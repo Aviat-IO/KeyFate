@@ -5,10 +5,13 @@ import type { Database } from "@/lib/database.types";
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } },
+  context: { params: { id: string } },
 ) {
+  const { params } = context;
+  const secretId = await params.id;
+
   try {
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const supabase = createRouteHandlerClient<Database>({
       cookies: () => cookieStore,
     });
@@ -25,7 +28,7 @@ export async function POST(
     const { data: secret, error: secretError } = await supabase
       .from("secrets")
       .select("*")
-      .eq("id", params.id)
+      .eq("id", secretId)
       .eq("user_id", user.id)
       .single();
 
@@ -40,12 +43,16 @@ export async function POST(
     // Update check-in time
     const now = new Date();
     const nextCheckIn = new Date(now);
-    const days = parseInt(secret.check_in_interval.match(/(\d+) days/)[1]);
+    const intervalMatch = secret.check_in_interval.match(/(\d+) days/);
+    if (!intervalMatch) {
+      throw new Error("Invalid check-in interval format");
+    }
+    const days = parseInt(intervalMatch[1]);
     nextCheckIn.setDate(nextCheckIn.getDate() + days);
 
     // Start a transaction to update both tables
     const { error: transactionError } = await supabase.rpc("check_in_secret", {
-      p_secret_id: params.id,
+      p_secret_id: secretId,
       p_user_id: user.id,
       p_checked_in_at: now.toISOString(),
       p_next_check_in: nextCheckIn.toISOString(),

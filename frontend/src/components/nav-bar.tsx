@@ -5,6 +5,7 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 interface NavBarProps {
   user?: User | null;
@@ -30,37 +31,36 @@ export function NavBar({ user }: NavBarProps) {
           Dead Man's Switch
         </Link>
         <div className="flex items-center gap-4">
-          {user
-            ? (
-              <>
-                <span className="text-muted-foreground text-sm">
-                  {user.email}
-                </span>
-                <Button variant="outline" onClick={handleSignOut}>
-                  Sign Out
-                </Button>
-              </>
-            )
-            : (
-              <div className="flex gap-2">
-                <Button variant="outline" asChild>
-                  <Link
-                    href="/auth/login"
-                    className="transition-all duration-200 hover:underline"
-                  >
-                    Sign In
-                  </Link>
-                </Button>
-                <Button asChild>
-                  <Link
-                    href="/auth/register"
-                    className="transition-all duration-200 hover:underline"
-                  >
-                    Sign Up
-                  </Link>
-                </Button>
-              </div>
-            )}
+          <ThemeToggle />
+          {user ? (
+            <>
+              <span className="text-muted-foreground text-sm">
+                {user.email}
+              </span>
+              <Button variant="outline" onClick={handleSignOut}>
+                Sign Out
+              </Button>
+            </>
+          ) : (
+            <div className="flex gap-2">
+              <Button variant="outline" asChild>
+                <Link
+                  href="/auth/login"
+                  className="transition-all duration-200 hover:underline"
+                >
+                  Sign In
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link
+                  href="/auth/register"
+                  className="transition-all duration-200 hover:underline"
+                >
+                  Sign Up
+                </Link>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </nav>
