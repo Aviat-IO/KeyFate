@@ -2,11 +2,11 @@ import { NavBar } from "@/components/nav-bar";
 import { Button } from "@/components/ui/button";
 import type { Database } from "@/lib/database.types";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { AlertCircle, Clock, PlusCircle } from "lucide-react";
+import { AlertCircle, PlusCircle } from "lucide-react";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CheckInButton } from "@/components/check-in-button";
+import { SecretCard } from "@/components/secret-card";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +16,7 @@ interface Secret {
   recipient_name: string;
   status: "active" | "paused" | "triggered";
   next_check_in: string;
+  last_check_in: string;
 }
 
 export default async function DashboardPage() {
@@ -58,15 +59,12 @@ export default async function DashboardPage() {
                 Keep your secrets safe by checking in regularly
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              <CheckInButton />
-              <Button asChild>
-                <Link href="/secrets/new">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Create New Secret
-                </Link>
-              </Button>
-            </div>
+            <Button asChild>
+              <Link href="/secrets/new">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Create New Secret
+              </Link>
+            </Button>
           </div>
 
           {!secrets || secrets.length === 0 ? (
@@ -88,40 +86,16 @@ export default async function DashboardPage() {
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {secrets.map((secret: Secret) => (
-                <div
+              {secrets.map((secret) => (
+                <SecretCard
                   key={secret.id}
-                  className="bg-card rounded-lg border p-4 shadow-sm"
-                >
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold">{secret.title}</h3>
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/secrets/${secret.id}/edit`}>Edit</Link>
-                    </Button>
-                  </div>
-                  <p className="text-muted-foreground mt-2 text-sm">
-                    For: {secret.recipient_name}
-                  </p>
-                  <div className="mt-4 flex items-center justify-between">
-                    <div className="text-muted-foreground flex items-center text-sm">
-                      <Clock className="mr-1 h-4 w-4" />
-                      Next check-in:{" "}
-                      {new Date(secret.next_check_in).toLocaleDateString()}
-                    </div>
-                    <span
-                      className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                        secret.status === "active"
-                          ? "bg-green-100 text-green-700"
-                          : secret.status === "paused"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {secret.status.charAt(0).toUpperCase() +
-                        secret.status.slice(1)}
-                    </span>
-                  </div>
-                </div>
+                  id={secret.id}
+                  title={secret.title}
+                  recipientName={secret.recipient_name}
+                  status={secret.status}
+                  nextCheckIn={secret.next_check_in}
+                  lastCheckIn={secret.last_check_in}
+                />
               ))}
             </div>
           )}

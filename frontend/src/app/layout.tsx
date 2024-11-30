@@ -16,7 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} bg-background min-h-screen`}>
-        <main className="container mx-auto px-4 py-8">{children}</main>
+        <main className="container mx-auto px-4">{children}</main>
       </body>
     </html>
   );

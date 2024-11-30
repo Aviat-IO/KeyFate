@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Dialog,
   DialogContent,
@@ -21,7 +23,7 @@ export function ContactMethodsDialog({
 }: ContactMethodsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Set Up Contact Methods</DialogTitle>
           <DialogDescription>
