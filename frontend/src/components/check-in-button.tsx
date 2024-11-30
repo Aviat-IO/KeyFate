@@ -33,12 +33,7 @@ export function CheckInButton({
         throw new Error("Failed to check in");
       }
 
-      toast({
-        title: "Check-in successful",
-        description: "Your check-in time has been updated.",
-      });
-
-      onCheckInSuccess?.();
+      onCheckInSuccess();
     } catch (error) {
       console.error("Error checking in:", error);
       toast({

@@ -6,6 +6,9 @@ import { Clock } from "lucide-react";
 import Link from "next/link";
 import { format } from "timeago.js";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface SecretCardProps {
   id: string;
@@ -22,8 +25,8 @@ function getStatusBadge(status: string, nextCheckIn: string) {
       label: status.charAt(0).toUpperCase() + status.slice(1),
       className:
         status === "paused"
-          ? "bg-yellow-100 text-yellow-700"
-          : "bg-red-100 text-red-700",
+          ? "bg-warning/20 text-warning-foreground"
+          : "bg-destructive/20 text-destructive-foreground",
     };
   }
 
@@ -36,20 +39,20 @@ function getStatusBadge(status: string, nextCheckIn: string) {
   if (daysUntilCheckIn <= 2) {
     return {
       label: "Urgent",
-      className: "bg-red-100 text-red-700",
+      className: "bg-destructive text-destructive-foreground",
     };
   }
 
-  if (daysUntilCheckIn <= 7) {
+  if (daysUntilCheckIn <= 5) {
     return {
       label: "Upcoming",
-      className: "bg-yellow-100 text-yellow-700",
+      className: "bg-warning/80 text-warning-foreground",
     };
   }
 
   return {
-    label: "Active",
-    className: "bg-green-100 text-green-700",
+    label: "Checked in",
+    className: "bg-success/80 text-success-foreground",
   };
 }
 
@@ -59,9 +62,22 @@ export function SecretCard({
   recipientName,
   status,
   nextCheckIn,
-  lastCheckIn,
+  lastCheckIn: initialLastCheckIn,
 }: SecretCardProps) {
+  const [lastCheckIn, setLastCheckIn] = useState<string | null>(
+    initialLastCheckIn,
+  );
   const statusBadge = getStatusBadge(status, nextCheckIn);
+  const { toast } = useToast();
+
+  const handleCheckInSuccess = () => {
+    setLastCheckIn(new Date().toISOString());
+    toast({
+      title: "Checked in successfully",
+      description: `Your check-in for "${title}" has been recorded.`,
+      duration: 6000,
+    });
+  };
 
   return (
     <div className="bg-card rounded-lg border p-4 shadow-sm">
@@ -74,7 +90,10 @@ export function SecretCard({
             </p>
           </div>
           <span
-            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${statusBadge.className}`}
+            className={cn(
+              "inline-flex items-center rounded-full px-2 py-1 text-xs font-medium",
+              statusBadge.className,
+            )}
           >
             {statusBadge.label}
           </span>
@@ -96,7 +115,7 @@ export function SecretCard({
       <Separator className="my-4" />
 
       <div className="flex justify-end gap-2">
-        <CheckInButton secretId={id} />
+        <CheckInButton secretId={id} onCheckInSuccess={handleCheckInSuccess} />
         <Button variant="ghost" size="sm" asChild>
           <Link href={`/secrets/${id}/edit`}>Edit</Link>
         </Button>

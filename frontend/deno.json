@@ -6,6 +6,7 @@
     "@supabase/ssr": "jsr:@supabase/ssr@^0.5.2",
     "@radix-ui/react-select": "jsr:@radix-ui/react-select@^2.1.2",
     "@radix-ui/react-slot": "jsr:@radix-ui/react-slot@^1.1.0",
+    "@radix-ui/react-toast": "jsr:@radix-ui/react-toast@^1.1.5",
     "@stripe/stripe-js": "jsr:@stripe/stripe-js@^5.2.0",
     "caniuse-lite": "npm:caniuse-lite@^1.0.30001684",
     "class-variance-authority": "jsr:class-variance-authority@^0.7.1",

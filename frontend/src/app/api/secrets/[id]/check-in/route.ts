@@ -8,7 +8,7 @@ export async function POST(
   { params }: { params: { id: string } },
 ) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = createRouteHandlerClient<Database>({
       cookies: () => cookieStore,
     });

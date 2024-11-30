@@ -6,7 +6,7 @@ import * as React from "react";
 import { Toast, ToastActionElement } from "@/components/ui/toast";
 import { useState, useEffect } from "react";
 
-const TOAST_LIMIT = 1;
+const TOAST_LIMIT = 3;
 const TOAST_REMOVE_DELAY = 1000000;
 
 type ToasterToast = Toast & {
