@@ -16,9 +16,10 @@ interface Secret {
 }
 
 export default async function DashboardPage() {
-  const cookieStore = await cookies
+  const cookieStore = await cookies()
   const supabase = createServerComponentClient<Database>({
-    cookies: () => cookieStore(),
+    // @ts-expect-error
+    cookies: () => cookieStore,
   })
 
   try {

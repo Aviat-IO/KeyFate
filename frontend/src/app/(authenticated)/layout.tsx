@@ -2,14 +2,17 @@ import { NavBar } from "@/components/nav-bar"
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
+import type { Database } from "@/lib/database.types"
 
 export default async function AuthenticatedLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const supabase = createServerComponentClient({
-    cookies,
+  const cookieStore = await cookies()
+  const supabase = createServerComponentClient<Database>({
+    // @ts-expect-error
+    cookies: () => cookieStore,
   })
 
   const {
