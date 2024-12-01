@@ -1,19 +1,19 @@
-import "./globals.css";
-import { Inter } from "next/font/google";
-import { Toaster } from "@/components/ui/toaster";
-import { ThemeProvider } from "@/components/theme-provider";
+import "./globals.css"
+import { Inter } from "next/font/google"
+import { Toaster } from "@/components/ui/toaster"
+import { ThemeProvider } from "@/components/theme-provider"
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
-  title: "Dead Man's Switch",
-  description: "Secure your digital legacy",
-};
+  title: "KeyFate",
+  description: "Your key to peace of mind",
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
@@ -29,5 +29,5 @@ export default function RootLayout({
         </ThemeProvider>
       </body>
     </html>
-  );
+  )
 }

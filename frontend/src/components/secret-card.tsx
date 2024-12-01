@@ -11,6 +11,12 @@ import { Clock } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { format } from "timeago.js"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface SecretCardProps {
   secret: Secret
@@ -69,15 +75,35 @@ export function SecretCard({ secret }: SecretCardProps) {
     })
   }
 
+  const getContactDetails = () => {
+    const details = []
+    if (secretState.recipient_email) {
+      details.push(`Email: ${secretState.recipient_email}`)
+    }
+    if (secretState.recipient_phone) {
+      details.push(`Phone: ${secretState.recipient_phone}`)
+    }
+    return details.join("\n")
+  }
+
   return (
     <div className="bg-card rounded-lg border p-4 shadow-sm">
       <div className="relative mb-4">
         <div className="flex items-start justify-between">
           <div>
             <h3 className="font-semibold">{secretState.title}</h3>
-            <p className="text-muted-foreground text-sm">
-              Recipient: {secretState.recipientName}
-            </p>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <p className="text-muted-foreground text-sm hover:cursor-help">
+                    Recipient: {secretState.recipient_name}
+                  </p>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="whitespace-pre-line">{getContactDetails()}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           <span
             className={cn(

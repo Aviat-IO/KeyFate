@@ -1,25 +1,25 @@
-"use client";
+"use client"
 
-import { Button } from "@/components/ui/button";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { User } from "@supabase/supabase-js";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { Button } from "@/components/ui/button"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { User } from "@supabase/supabase-js"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 interface NavBarProps {
-  user?: User | null;
+  user?: User | null
 }
 
 export function NavBar({ user }: NavBarProps) {
-  const router = useRouter();
-  const supabase = createClientComponentClient();
+  const router = useRouter()
+  const supabase = createClientComponentClient()
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.refresh();
-    router.push("/auth/login");
-  };
+    await supabase.auth.signOut()
+    router.refresh()
+    router.push("/auth/login")
+  }
 
   return (
     <nav className="bg-background border-b">
@@ -28,7 +28,7 @@ export function NavBar({ user }: NavBarProps) {
           href="/"
           className="text-xl font-bold transition-all duration-200 hover:underline"
         >
-          Dead Man's Switch
+          KeyFate
         </Link>
         <div className="flex items-center gap-4">
           <ThemeToggle />
@@ -64,5 +64,5 @@ export function NavBar({ user }: NavBarProps) {
         </div>
       </div>
     </nav>
-  );
+  )
 }

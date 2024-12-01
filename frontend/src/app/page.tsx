@@ -1,28 +1,28 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Clock, Lock, Shield } from "lucide-react";
-import { NavBar } from "@/components/nav-bar";
-import Link from "next/link";
+} from "@/components/ui/card"
+import { Clock, Lock, Shield } from "lucide-react"
+import { NavBar } from "@/components/nav-bar"
+import Link from "next/link"
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background min-h-screen">
       <NavBar />
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-24">
         <div className="text-center">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-6xl text-foreground">
-            Dead Man's Switch
+          <h1 className="text-foreground text-4xl font-bold tracking-tight sm:text-6xl">
+            KeyFate
           </h1>
-          <p className="mt-6 text-lg leading-8 text-muted-foreground">
-            Secure your digital legacy. Share your secrets with trusted contacts
+          <p className="text-muted-foreground mt-6 text-lg leading-8">
+            Your key to peace of mind. Share your secrets with trusted contacts
             if you don't check in.
           </p>
           <div className="mt-10 flex items-center justify-center gap-x-6">
@@ -41,7 +41,7 @@ export default function Home() {
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
           <Card>
             <CardHeader>
-              <Shield className="h-12 w-12 text-primary mb-4" />
+              <Shield className="text-primary mb-4 h-12 w-12" />
               <CardTitle>Secure Storage</CardTitle>
               <CardDescription>
                 Your secrets are encrypted and stored securely
@@ -55,7 +55,7 @@ export default function Home() {
 
           <Card>
             <CardHeader>
-              <Clock className="h-12 w-12 text-primary mb-4" />
+              <Clock className="text-primary mb-4 h-12 w-12" />
               <CardTitle>Flexible Check-ins</CardTitle>
               <CardDescription>Set your own schedule</CardDescription>
             </CardHeader>
@@ -67,7 +67,7 @@ export default function Home() {
 
           <Card>
             <CardHeader>
-              <Lock className="h-12 w-12 text-primary mb-4" />
+              <Lock className="text-primary mb-4 h-12 w-12" />
               <CardTitle>Trusted Contacts</CardTitle>
               <CardDescription>
                 Choose who receives your information
@@ -82,9 +82,9 @@ export default function Home() {
       </section>
 
       {/* Pricing Section */}
-      <section className="container mx-auto px-4 py-24 border-t">
-        <h2 className="text-3xl font-bold text-center mb-16">Simple Pricing</h2>
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 max-w-4xl mx-auto">
+      <section className="container mx-auto border-t px-4 py-24">
+        <h2 className="mb-16 text-center text-3xl font-bold">Simple Pricing</h2>
+        <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 sm:grid-cols-2">
           <Card>
             <CardHeader>
               <CardTitle>Free</CardTitle>
@@ -130,5 +130,5 @@ export default function Home() {
         </div>
       </section>
     </div>
-  );
+  )
 }

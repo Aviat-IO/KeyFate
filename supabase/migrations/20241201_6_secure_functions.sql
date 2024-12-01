@@ -14,14 +14,14 @@ alter function public.update_updated_at_column()
 -- Update the cron job to use the correct schema
 select cron.unschedule('check-dead-mans-switch');
 select cron.schedule(
-  'check-dead-mans-switch',
-  '* * * * *',
+  'check-dead-mans-switch',    -- name of the cron job
+  '* * * * *',                -- every minute
   $$
   select
-    extensions.http_post(
+    net.http_post(
       url:='https://<project-ref>.supabase.co/functions/v1/check-secrets',
       headers:='{"Content-Type": "application/json", "Authorization": "Bearer YOUR_ANON_KEY"}'::jsonb,
       body:='{}'::jsonb
     ) as request_id;
   $$
-);
+); 

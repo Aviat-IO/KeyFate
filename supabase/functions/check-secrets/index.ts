@@ -1,4 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+import sgMail from "npm:@sendgrid/mail";
+
+import { Secret } from "../secret.d.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 if (!SUPABASE_URL) {
@@ -11,7 +14,13 @@ if (!SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error("SUPABASE_SERVICE_ROLE_KEY is not set");
 }
 
+const SENDGRID_API_KEY = Deno.env.get("SENDGRID_API_KEY") ?? "";
+if (!SENDGRID_API_KEY) {
+  throw new Error("SENDGRID_API_KEY is not set");
+}
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+sgMail.setApiKey(SENDGRID_API_KEY);
 
 const BATCH_SIZE = 100; // Adjust based on your needs
 const MAX_PARALLEL_OPERATIONS = 5; // Adjust based on your needs
@@ -35,6 +44,8 @@ Deno.serve(async () => {
 
       if (error) throw error;
 
+      console.log("triggeredSecrets", triggeredSecrets.length);
+
       if (!triggeredSecrets || triggeredSecrets.length === 0) {
         hasMore = false;
         break;
@@ -56,6 +67,7 @@ Deno.serve(async () => {
               .eq("id", secret.id);
 
             await sendNotifications(secret);
+
             processedCount++;
           } catch (error) {
             console.error(`Failed to process secret ${secret.id}:`, error);
@@ -74,7 +86,7 @@ Deno.serve(async () => {
     );
   } catch (error) {
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error.message }, null, 2),
       {
         status: 500,
         headers: { "Content-Type": "application/json" },
@@ -92,11 +104,51 @@ function chunkArray<T>(array: T[], chunkSize: number): T[][] {
   return chunks;
 }
 
-async function sendNotifications(secret) {
+async function sendEmail(to: string, subject: string, content: string) {
+  const msg: sgMail.MailDataRequired = {
+    to,
+    from: "alerts@keyfate.com",
+    subject,
+    content: [{
+      type: "text/plain",
+      value: content,
+    }],
+  };
+
+  const [res, error] = await sgMail.send(msg);
+  console.log("sendEmail res", res, error);
+  if (error) {
+    throw error;
+  }
+}
+
+async function sendSecretEmail(secret: Secret) {
+  if (!secret.recipient_email) {
+    console.log("no recipient email", secret.id);
+    return;
+  }
+
+  const content = `${secret.title}\n\n${secret.message}`;
+  await sendEmail(
+    secret.recipient_email,
+    `${secret.recipient_name} - You've received a secret from a friend on KeyFate`,
+    content,
+  );
+}
+
+async function sendNotifications(secret: Secret) {
   console.log("sending notifications", secret);
-  // Implement your notification logic here
-  // You could use services like:
-  // - Resend for emails
-  // - Twilio for SMS
-  // - Or any other notification service
+
+  if (secret.recipient_email) {
+    await sendSecretEmail(secret);
+  }
+
+  if (secret.recipient_phone) {
+    await sendSecretSMS(secret);
+  }
+}
+
+function sendSecretSMS(secret: Secret) {
+  // TODO: Implement SMS sending
+  console.log("sending secret SMS", secret);
 }
