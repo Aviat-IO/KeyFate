@@ -27,7 +27,9 @@ export default async function DashboardPage() {
     const { data: secrets, error: secretsError } = await supabase
       .from("secrets")
       .select("*")
-      .order("created_at", { ascending: false })
+      .order("is_triggered", { ascending: true })
+      .order("next_check_in", { ascending: true })
+      .order("triggered_at", { ascending: false })
       .returns<Secret[]>()
 
     if (secretsError) {

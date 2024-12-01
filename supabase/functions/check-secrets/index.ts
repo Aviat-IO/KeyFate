@@ -128,7 +128,8 @@ async function sendSecretEmail(secret: Secret) {
     return;
   }
 
-  const content = `${secret.title}\n\n${secret.message}`;
+  const content =
+    `Secret Title: ${secret.title}\n\nSecret Message: ${secret.message}`;
   await sendEmail(
     secret.recipient_email,
     `${secret.recipient_name} - You've received a secret from a friend on KeyFate`,

@@ -17,6 +17,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { Badge } from "@/components/ui/badge"
 
 interface SecretCardProps {
   secret: Secret
@@ -24,10 +25,20 @@ interface SecretCardProps {
 
 interface StatusBadge {
   label: string
-  className: string
+  variant: "default" | "secondary" | "destructive" | "outline"
 }
 
-function getStatusBadge(nextCheckIn: string): StatusBadge {
+function getStatusBadge(
+  nextCheckIn: string,
+  isTriggered: boolean,
+): StatusBadge {
+  if (isTriggered) {
+    return {
+      label: "Sent",
+      variant: "destructive",
+    }
+  }
+
   const now = new Date()
   const checkInDate = new Date(nextCheckIn)
   const daysUntilCheckIn = Math.ceil(
@@ -37,32 +48,32 @@ function getStatusBadge(nextCheckIn: string): StatusBadge {
   if (daysUntilCheckIn <= 2) {
     return {
       label: "Urgent",
-      className: "bg-destructive text-destructive-foreground",
+      variant: "destructive",
     }
   }
 
   if (daysUntilCheckIn <= 5) {
     return {
       label: "Upcoming",
-      className: "bg-warning/80 text-warning-foreground",
+      variant: "default",
     }
   }
 
   return {
     label: "Checked in",
-    className: "bg-success/80 text-success-foreground",
+    variant: "secondary",
   }
 }
 
 export function SecretCard({ secret }: SecretCardProps) {
   const [statusBadge, setStatusBadge] = useState<StatusBadge>(
-    getStatusBadge(secret.next_check_in),
+    getStatusBadge(secret.next_check_in, secret.is_triggered),
   )
   const [secretState, setSecretState] = useState<Secret>(secret)
 
   useEffect(() => {
-    setStatusBadge(getStatusBadge(secret.next_check_in))
-  }, [secret.next_check_in])
+    setStatusBadge(getStatusBadge(secret.next_check_in, secret.is_triggered))
+  }, [secret.next_check_in, secret.is_triggered])
 
   const { toast } = useToast()
 
@@ -87,7 +98,12 @@ export function SecretCard({ secret }: SecretCardProps) {
   }
 
   return (
-    <div className="bg-card rounded-lg border p-4 shadow-sm">
+    <div
+      className={cn(
+        "bg-card rounded-lg border p-4 shadow-sm",
+        secretState.is_triggered && "border-destructive/50 bg-destructive/5",
+      )}
+    >
       <div className="relative mb-4">
         <div className="flex items-start justify-between">
           <div>
@@ -105,23 +121,18 @@ export function SecretCard({ secret }: SecretCardProps) {
               </Tooltip>
             </TooltipProvider>
           </div>
-          <span
-            className={cn(
-              "inline-flex items-center rounded-full px-2 py-1 text-xs font-medium",
-              statusBadge.className,
-            )}
-          >
-            {statusBadge.label}
-          </span>
+          <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
         </div>
       </div>
 
       <div className="text-muted-foreground flex flex-col gap-1 text-sm">
         <div className="flex items-center">
           <Clock className="mr-1 h-4 w-4" />
-          Next check-in: {format(secretState.next_check_in)}
+          {secretState.is_triggered
+            ? `Sent: ${format(secretState.triggered_at!)}`
+            : `Next check-in: ${format(secretState.next_check_in)}`}
         </div>
-        {secretState.last_check_in && (
+        {!secretState.is_triggered && secretState.last_check_in && (
           <div className="text-muted-foreground text-xs">
             Last check-in: {format(secretState.last_check_in)}
           </div>
@@ -131,13 +142,17 @@ export function SecretCard({ secret }: SecretCardProps) {
       <Separator className="my-4" />
 
       <div className="flex justify-end gap-2">
-        <CheckInButton
-          secretId={secretState.id}
-          onCheckInSuccess={handleCheckInSuccess}
-        />
-        <Button variant="ghost" size="sm" asChild>
-          <Link href={`/secrets/${secretState.id}/edit`}>Edit</Link>
-        </Button>
+        {!secretState.is_triggered && (
+          <>
+            <CheckInButton
+              secretId={secretState.id}
+              onCheckInSuccess={handleCheckInSuccess}
+            />
+            <Button variant="ghost" size="sm" asChild>
+              <Link href={`/secrets/${secretState.id}/edit`}>Edit</Link>
+            </Button>
+          </>
+        )}
       </div>
     </div>
   )
