@@ -1,39 +1,37 @@
-import { NavBar } from "@/components/nav-bar";
-import { Button } from "@/components/ui/button";
-import type { Database } from "@/lib/database.types";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { AlertCircle, PlusCircle } from "lucide-react";
-import { cookies } from "next/headers";
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { SecretCard } from "@/components/secret-card";
-
-export const dynamic = "force-dynamic";
+import { NavBar } from "@/components/nav-bar"
+import { Button } from "@/components/ui/button"
+import type { Database } from "@/lib/database.types"
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
+import { AlertCircle, PlusCircle } from "lucide-react"
+import { cookies } from "next/headers"
+import Link from "next/link"
+import { redirect } from "next/navigation"
+import { SecretCard } from "@/components/secret-card"
 
 interface Secret {
-  id: string;
-  title: string;
-  recipient_name: string;
-  status: "active" | "paused" | "triggered";
-  next_check_in: string;
-  last_check_in: string;
+  id: string
+  title: string
+  recipient_name: string
+  status: "active" | "paused" | "triggered"
+  next_check_in: string
+  last_check_in: string
 }
 
 export default async function DashboardPage() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies()
   const supabase = createServerComponentClient<Database>({
     cookies: () => cookieStore,
-  });
+  })
 
   try {
     const {
       data: { user },
       error: userError,
-    } = await supabase.auth.getUser();
+    } = await supabase.auth.getUser()
 
     if (userError || !user) {
-      console.error("[DashboardPage] Auth error:", userError);
-      redirect("/auth/login");
+      console.error("[DashboardPage] Auth error:", userError)
+      redirect("/auth/login")
     }
 
     // Fetch secrets directly using Supabase client
@@ -41,11 +39,12 @@ export default async function DashboardPage() {
       .from("secrets")
       .select("*")
       .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .returns<Secret[]>()
 
     if (secretsError) {
-      console.error("[DashboardPage] Secrets error:", secretsError);
-      throw new Error("Failed to fetch secrets");
+      console.error("[DashboardPage] Secrets error:", secretsError)
+      throw new Error("Failed to fetch secrets")
     }
 
     return (
@@ -87,23 +86,15 @@ export default async function DashboardPage() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {secrets.map((secret) => (
-                <SecretCard
-                  key={secret.id}
-                  id={secret.id}
-                  title={secret.title}
-                  recipientName={secret.recipient_name}
-                  status={secret.status}
-                  nextCheckIn={secret.next_check_in}
-                  lastCheckIn={secret.last_check_in}
-                />
+                <SecretCard secret={secret} key={secret.id} />
               ))}
             </div>
           )}
         </div>
       </div>
-    );
+    )
   } catch (error) {
-    console.error("[DashboardPage] Error:", error);
-    redirect("/auth/login");
+    console.error("[DashboardPage] Error:", error)
+    redirect("/auth/login")
   }
 }
