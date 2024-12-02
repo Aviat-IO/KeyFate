@@ -2,8 +2,10 @@
   "version": "4",
   "specifiers": {
     "jsr:@supabase/supabase-js@^2.46.2": "2.46.2",
+    "npm:@hookform/resolvers@^3.9.1": "3.9.1_react-hook-form@7.53.2__react@18.3.1_react@18.3.1",
     "npm:@next/env@^15.0.3": "15.0.3",
     "npm:@radix-ui/react-dialog@^1.1.2": "1.1.2_@types+react@18.3.12_@types+react-dom@18.3.1_react@18.3.1_react-dom@18.3.1__react@18.3.1",
+    "npm:@radix-ui/react-label@^2.1.0": "2.1.0_@types+react@18.3.12_@types+react-dom@18.3.1_react@18.3.1_react-dom@18.3.1__react@18.3.1",
     "npm:@radix-ui/react-select@^2.1.2": "2.1.2_@types+react@18.3.12_@types+react-dom@18.3.1_react@18.3.1_react-dom@18.3.1__react@18.3.1",
     "npm:@radix-ui/react-separator@^1.1.0": "1.1.0_@types+react@18.3.12_@types+react-dom@18.3.1_react@18.3.1_react-dom@18.3.1__react@18.3.1",
     "npm:@radix-ui/react-slot@^1.1.0": "1.1.0_@types+react@18.3.12_react@18.3.1",
@@ -43,6 +45,7 @@
     "npm:prettier-plugin-tailwindcss@~0.6.9": "0.6.9_prettier@3.4.1",
     "npm:prettier@^3.4.1": "3.4.1",
     "npm:react-dom@18.3.1": "18.3.1_react@18.3.1",
+    "npm:react-hook-form@^7.53.2": "7.53.2_react@18.3.1",
     "npm:react@18.3.1": "18.3.1",
     "npm:shadcn-ui@~0.9.3": "0.9.3_@babel+core@7.26.0_typescript@5.7.2",
     "npm:stripe@^17.4.0": "17.4.0",
@@ -51,7 +54,8 @@
     "npm:tailwindcss-animate@^1.0.7": "1.0.7_tailwindcss@3.4.15__postcss@8.4.49",
     "npm:tailwindcss@^3.4.1": "3.4.15_postcss@8.4.49",
     "npm:timeago.js@^4.0.2": "4.0.2",
-    "npm:typescript@^5.7.2": "5.7.2"
+    "npm:typescript@^5.7.2": "5.7.2",
+    "npm:zod@^3.23.8": "3.23.8"
   },
   "jsr": {
     "@supabase/supabase-js@2.46.2": {
@@ -474,6 +478,12 @@
     "@floating-ui/utils@0.2.8": {
       "integrity": "sha512-kym7SodPp8/wloecOpcmSnWJsK7M0E5Wg8UcFA+uO4B9s5d0ywXOEro/8HM9x0rW+TljRzul/14UYz3TleT3ig=="
     },
+    "@hookform/resolvers@3.9.1_react-hook-form@7.53.2__react@18.3.1_react@18.3.1": {
+      "integrity": "sha512-ud2HqmGBM0P0IABqoskKWI6PEf6ZDDBZkFqe2Vnl+mTHCEHzr3ISjjZyCwTjC/qpL25JC9aIDkloQejvMeq0ug==",
+      "dependencies": [
+        "react-hook-form"
+      ]
+    },
     "@humanwhocodes/config-array@0.13.0": {
       "integrity": "sha512-DZLEEqFWQFiyK6h5YIeynKx7JlvCYWL0cImfSRXZ9l4Sg2efkFGTuFf6vzXjK1cq6IYkU+Eg/JizXw+TD2vRNw==",
       "dependencies": [
@@ -782,6 +792,16 @@
         "@radix-ui/react-use-layout-effect",
         "@types/react",
         "react"
+      ]
+    },
+    "@radix-ui/react-label@2.1.0_@types+react@18.3.12_@types+react-dom@18.3.1_react@18.3.1_react-dom@18.3.1__react@18.3.1": {
+      "integrity": "sha512-peLblDlFw/ngk3UWq0VnYaOLy6agTZZ+MUO/WhVfm14vJGML+xH4FAl2XQGLqdefjNb7ApRg6Yn7U42ZhmYXdw==",
+      "dependencies": [
+        "@radix-ui/react-primitive",
+        "@types/react",
+        "@types/react-dom",
+        "react",
+        "react-dom"
       ]
     },
     "@radix-ui/react-popper@1.2.0_@types+react@18.3.12_@types+react-dom@18.3.1_react@18.3.1_react-dom@18.3.1__react@18.3.1": {
@@ -3234,6 +3254,12 @@
         "scheduler"
       ]
     },
+    "react-hook-form@7.53.2_react@18.3.1": {
+      "integrity": "sha512-YVel6fW5sOeedd1524pltpHX+jgU2u3DSDtXEaBORNdqiNrsX/nUI/iGXONegttg0mJVnfrIkiV0cmTU6Oo2xw==",
+      "dependencies": [
+        "react"
+      ]
+    },
     "react-is@16.13.1": {
       "integrity": "sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ=="
     },
@@ -4029,7 +4055,9 @@
     ],
     "packageJson": {
       "dependencies": [
+        "npm:@hookform/resolvers@^3.9.1",
         "npm:@radix-ui/react-dialog@^1.1.2",
+        "npm:@radix-ui/react-label@^2.1.0",
         "npm:@radix-ui/react-select@^2.1.2",
         "npm:@radix-ui/react-separator@^1.1.0",
         "npm:@radix-ui/react-slot@^1.1.0",
@@ -4058,6 +4086,7 @@
         "npm:prettier-plugin-tailwindcss@~0.6.9",
         "npm:prettier@^3.4.1",
         "npm:react-dom@18.3.1",
+        "npm:react-hook-form@^7.53.2",
         "npm:react@18.3.1",
         "npm:shadcn-ui@~0.9.3",
         "npm:stripe@^17.4.0",
@@ -4065,7 +4094,8 @@
         "npm:tailwindcss-animate@^1.0.7",
         "npm:tailwindcss@^3.4.1",
         "npm:timeago.js@^4.0.2",
-        "npm:typescript@^5.7.2"
+        "npm:typescript@^5.7.2",
+        "npm:zod@^3.23.8"
       ]
     }
   }

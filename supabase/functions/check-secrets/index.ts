@@ -173,7 +173,11 @@ async function sendSecretEmail(secret: Secret) {
     return;
   }
 
-  const decryptedMessage = await decryptMessage(secret.message, secret.iv);
+  const decryptedMessage = await decryptMessage(
+    secret.message,
+    secret.iv,
+    secret.auth_tag,
+  );
   const content =
     `Secret Title: ${secret.title}\n\nSecret Message: ${decryptedMessage}`;
 
@@ -203,7 +207,11 @@ function sendSecretSMS(secret: Secret) {
 
 export const checkSecret = async (secret: Secret) => {
   try {
-    const decryptedMessage = await decryptMessage(secret.message, secret.iv);
+    const decryptedMessage = await decryptMessage(
+      secret.message,
+      secret.iv,
+      secret.auth_tag,
+    );
     // Use decryptedMessage when sending email
     await sendEmail({
       // ... other email props ...

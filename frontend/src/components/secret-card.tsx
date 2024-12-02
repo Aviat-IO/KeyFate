@@ -99,6 +99,7 @@ export function SecretCard({ secret }: SecretCardProps) {
     return details.join("\n")
   }
 
+  // TODO: Likely remove this
   const decryptMessage = async () => {
     try {
       const response = await fetch("/api/decrypt", {

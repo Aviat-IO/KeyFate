@@ -1,8 +1,9 @@
 "use server";
 
-import crypto from "crypto";
+import crypto from "node:crypto";
+import { Buffer } from "node:buffer";
 
-const ENCRYPTION_KEY_BASE64 = process.env.ENCRYPTION_KEY!;
+const ENCRYPTION_KEY_BASE64 = Deno.env.get("ENCRYPTION_KEY")!;
 if (!ENCRYPTION_KEY_BASE64) {
   throw new Error("Invalid encryption key");
 }
@@ -12,32 +13,28 @@ const ENCRYPTION_KEY = Buffer.from(ENCRYPTION_KEY_BASE64, "base64");
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12;
 
-async function generateIV(): Promise<Buffer> {
+function generateIV(): Buffer {
   return crypto.randomBytes(IV_LENGTH);
 }
 
-export async function encryptMessage(
+export function encryptMessage(
   message: string,
   iv?: Buffer,
-): Promise<{ encrypted: string; iv: string; authTag: string }> {
-  const ivBuffer = iv ?? (await generateIV());
-  console.log("ivBuffer", ivBuffer);
+): { encrypted: string; iv: string; authTag: string } {
+  const ivBuffer = iv ?? generateIV();
   const cipher = crypto.createCipheriv(ALGORITHM, ENCRYPTION_KEY, ivBuffer);
-  console.log("cipher", cipher);
 
   let encrypted = cipher.update(message, "utf8", "base64");
   encrypted += cipher.final("base64");
-  console.log("encrypted", encrypted);
 
   const authTag = cipher.getAuthTag();
-  console.log("authTag", authTag);
 
   // Store the auth tag with the encrypted data
   const finalEncrypted = Buffer.concat([
     Buffer.from(encrypted, "base64"),
     authTag,
   ]).toString("base64");
-  console.log("finalEncrypted", finalEncrypted);
+
   return {
     encrypted: finalEncrypted,
     iv: ivBuffer.toString("base64"),
@@ -45,11 +42,11 @@ export async function encryptMessage(
   };
 }
 
-export async function decryptMessage(
+export function decryptMessage(
   cipherText: string,
   ivBuffer: Buffer,
   authTag: Buffer,
-): Promise<string> {
+): string {
   const cipherBuffer = Buffer.from(cipherText, "base64");
 
   // Extract the auth tag from the end of the cipher buffer

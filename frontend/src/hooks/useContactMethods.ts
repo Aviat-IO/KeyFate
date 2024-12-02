@@ -9,6 +9,7 @@ export interface ContactMethods {
   whatsapp: string;
   signal: string;
   preferred_method: "email" | "phone" | "both";
+  check_in_days: number;
 }
 
 export function useContactMethods() {
@@ -50,6 +51,7 @@ export function useContactMethods() {
             whatsapp: methods.whatsapp || "",
             signal: methods.signal || "",
             preferred_method: methods.preferred_method,
+            check_in_days: methods.check_in_days || 90,
           });
         }
       } catch (error) {

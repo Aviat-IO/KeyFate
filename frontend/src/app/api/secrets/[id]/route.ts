@@ -7,7 +7,8 @@ export async function GET(
   req: Request,
   { params }: { params: { id: string; decrypt?: boolean } },
 ) {
-  if (!params.id) {
+  const { id, decrypt } = await params;
+  if (!id) {
     return NextResponse.json({ error: "Missing secret ID" }, { status: 400 });
   }
 
@@ -23,7 +24,7 @@ export async function GET(
   const { data: existingSecret, error: fetchError } = await supabase
     .from("secrets")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .eq("user_id", user.id)
     .single();
 
@@ -31,7 +32,7 @@ export async function GET(
     return NextResponse.json({ error: "Secret not found" }, { status: 404 });
   }
 
-  if (params.decrypt) {
+  if (decrypt) {
     const decryptedMessage = await decryptMessage(
       existingSecret.message,
       Buffer.from(existingSecret.iv, "base64"),
@@ -49,7 +50,8 @@ export async function PUT(
   { params }: { params: { id: string } },
 ) {
   try {
-    if (!params.id) {
+    const { id } = await params;
+    if (!id) {
       return NextResponse.json({ error: "Missing secret ID" }, { status: 400 });
     }
 
@@ -73,14 +75,14 @@ export async function PUT(
       recipient_email,
       recipient_phone,
       contact_method,
-      check_in_interval,
+      check_in_days,
     } = body;
 
     // Verify the secret exists and belongs to user
     const { data: existingSecret, error: fetchError } = await supabase
       .from("secrets")
       .select("*")
-      .eq("id", params.id)
+      .eq("id", id)
       .eq("user_id", user.id)
       .single();
 
@@ -93,10 +95,10 @@ export async function PUT(
 
     // Calculate next check-in time
     const nextCheckIn = new Date();
-    nextCheckIn.setDate(nextCheckIn.getDate() + parseInt(check_in_interval));
+    nextCheckIn.setDate(nextCheckIn.getDate() + parseInt(check_in_days));
 
     // Re-encrypt message using existing IV
-    const { encrypted } = await encryptMessage(
+    const { encrypted, authTag } = await encryptMessage(
       message,
       Buffer.from(existingSecret.iv, "base64"),
     );
@@ -111,10 +113,11 @@ export async function PUT(
         recipient_email: contact_method !== "phone" ? recipient_email : null,
         recipient_phone: contact_method !== "email" ? recipient_phone : null,
         contact_method,
-        check_in_interval: `${check_in_interval} days`,
+        check_in_days,
         next_check_in: nextCheckIn.toISOString(),
+        auth_tag: authTag,
       })
-      .eq("id", params.id)
+      .eq("id", id)
       .eq("user_id", user.id);
 
     if (updateError) {

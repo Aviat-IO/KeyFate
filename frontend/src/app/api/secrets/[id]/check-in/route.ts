@@ -40,21 +40,8 @@ export async function POST(
 
     // Update check-in time
     const now = new Date();
-    const nextCheckIn = new Date(now);
-
-    // Calculate next check-in date based on interval
-    const days = parseInt(secret.check_in_interval);
-    if (isNaN(days)) {
-      console.error(
-        "[POST /api/secrets/[id]/check-in] Invalid interval:",
-        secret.check_in_interval,
-      );
-      return NextResponse.json(
-        { error: "Invalid check-in interval" },
-        { status: 400 },
-      );
-    }
-    nextCheckIn.setDate(nextCheckIn.getDate() + days);
+    const nextCheckIn = new Date();
+    nextCheckIn.setDate(nextCheckIn.getDate() + secret.check_in_days);
 
     // Start a transaction to update both tables
     const { error: transactionError } = await supabase.rpc("check_in_secret", {

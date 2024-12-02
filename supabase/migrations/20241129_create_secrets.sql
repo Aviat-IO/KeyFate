@@ -54,21 +54,39 @@ create type public.contact_method as enum ('email', 'phone', 'both');
 -- Create secrets table
 drop table if exists public.secrets cascade;
 create table public.secrets (
-    id uuid default gen_random_uuid() primary key,
-    user_id uuid references auth.users(id) on delete cascade not null,
+    id uuid not null default gen_random_uuid(),
+    user_id uuid not null,
     title text not null,
     message text not null,
     recipient_name text not null,
-    recipient_email text,
-    recipient_phone text,
-    contact_method contact_method not null,
-    check_in_interval interval not null, -- e.g., '7 days'
-    last_check_in timestamp with time zone,
-    next_check_in timestamp with time zone,
-    status secret_status default 'active' not null,
-    created_at timestamp with time zone default now() not null,
-    updated_at timestamp with time zone default now() not null
-);
+    recipient_email text null,
+    recipient_phone text null,
+    contact_method public.contact_method not null,
+    check_in_days integer not null default 90,
+    last_check_in timestamp with time zone null,
+    next_check_in timestamp with time zone null,
+    status public.secret_status not null default 'active'::secret_status,
+    is_triggered boolean null default false,
+    triggered_at timestamp with time zone null,
+    is_active boolean null default true,
+    iv text not null,
+    auth_tag text not null,
+    created_at timestamp with time zone not null default now(),
+    updated_at timestamp with time zone not null default now(),
+    constraint secrets_pkey primary key (id),
+    constraint secrets_user_id_fkey foreign key (user_id) references auth.users (id) on delete cascade
+) tablespace pg_default;
+
+create index if not exists idx_secrets_trigger_check on public.secrets using btree (is_active, is_triggered, next_check_in) tablespace pg_default
+where
+  (
+    (is_active = true)
+    and (is_triggered = false)
+  );
+
+create trigger update_secrets_updated_at before
+update on secrets for each row
+execute function update_updated_at_column();
 
 -- Add RLS policies
 alter table public.secrets enable row level security;

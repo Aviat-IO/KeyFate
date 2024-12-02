@@ -1,23 +1,24 @@
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import type { ContactMethods } from "@/hooks/useContactMethods";
-import { AlertCircle } from "lucide-react";
-import { useState } from "react";
+} from "@/components/ui/select"
+import type { ContactMethods } from "@/hooks/useContactMethods"
+import { AlertCircle } from "lucide-react"
+import { useState } from "react"
+import { z } from "zod"
 
 interface ContactMethodsFormProps {
-  onSubmit: (methods: ContactMethods) => Promise<void>;
-  initialValues?: ContactMethods;
-  submitLabel?: string;
-  showCancel?: boolean;
-  onCancel?: () => void;
+  onSubmit: (methods: ContactMethods) => Promise<void>
+  initialValues?: ContactMethods
+  submitLabel?: string
+  showCancel?: boolean
+  onCancel?: () => void
 }
 
 const defaultContactMethods: ContactMethods = {
@@ -27,7 +28,18 @@ const defaultContactMethods: ContactMethods = {
   whatsapp: "",
   signal: "",
   preferred_method: "email",
-};
+  check_in_days: 90,
+}
+
+const formSchema = z.object({
+  email: z.string().email(),
+  phone: z.string().min(10).max(15),
+  telegram_username: z.string().min(5).max(32),
+  whatsapp: z.string().min(10).max(15),
+  signal: z.string().min(10).max(15),
+  preferred_method: z.enum(["email", "phone", "both"]),
+  check_in_days: z.number().min(1).max(365),
+})
 
 export function ContactMethodsForm({
   onSubmit,
@@ -36,29 +48,29 @@ export function ContactMethodsForm({
   showCancel = false,
   onCancel,
 }: ContactMethodsFormProps) {
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [contactMethods, setContactMethods] =
-    useState<ContactMethods>(initialValues);
+    useState<ContactMethods>(initialValues)
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    setError(null);
+    e.preventDefault()
+    setSaving(true)
+    setError(null)
 
     try {
-      await onSubmit(contactMethods);
+      await onSubmit(contactMethods)
     } catch (error) {
-      console.error("Error saving contact methods:", error);
+      console.error("Error saving contact methods:", error)
       setError(
         error instanceof Error
           ? error.message
           : "Failed to save contact methods",
-      );
+      )
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
-  };
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -156,6 +168,23 @@ export function ContactMethodsForm({
         </Select>
       </div>
 
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Check-in Interval (days)</label>
+        <Input
+          type="number"
+          min={1}
+          max={365}
+          defaultValue={90}
+          value={contactMethods.check_in_days}
+          onChange={(e) =>
+            setContactMethods({
+              ...contactMethods,
+              check_in_days: parseInt(e.target.value) || 90,
+            })
+          }
+        />
+      </div>
+
       <div className="flex justify-end space-x-4">
         {showCancel && (
           <Button type="button" variant="outline" onClick={onCancel}>
@@ -167,5 +196,5 @@ export function ContactMethodsForm({
         </Button>
       </div>
     </form>
-  );
+  )
 }

@@ -1,282 +1,57 @@
-"use client"
+import { EditSecretForm } from "@/components/forms/editSecretForm"
+import { decryptMessage } from "@/lib/encryption"
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
+import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
 
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { AlertCircle, LockIcon } from "lucide-react"
-import { useParams, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-
-interface FormData {
-  title: string
-  message: string
-  recipient_name: string
-  recipient_email: string
-  recipient_phone: string
-  contact_method: "email" | "phone" | "both"
-  check_in_interval: string // days
+interface PageParams {
+  params: { id: string }
 }
 
-export default function EditSecretPage() {
-  const router = useRouter()
-  const params = useParams()
-  const supabase = createClientComponentClient()
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+export default async function EditSecretPage({ params }: PageParams) {
+  const { id } = await params
+  const cookieStore = await cookies()
+  // @ts-expect-error
+  const supabase = createServerComponentClient({ cookies: () => cookieStore })
 
-  const [formData, setFormData] = useState<FormData>({
-    title: "",
-    message: "",
-    recipient_name: "",
-    recipient_email: "",
-    recipient_phone: "",
-    contact_method: "email",
-    check_in_interval: "7",
-  })
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect("/auth/login")
 
-  useEffect(() => {
-    async function loadSecret() {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser()
+  const { data: secret, error } = await supabase
+    .from("secrets")
+    .select("*")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .single()
 
-        const { data: secret, error: secretError } = await supabase
-          .from("secrets")
-          .select("*")
-          .eq("id", params.id)
-          .eq("user_id", user.id)
-          .single()
-
-        if (secretError) throw secretError
-        if (!secret) throw new Error("Secret not found")
-
-        // Convert interval to days for the form
-        const intervalMatch = secret.check_in_interval.match(/(\d+) days/)
-        const days = intervalMatch ? intervalMatch[1] : "90"
-
-        setFormData({
-          title: secret.title,
-          message: secret.message,
-          recipient_name: secret.recipient_name,
-          recipient_email: secret.recipient_email || "",
-          recipient_phone: secret.recipient_phone || "",
-          contact_method: secret.contact_method,
-          check_in_interval: days,
-        })
-      } catch (error) {
-        console.error("Error loading secret:", error)
-        setError(
-          error instanceof Error ? error.message : "Failed to load secret",
-        )
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadSecret()
-  }, [supabase, params.id])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-
-    try {
-      const response = await fetch(`/api/secrets/${params.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: formData.title,
-          message: formData.message,
-          recipient_name: formData.recipient_name,
-          recipient_email: formData.recipient_email,
-          recipient_phone: formData.recipient_phone,
-          contact_method: formData.contact_method,
-          check_in_interval: formData.check_in_interval,
-        }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || "Failed to update secret")
-      }
-
-      router.push("/dashboard")
-      router.refresh()
-    } catch (error) {
-      console.error("Error updating secret:", error)
-      setError(
-        error instanceof Error ? error.message : "Failed to update secret",
-      )
-    } finally {
-      setLoading(false)
-    }
+  if (error || !secret) {
+    redirect("/dashboard")
   }
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="mb-8 text-2xl font-bold">Loading...</h1>
-      </div>
-    )
+  // Decrypt the message on the server
+  const decryptedMessage = await decryptMessage(
+    secret.message,
+    Buffer.from(secret.iv, "base64"),
+    Buffer.from(secret.auth_tag, "base64"),
+  )
+
+  const initialData = {
+    title: secret.title,
+    message: decryptedMessage,
+    recipient_name: secret.recipient_name,
+    recipient_email: secret.recipient_email || "",
+    recipient_phone: secret.recipient_phone || "",
+    contact_method: secret.contact_method,
+    check_in_days: secret.check_in_days,
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="mb-8 text-2xl font-bold">Edit Secret</h1>
       <div className="mx-auto max-w-2xl">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Secret Title</label>
-            <Input
-              required
-              value={formData.title}
-              onChange={(e) =>
-                setFormData({ ...formData, title: e.target.value })
-              }
-              placeholder="E.g., Important Documents Location"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">
-              Secret Message <LockIcon className="inline h-4 w-4" />
-            </label>
-            <Textarea
-              required
-              value={formData.message}
-              onChange={(e) =>
-                setFormData({ ...formData, message: e.target.value })
-              }
-              placeholder="Your secret, encrypted message that will be revealed to your trusted recipient..."
-              rows={4}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Recipient's Name</label>
-            <Input
-              required
-              value={formData.recipient_name}
-              onChange={(e) =>
-                setFormData({ ...formData, recipient_name: e.target.value })
-              }
-              placeholder="Who should receive this secret?"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Contact Method</label>
-            <Select
-              value={formData.contact_method}
-              onValueChange={(value: "email" | "phone" | "both") =>
-                setFormData({ ...formData, contact_method: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="How should we contact them?" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="email">Email</SelectItem>
-                <SelectItem value="phone">Phone</SelectItem>
-                <SelectItem value="both">Both Email and Phone</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {(formData.contact_method === "email" ||
-            formData.contact_method === "both") && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Recipient's Email</label>
-              <Input
-                type="email"
-                required
-                value={formData.recipient_email}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    recipient_email: e.target.value,
-                  })
-                }
-                placeholder="Their email address"
-              />
-            </div>
-          )}
-
-          {(formData.contact_method === "phone" ||
-            formData.contact_method === "both") && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Recipient's Phone</label>
-              <Input
-                type="tel"
-                required
-                value={formData.recipient_phone}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    recipient_phone: e.target.value,
-                  })
-                }
-                placeholder="Their phone number"
-              />
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Check-in Interval</label>
-            <Select
-              value={formData.check_in_interval}
-              onValueChange={(value) =>
-                setFormData({ ...formData, check_in_interval: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="How often should you check in?" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">Daily</SelectItem>
-                <SelectItem value="7">Weekly</SelectItem>
-                <SelectItem value="14">Every 2 weeks</SelectItem>
-                <SelectItem value="30">Monthly</SelectItem>
-                <SelectItem value="90">Every 3 months</SelectItem>
-                <SelectItem value="180">Every 6 months</SelectItem>
-                <SelectItem value="365">Yearly</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex justify-end space-x-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.back()}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Saving..." : "Save Changes"}
-            </Button>
-          </div>
-        </form>
+        <EditSecretForm initialData={initialData} secretId={secret.id} />
       </div>
     </div>
   )

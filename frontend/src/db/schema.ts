@@ -1,5 +1,6 @@
 import {
   boolean,
+  integer,
   pgTable,
   primaryKey,
   text,
@@ -32,16 +33,26 @@ export const secrets = pgTable("secrets", {
     .notNull()
     .references(() => profiles.id),
   title: text("title").notNull(),
-  content: text("content").notNull(),
+  message: text("message").notNull(),
+  recipientName: text("recipient_name").notNull(),
+  recipientEmail: text("recipient_email"),
+  recipientPhone: text("recipient_phone"),
+  contactMethod: text("contact_method").notNull(),
+  checkInDays: integer("check_in_days").notNull().default(90),
+  lastCheckIn: timestamp("last_check_in", { withTimezone: true }),
+  nextCheckIn: timestamp("next_check_in", { withTimezone: true }),
+  status: text("status").notNull().default("active"),
+  isTriggered: boolean("is_triggered").default(false),
+  triggeredAt: timestamp("triggered_at", { withTimezone: true }),
+  isActive: boolean("is_active").default(true),
+  iv: text("iv").notNull(),
+  authTag: text("auth_tag").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),
-  checkInInterval: interval("check_in_interval").notNull(),
-  lastCheckIn: timestamp("last_check_in", { withTimezone: true }),
-  isActive: boolean("is_active").default(true),
 });
 
 export const contacts = pgTable("contacts", {

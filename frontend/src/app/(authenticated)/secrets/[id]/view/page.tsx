@@ -19,7 +19,7 @@ interface Secret {
   recipient_email: string | null
   recipient_phone: string | null
   contact_method: "email" | "phone" | "both"
-  check_in_interval: string
+  check_in_days: string
   last_check_in: string | null
   next_check_in: string | null
   triggered_at: string | null
