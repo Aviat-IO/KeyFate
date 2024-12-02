@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 import { Secret } from "@/types/secret"
 import { Clock } from "lucide-react"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { format } from "timeago.js"
 import {
   Tooltip,
@@ -70,6 +70,8 @@ export function SecretCard({ secret }: SecretCardProps) {
     getStatusBadge(secret.next_check_in, secret.is_triggered),
   )
   const [secretState, setSecretState] = useState<Secret>(secret)
+  const [showMessage, setShowMessage] = useState(false)
+  const [decryptedMessage, setDecryptedMessage] = useState<string | null>(null)
 
   useEffect(() => {
     setStatusBadge(getStatusBadge(secret.next_check_in, secret.is_triggered))
@@ -97,14 +99,41 @@ export function SecretCard({ secret }: SecretCardProps) {
     return details.join("\n")
   }
 
+  const decryptMessage = async () => {
+    try {
+      const response = await fetch("/api/decrypt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          encryptedMessage: secret.message,
+          iv: secret.iv,
+        }),
+      })
+
+      const data = await response.json()
+      if (data.error) throw new Error(data.error)
+
+      setDecryptedMessage(data.decryptedMessage)
+    } catch (error) {
+      console.error("Error decrypting message:", error)
+      setDecryptedMessage("Error decrypting message")
+    }
+  }
+
+  useEffect(() => {
+    if (showMessage && !decryptedMessage) {
+      decryptMessage()
+    }
+  }, [showMessage])
+
   return (
     <div
       className={cn(
-        "bg-card rounded-lg border p-4 shadow-sm",
+        "bg-card flex h-full flex-col rounded-lg border p-4 shadow-sm",
         secretState.is_triggered && "border-destructive/50 bg-destructive/5",
       )}
     >
-      <div className="relative mb-4">
+      <div>
         <div className="flex items-start justify-between">
           <div>
             <h3 className="font-semibold">{secretState.title}</h3>
@@ -125,6 +154,8 @@ export function SecretCard({ secret }: SecretCardProps) {
         </div>
       </div>
 
+      <div className="mb-4 flex-grow" />
+
       <div className="text-muted-foreground flex flex-col gap-1 text-sm">
         <div className="flex items-center">
           <Clock className="mr-1 h-4 w-4" />
@@ -142,7 +173,7 @@ export function SecretCard({ secret }: SecretCardProps) {
       <Separator className="my-4" />
 
       <div className="flex justify-end gap-2">
-        {!secretState.is_triggered && (
+        {!secretState.is_triggered ? (
           <>
             <CheckInButton
               secretId={secretState.id}
@@ -152,8 +183,14 @@ export function SecretCard({ secret }: SecretCardProps) {
               <Link href={`/secrets/${secretState.id}/edit`}>Edit</Link>
             </Button>
           </>
+        ) : (
+          <Button variant="ghost" size="sm" asChild>
+            <Link href={`/secrets/${secretState.id}/view`}>View</Link>
+          </Button>
         )}
       </div>
+
+      {showMessage && <p>{decryptedMessage}</p>}
     </div>
   )
 }

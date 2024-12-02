@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, LockIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
@@ -107,14 +107,16 @@ export default function NewSecretPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Secret Message</label>
+            <label className="text-sm font-medium">
+              Secret Message <LockIcon className="inline h-4 w-4" />
+            </label>
             <Textarea
               required
               value={formData.message}
               onChange={(e) =>
                 setFormData({ ...formData, message: e.target.value })
               }
-              placeholder="Your secret message that will be revealed..."
+              placeholder="Your secret, encrypted message that will be revealed..."
               rows={4}
             />
           </div>

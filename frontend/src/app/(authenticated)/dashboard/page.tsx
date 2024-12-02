@@ -1,19 +1,11 @@
+import { SecretCard } from "@/components/secret-card"
 import { Button } from "@/components/ui/button"
 import type { Database } from "@/lib/database.types"
+import { Secret } from "@/types/secret"
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 import { AlertCircle, PlusCircle } from "lucide-react"
 import { cookies } from "next/headers"
 import Link from "next/link"
-import { SecretCard } from "@/components/secret-card"
-
-interface Secret {
-  id: string
-  title: string
-  recipient_name: string
-  status: "active" | "paused" | "triggered"
-  next_check_in: string
-  last_check_in: string
-}
 
 export default async function DashboardPage() {
   const cookieStore = await cookies()
@@ -60,8 +52,11 @@ export default async function DashboardPage() {
               <AlertCircle className="text-muted-foreground mx-auto h-12 w-12" />
               <h2 className="mt-4 text-lg font-semibold">No secrets yet</h2>
               <p className="text-muted-foreground mt-2 text-sm">
-                Create your first dead man's switch secret to get started. Your
-                secret will only be revealed if you fail to check in.
+                Create your first "dead man's switch".
+              </p>
+              <p className="text-muted-foreground mt-2 text-sm">
+                Your secret will only be revealed to your trusted contact if you
+                fail to check-in in your defined time period.
               </p>
               <Button asChild className="mt-4">
                 <Link href="/secrets/new">

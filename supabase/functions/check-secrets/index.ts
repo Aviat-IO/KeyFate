@@ -25,6 +25,51 @@ sgMail.setApiKey(SENDGRID_API_KEY);
 const BATCH_SIZE = 100; // Adjust based on your needs
 const MAX_PARALLEL_OPERATIONS = 5; // Adjust based on your needs
 
+const ENCRYPTION_KEY = Deno.env.get("ENCRYPTION_KEY");
+if (!ENCRYPTION_KEY) {
+  throw new Error("ENCRYPTION_KEY is not set");
+}
+
+async function decryptMessage(
+  encryptedMessage: string,
+  iv: string,
+): Promise<string> {
+  // Convert base64 strings back to Uint8Arrays
+  const encryptedArray = Uint8Array.from(
+    atob(encryptedMessage)
+      .split("")
+      .map((c) => c.charCodeAt(0)),
+  );
+
+  const ivArray = Uint8Array.from(
+    atob(iv)
+      .split("")
+      .map((c) => c.charCodeAt(0)),
+  );
+
+  // Import the key
+  const keyBuffer = new TextEncoder().encode(ENCRYPTION_KEY);
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    keyBuffer,
+    { name: "AES-GCM" },
+    false,
+    ["decrypt"],
+  );
+
+  // Decrypt the message
+  const decryptedBuffer = await crypto.subtle.decrypt(
+    {
+      name: "AES-GCM",
+      iv: ivArray,
+    },
+    cryptoKey,
+    encryptedArray,
+  );
+
+  return new TextDecoder().decode(decryptedBuffer);
+}
+
 Deno.serve(async () => {
   try {
     const now = new Date();
@@ -128,8 +173,10 @@ async function sendSecretEmail(secret: Secret) {
     return;
   }
 
+  const decryptedMessage = await decryptMessage(secret.message, secret.iv);
   const content =
-    `Secret Title: ${secret.title}\n\nSecret Message: ${secret.message}`;
+    `Secret Title: ${secret.title}\n\nSecret Message: ${decryptedMessage}`;
+
   await sendEmail(
     secret.recipient_email,
     `${secret.recipient_name} - You've received a secret from a friend on KeyFate`,
@@ -153,3 +200,16 @@ function sendSecretSMS(secret: Secret) {
   // TODO: Implement SMS sending
   console.log("sending secret SMS", secret);
 }
+
+export const checkSecret = async (secret: Secret) => {
+  try {
+    const decryptedMessage = await decryptMessage(secret.message, secret.iv);
+    // Use decryptedMessage when sending email
+    await sendEmail({
+      // ... other email props ...
+      message: decryptedMessage,
+    });
+  } catch (error) {
+    console.error("Error decrypting message:", error);
+  }
+};
