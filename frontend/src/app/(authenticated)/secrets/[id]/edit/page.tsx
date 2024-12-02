@@ -12,8 +12,7 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { User } from "@supabase/supabase-js"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, LockIcon } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
@@ -63,7 +62,7 @@ export default function EditSecretPage() {
 
         // Convert interval to days for the form
         const intervalMatch = secret.check_in_interval.match(/(\d+) days/)
-        const days = intervalMatch ? intervalMatch[1] : "7"
+        const days = intervalMatch ? intervalMatch[1] : "90"
 
         setFormData({
           title: secret.title,
@@ -93,38 +92,26 @@ export default function EditSecretPage() {
     setError(null)
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      // Calculate next check-in time
-      const nextCheckIn = new Date()
-      nextCheckIn.setDate(
-        nextCheckIn.getDate() + parseInt(formData.check_in_interval),
-      )
-
-      const { error: updateError } = await supabase
-        .from("secrets")
-        .update({
+      const response = await fetch(`/api/secrets/${params.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
           title: formData.title,
           message: formData.message,
           recipient_name: formData.recipient_name,
-          recipient_email:
-            formData.contact_method !== "phone"
-              ? formData.recipient_email
-              : null,
-          recipient_phone:
-            formData.contact_method !== "email"
-              ? formData.recipient_phone
-              : null,
+          recipient_email: formData.recipient_email,
+          recipient_phone: formData.recipient_phone,
           contact_method: formData.contact_method,
-          check_in_interval: `${formData.check_in_interval} days`,
-          next_check_in: nextCheckIn.toISOString(),
-        })
-        .eq("id", params.id)
-        .eq("user_id", user.id)
+          check_in_interval: formData.check_in_interval,
+        }),
+      })
 
-      if (updateError) throw updateError
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Failed to update secret")
+      }
 
       router.push("/dashboard")
       router.refresh()
@@ -171,14 +158,16 @@ export default function EditSecretPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Secret Message</label>
+            <label className="text-sm font-medium">
+              Secret Message <LockIcon className="inline h-4 w-4" />
+            </label>
             <Textarea
               required
               value={formData.message}
               onChange={(e) =>
                 setFormData({ ...formData, message: e.target.value })
               }
-              placeholder="Your secret message that will be revealed..."
+              placeholder="Your secret, encrypted message that will be revealed to your trusted recipient..."
               rows={4}
             />
           </div>

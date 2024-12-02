@@ -29,7 +29,7 @@ export default function NewSecretPage() {
     recipient_email: "",
     recipient_phone: "",
     contact_method: "email",
-    check_in_interval: "7", // days
+    check_in_interval: "90", // days
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,37 +38,26 @@ export default function NewSecretPage() {
     setError(null)
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      // Calculate next check-in time
-      const nextCheckIn = new Date()
-      nextCheckIn.setDate(
-        nextCheckIn.getDate() + parseInt(formData.check_in_interval),
-      )
-
-      const { error: insertError } = await supabase.from("secrets").insert([
-        {
-          user_id: user.id,
+      const response = await fetch("/api/secrets", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
           title: formData.title,
           message: formData.message,
           recipient_name: formData.recipient_name,
-          recipient_email:
-            formData.contact_method !== "phone"
-              ? formData.recipient_email
-              : null,
-          recipient_phone:
-            formData.contact_method !== "email"
-              ? formData.recipient_phone
-              : null,
+          recipient_email: formData.recipient_email,
+          recipient_phone: formData.recipient_phone,
           contact_method: formData.contact_method,
-          check_in_interval: `${formData.check_in_interval} days`,
-          next_check_in: nextCheckIn.toISOString(),
-        },
-      ])
+          check_in_interval: formData.check_in_interval,
+        }),
+      })
 
-      if (insertError) throw insertError
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Failed to create secret")
+      }
 
       router.push("/dashboard")
       router.refresh()

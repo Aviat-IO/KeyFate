@@ -53,7 +53,7 @@ export function NavBar({ user }: NavBarProps) {
               </Button>
               <Button asChild>
                 <Link
-                  href="/auth/register"
+                  href="/auth/signup"
                   className="transition-all duration-200 hover:underline"
                 >
                   Sign Up

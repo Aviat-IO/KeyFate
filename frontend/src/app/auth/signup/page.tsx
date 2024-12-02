@@ -1,22 +1,23 @@
-"use client";
+"use client"
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
-import { useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
+import { useState } from "react"
+import { supabase } from "@/lib/supabase"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { SocialButtons } from "@/components/ui/social-buttons"
 
 export default function SignUpPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+    e.preventDefault()
     try {
       const { error } = await supabase.auth.signUp({
         email,
@@ -24,13 +25,13 @@ export default function SignUpPage() {
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
-      });
-      if (error) throw error;
-      router.push("/auth/verify-email");
+      })
+      if (error) throw error
+      router.push("/auth/verify-email")
     } catch (error) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+      setError(error instanceof Error ? error.message : "An error occurred")
     }
-  };
+  }
 
   return (
     <div className="bg-background flex min-h-screen items-center justify-center">
@@ -54,7 +55,8 @@ export default function SignUpPage() {
               placeholder="Email address"
               value={email}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setEmail(e.target.value)}
+                setEmail(e.target.value)
+              }
               required
             />
             <Input
@@ -62,7 +64,8 @@ export default function SignUpPage() {
               placeholder="Password"
               value={password}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setPassword(e.target.value)}
+                setPassword(e.target.value)
+              }
               required
             />
           </div>
@@ -79,7 +82,20 @@ export default function SignUpPage() {
             </Link>
           </p>
         </form>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background text-muted-foreground px-2">
+              Or continue with
+            </span>
+          </div>
+        </div>
+
+        <SocialButtons />
       </div>
     </div>
-  );
+  )
 }
