@@ -15,3 +15,11 @@ A user is required to check in with the app at a regular interval to keep the sw
 - Tailwind CSS
 - Lucide Icons
 - Shadcn UI
+
+
+## TODO
+
+- [ ] Add tests
+- [ ] Enable users to pause and reactivate secrets
+- [ ] Reminders to check in
+

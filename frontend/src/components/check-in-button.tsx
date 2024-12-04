@@ -4,17 +4,19 @@ import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { APP_URL } from "@/lib/env"
 import { Secret } from "@/types/secret"
-import { Loader2 } from "lucide-react"
+import { CheckCircle, Loader2 } from "lucide-react"
 import { useState } from "react"
 
 interface CheckInButtonProps {
   secretId: string
   onCheckInSuccess?: (secret: Secret) => void
+  variant?: "default" | "outline" | "ghost"
 }
 
 export function CheckInButton({
   secretId,
   onCheckInSuccess,
+  variant = "outline",
 }: CheckInButtonProps) {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
@@ -37,7 +39,7 @@ export function CheckInButton({
       const res = await response.json()
       const updatedSecret = res.secret as Secret
 
-      onCheckInSuccess(updatedSecret)
+      onCheckInSuccess?.(updatedSecret)
     } catch (error) {
       console.error("Error checking in:", error)
       toast({
@@ -54,16 +56,19 @@ export function CheckInButton({
     <Button
       onClick={handleCheckIn}
       disabled={loading}
-      variant="outline"
+      variant={variant}
       size="sm"
     >
       {loading ? (
         <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          <Loader2 className="h-4 w-4 animate-spin" />
           Checking in...
         </>
       ) : (
-        "Check In"
+        <>
+          <CheckCircle className="h-4 w-4" />
+          Check In
+        </>
       )}
     </Button>
   )

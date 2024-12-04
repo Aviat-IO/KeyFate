@@ -81,7 +81,7 @@ Deno.serve(async () => {
       const { data: triggeredSecrets, error } = await supabase
         .from("secrets")
         .select("*")
-        .eq("is_active", true)
+        .eq("status", "active")
         .eq("is_triggered", false)
         .lt("next_check_in", now.toISOString())
         .order("next_check_in", { ascending: true })

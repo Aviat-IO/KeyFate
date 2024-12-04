@@ -1,13 +1,14 @@
 "use client"
 
 import { CheckInButton } from "@/components/check-in-button"
+import { TogglePauseButton } from "@/components/toggle-pause-button"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
 import { Database } from "@/lib/database.types"
 import { cn } from "@/lib/utils"
 import { Secret } from "@/types/secret"
-import { Clock } from "lucide-react"
+import { Clock, Pencil } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState, useMemo } from "react"
 import { format } from "timeago.js"
@@ -29,6 +30,7 @@ interface StatusBadge {
 }
 
 function getStatusBadge(
+  status: Secret["status"],
   nextCheckIn: string,
   isTriggered: boolean,
 ): StatusBadge {
@@ -36,6 +38,13 @@ function getStatusBadge(
     return {
       label: "Sent",
       variant: "destructive",
+    }
+  }
+
+  if (status === "paused") {
+    return {
+      label: "Paused",
+      variant: "outline",
     }
   }
 
@@ -66,16 +75,22 @@ function getStatusBadge(
 }
 
 export function SecretCard({ secret }: SecretCardProps) {
-  const [statusBadge, setStatusBadge] = useState<StatusBadge>(
-    getStatusBadge(secret.next_check_in, secret.is_triggered),
-  )
   const [secretState, setSecretState] = useState<Secret>(secret)
+  const [statusBadge, setStatusBadge] = useState<StatusBadge>(
+    getStatusBadge(secret.status, secret.next_check_in, secret.is_triggered),
+  )
   const [showMessage, setShowMessage] = useState(false)
   const [decryptedMessage, setDecryptedMessage] = useState<string | null>(null)
 
   useEffect(() => {
-    setStatusBadge(getStatusBadge(secret.next_check_in, secret.is_triggered))
-  }, [secret.next_check_in, secret.is_triggered])
+    setStatusBadge(
+      getStatusBadge(
+        secretState.status,
+        secretState.next_check_in,
+        secretState.is_triggered,
+      ),
+    )
+  }, [secretState.status, secretState.next_check_in, secretState.is_triggered])
 
   const { toast } = useToast()
 
@@ -84,6 +99,18 @@ export function SecretCard({ secret }: SecretCardProps) {
     toast({
       title: "Checked in successfully",
       description: `Your check-in for "${secret.title}" has been recorded.`,
+      duration: 6000,
+    })
+  }
+
+  const handleToggleSuccess = (updatedSecret: Secret) => {
+    setSecretState(updatedSecret)
+    toast({
+      title:
+        updatedSecret.status === "active" ? "Secret resumed" : "Secret paused",
+      description: `"${secret.title}" has been ${
+        updatedSecret.status === "active" ? "resumed" : "paused"
+      }.`,
       duration: 6000,
     })
   }
@@ -132,6 +159,7 @@ export function SecretCard({ secret }: SecretCardProps) {
       className={cn(
         "bg-card flex h-full flex-col rounded-lg border p-4 shadow-sm",
         secretState.is_triggered && "border-destructive/50 bg-destructive/5",
+        secretState.status === "paused" && "border-muted bg-muted/5",
       )}
     >
       <div>
@@ -151,7 +179,18 @@ export function SecretCard({ secret }: SecretCardProps) {
               </Tooltip>
             </TooltipProvider>
           </div>
-          <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
+              </TooltipTrigger>
+              {statusBadge.label === "Paused" && (
+                <TooltipContent>
+                  <p>Will not trigger even if past the due date</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 
@@ -173,15 +212,30 @@ export function SecretCard({ secret }: SecretCardProps) {
 
       <Separator className="my-4" />
 
-      <div className="flex justify-end gap-2">
+      <div className="flex items-center justify-end gap-2">
         {!secretState.is_triggered ? (
           <>
-            <CheckInButton
+            {secretState.status === "active" && (
+              <>
+                <CheckInButton
+                  secretId={secretState.id}
+                  onCheckInSuccess={handleCheckInSuccess}
+                  variant="ghost"
+                />
+                <Separator orientation="vertical" className="h-6" />
+              </>
+            )}
+            <TogglePauseButton
               secretId={secretState.id}
-              onCheckInSuccess={handleCheckInSuccess}
+              status={secretState.status}
+              onToggleSuccess={handleToggleSuccess}
             />
+            <Separator orientation="vertical" className="h-6" />
             <Button variant="ghost" size="sm" asChild>
-              <Link href={`/secrets/${secretState.id}/edit`}>Edit</Link>
+              <Link href={`/secrets/${secretState.id}/edit`}>
+                <Pencil className="h-4 w-4" />
+                Edit
+              </Link>
             </Button>
           </>
         ) : (
