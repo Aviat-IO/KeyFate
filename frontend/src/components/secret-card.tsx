@@ -154,6 +154,14 @@ export function SecretCard({ secret }: SecretCardProps) {
     }
   }, [showMessage])
 
+  const canCheckIn = useMemo(() => {
+    if (!secretState.last_check_in) return true
+    const lastCheckIn = new Date(secretState.last_check_in)
+    const fifteenMinutesAgo = new Date()
+    fifteenMinutesAgo.setMinutes(fifteenMinutesAgo.getMinutes() - 15)
+    return lastCheckIn < fifteenMinutesAgo
+  }, [secretState.last_check_in])
+
   return (
     <div
       className={cn(
@@ -215,7 +223,7 @@ export function SecretCard({ secret }: SecretCardProps) {
       <div className="flex items-center justify-end gap-2">
         {!secretState.is_triggered ? (
           <>
-            {secretState.status === "active" && (
+            {secretState.status === "active" && canCheckIn && (
               <>
                 <CheckInButton
                   secretId={secretState.id}
