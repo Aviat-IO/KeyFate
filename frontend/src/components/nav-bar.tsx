@@ -25,7 +25,7 @@ export function NavBar({ user }: NavBarProps) {
     <nav className="bg-background border-b">
       <div className="container mx-auto flex items-center justify-between px-4 py-4">
         <Link
-          href="/"
+          href={user ? "/dashboard" : "/"}
           className="text-xl font-bold transition-all duration-200 hover:underline"
         >
           KeyFate
