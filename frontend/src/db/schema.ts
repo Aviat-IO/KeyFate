@@ -44,7 +44,6 @@ export const secrets = pgTable("secrets", {
   status: text("status").notNull().default("active"),
   isTriggered: boolean("is_triggered").default(false),
   triggeredAt: timestamp("triggered_at", { withTimezone: true }),
-  isActive: boolean("is_active").default(true),
   iv: text("iv").notNull(),
   authTag: text("auth_tag").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })

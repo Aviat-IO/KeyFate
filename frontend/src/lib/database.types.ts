@@ -25,7 +25,6 @@ export interface Database {
           status: "active" | "paused" | "triggered";
           is_triggered: boolean | null;
           triggered_at: string | null;
-          is_active: boolean | null;
           iv: string;
           auth_tag: string;
           created_at: string;
@@ -46,7 +45,6 @@ export interface Database {
           status?: "active" | "paused" | "triggered";
           is_triggered?: boolean | null;
           triggered_at?: string | null;
-          is_active?: boolean | null;
           iv: string;
           auth_tag: string;
           created_at?: string;
@@ -67,7 +65,6 @@ export interface Database {
           status?: "active" | "paused" | "triggered";
           is_triggered?: boolean | null;
           triggered_at?: string | null;
-          is_active?: boolean | null;
           iv?: string;
           auth_tag?: string;
           created_at?: string;

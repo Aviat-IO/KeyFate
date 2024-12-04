@@ -15,7 +15,6 @@ export type Secret = {
   updated_at: string;
   is_triggered: boolean;
   triggered_at: string | null;
-  is_active: boolean;
   iv: string;
   auth_tag: string;
 };
