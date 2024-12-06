@@ -81,6 +81,21 @@ export const secretContacts = pgTable(
   }),
 );
 
+export const reminders = pgTable("reminders", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  secretId: uuid("secret_id")
+    .notNull()
+    .references(() => secrets.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => profiles.id),
+  type: text("type").notNull(), // '25_percent', '50_percent', '7_days', '3_days', '24_hours', '12_hours', '1_hour'
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  scheduledFor: timestamp("scheduled_for", { withTimezone: true }).notNull(),
+  status: text("status").notNull().default("pending"), // 'pending', 'sent', 'failed', 'cancelled'
+  error: text("error"),
+});
+
 // Relations
 export const profilesRelations = relations(profiles, ({ many }) => ({
   secrets: many(secrets),
@@ -93,6 +108,7 @@ export const secretsRelations = relations(secrets, ({ one, many }) => ({
     references: [profiles.id],
   }),
   secretContacts: many(secretContacts),
+  reminders: many(reminders),
 }));
 
 export const contactsRelations = relations(contacts, ({ one, many }) => ({
@@ -111,5 +127,16 @@ export const secretContactsRelations = relations(secretContacts, ({ one }) => ({
   contact: one(contacts, {
     fields: [secretContacts.contactId],
     references: [contacts.id],
+  }),
+}));
+
+export const remindersRelations = relations(reminders, ({ one }) => ({
+  secret: one(secrets, {
+    fields: [reminders.secretId],
+    references: [secrets.id],
+  }),
+  profile: one(profiles, {
+    fields: [reminders.userId],
+    references: [profiles.id],
   }),
 }));

@@ -1,137 +1,141 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
-import sgMail from "npm:@sendgrid/mail";
+import { Database, Secret } from "../_shared/types.ts";
+import { getSecretTriggerTemplate } from "../_shared/email-templates.ts";
+import { decrypt } from "../_shared/crypto.ts";
 
-import { Secret } from "../secret.d.ts";
-
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-if (!SUPABASE_URL) {
-  throw new Error("SUPABASE_URL is not set");
+interface ProcessError extends Error {
+  message: string;
 }
 
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
-  "";
-if (!SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error("SUPABASE_SERVICE_ROLE_KEY is not set");
-}
-
-const SENDGRID_API_KEY = Deno.env.get("SENDGRID_API_KEY") ?? "";
-if (!SENDGRID_API_KEY) {
-  throw new Error("SENDGRID_API_KEY is not set");
-}
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-sgMail.setApiKey(SENDGRID_API_KEY);
-
-const BATCH_SIZE = 100; // Adjust based on your needs
-const MAX_PARALLEL_OPERATIONS = 5; // Adjust based on your needs
-
-const ENCRYPTION_KEY = Deno.env.get("ENCRYPTION_KEY");
-if (!ENCRYPTION_KEY) {
-  throw new Error("ENCRYPTION_KEY is not set");
-}
-
-async function decryptMessage(
-  encryptedMessage: string,
-  iv: string,
-): Promise<string> {
-  // Convert base64 strings back to Uint8Arrays
-  const encryptedArray = Uint8Array.from(
-    atob(encryptedMessage)
-      .split("")
-      .map((c) => c.charCodeAt(0)),
-  );
-
-  const ivArray = Uint8Array.from(
-    atob(iv)
-      .split("")
-      .map((c) => c.charCodeAt(0)),
-  );
-
-  // Import the key
-  const keyBuffer = new TextEncoder().encode(ENCRYPTION_KEY);
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    keyBuffer,
-    { name: "AES-GCM" },
-    false,
-    ["decrypt"],
-  );
-
-  // Decrypt the message
-  const decryptedBuffer = await crypto.subtle.decrypt(
+async function sendEmail(to: string, subject: string, html: string) {
+  const response = await fetch(
+    `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-email`,
     {
-      name: "AES-GCM",
-      iv: ivArray,
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ to, subject, html }),
     },
-    cryptoKey,
-    encryptedArray,
   );
 
-  return new TextDecoder().decode(decryptedBuffer);
+  if (!response.ok) {
+    throw new Error(`Failed to send email: ${response.statusText}`);
+  }
 }
 
-Deno.serve(async () => {
+async function processSecret(
+  secret: Secret,
+  supabaseAdmin: ReturnType<typeof createClient<Database>>,
+) {
   try {
-    const now = new Date();
-    let processedCount = 0;
-    let hasMore = true;
+    // Get user's email from user_contact_methods
+    const { data: contactMethod } = await supabaseAdmin
+      .from("user_contact_methods")
+      .select("email")
+      .eq("user_id", secret.user_id)
+      .single();
 
-    while (hasMore) {
-      // Get a batch of secrets that need processing
-      const { data: triggeredSecrets, error } = await supabase
-        .from("secrets")
-        .select("*")
-        .eq("status", "active")
-        .eq("is_triggered", false)
-        .lt("next_check_in", now.toISOString())
-        .order("next_check_in", { ascending: true })
-        .limit(BATCH_SIZE);
-
-      if (error) throw error;
-
-      console.log("triggeredSecrets", triggeredSecrets.length);
-
-      if (!triggeredSecrets || triggeredSecrets.length === 0) {
-        hasMore = false;
-        break;
-      }
-
-      // Process secrets in parallel batches
-      const chunks = chunkArray(triggeredSecrets, MAX_PARALLEL_OPERATIONS);
-
-      for (const chunk of chunks) {
-        await Promise.all(chunk.map(async (secret) => {
-          try {
-            // Mark the secret as triggered
-            await supabase
-              .from("secrets")
-              .update({
-                is_triggered: true,
-                triggered_at: now.toISOString(),
-              })
-              .eq("id", secret.id);
-
-            await sendNotifications(secret);
-
-            processedCount++;
-          } catch (error) {
-            console.error(`Failed to process secret ${secret.id}:`, error);
-            // You might want to log this error to a monitoring service
-          }
-        }));
-      }
+    if (!contactMethod?.email) {
+      throw new Error("User email not found");
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        processed: processedCount,
-      }),
-      { headers: { "Content-Type": "application/json" } },
+    // Decrypt the secret message
+    const decryptedMessage = await decrypt(
+      secret.message,
+      secret.iv,
+      secret.auth_tag,
     );
+
+    // Prepare email content using the template
+    const emailHtml = getSecretTriggerTemplate({
+      recipientName: secret.recipient_name,
+      senderEmail: contactMethod.email,
+      secretTitle: secret.title,
+      secretMessage: decryptedMessage,
+    });
+
+    // Send the email
+    await sendEmail(
+      secret.recipient_email!,
+      `Important Message from ${contactMethod.email}`,
+      emailHtml,
+    );
+
+    // Only update the secret status if the email was sent successfully
+    await supabaseAdmin
+      .from("secrets")
+      .update({
+        status: "triggered",
+        is_triggered: true,
+        triggered_at: new Date().toISOString(),
+      })
+      .eq("id", secret.id);
+
+    return { id: secret.id, status: "triggered" };
   } catch (error) {
+    const processError = error as ProcessError;
+    console.error(
+      `Error processing secret ${secret.id}:`,
+      processError.message,
+    );
+    // Don't update the secret status on failure - it will be retried next time
+    return {
+      id: secret.id,
+      status: "failed",
+      error: processError.message,
+    };
+  }
+}
+
+Deno.serve(async (req) => {
+  try {
+    const supabaseAdmin = createClient<Database>(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      {
+        auth: {
+          persistSession: false,
+        },
+      },
+    );
+
+    // Get secrets that need to be triggered
+    const { data: secrets, error: secretsError } = await supabaseAdmin
+      .from("secrets")
+      .select("*")
+      .eq("status", "active")
+      .eq("is_triggered", false)
+      .lte("next_check_in", new Date().toISOString());
+
+    if (secretsError) {
+      throw new Error(`Failed to fetch secrets: ${secretsError.message}`);
+    }
+
+    if (!secrets || secrets.length === 0) {
+      return new Response(
+        JSON.stringify({ message: "No secrets to process" }),
+        {
+          headers: { "Content-Type": "application/json" },
+          status: 200,
+        },
+      );
+    }
+
+    // Process each secret
+    const results = await Promise.all(
+      secrets.map((secret) => processSecret(secret, supabaseAdmin)),
+    );
+
+    return new Response(JSON.stringify({ results }), {
+      headers: { "Content-Type": "application/json" },
+      status: 200,
+    });
+  } catch (error) {
+    const processError = error as ProcessError;
     return new Response(
-      JSON.stringify({ error: error.message }, null, 2),
+      JSON.stringify({ error: processError.message }),
       {
         status: 500,
         headers: { "Content-Type": "application/json" },
@@ -139,85 +143,3 @@ Deno.serve(async () => {
     );
   }
 });
-
-// Helper function to chunk array into smaller arrays
-function chunkArray<T>(array: T[], chunkSize: number): T[][] {
-  const chunks: T[][] = [];
-  for (let i = 0; i < array.length; i += chunkSize) {
-    chunks.push(array.slice(i, i + chunkSize));
-  }
-  return chunks;
-}
-
-async function sendEmail(to: string, subject: string, content: string) {
-  const msg: sgMail.MailDataRequired = {
-    to,
-    from: "alerts@keyfate.com",
-    subject,
-    content: [{
-      type: "text/plain",
-      value: content,
-    }],
-  };
-
-  const [res, error] = await sgMail.send(msg);
-  console.log("sendEmail res", res, error);
-  if (error) {
-    throw error;
-  }
-}
-
-async function sendSecretEmail(secret: Secret) {
-  if (!secret.recipient_email) {
-    console.log("no recipient email", secret.id);
-    return;
-  }
-
-  const decryptedMessage = await decryptMessage(
-    secret.message,
-    secret.iv,
-    secret.auth_tag,
-  );
-  const content =
-    `Secret Title: ${secret.title}\n\nSecret Message: ${decryptedMessage}`;
-
-  await sendEmail(
-    secret.recipient_email,
-    `${secret.recipient_name} - You've received a secret from a friend on KeyFate`,
-    content,
-  );
-}
-
-async function sendNotifications(secret: Secret) {
-  console.log("sending notifications", secret);
-
-  if (secret.recipient_email) {
-    await sendSecretEmail(secret);
-  }
-
-  if (secret.recipient_phone) {
-    await sendSecretSMS(secret);
-  }
-}
-
-function sendSecretSMS(secret: Secret) {
-  // TODO: Implement SMS sending
-  console.log("sending secret SMS", secret);
-}
-
-export const checkSecret = async (secret: Secret) => {
-  try {
-    const decryptedMessage = await decryptMessage(
-      secret.message,
-      secret.iv,
-      secret.auth_tag,
-    );
-    // Use decryptedMessage when sending email
-    await sendEmail({
-      // ... other email props ...
-      message: decryptedMessage,
-    });
-  } catch (error) {
-    console.error("Error decrypting message:", error);
-  }
-};

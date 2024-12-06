@@ -22,4 +22,7 @@ A user is required to check in with the app at a regular interval to keep the sw
 - [ ] Add tests
 - [x] Enable users to pause and reactivate secrets
 - [ ] Reminders to check in
+- [ ] ToS and Privacy Policy
+- [ ] New secret email
 
+Reminder email needs to handle more than 50 reminders.
