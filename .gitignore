@@ -30,3 +30,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts 
+
+# supabase
+supabase/config.toml
+supabase/migrations/20241207004612_cron_dev.sql
+supabase/prod-migrations/*

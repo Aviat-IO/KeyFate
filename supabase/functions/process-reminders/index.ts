@@ -125,7 +125,7 @@ async function processReminders(
 
         // Send email using Supabase Edge Function
         const emailResponse = await fetch(
-          `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-email`,
+          `${Deno.env.get("API_URL")}/functions/v1/send-email`,
           {
             method: "POST",
             headers: {
@@ -196,7 +196,7 @@ Deno.serve(async (req) => {
 
   try {
     const supabaseAdmin = createClient<Database>(
-      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("API_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       {
         auth: {

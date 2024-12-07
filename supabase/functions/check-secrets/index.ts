@@ -9,7 +9,7 @@ interface ProcessError extends Error {
 
 async function sendEmail(to: string, subject: string, html: string) {
   const response = await fetch(
-    `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-email`,
+    `${Deno.env.get("API_URL")}/functions/v1/send-email`,
     {
       method: "POST",
       headers: {
@@ -92,7 +92,7 @@ async function processSecret(
 Deno.serve(async (req) => {
   try {
     const supabaseAdmin = createClient<Database>(
-      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("API_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       {
         auth: {
