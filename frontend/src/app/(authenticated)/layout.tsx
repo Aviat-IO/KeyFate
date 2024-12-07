@@ -20,9 +20,14 @@ export default async function AuthenticatedLayout({
     error: userError,
   } = await supabase.auth.getUser()
 
-  if (userError || !user) {
+  if (userError) {
     console.error("[AuthenticatedLayout] Auth error:", userError)
-    redirect("/auth/login")
+    return redirect("/auth/signout")
+  }
+
+  if (!user) {
+    console.error("[AuthenticatedLayout] No user found")
+    return redirect("/auth/login?signout=1")
   }
 
   return (

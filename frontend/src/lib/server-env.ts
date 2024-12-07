@@ -1,0 +1,7 @@
+const SUPABASE_SERVICE_ROLE_KEY = process.env
+  .SUPABASE_SERVICE_ROLE_KEY as string;
+if (!SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error("SUPABASE_SERVICE_ROLE_KEY is not set");
+}
+
+export { SUPABASE_SERVICE_ROLE_KEY };

@@ -2,13 +2,9 @@
 
 import crypto from "node:crypto";
 import { Buffer } from "node:buffer";
+import { ENCRYPTION_KEY } from "../_shared/env.ts";
 
-const ENCRYPTION_KEY_BASE64 = Deno.env.get("ENCRYPTION_KEY")!;
-if (!ENCRYPTION_KEY_BASE64) {
-  throw new Error("Invalid encryption key");
-}
-
-const ENCRYPTION_KEY = Buffer.from(ENCRYPTION_KEY_BASE64, "base64");
+const ENCRYPTION_KEY_BUFFER = Buffer.from(ENCRYPTION_KEY, "base64");
 
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12;
@@ -22,7 +18,11 @@ export function encryptMessage(
   iv?: Buffer,
 ): { encrypted: string; iv: string; authTag: string } {
   const ivBuffer = iv ?? generateIV();
-  const cipher = crypto.createCipheriv(ALGORITHM, ENCRYPTION_KEY, ivBuffer);
+  const cipher = crypto.createCipheriv(
+    ALGORITHM,
+    ENCRYPTION_KEY_BUFFER,
+    ivBuffer,
+  );
 
   let encrypted = cipher.update(message, "utf8", "base64");
   encrypted += cipher.final("base64");
@@ -60,7 +60,7 @@ export function decryptMessage(
 
   const decipher = crypto.createDecipheriv(
     ALGORITHM,
-    ENCRYPTION_KEY,
+    ENCRYPTION_KEY_BUFFER,
     ivBuffer,
   );
 

@@ -21,23 +21,18 @@ export async function encryptMessage(
   iv?: Buffer,
 ): Promise<{ encrypted: string; iv: string; authTag: string }> {
   const ivBuffer = iv ?? (await generateIV());
-  console.log("ivBuffer", ivBuffer);
   const cipher = crypto.createCipheriv(ALGORITHM, ENCRYPTION_KEY, ivBuffer);
-  console.log("cipher", cipher);
 
   let encrypted = cipher.update(message, "utf8", "base64");
   encrypted += cipher.final("base64");
-  console.log("encrypted", encrypted);
 
   const authTag = cipher.getAuthTag();
-  console.log("authTag", authTag);
 
   // Store the auth tag with the encrypted data
   const finalEncrypted = Buffer.concat([
     Buffer.from(encrypted, "base64"),
     authTag,
   ]).toString("base64");
-  console.log("finalEncrypted", finalEncrypted);
   return {
     encrypted: finalEncrypted,
     iv: ivBuffer.toString("base64"),

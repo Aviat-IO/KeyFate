@@ -2,6 +2,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { corsHeaders } from "../_shared/cors.ts";
 import { Database } from "../_shared/database.types.ts";
 import { getReminderEmailTemplate } from "../_shared/email-templates.ts";
+import {
+  ANON_KEY,
+  API_URL,
+  SERVICE_ROLE_KEY,
+  SITE_URL,
+} from "../_shared/env.ts";
 
 type Secret = Database["public"]["Tables"]["secrets"]["Row"];
 type Reminder = Database["public"]["Tables"]["reminders"]["Row"] & {
@@ -59,6 +65,8 @@ async function processReminders(
     .lte("scheduled_for", new Date().toISOString())
     .range(from, from + 49)
     .order("scheduled_for", { ascending: true });
+  console.log("Reminders error:", remindersError);
+  console.log("Reminders data:", reminders);
 
   if (remindersError) {
     throw new Error(`Failed to fetch reminders: ${remindersError.message}`);
@@ -114,7 +122,7 @@ async function processReminders(
             minute: "numeric",
             timeZoneName: "short",
           }),
-          checkInUrl: `${Deno.env.get("SITE_URL")}/dashboard`,
+          checkInUrl: `${SITE_URL}/dashboard`,
         });
 
         const emailPayload: EmailPayload = {
@@ -125,15 +133,11 @@ async function processReminders(
 
         // Send email using Supabase Edge Function
         const emailResponse = await fetch(
-          `${Deno.env.get("API_URL")}/functions/v1/send-email`,
+          `${API_URL}/functions/v1/send-email`,
           {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${
-                Deno.env.get(
-                  "SUPABASE_SERVICE_ROLE_KEY",
-                )
-              }`,
+              Authorization: `Bearer ${ANON_KEY}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify(emailPayload),
@@ -196,11 +200,19 @@ Deno.serve(async (req) => {
 
   try {
     const supabaseAdmin = createClient<Database>(
-      Deno.env.get("API_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      API_URL,
+      SERVICE_ROLE_KEY,
       {
         auth: {
           persistSession: false,
+        },
+        db: {
+          schema: "public",
+        },
+        global: {
+          headers: {
+            "X-Client-Info": "supabase-js/2.39.0",
+          },
         },
       },
     );

@@ -1,24 +1,22 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
-import { Database, Secret } from "../_shared/types.ts";
-import { getSecretTriggerTemplate } from "../_shared/email-templates.ts";
 import { decrypt } from "../_shared/crypto.ts";
+import { getSecretTriggerTemplate } from "../_shared/email-templates.ts";
+import { API_URL, SERVICE_ROLE_KEY } from "../_shared/env.ts";
+import { Database, Secret } from "../_shared/types.ts";
 
 interface ProcessError extends Error {
   message: string;
 }
 
 async function sendEmail(to: string, subject: string, html: string) {
-  const response = await fetch(
-    `${Deno.env.get("API_URL")}/functions/v1/send-email`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ to, subject, html }),
+  const response = await fetch(`${API_URL}/functions/v1/send-email`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify({ to, subject, html }),
+  });
 
   if (!response.ok) {
     throw new Error(`Failed to send email: ${response.statusText}`);
@@ -92,8 +90,8 @@ async function processSecret(
 Deno.serve(async (req) => {
   try {
     const supabaseAdmin = createClient<Database>(
-      Deno.env.get("API_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      API_URL,
+      SERVICE_ROLE_KEY,
       {
         auth: {
           persistSession: false,

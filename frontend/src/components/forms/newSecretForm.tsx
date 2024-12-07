@@ -55,9 +55,15 @@ export function NewSecretForm() {
         body: JSON.stringify(data),
       })
 
+      const result = await response.json()
+
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to create secret")
+        throw new Error(result.error || "Failed to create secret")
+      }
+
+      if (result.warning) {
+        setError(result.warning)
+        await new Promise((resolve) => setTimeout(resolve, 6000))
       }
 
       router.push("/dashboard")

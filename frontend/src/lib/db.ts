@@ -1,21 +1,21 @@
 "use server";
 
 import type { Database } from "@/lib/database.types";
-import { ANON_KEY, API_URL } from "@/lib/env";
-import { createClient } from "@supabase/supabase-js";
+// TODO: Ensure this is secure. Or maybe we need to use admin and the service role key?
+import { supabase } from "@/lib/supabase";
 
 // Create a single supabase client for interacting with your database
-const supabaseAdmin = createClient<Database>(API_URL, ANON_KEY, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-});
+// const supabase = createClient<Database>(API_URL, ANON_KEY, {
+//   auth: {
+//     autoRefreshToken: false,
+//     persistSession: false,
+//   },
+// });
 
 // Convert db.secrets.getAll to individual export
 export async function getAllSecrets(userId: string) {
   "use server";
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await supabase
     .from("secrets")
     .select("*")
     .eq("user_id", userId)
@@ -28,7 +28,7 @@ export async function getAllSecrets(userId: string) {
 // Add "use server" to each function
 export async function getSecret(id: string, userId: string) {
   "use server";
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await supabase
     .from("secrets")
     .select("*")
     .eq("id", id)
@@ -43,7 +43,7 @@ export async function createSecret(
   secret: Database["public"]["Tables"]["secrets"]["Insert"],
 ) {
   "use server";
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await supabase
     .from("secrets")
     .insert([secret])
     .select()
@@ -58,7 +58,7 @@ export async function updateSecret(
   secret: Partial<Database["public"]["Tables"]["secrets"]["Update"]>,
 ) {
   "use server";
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await supabase
     .from("secrets")
     .update(secret)
     .eq("id", id)
@@ -71,14 +71,14 @@ export async function updateSecret(
 
 export async function deleteSecret(id: string) {
   "use server";
-  const { error } = await supabaseAdmin.from("secrets").delete().eq("id", id);
+  const { error } = await supabase.from("secrets").delete().eq("id", id);
 
   if (error) throw error;
 }
 
 export async function getOverdueSecrets() {
   "use server";
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await supabase
     .from("secrets")
     .select("*")
     .eq("status", "active")

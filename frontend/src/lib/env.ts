@@ -1,16 +1,21 @@
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL as string;
-if (!APP_URL) {
-  throw new Error("NEXT_PUBLIC_APP_URL is not set");
+const NEXT_PUBLIC_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL as string;
+if (!NEXT_PUBLIC_SITE_URL) {
+  throw new Error("NEXT_PUBLIC_SITE_URL is not set");
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL as string;
-if (!API_URL) {
-  throw new Error("NEXT_PUBLIC_API_URL is not set");
+const NEXT_PUBLIC_SUPABASE_ANON_KEY = process.env
+  .NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+if (!NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  throw new Error("NEXT_PUBLIC_SUPABASE_ANON_KEY is not set");
 }
 
-const ANON_KEY = process.env.NEXT_PUBLIC_ANON_KEY as string;
-if (!ANON_KEY) {
-  throw new Error("NEXT_PUBLIC_ANON_KEY is not set");
+const NEXT_PUBLIC_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+if (!NEXT_PUBLIC_SUPABASE_URL) {
+  throw new Error("NEXT_PUBLIC_SUPABASE_URL is not set");
 }
 
-export { ANON_KEY, API_URL, APP_URL };
+export {
+  NEXT_PUBLIC_SITE_URL,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  NEXT_PUBLIC_SUPABASE_URL,
+};

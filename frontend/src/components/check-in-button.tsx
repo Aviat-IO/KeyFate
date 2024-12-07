@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
-import { APP_URL } from "@/lib/env"
+import { NEXT_PUBLIC_SITE_URL } from "@/lib/env"
 import { Secret } from "@/types/secret"
 import { CheckCircle, Loader2 } from "lucide-react"
 import { useState } from "react"
@@ -26,7 +26,7 @@ export function CheckInButton({
 
     try {
       const response = await fetch(
-        `${APP_URL}/api/secrets/${secretId}/check-in`,
+        `${NEXT_PUBLIC_SITE_URL}/api/secrets/${secretId}/check-in`,
         {
           method: "POST",
         },

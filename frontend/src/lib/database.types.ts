@@ -109,12 +109,53 @@ export interface Database {
           updated_at?: string;
         };
       };
+      admin_notifications: {
+        Row: {
+          id: string;
+          type: string;
+          severity: string;
+          title: string;
+          message: string;
+          metadata: Json;
+          created_at: string;
+          acknowledged_at: string | null;
+          acknowledged_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          type: string;
+          severity: string;
+          title: string;
+          message: string;
+          metadata?: Json;
+          created_at?: string;
+          acknowledged_at?: string | null;
+          acknowledged_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          type?: string;
+          severity?: string;
+          title?: string;
+          message?: string;
+          metadata?: Json;
+          created_at?: string;
+          acknowledged_at?: string | null;
+          acknowledged_by?: string | null;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      schedule_secret_reminders: {
+        Args: {
+          p_secret_id: string;
+          p_next_check_in: string;
+        };
+        Returns: void;
+      };
     };
     Enums: {
       contact_method: "email" | "phone" | "both";

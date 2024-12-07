@@ -2,6 +2,11 @@ import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+const NON_AUTH_ROUTE_REGEXES = [
+  /^\/auth\/.*/,
+  /^\/$/,
+];
+
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
   const supabase = createMiddlewareClient({ req, res });
@@ -20,20 +25,22 @@ export async function middleware(req: NextRequest) {
 
     // Protected routes
     if (
-      req.nextUrl.pathname.startsWith("/dashboard") ||
-      req.nextUrl.pathname.startsWith("/secrets")
+      !session &&
+      !NON_AUTH_ROUTE_REGEXES.some((regex) => regex.test(req.nextUrl.pathname))
     ) {
-      if (!session) {
-        console.log("[Middleware] No session found");
-        const redirectUrl = req.nextUrl.clone();
-        redirectUrl.pathname = "/auth/login";
-        redirectUrl.searchParams.set("error", "Please sign in to continue");
-        return NextResponse.redirect(redirectUrl);
-      }
+      console.log("[Middleware] No session found");
+      const redirectUrl = req.nextUrl.clone();
+      redirectUrl.pathname = "/auth/login";
+      redirectUrl.searchParams.set("error", "Please sign in to continue");
+      return NextResponse.redirect(redirectUrl);
     }
 
     // Auth routes - redirect to dashboard if already logged in
-    if (req.nextUrl.pathname.startsWith("/auth") && session) {
+    if (
+      req.nextUrl.pathname.startsWith("/auth") &&
+      !req.nextUrl.pathname.startsWith("/auth/signout") &&
+      session
+    ) {
       const redirectUrl = req.nextUrl.clone();
       redirectUrl.pathname = "/dashboard";
       return NextResponse.redirect(redirectUrl);

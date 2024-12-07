@@ -16,6 +16,22 @@ A user is required to check in with the app at a regular interval to keep the sw
 - Lucide Icons
 - Shadcn UI
 
+## Deployment
+
+### Local development
+
+```bash
+supabase start
+supabase functions serve process-reminders --env-file ./supabase/functions/.env.development.local
+```
+
+### Production deployment
+
+```bash
+supabase secrets set --env-file ./supabase/functions/.env.production.local
+supabase functions deploy process-reminders --env-file ./supabase/functions/.env.production.local
+supabase functions deploy check-secrets --env-file ./supabase/functions/.env.production.local
+```
 
 ## TODO
 

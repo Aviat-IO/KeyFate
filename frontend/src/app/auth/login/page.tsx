@@ -23,6 +23,9 @@ export default function LoginPage() {
     const error = searchParams.get("error")
     if (error) setError(error)
 
+    const signout = searchParams.get("signout")
+    console.log({ signout })
+
     const checkSession = async () => {
       try {
         const {
@@ -35,7 +38,7 @@ export default function LoginPage() {
           return
         }
 
-        if (session) {
+        if (session && !searchParams.get("signout")) {
           router.push("/dashboard")
           router.refresh()
         }

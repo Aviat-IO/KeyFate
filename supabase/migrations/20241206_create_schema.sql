@@ -408,7 +408,10 @@ AS $$
 BEGIN
   -- Only schedule reminders if next_check_in is set and the secret is active
   IF NEW.next_check_in IS NOT NULL AND NEW.status = 'active' THEN
-    PERFORM schedule_secret_reminders(NEW.id, NEW.next_check_in);
+    PERFORM public.schedule_secret_reminders(
+      p_secret_id := NEW.id,
+      p_next_check_in := NEW.next_check_in
+    );
   END IF;
   RETURN NEW;
 END;
