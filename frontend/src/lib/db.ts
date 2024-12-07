@@ -1,11 +1,11 @@
 "use server";
 
 import type { Database } from "@/lib/database.types";
-import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/env";
+import { ANON_KEY, API_URL } from "@/lib/env";
 import { createClient } from "@supabase/supabase-js";
 
 // Create a single supabase client for interacting with your database
-const supabaseAdmin = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
+const supabaseAdmin = createClient<Database>(API_URL, ANON_KEY, {
   auth: {
     autoRefreshToken: false,
     persistSession: false,
