@@ -9,6 +9,7 @@ if (!ENCRYPTION_KEY_BASE64) {
 
 const ENCRYPTION_KEY = Buffer.from(ENCRYPTION_KEY_BASE64, "base64");
 
+const ENCODING: BufferEncoding = "base64";
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12;
 
@@ -23,20 +24,15 @@ export async function encryptMessage(
   const ivBuffer = iv ?? (await generateIV());
   const cipher = crypto.createCipheriv(ALGORITHM, ENCRYPTION_KEY, ivBuffer);
 
-  let encrypted = cipher.update(message, "utf8", "base64");
-  encrypted += cipher.final("base64");
+  const encrypted = Buffer.concat([
+    cipher.update(Buffer.from(message, ENCODING)),
+    cipher.final(),
+  ]).toString(ENCODING);
 
-  const authTag = cipher.getAuthTag();
-
-  // Store the auth tag with the encrypted data
-  const finalEncrypted = Buffer.concat([
-    Buffer.from(encrypted, "base64"),
-    authTag,
-  ]).toString("base64");
   return {
-    encrypted: finalEncrypted,
-    iv: ivBuffer.toString("base64"),
-    authTag: authTag.toString("base64"),
+    encrypted,
+    iv: ivBuffer.toString(ENCODING),
+    authTag: cipher.getAuthTag().toString(ENCODING),
   };
 }
 
@@ -45,28 +41,13 @@ export async function decryptMessage(
   ivBuffer: Buffer,
   authTag: Buffer,
 ): Promise<string> {
-  const cipherBuffer = Buffer.from(cipherText, "base64");
+  const decipher = crypto.createDecipheriv(ALGORITHM, ENCRYPTION_KEY, ivBuffer);
+  decipher.setAuthTag(authTag);
 
-  // Extract the auth tag from the end of the cipher buffer
-  const encryptedData = cipherBuffer.subarray(0, -authTag.length);
-  const storedAuthTag = cipherBuffer.subarray(-authTag.length);
+  const decrypted = Buffer.concat([
+    decipher.update(Buffer.from(cipherText, ENCODING)),
+    decipher.final(),
+  ]).toString(ENCODING);
 
-  // Verify the provided auth tag matches what was stored
-  if (!storedAuthTag.equals(authTag)) {
-    throw new Error("Authentication tag mismatch - data may be corrupted");
-  }
-
-  const decipher = crypto.createDecipheriv(
-    ALGORITHM,
-    ENCRYPTION_KEY,
-    ivBuffer,
-  );
-
-  let decrypted = decipher.update(
-    encryptedData.toString("base64"),
-    "base64",
-    "utf8",
-  );
-  decrypted += decipher.final("utf8");
   return decrypted;
 }

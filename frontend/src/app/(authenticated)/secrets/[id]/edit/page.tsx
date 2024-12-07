@@ -1,8 +1,8 @@
 import { EditSecretForm } from "@/components/forms/editSecretForm"
-import { decryptMessage } from "@/lib/encryption"
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
+import { NEXT_PUBLIC_SITE_URL } from "@/lib/env"
 
 interface PageParams {
   params: { id: string }
@@ -11,35 +11,28 @@ interface PageParams {
 export default async function EditSecretPage({ params }: PageParams) {
   const { id } = await params
   const cookieStore = await cookies()
-  // @ts-expect-error
-  const supabase = createServerComponentClient({ cookies: () => cookieStore })
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) redirect("/auth/login")
+  // Fetch and decrypt the secret using the API route
+  const response = await fetch(
+    `${NEXT_PUBLIC_SITE_URL}/api/secrets/${id}?decrypt=true`,
+    {
+      cache: "no-store",
+      headers: {
+        cookie: cookieStore.toString(),
+      },
+    },
+  )
 
-  const { data: secret, error } = await supabase
-    .from("secrets")
-    .select("*")
-    .eq("id", id)
-    .eq("user_id", user.id)
-    .single()
-
-  if (error || !secret) {
+  if (!response.ok) {
+    console.error("Failed to fetch secret:", response.statusText)
     redirect("/dashboard")
   }
 
-  // Decrypt the message on the server
-  const decryptedMessage = await decryptMessage(
-    secret.message,
-    Buffer.from(secret.iv, "base64"),
-    Buffer.from(secret.auth_tag, "base64"),
-  )
+  const { secret } = await response.json()
 
   const initialData = {
     title: secret.title,
-    message: decryptedMessage,
+    message: secret.message, // This will be already decrypted from the API
     recipient_name: secret.recipient_name,
     recipient_email: secret.recipient_email || "",
     recipient_phone: secret.recipient_phone || "",

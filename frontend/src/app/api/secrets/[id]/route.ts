@@ -5,9 +5,12 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string; decrypt?: boolean } },
+  { params }: { params: { id: string } },
 ) {
-  const { id, decrypt } = await params;
+  const { id } = await params;
+  const { searchParams } = new URL(req.url);
+  const decrypt = searchParams.get("decrypt") === "true";
+
   if (!id) {
     return NextResponse.json({ error: "Missing secret ID" }, { status: 400 });
   }
@@ -36,6 +39,7 @@ export async function GET(
     const decryptedMessage = await decryptMessage(
       existingSecret.message,
       Buffer.from(existingSecret.iv, "base64"),
+      Buffer.from(existingSecret.auth_tag, "base64"),
     );
     return NextResponse.json({
       secret: { ...existingSecret, message: decryptedMessage },
@@ -98,6 +102,7 @@ export async function PUT(
     nextCheckIn.setDate(nextCheckIn.getDate() + parseInt(check_in_days));
 
     // Re-encrypt message using existing IV
+    console.log("message", message);
     const { encrypted, authTag } = await encryptMessage(
       message,
       Buffer.from(existingSecret.iv, "base64"),
