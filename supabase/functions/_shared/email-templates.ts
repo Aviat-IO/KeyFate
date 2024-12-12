@@ -73,7 +73,7 @@ export function getReminderEmailTemplate({
           .button {
             background-color: #2563eb;
             border-radius: 6px;
-            color: #ffffff;
+            color: #ffffff !important;
             display: inline-block;
             font-size: 14px;
             font-weight: bold;
@@ -81,6 +81,10 @@ export function getReminderEmailTemplate({
             padding: 12px 24px;
             text-decoration: none;
             text-align: center;
+          }
+          
+          .button:visited {
+            color: #ffffff !important;
           }
           
           .warning {

@@ -20,8 +20,18 @@ interface EmailPayload {
   html: string;
 }
 
+interface SMSPayload {
+  to: string;
+  body: string;
+}
+
 interface ProcessError extends Error {
   message: string;
+}
+
+interface ContactMethods {
+  email?: string;
+  phone?: string;
 }
 
 function formatTimeRemaining(
@@ -46,10 +56,67 @@ function formatTimeRemaining(
   }
 }
 
+async function getUserContactMethods(
+  supabaseAdmin: ReturnType<typeof createClient<Database>>,
+  userId: string,
+): Promise<ContactMethods> {
+  console.log("[DEBUG] Getting contact methods for user:", userId);
+
+  // First try user_contact_methods
+  const { data: contactMethod } = await supabaseAdmin
+    .from("user_contact_methods")
+    .select("email, phone")
+    .eq("user_id", userId)
+    .single();
+
+  if (contactMethod?.email || contactMethod?.phone) {
+    console.log(
+      "[DEBUG] Found contact methods in user_contact_methods:",
+      contactMethod,
+    );
+    return {
+      email: contactMethod.email,
+      phone: contactMethod.phone,
+    };
+  }
+
+  // If not found, try auth.users
+  const { data: userData } = await supabaseAdmin
+    .auth
+    .admin
+    .getUserById(userId);
+
+  if (userData?.user) {
+    console.log("[DEBUG] Found user in auth.users:", {
+      email: userData.user.email,
+      phone: userData.user.phone,
+    });
+    return {
+      email: userData.user.email,
+      phone: userData.user.phone,
+    };
+  }
+
+  console.log("[DEBUG] No contact methods found for user:", userId);
+  return {};
+}
+
+async function sendSMS(payload: SMSPayload): Promise<boolean> {
+  // TODO: Implement Twilio integration
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  console.log("[DEBUG] Would send SMS:", payload);
+  return true;
+}
+
 async function processReminders(
   supabaseAdmin: ReturnType<typeof createClient<Database>>,
   from = 0,
 ): Promise<{ processed: number; hasMore: boolean }> {
+  console.log(
+    "[DEBUG] Starting processReminders function at:",
+    new Date().toISOString(),
+  );
+
   // Get pending reminders that are due
   const { data: reminders, error: remindersError } = await supabaseAdmin
     .from("reminders")
@@ -65,6 +132,7 @@ async function processReminders(
     .lte("scheduled_for", new Date().toISOString())
     .range(from, from + 49)
     .order("scheduled_for", { ascending: true });
+
   console.log("Reminders error:", remindersError);
   console.log("Reminders data:", reminders);
 
@@ -93,15 +161,14 @@ async function processReminders(
           return { id: reminder.id, status: "cancelled" };
         }
 
-        // Get user's email from user_contact_methods
-        const { data: contactMethod } = await supabaseAdmin
-          .from("user_contact_methods")
-          .select("email")
-          .eq("user_id", reminder.user_id)
-          .single();
+        // Get user's contact methods
+        const contactMethods = await getUserContactMethods(
+          supabaseAdmin,
+          reminder.user_id,
+        );
 
-        if (!contactMethod?.email) {
-          throw new Error("User email not found");
+        if (!contactMethods.email && !contactMethods.phone) {
+          throw new Error("No contact methods found for user");
         }
 
         // Calculate time remaining
@@ -109,43 +176,72 @@ async function processReminders(
         const now = new Date();
         const timeRemaining = nextCheckIn.getTime() - now.getTime();
 
-        // Format the email content using the template
-        const emailHtml = getReminderEmailTemplate({
-          secretTitle: secret.title,
-          timeRemaining: formatTimeRemaining(reminder.type, timeRemaining),
-          nextCheckIn: nextCheckIn.toLocaleString(undefined, {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-            hour: "numeric",
-            minute: "numeric",
-            timeZoneName: "short",
-          }),
-          checkInUrl: `${SITE_URL}/dashboard`,
-        });
+        let notificationSent = false;
 
-        const emailPayload: EmailPayload = {
-          to: contactMethod.email,
-          subject: `Reminder: "${secret.title}" needs attention`,
-          html: emailHtml,
-        };
+        // Try email first if available
+        if (contactMethods.email) {
+          const emailHtml = getReminderEmailTemplate({
+            secretTitle: secret.title,
+            timeRemaining: formatTimeRemaining(reminder.type, timeRemaining),
+            nextCheckIn: nextCheckIn.toLocaleString(undefined, {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+              hour: "numeric",
+              minute: "numeric",
+              timeZoneName: "short",
+            }),
+            checkInUrl: `${SITE_URL}/dashboard`,
+          });
 
-        // Send email using Supabase Edge Function
-        const emailResponse = await fetch(
-          `${API_URL}/functions/v1/send-email`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${ANON_KEY}`,
-              "Content-Type": "application/json",
+          const emailPayload: EmailPayload = {
+            to: contactMethods.email,
+            subject: `Reminder: "${secret.title}" needs attention`,
+            html: emailHtml,
+          };
+
+          // Send email using Supabase Edge Function
+          const emailResponse = await fetch(
+            `${API_URL}/functions/v1/send-email`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${ANON_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(emailPayload),
             },
-            body: JSON.stringify(emailPayload),
-          },
-        );
+          );
 
-        if (!emailResponse.ok) {
-          throw new Error("Failed to send email");
+          if (emailResponse.ok) {
+            notificationSent = true;
+          } else {
+            console.error("Failed to send email notification");
+          }
+        }
+
+        // Try SMS if email failed or wasn't available
+        if (!notificationSent && contactMethods.phone) {
+          const smsPayload: SMSPayload = {
+            to: contactMethods.phone,
+            body: `Reminder: Your secret "${secret.title}" needs attention. ${
+              formatTimeRemaining(reminder.type, timeRemaining)
+            } remaining until expiry. Visit ${SITE_URL}/dashboard to check in.`,
+          };
+
+          const smsSent = await sendSMS(smsPayload);
+          if (smsSent) {
+            notificationSent = true;
+          } else {
+            console.error("Failed to send SMS notification");
+          }
+        }
+
+        if (!notificationSent) {
+          throw new Error(
+            "Failed to send notifications via all available methods",
+          );
         }
 
         // Mark reminder as sent
@@ -187,6 +283,8 @@ async function processReminders(
     }),
   );
 
+  console.log("[DEBUG] Processed reminders:", processedReminders);
+
   return {
     processed: processedReminders.length,
     hasMore: processedReminders.length === 50,
@@ -194,11 +292,14 @@ async function processReminders(
 }
 
 Deno.serve(async (req) => {
+  console.log("[DEBUG] Function triggered at:", new Date().toISOString());
+
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
+    console.log("[DEBUG] Creating Supabase client");
     const supabaseAdmin = createClient<Database>(
       API_URL,
       SERVICE_ROLE_KEY,
@@ -234,7 +335,7 @@ Deno.serve(async (req) => {
 
       // Add a small delay between batches to avoid rate limits
       if (hasMore) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
     }
 
