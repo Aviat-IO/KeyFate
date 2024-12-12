@@ -9,7 +9,9 @@ if (!ENCRYPTION_KEY_BASE64) {
 
 const ENCRYPTION_KEY = Buffer.from(ENCRYPTION_KEY_BASE64, "base64");
 
-const ENCODING: BufferEncoding = "base64";
+const DB_ENCODING: BufferEncoding = "base64";
+const MESSAGE_ENCODING: BufferEncoding = "utf8";
+
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12;
 
@@ -17,6 +19,7 @@ async function generateIV(): Promise<Buffer> {
   return crypto.randomBytes(IV_LENGTH);
 }
 
+// Text (string) → UTF-8 → Binary → Encryption → Binary → Base64 (for storage)
 export async function encryptMessage(
   message: string,
   iv?: Buffer,
@@ -25,17 +28,18 @@ export async function encryptMessage(
   const cipher = crypto.createCipheriv(ALGORITHM, ENCRYPTION_KEY, ivBuffer);
 
   const encrypted = Buffer.concat([
-    cipher.update(Buffer.from(message, ENCODING)),
+    cipher.update(Buffer.from(message, MESSAGE_ENCODING)),
     cipher.final(),
-  ]).toString(ENCODING);
+  ]).toString(DB_ENCODING);
 
   return {
     encrypted,
-    iv: ivBuffer.toString(ENCODING),
-    authTag: cipher.getAuthTag().toString(ENCODING),
+    iv: ivBuffer.toString(DB_ENCODING),
+    authTag: cipher.getAuthTag().toString(DB_ENCODING),
   };
 }
 
+// Base64 → Binary → Decryption → Binary → UTF-8 → Text (string)
 export async function decryptMessage(
   cipherText: string,
   ivBuffer: Buffer,
@@ -45,9 +49,9 @@ export async function decryptMessage(
   decipher.setAuthTag(authTag);
 
   const decrypted = Buffer.concat([
-    decipher.update(Buffer.from(cipherText, ENCODING)),
+    decipher.update(Buffer.from(cipherText, DB_ENCODING)),
     decipher.final(),
-  ]).toString(ENCODING);
+  ]).toString(MESSAGE_ENCODING);
 
   return decrypted;
 }
