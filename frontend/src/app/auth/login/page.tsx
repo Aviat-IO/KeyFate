@@ -26,6 +26,54 @@ export default function LoginPage() {
     const signout = searchParams.get("signout")
     console.log({ signout })
 
+    const handleHashParams = async () => {
+      // Check if we have hash parameters
+      if (typeof window !== "undefined" && window.location.hash) {
+        try {
+          setLoading(true)
+          // Parse the hash parameters
+          const hashParams = new URLSearchParams(
+            window.location.hash.substring(1),
+          )
+          const accessToken = hashParams.get("access_token")
+          const refreshToken = hashParams.get("refresh_token")
+          const type = hashParams.get("type")
+
+          if (accessToken && type === "signup") {
+            // Set the session using the tokens
+            const {
+              data: { session },
+              error: sessionError,
+            } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken!,
+            })
+
+            if (sessionError) {
+              console.error("Error setting session:", sessionError)
+              setError(sessionError.message)
+              return
+            }
+
+            if (session) {
+              // Clear the hash from the URL without triggering a reload
+              window.history.replaceState(null, "", window.location.pathname)
+              // Redirect to dashboard
+              router.push("/dashboard")
+              router.refresh()
+            }
+          }
+        } catch (error) {
+          console.error("Error handling hash params:", error)
+          setError(
+            error instanceof Error ? error.message : "Authentication failed",
+          )
+        } finally {
+          setLoading(false)
+        }
+      }
+    }
+
     const checkSession = async () => {
       try {
         const {
@@ -47,6 +95,7 @@ export default function LoginPage() {
       }
     }
 
+    handleHashParams()
     checkSession()
   }, [router, searchParams, supabase.auth])
 

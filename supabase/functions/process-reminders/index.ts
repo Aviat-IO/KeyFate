@@ -178,6 +178,22 @@ async function processReminders(
 
         let notificationSent = false;
 
+        // Create a one-time check-in token
+        const { data: token, error: tokenError } = await supabaseAdmin
+          .rpc("create_check_in_token", {
+            p_secret_id: secret.id,
+          });
+
+        if (tokenError) {
+          console.error("Failed to create check-in token:", tokenError);
+          throw new Error("Failed to create check-in token");
+        }
+
+        if (!token) {
+          console.error("No token returned from create_check_in_token");
+          throw new Error("Failed to create check-in token");
+        }
+
         // Try email first if available
         if (contactMethods.email) {
           const emailHtml = getReminderEmailTemplate({
@@ -192,7 +208,7 @@ async function processReminders(
               minute: "numeric",
               timeZoneName: "short",
             }),
-            checkInUrl: `${SITE_URL}/dashboard`,
+            checkInUrl: `${SITE_URL}/check-in?token=${token}`,
           });
 
           const emailPayload: EmailPayload = {

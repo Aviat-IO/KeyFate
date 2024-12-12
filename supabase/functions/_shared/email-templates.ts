@@ -116,11 +116,11 @@ export function getReminderEmailTemplate({
                 </div>
                 
                 <div class="content">
-                  <p>Your secret "<span class="highlight">${secretTitle}</span>" needs attention.</p>
+                  <p style="text-align: center;">Your secret "<span class="highlight">${secretTitle}</span>" needs attention.</p>
                   
-                  <p>You have <span class="highlight">${timeRemaining}</span> remaining to check in.</p>
+                  <p style="text-align: center;">You have <span class="highlight">${timeRemaining}</span> remaining to check in.</p>
                   
-                  <p class="warning">If you don't check in by ${nextCheckIn}, your secret will be triggered.</p>
+                  <p style="text-align: center;" class="warning">If you don't check in by ${nextCheckIn}, your secret will be triggered.</p>
                   
                   <div style="text-align: center;">
                     <a href="${checkInUrl}" class="button">
@@ -129,7 +129,7 @@ export function getReminderEmailTemplate({
                   </div>
                   
                   <p style="margin-top: 24px;">
-                    For your security, this link will take you to your dashboard where you can check in safely.
+                    This link is valid for 24 hours and will automatically check-in for your secret. If it has expired, you can visit your dashboard at <a href="https://keyfate.com/dashboard" style="color: #2563eb; text-decoration: underline;">keyfate.com/dashboard</a>.
                   </p>
                 </div>
                 

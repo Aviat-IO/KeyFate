@@ -16,7 +16,6 @@ export async function GET(request: NextRequest) {
   // Create response that redirects to sign in page
   const redirectUrl = new URL("/auth/login", NEXT_PUBLIC_SITE_URL);
   redirectUrl.searchParams.set("signout", "1");
-  console.log({ redirectUrl });
   const response = NextResponse.redirect(redirectUrl);
 
   clearSupabaseCookies({

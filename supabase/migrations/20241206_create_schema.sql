@@ -191,7 +191,7 @@ CREATE OR REPLACE FUNCTION public.toggle_secret_pause(
     p_next_check_in TIMESTAMPTZ
 ) RETURNS void 
 SECURITY DEFINER
-SET search_path = ''
+SET search_path = public, extensions
 AS $$
 BEGIN
     -- Update the secret status
