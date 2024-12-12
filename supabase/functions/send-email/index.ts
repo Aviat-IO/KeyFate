@@ -44,8 +44,6 @@ async function sendEmail(payload: EmailPayload) {
 }
 
 Deno.serve(async (req) => {
-  console.log("[DEBUG] Email request:", req);
-
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }

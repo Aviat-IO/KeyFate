@@ -60,5 +60,6 @@ supabase functions deploy check-secrets --env-file ./supabase/functions/.env.pro
 - [ ] New secret email
 - [ ] SMS reminders
 - [ ] Security audit
+- [ ] Fix Google Auth
 
 Reminder email needs to handle more than 50 reminders.

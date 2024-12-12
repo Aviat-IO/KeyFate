@@ -263,7 +263,10 @@ async function processReminders(
         // Mark reminder as sent
         await supabaseAdmin
           .from("reminders")
-          .update({ status: "sent" })
+          .update({
+            status: "sent",
+            sent_at: new Date().toISOString(),
+          })
           .eq("id", reminder.id);
 
         return { id: reminder.id, status: "sent" };
