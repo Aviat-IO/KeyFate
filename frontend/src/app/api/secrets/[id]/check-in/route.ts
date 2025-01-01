@@ -1,12 +1,15 @@
+import type { Database } from "@/lib/database.types";
+import { Secret } from "@/types/secret";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import type { Database } from "@/lib/database.types";
 
-export async function POST(
-  request: Request,
-  context: { params: { id: string } },
-) {
+interface PageParams {
+  params: { id: string };
+}
+
+export async function POST(_request: Request, { params }: PageParams) {
+  const { id } = await params;
   try {
     const cookieStore = await cookies();
     const supabase = createRouteHandlerClient<Database>({
@@ -26,7 +29,7 @@ export async function POST(
     const { data: secret, error: secretError } = await supabase
       .from("secrets")
       .select("*")
-      .eq("id", context.params.id)
+      .eq("id", id)
       .eq("user_id", user.id)
       .single();
 
@@ -41,11 +44,13 @@ export async function POST(
     // Update check-in time
     const now = new Date();
     const nextCheckIn = new Date();
-    nextCheckIn.setDate(nextCheckIn.getDate() + secret.check_in_days);
+    nextCheckIn.setDate(
+      nextCheckIn.getDate() + (secret as Secret).check_in_days,
+    );
 
     // Start a transaction to update both tables
     const { error: transactionError } = await supabase.rpc("check_in_secret", {
-      p_secret_id: context.params.id,
+      p_secret_id: id,
       p_user_id: user.id,
       p_checked_in_at: now.toISOString(),
       p_next_check_in: nextCheckIn.toISOString(),
@@ -66,7 +71,7 @@ export async function POST(
     const { data: updatedSecret, error: fetchError } = await supabase
       .from("secrets")
       .select("*")
-      .eq("id", context.params.id)
+      .eq("id", id)
       .single();
 
     if (fetchError) {
