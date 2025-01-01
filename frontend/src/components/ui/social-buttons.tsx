@@ -5,18 +5,24 @@ import { RiGoogleFill } from "@remixicon/react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useRouter } from "next/navigation"
 import { Provider } from "@supabase/supabase-js"
+import { useState } from "react"
+import { Loader2 } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 export function SocialButtons() {
   const router = useRouter()
   const supabase = createClientComponentClient()
+  const [isLoading, setIsLoading] = useState(false)
+  const { toast } = useToast()
 
   const handleOAuthSignIn = async (provider: Provider) => {
     try {
+      setIsLoading(true)
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
-          scopes: "email profile",
+          scopes: "openid email profile",
           queryParams: {
             access_type: "offline",
             prompt: "consent",
@@ -30,6 +36,13 @@ export function SocialButtons() {
       }
     } catch (error) {
       console.error(`[OAuth] ${provider} sign in error:`, error)
+      toast({
+        title: "Authentication failed",
+        description: "Could not sign in with Google. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -39,13 +52,23 @@ export function SocialButtons() {
         variant="outline"
         onClick={() => handleOAuthSignIn("google")}
         type="button"
+        disabled={isLoading}
       >
-        <RiGoogleFill
-          className="mr-3 text-[#DB4437] dark:text-white/60"
-          size={16}
-          aria-hidden="true"
-        />
-        Continue with Google
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Signing in...
+          </>
+        ) : (
+          <>
+            <RiGoogleFill
+              className="mr-3 text-[#DB4437] dark:text-white/60"
+              size={16}
+              aria-hidden="true"
+            />
+            Continue with Google
+          </>
+        )}
       </Button>
     </div>
   )

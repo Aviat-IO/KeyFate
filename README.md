@@ -61,5 +61,6 @@ supabase functions deploy check-secrets --env-file ./supabase/functions/.env.pro
 - [ ] SMS reminders
 - [ ] Security audit
 - [ ] Fix Google Auth
+- [ ] Email verification for user.meta.email_verified not being set to true. Also need to enable email verify with OTP.
 
 Reminder email needs to handle more than 50 reminders.

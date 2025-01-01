@@ -209,7 +209,7 @@ export function SecretCard({ secret }: SecretCardProps) {
           <Clock className="mr-1 h-4 w-4" />
           {secretState.is_triggered
             ? `Sent: ${format(secretState.triggered_at!)}`
-            : `Next check-in: ${format(secretState.next_check_in)}`}
+            : `Triggers: ${format(secretState.next_check_in)}`}
         </div>
         {!secretState.is_triggered && secretState.last_check_in && (
           <div className="text-muted-foreground text-xs">

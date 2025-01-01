@@ -161,14 +161,14 @@ SET search_path = ''
 AS $$
 BEGIN
     -- Update the secret
-    UPDATE secrets
+    UPDATE public.secrets
     SET last_check_in = p_checked_in_at,
         next_check_in = p_next_check_in
     WHERE id = p_secret_id
     AND user_id = p_user_id;
 
     -- Record the check-in history
-    INSERT INTO checkin_history (
+    INSERT INTO public.checkin_history (
         secret_id,
         user_id,
         checked_in_at,
