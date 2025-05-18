@@ -100,7 +100,7 @@ export function EditSecretForm({ initialData, secretId }: EditSecretFormProps) {
                 <FormLabel>Secret Title</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="E.g., Important Documents Location"
+                    placeholder="Example: Important Documents Location"
                     {...field}
                   />
                 </FormControl>

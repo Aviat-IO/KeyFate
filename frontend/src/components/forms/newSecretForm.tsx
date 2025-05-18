@@ -92,7 +92,7 @@ export function NewSecretForm() {
                 <FormControl>
                   <Input
                     {...field}
-                    placeholder="E.g., Important Documents Location"
+                    placeholder="Example: Important Documents Location"
                   />
                 </FormControl>
                 <FormMessage />
