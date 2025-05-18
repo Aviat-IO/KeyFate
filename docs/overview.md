@@ -52,3 +52,4 @@ Key Fate is a secure dead man's switch platform. Users create secrets (e.g., pri
 - SMS reminders and recipient verification.
 - 3rd-party security audit.
 - Enhanced B2B features and integrations.
+- Enable Nostr integration so recipient can be an `npub` (this allows for uncensorable publications)
