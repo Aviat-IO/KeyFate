@@ -1,16 +1,14 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { useToast } from "@/hooks/use-toast"
 import { RiGoogleFill } from "@remixicon/react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { useRouter } from "next/navigation"
 import { Provider } from "@supabase/supabase-js"
-import { useState } from "react"
 import { Loader2 } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { useState } from "react"
 
 export function SocialButtons() {
-  const router = useRouter()
   const supabase = createClientComponentClient()
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()

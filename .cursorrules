@@ -44,3 +44,4 @@ UI:
 - Use TailwindCSS for styling.
 - Use Shadcn/UI for components. Prompt the user to install any needed components.
 Follow Next.js docs for Data Fetching, Rendering, and Routing.
+- When looking for documentation, use the context7 MCP server

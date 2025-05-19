@@ -1,50 +1,56 @@
-import { EditSecretForm } from "@/components/forms/editSecretForm"
+import { SecretDetailsForm } from "@/components/forms/secretDetailsForm"
+import { Database, Secret } from "@/types"
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
-import { NEXT_PUBLIC_SITE_URL } from "@/lib/env"
 
 interface PageParams {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
-export default async function EditSecretPage({ params }: PageParams) {
+export default async function SecretDetailsPage({ params }: PageParams) {
   const { id } = await params
   const cookieStore = await cookies()
+  const supabase = createServerComponentClient<Database>({
+    // @ts-expect-error - Supabase auth helpers expect different cookie format
+    cookies: () => cookieStore,
+  })
 
-  // Fetch and decrypt the secret using the API route
-  const response = await fetch(
-    `${NEXT_PUBLIC_SITE_URL}/api/secrets/${id}?decrypt=true`,
-    {
-      cache: "no-store",
-      headers: {
-        cookie: cookieStore.toString(),
-      },
-    },
-  )
+  // Get the authenticated user
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+  if (authError || !user) {
+    redirect("/auth/login")
+  }
 
-  if (!response.ok) {
-    console.error("Failed to fetch secret:", response.statusText)
+  // Fetch secret metadata (no decryption needed for details view)
+  const {
+    data: secret,
+    error: secretError,
+  }: { data: Secret | null; error: Error | null } = await supabase
+    .from("secrets")
+    .select("*")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .single()
+
+  if (secretError || !secret) {
+    console.error("Failed to fetch secret:", secretError)
     redirect("/dashboard")
   }
 
-  const { secret } = await response.json()
-
-  const initialData = {
-    title: secret.title,
-    message: secret.message, // This will be already decrypted from the API
-    recipient_name: secret.recipient_name,
-    recipient_email: secret.recipient_email || "",
-    recipient_phone: secret.recipient_phone || "",
-    contact_method: secret.contact_method,
-    check_in_days: secret.check_in_days,
+  // If secret is triggered, redirect to view page
+  if (secret.is_triggered) {
+    redirect(`/secrets/${id}/view`)
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="mb-8 text-2xl font-bold">Edit Secret</h1>
+      <h1 className="mb-8 text-2xl font-bold">Secret Details</h1>
       <div className="mx-auto max-w-2xl">
-        <EditSecretForm initialData={initialData} secretId={secret.id} />
+        <SecretDetailsForm secret={secret} />
       </div>
     </div>
   )

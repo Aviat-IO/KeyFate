@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     const decryptedMessage = new TextDecoder().decode(decryptedBuffer);
 
     return Response.json({ decryptedMessage });
-  } catch (error) {
+  } catch {
     return Response.json({ error: "Decryption failed" }, { status: 500 });
   }
 }

@@ -8,9 +8,9 @@ import {
   SERVICE_ROLE_KEY,
   SITE_URL,
 } from "../_shared/env.ts";
+import { Reminder, Secret } from "../_shared/types.ts";
 
-type Secret = Database["public"]["Tables"]["secrets"]["Row"];
-type Reminder = Database["public"]["Tables"]["reminders"]["Row"] & {
+type ReminderWithSecret = Reminder & {
   secret: Secret;
 };
 
@@ -145,15 +145,15 @@ async function processReminders(
   }
 
   const processedReminders = await Promise.all(
-    reminders.map(async (reminder: Reminder) => {
+    reminders.map(async (reminder: ReminderWithSecret) => {
       try {
         const secret = reminder.secret;
         if (!secret) {
           throw new Error("Secret not found");
         }
 
-        // Skip if secret is not active
-        if (secret.status !== "active") {
+        // Skip if secret is not active or server share has been deleted
+        if (secret.status !== "active" || !secret.server_share) {
           await supabaseAdmin
             .from("reminders")
             .update({ status: "cancelled" })
@@ -340,7 +340,7 @@ Deno.serve(async (req) => {
     let from = 0;
     let totalProcessed = 0;
     let hasMore = true;
-    const results = [];
+    // const results = [];
 
     // Process reminders in batches until no more are found
     while (hasMore) {

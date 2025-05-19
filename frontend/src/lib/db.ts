@@ -1,8 +1,8 @@
 "use server";
 
-import type { Database } from "@/lib/database.types";
 // TODO: Ensure this is secure. Or maybe we need to use admin and the service role key?
 import { supabase } from "@/lib/supabase";
+import { SecretInsert, SecretUpdate } from "@/types";
 
 // Create a single supabase client for interacting with your database
 // const supabase = createClient<Database>(API_URL, ANON_KEY, {
@@ -40,7 +40,7 @@ export async function getSecret(id: string, userId: string) {
 }
 
 export async function createSecret(
-  secret: Database["public"]["Tables"]["secrets"]["Insert"],
+  secret: SecretInsert,
 ) {
   "use server";
   const { data, error } = await supabase
@@ -55,7 +55,7 @@ export async function createSecret(
 
 export async function updateSecret(
   id: string,
-  secret: Partial<Database["public"]["Tables"]["secrets"]["Update"]>,
+  secret: Partial<SecretUpdate>,
 ) {
   "use server";
   const { data, error } = await supabase

@@ -1,11 +1,12 @@
-import { decryptMessage, encryptMessage } from "@/lib/encryption";
+import { decryptMessage } from "@/lib/encryption";
+import { Database, Secret, SecretUpdate } from "@/types";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   const { searchParams } = new URL(req.url);
@@ -16,15 +17,20 @@ export async function GET(
   }
 
   const cookieStore = await cookies();
-  // @ts-expect-error
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  const supabase = createRouteHandlerClient<Database>({
+    // @ts-expect-error - cookies function signature mismatch with Next.js 15
+    cookies: () => cookieStore,
+  });
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
   if (authError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: existingSecret, error: fetchError } = await supabase
+  const { data: existingSecret, error: fetchError }: {
+    data: Secret | null;
+    error: Error | null;
+  } = await supabase
     .from("secrets")
     .select("*")
     .eq("id", id)
@@ -35,15 +41,33 @@ export async function GET(
     return NextResponse.json({ error: "Secret not found" }, { status: 404 });
   }
 
-  if (decrypt) {
-    const decryptedMessage = await decryptMessage(
-      existingSecret.message,
-      Buffer.from(existingSecret.iv, "base64"),
-      Buffer.from(existingSecret.auth_tag, "base64"),
-    );
-    return NextResponse.json({
-      secret: { ...existingSecret, message: decryptedMessage },
-    });
+  if (
+    decrypt &&
+    existingSecret.server_share &&
+    existingSecret.iv &&
+    existingSecret.auth_tag
+  ) {
+    // Decrypt the server share for the owner
+    try {
+      const secret = existingSecret as Secret;
+      const decryptedServerShare = await decryptMessage(
+        secret.server_share!,
+        Buffer.from(secret.iv!, "base64"),
+        Buffer.from(secret.auth_tag!, "base64"),
+      );
+      return NextResponse.json({
+        secret: {
+          ...existingSecret,
+          decrypted_server_share: decryptedServerShare,
+        },
+      });
+    } catch (error) {
+      console.error("Failed to decrypt server share:", error);
+      return NextResponse.json(
+        { error: "Failed to decrypt server share" },
+        { status: 500 },
+      );
+    }
   }
 
   return NextResponse.json({ secret: existingSecret });
@@ -51,7 +75,7 @@ export async function GET(
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
@@ -60,8 +84,10 @@ export async function PUT(
     }
 
     const cookieStore = await cookies();
-    // @ts-expect-error
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = createRouteHandlerClient<Database>({
+      // @ts-expect-error - cookies function signature mismatch with Next.js 15
+      cookies: () => cookieStore,
+    });
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
@@ -74,7 +100,6 @@ export async function PUT(
     const body = await req.json();
     const {
       title,
-      message,
       recipient_name,
       recipient_email,
       recipient_phone,
@@ -101,27 +126,20 @@ export async function PUT(
     const nextCheckIn = new Date();
     nextCheckIn.setDate(nextCheckIn.getDate() + parseInt(check_in_days));
 
-    // Re-encrypt message using existing IV
-    console.log("message", message);
-    const { encrypted, authTag } = await encryptMessage(
-      message,
-      Buffer.from(existingSecret.iv, "base64"),
-    );
-
-    // Update the secret
+    // Update only metadata (no secret content editing allowed with Shamir's)
     const { error: updateError } = await supabase
       .from("secrets")
-      .update({
-        title,
-        message: encrypted,
-        recipient_name,
-        recipient_email: contact_method !== "phone" ? recipient_email : null,
-        recipient_phone: contact_method !== "email" ? recipient_phone : null,
-        contact_method,
-        check_in_days,
-        next_check_in: nextCheckIn.toISOString(),
-        auth_tag: authTag,
-      })
+      .update(
+        {
+          title,
+          recipient_name,
+          recipient_email: contact_method !== "phone" ? recipient_email : null,
+          recipient_phone: contact_method !== "email" ? recipient_phone : null,
+          contact_method,
+          check_in_days: parseInt(check_in_days),
+          next_check_in: nextCheckIn.toISOString(),
+        } satisfies SecretUpdate,
+      )
       .eq("id", id)
       .eq("user_id", user.id);
 

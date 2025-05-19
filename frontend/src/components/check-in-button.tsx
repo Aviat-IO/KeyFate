@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { NEXT_PUBLIC_SITE_URL } from "@/lib/env"
-import { Secret } from "@/types/secret"
+import { Secret } from "@/types"
 import { CheckCircle, Loader2 } from "lucide-react"
 import { useState } from "react"
 

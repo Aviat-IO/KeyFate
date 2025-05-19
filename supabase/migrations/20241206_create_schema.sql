@@ -66,6 +66,7 @@ DROP TABLE IF EXISTS public.reminders CASCADE;
 DROP TABLE IF EXISTS public.admin_notifications CASCADE;
 DROP TABLE IF EXISTS public.user_contact_methods CASCADE;
 DROP TABLE IF EXISTS public.checkin_history CASCADE;
+DROP TABLE IF EXISTS public.recipient_access_tokens CASCADE;
 
 -- Create user_contact_methods table
 CREATE TABLE user_contact_methods (
@@ -83,7 +84,7 @@ CREATE TABLE secrets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
-    message TEXT NOT NULL,
+    server_share TEXT NOT NULL,
     recipient_name TEXT NOT NULL,
     recipient_email TEXT,
     recipient_phone TEXT,
@@ -96,9 +97,37 @@ CREATE TABLE secrets (
     triggered_at TIMESTAMPTZ,
     iv TEXT NOT NULL,
     auth_tag TEXT NOT NULL,
+    sss_shares_total INTEGER NOT NULL DEFAULT 3,
+    sss_threshold INTEGER NOT NULL DEFAULT 2,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Create recipient_access_tokens table
+CREATE TABLE public.recipient_access_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    secret_id UUID NOT NULL REFERENCES public.secrets(id) ON DELETE CASCADE,
+    token TEXT NOT NULL UNIQUE,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    used_at TIMESTAMPTZ,
+    CONSTRAINT uq_secret_active_token UNIQUE (secret_id, used_at) -- Potentially allow only one active (unused) token per secret
+);
+
+CREATE INDEX idx_recipient_access_tokens_token ON public.recipient_access_tokens(token);
+CREATE INDEX idx_recipient_access_tokens_secret_id ON public.recipient_access_tokens(secret_id);
+CREATE INDEX idx_recipient_access_tokens_expires_at ON public.recipient_access_tokens(expires_at);
+
+ALTER TABLE public.recipient_access_tokens ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for recipient_access_tokens
+-- Service role can manage all tokens
+CREATE POLICY "Service role can manage recipient tokens"
+    ON public.recipient_access_tokens
+    FOR ALL
+    TO service_role
+    USING (true)
+    WITH CHECK (true);
 
 -- Create reminders table
 CREATE TABLE reminders (
@@ -436,6 +465,7 @@ ALTER TABLE reminders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin_notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_contact_methods ENABLE ROW LEVEL SECURITY;
 ALTER TABLE checkin_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE recipient_access_tokens ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS policies for secrets
 DROP POLICY IF EXISTS "Users can view their own secrets" ON public.secrets;

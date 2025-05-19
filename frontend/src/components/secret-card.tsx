@@ -2,23 +2,22 @@
 
 import { CheckInButton } from "@/components/check-in-button"
 import { TogglePauseButton } from "@/components/toggle-pause-button"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { useToast } from "@/hooks/use-toast"
-import { Database } from "@/lib/database.types"
-import { cn } from "@/lib/utils"
-import { Secret } from "@/types/secret"
-import { Clock, Pencil } from "lucide-react"
-import Link from "next/link"
-import { useEffect, useState, useMemo } from "react"
-import { format } from "timeago.js"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Badge } from "@/components/ui/badge"
+import { useToast } from "@/hooks/use-toast"
+import { cn } from "@/lib/utils"
+import { Secret } from "@/types"
+import { Clock, Pencil } from "lucide-react"
+import Link from "next/link"
+import { useEffect, useMemo, useState } from "react"
+import { format } from "timeago.js"
 
 interface SecretCardProps {
   secret: Secret
@@ -33,11 +32,19 @@ function getStatusBadge(
   status: Secret["status"],
   nextCheckIn: string,
   isTriggered: boolean,
+  serverShareDeleted: boolean,
 ): StatusBadge {
   if (isTriggered) {
     return {
       label: "Sent",
       variant: "destructive",
+    }
+  }
+
+  if (serverShareDeleted) {
+    return {
+      label: "Disabled",
+      variant: "outline",
     }
   }
 
@@ -76,11 +83,17 @@ function getStatusBadge(
 
 export function SecretCard({ secret }: SecretCardProps) {
   const [secretState, setSecretState] = useState<Secret>(secret)
+  const serverShareDeleted = !secretState.server_share
   const [statusBadge, setStatusBadge] = useState<StatusBadge>(
-    getStatusBadge(secret.status, secret.next_check_in, secret.is_triggered),
+    getStatusBadge(
+      secret.status,
+      secret.next_check_in,
+      secret.is_triggered,
+      !secret.server_share,
+    ),
   )
-  const [showMessage, setShowMessage] = useState(false)
-  const [decryptedMessage, setDecryptedMessage] = useState<string | null>(null)
+  const [showMessage] = useState(false)
+  const [decryptedMessage] = useState<string | null>(null)
 
   useEffect(() => {
     setStatusBadge(
@@ -88,9 +101,15 @@ export function SecretCard({ secret }: SecretCardProps) {
         secretState.status,
         secretState.next_check_in,
         secretState.is_triggered,
+        serverShareDeleted,
       ),
     )
-  }, [secretState.status, secretState.next_check_in, secretState.is_triggered])
+  }, [
+    secretState.status,
+    secretState.next_check_in,
+    secretState.is_triggered,
+    serverShareDeleted,
+  ])
 
   const { toast } = useToast()
 
@@ -126,34 +145,6 @@ export function SecretCard({ secret }: SecretCardProps) {
     return details.join("\n")
   }
 
-  // TODO: Likely remove this
-  const decryptMessage = async () => {
-    try {
-      const response = await fetch("/api/decrypt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          encryptedMessage: secret.message,
-          iv: secret.iv,
-        }),
-      })
-
-      const data = await response.json()
-      if (data.error) throw new Error(data.error)
-
-      setDecryptedMessage(data.decryptedMessage)
-    } catch (error) {
-      console.error("Error decrypting message:", error)
-      setDecryptedMessage("Error decrypting message")
-    }
-  }
-
-  useEffect(() => {
-    if (showMessage && !decryptedMessage) {
-      decryptMessage()
-    }
-  }, [showMessage])
-
   const canCheckIn = useMemo(() => {
     if (!secretState.last_check_in) return true
     const lastCheckIn = new Date(secretState.last_check_in)
@@ -168,6 +159,7 @@ export function SecretCard({ secret }: SecretCardProps) {
         "bg-card flex h-full flex-col rounded-lg border p-4 shadow-sm",
         secretState.is_triggered && "border-destructive/50 bg-destructive/5",
         secretState.status === "paused" && "border-muted bg-muted/5",
+        serverShareDeleted && "border-muted bg-muted/5 opacity-75",
       )}
     >
       <div>
@@ -197,6 +189,11 @@ export function SecretCard({ secret }: SecretCardProps) {
                   <p>Will not trigger even if past the due date</p>
                 </TooltipContent>
               )}
+              {statusBadge.label === "Disabled" && (
+                <TooltipContent>
+                  <p>Server share deleted - secret is disabled</p>
+                </TooltipContent>
+              )}
             </Tooltip>
           </TooltipProvider>
         </div>
@@ -209,11 +206,20 @@ export function SecretCard({ secret }: SecretCardProps) {
           <Clock className="mr-1 h-4 w-4" />
           {secretState.is_triggered
             ? `Sent: ${format(secretState.triggered_at!)}`
-            : `Triggers: ${format(secretState.next_check_in)}`}
+            : serverShareDeleted
+              ? "Disabled - will not trigger"
+              : `Triggers: ${format(secretState.next_check_in)}`}
         </div>
-        {!secretState.is_triggered && secretState.last_check_in && (
+        {!secretState.is_triggered &&
+          !serverShareDeleted &&
+          secretState.last_check_in && (
+            <div className="text-muted-foreground text-xs">
+              Last check-in: {format(secretState.last_check_in)}
+            </div>
+          )}
+        {serverShareDeleted && (
           <div className="text-muted-foreground text-xs">
-            Last check-in: {format(secretState.last_check_in)}
+            Server share deleted
           </div>
         )}
       </div>
@@ -223,26 +229,38 @@ export function SecretCard({ secret }: SecretCardProps) {
       <div className="flex items-center justify-end gap-2">
         {!secretState.is_triggered ? (
           <>
-            {secretState.status === "active" && canCheckIn && (
+            {!serverShareDeleted &&
+              secretState.status === "active" &&
+              canCheckIn && (
+                <>
+                  <CheckInButton
+                    secretId={secretState.id}
+                    onCheckInSuccess={handleCheckInSuccess}
+                    variant="ghost"
+                  />
+                  <Separator orientation="vertical" className="h-6" />
+                </>
+              )}
+            {!serverShareDeleted && (
               <>
-                <CheckInButton
+                <TogglePauseButton
                   secretId={secretState.id}
-                  onCheckInSuccess={handleCheckInSuccess}
-                  variant="ghost"
+                  status={secretState.status}
+                  onToggleSuccess={handleToggleSuccess}
                 />
                 <Separator orientation="vertical" className="h-6" />
               </>
             )}
-            <TogglePauseButton
-              secretId={secretState.id}
-              status={secretState.status}
-              onToggleSuccess={handleToggleSuccess}
-            />
-            <Separator orientation="vertical" className="h-6" />
             <Button variant="ghost" size="sm" asChild>
-              <Link href={`/secrets/${secretState.id}/edit`}>
+              <Link
+                href={
+                  serverShareDeleted
+                    ? `/secrets/${secretState.id}/view`
+                    : `/secrets/${secretState.id}/edit`
+                }
+              >
                 <Pencil className="h-4 w-4" />
-                Edit
+                {serverShareDeleted ? "View" : "Edit"}
               </Link>
             </Button>
           </>

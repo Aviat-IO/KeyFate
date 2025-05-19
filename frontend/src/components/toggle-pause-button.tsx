@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Secret } from "@/types/secret"
+import { Secret } from "@/types"
 import { Loader2, PauseIcon, PlayIcon } from "lucide-react"
 import { useState } from "react"
 

@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   const cookieStore = await cookies();
-  // @ts-expect-error
+  // @ts-expect-error - Supabase auth helpers expect different cookie format
   const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
   // Sign out from Supabase

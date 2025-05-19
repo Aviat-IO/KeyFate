@@ -1,7 +1,6 @@
 import { SecretCard } from "@/components/secret-card"
 import { Button } from "@/components/ui/button"
-import type { Database } from "@/lib/database.types"
-import { Secret } from "@/types/secret"
+import { Database, Secret } from "@/types"
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 import { AlertCircle, PlusCircle } from "lucide-react"
 import { cookies } from "next/headers"
@@ -10,7 +9,7 @@ import Link from "next/link"
 export default async function DashboardPage() {
   const cookieStore = await cookies()
   const supabase = createServerComponentClient<Database>({
-    // @ts-expect-error
+    // @ts-expect-error - Supabase auth helpers expect different cookie format
     cookies: () => cookieStore,
   })
 
@@ -52,7 +51,7 @@ export default async function DashboardPage() {
               <AlertCircle className="text-muted-foreground mx-auto h-12 w-12" />
               <h2 className="mt-4 text-lg font-semibold">No secrets yet</h2>
               <p className="text-muted-foreground mt-2 text-sm">
-                Create your first "dead man's switch".
+                Create your first &quot;dead man&apos;s switch&quot;.
               </p>
               <p className="text-muted-foreground mt-2 text-sm">
                 Your secret will only be revealed to your trusted contact if you
@@ -67,11 +66,71 @@ export default async function DashboardPage() {
             </div>
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {secrets.map((secret) => (
-              <SecretCard secret={secret} key={secret.id} />
-            ))}
-          </div>
+          <>
+            {/* Active secrets */}
+            {secrets.filter((secret) => secret.server_share !== null).length >
+              0 && (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {secrets
+                  .filter((secret) => secret.server_share !== null)
+                  .map((secret) => (
+                    <SecretCard secret={secret} key={secret.id} />
+                  ))}
+              </div>
+            )}
+
+            {/* Secrets with deleted server shares - less prominent section */}
+            {secrets.filter((secret) => secret.server_share === null).length >
+              0 && (
+              <div className="mt-20">
+                <div className="mb-4 flex items-center gap-2">
+                  <h2 className="text-muted-foreground text-lg font-medium">
+                    Disabled Secrets
+                  </h2>
+                  <div className="text-muted-foreground bg-muted rounded px-2 py-1 text-xs">
+                    Server share deleted
+                  </div>
+                </div>
+                <p className="text-muted-foreground mb-4 text-sm">
+                  These secrets have had their server share deleted and are
+                  effectively disabled. They serve as a record of what was
+                  created and to whom it was sent.
+                </p>
+                <div className="grid gap-4 opacity-60 md:grid-cols-2 lg:grid-cols-3">
+                  {secrets
+                    .filter((secret) => secret.server_share === null)
+                    .map((secret) => (
+                      <SecretCard secret={secret} key={secret.id} />
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {/* Show empty state if all secrets have deleted server shares */}
+            {secrets.filter((secret) => secret.server_share !== null).length ===
+              0 &&
+              secrets.filter((secret) => secret.server_share === null).length >
+                0 && (
+                <div className="mb-8 rounded-lg border-2 border-dashed p-12 text-center">
+                  <div className="mx-auto max-w-sm">
+                    <AlertCircle className="text-muted-foreground mx-auto h-12 w-12" />
+                    <h2 className="mt-4 text-lg font-semibold">
+                      No active secrets
+                    </h2>
+                    <p className="text-muted-foreground mt-2 text-sm">
+                      All your secrets have been disabled. Create a new one to
+                      get started.
+                    </p>
+                    <Button asChild className="mt-4">
+                      <Link href="/secrets/new">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Create New Secret
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              )}
+          </>
         )}
       </div>
     )

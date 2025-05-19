@@ -1,8 +1,8 @@
 import { NavBar } from "@/components/nav-bar"
+import { Database } from "@/types"
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
-import type { Database } from "@/lib/database.types"
 
 export default async function AuthenticatedLayout({
   children,
@@ -11,7 +11,7 @@ export default async function AuthenticatedLayout({
 }) {
   const cookieStore = await cookies()
   const supabase = createServerComponentClient<Database>({
-    // @ts-expect-error
+    // @ts-expect-error - Supabase auth helpers expect different cookie format
     cookies: () => cookieStore,
   })
 

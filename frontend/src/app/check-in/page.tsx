@@ -49,7 +49,7 @@ export default function CheckInPage() {
         setStatus("success")
         setSecretTitle(data.secretTitle)
         setNextCheckIn(data.nextCheckIn)
-      } catch (error) {
+      } catch {
         setStatus("error")
         setMessage("An error occurred while processing your check-in.")
       }

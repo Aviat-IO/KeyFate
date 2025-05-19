@@ -45,7 +45,7 @@ export async function POST(req: Request) {
       encryptedMessage: btoa(String.fromCharCode(...encryptedArray)),
       iv: btoa(String.fromCharCode(...ivArray)),
     });
-  } catch (error) {
+  } catch {
     return Response.json({ error: "Encryption failed" }, { status: 500 });
   }
 }

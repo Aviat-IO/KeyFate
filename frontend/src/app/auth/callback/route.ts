@@ -8,7 +8,7 @@ export async function GET(request: Request) {
 
   if (code) {
     const cookieStore = await cookies();
-    // @ts-expect-error
+    // @ts-expect-error - Supabase auth helpers expect different cookie format
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
     try {

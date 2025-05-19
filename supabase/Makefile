@@ -1,4 +1,4 @@
-.PHONY: dev stop help status test
+.PHONY: dev stop help status test gen-types
 
 dev:
 	supabase start
@@ -14,3 +14,6 @@ status:
 
 test:
 	supabase test
+
+gen-types:
+	npx supabase gen types typescript --local > database.types.ts

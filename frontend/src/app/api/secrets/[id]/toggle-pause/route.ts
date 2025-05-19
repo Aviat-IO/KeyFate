@@ -1,18 +1,17 @@
+import { Database, Secret } from "@/types";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import type { Database } from "@/lib/database.types";
 
-interface PageParams {
-  params: { id: string };
-}
-
-export async function POST(_request: Request, { params }: PageParams) {
+export async function POST(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     const { id } = await params;
     const cookieStore = await cookies();
     const supabase = createRouteHandlerClient<Database>({
-      // @ts-expect-error
+      // @ts-expect-error - cookies function signature mismatch with Next.js 15
       cookies: () => cookieStore,
     });
 
@@ -25,7 +24,10 @@ export async function POST(_request: Request, { params }: PageParams) {
     }
 
     // Get the secret and verify ownership
-    const { data: secret, error: secretError } = await supabase
+    const { data: secret, error: secretError }: {
+      data: Secret | null;
+      error: Error | null;
+    } = await supabase
       .from("secrets")
       .select("*")
       .eq("id", id)
@@ -67,7 +69,10 @@ export async function POST(_request: Request, { params }: PageParams) {
     }
 
     // Fetch the updated secret
-    const { data: updatedSecret, error: fetchError } = await supabase
+    const { data: updatedSecret, error: fetchError }: {
+      data: Secret | null;
+      error: Error | null;
+    } = await supabase
       .from("secrets")
       .select("*")
       .eq("id", id)

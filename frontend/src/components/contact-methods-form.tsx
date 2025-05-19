@@ -11,8 +11,6 @@ import {
 import type { ContactMethods } from "@/hooks/useContactMethods"
 import { AlertCircle } from "lucide-react"
 import { useState } from "react"
-import { z } from "zod"
-
 interface ContactMethodsFormProps {
   onSubmit: (methods: ContactMethods) => Promise<void>
   initialValues?: ContactMethods
@@ -30,16 +28,6 @@ const defaultContactMethods: ContactMethods = {
   preferred_method: "email",
   check_in_days: 90,
 }
-
-const formSchema = z.object({
-  email: z.string().email(),
-  phone: z.string().min(10).max(15),
-  telegram_username: z.string().min(5).max(32),
-  whatsapp: z.string().min(10).max(15),
-  signal: z.string().min(10).max(15),
-  preferred_method: z.enum(["email", "phone", "both"]),
-  check_in_days: z.number().min(1).max(365),
-})
 
 export function ContactMethodsForm({
   onSubmit,

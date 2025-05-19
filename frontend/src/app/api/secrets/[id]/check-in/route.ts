@@ -1,19 +1,18 @@
-import type { Database } from "@/lib/database.types";
-import { Secret } from "@/types/secret";
+import type { Database } from "@/types";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { Secret } from "@/types";
 
-interface PageParams {
-  params: { id: string };
-}
-
-export async function POST(_request: Request, { params }: PageParams) {
+export async function POST(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
     const cookieStore = await cookies();
     const supabase = createRouteHandlerClient<Database>({
-      // @ts-expect-error
+      // @ts-expect-error - cookies function signature mismatch with Next.js 15
       cookies: () => cookieStore,
     });
 

@@ -35,12 +35,19 @@ export default function SignUpPage() {
 
   return (
     <>
-      <div>
+      <div className="space-y-2">
         <h2 className="text-center text-3xl font-bold tracking-tight">
           Create your account
         </h2>
-        <p className="text-muted-foreground mt-2 text-center text-sm">
-          Enter your email to create an account
+        <p className="text-muted-foreground text-center text-sm">
+          Or{" "}
+          <Link
+            href="/auth/login"
+            className="text-primary hover:text-primary/90 transition hover:underline"
+          >
+            sign in
+          </Link>{" "}
+          if you already have an account
         </p>
       </div>
       <form className="mt-8 space-y-6" onSubmit={handleSignUp}>
@@ -101,16 +108,6 @@ export default function SignUpPage() {
             Forgot your password?
           </Link>
         </div>
-
-        <p className="text-muted-foreground text-center text-sm">
-          Already have an account?{" "}
-          <Link
-            href="/auth/login"
-            className="text-primary hover:text-primary/90 transition hover:underline"
-          >
-            Sign in
-          </Link>
-        </p>
       </form>
 
       <div className="relative">
