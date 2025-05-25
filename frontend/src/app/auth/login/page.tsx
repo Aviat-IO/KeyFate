@@ -1,14 +1,14 @@
 "use client"
 
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle } from "lucide-react"
-import { useEffect, useState } from "react"
+import { SocialButtons } from "@/components/ui/social-buttons"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { SocialButtons } from "@/components/ui/social-buttons"
+import { useEffect, useState } from "react"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")

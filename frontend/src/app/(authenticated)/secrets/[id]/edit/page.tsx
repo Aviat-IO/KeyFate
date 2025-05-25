@@ -1,8 +1,13 @@
 import { SecretDetailsForm } from "@/components/forms/secretDetailsForm"
 import { Database, Secret } from "@/types"
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
+import { Metadata } from "next"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
+
+export const metadata: Metadata = {
+  title: "KeyFate - Edit Secret",
+}
 
 interface PageParams {
   params: Promise<{ id: string }>

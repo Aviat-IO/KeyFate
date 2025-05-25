@@ -11,7 +11,7 @@
   - [x] The secret cannot be edited, but users can delete the server's share (with a notice that the other shares STILL could be used to reconstruct the secret)
   - [x] Users can choose to reveal the server's share (decrypt on the server and show on the UI). This should have a prompt first that warns the user that this share can be combined with other shares to reveal the secret and that they should only do this if they're doing it for recovery reasons
 - [ ] Add unit tests
-- [ ] Google Sign on
+- [x] Google Sign on
 - [x] Enable users to pause and reactivate secrets
 - [x] Reminders to check in
 - [ ] ToS and Privacy Policy
@@ -27,3 +27,7 @@
 
 - [ ] SMS reminders
 - [ ] 3rd-party security audit
+- [ ] Contacts stored in the contacts table
+  - [ ] Import contacts from Google Contacts
+  - [ ] Import contacts from Apple
+- [ ] Payment wired up

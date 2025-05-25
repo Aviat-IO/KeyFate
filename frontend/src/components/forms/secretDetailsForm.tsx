@@ -398,7 +398,15 @@ export function SecretDetailsForm({ secret }: SecretDetailsFormProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => copyToClipboard(serverShare)}
+                  onClick={() => {
+                    copyToClipboard(serverShare)
+                    const button = document.activeElement as HTMLButtonElement
+                    const originalText = button.textContent
+                    button.textContent = "Copied!"
+                    setTimeout(() => {
+                      button.textContent = originalText
+                    }, 2000)
+                  }}
                 >
                   Copy Share
                 </Button>

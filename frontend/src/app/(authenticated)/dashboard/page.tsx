@@ -3,8 +3,13 @@ import { Button } from "@/components/ui/button"
 import { Database, Secret } from "@/types"
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 import { AlertCircle, PlusCircle } from "lucide-react"
+import { Metadata } from "next"
 import { cookies } from "next/headers"
 import Link from "next/link"
+
+export const metadata: Metadata = {
+  title: "KeyFate - Dashboard",
+}
 
 export default async function DashboardPage() {
   const cookieStore = await cookies()

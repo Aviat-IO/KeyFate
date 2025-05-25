@@ -1,14 +1,14 @@
 "use client"
 
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle } from "lucide-react"
-import { useState } from "react"
-import { supabase } from "@/lib/supabase"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
 import { SocialButtons } from "@/components/ui/social-buttons"
+import { supabase } from "@/lib/supabase"
+import { AlertCircle } from "lucide-react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("")
