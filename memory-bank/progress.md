@@ -59,7 +59,8 @@
 - [x] Google Sign on
 - [x] Enable users to pause and reactivate secrets
 - [x] Reminders to check in
-- [ ] ToS and Privacy Policy
+- [x] ToS and Privacy Policy
+  - [ ] Have a lawyer review before going live
 - [ ] Email verification for user.meta.email_verified not being set to true. Also need to enable email verify with OTP.
 - [ ]  Deploy to Supabase prod and be comfortable with DB management
 - [ ] Unauthenticated page where people can explore Shamir's Secret Sharing

@@ -1,4 +1,5 @@
 import { SecretDetailsForm } from "@/components/forms/secretDetailsForm"
+import { NEXT_PUBLIC_COMPANY } from "@/lib/env"
 import { Database, Secret } from "@/types"
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Metadata } from "next"
@@ -6,7 +7,8 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 
 export const metadata: Metadata = {
-  title: "KeyFate - Edit Secret",
+  title: `${NEXT_PUBLIC_COMPANY} - Edit Secret`,
+  description: `Edit secret for ${NEXT_PUBLIC_COMPANY} dead man's switch service`,
 }
 
 interface PageParams {

@@ -1,8 +1,8 @@
-# Key Fate: A Dead Man's Switch — Project Overview
+# KeyFate: A Dead Man's Switch — Project Overview
 
 ## Purpose
 
-Key Fate is a secure dead man's switch platform. Users create secrets (e.g., private keys, sensitive info) that are disclosed to a chosen recipient if the user fails to check in. Designed for personal use (journalists, estate planning, crypto holders), with future B2B potential.
+KeyFate is a secure dead man's switch platform using client-side Shamir's Secret Sharing. Users create secrets (e.g., private keys, sensitive info) that are disclosed to a chosen recipient if the user fails to check in. Secret creation and recovery happen 100% client-side, ensuring we never have access to users' original secrets. Designed for personal use (journalists, estate planning, crypto holders), with future B2B potential.
 
 ## Core User Story
 
@@ -13,7 +13,8 @@ Key Fate is a secure dead man's switch platform. Users create secrets (e.g., pri
 
 ## Key Features
 
-- Secret creation and end-to-end encryption (client-side; only user holds decryption key).
+- Secret creation and Shamir's Secret Sharing (100% client-side; we only receive one encrypted share that alone cannot reconstruct secrets).
+- Threshold security requiring at least 2 shares for secret reconstruction.
 - Periodic check-in system with reminders (email/SMS planned).
 - Recipient management and secure disclosure.
 - Google OAuth and email-based authentication.
@@ -28,8 +29,10 @@ Key Fate is a secure dead man's switch platform. Users create secrets (e.g., pri
 
 ## Security Positioning
 
-- Secrets are encrypted in the browser before storage; only the user knows the decryption key.
-- No plaintext secrets are ever stored in the database.
+- Secrets are split using Shamir's Secret Sharing entirely in the browser; original secrets never leave the user's device.
+- We only receive one share (which alone cannot reconstruct the secret) and encrypt it before storage.
+- No plaintext secrets or sufficient shares to reconstruct secrets are ever stored in the database.
+- Mathematical impossibility of secret reconstruction from our servers alone (requires at least 2 shares).
 - Authentication and recipient verification via email/SMS.
 - Security best practices enforced throughout the stack.
 

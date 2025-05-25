@@ -1,5 +1,6 @@
 import { SecretCard } from "@/components/secret-card"
 import { Button } from "@/components/ui/button"
+import { NEXT_PUBLIC_COMPANY } from "@/lib/env"
 import { Database, Secret } from "@/types"
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 import { AlertCircle, PlusCircle } from "lucide-react"
@@ -8,7 +9,8 @@ import { cookies } from "next/headers"
 import Link from "next/link"
 
 export const metadata: Metadata = {
-  title: "KeyFate - Dashboard",
+  title: `${NEXT_PUBLIC_COMPANY} - Dashboard`,
+  description: `Dashboard for ${NEXT_PUBLIC_COMPANY} dead man's switch service`,
 }
 
 export default async function DashboardPage() {

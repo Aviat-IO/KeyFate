@@ -1,3 +1,5 @@
+import { Footer } from "@/components/footer"
+import { NavBar } from "@/components/nav-bar"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -7,7 +9,6 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Clock, Lock, Shield } from "lucide-react"
-import { NavBar } from "@/components/nav-bar"
 import Link from "next/link"
 
 export default function Home() {
@@ -23,7 +24,7 @@ export default function Home() {
           </h1>
           <p className="text-muted-foreground mt-6 text-lg leading-8">
             Your key to peace of mind. Share your secrets with trusted contacts
-            if you don't check in.
+            if you don't check in
           </p>
           <div className="mt-10 flex items-center justify-center gap-x-6">
             <Button size="lg" asChild>
@@ -48,8 +49,8 @@ export default function Home() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              Military-grade encryption ensures your data remains private until
-              you want it shared.
+              Shamir's Secret Sharing happens 100% client-side. We only store
+              one encrypted share that alone cannot reconstruct your secret.
             </CardContent>
           </Card>
 
@@ -129,6 +130,8 @@ export default function Home() {
           </Card>
         </div>
       </section>
+
+      <Footer />
     </div>
   )
 }
