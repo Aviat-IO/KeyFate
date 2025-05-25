@@ -162,7 +162,6 @@ export function ContactMethodsForm({
           type="number"
           min={1}
           max={365}
-          defaultValue={90}
           value={contactMethods.check_in_days}
           onChange={(e) =>
             setContactMethods({
