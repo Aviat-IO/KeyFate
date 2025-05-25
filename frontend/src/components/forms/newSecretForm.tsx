@@ -1,12 +1,12 @@
 "use client"
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
-import sss from "shamirs-secret-sharing"
-import { Buffer } from "buffer"
-
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -18,7 +18,6 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
@@ -26,16 +25,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
-import { AlertCircle, LockIcon, Info } from "lucide-react"
-import { secretFormSchema, type SecretFormValues } from "@/lib/schemas/secret"
+import { Textarea } from "@/components/ui/textarea"
 import { encryptMessage } from "@/lib/encryption"
+import { secretFormSchema, type SecretFormValues } from "@/lib/schemas/secret"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Buffer } from "buffer"
+import { AlertCircle, Info, LockIcon } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
+import { useForm } from "react-hook-form"
+import sss from "shamirs-secret-sharing"
 
 export function NewSecretForm() {
   const router = useRouter()
@@ -43,6 +42,7 @@ export function NewSecretForm() {
 
   const form = useForm<SecretFormValues>({
     resolver: zodResolver(secretFormSchema),
+    mode: "onBlur",
     defaultValues: {
       title: "",
       secretMessageContent: "",
@@ -360,23 +360,28 @@ export function NewSecretForm() {
                   <FormField
                     control={form.control}
                     name="sss_shares_total"
-                    render={({ field }) => (
+                    render={({ field: { onChange, value, ...field } }) => (
                       <FormItem>
                         <FormLabel>Total Shares to Create</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
-                            {...field}
+                            value={value?.toString() ?? ""}
                             min="2"
                             max="10"
-                            onChange={(e) =>
-                              field.onChange(
-                                e.target.value === ""
-                                  ? null
-                                  : parseInt(e.target.value, 10),
-                              )
-                            }
+                            onChange={(e) => {
+                              const val = e.target.value
+                              if (val === "") {
+                                onChange("")
+                              } else {
+                                const numValue = parseInt(val, 10)
+                                if (!isNaN(numValue)) {
+                                  onChange(numValue)
+                                }
+                              }
+                            }}
                             disabled={isSubmitting}
+                            {...field}
                           />
                         </FormControl>
                         <FormDescription>
@@ -389,7 +394,7 @@ export function NewSecretForm() {
                   <FormField
                     control={form.control}
                     name="sss_threshold"
-                    render={({ field }) => (
+                    render={({ field: { onChange, value, ...field } }) => (
                       <FormItem>
                         <FormLabel>
                           Shares Needed for Recovery (Threshold)
@@ -397,17 +402,22 @@ export function NewSecretForm() {
                         <FormControl>
                           <Input
                             type="number"
-                            {...field}
+                            value={value?.toString() ?? ""}
                             min="2"
                             max="10"
-                            onChange={(e) =>
-                              field.onChange(
-                                e.target.value === ""
-                                  ? null
-                                  : parseInt(e.target.value, 10),
-                              )
-                            }
+                            onChange={(e) => {
+                              const val = e.target.value
+                              if (val === "") {
+                                onChange("")
+                              } else {
+                                const numValue = parseInt(val, 10)
+                                if (!isNaN(numValue)) {
+                                  onChange(numValue)
+                                }
+                              }
+                            }}
                             disabled={isSubmitting}
+                            {...field}
                           />
                         </FormControl>
                         <FormDescription>

@@ -11,19 +11,41 @@ export const secretFormSchema = z.object({
     message: "Check-in frequency must be at least 2 days.",
   }),
   sss_shares_total: z
-    .number({
-      required_error: "Total shares is required.",
-      invalid_type_error: "Total shares must be a number.",
+    .union([z.string(), z.number()])
+    .transform((val) => {
+      if (typeof val === "string") {
+        if (val === "") return undefined;
+        const num = parseInt(val, 10);
+        return isNaN(num) ? undefined : num;
+      }
+      return val;
     })
-    .min(2, "Total shares must be at least 2.")
-    .max(10, "Total shares cannot exceed 10."),
+    .pipe(
+      z.number({
+        required_error: "Total shares is required.",
+        invalid_type_error: "Total shares must be a number.",
+      })
+        .min(2, "Total shares must be at least 2.")
+        .max(10, "Total shares cannot exceed 10."),
+    ),
   sss_threshold: z
-    .number({
-      required_error: "Threshold is required.",
-      invalid_type_error: "Threshold must be a number.",
+    .union([z.string(), z.number()])
+    .transform((val) => {
+      if (typeof val === "string") {
+        if (val === "") return undefined;
+        const num = parseInt(val, 10);
+        return isNaN(num) ? undefined : num;
+      }
+      return val;
     })
-    .min(2, "Threshold must be at least 2.")
-    .max(10, "Threshold cannot exceed 10."),
+    .pipe(
+      z.number({
+        required_error: "Threshold is required.",
+        invalid_type_error: "Threshold must be a number.",
+      })
+        .min(2, "Threshold must be at least 2.")
+        .max(10, "Threshold cannot exceed 10."),
+    ),
 }).refine((data) => {
   // Ensure data.sss_threshold and data.sss_shares_total are numbers before comparison
   // This should be guaranteed by the .number() type, but good for robustness

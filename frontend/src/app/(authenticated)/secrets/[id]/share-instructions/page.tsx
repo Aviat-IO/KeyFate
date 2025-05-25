@@ -71,8 +71,8 @@ function ShareDisplay({
       </div>
       {copied && <p className="text-xs text-green-600">Copied to clipboard!</p>}
       <p className="text-muted-foreground text-xs">
-        This is {shareName.toLowerCase()}. Store it securely. You will need it
-        along with other shares to recover the secret.
+        This is {shareName}. Store it securely. You will need it along with
+        other shares to recover the secret.
       </p>
     </div>
   )
@@ -154,8 +154,14 @@ function ShareInstructionsContent() {
     }
   }
 
-  const primaryRecipientShare =
-    userManagedShares.length > 1 ? userManagedShares[1] : null
+  // For 2-share scenario: only recipient share exists (no personal share for user)
+  // For 3+ share scenario: first is personal, second is recipient, rest are additional
+  const isMinimalShares = sssSharesTotal === 2
+  const primaryRecipientShare = isMinimalShares
+    ? userManagedShares[0]
+    : userManagedShares.length > 1
+      ? userManagedShares[1]
+      : null
 
   let recipientShareMailto = null
   if (recipientEmail && primaryRecipientShare) {
@@ -201,7 +207,9 @@ function ShareInstructionsContent() {
   }
 
   // const usersPersonalShare = userManagedShares[0]
-  const additionalDistributableShares = userManagedShares.slice(2)
+  const additionalDistributableShares = isMinimalShares
+    ? []
+    : userManagedShares.slice(2)
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
@@ -224,44 +232,59 @@ function ShareInstructionsContent() {
               <ul className="mt-2 list-disc space-y-1 pl-5">
                 <li>
                   <strong>
-                    KeyFate&apos;s Share (Share 1 of {sssSharesTotal}):
+                    KeyFate's Share (Share 1 of {sssSharesTotal}):
                   </strong>{" "}
                   We securely store one share. This share alone cannot reveal
                   your secret. It will be sent to{" "}
                   {recipientName || "your primary recipient"} if you miss your
                   check-ins.
                 </li>
-                <li>
-                  <strong>
-                    Your Personal Share (Share 2 of {sssSharesTotal}):
-                  </strong>{" "}
-                  Displayed below. This is `Share #1` in the list below. Keep
-                  this share extremely safe and private.{" "}
-                  <strong>
-                    If you lose this, and other required shares are lost, the
-                    secret may be unrecoverable.
-                  </strong>
-                </li>
-                {primaryRecipientShare && (
+                {isMinimalShares ? (
                   <li>
                     <strong>
-                      Primary Recipient&apos;s Share (Share 3 of{" "}
-                      {sssSharesTotal}):
+                      Recipient's Share (Share 2 of {sssSharesTotal}):
                     </strong>{" "}
-                    Displayed below as `Share #2`. This is for{" "}
+                    Displayed below. This is for{" "}
                     {recipientName || "your primary recipient"}. You MUST send
-                    this to them.
+                    this to them. With only 2 shares total, both KeyFate's share
+                    and this recipient share are required to recover the secret.
                   </li>
-                )}
-                {additionalDistributableShares.length > 0 && (
-                  <li>
-                    <strong>
-                      Additional Distributable Shares (Shares 4 to{" "}
-                      {sssSharesTotal} of {sssSharesTotal}):
-                    </strong>{" "}
-                    Displayed below as `Share #3` onwards. You are responsible
-                    for securely distributing these additional shares.
-                  </li>
+                ) : (
+                  <>
+                    <li>
+                      <strong>
+                        Your Personal Share (Share 2 of {sssSharesTotal}):
+                      </strong>{" "}
+                      Displayed below. This is `Share #1` in the list below.
+                      Keep this share extremely safe and private.{" "}
+                      <strong>
+                        If you lose this, and other required shares are lost,
+                        the secret may be unrecoverable.
+                      </strong>
+                    </li>
+                    {primaryRecipientShare && (
+                      <li>
+                        <strong>
+                          Primary Recipient's Share (Share 3 of {sssSharesTotal}
+                          ):
+                        </strong>{" "}
+                        Displayed below as `Share #2`. This is for{" "}
+                        {recipientName || "your primary recipient"}. You MUST
+                        send this to them.
+                      </li>
+                    )}
+                    {additionalDistributableShares.length > 0 && (
+                      <li>
+                        <strong>
+                          Additional Distributable Shares (Shares 4 to{" "}
+                          {sssSharesTotal} of {sssSharesTotal}):
+                        </strong>{" "}
+                        Displayed below as `Share #3` onwards. You are
+                        responsible for securely distributing these additional
+                        shares.
+                      </li>
+                    )}
+                  </>
                 )}
               </ul>
             </AlertDescription>
@@ -273,12 +296,18 @@ function ShareInstructionsContent() {
             let shareName = ""
             const trueShareNumber = index + 2
 
-            if (index === 0) {
-              shareName = "Your Personal Share"
-            } else if (index === 1) {
-              shareName = `Primary Recipient&apos;s (${recipientName || "N/A"}) Share`
+            if (isMinimalShares) {
+              // Only one share for recipient in 2-share scenario
+              shareName = `Recipient's (${recipientName || "N/A"}) Share`
             } else {
-              shareName = "Additional Distributable Share"
+              // 3+ share scenario
+              if (index === 0) {
+                shareName = "Your Personal Share"
+              } else if (index === 1) {
+                shareName = `Primary Recipient's (${recipientName || "N/A"}) Share`
+              } else {
+                shareName = "Additional Distributable Share"
+              }
             }
 
             return (
@@ -296,36 +325,48 @@ function ShareInstructionsContent() {
           <Separator />
 
           <Alert variant="destructive" className="mt-6">
-            <AlertTriangle className="h-5 w-5" />
+            <AlertTriangle className="mt-0.5 h-5 w-5" />
             <AlertTitle className="text-lg">
               CRITICAL: Securely Distribute Shares!
             </AlertTitle>
-            <AlertDescription className="space-y-3">
+            <AlertDescription className="text-foreground space-y-3">
               <p>
                 For this system to work, you <strong>MUST</strong> take the
                 following actions:
               </p>
               <ul className="list-disc space-y-1 pl-6">
-                <li>
-                  <strong>Your Personal Share:</strong> Keep this share
-                  extremely safe and private.
-                </li>
-                {primaryRecipientShare && (
+                {isMinimalShares ? (
                   <li>
-                    <strong>Primary Recipient&apos;s:</strong> Securely send
-                    this to{" "}
-                    {recipientName || "your designated primary recipient"} (
-                    {recipientEmail || "their contact details"}).
+                    <strong>Recipient's Share:</strong> Securely send this to{" "}
+                    {recipientName || "your designated recipient"} (
+                    {recipientEmail || "their contact details"}). This is the
+                    only share you need to distribute - KeyFate will
+                    automatically provide its share when needed.
                   </li>
-                )}
-                {additionalDistributableShares.length > 0 && (
-                  <li>
-                    <strong>
-                      Additional Distributable Shares (Display #3 onwards):
-                    </strong>{" "}
-                    Securely send these to their intended recipients. You are
-                    responsible for their distribution.
-                  </li>
+                ) : (
+                  <>
+                    <li>
+                      <strong>Your Personal Share:</strong> Keep this share
+                      extremely safe and private.
+                    </li>
+                    {primaryRecipientShare && (
+                      <li>
+                        <strong>Primary Recipient's:</strong> Securely send this
+                        to{" "}
+                        {recipientName || "your designated primary recipient"} (
+                        {recipientEmail || "their contact details"}).
+                      </li>
+                    )}
+                    {additionalDistributableShares.length > 0 && (
+                      <li>
+                        <strong>
+                          Additional Distributable Shares (Display #3 onwards):
+                        </strong>{" "}
+                        Securely send these to their intended recipients. You
+                        are responsible for their distribution.
+                      </li>
+                    )}
+                  </>
                 )}
               </ul>
               <p>
@@ -348,14 +389,14 @@ function ShareInstructionsContent() {
                 </li>
               </ul>
               {recipientShareMailto && primaryRecipientShare && (
-                <Button asChild variant="outline" className="mt-2 w-full">
+                <Button asChild variant="destructive" className="mt-2 w-full">
                   <a
                     href={recipientShareMailto}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
                     <Send className="mr-2 h-4 w-4" />
-                    Email Primary Recipient&apos;s Share to{" "}
+                    Email Primary Recipient's Share to{" "}
                     {recipientName || recipientEmail}
                   </a>
                 </Button>
@@ -376,8 +417,9 @@ function ShareInstructionsContent() {
               htmlFor="confirm-sent"
               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
-              I have securely distributed all necessary shares as instructed and
-              understand their importance.
+              {isMinimalShares
+                ? "I have securely sent the recipient's share as instructed and understand its importance."
+                : "I have securely distributed all necessary shares as instructed and understand their importance."}
             </Label>
           </div>
         </CardContent>
@@ -390,7 +432,9 @@ function ShareInstructionsContent() {
           >
             {confirmedSent
               ? "Proceed to Dashboard"
-              : "Confirm Shares Distributed to Proceed"}
+              : isMinimalShares
+                ? "Confirm Share Sent to Proceed"
+                : "Confirm Shares Distributed to Proceed"}
           </Button>
         </CardFooter>
       </Card>
