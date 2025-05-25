@@ -252,7 +252,7 @@ export default function PrivacyPolicyPage() {
             To exercise these rights, contact us at{" "}
             <a
               href={`mailto:${NEXT_PUBLIC_SUPPORT_EMAIL}`}
-              className="text-blue-600 hover:underline"
+              className="text-primary hover:underline"
             >
               {NEXT_PUBLIC_SUPPORT_EMAIL}
             </a>
@@ -298,7 +298,7 @@ export default function PrivacyPolicyPage() {
           <h2 className="mb-4 text-2xl font-semibold">
             11. Contact Information
           </h2>
-          <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+          <div className="bg-muted rounded-lg p-4">
             <p>
               <strong>{NEXT_PUBLIC_PARENT_COMPANY}</strong>
             </p>
@@ -307,7 +307,7 @@ export default function PrivacyPolicyPage() {
               Email:{" "}
               <a
                 href={`mailto:${NEXT_PUBLIC_SUPPORT_EMAIL}`}
-                className="text-blue-600 hover:underline"
+                className="text-primary hover:underline"
               >
                 {NEXT_PUBLIC_SUPPORT_EMAIL}
               </a>

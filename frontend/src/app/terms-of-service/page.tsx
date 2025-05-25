@@ -251,11 +251,11 @@ export default function TermsOfServicePage() {
           </h2>
 
           <h3 className="mb-2 text-xl font-medium">9.1 Service Disclaimers</h3>
-          <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-900/20">
-            <p className="mb-2 font-semibold text-yellow-800 dark:text-yellow-200">
+          <div className="border-warning/20 bg-warning/10 rounded-lg border p-4">
+            <p className="text-foreground mb-2 font-semibold">
               IMPORTANT DISCLAIMERS:
             </p>
-            <ul className="list-disc space-y-1 pl-6 text-yellow-700 dark:text-yellow-300">
+            <ul className="text-foreground/80 list-disc space-y-1 pl-6">
               <li>
                 THE SERVICE IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND
               </li>
@@ -274,11 +274,11 @@ export default function TermsOfServicePage() {
           <h3 className="mb-2 text-xl font-medium">
             9.2 Limitation of Liability
           </h3>
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-            <p className="mb-2 font-semibold text-red-800 dark:text-red-200">
+          <div className="border-destructive/20 bg-destructive/10 rounded-lg border p-4">
+            <p className="text-foreground mb-2 font-semibold">
               LIABILITY LIMITATIONS:
             </p>
-            <ul className="list-disc space-y-1 pl-6 text-red-700 dark:text-red-300">
+            <ul className="text-foreground/80 list-disc space-y-1 pl-6">
               <li>
                 TO THE MAXIMUM EXTENT PERMITTED BY LAW,{" "}
                 {NEXT_PUBLIC_PARENT_COMPANY} SHALL NOT BE LIABLE FOR ANY
@@ -410,7 +410,7 @@ export default function TermsOfServicePage() {
           <h2 className="mb-4 text-2xl font-semibold">
             14. Contact Information
           </h2>
-          <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+          <div className="bg-muted rounded-lg p-4">
             <p>
               <strong>{NEXT_PUBLIC_PARENT_COMPANY}</strong>
             </p>
@@ -419,7 +419,7 @@ export default function TermsOfServicePage() {
               Email:{" "}
               <a
                 href={`mailto:${NEXT_PUBLIC_SUPPORT_EMAIL}`}
-                className="text-blue-600 hover:underline"
+                className="text-primary hover:underline"
               >
                 {NEXT_PUBLIC_SUPPORT_EMAIL}
               </a>
@@ -433,11 +433,11 @@ export default function TermsOfServicePage() {
 
         <section>
           <h2 className="mb-4 text-2xl font-semibold">15. Acknowledgment</h2>
-          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
-            <p className="mb-2 font-semibold text-blue-800 dark:text-blue-200">
+          <div className="border-primary/20 bg-primary/10 rounded-lg border p-4">
+            <p className="text-foreground mb-2 font-semibold">
               By using {NEXT_PUBLIC_COMPANY}, you acknowledge that:
             </p>
-            <ul className="list-disc space-y-1 pl-6 text-blue-700 dark:text-blue-300">
+            <ul className="text-foreground/80 list-disc space-y-1 pl-6">
               <li>
                 You understand the nature and risks of a dead man's switch
                 service
