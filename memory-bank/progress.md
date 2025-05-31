@@ -68,6 +68,14 @@
   - [ ] One for generating new shares
     - [ ] Big disclaimers that this is for exploration / learning only. You should not input actual secrets here; if you want to do that, use KeyFates (give them a link to sign in / up)
 - [x] Add a link to sign up from the sign in form.
+- [ ] Process to delete a user (GDPR)
+- [ ] Set up automatic expiration (scheduled deletion) of secrets after they're triggered as listed in the Privacy Policy
+  - [ ] Cron that runs daily to delete expired secrets
+- [ ] Payment wired up
+  - [ ] Accept Credit Cards
+  - [ ] Accept Bitcoin (via either Lightning or Cashu tokens). This should be a completely anonymous option
+  - [ ] Determine reasonable monthly and annual billing rates
+  - [ ] Hook into payments to then set user attributes noting that they've paid (so we can use this to offer/restrict app features)
 
 ## v2 Tasks
 
@@ -76,4 +84,3 @@
 - [ ] Contacts stored in the contacts table
   - [ ] Import contacts from Google Contacts
   - [ ] Import contacts from Apple
-- [ ] Payment wired up

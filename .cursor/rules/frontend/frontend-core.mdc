@@ -1,0 +1,26 @@
+---
+description: 
+globs: ["frontend/**/*"],**/frontend/**
+alwaysApply: false
+---
+# Frontend Development Rules
+
+## Next.js Patterns
+- Use server components by default
+- Only use `'use client'` for Web API access
+- Use App Router with proper loading/error boundaries
+
+## Component Architecture
+- Use functional components with TypeScript types
+- Prefer named exports over default exports
+- Use descriptive variable names (isLoading, hasError)
+
+## State Management
+- Use 'nuqs' for URL search parameter state
+- Minimize useState and useEffect
+- Prefer server state over client state
+
+## Performance & UI
+- Wrap client components in Suspense
+- Use TailwindCSS for styling
+- Use Shadcn/UI for components

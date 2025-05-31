@@ -1,0 +1,33 @@
+---
+description: 
+globs: supabase/**
+alwaysApply: false
+---
+# Supabase Development Rules
+
+## Database Schema
+- Use RLS (Row Level Security) policies for all tables
+- Store encrypted server shares in `secrets.server_share` column
+- Include `iv`, `auth_tag` columns for AES-256-GCM decryption
+- Store SSS parameters: `sss_shares_total`, `sss_threshold`
+
+## Migration Patterns
+- Always create reversible migrations
+- Test migrations locally before applying to production
+- Use descriptive migration names with dates
+
+## Edge Functions
+- Use TypeScript for all Edge Functions
+- Handle check-in reminders and secret triggering
+- Implement proper error handling and logging
+
+## Key Tables
+- `secrets`: Core secret metadata + encrypted server share
+- `recipient_access_tokens`: Time-limited access for secret recovery
+- Users managed through Supabase Auth
+
+## Security Considerations
+- Never store plaintext secrets in database
+- Use secure token generation for recipient access
+- Log security events for audit trails
+

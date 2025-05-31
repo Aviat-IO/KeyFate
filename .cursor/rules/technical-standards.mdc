@@ -1,0 +1,15 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Technical Standards
+
+- Always run pnpm as a package manager (and not npm)
+- Consider the following at every point
+  - Maintainability (inversion of control, dependency injection, interfaces, etc)
+  - Security
+  - Logging, Monitoring, and Visibility
+- Prefer Typescript over other languages
+
+
