@@ -8,7 +8,22 @@ CREATE SCHEMA IF NOT EXISTS extensions;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp" SCHEMA public;
 CREATE EXTENSION IF NOT EXISTS pgcrypto SCHEMA public;
 CREATE EXTENSION IF NOT EXISTS pg_net WITH SCHEMA extensions;
-CREATE EXTENSION IF NOT EXISTS pg_cron WITH SCHEMA extensions;
+
+-- Handle pg_cron extension (may already exist in different schema)
+DO $$
+BEGIN
+    -- Try to create in extensions schema, but don't fail if it exists elsewhere
+    BEGIN
+        CREATE EXTENSION IF NOT EXISTS pg_cron WITH SCHEMA extensions;
+    EXCEPTION
+        WHEN dependent_objects_still_exist THEN
+            -- Extension exists with dependencies, skip creation
+            RAISE NOTICE 'pg_cron extension already exists with dependencies, skipping';
+        WHEN duplicate_object THEN
+            -- Extension already exists, skip creation
+            RAISE NOTICE 'pg_cron extension already exists, skipping';
+    END;
+END $$;
 
 -- Grant usage on extensions schema
 REVOKE ALL ON SCHEMA extensions FROM public;
@@ -50,7 +65,7 @@ CREATE TYPE reminder_status AS ENUM (
 
 -- Create updated_at function
 CREATE OR REPLACE FUNCTION public.update_updated_at_column()
-RETURNS TRIGGER 
+RETURNS TRIGGER
 SECURITY DEFINER
 SET search_path = ''
 AS $$
@@ -184,7 +199,7 @@ CREATE OR REPLACE FUNCTION public.check_in_secret(
     p_user_id UUID,
     p_checked_in_at TIMESTAMPTZ,
     p_next_check_in TIMESTAMPTZ
-) RETURNS void 
+) RETURNS void
 SECURITY DEFINER
 SET search_path = ''
 AS $$
@@ -218,7 +233,7 @@ CREATE OR REPLACE FUNCTION public.toggle_secret_pause(
     p_new_status TEXT,
     p_checked_in_at TIMESTAMPTZ,
     p_next_check_in TIMESTAMPTZ
-) RETURNS void 
+) RETURNS void
 SECURITY DEFINER
 SET search_path = public, extensions
 AS $$
@@ -250,7 +265,7 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION public.schedule_secret_reminders(
   p_secret_id UUID,
   p_next_check_in TIMESTAMPTZ
-) RETURNS void 
+) RETURNS void
 SECURITY DEFINER
 SET search_path = ''
 AS $$
@@ -324,7 +339,7 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION public.handle_failed_reminder(
   p_reminder_id UUID,
   p_error TEXT
-) RETURNS void 
+) RETURNS void
 SECURITY DEFINER
 SET search_path = ''
 AS $$
@@ -354,7 +369,7 @@ BEGIN
   -- If we've reached max retries, mark as failed and notify admin
   IF v_retry_count >= 4 THEN -- 5 tries total (initial + 4 retries)
     UPDATE reminders
-    SET 
+    SET
       status = 'failed',
       error = p_error,
       last_retry_at = CURRENT_TIMESTAMP
@@ -388,7 +403,7 @@ BEGIN
   ELSE
     -- Increment retry count and update last retry time
     UPDATE reminders
-    SET 
+    SET
       retry_count = retry_count + 1,
       last_retry_at = CURRENT_TIMESTAMP
     WHERE id = p_reminder_id;
@@ -397,9 +412,9 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create function to notify about failed reminders
-CREATE OR REPLACE FUNCTION public.notify_failed_reminders() 
-RETURNS TRIGGER 
-SECURITY DEFINER 
+CREATE OR REPLACE FUNCTION public.notify_failed_reminders()
+RETURNS TRIGGER
+SECURITY DEFINER
 SET search_path = ''
 AS $$
 BEGIN
@@ -429,8 +444,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create trigger to schedule reminders when a secret is created or updated
-CREATE OR REPLACE FUNCTION public.schedule_reminders_on_secret_change() 
-RETURNS TRIGGER 
+CREATE OR REPLACE FUNCTION public.schedule_reminders_on_secret_change()
+RETURNS TRIGGER
 SECURITY DEFINER
 SET search_path = ''
 AS $$
@@ -573,29 +588,29 @@ USING (true)
 WITH CHECK (true);
 
 -- Create indexes for efficient querying
-CREATE INDEX idx_secrets_trigger_check 
+CREATE INDEX idx_secrets_trigger_check
 ON secrets (status, is_triggered, next_check_in)
 WHERE status = 'active' AND is_triggered = false;
 
-CREATE INDEX idx_reminders_status_scheduled 
+CREATE INDEX idx_reminders_status_scheduled
 ON reminders (status, scheduled_for)
 WHERE status = 'pending';
 
-CREATE INDEX idx_reminders_secret_type 
+CREATE INDEX idx_reminders_secret_type
 ON reminders (secret_id, type);
 
-CREATE INDEX idx_reminders_retry_count 
+CREATE INDEX idx_reminders_retry_count
 ON reminders (retry_count)
 WHERE status = 'failed';
 
-CREATE INDEX idx_reminders_user_email 
+CREATE INDEX idx_reminders_user_email
 ON user_contact_methods (user_id)
 WHERE email IS NOT NULL;
 
-CREATE INDEX checkin_history_secret_id_idx 
+CREATE INDEX checkin_history_secret_id_idx
 ON checkin_history(secret_id);
 
-CREATE INDEX checkin_history_user_id_idx 
+CREATE INDEX checkin_history_user_id_idx
 ON checkin_history(user_id);
 
 CREATE INDEX idx_admin_notifications_unacknowledged
@@ -603,12 +618,12 @@ ON admin_notifications (acknowledged_at)
 WHERE acknowledged_at IS NULL;
 
 -- Add is_super_admin column to auth.users if it doesn't exist
-DO $$ 
+DO $$
 BEGIN
   IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns 
-    WHERE table_schema = 'auth' 
-    AND table_name = 'users' 
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'auth'
+    AND table_name = 'users'
     AND column_name = 'is_super_admin'
   ) THEN
     ALTER TABLE auth.users ADD COLUMN is_super_admin BOOLEAN NOT NULL DEFAULT false;

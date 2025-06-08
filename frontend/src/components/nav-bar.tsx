@@ -31,6 +31,16 @@ export function NavBar({ user }: NavBarProps) {
           KeyFate
         </Link>
         <div className="flex items-center gap-4">
+          {!user && (
+            <Button variant="ghost" asChild>
+              <Link
+                href="/pricing"
+                className="transition-all duration-200 hover:underline"
+              >
+                Pricing
+              </Link>
+            </Button>
+          )}
           <ThemeToggle />
           {user ? (
             <>
