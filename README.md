@@ -1,4 +1,4 @@
-# KeyFate
+# KeyFate (Dead Man's Switch)
 
 Your key to peace of mind.
 
@@ -56,11 +56,11 @@ supabase functions deploy check-secrets --env-file ./supabase/functions/.env.pro
 - [ ] Add tests
 - [x] Enable users to pause and reactivate secrets
 - [x] Reminders to check in
-- [ ] ToS and Privacy Policy
-- [ ] New secret email
+- [x] ToS and Privacy Policy
+- [x] New secret email
 - [ ] SMS reminders
 - [ ] Security audit
-- [ ] Fix Google Auth
+- [x] Fix Google Auth
 - [ ] Email verification for user.meta.email_verified not being set to true. Also need to enable email verify with OTP.
 
 Reminder email needs to handle more than 50 reminders.

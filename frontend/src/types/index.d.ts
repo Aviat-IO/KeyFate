@@ -1,6 +1,6 @@
-import * as supabase from "../supabase/types";
+import * as supabase from "@/supabase/types";
 
-export * from "../supabase/types";
+export * from "@/supabase/types";
 
 export type Database = supabase.Database;
 

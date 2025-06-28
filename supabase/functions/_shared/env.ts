@@ -1,11 +1,12 @@
-const ANON_KEY = Deno.env.get("ANON_KEY") ?? "";
+const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ??
+  Deno.env.get("ANON_KEY") ?? "";
 if (!ANON_KEY) {
-  throw new Error("ANON_KEY is not set");
+  throw new Error("SUPABASE_ANON_KEY is not set");
 }
 
-const API_URL = Deno.env.get("API_URL") ?? "";
+const API_URL = Deno.env.get("SUPABASE_URL") ?? Deno.env.get("API_URL") ?? "";
 if (!API_URL) {
-  throw new Error("API_URL is not set");
+  throw new Error("SUPABASE_URL is not set");
 }
 
 const DB_URL = Deno.env.get("DB_URL") ?? "";
@@ -18,9 +19,10 @@ if (!ENCRYPTION_KEY) {
   throw new Error("ENCRYPTION_KEY is not set");
 }
 
-const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
+  Deno.env.get("SERVICE_ROLE_KEY") ?? "";
 if (!SERVICE_ROLE_KEY) {
-  throw new Error("SERVICE_ROLE_KEY is not set");
+  throw new Error("SUPABASE_SERVICE_ROLE_KEY is not set");
 }
 
 const SITE_URL = Deno.env.get("SITE_URL") ?? "";

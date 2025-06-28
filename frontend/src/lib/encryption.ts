@@ -9,6 +9,13 @@ if (!ENCRYPTION_KEY_BASE64) {
 
 const ENCRYPTION_KEY = Buffer.from(ENCRYPTION_KEY_BASE64, "base64");
 
+// Validate key length for AES-256-GCM (must be exactly 32 bytes)
+if (ENCRYPTION_KEY.length !== 32) {
+  throw new Error(
+    `Invalid key length: expected 32 bytes, got ${ENCRYPTION_KEY.length} bytes. Please generate a new 256-bit key.`,
+  );
+}
+
 const DB_ENCODING: BufferEncoding = "base64";
 const MESSAGE_ENCODING: BufferEncoding = "utf8";
 
@@ -54,4 +61,9 @@ export async function decryptMessage(
   ]).toString(MESSAGE_ENCODING);
 
   return decrypted;
+}
+
+// Helper function to generate a new 256-bit encryption key
+export async function generateEncryptionKey(): Promise<string> {
+  return crypto.randomBytes(32).toString("base64");
 }

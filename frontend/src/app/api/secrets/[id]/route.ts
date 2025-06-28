@@ -138,7 +138,7 @@ export async function PUT(
           contact_method,
           check_in_days: parseInt(check_in_days),
           next_check_in: nextCheckIn.toISOString(),
-        } satisfies SecretUpdate,
+        } as any,
       )
       .eq("id", id)
       .eq("user_id", user.id);

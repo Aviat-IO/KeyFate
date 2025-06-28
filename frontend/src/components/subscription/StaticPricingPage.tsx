@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Check, Crown, Star, Zap } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { TIER_CONFIGS } from "@/constants/tiers"
+import { Check, Crown, Zap } from "lucide-react"
 import Link from "next/link"
+import { useState } from "react"
 
 interface StaticPricingPageProps {
   className?: string

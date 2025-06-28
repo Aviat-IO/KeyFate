@@ -20,7 +20,7 @@ CREATE POLICY "Users can view their own tokens"
   FOR SELECT
   USING (
     secret_id IN (
-      SELECT id FROM secrets WHERE user_id = auth.uid()
+      SELECT id FROM secrets WHERE user_id = (select auth.uid())
     )
   );
 
@@ -39,7 +39,7 @@ DECLARE
 BEGIN
   -- Get the current role
   SELECT current_setting('request.jwt.claims', true)::json->>'role' INTO v_role;
-  
+
   -- Verify the caller has appropriate role
   IF v_role IS NULL OR v_role != 'service_role' THEN
     RAISE EXCEPTION 'Unauthorized. Only service_role can create check-in tokens.';
@@ -47,7 +47,7 @@ BEGIN
 
   -- Generate a secure random token
   v_token := encode(gen_random_bytes(32), 'hex');
-  
+
   -- Insert the token
   INSERT INTO check_in_tokens (
     secret_id,
@@ -58,7 +58,7 @@ BEGIN
     v_token,
     CURRENT_TIMESTAMP + p_expires_in
   );
-  
+
   RETURN v_token;
 END;
 $$;

@@ -1,0 +1,99 @@
+# Git and version control
+.git/
+.gitignore
+
+# Node modules and package managers
+node_modules/
+.pnpm-store/
+.npm/
+.yarn/
+
+# Build artifacts and caches
+.next/
+dist/
+build/
+.turbo/
+.cache/
+coverage/
+.nyc_output/
+
+# Development and IDE files
+.vscode/
+.cursor/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Environment files
+.env*
+!.env.example
+
+# Documentation and project management
+README.md
+*.md
+tasks.md
+.prettierrc
+
+# Scripts and database files (not needed for frontend)
+scripts/
+db/
+memory-bank/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Supabase - exclude everything except types
+supabase/migrations/
+supabase/functions/
+supabase/prod-migrations/
+supabase/.branches/
+supabase/.temp/
+supabase/config.toml
+supabase/Makefile
+supabase/.gitignore
+
+# Firebase (since we're not using it anymore)
+firebase.json
+.firebaserc
+firebase-debug.log
+firebase-debug.*.log
+
+# Test files (not needed for production build)
+__tests__/
+**/__tests__/
+*.test.js
+*.test.ts
+*.test.tsx
+*.spec.js
+*.spec.ts
+*.spec.tsx
+
+# Development config files
+.eslintrc*
+.prettierrc*
+jest.config*
+vitest.config*

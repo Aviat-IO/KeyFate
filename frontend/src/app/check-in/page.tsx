@@ -2,9 +2,9 @@
 
 import { CheckCircle2 } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 
-export default function CheckInPage() {
+function CheckInContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get("token")
@@ -102,5 +102,13 @@ export default function CheckInPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function CheckInPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CheckInContent />
+    </Suspense>
   )
 }

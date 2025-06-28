@@ -18,7 +18,8 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@/supabase/*": ["../supabase/*"]
     },
     "plugins": [
       {

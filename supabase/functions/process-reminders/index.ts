@@ -11,7 +11,7 @@ import {
 import { Reminder, Secret } from "../_shared/types.ts";
 
 type ReminderWithSecret = Reminder & {
-  secret: Secret;
+  secret: Secret | null;
 };
 
 interface EmailPayload {
@@ -75,8 +75,8 @@ async function getUserContactMethods(
       contactMethod,
     );
     return {
-      email: contactMethod.email,
-      phone: contactMethod.phone,
+      email: contactMethod.email || undefined,
+      phone: contactMethod.phone || undefined,
     };
   }
 
@@ -149,7 +149,12 @@ async function processReminders(
       try {
         const secret = reminder.secret;
         if (!secret) {
-          throw new Error("Secret not found");
+          // Secret was deleted, cancel the reminder
+          await supabaseAdmin
+            .from("reminders")
+            .update({ status: "cancelled" })
+            .eq("id", reminder.id);
+          return { id: reminder.id, status: "cancelled" };
         }
 
         // Skip if secret is not active or server share has been deleted
@@ -318,7 +323,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    console.log("[DEBUG] Creating Supabase client");
     const supabaseAdmin = createClient<Database>(
       API_URL,
       SERVICE_ROLE_KEY,
@@ -336,6 +340,23 @@ Deno.serve(async (req) => {
         },
       },
     );
+
+    // Test basic connectivity first
+    console.log("[DEBUG] Testing basic database connectivity...");
+    const { data: testData, error: testError } = await supabaseAdmin
+      .from("secrets")
+      .select("count")
+      .limit(1);
+
+    console.log("[DEBUG] Basic connectivity test:");
+    console.log("Test error:", testError);
+    console.log("Test data:", testData);
+
+    if (testError) {
+      throw new Error(
+        `Database connectivity test failed: ${testError.message}`,
+      );
+    }
 
     let from = 0;
     let totalProcessed = 0;

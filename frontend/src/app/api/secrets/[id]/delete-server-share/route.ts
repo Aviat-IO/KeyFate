@@ -1,4 +1,4 @@
-import { Database, Secret, SecretUpdate } from "@/types";
+import { Database } from "@/supabase/database.types";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
@@ -26,7 +26,7 @@ export async function DELETE(
 
     // Verify the secret exists and belongs to user
     const { data: secret, error: fetchError }: {
-      data: Secret | null;
+      data: Database["public"]["Tables"]["secrets"]["Row"] | null;
       error: Error | null;
     } = await supabase
       .from("secrets")
@@ -47,7 +47,7 @@ export async function DELETE(
       );
     }
 
-    const update: SecretUpdate = {
+    const update: Database["public"]["Tables"]["secrets"]["Update"] = {
       server_share: null,
       iv: null,
       auth_tag: null,
@@ -59,7 +59,7 @@ export async function DELETE(
     // Pausing ensures no emails will be sent for this secret
     const { error: updateError } = await supabase
       .from("secrets")
-      .update(update)
+      .update(update as any)
       .eq("id", id)
       .eq("user_id", user.id);
 

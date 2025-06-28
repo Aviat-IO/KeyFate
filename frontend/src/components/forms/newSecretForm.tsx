@@ -26,7 +26,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { encryptMessage } from "@/lib/encryption"
 import { secretFormSchema, type SecretFormValues } from "@/lib/schemas/secret"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Buffer } from "buffer"
@@ -69,7 +68,6 @@ export function NewSecretForm() {
         shares: data.sss_shares_total,
         threshold: data.sss_threshold,
       })
-
       // Ensure enough shares were generated (should always be true if sss.split succeeded)
       if (shares.length < data.sss_shares_total || shares.length === 0) {
         throw new Error("Failed to generate the required number of SSS shares.")
@@ -82,19 +80,12 @@ export function NewSecretForm() {
         userManagedShares.push(shares[i].toString("hex"))
       }
 
-      // 3. Encrypt the server's share (shares[0])
-      const serverSharePlainHex = shares[0].toString("hex") // Get server share before encryption
-      const {
-        encrypted: encryptedServerShare,
-        iv,
-        authTag,
-      } = await encryptMessage(serverSharePlainHex)
+      // 3. Send plain server share to API for server-side encryption
+      const serverSharePlainHex = shares[0].toString("hex")
 
       const payload = {
         title: data.title,
-        server_share: encryptedServerShare,
-        iv: iv,
-        auth_tag: authTag,
+        server_share: serverSharePlainHex, // Send plain share for server-side encryption
         recipient_name: data.recipient_name,
         recipient_email: data.recipient_email,
         recipient_phone: data.recipient_phone,

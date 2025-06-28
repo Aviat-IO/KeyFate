@@ -1,6 +1,7 @@
 import { Database } from "@/types";
 import { NEXT_PUBLIC_SUPABASE_URL } from "@/lib/env";
 import { SUPABASE_SERVICE_ROLE_KEY } from "@/lib/server-env";
+import { encryptMessage } from "@/lib/encryption";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
@@ -40,8 +41,6 @@ export async function POST(req: Request) {
     const {
       title,
       server_share,
-      iv,
-      auth_tag,
       recipient_name,
       recipient_email,
       recipient_phone,
@@ -51,9 +50,9 @@ export async function POST(req: Request) {
       sss_threshold,
     } = body;
 
-    if (!server_share || !iv || !auth_tag) {
+    if (!server_share) {
       return NextResponse.json(
-        { error: "Missing encrypted server share, IV, or auth tag." },
+        { error: "Missing server share." },
         { status: 400 },
       );
     }
@@ -71,6 +70,13 @@ export async function POST(req: Request) {
       );
     }
 
+    // Encrypt the server share server-side
+    const {
+      encrypted: encryptedServerShare,
+      iv,
+      authTag,
+    } = await encryptMessage(server_share);
+
     const nextCheckIn = new Date();
     const parsedCheckInDays = parseInt(check_in_days, 10);
     if (isNaN(parsedCheckInDays) || parsedCheckInDays <= 0) {
@@ -85,7 +91,7 @@ export async function POST(req: Request) {
       .insert([{
         user_id: user.id,
         title,
-        server_share: server_share,
+        server_share: encryptedServerShare,
         recipient_name,
         recipient_email: contact_method === "email" || contact_method === "both"
           ? recipient_email
@@ -97,7 +103,7 @@ export async function POST(req: Request) {
         check_in_days: parsedCheckInDays,
         next_check_in: nextCheckIn.toISOString(),
         iv: iv,
-        auth_tag: auth_tag,
+        auth_tag: authTag,
         status: "active",
         sss_shares_total: sss_shares_total,
         sss_threshold: sss_threshold,

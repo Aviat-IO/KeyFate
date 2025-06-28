@@ -257,7 +257,7 @@ ALTER TABLE public.subscription_usage ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view their own tier"
   ON public.user_tiers
   FOR SELECT
-  USING (auth.uid() = user_id);
+  USING ((select auth.uid()) = user_id);
 
 CREATE POLICY "Service role can manage all tiers"
   ON public.user_tiers
@@ -270,7 +270,7 @@ CREATE POLICY "Service role can manage all tiers"
 CREATE POLICY "Users can view their own subscription"
   ON public.user_subscriptions
   FOR SELECT
-  USING (auth.uid() = user_id);
+  USING ((select auth.uid()) = user_id);
 
 CREATE POLICY "Service role can manage all subscriptions"
   ON public.user_subscriptions
@@ -283,7 +283,7 @@ CREATE POLICY "Service role can manage all subscriptions"
 CREATE POLICY "Users can view their own usage"
   ON public.subscription_usage
   FOR SELECT
-  USING (auth.uid() = user_id);
+  USING ((select auth.uid()) = user_id);
 
 CREATE POLICY "Service role can manage all usage"
   ON public.subscription_usage

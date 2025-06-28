@@ -1,4 +1,4 @@
-import { Database } from "../database.types";
+import { Database } from "./database.types.ts";
 
 // export Database = SupabaseDatabase;
 
