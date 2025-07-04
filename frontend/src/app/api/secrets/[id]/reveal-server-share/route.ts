@@ -1,5 +1,4 @@
 import { decryptMessage } from "@/lib/encryption";
-import { Database, Secret } from "@/types";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
@@ -15,7 +14,7 @@ export async function POST(
     }
 
     const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient<Database>({
+    const supabase = createRouteHandlerClient({
       // @ts-expect-error - Supabase auth helpers expect different cookie format
       cookies: () => cookieStore,
     });
@@ -26,10 +25,7 @@ export async function POST(
     }
 
     // Fetch the secret and verify ownership
-    const { data: secret, error: fetchError }: {
-      data: Secret | null;
-      error: Error | null;
-    } = await supabase
+    const { data: secret, error: fetchError } = await supabase
       .from("secrets")
       .select("server_share, iv, auth_tag")
       .eq("id", id)

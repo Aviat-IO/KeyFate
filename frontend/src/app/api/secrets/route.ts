@@ -1,4 +1,3 @@
-import { Database } from "@/types";
 import { NEXT_PUBLIC_SUPABASE_URL } from "@/lib/env";
 import { SUPABASE_SERVICE_ROLE_KEY } from "@/lib/server-env";
 import { encryptMessage } from "@/lib/encryption";
@@ -9,13 +8,13 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient<Database>({
+  const supabase = createRouteHandlerClient({
     // @ts-expect-error - Supabase auth helpers expect different cookie format
     cookies: () => cookieStore,
   });
 
   try {
-    const supabaseAdmin = createClient<Database>(
+    const supabaseAdmin = createClient(
       NEXT_PUBLIC_SUPABASE_URL,
       SUPABASE_SERVICE_ROLE_KEY,
       {

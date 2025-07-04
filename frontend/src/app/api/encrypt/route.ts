@@ -1,10 +1,9 @@
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY!;
-if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length !== 32) {
-  throw new Error("Invalid encryption key");
-}
-
 export async function POST(req: Request) {
   try {
+    const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY!;
+    if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length !== 32) {
+      throw new Error("Invalid encryption key");
+    }
     const { message } = await req.json();
 
     if (!message) {

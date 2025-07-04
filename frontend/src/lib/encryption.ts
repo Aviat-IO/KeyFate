@@ -2,18 +2,25 @@
 
 import crypto from "crypto";
 
-const ENCRYPTION_KEY_BASE64 = process.env.ENCRYPTION_KEY!;
-if (!ENCRYPTION_KEY_BASE64) {
-  throw new Error("Invalid encryption key");
-}
+let ENCRYPTION_KEY: Buffer | null = null;
 
-const ENCRYPTION_KEY = Buffer.from(ENCRYPTION_KEY_BASE64, "base64");
+function getEncryptionKey(): Buffer {
+  if (!ENCRYPTION_KEY) {
+    const ENCRYPTION_KEY_BASE64 = process.env.ENCRYPTION_KEY!;
+    if (!ENCRYPTION_KEY_BASE64) {
+      throw new Error("Invalid encryption key");
+    }
 
-// Validate key length for AES-256-GCM (must be exactly 32 bytes)
-if (ENCRYPTION_KEY.length !== 32) {
-  throw new Error(
-    `Invalid key length: expected 32 bytes, got ${ENCRYPTION_KEY.length} bytes. Please generate a new 256-bit key.`,
-  );
+    ENCRYPTION_KEY = Buffer.from(ENCRYPTION_KEY_BASE64, "base64");
+
+    // Validate key length for AES-256-GCM (must be exactly 32 bytes)
+    if (ENCRYPTION_KEY.length !== 32) {
+      throw new Error(
+        `Invalid key length: expected 32 bytes, got ${ENCRYPTION_KEY.length} bytes. Please generate a new 256-bit key.`,
+      );
+    }
+  }
+  return ENCRYPTION_KEY;
 }
 
 const DB_ENCODING: BufferEncoding = "base64";
@@ -32,7 +39,7 @@ export async function encryptMessage(
   iv?: Buffer,
 ): Promise<{ encrypted: string; iv: string; authTag: string }> {
   const ivBuffer = iv ?? (await generateIV());
-  const cipher = crypto.createCipheriv(ALGORITHM, ENCRYPTION_KEY, ivBuffer);
+  const cipher = crypto.createCipheriv(ALGORITHM, getEncryptionKey(), ivBuffer);
 
   const encrypted = Buffer.concat([
     cipher.update(Buffer.from(message, MESSAGE_ENCODING)),
@@ -52,7 +59,11 @@ export async function decryptMessage(
   ivBuffer: Buffer,
   authTag: Buffer,
 ): Promise<string> {
-  const decipher = crypto.createDecipheriv(ALGORITHM, ENCRYPTION_KEY, ivBuffer);
+  const decipher = crypto.createDecipheriv(
+    ALGORITHM,
+    getEncryptionKey(),
+    ivBuffer,
+  );
   decipher.setAuthTag(authTag);
 
   const decrypted = Buffer.concat([

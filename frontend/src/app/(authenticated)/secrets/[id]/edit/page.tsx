@@ -1,6 +1,5 @@
 import { SecretDetailsForm } from "@/components/forms/secretDetailsForm"
 import { NEXT_PUBLIC_COMPANY } from "@/lib/env"
-import { Database, Secret } from "@/types"
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Metadata } from "next"
 import { cookies } from "next/headers"
@@ -18,7 +17,7 @@ interface PageParams {
 export default async function SecretDetailsPage({ params }: PageParams) {
   const { id } = await params
   const cookieStore = await cookies()
-  const supabase = createServerComponentClient<Database>({
+  const supabase = createServerComponentClient({
     // @ts-expect-error - Supabase auth helpers expect different cookie format
     cookies: () => cookieStore,
   })
@@ -33,10 +32,7 @@ export default async function SecretDetailsPage({ params }: PageParams) {
   }
 
   // Fetch secret metadata (no decryption needed for details view)
-  const {
-    data: secret,
-    error: secretError,
-  }: { data: Secret | null; error: Error | null } = await supabase
+  const { data: secret, error: secretError } = await supabase
     .from("secrets")
     .select("*")
     .eq("id", id)

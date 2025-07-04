@@ -1,4 +1,3 @@
-import { Database } from "@/supabase/database.types";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
@@ -14,7 +13,7 @@ export async function DELETE(
     }
 
     const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient<Database>({
+    const supabase = createRouteHandlerClient({
       // @ts-expect-error - cookies function signature mismatch with Next.js 15
       cookies: () => cookieStore,
     });
@@ -25,10 +24,7 @@ export async function DELETE(
     }
 
     // Verify the secret exists and belongs to user
-    const { data: secret, error: fetchError }: {
-      data: Database["public"]["Tables"]["secrets"]["Row"] | null;
-      error: Error | null;
-    } = await supabase
+    const { data: secret, error: fetchError } = await supabase
       .from("secrets")
       .select("id, server_share")
       .eq("id", id)
@@ -47,11 +43,11 @@ export async function DELETE(
       );
     }
 
-    const update: Database["public"]["Tables"]["secrets"]["Update"] = {
+    const update = {
       server_share: null,
       iv: null,
       auth_tag: null,
-      status: "paused", // Automatically pause the secret when server share is deleted
+      status: "paused" as const, // Automatically pause the secret when server share is deleted
     };
 
     // Delete the server share by setting it to null and pause the secret
@@ -59,7 +55,7 @@ export async function DELETE(
     // Pausing ensures no emails will be sent for this secret
     const { error: updateError } = await supabase
       .from("secrets")
-      .update(update as any)
+      .update(update)
       .eq("id", id)
       .eq("user_id", user.id);
 

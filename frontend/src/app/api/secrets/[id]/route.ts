@@ -1,5 +1,4 @@
 import { decryptMessage } from "@/lib/encryption";
-import { Database, Secret, SecretUpdate } from "@/types";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
@@ -17,7 +16,7 @@ export async function GET(
   }
 
   const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient<Database>({
+  const supabase = createRouteHandlerClient({
     // @ts-expect-error - cookies function signature mismatch with Next.js 15
     cookies: () => cookieStore,
   });
@@ -27,10 +26,7 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: existingSecret, error: fetchError }: {
-    data: Secret | null;
-    error: Error | null;
-  } = await supabase
+  const { data: existingSecret, error: fetchError } = await supabase
     .from("secrets")
     .select("*")
     .eq("id", id)
@@ -49,7 +45,7 @@ export async function GET(
   ) {
     // Decrypt the server share for the owner
     try {
-      const secret = existingSecret as Secret;
+      const secret = existingSecret;
       const decryptedServerShare = await decryptMessage(
         secret.server_share!,
         Buffer.from(secret.iv!, "base64"),
@@ -84,7 +80,7 @@ export async function PUT(
     }
 
     const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient<Database>({
+    const supabase = createRouteHandlerClient({
       // @ts-expect-error - cookies function signature mismatch with Next.js 15
       cookies: () => cookieStore,
     });
@@ -129,17 +125,15 @@ export async function PUT(
     // Update only metadata (no secret content editing allowed with Shamir's)
     const { error: updateError } = await supabase
       .from("secrets")
-      .update(
-        {
-          title,
-          recipient_name,
-          recipient_email: contact_method !== "phone" ? recipient_email : null,
-          recipient_phone: contact_method !== "email" ? recipient_phone : null,
-          contact_method,
-          check_in_days: parseInt(check_in_days),
-          next_check_in: nextCheckIn.toISOString(),
-        } as any,
-      )
+      .update({
+        title,
+        recipient_name,
+        recipient_email: contact_method !== "phone" ? recipient_email : null,
+        recipient_phone: contact_method !== "email" ? recipient_phone : null,
+        contact_method,
+        check_in_days: parseInt(check_in_days),
+        next_check_in: nextCheckIn.toISOString(),
+      })
       .eq("id", id)
       .eq("user_id", user.id);
 
