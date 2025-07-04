@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import {
   Dialog,
@@ -6,14 +6,19 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { ContactMethodsForm } from "@/components/contact-methods-form";
-import type { ContactMethods } from "@/hooks/useContactMethods";
+} from "@/components/ui/dialog"
+import { ContactMethodsForm } from "@/components/contact-methods-form"
+
+type ContactMethodData = {
+  email?: string
+  phone?: string
+  preferred_method?: "email" | "phone" | "both"
+}
 
 interface ContactMethodsDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSubmit: (methods: ContactMethods) => Promise<void>;
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onSubmit: (methods: ContactMethodData) => Promise<void>
 }
 
 export function ContactMethodsDialog({
@@ -33,12 +38,12 @@ export function ContactMethodsDialog({
         </DialogHeader>
         <ContactMethodsForm
           onSubmit={async (methods) => {
-            await onSubmit(methods);
-            onOpenChange(false);
+            await onSubmit(methods)
+            onOpenChange(false)
           }}
           submitLabel="Continue"
         />
       </DialogContent>
     </Dialog>
-  );
+  )
 }

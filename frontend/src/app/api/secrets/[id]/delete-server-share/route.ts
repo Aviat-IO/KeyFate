@@ -1,6 +1,7 @@
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { Database } from "@/types";
 
 export async function DELETE(
   _req: Request,
@@ -13,9 +14,8 @@ export async function DELETE(
     }
 
     const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({
-      // @ts-expect-error - cookies function signature mismatch with Next.js 15
-      cookies: () => cookieStore,
+    const supabase = createRouteHandlerClient<Database>({
+      cookies: () => Promise.resolve(cookieStore),
     });
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 

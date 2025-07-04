@@ -8,38 +8,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type { ContactMethods } from "@/hooks/useContactMethods"
+import type { Tables } from "@/types"
 import { AlertCircle } from "lucide-react"
 import { useState } from "react"
+
+type ContactMethodData = {
+  email?: string
+  phone?: string
+  preferred_method?: "email" | "phone" | "both"
+}
+
 interface ContactMethodsFormProps {
-  onSubmit: (methods: ContactMethods) => Promise<void>
-  initialValues?: ContactMethods
+  onSubmit: (methods: ContactMethodData) => Promise<void>
+  initialValues?: Tables<"user_contact_methods"> | null
   submitLabel?: string
   showCancel?: boolean
   onCancel?: () => void
 }
 
-const defaultContactMethods: ContactMethods = {
-  email: "",
-  phone: "",
-  telegram_username: "",
-  whatsapp: "",
-  signal: "",
-  preferred_method: "email",
-  check_in_days: 90,
-}
-
 export function ContactMethodsForm({
   onSubmit,
-  initialValues = defaultContactMethods,
+  initialValues,
   submitLabel = "Save Changes",
   showCancel = false,
   onCancel,
 }: ContactMethodsFormProps) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [contactMethods, setContactMethods] =
-    useState<ContactMethods>(initialValues)
+  const [contactMethods, setContactMethods] = useState<ContactMethodData>({
+    email: initialValues?.email || "",
+    phone: initialValues?.phone || "",
+    preferred_method: initialValues?.preferred_method || "email",
+  })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -47,6 +47,11 @@ export function ContactMethodsForm({
     setError(null)
 
     try {
+      // Validate that at least one contact method is provided
+      if (!contactMethods.email?.trim() && !contactMethods.phone?.trim()) {
+        throw new Error("Please provide at least one contact method")
+      }
+
       await onSubmit(contactMethods)
     } catch (error) {
       console.error("Error saving contact methods:", error)
@@ -94,47 +99,6 @@ export function ContactMethodsForm({
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Telegram Username</label>
-        <Input
-          value={contactMethods.telegram_username}
-          onChange={(e) =>
-            setContactMethods({
-              ...contactMethods,
-              telegram_username: e.target.value,
-            })
-          }
-          placeholder="Your Telegram username"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium">WhatsApp</label>
-        <Input
-          type="tel"
-          value={contactMethods.whatsapp}
-          onChange={(e) =>
-            setContactMethods({
-              ...contactMethods,
-              whatsapp: e.target.value,
-            })
-          }
-          placeholder="Your WhatsApp number"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Signal</label>
-        <Input
-          type="tel"
-          value={contactMethods.signal}
-          onChange={(e) =>
-            setContactMethods({ ...contactMethods, signal: e.target.value })
-          }
-          placeholder="Your Signal number"
-        />
-      </div>
-
-      <div className="space-y-2">
         <label className="text-sm font-medium">Preferred Contact Method</label>
         <Select
           value={contactMethods.preferred_method}
@@ -154,22 +118,6 @@ export function ContactMethodsForm({
             <SelectItem value="both">Both Email and Phone</SelectItem>
           </SelectContent>
         </Select>
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Check-in Interval (days)</label>
-        <Input
-          type="number"
-          min={1}
-          max={365}
-          value={contactMethods.check_in_days}
-          onChange={(e) =>
-            setContactMethods({
-              ...contactMethods,
-              check_in_days: parseInt(e.target.value) || 90,
-            })
-          }
-        />
       </div>
 
       <div className="flex justify-end space-x-4">

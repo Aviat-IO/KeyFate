@@ -2,7 +2,7 @@
 
 // TODO: Ensure this is secure. Or maybe we need to use admin and the service role key?
 import { supabase } from "@/lib/supabase";
-import { SecretInsert, SecretUpdate } from "@/types";
+import { SecretInsert, SecretUpdate, Tables } from "@/types";
 
 // Create a single supabase client for interacting with your database
 // const supabase = createClient<Database>(API_URL, ANON_KEY, {
@@ -13,7 +13,9 @@ import { SecretInsert, SecretUpdate } from "@/types";
 // });
 
 // Convert db.secrets.getAll to individual export
-export async function getAllSecrets(userId: string) {
+export async function getAllSecrets(
+  userId: string,
+): Promise<Tables<"secrets">[]> {
   "use server";
   const { data, error } = await supabase
     .from("secrets")
@@ -22,11 +24,14 @@ export async function getAllSecrets(userId: string) {
     .order("created_at", { ascending: false });
 
   if (error) throw error;
-  return data;
+  return data as Tables<"secrets">[];
 }
 
 // Add "use server" to each function
-export async function getSecret(id: string, userId: string) {
+export async function getSecret(
+  id: string,
+  userId: string,
+): Promise<Tables<"secrets">> {
   "use server";
   const { data, error } = await supabase
     .from("secrets")
@@ -36,12 +41,12 @@ export async function getSecret(id: string, userId: string) {
     .single();
 
   if (error) throw error;
-  return data;
+  return data as Tables<"secrets">;
 }
 
 export async function createSecret(
   secret: SecretInsert,
-) {
+): Promise<Tables<"secrets">> {
   "use server";
   const { data, error } = await supabase
     .from("secrets")
@@ -50,29 +55,33 @@ export async function createSecret(
     .single();
 
   if (error) throw error;
-  return data;
+  return data as Tables<"secrets">;
 }
 
 export async function updateSecret(
   id: string,
-  secret: Partial<SecretUpdate>,
-) {
+  userId: string,
+  updates: SecretUpdate,
+): Promise<Tables<"secrets">> {
   "use server";
   const { data, error } = await supabase
     .from("secrets")
-    .update(secret)
+    .update(updates)
     .eq("id", id)
+    .eq("user_id", userId)
     .select()
     .single();
 
   if (error) throw error;
-  return data;
+  return data as Tables<"secrets">;
 }
 
-export async function deleteSecret(id: string) {
+export async function deleteSecret(id: string, userId: string): Promise<void> {
   "use server";
-  const { error } = await supabase.from("secrets").delete().eq("id", id);
-
+  const { error } = await supabase.from("secrets").delete().eq("id", id).eq(
+    "user_id",
+    userId,
+  );
   if (error) throw error;
 }
 
@@ -86,4 +95,20 @@ export async function getOverdueSecrets() {
 
   if (error) throw error;
   return data;
+}
+
+export async function getSecretWithOwnership(
+  id: string,
+  userId: string,
+): Promise<Tables<"secrets">> {
+  "use server";
+  const { data, error } = await supabase
+    .from("secrets")
+    .select("*")
+    .eq("id", id)
+    .eq("user_id", userId)
+    .single();
+
+  if (error) throw error;
+  return data as Tables<"secrets">;
 }

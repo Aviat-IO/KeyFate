@@ -1,7 +1,7 @@
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { Secret } from "@/types";
+import { Tables } from "@/types";
 
 export async function POST(
   _request: Request,
@@ -39,55 +39,49 @@ export async function POST(
       return NextResponse.json({ error: "Secret not found" }, { status: 404 });
     }
 
-    // Update check-in time
+    // Type assertion for the secret data
+    const typedSecret = secret as Tables<"secrets">;
+
+    // Check if secret is active
+    if (typedSecret.status !== "active") {
+      return NextResponse.json(
+        { error: "Secret is not active and cannot be checked in" },
+        { status: 400 },
+      );
+    }
+
     const now = new Date();
     const nextCheckIn = new Date();
-    nextCheckIn.setDate(
-      nextCheckIn.getDate() + (secret as Secret).check_in_days,
-    );
+    nextCheckIn.setDate(nextCheckIn.getDate() + typedSecret.check_in_days);
 
-    // Start a transaction to update both tables
-    const { error: transactionError } = await supabase.rpc("check_in_secret", {
+    // Update last check-in and next check-in
+    const { error: updateError } = await supabase.rpc("check_in_secret", {
       p_secret_id: id,
       p_user_id: user.id,
       p_checked_in_at: now.toISOString(),
       p_next_check_in: nextCheckIn.toISOString(),
     });
 
-    if (transactionError) {
+    if (updateError) {
       console.error(
-        "[POST /api/secrets/[id]/check-in] Transaction error:",
-        transactionError,
+        "[POST /api/secrets/[id]/check-in] Update error:",
+        updateError,
       );
-      return NextResponse.json(
-        { error: "Failed to record check-in" },
-        { status: 500 },
-      );
+      throw updateError;
     }
 
-    // Fetch the updated secret
-    const { data: updatedSecret, error: fetchError } = await supabase
-      .from("secrets")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (fetchError) {
-      console.error(
-        "[POST /api/secrets/[id]/check-in] Error fetching updated secret:",
-        fetchError,
-      );
-      return NextResponse.json(
-        { error: "Failed to fetch updated secret" },
-        { status: 500 },
-      );
-    }
-
-    return NextResponse.json({ success: true, secret: updatedSecret });
+    return NextResponse.json({
+      message: "Check-in successful",
+      next_check_in: nextCheckIn.toISOString(),
+    });
   } catch (error) {
     console.error("[POST /api/secrets/[id]/check-in] Error:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      {
+        error: error instanceof Error
+          ? error.message
+          : "Failed to check in secret",
+      },
       { status: 500 },
     );
   }

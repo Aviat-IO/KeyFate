@@ -1,101 +1,117 @@
-import type { Database } from "@/types";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useEffect, useState } from "react";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import type { Database, Tables } from "@/types";
 
-export interface ContactMethods {
-  email: string;
-  phone: string;
-  telegram_username: string;
-  whatsapp: string;
-  signal: string;
-  preferred_method: "email" | "phone" | "both";
-  check_in_days: number;
-}
+const supabase = createClientComponentClient<Database>();
+
+type ContactMethodData = {
+  email?: string;
+  phone?: string;
+  preferred_method?: Database["public"]["Enums"]["contact_method"];
+};
 
 export function useContactMethods() {
-  const supabase = createClientComponentClient<Database>();
+  const [contactMethods, setContactMethods] = useState<
+    Tables<"user_contact_methods"> | null
+  >(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [contactMethods, setContactMethods] = useState<ContactMethods | null>(
-    null,
-  );
-  const [userId, setUserId] = useState<string | null>(null);
+
+  const fetchContactMethods = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError) throw userError;
+      if (!user) {
+        setContactMethods(null);
+        return;
+      }
+
+      const { data, error: fetchError } = await supabase
+        .from("user_contact_methods")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+
+      setContactMethods(data as Tables<"user_contact_methods"> | null);
+    } catch (err) {
+      console.error("Error fetching contact methods:", err);
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function loadContactMethods() {
-      try {
-        const {
-          data: { user },
-          error: userError,
-        } = await supabase.auth.getUser();
-        if (userError) throw userError;
-        if (!user) return;
+    fetchContactMethods();
+  }, []);
 
-        setUserId(user.id);
+  const saveContactMethods = async (data: ContactMethodData) => {
+    try {
+      setError(null);
 
-        const { data: methods, error: methodsError } = await supabase
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError) throw userError;
+      if (!user) throw new Error("User not authenticated");
+
+      // Check if contact methods exist
+      const { data: existing } = await supabase
+        .from("user_contact_methods")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (existing) {
+        // Update existing record
+        const { data: updated, error: updateError } = await supabase
           .from("user_contact_methods")
-          .select("*")
+          .update({
+            email: data.email || null,
+            phone: data.phone || null,
+            preferred_method: data.preferred_method || "email",
+            updated_at: new Date().toISOString(),
+          })
           .eq("user_id", user.id)
+          .select()
           .single();
 
-        if (methodsError && methodsError.code !== "PGRST116") {
-          throw methodsError;
-        }
+        if (updateError) throw updateError;
+        setContactMethods(updated as Tables<"user_contact_methods">);
+      } else {
+        // Insert new record
+        const { error } = await supabase.from("user_contact_methods").upsert({
+          user_id: user.id,
+          email: data.email || null,
+          phone: data.phone || null,
+          preferred_method: data.preferred_method || "email",
+        });
 
-        if (methods) {
-          setContactMethods({
-            email: methods.email || "",
-            phone: methods.phone || "",
-            telegram_username: methods.telegram_username || "",
-            whatsapp: methods.whatsapp || "",
-            signal: methods.signal || "",
-            preferred_method: methods.preferred_method,
-            check_in_days: methods.check_in_days || 90,
-          });
-        }
-      } catch (error) {
-        console.error("Error loading contact methods:", error);
-        setError(
-          error instanceof Error
-            ? error.message
-            : "Failed to load contact methods",
-        );
-      } finally {
-        setLoading(false);
+        if (error) throw error;
+        await fetchContactMethods(); // Refetch to get the inserted data
       }
+    } catch (err) {
+      console.error("Error saving contact methods:", err);
+      throw err;
     }
-
-    loadContactMethods();
-  }, [supabase]);
-
-  const saveContactMethods = async (methods: ContactMethods) => {
-    if (!userId) throw new Error("Not authenticated");
-
-    const hasContactMethod = Object.entries(methods).some(
-      ([key, value]) =>
-        key !== "preferred_method" &&
-        typeof value === "string" &&
-        value.trim() !== "",
-    );
-
-    if (!hasContactMethod) {
-      throw new Error("At least one contact method is required");
-    }
-
-    const { error } = await supabase.from("user_contact_methods").upsert({
-      user_id: userId,
-      ...methods,
-    });
-
-    if (error) throw error;
-    setContactMethods(methods);
   };
 
   return {
+    contactMethods,
     loading,
     error,
-    contactMethods,
     saveContactMethods,
+    refetch: fetchContactMethods,
   };
 }
