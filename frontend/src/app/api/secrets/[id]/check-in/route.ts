@@ -1,7 +1,8 @@
+import { Database, Secret } from "@/types";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { PostgrestError } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { Tables } from "@/types";
 
 export async function POST(
   _request: Request,
@@ -10,9 +11,8 @@ export async function POST(
   const { id } = await params;
   try {
     const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({
-      // @ts-expect-error - cookies function signature mismatch with Next.js 15
-      cookies: () => cookieStore,
+    const supabase = createRouteHandlerClient<Database>({
+      cookies: () => Promise.resolve(cookieStore),
     });
 
     const {
@@ -24,7 +24,10 @@ export async function POST(
     }
 
     // Get the secret and verify ownership
-    const { data: secret, error: secretError } = await supabase
+    const { data: secret, error: secretError }: {
+      data: Secret | null;
+      error: PostgrestError | null;
+    } = await supabase
       .from("secrets")
       .select("*")
       .eq("id", id)
@@ -39,11 +42,8 @@ export async function POST(
       return NextResponse.json({ error: "Secret not found" }, { status: 404 });
     }
 
-    // Type assertion for the secret data
-    const typedSecret = secret as Tables<"secrets">;
-
     // Check if secret is active
-    if (typedSecret.status !== "active") {
+    if (secret.status !== "active") {
       return NextResponse.json(
         { error: "Secret is not active and cannot be checked in" },
         { status: 400 },
@@ -52,7 +52,7 @@ export async function POST(
 
     const now = new Date();
     const nextCheckIn = new Date();
-    nextCheckIn.setDate(nextCheckIn.getDate() + typedSecret.check_in_days);
+    nextCheckIn.setDate(nextCheckIn.getDate() + secret.check_in_days);
 
     // Update last check-in and next check-in
     const { error: updateError } = await supabase.rpc("check_in_secret", {
@@ -74,7 +74,10 @@ export async function POST(
     }
 
     // Fetch the updated secret to return to client
-    const { data: updatedSecret, error: fetchError } = await supabase
+    const { data: updatedSecret, error: fetchError }: {
+      data: Secret | null;
+      error: PostgrestError | null;
+    } = await supabase
       .from("secrets")
       .select("*")
       .eq("id", id)
@@ -94,7 +97,7 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      secret: updatedSecret as Tables<"secrets">,
+      secret: updatedSecret,
     });
   } catch (error) {
     console.error("[POST /api/secrets/[id]/check-in] Error:", error);

@@ -1,8 +1,12 @@
 "use server";
 
 // TODO: Ensure this is secure. Or maybe we need to use admin and the service role key?
-import { supabase } from "@/lib/supabase";
-import { SecretInsert, SecretUpdate, Tables } from "@/types";
+import { supabase as baseSupabase } from "@/lib/supabase";
+import { Database, SecretInsert, SecretUpdate, Tables } from "@/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+// Explicitly type the supabase client
+const supabase = baseSupabase as SupabaseClient<Database>;
 
 // Create a single supabase client for interacting with your database
 // const supabase = createClient<Database>(API_URL, ANON_KEY, {
@@ -48,14 +52,14 @@ export async function createSecret(
   secret: SecretInsert,
 ): Promise<Tables<"secrets">> {
   "use server";
-  const { data, error } = await supabase
+  const result = await supabase
     .from("secrets")
     .insert([secret])
     .select()
     .single();
 
-  if (error) throw error;
-  return data as Tables<"secrets">;
+  if (result.error) throw result.error;
+  return result.data as Tables<"secrets">;
 }
 
 export async function updateSecret(

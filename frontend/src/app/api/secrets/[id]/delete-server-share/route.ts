@@ -1,7 +1,7 @@
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { Database } from "@/types";
+import { Database, Secret } from "@/types";
 
 export async function DELETE(
   _req: Request,
@@ -24,7 +24,13 @@ export async function DELETE(
     }
 
     // Verify the secret exists and belongs to user
-    const { data: secret, error: fetchError } = await supabase
+    const {
+      data: secret,
+      error: fetchError,
+    }: {
+      data: Secret;
+      error: Error | null;
+    } = await supabase
       .from("secrets")
       .select("id, server_share")
       .eq("id", id)

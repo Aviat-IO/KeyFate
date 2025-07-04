@@ -1,8 +1,8 @@
 import { decryptMessage } from "@/lib/encryption";
 import { NEXT_PUBLIC_SUPABASE_URL } from "@/lib/env";
 import { SUPABASE_SERVICE_ROLE_KEY } from "@/lib/server-env";
-import { Database } from "@/types";
-import { createClient } from "@supabase/supabase-js";
+import { Database, Secret, Tables } from "@/types";
+import { createClient, PostgrestError } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -35,7 +35,10 @@ export async function GET(
 
   try {
     // 1. Fetch and validate the token
-    const { data: tokenData, error: tokenError } = await supabaseAdmin
+    const { data: tokenData, error: tokenError }: {
+      data: Tables<"recipient_access_tokens"> | null;
+      error: PostgrestError | null;
+    } = await supabaseAdmin
       .from("recipient_access_tokens")
       .select("*")
       .eq("token", token)
@@ -76,7 +79,10 @@ export async function GET(
     }
 
     // 2. Fetch the secret
-    const { data: secret, error: secretError } = await supabaseAdmin
+    const { data: secret, error: secretError }: {
+      data: Pick<Secret, "server_share" | "iv" | "auth_tag"> | null;
+      error: PostgrestError | null;
+    } = await supabaseAdmin
       .from("secrets")
       .select("server_share, iv, auth_tag")
       .eq("id", id)

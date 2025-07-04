@@ -1,6 +1,8 @@
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { Database, Secret } from "@/types";
+import { PostgrestError } from "@supabase/supabase-js";
 
 export async function POST(
   _request: Request,
@@ -9,9 +11,8 @@ export async function POST(
   try {
     const { id } = await params;
     const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({
-      // @ts-expect-error - cookies function signature mismatch with Next.js 15
-      cookies: () => cookieStore,
+    const supabase = createRouteHandlerClient<Database>({
+      cookies: () => Promise.resolve(cookieStore),
     });
 
     const {
@@ -23,7 +24,10 @@ export async function POST(
     }
 
     // Get the secret and verify ownership
-    const { data: secret, error: secretError } = await supabase
+    const { data: secret, error: secretError }: {
+      data: Secret | null;
+      error: PostgrestError | null;
+    } = await supabase
       .from("secrets")
       .select("*")
       .eq("id", id)
@@ -45,13 +49,14 @@ export async function POST(
     nextCheckIn.setDate(nextCheckIn.getDate() + secret.check_in_days);
 
     // Update the secret status and perform a check-in
-    const { error: updateError } = await supabase.rpc("toggle_secret_pause", {
-      p_secret_id: id,
-      p_user_id: user.id,
-      p_new_status: newStatus,
-      p_checked_in_at: now.toISOString(),
-      p_next_check_in: nextCheckIn.toISOString(),
-    });
+    const { error: updateError }: { error: PostgrestError | null } =
+      await supabase.rpc("toggle_secret_pause", {
+        p_secret_id: id,
+        p_user_id: user.id,
+        p_new_status: newStatus,
+        p_checked_in_at: now.toISOString(),
+        p_next_check_in: nextCheckIn.toISOString(),
+      });
 
     if (updateError) {
       console.error(
@@ -65,7 +70,10 @@ export async function POST(
     }
 
     // Fetch the updated secret
-    const { data: updatedSecret, error: fetchError } = await supabase
+    const { data: updatedSecret, error: fetchError }: {
+      data: Secret | null;
+      error: PostgrestError | null;
+    } = await supabase
       .from("secrets")
       .select("*")
       .eq("id", id)

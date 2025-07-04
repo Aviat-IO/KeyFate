@@ -4,6 +4,7 @@ import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Metadata } from "next"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
+import type { Database } from "@/types"
 
 export const metadata: Metadata = {
   title: `${NEXT_PUBLIC_COMPANY} - Edit Secret`,
@@ -16,9 +17,8 @@ interface PageParams {
 
 export default async function SecretDetailsPage({ params }: PageParams) {
   const { id } = await params
-  const cookieStore = await cookies()
-  const supabase = createServerComponentClient({
-    // @ts-expect-error - Supabase auth helpers expect different cookie format
+  const cookieStore = cookies()
+  const supabase = createServerComponentClient<Database>({
     cookies: () => cookieStore,
   })
 

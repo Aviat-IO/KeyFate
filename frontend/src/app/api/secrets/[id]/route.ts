@@ -2,6 +2,8 @@ import { decryptMessage } from "@/lib/encryption";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import type { Database, Secret, SecretUpdate } from "@/types";
+import type { PostgrestError } from "@supabase/supabase-js";
 
 export async function GET(
   req: Request,
@@ -16,9 +18,8 @@ export async function GET(
   }
 
   const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient({
-    // @ts-expect-error - cookies function signature mismatch with Next.js 15
-    cookies: () => cookieStore,
+  const supabase = createRouteHandlerClient<Database>({
+    cookies: () => Promise.resolve(cookieStore),
   });
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -26,7 +27,10 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: existingSecret, error: fetchError } = await supabase
+  const { data: existingSecret, error: fetchError }: {
+    data: Secret | null;
+    error: PostgrestError | null;
+  } = await supabase
     .from("secrets")
     .select("*")
     .eq("id", id)
@@ -80,9 +84,8 @@ export async function PUT(
     }
 
     const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({
-      // @ts-expect-error - cookies function signature mismatch with Next.js 15
-      cookies: () => cookieStore,
+    const supabase = createRouteHandlerClient<Database>({
+      cookies: () => Promise.resolve(cookieStore),
     });
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -93,18 +96,20 @@ export async function PUT(
       );
     }
 
-    const body = await req.json();
-    const {
-      title,
-      recipient_name,
-      recipient_email,
-      recipient_phone,
-      contact_method,
-      check_in_days,
-    } = body;
+    const body: {
+      title: string;
+      recipient_name: string;
+      recipient_email: string | null;
+      recipient_phone: string | null;
+      contact_method: "email" | "phone" | "both";
+      check_in_days: string | number;
+    } = await req.json();
 
     // Verify the secret exists and belongs to user
-    const { data: existingSecret, error: fetchError } = await supabase
+    const { data: existingSecret, error: fetchError }: {
+      data: Secret | null;
+      error: PostgrestError | null;
+    } = await supabase
       .from("secrets")
       .select("*")
       .eq("id", id)
@@ -119,21 +124,31 @@ export async function PUT(
     }
 
     // Calculate next check-in time
+    const parsedCheckInDays = typeof body.check_in_days === "string"
+      ? parseInt(body.check_in_days, 10)
+      : body.check_in_days;
+
     const nextCheckIn = new Date();
-    nextCheckIn.setDate(nextCheckIn.getDate() + parseInt(check_in_days));
+    nextCheckIn.setDate(nextCheckIn.getDate() + parsedCheckInDays);
+
+    const updateData: SecretUpdate = {
+      title: body.title,
+      recipient_name: body.recipient_name,
+      recipient_email: body.contact_method !== "phone"
+        ? body.recipient_email
+        : null,
+      recipient_phone: body.contact_method !== "email"
+        ? body.recipient_phone
+        : null,
+      contact_method: body.contact_method,
+      check_in_days: parsedCheckInDays,
+      next_check_in: nextCheckIn.toISOString(),
+    };
 
     // Update only metadata (no secret content editing allowed with Shamir's)
     const { error: updateError } = await supabase
       .from("secrets")
-      .update({
-        title,
-        recipient_name,
-        recipient_email: contact_method !== "phone" ? recipient_email : null,
-        recipient_phone: contact_method !== "email" ? recipient_phone : null,
-        contact_method,
-        check_in_days: parseInt(check_in_days),
-        next_check_in: nextCheckIn.toISOString(),
-      })
+      .update(updateData)
       .eq("id", id)
       .eq("user_id", user.id);
 

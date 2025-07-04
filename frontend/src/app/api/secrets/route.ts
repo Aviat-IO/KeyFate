@@ -2,7 +2,7 @@ import { NEXT_PUBLIC_SUPABASE_URL } from "@/lib/env";
 import { SUPABASE_SERVICE_ROLE_KEY } from "@/lib/server-env";
 
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, PostgrestError } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { Database } from "@/types";
@@ -86,7 +86,10 @@ export async function POST(req: Request) {
     }
     nextCheckIn.setDate(nextCheckIn.getDate() + parsedCheckInDays);
 
-    const { data: secretData, error: insertError } = await supabaseAdmin
+    const { data: secretData, error: insertError }: {
+      data: { id: string } | null;
+      error: PostgrestError | null;
+    } = await supabaseAdmin
       .from("secrets")
       .insert([{
         user_id: user.id,
@@ -127,30 +130,32 @@ export async function POST(req: Request) {
       }, { status: 500 });
     }
 
-    const { error: scheduleError } = await supabaseAdmin.rpc(
-      "schedule_secret_reminders",
-      {
-        p_secret_id: secretData.id,
-        p_next_check_in: nextCheckIn.toISOString(),
-      },
-    );
+    const { error: scheduleError }: { error: PostgrestError | null } =
+      await supabaseAdmin.rpc(
+        "schedule_secret_reminders",
+        {
+          p_secret_id: secretData.id,
+          p_next_check_in: nextCheckIn.toISOString(),
+        },
+      );
 
     if (scheduleError) {
-      const { error: notificationError } = await supabaseAdmin
-        .from("admin_notifications")
-        .insert([{
-          type: "reminder_scheduling_failed",
-          severity: "error",
-          title: "Failed to Schedule Reminders",
-          message:
-            `Failed to schedule reminders for secret titled \\"${title}\\" (ID: ${secretData.id}). Error: ${scheduleError.message}`,
-          metadata: {
-            secret_id: secretData.id,
-            error_code: scheduleError.code,
-            error_message: scheduleError.message,
-            user_id: user.id,
-          },
-        }]);
+      const { error: notificationError }: { error: PostgrestError | null } =
+        await supabaseAdmin
+          .from("admin_notifications")
+          .insert([{
+            type: "reminder_scheduling_failed",
+            severity: "error",
+            title: "Failed to Schedule Reminders",
+            message:
+              `Failed to schedule reminders for secret titled \\"${title}\\" (ID: ${secretData.id}). Error: ${scheduleError.message}`,
+            metadata: {
+              secret_id: secretData.id,
+              error_code: scheduleError.code,
+              error_message: scheduleError.message,
+              user_id: user.id,
+            },
+          }]);
 
       if (notificationError) {
         console.error(

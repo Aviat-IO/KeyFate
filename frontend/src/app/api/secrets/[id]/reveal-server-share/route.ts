@@ -2,6 +2,8 @@ import { decryptMessage } from "@/lib/encryption";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { Database, Secret } from "@/types";
+import { PostgrestError } from "@supabase/supabase-js";
 
 export async function POST(
   _req: Request,
@@ -14,9 +16,8 @@ export async function POST(
     }
 
     const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({
-      // @ts-expect-error - Supabase auth helpers expect different cookie format
-      cookies: () => cookieStore,
+    const supabase = createRouteHandlerClient<Database>({
+      cookies: () => Promise.resolve(cookieStore),
     });
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -25,7 +26,10 @@ export async function POST(
     }
 
     // Fetch the secret and verify ownership
-    const { data: secret, error: fetchError } = await supabase
+    const { data: secret, error: fetchError }: {
+      data: Pick<Secret, "server_share" | "iv" | "auth_tag"> | null;
+      error: PostgrestError | null;
+    } = await supabase
       .from("secrets")
       .select("server_share, iv, auth_tag")
       .eq("id", id)
@@ -47,8 +51,8 @@ export async function POST(
     // Decrypt the server share
     const decryptedServerShare = await decryptMessage(
       secret.server_share,
-      Buffer.from(secret.iv, "base64"),
-      Buffer.from(secret.auth_tag, "base64"),
+      Buffer.from(secret.iv!, "base64"),
+      Buffer.from(secret.auth_tag!, "base64"),
     );
 
     return NextResponse.json({ serverShare: decryptedServerShare });
