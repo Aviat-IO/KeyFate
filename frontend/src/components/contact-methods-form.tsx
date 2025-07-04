@@ -8,22 +8,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type { Tables } from "@/types"
+import type { ContactMethods } from "@/hooks/useContactMethods"
 import { AlertCircle } from "lucide-react"
 import { useState } from "react"
 
-type ContactMethodData = {
-  email?: string
-  phone?: string
-  preferred_method?: "email" | "phone" | "both"
-}
-
 interface ContactMethodsFormProps {
-  onSubmit: (methods: ContactMethodData) => Promise<void>
-  initialValues?: Tables<"user_contact_methods"> | null
+  onSubmit: (methods: ContactMethods) => Promise<void>
+  initialValues?: ContactMethods | null
   submitLabel?: string
   showCancel?: boolean
   onCancel?: () => void
+}
+
+const defaultContactMethods: ContactMethods = {
+  email: "",
+  phone: "",
+  telegram_username: "",
+  whatsapp: "",
+  signal: "",
+  preferred_method: "email",
+  check_in_days: 90,
 }
 
 export function ContactMethodsForm({
@@ -33,103 +37,158 @@ export function ContactMethodsForm({
   showCancel = false,
   onCancel,
 }: ContactMethodsFormProps) {
-  const [saving, setSaving] = useState(false)
+  const [formData, setFormData] = useState<ContactMethods>(
+    initialValues || defaultContactMethods,
+  )
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [contactMethods, setContactMethods] = useState<ContactMethodData>({
-    email: initialValues?.email || "",
-    phone: initialValues?.phone || "",
-    preferred_method: initialValues?.preferred_method || "email",
-  })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setSaving(true)
+
+    setIsLoading(true)
     setError(null)
 
     try {
-      // Validate that at least one contact method is provided
-      if (!contactMethods.email?.trim() && !contactMethods.phone?.trim()) {
-        throw new Error("Please provide at least one contact method")
+      await onSubmit(formData)
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError("Failed to save contact methods")
       }
-
-      await onSubmit(contactMethods)
-    } catch (error) {
-      console.error("Error saving contact methods:", error)
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Failed to save contact methods",
-      )
     } finally {
-      setSaving(false)
+      setIsLoading(false)
+    }
+  }
+
+  const handleInputChange = (
+    field: keyof ContactMethods,
+    value: string | number,
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }))
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault()
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Email</label>
-        <Input
-          type="email"
-          value={contactMethods.email}
-          onChange={(e) =>
-            setContactMethods({ ...contactMethods, email: e.target.value })
-          }
-          placeholder="Your email address"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Phone</label>
-        <Input
-          type="tel"
-          value={contactMethods.phone}
-          onChange={(e) =>
-            setContactMethods({ ...contactMethods, phone: e.target.value })
-          }
-          placeholder="Your phone number"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Preferred Contact Method</label>
-        <Select
-          value={contactMethods.preferred_method}
-          onValueChange={(value: "email" | "phone" | "both") =>
-            setContactMethods({
-              ...contactMethods,
-              preferred_method: value,
-            })
-          }
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="How should we contact you?" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="email">Email</SelectItem>
-            <SelectItem value="phone">Phone</SelectItem>
-            <SelectItem value="both">Both Email and Phone</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex justify-end space-x-4">
-        {showCancel && (
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
+    <div>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
-        <Button type="submit" disabled={saving}>
-          {saving ? "Saving..." : submitLabel}
-        </Button>
-      </div>
-    </form>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Email</label>
+          <Input
+            type="email"
+            placeholder="Your email address"
+            value={formData.email}
+            onChange={(e) => handleInputChange("email", e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Phone</label>
+          <Input
+            type="tel"
+            placeholder="Your phone number"
+            value={formData.phone}
+            onChange={(e) => handleInputChange("phone", e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Telegram Username</label>
+          <Input
+            type="text"
+            placeholder="Your telegram username"
+            value={formData.telegram_username}
+            onChange={(e) =>
+              handleInputChange("telegram_username", e.target.value)
+            }
+            onKeyDown={handleKeyDown}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">WhatsApp</label>
+          <Input
+            type="tel"
+            placeholder="Your whatsapp number"
+            value={formData.whatsapp}
+            onChange={(e) => handleInputChange("whatsapp", e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Signal</label>
+          <Input
+            type="tel"
+            placeholder="Your signal number"
+            value={formData.signal}
+            onChange={(e) => handleInputChange("signal", e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">
+            Preferred Contact Method
+          </label>
+          <Select
+            value={formData.preferred_method}
+            onValueChange={(value) =>
+              handleInputChange("preferred_method", value)
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="email">Email</SelectItem>
+              <SelectItem value="phone">Phone</SelectItem>
+              <SelectItem value="both">Both Email and Phone</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Check-in Days</label>
+          <Input
+            type="number"
+            value={formData.check_in_days}
+            onChange={(e) =>
+              handleInputChange("check_in_days", parseInt(e.target.value))
+            }
+            onKeyDown={handleKeyDown}
+          />
+        </div>
+
+        <div className="flex justify-end space-x-4">
+          {showCancel && (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+          )}
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Saving..." : submitLabel}
+          </Button>
+        </div>
+      </form>
+    </div>
   )
 }

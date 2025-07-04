@@ -1,6 +1,6 @@
 import { NEXT_PUBLIC_SUPABASE_URL } from "@/lib/env";
 import { SUPABASE_SERVICE_ROLE_KEY } from "@/lib/server-env";
-import { encryptMessage } from "@/lib/encryption";
+
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
@@ -41,6 +41,8 @@ export async function POST(req: Request) {
     const {
       title,
       server_share,
+      iv: clientIv,
+      auth_tag: clientAuthTag,
       recipient_name,
       recipient_email,
       recipient_phone,
@@ -50,9 +52,9 @@ export async function POST(req: Request) {
       sss_threshold,
     } = body;
 
-    if (!server_share) {
+    if (!server_share || !clientIv || !clientAuthTag) {
       return NextResponse.json(
-        { error: "Missing server share." },
+        { error: "Missing encrypted server share, IV, or auth tag." },
         { status: 400 },
       );
     }
@@ -70,12 +72,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // Encrypt the server share server-side
-    const {
-      encrypted: encryptedServerShare,
-      iv,
-      authTag,
-    } = await encryptMessage(server_share);
+    // Use the server share and encryption data provided by client
+    const encryptedServerShare = server_share;
+    const iv = clientIv;
+    const authTag = clientAuthTag;
 
     const nextCheckIn = new Date();
     const parsedCheckInDays = parseInt(check_in_days, 10);

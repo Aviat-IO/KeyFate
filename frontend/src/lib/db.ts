@@ -60,7 +60,6 @@ export async function createSecret(
 
 export async function updateSecret(
   id: string,
-  userId: string,
   updates: SecretUpdate,
 ): Promise<Tables<"secrets">> {
   "use server";
@@ -68,7 +67,6 @@ export async function updateSecret(
     .from("secrets")
     .update(updates)
     .eq("id", id)
-    .eq("user_id", userId)
     .select()
     .single();
 
@@ -76,16 +74,13 @@ export async function updateSecret(
   return data as Tables<"secrets">;
 }
 
-export async function deleteSecret(id: string, userId: string): Promise<void> {
+export async function deleteSecret(id: string): Promise<void> {
   "use server";
-  const { error } = await supabase.from("secrets").delete().eq("id", id).eq(
-    "user_id",
-    userId,
-  );
+  const { error } = await supabase.from("secrets").delete().eq("id", id);
   if (error) throw error;
 }
 
-export async function getOverdueSecrets() {
+export async function getOverdueSecrets(): Promise<Tables<"secrets">[]> {
   "use server";
   const { data, error } = await supabase
     .from("secrets")
@@ -94,7 +89,7 @@ export async function getOverdueSecrets() {
     .lt("next_check_in", new Date().toISOString());
 
   if (error) throw error;
-  return data;
+  return data as Tables<"secrets">[];
 }
 
 export async function getSecretWithOwnership(

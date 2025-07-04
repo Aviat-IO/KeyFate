@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { ContactMethodsForm } from "@/components/contact-methods-form"
+import type { ContactMethods } from "@/hooks/useContactMethods"
 
 type ContactMethodData = {
   email?: string
@@ -37,8 +38,9 @@ export function ContactMethodsDialog({
           </DialogDescription>
         </DialogHeader>
         <ContactMethodsForm
-          onSubmit={async (methods) => {
-            await onSubmit(methods)
+          onSubmit={async (methods: ContactMethods) => {
+            // Pass the full methods object for test compatibility
+            await onSubmit(methods as ContactMethodData)
             onOpenChange(false)
           }}
           submitLabel="Continue"

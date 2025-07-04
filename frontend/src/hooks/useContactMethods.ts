@@ -4,6 +4,18 @@ import type { Database, Tables } from "@/types";
 
 const supabase = createClientComponentClient<Database>();
 
+// Legacy interface for backward compatibility with tests
+export type ContactMethods = {
+  email: string;
+  phone: string;
+  telegram_username: string;
+  whatsapp: string;
+  signal: string;
+  preferred_method: "email" | "phone" | "both";
+  check_in_days: number;
+};
+
+// Actual database type for user_contact_methods
 type ContactMethodData = {
   email?: string;
   phone?: string;

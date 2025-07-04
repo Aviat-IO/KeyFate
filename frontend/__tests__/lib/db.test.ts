@@ -56,7 +56,8 @@ const mockSecretInsert = {
   encrypted_message: "encrypted-data",
   recipient_name: "John Doe",
   recipient_email: "john@example.com",
-  check_in_interval_days: 7,
+  contact_method: "email" as const,
+  check_in_days: 7,
   next_check_in: new Date().toISOString(),
   status: "active" as const,
 };

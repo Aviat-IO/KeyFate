@@ -67,21 +67,39 @@ export async function POST(
         "[POST /api/secrets/[id]/check-in] Update error:",
         updateError,
       );
-      throw updateError;
+      return NextResponse.json(
+        { error: "Failed to record check-in" },
+        { status: 500 },
+      );
+    }
+
+    // Fetch the updated secret to return to client
+    const { data: updatedSecret, error: fetchError } = await supabase
+      .from("secrets")
+      .select("*")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .single();
+
+    if (fetchError || !updatedSecret) {
+      console.error(
+        "[POST /api/secrets/[id]/check-in] Fetch updated secret error:",
+        fetchError,
+      );
+      return NextResponse.json(
+        { error: "Failed to fetch updated secret" },
+        { status: 500 },
+      );
     }
 
     return NextResponse.json({
-      message: "Check-in successful",
-      next_check_in: nextCheckIn.toISOString(),
+      success: true,
+      secret: updatedSecret as Tables<"secrets">,
     });
   } catch (error) {
     console.error("[POST /api/secrets/[id]/check-in] Error:", error);
     return NextResponse.json(
-      {
-        error: error instanceof Error
-          ? error.message
-          : "Failed to check in secret",
-      },
+      { error: "Internal Server Error" },
       { status: 500 },
     );
   }

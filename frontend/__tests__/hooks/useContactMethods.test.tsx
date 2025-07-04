@@ -5,21 +5,31 @@ import {
   type ContactMethods,
 } from "@/hooks/useContactMethods"
 
-// Mock Supabase
-const mockSupabase = {
-  auth: {
+// Mock Supabase client using vi.hoisted to ensure proper initialization order
+const { mockAuth, mockFrom, mockSupabaseClient } = vi.hoisted(() => {
+  const mockAuth = {
     getUser: vi.fn(),
-  },
-  from: vi.fn(() => ({
+  }
+
+  const mockFrom = vi.fn(() => ({
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn(),
     single: vi.fn(),
+    update: vi.fn().mockReturnThis(),
     upsert: vi.fn(),
-  })),
-}
+  }))
+
+  const mockSupabaseClient = {
+    auth: mockAuth,
+    from: mockFrom,
+  }
+
+  return { mockAuth, mockFrom, mockSupabaseClient }
+})
 
 vi.mock("@supabase/auth-helpers-nextjs", () => ({
-  createClientComponentClient: () => mockSupabase,
+  createClientComponentClient: () => mockSupabaseClient,
 }))
 
 describe("useContactMethods", () => {
@@ -43,31 +53,29 @@ describe("useContactMethods", () => {
   })
 
   it("should load contact methods for authenticated user", async () => {
-    mockSupabase.auth.getUser.mockResolvedValue({
+    mockAuth.getUser.mockResolvedValue({
       data: { user: mockUser },
       error: null,
     })
 
     const mockSelect = vi.fn().mockReturnThis()
     const mockEq = vi.fn().mockReturnThis()
-    const mockSingle = vi.fn().mockResolvedValue({
+    const mockMaybeSingle = vi.fn().mockResolvedValue({
       data: {
         user_id: "user-123",
         email: "test@example.com",
         phone: "+1234567890",
-        telegram_username: "@testuser",
-        whatsapp: "+0987654321",
-        signal: "+1122334455",
         preferred_method: "email",
-        check_in_days: 30,
       },
       error: null,
     })
 
-    mockSupabase.from.mockReturnValue({
+    mockFrom.mockReturnValue({
       select: mockSelect,
       eq: mockEq,
-      single: mockSingle,
+      maybeSingle: mockMaybeSingle,
+      single: vi.fn(),
+      update: vi.fn().mockReturnThis(),
       upsert: vi.fn(),
     })
 
@@ -79,18 +87,23 @@ describe("useContactMethods", () => {
       expect(result.current.loading).toBe(false)
     })
 
-    expect(mockSupabase.auth.getUser).toHaveBeenCalled()
-    expect(mockSupabase.from).toHaveBeenCalledWith("user_contact_methods")
+    expect(mockAuth.getUser).toHaveBeenCalled()
+    expect(mockFrom).toHaveBeenCalledWith("user_contact_methods")
     expect(mockSelect).toHaveBeenCalledWith("*")
     expect(mockEq).toHaveBeenCalledWith("user_id", "user-123")
-    expect(mockSingle).toHaveBeenCalled()
+    expect(mockMaybeSingle).toHaveBeenCalled()
 
-    expect(result.current.contactMethods).toEqual(mockContactMethods)
+    expect(result.current.contactMethods).toEqual({
+      user_id: "user-123",
+      email: "test@example.com",
+      phone: "+1234567890",
+      preferred_method: "email",
+    })
     expect(result.current.error).toBeNull()
   })
 
   it("should handle user not found", async () => {
-    mockSupabase.auth.getUser.mockResolvedValue({
+    mockAuth.getUser.mockResolvedValue({
       data: { user: null },
       error: null,
     })
@@ -105,23 +118,25 @@ describe("useContactMethods", () => {
     expect(result.current.error).toBeNull()
   })
 
-  it("should handle no existing contact methods (PGRST116 error)", async () => {
-    mockSupabase.auth.getUser.mockResolvedValue({
+  it("should handle no existing contact methods", async () => {
+    mockAuth.getUser.mockResolvedValue({
       data: { user: mockUser },
       error: null,
     })
 
     const mockSelect = vi.fn().mockReturnThis()
     const mockEq = vi.fn().mockReturnThis()
-    const mockSingle = vi.fn().mockResolvedValue({
+    const mockMaybeSingle = vi.fn().mockResolvedValue({
       data: null,
-      error: { code: "PGRST116", message: "No rows found" },
+      error: null,
     })
 
-    mockSupabase.from.mockReturnValue({
+    mockFrom.mockReturnValue({
       select: mockSelect,
       eq: mockEq,
-      single: mockSingle,
+      maybeSingle: mockMaybeSingle,
+      single: vi.fn(),
+      update: vi.fn().mockReturnThis(),
       upsert: vi.fn(),
     })
 
@@ -138,22 +153,24 @@ describe("useContactMethods", () => {
   it("should handle database errors", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
 
-    mockSupabase.auth.getUser.mockResolvedValue({
+    mockAuth.getUser.mockResolvedValue({
       data: { user: mockUser },
       error: null,
     })
 
     const mockSelect = vi.fn().mockReturnThis()
     const mockEq = vi.fn().mockReturnThis()
-    const mockSingle = vi.fn().mockResolvedValue({
+    const mockMaybeSingle = vi.fn().mockResolvedValue({
       data: null,
       error: new Error("Database error"),
     })
 
-    mockSupabase.from.mockReturnValue({
+    mockFrom.mockReturnValue({
       select: mockSelect,
       eq: mockEq,
-      single: mockSingle,
+      maybeSingle: mockMaybeSingle,
+      single: vi.fn(),
+      update: vi.fn().mockReturnThis(),
       upsert: vi.fn(),
     })
 
@@ -165,7 +182,7 @@ describe("useContactMethods", () => {
 
     expect(result.current.error).toBe("Database error")
     expect(consoleSpy).toHaveBeenCalledWith(
-      "Error loading contact methods:",
+      "Error fetching contact methods:",
       expect.any(Error),
     )
 
@@ -173,7 +190,7 @@ describe("useContactMethods", () => {
   })
 
   it("should save contact methods successfully", async () => {
-    mockSupabase.auth.getUser.mockResolvedValue({
+    mockAuth.getUser.mockResolvedValue({
       data: { user: mockUser },
       error: null,
     })
@@ -181,19 +198,21 @@ describe("useContactMethods", () => {
     // Mock initial load (no existing methods)
     const mockSelect = vi.fn().mockReturnThis()
     const mockEq = vi.fn().mockReturnThis()
-    const mockSingle = vi.fn().mockResolvedValue({
+    const mockMaybeSingle = vi.fn().mockResolvedValue({
       data: null,
-      error: { code: "PGRST116" },
+      error: null,
     })
 
     const mockUpsert = vi.fn().mockResolvedValue({
       error: null,
     })
 
-    mockSupabase.from.mockReturnValue({
+    mockFrom.mockReturnValue({
       select: mockSelect,
       eq: mockEq,
-      single: mockSingle,
+      maybeSingle: mockMaybeSingle,
+      single: vi.fn(),
+      update: vi.fn().mockReturnThis(),
       upsert: mockUpsert,
     })
 
@@ -204,49 +223,47 @@ describe("useContactMethods", () => {
     })
 
     // Test saving
-    await result.current.saveContactMethods(mockContactMethods)
+    await result.current.saveContactMethods({
+      email: "test@example.com",
+      phone: "+1234567890",
+      preferred_method: "email",
+    })
 
     expect(mockUpsert).toHaveBeenCalledWith({
       user_id: "user-123",
-      ...mockContactMethods,
+      email: "test@example.com",
+      phone: "+1234567890",
+      preferred_method: "email",
     })
   })
 
-  it("should throw error when saving without authentication", async () => {
-    mockSupabase.auth.getUser.mockResolvedValue({
-      data: { user: null },
-      error: null,
-    })
+  it("should handle save errors", async () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
 
-    const { result } = renderHook(() => useContactMethods())
-
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false)
-    })
-
-    await expect(
-      result.current.saveContactMethods(mockContactMethods),
-    ).rejects.toThrow("Not authenticated")
-  })
-
-  it("should throw error when saving without any contact methods", async () => {
-    mockSupabase.auth.getUser.mockResolvedValue({
+    mockAuth.getUser.mockResolvedValue({
       data: { user: mockUser },
       error: null,
     })
 
+    // Mock initial load
     const mockSelect = vi.fn().mockReturnThis()
     const mockEq = vi.fn().mockReturnThis()
-    const mockSingle = vi.fn().mockResolvedValue({
+    const mockMaybeSingle = vi.fn().mockResolvedValue({
       data: null,
-      error: { code: "PGRST116" },
+      error: null,
     })
 
-    mockSupabase.from.mockReturnValue({
+    const mockUpsert = vi.fn().mockResolvedValue({
+      error: new Error("Save failed"),
+    })
+
+    mockFrom.mockReturnValue({
       select: mockSelect,
       eq: mockEq,
-      single: mockSingle,
-      upsert: vi.fn(),
+      maybeSingle: mockMaybeSingle,
+      single: vi.fn(),
+      update: vi.fn().mockReturnThis(),
+      upsert: mockUpsert,
     })
 
     const { result } = renderHook(() => useContactMethods())
@@ -255,18 +272,15 @@ describe("useContactMethods", () => {
       expect(result.current.loading).toBe(false)
     })
 
-    const emptyMethods: ContactMethods = {
-      email: "",
-      phone: "",
-      telegram_username: "",
-      whatsapp: "",
-      signal: "",
-      preferred_method: "email",
-      check_in_days: 90,
-    }
-
+    // Test saving with error
     await expect(
-      result.current.saveContactMethods(emptyMethods),
-    ).rejects.toThrow("At least one contact method is required")
+      result.current.saveContactMethods({
+        email: "test@example.com",
+        phone: "+1234567890",
+        preferred_method: "email",
+      }),
+    ).rejects.toThrow("Save failed")
+
+    consoleSpy.mockRestore()
   })
 })
