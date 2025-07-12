@@ -1,0 +1,212 @@
+# KeyFate Infrastructure
+
+This directory contains the Terraform configuration for deploying KeyFate's infrastructure, including the Cloud Run service with automated container image building and secure secret management.
+
+## Architecture
+
+The infrastructure uses:
+
+- **Terragrunt** for environment management and DRY configuration
+- **Cloud Foundation Fabric** modules for Google Cloud resources
+- **Cloud Run** for the containerized frontend application
+- **Artifact Registry** for container image storage
+- **Cloud Build** for automated image building
+- **Secret Manager** for secure environment variable storage
+- **Dedicated Service Account** for the Cloud Run service
+
+## Environments
+
+- **dev**: Development/staging environment (`keyfate-dev` project)
+- **prod**: Production environment (`keyfate-prod` project)
+
+## Migration from Makefile
+
+The deployment has been migrated from the Makefile (`make deploy-staging` and `make deploy-prod`) to Terraform using the Cloud Foundation Fabric modules with automated image building and secure secret management.
+
+### Key Changes
+
+- **Automated Image Building**: Images are built automatically when frontend source files change
+- **Hash-based Tagging**: Images are tagged with MD5 hash of source files for reproducible builds
+- **Artifact Registry**: Container images are stored in Google Artifact Registry
+- **Secret Manager Integration**: Sensitive environment variables are stored in Secret Manager
+- **Dedicated Service Account**: Cloud Run service runs with least-privilege service account
+- **Infrastructure as Code**: All deployment settings are version-controlled and reproducible
+
+## Setup
+
+1. **Copy terraform.tfvars files**:
+
+   ```bash
+   # For dev environment
+   cp terragrunt/dev/terraform.tfvars.example terragrunt/dev/terraform.tfvars
+
+   # For prod environment
+   cp terragrunt/prod/terraform.tfvars.example terragrunt/prod/terraform.tfvars
+   ```
+
+2. **Fill in sensitive values** in the terraform.tfvars files:
+   - Organization and billing account details
+   - Public environment variables (NEXT_PUBLIC_*)
+   - Secret environment variables (stored in Secret Manager)
+
+3. **Deploy**:
+
+   ```bash
+   # Deploy to dev
+   cd terragrunt/dev
+   terragrunt apply
+
+   # Deploy to prod
+   cd terragrunt/prod
+   terragrunt apply
+   ```
+
+## Automated Image Building
+
+The infrastructure automatically handles container image building and deployment:
+
+1. **Source Change Detection**: Terraform calculates MD5 hash of all files in `frontend/` directory
+2. **Conditional Building**: Images are only built when source files change
+3. **Cloud Build**: Uses `gcloud builds submit` to build and push images
+4. **Registry Storage**: Images are stored in Google Artifact Registry
+5. **Service Update**: Cloud Run service is automatically updated with new image
+
+### How it Works
+
+```hcl
+# Source file hash triggers rebuild
+frontend_image_tag = md5(join("", [for f in fileset(local.frontend_app_dir, "**") : filemd5("${local.frontend_app_dir}/${f}")]))
+
+# Build and push when hash changes
+resource "null_resource" "build_and_push_frontend" {
+  triggers = {
+    app_dir_hash = local.frontend_image_tag
+  }
+  # ... Cloud Build commands
+}
+```
+
+## Secret Management
+
+The infrastructure uses Google Secret Manager for secure environment variable storage:
+
+### Public Environment Variables
+
+Variables prefixed with `NEXT_PUBLIC_` are stored as regular environment variables:
+
+- `NEXT_PUBLIC_SITE_URL`
+- `NEXT_PUBLIC_COMPANY`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- And others...
+
+### Secret Environment Variables
+
+Sensitive variables are stored in Secret Manager and injected at runtime:
+
+- `DB_URL`: Database connection string
+- `ENCRYPTION_KEY`: Application encryption key
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`: OAuth credentials
+- `SUPABASE_JWT_SECRET`: JWT signing secret
+- `SUPABASE_SERVICE_ROLE_KEY`: Supabase service role key
+
+### How Secrets Work
+
+```hcl
+# Secrets are created in Secret Manager
+module "frontend_secrets" {
+  source = "github.com/GoogleCloudPlatform/cloud-foundation-fabric//modules/secret-manager"
+  # ... secret definitions
+}
+
+# Secrets are injected into Cloud Run
+env_from_key = {
+  DB_URL = {
+    secret  = "projects/${module.project.number}/secrets/db-url"
+    version = "latest"
+  }
+  # ... other secrets
+}
+```
+
+## Configuration
+
+### Cloud Run Settings
+
+The Cloud Run service is configured with:
+
+- **Dedicated Service Account**: `frontend-service@project-id.iam.gserviceaccount.com`
+- **CPU Boost**: Enabled for faster cold starts
+- **Min Instances**: 0 (for cost optimization)
+- **Max Instances**: 10 (configurable)
+- **Unauthenticated Access**: Enabled (public facing)
+- **Memory/CPU**: Configurable per environment
+
+### Service Account Permissions
+
+The frontend service account has the following roles:
+
+- `roles/secretmanager.secretAccessor`: Access to secrets
+- `roles/cloudsql.client`: Database connectivity
+- `roles/storage.objectViewer`: Cloud Storage access
+
+### Environment Variables
+
+Environment variables are managed through terraform.tfvars and injected via:
+
+- **Regular env vars**: Public configuration (NEXT_PUBLIC_*)
+- **Secret Manager**: Sensitive configuration (DB credentials, API keys, etc.)
+
+**Important**: The terraform.tfvars files are gitignored and contain sensitive data.
+
+## Outputs
+
+The deployment provides:
+
+- `cloud_run_service_url`: The public URL of the deployed service
+- `cloud_run_service_name`: The name of the Cloud Run service
+- `artifact_registry_url`: The URL of the container registry
+- `frontend_service_account_email`: The service account email
+- `project_id`: The Google Cloud project ID
+- `project_number`: The Google Cloud project number
+
+## Accessing the Service
+
+After deployment, the service URL will be available in the Terraform outputs:
+
+```bash
+terragrunt output cloud_run_service_url
+```
+
+## Updating the Service
+
+To update the service, simply modify files in the `frontend/` directory and run:
+
+```bash
+terragrunt apply
+```
+
+Terraform will:
+
+1. Detect source file changes via hash comparison
+2. Build and push a new container image
+3. Update the Cloud Run service with the new image
+4. Perform a zero-downtime deployment
+
+No manual image building or pushing is required!
+
+## Security Benefits
+
+- **Secret Isolation**: Sensitive data never appears in Terraform state or logs
+- **Least Privilege**: Service account has minimal required permissions
+- **Encryption**: All secrets are encrypted at rest and in transit
+- **Audit Trail**: Secret Manager provides full audit logs
+- **Rotation**: Secrets can be rotated without redeploying infrastructure
+
+## Architecture Benefits
+
+- **Reproducible Deployments**: Hash-based image tagging ensures consistent builds
+- **Cost Optimization**: Images are only built when needed
+- **Security**: Secrets managed via Secret Manager with least-privilege access
+- **Scalability**: Artifact Registry provides fast, regional image storage
+- **Automation**: Complete CI/CD pipeline with secure secret management in Terraform

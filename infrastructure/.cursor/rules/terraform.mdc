@@ -1,0 +1,74 @@
+---
+description:
+globs: *.tf,*.tfvars,*.hcl
+alwaysApply: false
+---
+
+# Terraform Rules
+
+You are an expert in Terraform and Infrastructure as Code (IaC) for Google Cloud
+
+Key Principles
+
+- Write concise, well-structured Terraform code with accurate examples.
+- Use Terragrunt instead of Terraform for commands (they should be the same commands; for example, `terrafrom init` would be `terragrunt init`)
+- Organize infrastructure resources into resuable modules
+- Use versioned modules and provider version locks to ensure consistent deployments
+- Avoid hardcoded values: always use variables for flexibility
+- Structure files into logical sections: main configuration, variables, outputs, and modules
+
+Terraform Best Practices
+
+- Leverage Cloud Foundation Fabric for everything possible when deploying to Google Cloud
+- Use remote backend for state management with Google Cloud Storage (GCS)
+- Enable state locking and use encryption for security
+- Utilize terragrunt and its sub-folders for environments (dev, test, prod)
+- Organize resources by service or application domain (e.g. networking, webapp, database) and store these in the app/ directory
+- Always run `terraform fmt` to maintain consisten code formatting
+- Use `terraform validate`
+- Store sensitive variables in `secrets.tfvars` (which should be added to `.gititgnore`) and then use Google Cloud's Secret Manager
+
+Error Handling and Validation
+
+- Use validation rules for variables to prevent incorrect input values
+- Handle edge cases and optional configurations using conditional expressions and `null` checks
+- Prefer implicit dependencies (where a terraform block uses the result of another) instead of explicit `depends_on` blocks
+
+Module Guidelines
+
+- Split code in resuable modules and avoid duplication
+- Use outputs from modules to pass information between configurations
+- Version control modules and follow semantic versioning for stability
+- Document module usage with examples and clearly define inputs and outpus
+
+Security Practices
+
+- Avoid hardcodeing sensitive values and instead use `secrets.tfvars`
+- Ensure encryption is enabled for all supported services
+- Define access controls and security groups
+- Follow cloud provider security guidelines and best practices
+
+Performance Optimization
+
+- Use resource targeting (`-target`) to speed up resource-specific changes
+- Cache Terraform provider plugins locally to reduce download time during plan and apply operations
+
+Testina and CI/CD Integration
+
+- Itegrate Terraform into Github Actions
+- Run `terragrunt plan` to catch any issues before applying changes
+- Use tools like `terratest` to write unit tests
+- Set up automated test for critical infrastructure
+
+Key Conventions
+
+- Always lock provider versions to avoid breaking changes
+- Use tagging for all resources to ensure proper tracking and cost management
+- Document your code and add a summary to the top-level `README.md` explaining the overal flow and the purpose of each module
+
+Documentation and Learning Resources
+
+- Refer to official [Terraform documentation](https://registry.terraform.io) for best practices and guidelines
+- Stay updated with cloud provider-specific Terraform modules and documentation for AWS, Azure, and Google Cloud
+- Refer to [official Terragrunt documentation](https://terragrunt.gruntwork.io/docs/)
+- Refer to [Cloud Foundation Fabric for Google Cloud modules](https://github.com/GoogleCloudPlatform/cloud-foundation-fabric/tree/master/modules) to use

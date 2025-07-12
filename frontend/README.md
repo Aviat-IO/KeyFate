@@ -1,51 +1,138 @@
-# Dead Man's Switch
+# KeyFate Frontend
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with
-[`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Next.js frontend for the KeyFate dead man's switch platform.
 
-## Getting Started
+## Development
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Node.js 18+
+- pnpm (recommended)
+- Supabase CLI
+
+### Quick Start
+
+1. **Install dependencies:**
+
+   ```bash
+   pnpm install
+   ```
+
+2. **Start Supabase locally:**
+
+   ```bash
+   supabase start
+   ```
+
+3. **Run development server:**
+
+   ```bash
+   pnpm dev
+   ```
+
+4. **Open [http://localhost:3000](http://localhost:3000)** in your browser
+
+### Environment Variables
+
+Create `.env.local` for development:
+
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-local-anon-key
+
+# App Configuration
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_COMPANY=KeyFate
+NEXT_PUBLIC_SUPPORT_EMAIL=support@keyfate.com
+
+# Google OAuth (optional for local dev)
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+# Local encryption key (generate with: openssl rand -base64 32)
+ENCRYPTION_KEY=your-local-encryption-key
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the
-result.
+## Architecture
 
-You can start editing the page by modifying `app/page.tsx`. The page
-auto-updates as you edit the file.
+### Tech Stack
 
-This project uses
-[`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts)
-to automatically optimize and load [Geist](https://vercel.com/font), a new font
-family for Vercel.
+- **Framework:** Next.js 14 (App Router)
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS, Shadcn UI
+- **Authentication:** Supabase Auth
+- **Database:** Supabase (PostgreSQL)
+- **Security:** Client-side Shamir's Secret Sharing
 
-## Learn More
+### Key Features
 
-To learn more about Next.js, take a look at the following resources:
+- **Dead Man's Switch:** Automated secret delivery when users fail to check in
+- **Shamir's Secret Sharing:** Secrets split and encrypted entirely in browser
+- **Google OAuth:** Seamless authentication
+- **Responsive Design:** Mobile-first, modern UI
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js
-  features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Development Patterns
 
-You can check out
-[the Next.js GitHub repository](https://github.com/vercel/next.js) - your
-feedback and contributions are welcome!
+- Server components by default
+- Use `'use client'` only for Web API access
+- Functional components with TypeScript
+- Named exports over default exports
+- `nuqs` for URL search parameter state
 
-## Deploy on Vercel
+## Building & Deployment
 
-The easiest way to deploy your Next.js app is to use the
-[Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme)
-from the creators of Next.js.
+### Build
 
-Check out our
-[Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying)
-for more details.
+```bash
+pnpm build
+```
+
+### Production Deployment
+
+Production deployment is handled by Terragrunt. See [Infrastructure README](../infrastructure/README.md) for details.
+
+### Manual Testing
+
+```bash
+# Run tests
+pnpm test
+
+# Type checking
+pnpm type-check
+
+# Linting
+pnpm lint
+```
+
+## Project Structure
+
+```none
+src/
+├── app/                 # Next.js App Router
+│   ├── (authenticated)/ # Protected routes
+│   ├── (main)/         # Public routes
+│   └── api/            # API routes
+├── components/         # Reusable components
+│   ├── ui/            # Shadcn UI components
+│   └── forms/         # Form components
+├── lib/               # Utilities & configs
+├── hooks/             # Custom React hooks
+└── types/             # TypeScript types
+```
+
+## Key Components
+
+- **Secret Management:** Create, edit, and manage secrets
+- **Check-in System:** Automated reminders and status tracking
+- **Contact Methods:** Email/SMS delivery configuration
+- **Encryption:** Client-side SSS implementation
+- **Authentication:** Supabase Auth integration
+
+## Development Tips
+
+- Use TypeScript strictly
+- Follow Next.js App Router patterns
+- Test with local Supabase instance
+- Keep secrets client-side only
+- Use Shadcn UI components for consistency

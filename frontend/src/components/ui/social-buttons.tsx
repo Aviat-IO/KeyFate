@@ -14,12 +14,14 @@ export function SocialButtons() {
   const { toast } = useToast()
 
   const handleOAuthSignIn = async (provider: Provider) => {
+    const redirectTo = `${window.location.origin}/auth/callback`
+    console.log({ redirectTo })
     try {
       setIsLoading(true)
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo,
           scopes: "openid email profile",
           queryParams: {
             access_type: "offline",

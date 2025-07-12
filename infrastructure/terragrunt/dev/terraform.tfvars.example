@@ -1,0 +1,33 @@
+# *.tfvars should not be added to git
+# Copy this file to terraform.tfvars and fill in the values
+
+# Organization and billing info
+folder_id = "870745208278" # LoginLoop
+organization_id = "115297153788" # aviat.io
+billing_account = "01A677-2C61EB-9BD9E1" # Fixed typo: was "billing_acocunt"
+
+# Cloud Run configuration
+cpu_limit = "1000m"
+memory_limit = "512Mi"
+cpu_boost = true
+max_instances = 10
+min_instances = 0
+allow_unauthenticated = true
+deletion_protection = false
+
+# Public environment variables (NEXT_PUBLIC_*)
+next_public_site_url = "https://keyfate-dev.example.com"
+next_public_company = "KeyFate"
+next_public_parent_company = "Aviat"
+next_public_support_email = "support@aviat.io"
+next_public_supabase_url = "https://your-supabase-project.supabase.co"
+next_public_supabase_anon_key = "your-anon-key"
+next_public_graphql_url = "https://your-supabase-project.supabase.co/graphql/v1"
+
+# Secret environment variables (sensitive)
+db_url = "postgresql://user:password@host:port/database"
+encryption_key = "your-base64-encoded-encryption-key"
+supabase_service_role_key = "your-service-role-key"
+supabase_jwt_secret = "your-jwt-secret"
+google_client_id = "your-google-client-id"
+google_client_secret = "your-google-client-secret"

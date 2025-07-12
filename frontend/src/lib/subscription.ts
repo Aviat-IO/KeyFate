@@ -52,12 +52,13 @@ export async function getUserTierInfo(
     }
   }
 
-  const finalUsage = usage ||
-    {
-      secrets_count: 0,
-      total_recipients: 0,
-      last_calculated: new Date().toISOString(),
-    };
+  const finalUsage = usage || {
+    id: crypto.randomUUID(),
+    user_id: userId,
+    secrets_count: 0,
+    total_recipients: 0,
+    last_calculated: new Date().toISOString(),
+  };
 
   return {
     tier,

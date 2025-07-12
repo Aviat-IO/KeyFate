@@ -1,0 +1,41 @@
+# Terraform State
+*.tfstate
+*.tfstate.backup
+*.tfvars
+
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Override files
+override.tf
+override.tf.json
+override.tfvars
+override.tfvars.json
+override.tfvars.json.terraform
+override.tfvars.terraform
+
+# Terraform
+**/.terraform/*
+.terraformmrc
+.terraformrc
+
+# Terragrunt
+.terragrunt-cache
+.terragrunt-cache/*
+
+# IDE and editor files
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS Generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Direnv
+.envrc

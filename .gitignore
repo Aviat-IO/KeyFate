@@ -27,6 +27,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Generated database types (copied from supabase/)
+frontend/src/types/database.types.ts
+
 # supabase
 supabase/config.toml
 supabase/migrations/20241207004612_cron_dev.sql
@@ -34,3 +37,5 @@ supabase/prod-migrations/*
 
 .firebaserc
 .envrc
+
+*.crt

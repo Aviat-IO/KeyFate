@@ -1,4 +1,4 @@
-import { Database } from "@/supabase/database.types";
+import { Database } from "@/types/database.types";
 
 export type SubscriptionTier = Database["public"]["Enums"]["subscription_tier"];
 export type SubscriptionStatus =

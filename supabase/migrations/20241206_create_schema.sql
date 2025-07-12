@@ -1,5 +1,4 @@
 -- Create schemas first
-CREATE SCHEMA IF NOT EXISTS auth;
 CREATE SCHEMA IF NOT EXISTS storage;
 CREATE SCHEMA IF NOT EXISTS public;
 CREATE SCHEMA IF NOT EXISTS extensions;
@@ -28,14 +27,6 @@ END $$;
 -- Grant usage on extensions schema
 REVOKE ALL ON SCHEMA extensions FROM public;
 GRANT USAGE ON SCHEMA extensions TO postgres, service_role;
-
--- Create auth function
-CREATE OR REPLACE FUNCTION auth.uid() RETURNS UUID AS $$
-  SELECT COALESCE(
-    current_setting('request.jwt.claim.sub', true),
-    (current_setting('request.jwt.claims', true)::jsonb->>'sub')
-  )::UUID
-$$ LANGUAGE sql STABLE;
 
 -- Create types
 DROP TYPE IF EXISTS public.secret_status CASCADE;

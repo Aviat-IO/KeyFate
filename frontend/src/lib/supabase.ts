@@ -3,7 +3,7 @@ import {
   NEXT_PUBLIC_SUPABASE_URL,
 } from "@/lib/env";
 import { createClient } from "@supabase/supabase-js";
-import { Database } from "@/types";
+import { Database } from "@/types/database.types";
 
 // Create a single instance of the Supabase client
 export const supabase = createClient<Database>(
