@@ -1,5 +1,9 @@
+"use client"
+
 import { Footer } from "@/components/footer"
 import { NavBar } from "@/components/nav-bar"
+import { PricingCard } from "@/components/subscription/PricingCard"
+import { BillingToggle } from "@/components/subscription/BillingToggle"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -8,10 +12,34 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { TIER_CONFIGS } from "@/constants/tiers"
 import { Clock, Lock, Shield } from "lucide-react"
 import Link from "next/link"
+import { useState } from "react"
 
 export default function Home() {
+  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">(
+    "yearly",
+  )
+
+  // Static pricing data
+  const STATIC_PRICING = {
+    pro: {
+      monthly: {
+        price: "$9/month",
+        subtext: undefined,
+        savingsText: undefined,
+      },
+      yearly: {
+        price: "$7.50/month",
+        subtext: "Billed annually at $90/year",
+        savingsText: "$18 saved (17% off)",
+      },
+    },
+  }
+
+  const proData = STATIC_PRICING.pro[billingPeriod]
+
   return (
     <div className="bg-background min-h-screen">
       <NavBar />
@@ -85,67 +113,44 @@ export default function Home() {
 
       {/* Pricing Section */}
       <section className="container mx-auto border-t px-4 py-24">
-        <h2 className="mb-16 text-center text-3xl font-bold">Simple Pricing</h2>
-        <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 sm:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Free</CardTitle>
-              <CardDescription>Perfect for getting started</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <p className="text-3xl font-bold">$0</p>
-                <ul className="space-y-2 text-sm">
-                  <li>✓ 1 secret</li>
-                  <li>✓ 1 recipient per secret</li>
-                  <li>✓ Weekly, monthly, yearly intervals</li>
-                  <li>✓ Community support</li>
-                </ul>
-                <Button className="w-full" asChild>
-                  <Link href="/auth/signup">Get Started</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="space-y-8">
+          <div className="space-y-4 text-center">
+            <h2 className="text-4xl font-bold tracking-tight">
+              Simple Pricing
+            </h2>
+            <p className="text-muted-foreground mx-auto max-w-2xl text-xl">
+              Secure your digital legacy with KeyFate's dead man's switch
+              service. Start free and upgrade when you need more capacity.
+            </p>
+          </div>
 
-          <Card className="ring-2 ring-purple-500">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                Pro
-                <span className="ml-2 rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                  Most Popular
-                </span>
-              </CardTitle>
-              <CardDescription>For power users</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-3xl font-bold">
-                    $9<span className="text-lg font-normal">/month</span>
-                  </p>
-                  <p className="text-muted-foreground text-sm">
-                    or $90/year (save $18)
-                  </p>
-                </div>
-                <ul className="space-y-2 text-sm">
-                  <li>✓ Up to 10 secrets</li>
-                  <li>✓ Up to 5 recipients per secret</li>
-                  <li>✓ Flexible intervals (1 day to 3 years)</li>
-                  <li>✓ Message templates</li>
-                  <li>✓ Email support</li>
-                </ul>
-                <Button className="w-full" asChild>
-                  <Link href="/pricing">View Details</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        <div className="mt-8 text-center">
-          <Button variant="outline" asChild>
-            <Link href="/pricing">View Full Pricing Details</Link>
-          </Button>
+          <BillingToggle
+            billingPeriod={billingPeriod}
+            onPeriodChange={setBillingPeriod}
+          />
+
+          <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-2">
+            <PricingCard
+              title="Free"
+              description="Perfect for getting started"
+              price="$0"
+              features={TIER_CONFIGS.free.features}
+              buttonText="Get Started"
+              buttonHref="/auth/signup"
+            />
+
+            <PricingCard
+              title="Pro"
+              description="For power users"
+              price={proData.price}
+              subtext={proData.subtext}
+              savingsText={proData.savingsText}
+              features={TIER_CONFIGS.pro.features}
+              buttonText="Get Started with Pro"
+              buttonHref="/auth/signup"
+              isPopular={true}
+            />
+          </div>
         </div>
       </section>
 

@@ -62,7 +62,7 @@ export function SocialButtons() {
         ) : (
           <>
             <RiGoogleFill
-              className="mr-3 text-[#DB4437] dark:text-white/60"
+              className="text-foreground/80 mr-3"
               size={16}
               aria-hidden="true"
             />
