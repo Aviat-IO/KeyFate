@@ -90,7 +90,7 @@ export function NewSecretForm() {
         recipient_email: data.recipient_email,
         recipient_phone: data.recipient_phone,
         contact_method: data.contact_method,
-        check_in_days: data.check_in_days,
+        check_in_days: parseInt(data.check_in_days, 10),
         sss_shares_total: data.sss_shares_total,
         sss_threshold: data.sss_threshold,
       }

@@ -4,6 +4,7 @@ import { CheckInButton } from "@/components/check-in-button"
 import { TogglePauseButton } from "@/components/toggle-pause-button"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import {
   Tooltip,
@@ -14,7 +15,7 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import { Secret } from "@/types"
-import { Clock, Pencil } from "lucide-react"
+import { Clock, Pencil, User } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { format } from "timeago.js"
@@ -76,7 +77,7 @@ function getStatusBadge(
   }
 
   return {
-    label: "Checked in",
+    label: "Active",
     variant: "secondary",
   }
 }
@@ -92,8 +93,6 @@ export function SecretCard({ secret }: SecretCardProps) {
       !secret.server_share,
     ),
   )
-  const [showMessage] = useState(false)
-  const [decryptedMessage] = useState<string | null>(null)
 
   useEffect(() => {
     setStatusBadge(
@@ -153,125 +152,188 @@ export function SecretCard({ secret }: SecretCardProps) {
     return lastCheckIn < fifteenMinutesAgo
   }, [secretState.last_check_in])
 
+  const getTimingText = () => {
+    if (secretState.is_triggered) {
+      return `Sent ${format(secretState.triggered_at!)}`
+    }
+    if (serverShareDeleted) {
+      return "Disabled"
+    }
+    return `Triggers ${format(secretState.next_check_in)}`
+  }
+
+  const getLastCheckInText = () => {
+    if (
+      !secretState.last_check_in ||
+      secretState.is_triggered ||
+      serverShareDeleted
+    ) {
+      return null
+    }
+    return `Last: ${format(secretState.last_check_in)}`
+  }
+
   return (
-    <div
+    <Card
       className={cn(
-        "bg-card flex h-full flex-col rounded-lg border p-4 shadow-sm",
+        "transition-all duration-200 hover:shadow-md",
         secretState.is_triggered && "border-destructive/50 bg-destructive/5",
-        secretState.status === "paused" && "border-muted bg-muted/5",
-        serverShareDeleted && "border-muted bg-muted/5 opacity-75",
+        secretState.status === "paused" && "border-accent bg-accent/10",
+        serverShareDeleted &&
+          "border-muted-foreground/30 bg-muted/50 opacity-90",
       )}
     >
-      <div>
-        <div className="flex items-start justify-between">
-          <div>
-            <h3 className="font-semibold">{secretState.title}</h3>
+      <CardHeader className="pb-3">
+        {/* Mobile Layout: Stack everything vertically */}
+        <div className="flex flex-col gap-2 md:hidden">
+          <div className="flex items-start justify-between">
+            <h3 className="flex-1 truncate pr-2 text-sm font-semibold">
+              {secretState.title}
+            </h3>
+            <Badge variant={statusBadge.variant} className="text-xs">
+              {statusBadge.label}
+            </Badge>
+          </div>
+
+          <div className="text-muted-foreground flex items-center gap-2 text-xs">
+            <User className="h-3 w-3" />
+            <span className="truncate">{secretState.recipient_name}</span>
+          </div>
+
+          <div className="text-muted-foreground flex items-center gap-2 text-xs">
+            <Clock className="h-3 w-3" />
+            <span>{getTimingText()}</span>
+          </div>
+
+          {getLastCheckInText() && (
+            <div className="text-muted-foreground text-xs">
+              {getLastCheckInText()}
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Layout: More spacious with better information hierarchy */}
+        <div className="hidden md:block">
+          <div className="mb-2 flex items-start justify-between">
+            <div className="flex-1">
+              <h3 className="mb-1 text-base font-semibold">
+                {secretState.title}
+              </h3>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="text-muted-foreground flex items-center gap-2 text-sm">
+                      <User className="h-4 w-4" />
+                      <span>Recipient: {secretState.recipient_name}</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="whitespace-pre-line">{getContactDetails()}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <p className="text-muted-foreground text-sm hover:cursor-help">
-                    Recipient: {secretState.recipient_name}
-                  </p>
+                  <Badge variant={statusBadge.variant}>
+                    {statusBadge.label}
+                  </Badge>
                 </TooltipTrigger>
-                <TooltipContent>
-                  <p className="whitespace-pre-line">{getContactDetails()}</p>
-                </TooltipContent>
+                {statusBadge.label === "Paused" && (
+                  <TooltipContent>
+                    <p>Will not trigger even if past the due date</p>
+                  </TooltipContent>
+                )}
+                {statusBadge.label === "Disabled" && (
+                  <TooltipContent>
+                    <p>Server share deleted - secret is disabled</p>
+                  </TooltipContent>
+                )}
               </Tooltip>
             </TooltipProvider>
           </div>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
-              </TooltipTrigger>
-              {statusBadge.label === "Paused" && (
-                <TooltipContent>
-                  <p>Will not trigger even if past the due date</p>
-                </TooltipContent>
-              )}
-              {statusBadge.label === "Disabled" && (
-                <TooltipContent>
-                  <p>Server share deleted - secret is disabled</p>
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </div>
 
-      <div className="mb-4 flex-grow" />
-
-      <div className="text-muted-foreground flex flex-col gap-1 text-sm">
-        <div className="flex items-center">
-          <Clock className="mr-1 h-4 w-4" />
-          {secretState.is_triggered
-            ? `Sent: ${format(secretState.triggered_at!)}`
-            : serverShareDeleted
-              ? "Disabled - will not trigger"
-              : `Triggers: ${format(secretState.next_check_in)}`}
-        </div>
-        {!secretState.is_triggered &&
-          !serverShareDeleted &&
-          secretState.last_check_in && (
-            <div className="text-muted-foreground text-xs">
-              Last check-in: {format(secretState.last_check_in)}
+          <div className="flex flex-col gap-1">
+            <div className="text-muted-foreground flex items-center gap-2 text-sm">
+              <Clock className="h-4 w-4" />
+              <span>{getTimingText()}</span>
             </div>
-          )}
-        {serverShareDeleted && (
-          <div className="text-muted-foreground text-xs">
-            Server share deleted
+
+            {getLastCheckInText() && (
+              <div className="text-muted-foreground ml-6 text-xs">
+                {getLastCheckInText()}
+              </div>
+            )}
+
+            {serverShareDeleted && (
+              <div className="text-muted-foreground ml-6 text-xs">
+                Server share deleted
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      </CardHeader>
 
-      <Separator className="my-4" />
+      <CardContent className="pt-0">
+        <Separator className="mb-3" />
 
-      <div className="flex items-center justify-end gap-2">
-        {!secretState.is_triggered ? (
-          <>
-            {!serverShareDeleted &&
-              secretState.status === "active" &&
-              canCheckIn && (
+        {/* Action Buttons - Responsive layout */}
+        <div className="flex items-center justify-end gap-2">
+          {!secretState.is_triggered ? (
+            <>
+              {/* Check-in button - only on larger screens or when urgent */}
+              {!serverShareDeleted &&
+                secretState.status === "active" &&
+                canCheckIn && (
+                  <>
+                    <CheckInButton
+                      secretId={secretState.id}
+                      onCheckInSuccess={handleCheckInSuccess}
+                      variant="ghost"
+                    />
+                    <Separator orientation="vertical" className="h-4" />
+                  </>
+                )}
+
+              {/* Pause/Resume button */}
+              {!serverShareDeleted && (
                 <>
-                  <CheckInButton
+                  <TogglePauseButton
                     secretId={secretState.id}
-                    onCheckInSuccess={handleCheckInSuccess}
-                    variant="ghost"
+                    status={secretState.status}
+                    onToggleSuccess={handleToggleSuccess}
                   />
-                  <Separator orientation="vertical" className="h-6" />
+                  <Separator orientation="vertical" className="h-4" />
                 </>
               )}
-            {!serverShareDeleted && (
-              <>
-                <TogglePauseButton
-                  secretId={secretState.id}
-                  status={secretState.status}
-                  onToggleSuccess={handleToggleSuccess}
-                />
-                <Separator orientation="vertical" className="h-6" />
-              </>
-            )}
+
+              {/* Edit/View button */}
+              <Button variant="ghost" size="sm" asChild>
+                <Link
+                  href={
+                    serverShareDeleted
+                      ? `/secrets/${secretState.id}/view`
+                      : `/secrets/${secretState.id}/edit`
+                  }
+                >
+                  <Pencil className="mr-1 h-4 w-4" />
+                  <span className="hidden sm:inline">
+                    {serverShareDeleted ? "View" : "Edit"}
+                  </span>
+                </Link>
+              </Button>
+            </>
+          ) : (
             <Button variant="ghost" size="sm" asChild>
-              <Link
-                href={
-                  serverShareDeleted
-                    ? `/secrets/${secretState.id}/view`
-                    : `/secrets/${secretState.id}/edit`
-                }
-              >
-                <Pencil className="h-4 w-4" />
-                {serverShareDeleted ? "View" : "Edit"}
+              <Link href={`/secrets/${secretState.id}/view`}>
+                <span className="text-sm">View</span>
               </Link>
             </Button>
-          </>
-        ) : (
-          <Button variant="ghost" size="sm" asChild>
-            <Link href={`/secrets/${secretState.id}/view`}>View</Link>
-          </Button>
-        )}
-      </div>
-
-      {showMessage && <p>{decryptedMessage}</p>}
-    </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   )
 }

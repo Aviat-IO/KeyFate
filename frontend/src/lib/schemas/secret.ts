@@ -74,7 +74,7 @@ export const secretSchema = z.object({
     "Check-in frequency must be at least 2 days",
   ),
   next_check_in: z.string().optional(),
-  status: z.enum(["active", "paused", "expired"]).default("active"),
+  status: z.enum(["active", "paused", "triggered"]).default("active"),
   sss_shares_total: z.number().min(2).max(10),
   sss_threshold: z.number().min(2).max(10),
 });

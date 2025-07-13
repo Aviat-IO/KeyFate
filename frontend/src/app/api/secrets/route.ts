@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
       .insert({
         ...validatedData,
         user_id: user.user.id,
-      })
+      } as any)
       .select()
       .single();
 
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json({ secretId: data.id, ...data });
   } catch (error) {
     console.error("Error in POST /api/secrets:", error);
     return NextResponse.json(

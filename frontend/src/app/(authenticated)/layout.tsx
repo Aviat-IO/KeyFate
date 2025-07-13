@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/utils/supabase/server"
 import { ReactNode } from "react"
+import { NavBar } from "@/components/nav-bar"
 
 interface AuthenticatedLayoutProps {
   children: ReactNode
@@ -19,5 +20,10 @@ export default async function AuthenticatedLayout({
     redirect("/auth/login")
   }
 
-  return <>{children}</>
+  return (
+    <>
+      <NavBar />
+      <main>{children}</main>
+    </>
+  )
 }
