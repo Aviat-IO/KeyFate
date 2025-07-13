@@ -1,108 +1,55 @@
-import { Database, Secret } from "@/types";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { PostgrestError } from "@supabase/supabase-js";
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { createClient } from "@/utils/supabase/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> },
+  request: NextRequest,
+  { params }: { params: { id: string } },
 ) {
-  const { id } = await params;
   try {
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient<Database>({
-      cookies: () => Promise.resolve(cookieStore),
-    });
+    const supabase = await createClient();
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-    if (userError || !user) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get the secret and verify ownership
-    const { data: secret, error: secretError }: {
-      data: Secret | null;
-      error: PostgrestError | null;
-    } = await supabase
+    const { data: secret, error: fetchError } = await supabase
       .from("secrets")
       .select("*")
-      .eq("id", id)
+      .eq("id", params.id)
       .eq("user_id", user.id)
       .single();
 
-    if (secretError || !secret) {
-      console.error(
-        "[POST /api/secrets/[id]/check-in] Secret error:",
-        secretError,
-      );
+    if (fetchError || !secret) {
       return NextResponse.json({ error: "Secret not found" }, { status: 404 });
     }
 
-    // Check if secret is active
-    if (secret.status !== "active") {
-      return NextResponse.json(
-        { error: "Secret is not active and cannot be checked in" },
-        { status: 400 },
-      );
-    }
-
-    const now = new Date();
+    // Calculate next check-in
     const nextCheckIn = new Date();
     nextCheckIn.setDate(nextCheckIn.getDate() + secret.check_in_days);
 
-    // Update last check-in and next check-in
-    const { error: updateError } = await supabase.rpc("check_in_secret", {
-      p_secret_id: id,
-      p_user_id: user.id,
-      p_checked_in_at: now.toISOString(),
-      p_next_check_in: nextCheckIn.toISOString(),
-    });
+    const { error: updateError } = await supabase
+      .from("secrets")
+      .update({
+        last_check_in: new Date().toISOString(),
+        next_check_in: nextCheckIn.toISOString(),
+      })
+      .eq("id", params.id)
+      .eq("user_id", user.id);
 
     if (updateError) {
-      console.error(
-        "[POST /api/secrets/[id]/check-in] Update error:",
-        updateError,
-      );
+      console.error("Error updating check-in:", updateError);
       return NextResponse.json(
-        { error: "Failed to record check-in" },
+        { error: "Failed to update check-in" },
         { status: 500 },
       );
     }
 
-    // Fetch the updated secret to return to client
-    const { data: updatedSecret, error: fetchError }: {
-      data: Secret | null;
-      error: PostgrestError | null;
-    } = await supabase
-      .from("secrets")
-      .select("*")
-      .eq("id", id)
-      .eq("user_id", user.id)
-      .single();
-
-    if (fetchError || !updatedSecret) {
-      console.error(
-        "[POST /api/secrets/[id]/check-in] Fetch updated secret error:",
-        fetchError,
-      );
-      return NextResponse.json(
-        { error: "Failed to fetch updated secret" },
-        { status: 500 },
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      secret: updatedSecret,
-    });
+    return NextResponse.json({ success: true, next_check_in: nextCheckIn });
   } catch (error) {
-    console.error("[POST /api/secrets/[id]/check-in] Error:", error);
+    console.error("Error in POST /api/secrets/[id]/check-in:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Internal server error" },
       { status: 500 },
     );
   }

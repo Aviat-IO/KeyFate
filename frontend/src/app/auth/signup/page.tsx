@@ -1,14 +1,15 @@
 "use client"
 
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { SocialButtons } from "@/components/ui/social-buttons"
+import { Label } from "@/components/ui/label"
+import { AuthForm } from "@/components/auth-form"
 import { supabase } from "@/lib/supabase"
 import { AlertCircle } from "lucide-react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("")
@@ -34,12 +35,10 @@ export default function SignUpPage() {
   }
 
   return (
-    <>
-      <div className="space-y-2">
-        <h2 className="text-center text-3xl font-bold tracking-tight">
-          Create your account
-        </h2>
-        <p className="text-muted-foreground text-center text-sm">
+    <AuthForm
+      title="Create your account"
+      description={
+        <>
           Or{" "}
           <Link
             href="/auth/login"
@@ -48,80 +47,53 @@ export default function SignUpPage() {
             sign in
           </Link>{" "}
           if you already have an account
-        </p>
-      </div>
-      <form className="mt-8 space-y-6" onSubmit={handleSignUp}>
-        {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="email" className="sr-only">
-              Email address
-            </label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setEmail(e.target.value)
-              }
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="sr-only">
-              Password
-            </label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              placeholder="Password"
-              value={password}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setPassword(e.target.value)
-              }
-              required
-            />
-          </div>
+        </>
+      }
+      leftLink={{ href: "/auth/reset-password", text: "Forgot password?" }}
+      rightLink={{
+        text: "Have an account?",
+        linkText: "Sign in",
+        href: "/auth/login",
+      }}
+    >
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      <form onSubmit={handleSignUp} className="space-y-3">
+        <div className="space-y-2">
+          <Label htmlFor="email">Email address</Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
         </div>
 
-        <div>
-          <Button type="submit" className="w-full">
-            Sign up
-          </Button>
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
         </div>
 
-        <div className="flex justify-center">
-          <Link
-            href="/auth/reset-password"
-            className="text-primary hover:text-primary/90 text-sm transition hover:underline"
-          >
-            Forgot your password?
-          </Link>
-        </div>
+        <Button type="submit" className="w-full">
+          Sign up
+        </Button>
       </form>
-
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background text-muted-foreground px-2">
-            Or continue with
-          </span>
-        </div>
-      </div>
-
-      <SocialButtons />
-    </>
+    </AuthForm>
   )
 }

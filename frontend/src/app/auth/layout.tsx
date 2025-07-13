@@ -1,33 +1,38 @@
 "use client"
 
-import { NavBar } from "@/components/nav-bar"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { createClient } from "@/utils/supabase/client"
+import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
-export default function AuthLayout({
-  children,
-}: {
+interface AuthLayoutProps {
   children: React.ReactNode
-}) {
-  const [user, setUser] = useState(null)
-  const supabase = createClientComponentClient()
+}
+
+const supabase = createClient()
+
+export default function AuthLayout({ children }: AuthLayoutProps) {
+  const router = useRouter()
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const getUser = async () => {
+    const checkUser = async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser()
-      setUser(user)
-    }
-    getUser()
-  }, [supabase.auth])
 
-  return (
-    <div className="bg-background min-h-screen">
-      <NavBar user={user} />
-      <div className="flex min-h-[calc(100vh-200px)] items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md space-y-8">{children}</div>
-      </div>
-    </div>
-  )
+      if (user) {
+        router.push("/dashboard")
+      } else {
+        setLoading(false)
+      }
+    }
+
+    checkUser()
+  }, [router])
+
+  if (loading) {
+    return <div>Loading...</div>
+  }
+
+  return <>{children}</>
 }

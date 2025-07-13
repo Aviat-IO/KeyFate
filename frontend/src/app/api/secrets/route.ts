@@ -1,185 +1,41 @@
-import { NEXT_PUBLIC_SUPABASE_URL } from "@/lib/env";
-import { SUPABASE_SERVICE_ROLE_KEY } from "@/lib/server-env";
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/utils/supabase/server";
+import { secretSchema } from "@/lib/schemas/secret";
 
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { createClient, PostgrestError } from "@supabase/supabase-js";
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
-import { Database } from "@/types";
-
-export async function POST(req: Request) {
-  const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient<Database>({
-    // @ts-expect-error - Supabase auth helpers expect different cookie format
-    cookies: () => cookieStore,
-  });
-
+export async function POST(request: NextRequest) {
   try {
-    const supabaseAdmin = createClient<Database>(
-      NEXT_PUBLIC_SUPABASE_URL,
-      SUPABASE_SERVICE_ROLE_KEY,
-      {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-        },
-        db: {
-          schema: "public",
-        },
-      },
-    );
+    const supabase = await createClient();
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 },
-      );
+    const { data: user, error: userError } = await supabase.auth.getUser();
+    if (userError || !user.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
-    const {
-      title,
-      server_share,
-      iv: clientIv,
-      auth_tag: clientAuthTag,
-      recipient_name,
-      recipient_email,
-      recipient_phone,
-      contact_method,
-      check_in_days,
-      sss_shares_total,
-      sss_threshold,
-    } = body;
+    const body = await request.json();
+    const validatedData = secretSchema.parse(body);
 
-    if (!server_share || !clientIv || !clientAuthTag) {
-      return NextResponse.json(
-        { error: "Missing encrypted server share, IV, or auth tag." },
-        { status: 400 },
-      );
-    }
-
-    if (
-      typeof sss_shares_total !== "number" ||
-      sss_shares_total < 2 ||
-      typeof sss_threshold !== "number" ||
-      sss_threshold < 2 ||
-      sss_threshold > sss_shares_total
-    ) {
-      return NextResponse.json(
-        { error: "Invalid SSS shares total or threshold parameters." },
-        { status: 400 },
-      );
-    }
-
-    // Use the server share and encryption data provided by client
-    const encryptedServerShare = server_share;
-    const iv = clientIv;
-    const authTag = clientAuthTag;
-
-    const nextCheckIn = new Date();
-    const parsedCheckInDays = parseInt(check_in_days, 10);
-    if (isNaN(parsedCheckInDays) || parsedCheckInDays <= 0) {
-      return NextResponse.json({ error: "Invalid check_in_days value." }, {
-        status: 400,
-      });
-    }
-    nextCheckIn.setDate(nextCheckIn.getDate() + parsedCheckInDays);
-
-    const { data: secretData, error: insertError }: {
-      data: { id: string } | null;
-      error: PostgrestError | null;
-    } = await supabaseAdmin
+    const { data, error } = await supabase
       .from("secrets")
-      .insert([{
-        user_id: user.id,
-        title,
-        server_share: encryptedServerShare,
-        recipient_name,
-        recipient_email: contact_method === "email" || contact_method === "both"
-          ? recipient_email
-          : null,
-        recipient_phone: contact_method === "phone" || contact_method === "both"
-          ? recipient_phone
-          : null,
-        contact_method,
-        check_in_days: parsedCheckInDays,
-        next_check_in: nextCheckIn.toISOString(),
-        iv: iv,
-        auth_tag: authTag,
-        status: "active",
-        sss_shares_total: sss_shares_total,
-        sss_threshold: sss_threshold,
-      }])
-      .select("id")
+      .insert({
+        ...validatedData,
+        user_id: user.user.id,
+      })
+      .select()
       .single();
 
-    if (insertError) {
-      console.error("[CreateSecret DB Insert Error]:", insertError);
-      return NextResponse.json({
-        error: "Database error: " + insertError.message,
-      }, { status: 500 });
-    }
-
-    if (!secretData || !secretData.id) {
-      console.error(
-        "[CreateSecret DB Insert Error]: No secret data or ID returned after insert.",
+    if (error) {
+      console.error("Error creating secret:", error);
+      return NextResponse.json(
+        { error: "Failed to create secret" },
+        { status: 500 },
       );
-      return NextResponse.json({
-        error: "Failed to create secret and retrieve ID.",
-      }, { status: 500 });
     }
 
-    const { error: scheduleError }: { error: PostgrestError | null } =
-      await supabaseAdmin.rpc(
-        "schedule_secret_reminders",
-        {
-          p_secret_id: secretData.id,
-          p_next_check_in: nextCheckIn.toISOString(),
-        },
-      );
-
-    if (scheduleError) {
-      const { error: notificationError }: { error: PostgrestError | null } =
-        await supabaseAdmin
-          .from("admin_notifications")
-          .insert([{
-            type: "reminder_scheduling_failed",
-            severity: "error",
-            title: "Failed to Schedule Reminders",
-            message:
-              `Failed to schedule reminders for secret titled \\"${title}\\" (ID: ${secretData.id}). Error: ${scheduleError.message}`,
-            metadata: {
-              secret_id: secretData.id,
-              error_code: scheduleError.code,
-              error_message: scheduleError.message,
-              user_id: user.id,
-            },
-          }]);
-
-      if (notificationError) {
-        console.error(
-          "Failed to create admin notification for reminder scheduling failure:",
-          notificationError,
-        );
-      }
-      return NextResponse.json({
-        secretId: secretData.id,
-        warning:
-          "Secret created, but reminder scheduling failed. An administrator has been notified.",
-      });
-    }
-
-    return NextResponse.json({ secretId: secretData.id });
+    return NextResponse.json(data);
   } catch (error) {
-    console.error("[CreateSecret API Error]:", error);
-    const errorMessage = (error instanceof Error && error.message)
-      ? error.message
-      : "An unexpected error occurred.";
+    console.error("Error in POST /api/secrets:", error);
     return NextResponse.json(
-      {
-        error: "Failed to create secret: " + errorMessage,
-      },
+      { error: "Internal server error" },
       { status: 500 },
     );
   }

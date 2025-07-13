@@ -79,7 +79,7 @@ export function StaticPricingPage({ className = "" }: StaticPricingPageProps) {
       </div>
 
       {/* FAQ Section */}
-      <div className="mx-auto max-w-3xl space-y-8">
+      <div className="mx-auto max-w-3xl space-y-8 pt-16">
         <h2 className="text-foreground text-center text-2xl font-bold">
           Frequently Asked Questions
         </h2>

@@ -1,39 +1,22 @@
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
-import { Database, Secret } from "@/types";
+import { createClient } from "@/utils/supabase/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function DELETE(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> },
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string } },
 ) {
   try {
-    const { id } = await params;
-    if (!id) {
-      return NextResponse.json({ error: "Missing secret ID" }, { status: 400 });
-    }
+    const supabase = await createClient();
 
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient<Database>({
-      cookies: () => Promise.resolve(cookieStore),
-    });
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Verify the secret exists and belongs to user
-    const {
-      data: secret,
-      error: fetchError,
-    }: {
-      data: Secret;
-      error: Error | null;
-    } = await supabase
+    const { data: secret, error: fetchError } = await supabase
       .from("secrets")
-      .select("id, server_share")
-      .eq("id", id)
+      .select("*")
+      .eq("id", params.id)
       .eq("user_id", user.id)
       .single();
 
@@ -41,43 +24,33 @@ export async function DELETE(
       return NextResponse.json({ error: "Secret not found" }, { status: 404 });
     }
 
-    // Check if server share is already deleted
-    if (!secret.server_share) {
-      return NextResponse.json(
-        { error: "Server share has already been deleted" },
-        { status: 410 },
-      );
-    }
-
-    const update = {
-      server_share: null,
-      iv: null,
-      auth_tag: null,
-      status: "paused" as const, // Automatically pause the secret when server share is deleted
-    };
-
-    // Delete the server share by setting it to null and pause the secret
-    // Also clear the IV and auth_tag since they're no longer needed
-    // Pausing ensures no emails will be sent for this secret
     const { error: updateError } = await supabase
       .from("secrets")
-      .update(update)
-      .eq("id", id)
+      .update({
+        server_share: null,
+        iv: null,
+        auth_tag: null,
+        status: "paused",
+      })
+      .eq("id", params.id)
       .eq("user_id", user.id);
 
     if (updateError) {
-      throw updateError;
+      console.error("Error deleting server share:", updateError);
+      return NextResponse.json(
+        { error: "Failed to delete server share" },
+        { status: 500 },
+      );
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[DeleteServerShare] Error:", error);
+    console.error(
+      "Error in POST /api/secrets/[id]/delete-server-share:",
+      error,
+    );
     return NextResponse.json(
-      {
-        error: error instanceof Error
-          ? error.message
-          : "Failed to delete server share",
-      },
+      { error: "Internal server error" },
       { status: 500 },
     );
   }

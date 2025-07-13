@@ -1,148 +1,86 @@
 import { SecretCard } from "@/components/secret-card"
 import { Button } from "@/components/ui/button"
-import { NEXT_PUBLIC_COMPANY } from "@/lib/env"
-import { Database, Secret } from "@/types"
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { AlertCircle, PlusCircle } from "lucide-react"
-import { Metadata } from "next"
-import { cookies } from "next/headers"
+import { Suspense } from "react"
+import { createClient } from "@/utils/supabase/server"
 import Link from "next/link"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-export const metadata: Metadata = {
-  title: `${NEXT_PUBLIC_COMPANY} - Dashboard`,
-  description: `Dashboard for ${NEXT_PUBLIC_COMPANY} dead man's switch service`,
+async function SecretsLoader() {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return <div>Please sign in to continue</div>
+  }
+
+  const { data: secrets } = await supabase
+    .from("secrets")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+
+  if (!secrets || secrets.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>No Secrets Yet</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground mb-4">
+            You haven't created any secrets yet. Get started by creating your
+            first dead man's switch.
+          </p>
+          <Button asChild>
+            <Link href="/secrets/new">Create Your First Secret</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {secrets.map((secret) => (
+        <SecretCard key={secret.id} secret={secret} />
+      ))}
+    </div>
+  )
 }
 
 export default async function DashboardPage() {
-  const cookieStore = await cookies()
-  const supabase = createServerComponentClient<Database>({
-    // @ts-expect-error - Supabase auth helpers expect different cookie format
-    cookies: () => cookieStore,
-  })
-
-  try {
-    // Fetch secrets directly using Supabase client
-    const { data: secrets, error: secretsError } = await supabase
-      .from("secrets")
-      .select("*")
-      .order("is_triggered", { ascending: true })
-      .order("next_check_in", { ascending: true })
-      .order("triggered_at", { ascending: false })
-      .returns<Secret[]>()
-
-    if (secretsError) {
-      console.error("[DashboardPage] Secrets error:", secretsError)
-      throw new Error("Failed to fetch secrets")
-    }
-
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Dashboard</h1>
-            <p className="text-muted-foreground mt-1">
-              Keep your secrets safe by checking in regularly
-            </p>
-          </div>
-          <Button asChild>
-            <Link href="/secrets/new">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Create New Secret
-            </Link>
-          </Button>
-        </div>
-
-        {!secrets || secrets.length === 0 ? (
-          <div className="rounded-lg border-2 border-dashed p-12 text-center">
-            <div className="mx-auto max-w-sm">
-              <AlertCircle className="text-muted-foreground mx-auto h-12 w-12" />
-              <h2 className="mt-4 text-lg font-semibold">No secrets yet</h2>
-              <p className="text-muted-foreground mt-2 text-sm">
-                Create your first &quot;dead man&apos;s switch&quot;.
-              </p>
-              <p className="text-muted-foreground mt-2 text-sm">
-                Your secret will only be revealed to your trusted contact if you
-                fail to check-in in your defined time period.
-              </p>
-              <Button asChild className="mt-4">
-                <Link href="/secrets/new">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Create Your First Secret
-                </Link>
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* Active secrets */}
-            {secrets.filter((secret) => secret.server_share !== null).length >
-              0 && (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {secrets
-                  .filter((secret) => secret.server_share !== null)
-                  .map((secret) => (
-                    <SecretCard secret={secret} key={secret.id} />
-                  ))}
-              </div>
-            )}
-
-            {/* Secrets with deleted server shares - less prominent section */}
-            {secrets.filter((secret) => secret.server_share === null).length >
-              0 && (
-              <div className="mt-20">
-                <div className="mb-4 flex items-center gap-2">
-                  <h2 className="text-muted-foreground text-lg font-medium">
-                    Disabled Secrets
-                  </h2>
-                  <div className="text-muted-foreground bg-muted rounded px-2 py-1 text-xs">
-                    Server share deleted
-                  </div>
-                </div>
-                <p className="text-muted-foreground mb-4 text-sm">
-                  These secrets have had their server share deleted and are
-                  effectively disabled. They serve as a record of what was
-                  created and to whom it was sent.
-                </p>
-                <div className="grid gap-4 opacity-60 md:grid-cols-2 lg:grid-cols-3">
-                  {secrets
-                    .filter((secret) => secret.server_share === null)
-                    .map((secret) => (
-                      <SecretCard secret={secret} key={secret.id} />
-                    ))}
-                </div>
-              </div>
-            )}
-
-            {/* Show empty state if all secrets have deleted server shares */}
-            {secrets.filter((secret) => secret.server_share !== null).length ===
-              0 &&
-              secrets.filter((secret) => secret.server_share === null).length >
-                0 && (
-                <div className="mb-8 rounded-lg border-2 border-dashed p-12 text-center">
-                  <div className="mx-auto max-w-sm">
-                    <AlertCircle className="text-muted-foreground mx-auto h-12 w-12" />
-                    <h2 className="mt-4 text-lg font-semibold">
-                      No active secrets
-                    </h2>
-                    <p className="text-muted-foreground mt-2 text-sm">
-                      All your secrets have been disabled. Create a new one to
-                      get started.
-                    </p>
-                    <Button asChild className="mt-4">
-                      <Link href="/secrets/new">
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Create New Secret
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-              )}
-          </>
-        )}
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Your Secrets</h1>
+        <Button asChild>
+          <Link href="/secrets/new">Create New Secret</Link>
+        </Button>
       </div>
-    )
-  } catch (error) {
-    console.error("[DashboardPage] Error:", error)
-    throw error
-  }
+
+      <Suspense
+        fallback={
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <CardHeader>
+                  <div className="h-6 w-1/3 rounded bg-gray-200"></div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="h-4 w-full rounded bg-gray-200"></div>
+                    <div className="h-4 w-2/3 rounded bg-gray-200"></div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        }
+      >
+        <SecretsLoader />
+      </Suspense>
+    </div>
+  )
 }

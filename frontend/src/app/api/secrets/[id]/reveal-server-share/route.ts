@@ -1,69 +1,52 @@
-import { decryptMessage } from "@/lib/encryption";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
-import { Database, Secret } from "@/types";
-import { PostgrestError } from "@supabase/supabase-js";
+import { createClient } from "@/utils/supabase/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> },
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } },
 ) {
   try {
-    const { id } = await params;
-    if (!id) {
-      return NextResponse.json({ error: "Missing secret ID" }, { status: 400 });
+    const supabase = await createClient();
+
+    // Get the token from query params
+    const { searchParams } = new URL(request.url);
+    const token = searchParams.get("token");
+
+    if (!token) {
+      return NextResponse.json({ error: "Missing token" }, { status: 400 });
     }
 
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient<Database>({
-      cookies: () => Promise.resolve(cookieStore),
-    });
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Fetch the secret and verify ownership
-    const { data: secret, error: fetchError }: {
-      data: Pick<Secret, "server_share" | "iv" | "auth_tag"> | null;
-      error: PostgrestError | null;
-    } = await supabase
+    // Verify the token and get the secret
+    const { data: secret, error } = await supabase
       .from("secrets")
-      .select("server_share, iv, auth_tag")
-      .eq("id", id)
-      .eq("user_id", user.id)
+      .select("*")
+      .eq("id", params.id)
+      .eq("checkin_token", token)
       .single();
 
-    if (fetchError || !secret) {
-      return NextResponse.json({ error: "Secret not found" }, { status: 404 });
+    if (error || !secret) {
+      return NextResponse.json({ error: "Invalid token or secret not found" }, {
+        status: 404,
+      });
     }
 
-    // Check if server share exists (not deleted)
     if (!secret.server_share) {
-      return NextResponse.json(
-        { error: "Server share has been deleted" },
-        { status: 410 },
-      );
+      return NextResponse.json({ error: "Server share not available" }, {
+        status: 410,
+      });
     }
 
-    // Decrypt the server share
-    const decryptedServerShare = await decryptMessage(
-      secret.server_share,
-      Buffer.from(secret.iv!, "base64"),
-      Buffer.from(secret.auth_tag!, "base64"),
-    );
-
-    return NextResponse.json({ serverShare: decryptedServerShare });
+    return NextResponse.json({
+      server_share: secret.server_share,
+      iv: secret.iv,
+      auth_tag: secret.auth_tag,
+      sss_threshold: secret.sss_threshold,
+      sss_shares_total: secret.sss_shares_total,
+    });
   } catch (error) {
-    console.error("[RevealServerShare] Error:", error);
+    console.error("Error in GET /api/secrets/[id]/reveal-server-share:", error);
     return NextResponse.json(
-      {
-        error: error instanceof Error
-          ? error.message
-          : "Failed to reveal server share",
-      },
+      { error: "Internal server error" },
       { status: 500 },
     );
   }

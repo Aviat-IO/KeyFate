@@ -1,170 +1,116 @@
-import { decryptMessage } from "@/lib/encryption";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
-import type { Database, Secret, SecretUpdate } from "@/types";
-import type { PostgrestError } from "@supabase/supabase-js";
+import { createClient } from "@/utils/supabase/server";
+import { NextRequest, NextResponse } from "next/server";
+import { secretSchema } from "@/lib/schemas/secret";
 
 export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const { id } = await params;
-  const { searchParams } = new URL(req.url);
-  const decrypt = searchParams.get("decrypt") === "true";
-
-  if (!id) {
-    return NextResponse.json({ error: "Missing secret ID" }, { status: 400 });
-  }
-
-  const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient<Database>({
-    cookies: () => Promise.resolve(cookieStore),
-  });
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: existingSecret, error: fetchError }: {
-    data: Secret | null;
-    error: PostgrestError | null;
-  } = await supabase
-    .from("secrets")
-    .select("*")
-    .eq("id", id)
-    .eq("user_id", user.id)
-    .single();
-
-  if (fetchError || !existingSecret) {
-    return NextResponse.json({ error: "Secret not found" }, { status: 404 });
-  }
-
-  if (
-    decrypt &&
-    existingSecret.server_share &&
-    existingSecret.iv &&
-    existingSecret.auth_tag
-  ) {
-    // Decrypt the server share for the owner
-    try {
-      const secret = existingSecret;
-      const decryptedServerShare = await decryptMessage(
-        secret.server_share!,
-        Buffer.from(secret.iv!, "base64"),
-        Buffer.from(secret.auth_tag!, "base64"),
-      );
-      return NextResponse.json({
-        secret: {
-          ...existingSecret,
-          decrypted_server_share: decryptedServerShare,
-        },
-      });
-    } catch (error) {
-      console.error("Failed to decrypt server share:", error);
-      return NextResponse.json(
-        { error: "Failed to decrypt server share" },
-        { status: 500 },
-      );
-    }
-  }
-
-  return NextResponse.json({ secret: existingSecret });
-}
-
-export async function PUT(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
+  request: NextRequest,
+  { params }: { params: { id: string } },
 ) {
   try {
-    const { id } = await params;
-    if (!id) {
-      return NextResponse.json({ error: "Missing secret ID" }, { status: 400 });
+    const supabase = await createClient();
+
+    const { data: user, error: userError } = await supabase.auth.getUser();
+    if (userError || !user.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient<Database>({
-      cookies: () => Promise.resolve(cookieStore),
-    });
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
-    const body: {
-      title: string;
-      recipient_name: string;
-      recipient_email: string | null;
-      recipient_phone: string | null;
-      contact_method: "email" | "phone" | "both";
-      check_in_days: string | number;
-    } = await req.json();
-
-    // Verify the secret exists and belongs to user
-    const { data: existingSecret, error: fetchError }: {
-      data: Secret | null;
-      error: PostgrestError | null;
-    } = await supabase
+    const { data: secret, error } = await supabase
       .from("secrets")
       .select("*")
-      .eq("id", id)
-      .eq("user_id", user.id)
+      .eq("id", params.id)
+      .eq("user_id", user.user.id)
       .single();
 
-    if (fetchError || !existingSecret) {
+    if (error) {
+      console.error("Error fetching secret:", error);
       return NextResponse.json(
         { error: "Secret not found" },
         { status: 404 },
       );
     }
 
-    // Calculate next check-in time
-    const parsedCheckInDays = typeof body.check_in_days === "string"
-      ? parseInt(body.check_in_days, 10)
-      : body.check_in_days;
+    return NextResponse.json(secret);
+  } catch (error) {
+    console.error("Error in GET /api/secrets/[id]:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+}
 
-    const nextCheckIn = new Date();
-    nextCheckIn.setDate(nextCheckIn.getDate() + parsedCheckInDays);
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } },
+) {
+  try {
+    const supabase = await createClient();
 
-    const updateData: SecretUpdate = {
-      title: body.title,
-      recipient_name: body.recipient_name,
-      recipient_email: body.contact_method !== "phone"
-        ? body.recipient_email
-        : null,
-      recipient_phone: body.contact_method !== "email"
-        ? body.recipient_phone
-        : null,
-      contact_method: body.contact_method,
-      check_in_days: parsedCheckInDays,
-      next_check_in: nextCheckIn.toISOString(),
-    };
+    const { data: user, error: userError } = await supabase.auth.getUser();
+    if (userError || !user.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    // Update only metadata (no secret content editing allowed with Shamir's)
-    const { error: updateError } = await supabase
+    const body = await request.json();
+    const validatedData = secretSchema.parse(body);
+
+    const { data, error } = await supabase
       .from("secrets")
-      .update(updateData)
-      .eq("id", id)
-      .eq("user_id", user.id);
+      .update(validatedData)
+      .eq("id", params.id)
+      .eq("user_id", user.user.id)
+      .select()
+      .single();
 
-    if (updateError) {
-      throw updateError;
+    if (error) {
+      console.error("Error updating secret:", error);
+      return NextResponse.json(
+        { error: "Failed to update secret" },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error("Error in PUT /api/secrets/[id]:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } },
+) {
+  try {
+    const supabase = await createClient();
+
+    const { data: user, error: userError } = await supabase.auth.getUser();
+    if (userError || !user.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { error } = await supabase
+      .from("secrets")
+      .delete()
+      .eq("id", params.id)
+      .eq("user_id", user.user.id);
+
+    if (error) {
+      console.error("Error deleting secret:", error);
+      return NextResponse.json(
+        { error: "Failed to delete secret" },
+        { status: 500 },
+      );
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[UpdateSecret] Error:", error);
+    console.error("Error in DELETE /api/secrets/[id]:", error);
     return NextResponse.json(
-      {
-        error: error instanceof Error
-          ? error.message
-          : "Failed to update secret",
-      },
+      { error: "Internal server error" },
       { status: 500 },
     );
   }

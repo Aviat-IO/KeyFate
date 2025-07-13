@@ -2,8 +2,6 @@
 
 import { Footer } from "@/components/footer"
 import { NavBar } from "@/components/nav-bar"
-import { PricingCard } from "@/components/subscription/PricingCard"
-import { BillingToggle } from "@/components/subscription/BillingToggle"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -13,7 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { TIER_CONFIGS } from "@/constants/tiers"
 import {
   Clock,
   Lock,
@@ -32,9 +29,6 @@ import Link from "next/link"
 import { useState, useEffect } from "react"
 
 export default function Home() {
-  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">(
-    "yearly",
-  )
   const [scrollY, setScrollY] = useState(0)
 
   useEffect(() => {
@@ -43,27 +37,9 @@ export default function Home() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  // Static pricing data
-  const STATIC_PRICING = {
-    pro: {
-      monthly: {
-        price: "$9/month",
-        subtext: undefined,
-        savingsText: undefined,
-      },
-      yearly: {
-        price: "$7.50/month",
-        subtext: "Billed annually at $90/year",
-        savingsText: "$18 saved (17% off)",
-      },
-    },
-  }
-
-  const proData = STATIC_PRICING.pro[billingPeriod]
-
   return (
     <div className="bg-background min-h-screen">
-      <div className="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 border-b backdrop-blur">
+      <div className="bg-background/90 supports-[backdrop-filter]:bg-background/50 sticky top-0 z-50 border-b backdrop-blur">
         <NavBar />
       </div>
 
@@ -436,45 +412,50 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section className="container mx-auto px-4 py-24">
-        <div className="space-y-8">
-          <div className="space-y-4 text-center">
-            <h2 className="text-4xl font-bold tracking-tight">
-              Start Protecting Your Legacy Today
+      {/* Call to Action Section */}
+      <section className="bg-primary/5 border-t">
+        <div className="container mx-auto px-4 py-24">
+          <div className="mx-auto max-w-4xl text-center">
+            <h2 className="mb-6 text-4xl font-bold tracking-tight md:text-5xl">
+              Ready to Protect Your Digital Legacy?
             </h2>
-            <p className="text-muted-foreground mx-auto max-w-2xl text-xl">
-              Begin with our free plan. Upgrade when you need to protect more
-              secrets or add additional recipients.
+            <p className="text-muted-foreground mb-8 text-xl leading-relaxed md:text-2xl">
+              Join thousands who trust KeyFate to safeguard their most important
+              information. Start with our free plan and upgrade as you grow.
             </p>
-          </div>
 
-          <BillingToggle
-            billingPeriod={billingPeriod}
-            onPeriodChange={setBillingPeriod}
-          />
+            <div className="mb-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <Button size="lg" className="px-8 py-6 text-lg" asChild>
+                <Link href="/auth/signup">
+                  Get Started Free
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                className="px-8 py-6 text-lg"
+                asChild
+              >
+                <Link href="/pricing">View Pricing</Link>
+              </Button>
+            </div>
 
-          <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-2">
-            <PricingCard
-              title="Free"
-              description="Perfect for getting started"
-              price="$0"
-              features={TIER_CONFIGS.free.features}
-              buttonText="Get Started"
-              buttonHref="/auth/signup"
-            />
-
-            <PricingCard
-              title="Pro"
-              description="For power users"
-              price={proData.price}
-              subtext={proData.subtext}
-              savingsText={proData.savingsText}
-              features={TIER_CONFIGS.pro.features}
-              buttonText="Get Started with Pro"
-              buttonHref="/auth/signup"
-              isPopular={true}
-            />
+            {/* Final Trust Indicators */}
+            <div className="text-muted-foreground flex flex-wrap items-center justify-center gap-8 text-sm">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                <span>Free to start</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                <span>No credit card required</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                <span>30-day money-back guarantee</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>

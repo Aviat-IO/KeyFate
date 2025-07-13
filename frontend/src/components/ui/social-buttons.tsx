@@ -1,74 +1,44 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { useToast } from "@/hooks/use-toast"
-import { RiGoogleFill } from "@remixicon/react"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { Provider } from "@supabase/supabase-js"
-import { Loader2 } from "lucide-react"
 import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { createClient } from "@/utils/supabase/client"
+import { NEXT_PUBLIC_SITE_URL } from "@/lib/env"
+
+const supabase = createClient()
 
 export function SocialButtons() {
-  const supabase = createClientComponentClient()
-  const [isLoading, setIsLoading] = useState(false)
-  const { toast } = useToast()
+  const [loading, setLoading] = useState(false)
 
-  const handleOAuthSignIn = async (provider: Provider) => {
-    const redirectTo = `${window.location.origin}/auth/callback`
-    console.log({ redirectTo })
+  const handleGoogleLogin = async () => {
+    setLoading(true)
     try {
-      setIsLoading(true)
       const { error } = await supabase.auth.signInWithOAuth({
-        provider,
+        provider: "google",
         options: {
-          redirectTo,
-          scopes: "openid email profile",
-          queryParams: {
-            access_type: "offline",
-            prompt: "consent",
-          },
+          redirectTo: `${NEXT_PUBLIC_SITE_URL}/auth/callback`,
         },
       })
 
       if (error) {
-        console.error(`[OAuth] ${provider} sign in error:`, error)
-        throw error
+        console.error("Error signing in with Google:", error)
       }
     } catch (error) {
-      console.error(`[OAuth] ${provider} sign in error:`, error)
-      toast({
-        title: "Authentication failed",
-        description: "Could not sign in with Google. Please try again.",
-        variant: "destructive",
-      })
+      console.error("Error during Google OAuth:", error)
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="space-y-3">
       <Button
+        onClick={handleGoogleLogin}
+        disabled={loading}
         variant="outline"
-        onClick={() => handleOAuthSignIn("google")}
-        type="button"
-        disabled={isLoading}
+        className="w-full"
       >
-        {isLoading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Signing in...
-          </>
-        ) : (
-          <>
-            <RiGoogleFill
-              className="text-foreground/80 mr-3"
-              size={16}
-              aria-hidden="true"
-            />
-            Continue with Google
-          </>
-        )}
+        {loading ? "Signing in..." : "Continue with Google"}
       </Button>
     </div>
   )

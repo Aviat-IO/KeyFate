@@ -1,70 +1,117 @@
 "use client"
 
-import { useEffect, Suspense } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { createClient } from "@/utils/supabase/client"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { SocialButtons } from "@/components/ui/social-buttons"
+import Link from "next/link"
 
-function SignInContent() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const token = searchParams.get("token")
-  const type = searchParams.get("type")
-  const next = searchParams.get("next")
-
-  useEffect(() => {
-    async function handleEmailVerification() {
-      if (token && type === "email_change") {
-        const supabase = createClientComponentClient()
-        const { error } = await supabase.auth.verifyOtp({
-          token_hash: token,
-          type: "email_change",
-        })
-
-        if (!error) {
-          router.push("/dashboard")
-        }
-      }
-    }
-
-    async function handleVerificationToken() {
-      if (token && type === "signup") {
-        const supabase = createClientComponentClient()
-
-        // First verify the token
-        const { error: verifyError } = await supabase.auth.verifyOtp({
-          token_hash: token,
-          type: "signup",
-        })
-
-        if (verifyError) {
-          console.error("Error verifying token:", verifyError)
-          return
-        }
-
-        // Then get the session - user should be logged in after verification
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-
-        if (session) {
-          // Redirect to dashboard or the next URL if provided
-          router.push(next || "/dashboard")
-        }
-      }
-    }
-
-    handleEmailVerification()
-    handleVerificationToken()
-  }, [token, type, router, next])
-
-  // Your existing sign in form JSX here...
-  return null
-}
+const supabase = createClient()
 
 export default function SignInPage() {
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
+
+  const handleEmailSignIn = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) {
+        setError(error.message)
+      } else {
+        router.push("/dashboard")
+        router.refresh()
+      }
+    } catch (error) {
+      setError("An unexpected error occurred")
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <SignInContent />
-    </Suspense>
+    <div className="container mx-auto max-w-md px-4 py-8">
+      <Card>
+        <CardHeader>
+          <CardTitle>Sign In</CardTitle>
+          <CardDescription>
+            Welcome back! Sign in to your account
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <SocialButtons />
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background text-muted-foreground px-2">
+                Or continue with
+              </span>
+            </div>
+          </div>
+
+          <form onSubmit={handleEmailSignIn} className="space-y-3">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            {error && <div className="text-sm text-red-600">{error}</div>}
+
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Signing in..." : "Sign In"}
+            </Button>
+          </form>
+
+          <div className="text-center text-sm">
+            <span className="text-muted-foreground">
+              Don't have an account?{" "}
+            </span>
+            <Link href="/auth/signup" className="underline">
+              Sign up
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   )
 }

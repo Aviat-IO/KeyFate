@@ -1,10 +1,12 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AuthForm } from "@/components/auth-form"
 import { AlertCircle, CheckCircle2 } from "lucide-react"
-import { useState } from "react"
 import { supabase } from "@/lib/supabase"
 
 export default function ResetPasswordPage() {
@@ -28,53 +30,47 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <>
-      <div>
-        <h2 className="text-center text-3xl font-bold tracking-tight">
-          Reset your password
-        </h2>
-        <p className="text-muted-foreground mt-2 text-center text-sm">
-          Enter your email to receive a password reset link
-        </p>
-      </div>
-      <form className="mt-8 space-y-6" onSubmit={handleReset}>
-        {message && (
-          <Alert className="border-primary/50 text-primary">
-            <CheckCircle2 className="h-4 w-4" />
-            <AlertDescription>{message}</AlertDescription>
-          </Alert>
-        )}
-        {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="email" className="sr-only">
-              Email address
-            </label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setEmail(e.target.value)
-              }
-              required
-            />
-          </div>
+    <AuthForm
+      title="Reset your password"
+      description="Enter your email to receive a password reset link"
+      leftLink={{ href: "/auth/login", text: "Back to sign in" }}
+      rightLink={{
+        text: "No account?",
+        linkText: "Sign up",
+        href: "/auth/signup",
+      }}
+    >
+      {message && (
+        <Alert className="border-primary/50 text-primary">
+          <CheckCircle2 className="h-4 w-4" />
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
+      )}
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      <form onSubmit={handleReset} className="space-y-3">
+        <div className="space-y-2">
+          <Label htmlFor="email">Email address</Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
         </div>
-        <div>
-          <Button type="submit" className="w-full">
-            Send reset link
-          </Button>
-        </div>
+
+        <Button type="submit" className="w-full">
+          Send reset link
+        </Button>
       </form>
-    </>
+    </AuthForm>
   )
 }

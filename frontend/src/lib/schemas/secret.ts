@@ -58,3 +58,25 @@ export const secretFormSchema = z.object({
 });
 
 export type SecretFormValues = z.infer<typeof secretFormSchema>;
+
+// Schema for API operations with server-side fields
+export const secretSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  server_share: z.string().optional(),
+  iv: z.string().optional(),
+  auth_tag: z.string().optional(),
+  recipient_name: z.string().min(1, "Recipient name is required"),
+  recipient_email: z.string().email().nullable().optional(),
+  recipient_phone: z.string().nullable().optional(),
+  contact_method: z.enum(["email", "phone", "both"]),
+  check_in_days: z.number().min(
+    2,
+    "Check-in frequency must be at least 2 days",
+  ),
+  next_check_in: z.string().optional(),
+  status: z.enum(["active", "paused", "expired"]).default("active"),
+  sss_shares_total: z.number().min(2).max(10),
+  sss_threshold: z.number().min(2).max(10),
+});
+
+export type SecretValues = z.infer<typeof secretSchema>;
