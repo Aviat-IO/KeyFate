@@ -25,3 +25,13 @@ output "frontend_service_account_email" {
   description = "The email of the frontend service account"
   value       = module.frontend_service_account.email
 }
+
+output "domain_mapping_url" {
+  description = "The custom domain URL (if configured)"
+  value       = var.custom_domain != "" ? "https://${var.custom_domain}" : "Not configured"
+}
+
+output "domain_mapping_status" {
+  description = "The status of the domain mapping"
+  value       = var.custom_domain != "" ? google_cloud_run_domain_mapping.frontend_domain[0].status : null
+}

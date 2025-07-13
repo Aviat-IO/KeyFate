@@ -142,6 +142,31 @@ The Cloud Run service is configured with:
 - **Unauthenticated Access**: Enabled (public facing)
 - **Memory/CPU**: Configurable per environment
 
+### Custom Domain Configuration
+
+To configure a custom domain (e.g., `staging.keyfate.com`), add the `custom_domain` variable to your `terraform.tfvars`:
+
+```hcl
+custom_domain = "staging.keyfate.com"
+```
+
+This will create a Google Cloud Run domain mapping that allows your custom domain to route to the Cloud Run service.
+
+**Prerequisites:**
+
+1. Set up DNS CNAME record pointing your domain to the Cloud Run service URL
+2. Configure the `custom_domain` variable in `terraform.tfvars`
+3. Apply the Terraform configuration
+
+**Steps:**
+
+1. Get the Cloud Run service URL from Terraform outputs
+2. Create a CNAME record: `staging.keyfate.com` → `frontend-PROJECT_ID.run.app`
+3. Set `custom_domain = "staging.keyfate.com"` in `terraform.tfvars`
+4. Run `terragrunt apply`
+
+The domain mapping will automatically provision SSL certificates and route traffic properly.
+
 ### Service Account Permissions
 
 The frontend service account has the following roles:

@@ -139,3 +139,19 @@ module "cloud_run" {
     module.frontend_secrets
   ]
 }
+
+# Domain mapping for custom domain
+resource "google_cloud_run_domain_mapping" "frontend_domain" {
+  count    = var.custom_domain != "" ? 1 : 0
+  location = var.region
+  name     = var.custom_domain
+  project  = module.project.id
+
+  metadata {
+    namespace = module.project.id
+  }
+
+  spec {
+    route_name = module.cloud_run.service_name
+  }
+}

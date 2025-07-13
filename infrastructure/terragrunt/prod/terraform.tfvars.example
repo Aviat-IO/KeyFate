@@ -24,6 +24,9 @@ next_public_supabase_url = "https://your-supabase-project.supabase.co"
 next_public_supabase_anon_key = "your-anon-key"
 next_public_graphql_url = "https://your-supabase-project.supabase.co/graphql/v1"
 
+# Custom domain configuration
+custom_domain = "keyfate.com"
+
 # Secret environment variables (sensitive)
 db_url = "postgresql://user:password@host:port/database"
 encryption_key = "your-base64-encoded-encryption-key"

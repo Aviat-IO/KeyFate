@@ -146,3 +146,9 @@ variable "google_client_secret" {
   type        = string
   sensitive   = true
 }
+
+variable "custom_domain" {
+  description = "Custom domain for the Cloud Run service (e.g., staging.keyfate.com)"
+  type        = string
+  default     = ""
+}
