@@ -38,4 +38,10 @@ supabase/prod-migrations/*
 .firebaserc
 .envrc
 
+# Supabase
+/.branches/
+.branches/**
+.temp/
+
+# Other
 *.crt
