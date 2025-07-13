@@ -5,6 +5,7 @@ import { NavBar } from "@/components/nav-bar"
 import { PricingCard } from "@/components/subscription/PricingCard"
 import { BillingToggle } from "@/components/subscription/BillingToggle"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import {
   Card,
   CardContent,
@@ -13,14 +14,34 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { TIER_CONFIGS } from "@/constants/tiers"
-import { Clock, Lock, Shield } from "lucide-react"
+import {
+  Clock,
+  Lock,
+  Shield,
+  FileText,
+  Key,
+  Users,
+  CheckCircle,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  Zap,
+  Globe,
+} from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 export default function Home() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">(
     "yearly",
   )
+  const [scrollY, setScrollY] = useState(0)
+
+  useEffect(() => {
+    const handleScroll = () => setScrollY(window.scrollY)
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
 
   // Static pricing data
   const STATIC_PRICING = {
@@ -42,85 +63,389 @@ export default function Home() {
 
   return (
     <div className="bg-background min-h-screen">
-      <NavBar />
+      <div className="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 border-b backdrop-blur">
+        <NavBar />
+      </div>
 
       {/* Hero Section */}
-      <section className="container relative mx-auto overflow-hidden px-4 py-24">
+      <section className="container relative mx-auto overflow-hidden px-4 py-32">
+        {/* Parallax Background Element */}
+        <div
+          className="absolute inset-0 opacity-5"
+          style={{
+            transform: `translateY(${scrollY * 0.3}px)`,
+          }}
+        >
+          <div className="bg-primary/20 absolute left-1/4 top-1/4 h-96 w-96 rounded-full blur-3xl" />
+          <div className="bg-secondary/30 absolute bottom-1/4 right-1/4 h-64 w-64 rounded-full blur-2xl" />
+        </div>
+
         {/* Content */}
-        <div className="relative z-10 text-center">
-          <h1 className="text-foreground text-4xl font-bold tracking-tight drop-shadow-lg sm:text-6xl">
-            KeyFate
+        <div className="relative z-10 mx-auto max-w-4xl text-center">
+          <Badge
+            variant="outline"
+            className="animate-in fade-in slide-in-from-bottom-4 mb-6 text-sm duration-700"
+          >
+            <Shield className="mr-2 h-3 w-3" />
+            Zero-knowledge security with Shamir's Secret Sharing
+          </Badge>
+
+          <h1 className="animate-in fade-in slide-in-from-bottom-6 mb-8 text-5xl font-bold tracking-tight delay-200 duration-700 md:text-7xl">
+            Your Digital{" "}
+            <span className="text-primary relative">
+              Legacy
+              <div className="bg-primary/30 animate-in slide-in-from-left absolute -bottom-2 left-0 right-0 h-1 rounded-full delay-1000 duration-1000" />
+            </span>{" "}
+            Protected
           </h1>
-          <p className="text-muted-foreground mt-6 text-lg leading-8 drop-shadow-md">
-            Your key to peace of mind. Share your secrets with trusted contacts
-            if you don't check in
+
+          <p className="text-muted-foreground animate-in fade-in slide-in-from-bottom-8 delay-400 mb-12 text-xl leading-relaxed duration-700 md:text-2xl">
+            Securely share critical information with trusted contacts if you
+            can't check in.{" "}
+            <span className="text-foreground font-medium">
+              Perfect for crypto keys, sensitive documents, and estate planning.
+            </span>
           </p>
-          <div className="mt-10 flex items-center justify-center gap-x-6">
-            <Button size="lg" asChild>
-              <Link href="/auth/signup">Get Started</Link>
+
+          <div className="animate-in fade-in slide-in-from-bottom-10 delay-600 mb-16 flex flex-col items-center justify-center gap-4 duration-700 sm:flex-row">
+            <Button size="lg" className="px-8 py-6 text-lg" asChild>
+              <Link href="/auth/signup">
+                Start Protecting Your Secrets
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
             </Button>
-            <Button variant="outline" size="lg" asChild>
-              <Link href="#features">Learn More</Link>
+            <Button
+              variant="outline"
+              size="lg"
+              className="px-8 py-6 text-lg"
+              asChild
+            >
+              <Link href="#how-it-works">See How It Works</Link>
             </Button>
+          </div>
+
+          {/* Trust Indicators */}
+          <div className="text-muted-foreground animate-in fade-in slide-in-from-bottom-12 delay-800 flex flex-wrap items-center justify-center gap-8 text-sm duration-700">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-500" />
+              <span>Client-side encryption</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-500" />
+              <span>Zero-knowledge architecture</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-500" />
+              <span>Open source cryptography</span>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="container mx-auto px-4 py-24">
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          <Card>
+      {/* Use Cases Section */}
+      <section className="bg-muted/30 container mx-auto px-4 py-24">
+        <div className="mb-16 text-center">
+          <h2 className="mb-4 text-3xl font-bold md:text-4xl">
+            Trusted by Those Who Need It Most
+          </h2>
+          <p className="text-muted-foreground mx-auto max-w-2xl text-xl">
+            When your information is critical, you need a solution you can trust
+          </p>
+        </div>
+
+        <div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-3">
+          <Card className="group transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
             <CardHeader>
-              <Shield className="text-primary mb-4 h-12 w-12" />
-              <CardTitle>Secure Storage</CardTitle>
+              <Key className="text-primary mb-4 h-12 w-12 transition-transform duration-300 group-hover:scale-110" />
+              <CardTitle>Cryptocurrency Holders</CardTitle>
               <CardDescription>
-                Your secrets are encrypted and stored securely
+                Secure your private keys and recovery phrases
               </CardDescription>
             </CardHeader>
             <CardContent>
-              Shamir's Secret Sharing happens 100% client-side. We only store
-              one encrypted share that alone cannot reconstruct your secret.
+              <p className="text-muted-foreground mb-4 text-sm">
+                Ensure your family can access your crypto assets if something
+                happens to you. Your private keys stay encrypted and are only
+                released to trusted recipients when needed.
+              </p>
+              <div className="space-y-2">
+                <div className="text-muted-foreground flex items-center text-xs">
+                  <CheckCircle className="mr-2 h-3 w-3 text-green-500" />
+                  Hardware wallet recovery phrases
+                </div>
+                <div className="text-muted-foreground flex items-center text-xs">
+                  <CheckCircle className="mr-2 h-3 w-3 text-green-500" />
+                  Exchange account details
+                </div>
+                <div className="text-muted-foreground flex items-center text-xs">
+                  <CheckCircle className="mr-2 h-3 w-3 text-green-500" />
+                  Cold storage instructions
+                </div>
+              </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="group transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
             <CardHeader>
-              <Clock className="text-primary mb-4 h-12 w-12" />
+              <FileText className="text-primary mb-4 h-12 w-12 transition-transform duration-300 group-hover:scale-110" />
+              <CardTitle>Journalists & Activists</CardTitle>
+              <CardDescription>
+                Protect sensitive sources and information
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4 text-sm">
+                Safeguard critical information and source protection. If you're
+                compromised, ensure trusted colleagues can continue your work
+                and protect those who helped you.
+              </p>
+              <div className="space-y-2">
+                <div className="text-muted-foreground flex items-center text-xs">
+                  <CheckCircle className="mr-2 h-3 w-3 text-green-500" />
+                  Source contact information
+                </div>
+                <div className="text-muted-foreground flex items-center text-xs">
+                  <CheckCircle className="mr-2 h-3 w-3 text-green-500" />
+                  Encrypted document locations
+                </div>
+                <div className="text-muted-foreground flex items-center text-xs">
+                  <CheckCircle className="mr-2 h-3 w-3 text-green-500" />
+                  Investigation handoff protocols
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="group transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+            <CardHeader>
+              <Users className="text-primary mb-4 h-12 w-12 transition-transform duration-300 group-hover:scale-110" />
+              <CardTitle>Estate Planning</CardTitle>
+              <CardDescription>Digital inheritance made simple</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4 text-sm">
+                Ensure your digital assets and important accounts can be
+                accessed by your loved ones. No more lost passwords or
+                inaccessible accounts when it matters most.
+              </p>
+              <div className="space-y-2">
+                <div className="text-muted-foreground flex items-center text-xs">
+                  <CheckCircle className="mr-2 h-3 w-3 text-green-500" />
+                  Financial account access
+                </div>
+                <div className="text-muted-foreground flex items-center text-xs">
+                  <CheckCircle className="mr-2 h-3 w-3 text-green-500" />
+                  Digital asset inventories
+                </div>
+                <div className="text-muted-foreground flex items-center text-xs">
+                  <CheckCircle className="mr-2 h-3 w-3 text-green-500" />
+                  Important document locations
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section id="how-it-works" className="container mx-auto px-4 py-24">
+        <div className="mb-16 text-center">
+          <h2 className="mb-4 text-3xl font-bold md:text-4xl">
+            How KeyFate Protects Your Secrets
+          </h2>
+          <p className="text-muted-foreground mx-auto max-w-3xl text-xl">
+            Advanced cryptography meets simple usability. Your secrets are
+            mathematically impossible for us to read.
+          </p>
+        </div>
+
+        <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-3">
+          <div className="group text-center">
+            <div className="mb-6">
+              <div className="bg-primary/10 group-hover:bg-primary/20 mx-auto flex h-20 w-20 items-center justify-center rounded-full transition-colors duration-300">
+                <Lock className="text-primary h-10 w-10" />
+              </div>
+            </div>
+            <h3 className="mb-3 text-xl font-semibold">Create & Encrypt</h3>
+            <p className="text-muted-foreground">
+              Your secret is split into 3 encrypted pieces using{" "}
+              <strong>Shamir's Secret Sharing</strong> - entirely in your
+              browser. The original never leaves your device.
+            </p>
+          </div>
+
+          <div className="group text-center">
+            <div className="mb-6">
+              <div className="bg-primary/10 group-hover:bg-primary/20 mx-auto flex h-20 w-20 items-center justify-center rounded-full transition-colors duration-300">
+                <Shield className="text-primary h-10 w-10" />
+              </div>
+            </div>
+            <h3 className="mb-3 text-xl font-semibold">Secure Storage</h3>
+            <p className="text-muted-foreground">
+              We store just <strong>1 encrypted piece</strong> (useless alone).
+              You keep 1 piece. Your recipient gets 1 piece.
+              <strong>2 pieces minimum</strong> needed to unlock.
+            </p>
+          </div>
+
+          <div className="group text-center">
+            <div className="mb-6">
+              <div className="bg-primary/10 group-hover:bg-primary/20 mx-auto flex h-20 w-20 items-center justify-center rounded-full transition-colors duration-300">
+                <Clock className="text-primary h-10 w-10" />
+              </div>
+            </div>
+            <h3 className="mb-3 text-xl font-semibold">Automatic Release</h3>
+            <p className="text-muted-foreground">
+              If you don't check in on schedule, we send our encrypted piece to
+              your recipient. They combine it with theirs to{" "}
+              <strong>reconstruct your secret</strong>.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-16 text-center">
+          <Card className="bg-muted/50 border-primary/20 mx-auto max-w-2xl">
+            <CardContent className="pt-6">
+              <div className="mb-4 flex items-center justify-center">
+                <EyeOff className="text-primary mr-2 h-6 w-6" />
+                <span className="font-semibold">Zero-Knowledge Promise</span>
+              </div>
+              <p className="text-muted-foreground text-sm">
+                <strong>We mathematically cannot read your secrets.</strong>{" "}
+                Even if our servers were compromised, your information remains
+                secure. Only you and your chosen recipients can reconstruct the
+                original data.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* Enhanced Features Section */}
+      <section className="bg-muted/30 container mx-auto px-4 py-24">
+        <div className="mb-16 text-center">
+          <h2 className="mb-4 text-3xl font-bold md:text-4xl">
+            Built for Security & Peace of Mind
+          </h2>
+          <p className="text-muted-foreground text-xl">
+            Enterprise-grade security with consumer-friendly simplicity
+          </p>
+        </div>
+
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <Card className="group transition-all duration-300 hover:shadow-lg">
+            <CardHeader>
+              <Shield className="text-primary mb-4 h-12 w-12 transition-transform duration-300 group-hover:scale-110" />
+              <CardTitle>Military-Grade Encryption</CardTitle>
+              <CardDescription>
+                AES-256 encryption with client-side Shamir's Secret Sharing
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground text-sm">
+                Your secrets are encrypted with the same standards used by
+                governments and militaries. The cryptographic splitting happens
+                entirely in your browser.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="group transition-all duration-300 hover:shadow-lg">
+            <CardHeader>
+              <Clock className="text-primary mb-4 h-12 w-12 transition-transform duration-300 group-hover:scale-110" />
               <CardTitle>Flexible Check-ins</CardTitle>
-              <CardDescription>Set your own schedule</CardDescription>
-            </CardHeader>
-            <CardContent>
-              Choose how often you need to check in. Get reminders when it's
-              time.
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <Lock className="text-primary mb-4 h-12 w-12" />
-              <CardTitle>Trusted Contacts</CardTitle>
               <CardDescription>
-                Choose who receives your information
+                Set your own schedule from daily to yearly
               </CardDescription>
             </CardHeader>
             <CardContent>
-              Select trusted contacts to receive your secrets if you don't check
-              in.
+              <p className="text-muted-foreground text-sm">
+                Choose check-in intervals that work for your lifestyle. Get
+                gentle reminders before deadlines. One-click check-ins from
+                anywhere.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="group transition-all duration-300 hover:shadow-lg">
+            <CardHeader>
+              <Users className="text-primary mb-4 h-12 w-12 transition-transform duration-300 group-hover:scale-110" />
+              <CardTitle>Trusted Recipients</CardTitle>
+              <CardDescription>
+                Verify recipients and customize delivery messages
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground text-sm">
+                Email verification ensures your secrets reach the right people.
+                Add custom instructions to help recipients understand what
+                they're receiving.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="group transition-all duration-300 hover:shadow-lg">
+            <CardHeader>
+              <Zap className="text-primary mb-4 h-12 w-12 transition-transform duration-300 group-hover:scale-110" />
+              <CardTitle>Instant Setup</CardTitle>
+              <CardDescription>
+                Start protecting your secrets in under 5 minutes
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground text-sm">
+                Quick and simple signup process. No complex configuration. Our
+                intuitive interface guides you through creating your first
+                secret.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="group transition-all duration-300 hover:shadow-lg">
+            <CardHeader>
+              <Globe className="text-primary mb-4 h-12 w-12 transition-transform duration-300 group-hover:scale-110" />
+              <CardTitle>Global Reliability</CardTitle>
+              <CardDescription>
+                Robust infrastructure with worldwide availability
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground text-sm">
+                Built on modern cloud infrastructure. Your check-ins and
+                notifications work reliably from anywhere in the world.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="group transition-all duration-300 hover:shadow-lg">
+            <CardHeader>
+              <Eye className="text-primary mb-4 h-12 w-12 transition-transform duration-300 group-hover:scale-110" />
+              <CardTitle>Full Transparency</CardTitle>
+              <CardDescription>
+                Open-source cryptography with audit trail
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground text-sm">
+                Our encryption methods are based on proven, open-source
+                algorithms. Full audit logs show exactly when and how your
+                secrets are accessed.
+              </p>
             </CardContent>
           </Card>
         </div>
       </section>
 
       {/* Pricing Section */}
-      <section className="container mx-auto border-t px-4 py-24">
+      <section className="container mx-auto px-4 py-24">
         <div className="space-y-8">
           <div className="space-y-4 text-center">
             <h2 className="text-4xl font-bold tracking-tight">
-              Simple Pricing
+              Start Protecting Your Legacy Today
             </h2>
             <p className="text-muted-foreground mx-auto max-w-2xl text-xl">
-              Secure your digital legacy with KeyFate's dead man's switch
-              service. Start free and upgrade when you need more capacity.
+              Begin with our free plan. Upgrade when you need to protect more
+              secrets or add additional recipients.
             </p>
           </div>
 
