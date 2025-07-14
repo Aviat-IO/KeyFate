@@ -63,7 +63,7 @@ export default function Home() {
             className="animate-in fade-in slide-in-from-bottom-4 mb-6 text-sm duration-700"
           >
             <Shield className="mr-2 h-3 w-3" />
-            Zero-knowledge security with Shamir's Secret Sharing
+            Zero-knowledge security
           </Badge>
 
           <h1 className="animate-in fade-in slide-in-from-bottom-6 mb-8 text-5xl font-bold tracking-tight delay-200 duration-700 md:text-7xl">
