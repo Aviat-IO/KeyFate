@@ -3,9 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -16,7 +17,7 @@ export async function POST(
     const { data: secret, error: fetchError } = await supabase
       .from("secrets")
       .select("*")
-      .eq("id", params.id)
+      .eq("id", id)
       .eq("user_id", user.id)
       .single();
 
@@ -34,7 +35,7 @@ export async function POST(
         last_check_in: new Date().toISOString(),
         next_check_in: nextCheckIn.toISOString(),
       })
-      .eq("id", params.id)
+      .eq("id", id)
       .eq("user_id", user.id);
 
     if (updateError) {

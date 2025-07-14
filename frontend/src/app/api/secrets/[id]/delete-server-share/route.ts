@@ -1,11 +1,12 @@
 import { createClient } from "@/utils/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } },
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -13,10 +14,11 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Verify ownership
     const { data: secret, error: fetchError } = await supabase
       .from("secrets")
       .select("*")
-      .eq("id", params.id)
+      .eq("id", id)
       .eq("user_id", user.id)
       .single();
 
@@ -24,6 +26,7 @@ export async function POST(
       return NextResponse.json({ error: "Secret not found" }, { status: 404 });
     }
 
+    // Delete the server share and update status to paused
     const { error: updateError } = await supabase
       .from("secrets")
       .update({
@@ -32,7 +35,7 @@ export async function POST(
         auth_tag: null,
         status: "paused",
       })
-      .eq("id", params.id)
+      .eq("id", id)
       .eq("user_id", user.id);
 
     if (updateError) {

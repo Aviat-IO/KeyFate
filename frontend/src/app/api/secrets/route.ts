@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
 import { secretSchema } from "@/lib/schemas/secret";
+import { Tables } from "@/types";
+import { createClient } from "@/utils/supabase/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,10 +17,12 @@ export async function POST(request: NextRequest) {
 
     const { data, error } = await supabase
       .from("secrets")
-      .insert({
-        ...validatedData,
-        user_id: user.user.id,
-      } as any)
+      .insert(
+        {
+          ...validatedData,
+          user_id: user.user.id,
+        } as Tables<"secrets">["Insert"],
+      )
       .select()
       .single();
 

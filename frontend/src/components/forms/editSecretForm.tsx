@@ -18,9 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { AlertCircle, LockIcon } from "lucide-react"
+import { AlertCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
@@ -28,7 +27,6 @@ import { z } from "zod"
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  message: z.string().min(1, "Message is required"),
   recipient_name: z.string().min(1, "Recipient name is required"),
   recipient_email: z.string().email().optional().or(z.literal("")),
   recipient_phone: z.string().optional().or(z.literal("")),
@@ -101,26 +99,6 @@ export function EditSecretForm({ initialData, secretId }: EditSecretFormProps) {
                 <FormControl>
                   <Input
                     placeholder="Example: Important Documents Location"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="message"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>
-                  Secret Message <LockIcon className="inline h-4 w-4" />
-                </FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Your secret, encrypted message that will be revealed to your trusted recipient..."
-                    rows={4}
                     {...field}
                   />
                 </FormControl>

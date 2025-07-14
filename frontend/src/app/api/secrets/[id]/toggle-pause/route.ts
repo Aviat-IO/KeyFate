@@ -1,11 +1,12 @@
 import { createClient } from "@/utils/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } },
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -16,7 +17,7 @@ export async function POST(
     const { data: secret, error: fetchError } = await supabase
       .from("secrets")
       .select("*")
-      .eq("id", params.id)
+      .eq("id", id)
       .eq("user_id", user.id)
       .single();
 
@@ -29,13 +30,13 @@ export async function POST(
     const { error: updateError } = await supabase
       .from("secrets")
       .update({ status: newStatus })
-      .eq("id", params.id)
+      .eq("id", id)
       .eq("user_id", user.id);
 
     if (updateError) {
-      console.error("Error toggling pause status:", updateError);
+      console.error("Error updating secret status:", updateError);
       return NextResponse.json(
-        { error: "Failed to toggle pause status" },
+        { error: "Failed to update secret status" },
         { status: 500 },
       );
     }

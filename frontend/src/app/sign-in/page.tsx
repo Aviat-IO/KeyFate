@@ -1,11 +1,6 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { createClient } from "@/utils/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import {
   Card,
   CardContent,
@@ -13,8 +8,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { SocialButtons } from "@/components/ui/social-buttons"
+import { createClient } from "@/utils/supabase/client"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 const supabase = createClient()
 
@@ -43,6 +43,7 @@ export default function SignInPage() {
         router.refresh()
       }
     } catch (error) {
+      console.error(error)
       setError("An unexpected error occurred")
     } finally {
       setLoading(false)

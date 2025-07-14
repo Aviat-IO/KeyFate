@@ -1,8 +1,7 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { PricingCard } from "@/components/subscription/PricingCard"
 import { BillingToggle } from "@/components/subscription/BillingToggle"
+import { PricingCard } from "@/components/subscription/PricingCard"
 import { TIER_CONFIGS } from "@/constants/tiers"
 import { Check } from "lucide-react"
 import Link from "next/link"

@@ -3,10 +3,11 @@ import { createClient } from "@/utils/supabase/server"
 import { notFound, redirect } from "next/navigation"
 
 interface EditSecretPageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export default async function EditSecretPage({ params }: EditSecretPageProps) {
+  const { id } = await params
   const supabase = await createClient()
 
   const {
@@ -20,7 +21,7 @@ export default async function EditSecretPage({ params }: EditSecretPageProps) {
   const { data: secret, error } = await supabase
     .from("secrets")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .eq("user_id", user.id)
     .single()
 
@@ -28,10 +29,19 @@ export default async function EditSecretPage({ params }: EditSecretPageProps) {
     notFound()
   }
 
+  const initialData = {
+    title: secret.title,
+    recipient_name: secret.recipient_name,
+    recipient_email: secret.recipient_email || "",
+    recipient_phone: secret.recipient_phone || "",
+    contact_method: secret.contact_method,
+    check_in_days: secret.check_in_days,
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="mb-6 text-3xl font-bold">Edit Secret</h1>
-      <EditSecretForm secret={secret} />
+      <EditSecretForm initialData={initialData} secretId={secret.id} />
     </div>
   )
 }

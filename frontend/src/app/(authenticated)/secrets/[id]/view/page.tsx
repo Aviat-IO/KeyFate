@@ -1,69 +1,35 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { createClient } from "@/utils/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-
-const supabase = createClient()
+import { createClient } from "@/utils/supabase/server"
+import Link from "next/link"
+import { notFound, redirect } from "next/navigation"
 
 interface ViewSecretPageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
-interface Secret {
-  id: string
-  title: string
-  recipient_name: string
-  contact_method: string
-  status: string
-  check_in_days: number
-  next_check_in: string
-}
+export default async function ViewSecretPage({ params }: ViewSecretPageProps) {
+  const { id } = await params
+  const supabase = await createClient()
 
-export default function ViewSecretPage({ params }: ViewSecretPageProps) {
-  const [secret, setSecret] = useState<Secret | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  useEffect(() => {
-    const fetchSecret = async () => {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser()
-        if (!user) {
-          router.push("/auth/login")
-          return
-        }
+  if (!user) {
+    redirect("/auth/login")
+  }
 
-        const { data, error: fetchError } = await supabase
-          .from("secrets")
-          .select("*")
-          .eq("id", params.id)
-          .eq("user_id", user.id)
-          .single()
+  const { data: secret, error } = await supabase
+    .from("secrets")
+    .select("*")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .single()
 
-        if (fetchError || !data) {
-          setError("Secret not found")
-        } else {
-          setSecret(data)
-        }
-      } catch {
-        setError("Failed to load secret")
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchSecret()
-  }, [params.id, router])
-
-  if (loading) return <div>Loading...</div>
-  if (error) return <div>Error: {error}</div>
-  if (!secret) return <div>Secret not found</div>
+  if (error || !secret) {
+    notFound()
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -92,9 +58,9 @@ export default function ViewSecretPage({ params }: ViewSecretPageProps) {
             </div>
           </div>
           <div className="mt-6">
-            <Button onClick={() => router.push("/dashboard")}>
-              Back to Dashboard
-            </Button>
+            <Link href="/dashboard">
+              <Button>Back to Dashboard</Button>
+            </Link>
           </div>
         </CardContent>
       </Card>

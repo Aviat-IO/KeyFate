@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { createClient } from "@/utils/supabase/client"
+import { AuthForm } from "@/components/auth-form"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { AuthForm } from "@/components/auth-form"
+import { createClient } from "@/utils/supabase/client"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 const supabase = createClient()
 
@@ -35,6 +35,7 @@ export default function LoginPage() {
         router.refresh()
       }
     } catch (error) {
+      console.error(error)
       setError("An unexpected error occurred")
     } finally {
       setLoading(false)
