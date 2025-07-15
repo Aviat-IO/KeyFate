@@ -1,9 +1,6 @@
+import { useContactMethods } from "@/hooks/useContactMethods"
 import { renderHook, waitFor } from "@testing-library/react"
-import { describe, expect, it, vi, beforeEach } from "vitest"
-import {
-  useContactMethods,
-  type ContactMethods,
-} from "@/hooks/useContactMethods"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
 // Mock Supabase client using vi.hoisted to ensure proper initialization order
 const { mockAuth, mockFrom, mockSupabaseClient } = vi.hoisted(() => {
@@ -14,10 +11,7 @@ const { mockAuth, mockFrom, mockSupabaseClient } = vi.hoisted(() => {
   const mockFrom = vi.fn(() => ({
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
-    maybeSingle: vi.fn(),
-    single: vi.fn(),
-    update: vi.fn().mockReturnThis(),
-    upsert: vi.fn(),
+    upsert: vi.fn().mockReturnThis(),
   }))
 
   const mockSupabaseClient = {
@@ -28,8 +22,8 @@ const { mockAuth, mockFrom, mockSupabaseClient } = vi.hoisted(() => {
   return { mockAuth, mockFrom, mockSupabaseClient }
 })
 
-vi.mock("@supabase/auth-helpers-nextjs", () => ({
-  createClientComponentClient: () => mockSupabaseClient,
+vi.mock("@/utils/supabase/client", () => ({
+  createClient: () => mockSupabaseClient,
 }))
 
 describe("useContactMethods", () => {
@@ -38,15 +32,17 @@ describe("useContactMethods", () => {
     email: "test@example.com",
   }
 
-  const mockContactMethods: ContactMethods = {
-    email: "test@example.com",
-    phone: "+1234567890",
-    telegram_username: "@testuser",
-    whatsapp: "+0987654321",
-    signal: "+1122334455",
-    preferred_method: "email",
-    check_in_days: 30,
-  }
+  const mockContactMethodsData = [
+    {
+      user_id: "user-123",
+      email: "test@example.com",
+      phone: "+1234567890",
+      preferred_method: "email" as const,
+      created_at: "2024-01-01T00:00:00Z",
+      updated_at: "2024-01-01T00:00:00Z",
+      id: "contact-123",
+    },
+  ]
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -59,23 +55,14 @@ describe("useContactMethods", () => {
     })
 
     const mockSelect = vi.fn().mockReturnThis()
-    const mockEq = vi.fn().mockReturnThis()
-    const mockMaybeSingle = vi.fn().mockResolvedValue({
-      data: {
-        user_id: "user-123",
-        email: "test@example.com",
-        phone: "+1234567890",
-        preferred_method: "email",
-      },
+    const mockEq = vi.fn().mockResolvedValue({
+      data: mockContactMethodsData,
       error: null,
     })
 
     mockFrom.mockReturnValue({
       select: mockSelect,
       eq: mockEq,
-      maybeSingle: mockMaybeSingle,
-      single: vi.fn(),
-      update: vi.fn().mockReturnThis(),
       upsert: vi.fn(),
     })
 
@@ -91,14 +78,8 @@ describe("useContactMethods", () => {
     expect(mockFrom).toHaveBeenCalledWith("user_contact_methods")
     expect(mockSelect).toHaveBeenCalledWith("*")
     expect(mockEq).toHaveBeenCalledWith("user_id", "user-123")
-    expect(mockMaybeSingle).toHaveBeenCalled()
 
-    expect(result.current.contactMethods).toEqual({
-      user_id: "user-123",
-      email: "test@example.com",
-      phone: "+1234567890",
-      preferred_method: "email",
-    })
+    expect(result.current.contactMethods).toEqual(mockContactMethodsData)
     expect(result.current.error).toBeNull()
   })
 
@@ -114,8 +95,8 @@ describe("useContactMethods", () => {
       expect(result.current.loading).toBe(false)
     })
 
-    expect(result.current.contactMethods).toBeNull()
-    expect(result.current.error).toBeNull()
+    expect(result.current.contactMethods).toEqual([])
+    expect(result.current.error).toBe("User not authenticated")
   })
 
   it("should handle no existing contact methods", async () => {
@@ -125,8 +106,7 @@ describe("useContactMethods", () => {
     })
 
     const mockSelect = vi.fn().mockReturnThis()
-    const mockEq = vi.fn().mockReturnThis()
-    const mockMaybeSingle = vi.fn().mockResolvedValue({
+    const mockEq = vi.fn().mockResolvedValue({
       data: null,
       error: null,
     })
@@ -134,9 +114,6 @@ describe("useContactMethods", () => {
     mockFrom.mockReturnValue({
       select: mockSelect,
       eq: mockEq,
-      maybeSingle: mockMaybeSingle,
-      single: vi.fn(),
-      update: vi.fn().mockReturnThis(),
       upsert: vi.fn(),
     })
 
@@ -146,21 +123,18 @@ describe("useContactMethods", () => {
       expect(result.current.loading).toBe(false)
     })
 
-    expect(result.current.contactMethods).toBeNull()
+    expect(result.current.contactMethods).toEqual([])
     expect(result.current.error).toBeNull()
   })
 
   it("should handle database errors", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-
     mockAuth.getUser.mockResolvedValue({
       data: { user: mockUser },
       error: null,
     })
 
     const mockSelect = vi.fn().mockReturnThis()
-    const mockEq = vi.fn().mockReturnThis()
-    const mockMaybeSingle = vi.fn().mockResolvedValue({
+    const mockEq = vi.fn().mockResolvedValue({
       data: null,
       error: new Error("Database error"),
     })
@@ -168,10 +142,7 @@ describe("useContactMethods", () => {
     mockFrom.mockReturnValue({
       select: mockSelect,
       eq: mockEq,
-      maybeSingle: mockMaybeSingle,
-      single: vi.fn(),
-      update: vi.fn().mockReturnThis(),
-      upsert: vi.fn(),
+      upsert: vi.fn().mockReturnThis(),
     })
 
     const { result } = renderHook(() => useContactMethods())
@@ -181,12 +152,6 @@ describe("useContactMethods", () => {
     })
 
     expect(result.current.error).toBe("Database error")
-    expect(consoleSpy).toHaveBeenCalledWith(
-      "Error fetching contact methods:",
-      expect.any(Error),
-    )
-
-    consoleSpy.mockRestore()
   })
 
   it("should save contact methods successfully", async () => {
@@ -197,22 +162,26 @@ describe("useContactMethods", () => {
 
     // Mock initial load (no existing methods)
     const mockSelect = vi.fn().mockReturnThis()
-    const mockEq = vi.fn().mockReturnThis()
-    const mockMaybeSingle = vi.fn().mockResolvedValue({
-      data: null,
-      error: null,
-    })
+    const mockEq = vi
+      .fn()
+      .mockResolvedValueOnce({
+        data: [],
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: mockContactMethodsData,
+        error: null,
+      })
 
-    const mockUpsert = vi.fn().mockResolvedValue({
-      error: null,
+    const mockUpsert = vi.fn().mockReturnThis()
+    // Mock the upsert chain: .upsert().eq()
+    mockUpsert.mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ error: null }),
     })
 
     mockFrom.mockReturnValue({
       select: mockSelect,
       eq: mockEq,
-      maybeSingle: mockMaybeSingle,
-      single: vi.fn(),
-      update: vi.fn().mockReturnThis(),
       upsert: mockUpsert,
     })
 
@@ -238,8 +207,6 @@ describe("useContactMethods", () => {
   })
 
   it("should handle save errors", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-
     mockAuth.getUser.mockResolvedValue({
       data: { user: mockUser },
       error: null,
@@ -247,22 +214,20 @@ describe("useContactMethods", () => {
 
     // Mock initial load
     const mockSelect = vi.fn().mockReturnThis()
-    const mockEq = vi.fn().mockReturnThis()
-    const mockMaybeSingle = vi.fn().mockResolvedValue({
-      data: null,
+    const mockEq = vi.fn().mockResolvedValue({
+      data: [],
       error: null,
     })
 
-    const mockUpsert = vi.fn().mockResolvedValue({
-      error: new Error("Save failed"),
+    const mockUpsert = vi.fn().mockReturnThis()
+    // Mock the upsert chain with error: .upsert().eq()
+    mockUpsert.mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ error: new Error("Save failed") }),
     })
 
     mockFrom.mockReturnValue({
       select: mockSelect,
       eq: mockEq,
-      maybeSingle: mockMaybeSingle,
-      single: vi.fn(),
-      update: vi.fn().mockReturnThis(),
       upsert: mockUpsert,
     })
 
@@ -280,7 +245,5 @@ describe("useContactMethods", () => {
         preferred_method: "email",
       }),
     ).rejects.toThrow("Save failed")
-
-    consoleSpy.mockRestore()
   })
 })

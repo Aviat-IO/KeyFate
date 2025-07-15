@@ -17,9 +17,10 @@ resource "null_resource" "build_and_push_frontend" {
 
       BUILD_TAG=${var.region}-docker.pkg.dev/${module.project.id}/${module.artifact_registry.name}/${local.frontend_app_name}:${self.triggers.app_dir_hash}
 
-      gcloud builds submit ${local.frontend_app_dir} \
+      gcloud builds submit ${local.frontend_app_dir}/.. \
         --project=${module.project.id} \
-        --tag=$BUILD_TAG
+        --config=${local.frontend_app_dir}/../cloudbuild.yaml \
+        --substitutions=_IMAGE_TAG="$BUILD_TAG",_NEXT_PUBLIC_SITE_URL="${var.next_public_site_url}",_NEXT_PUBLIC_SUPABASE_URL="${var.next_public_supabase_url}",_NEXT_PUBLIC_SUPABASE_ANON_KEY="${var.next_public_supabase_anon_key}",_NEXT_PUBLIC_COMPANY="${var.next_public_company}",_NEXT_PUBLIC_PARENT_COMPANY="${var.next_public_parent_company}",_NEXT_PUBLIC_SUPPORT_EMAIL="${var.next_public_support_email}"
 
       if gcloud run services describe ${local.frontend_app_name} \
           --region=${var.region} \

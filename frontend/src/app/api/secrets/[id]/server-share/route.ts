@@ -1,6 +1,6 @@
 import { decryptMessage } from "@/lib/encryption";
 import { NEXT_PUBLIC_SUPABASE_URL } from "@/lib/env";
-import { SUPABASE_SERVICE_ROLE_KEY } from "@/lib/server-env";
+import { getSUPABASE_SERVICE_ROLE_KEY } from "@/lib/server-env";
 import { Database, Secret, Tables } from "@/types";
 import { createClient, PostgrestError } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
@@ -26,7 +26,7 @@ export async function GET(
 
   const supabaseAdmin = createClient<Database>(
     NEXT_PUBLIC_SUPABASE_URL,
-    SUPABASE_SERVICE_ROLE_KEY,
+    getSUPABASE_SERVICE_ROLE_KEY(),
     {
       auth: { persistSession: false, autoRefreshToken: false },
       db: { schema: "public" },

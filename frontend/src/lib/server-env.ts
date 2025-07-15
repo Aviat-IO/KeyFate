@@ -1,7 +1,18 @@
-const SUPABASE_SERVICE_ROLE_KEY = process.env
-  .SUPABASE_SERVICE_ROLE_KEY as string;
-if (!SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error("SUPABASE_SERVICE_ROLE_KEY is not set");
+// Delay validation until runtime to avoid build-time errors
+function getSupabaseServiceRoleKey(): string {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!key) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY is not set");
+  }
+  return key;
 }
 
-export { SUPABASE_SERVICE_ROLE_KEY };
+// Export a lazy getter that only validates when accessed
+let _cachedKey: string | undefined;
+
+export function getSUPABASE_SERVICE_ROLE_KEY(): string {
+  if (_cachedKey === undefined) {
+    _cachedKey = getSupabaseServiceRoleKey();
+  }
+  return _cachedKey;
+}

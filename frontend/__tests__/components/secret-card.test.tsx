@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render, screen, fireEvent, waitFor } from "@testing-library/react"
 import { SecretCard } from "@/components/secret-card"
 import { Secret } from "@/types"
+import { render, screen } from "@testing-library/react"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
 // Mock the child components
 vi.mock("@/components/check-in-button", () => ({
@@ -53,9 +53,13 @@ const mockSecret: Secret = {
   user_id: "user-123",
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
-  check_in_interval_days: 7,
-  encrypted_message: "encrypted-message",
-  reminder_days_before: 2,
+  check_in_days: 7,
+  contact_method: "email",
+  auth_tag: "auth-tag-data",
+  iv: "iv-data",
+  sss_shares_total: 3,
+  sss_threshold: 2,
+  triggered_at: null,
 }
 
 describe("SecretCard Component", () => {
@@ -66,14 +70,21 @@ describe("SecretCard Component", () => {
   it("renders secret information correctly", () => {
     render(<SecretCard secret={mockSecret} />)
 
-    expect(screen.getByText("Test Secret")).toBeInTheDocument()
+    // Use getAllByText to handle multiple instances (mobile + desktop)
+    const titleElements = screen.getAllByText("Test Secret")
+    expect(titleElements.length).toBeGreaterThan(0)
+    expect(titleElements[0]).toBeInTheDocument()
+
     expect(screen.getByText("Recipient: John Doe")).toBeInTheDocument()
   })
 
   it("shows correct status badge for active secret", () => {
     render(<SecretCard secret={mockSecret} />)
 
-    expect(screen.getByText("Checked in")).toBeInTheDocument()
+    // Use getAllByText to handle multiple status badges (mobile + desktop)
+    const statusBadges = screen.getAllByText("Active")
+    expect(statusBadges.length).toBeGreaterThan(0)
+    expect(statusBadges[0]).toBeInTheDocument()
   })
 
   it("shows urgent status for secrets due soon", () => {
@@ -84,7 +95,9 @@ describe("SecretCard Component", () => {
 
     render(<SecretCard secret={urgentSecret} />)
 
-    expect(screen.getByText("Urgent")).toBeInTheDocument()
+    const urgentBadges = screen.getAllByText("Urgent")
+    expect(urgentBadges.length).toBeGreaterThan(0)
+    expect(urgentBadges[0]).toBeInTheDocument()
   })
 
   it("shows upcoming status for secrets due in 3-5 days", () => {
@@ -97,7 +110,9 @@ describe("SecretCard Component", () => {
 
     render(<SecretCard secret={upcomingSecret} />)
 
-    expect(screen.getByText("Upcoming")).toBeInTheDocument()
+    const upcomingBadges = screen.getAllByText("Upcoming")
+    expect(upcomingBadges.length).toBeGreaterThan(0)
+    expect(upcomingBadges[0]).toBeInTheDocument()
   })
 
   it("shows paused status for paused secrets", () => {
@@ -108,7 +123,9 @@ describe("SecretCard Component", () => {
 
     render(<SecretCard secret={pausedSecret} />)
 
-    expect(screen.getByText("Paused")).toBeInTheDocument()
+    const pausedBadges = screen.getAllByText("Paused")
+    expect(pausedBadges.length).toBeGreaterThan(0)
+    expect(pausedBadges[0]).toBeInTheDocument()
   })
 
   it("shows sent status for triggered secrets", () => {
@@ -119,7 +136,9 @@ describe("SecretCard Component", () => {
 
     render(<SecretCard secret={triggeredSecret} />)
 
-    expect(screen.getByText("Sent")).toBeInTheDocument()
+    const sentBadges = screen.getAllByText("Sent")
+    expect(sentBadges.length).toBeGreaterThan(0)
+    expect(sentBadges[0]).toBeInTheDocument()
   })
 
   it("shows disabled status when server share is deleted", () => {
@@ -130,7 +149,10 @@ describe("SecretCard Component", () => {
 
     render(<SecretCard secret={disabledSecret} />)
 
-    expect(screen.getByText("Disabled")).toBeInTheDocument()
+    // For disabled status, there are multiple "Disabled" texts (status badge + timing text)
+    const disabledElements = screen.getAllByText("Disabled")
+    expect(disabledElements.length).toBeGreaterThan(0)
+    expect(disabledElements[0]).toBeInTheDocument()
   })
 
   it("renders check-in button for active secrets", () => {
@@ -172,7 +194,7 @@ describe("SecretCard Component", () => {
     const { container } = render(<SecretCard secret={pausedSecret} />)
 
     const card = container.firstChild as HTMLElement
-    expect(card).toHaveClass("border-muted", "bg-muted/5")
+    expect(card).toHaveClass("border-accent", "bg-accent/10")
   })
 
   it("shows edit link", () => {

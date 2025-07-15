@@ -1,8 +1,15 @@
 import { vi } from "vitest";
 
 // Mock Next.js server components
+const mockCookieStore = {
+  getAll: vi.fn(() => []),
+  set: vi.fn(),
+  get: vi.fn(),
+  delete: vi.fn(),
+};
+
 vi.mock("next/headers", () => ({
-  cookies: vi.fn(() => Promise.resolve(new Map())),
+  cookies: vi.fn(() => Promise.resolve(mockCookieStore)),
 }));
 
 vi.mock("next/server", () => ({
@@ -15,7 +22,7 @@ vi.mock("next/server", () => ({
   },
 }));
 
-// Mock Supabase auth helpers
+// Mock Supabase client
 const mockSupabaseClient = {
   auth: {
     getUser: vi.fn(),
@@ -31,10 +38,17 @@ const mockSupabaseClient = {
   rpc: vi.fn(),
 };
 
-vi.mock("@supabase/auth-helpers-nextjs", () => ({
-  createRouteHandlerClient: vi.fn(() => mockSupabaseClient),
+// Mock the new Supabase SSR package
+vi.mock("@supabase/ssr", () => ({
+  createServerClient: vi.fn(() => mockSupabaseClient),
 }));
 
+// Mock the server utils directly
+vi.mock("@/utils/supabase/server", () => ({
+  createClient: vi.fn(() => Promise.resolve(mockSupabaseClient)),
+}));
+
+// Mock Supabase client package (for client-side usage)
 vi.mock("@supabase/supabase-js", () => ({
   createClient: vi.fn(() => mockSupabaseClient),
 }));
@@ -101,4 +115,4 @@ Object.defineProperty(global, "TextDecoder", {
   },
 });
 
-export { mockSupabaseClient };
+export { mockCookieStore, mockSupabaseClient };

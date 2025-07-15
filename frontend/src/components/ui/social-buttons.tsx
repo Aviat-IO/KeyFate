@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { createClient } from "@/utils/supabase/client"
 import { NEXT_PUBLIC_SITE_URL } from "@/lib/env"
+import { createClient } from "@/utils/supabase/client"
+import { useState } from "react"
 
+// Create a single Supabase client instance for this component
 const supabase = createClient()
 
 export function SocialButtons() {
@@ -16,6 +17,7 @@ export function SocialButtons() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
+          // Use environment variable which is now properly set at build time for each environment
           redirectTo: `${NEXT_PUBLIC_SITE_URL}/auth/callback`,
         },
       })
