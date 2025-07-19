@@ -1,15 +1,15 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { AuthForm } from "@/components/auth-form"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { AuthForm } from "@/components/auth-form"
 import { supabase } from "@/lib/supabase"
 import { AlertCircle } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("")
@@ -28,7 +28,7 @@ export default function SignUpPage() {
         },
       })
       if (error) throw error
-      router.push("/auth/verify-email")
+      router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`)
     } catch (error) {
       setError(error instanceof Error ? error.message : "An error occurred")
     }

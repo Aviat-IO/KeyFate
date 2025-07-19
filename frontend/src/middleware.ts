@@ -3,7 +3,12 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 const NON_AUTH_ROUTE_REGEXES = [
-  /^\/auth\/.*/,
+  /^\/auth\/login$/,
+  /^\/auth\/signup$/,
+  /^\/auth\/reset-password$/,
+  /^\/auth\/verify-email$/,
+  /^\/auth\/verify$/,
+  /^\/auth\/callback$/,
   /^\/$/,
 ];
 
