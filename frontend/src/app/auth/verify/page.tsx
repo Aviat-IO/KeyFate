@@ -1,5 +1,6 @@
 "use client"
 
+import { completeAuthFlow } from "@/lib/auth"
 import { createClient } from "@/utils/supabase/client"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect } from "react"
@@ -20,38 +21,23 @@ function VerifyContent() {
       const hash = window.location.hash
       if (hash && hash.includes("access_token")) {
         console.log("[Verify] Found tokens in URL fragment")
-        const supabase = createClient()
 
         try {
-          // Parse the fragment to get the tokens
-          const params = new URLSearchParams(hash.substring(1))
-          const accessToken = params.get("access_token")
-          const refreshToken = params.get("refresh_token")
+          const result = await completeAuthFlow(hash)
 
-          if (accessToken && refreshToken) {
-            // Set the session with the tokens
-            const { data, error } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-            })
-
-            if (error) {
-              console.error("[Verify] Error setting session:", error)
-              router.push(
-                "/auth/login?error=Email verification failed. Please try again.",
-              )
-              return
-            }
-
-            console.log("[Verify] Session set successfully:", data)
-            // Clear the hash from the URL
-            window.history.replaceState(null, "", window.location.pathname)
+          if (result.success) {
             // Redirect to dashboard
             router.push("/dashboard")
             return
+          } else {
+            console.error("[Verify] Auth flow failed:", result.error)
+            router.push(
+              "/auth/login?error=Email verification failed. Please try again.",
+            )
+            return
           }
         } catch (error) {
-          console.error("[Verify] Exception setting session:", error)
+          console.error("[Verify] Exception during auth flow:", error)
           router.push(
             "/auth/login?error=Email verification failed. Please try again.",
           )
