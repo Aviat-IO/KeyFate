@@ -73,15 +73,8 @@ module "cloud_run" {
           container_port = 3000
         }
       }
-      # Public environment variables (NEXT_PUBLIC_*)
+      # Additional environment variables from terraform.tfvars
       env = {
-        NEXT_PUBLIC_SITE_URL          = var.next_public_site_url
-        NEXT_PUBLIC_COMPANY           = var.next_public_company
-        NEXT_PUBLIC_PARENT_COMPANY    = var.next_public_parent_company
-        NEXT_PUBLIC_SUPPORT_EMAIL     = var.next_public_support_email
-        NEXT_PUBLIC_SUPABASE_URL      = var.next_public_supabase_url
-        NEXT_PUBLIC_SUPABASE_ANON_KEY = var.next_public_supabase_anon_key
-        # Additional environment variables from terraform.tfvars
         ENV = var.env
       }
       # Secret environment variables from Secret Manager

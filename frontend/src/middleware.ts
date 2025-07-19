@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 import { updateSession } from "@/utils/supabase/middleware";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 const NON_AUTH_ROUTE_REGEXES = [
   /^\/auth\/.*/,
@@ -25,9 +25,11 @@ export async function middleware(req: NextRequest) {
     }
 
     // Auth routes - redirect to dashboard if already logged in
+    // Exclude callback route from this redirect to allow OAuth flow to complete
     if (
       req.nextUrl.pathname.startsWith("/auth") &&
       !req.nextUrl.pathname.startsWith("/auth/signout") &&
+      !req.nextUrl.pathname.startsWith("/auth/callback") &&
       user
     ) {
       const redirectUrl = req.nextUrl.clone();
