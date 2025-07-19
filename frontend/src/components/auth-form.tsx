@@ -1,4 +1,5 @@
-import { ReactNode } from "react"
+import { Footer } from "@/components/footer"
+import { NavBar } from "@/components/nav-bar"
 import {
   Card,
   CardContent,
@@ -7,9 +8,8 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { SocialButtons } from "@/components/ui/social-buttons"
-import { NavBar } from "@/components/nav-bar"
-import { Footer } from "@/components/footer"
 import Link from "next/link"
+import { ReactNode } from "react"
 
 interface AuthFormProps {
   title: string
@@ -24,6 +24,7 @@ interface AuthFormProps {
     linkText: string
     href: string
   }
+  hideSocialButtons?: boolean
 }
 
 export function AuthForm({
@@ -32,6 +33,7 @@ export function AuthForm({
   children,
   leftLink,
   rightLink,
+  hideSocialButtons = false,
 }: AuthFormProps) {
   return (
     <div className="bg-background flex min-h-screen flex-col">
@@ -47,18 +49,22 @@ export function AuthForm({
               <CardDescription>{description}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <SocialButtons />
+              {!hideSocialButtons && (
+                <>
+                  <SocialButtons />
 
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background text-muted-foreground px-2">
-                    Or continue with
-                  </span>
-                </div>
-              </div>
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background text-muted-foreground px-2">
+                        Or continue with
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
 
               {children}
 

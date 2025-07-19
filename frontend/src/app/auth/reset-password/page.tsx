@@ -1,13 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { AuthForm } from "@/components/auth-form"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AuthForm } from "@/components/auth-form"
-import { AlertCircle, CheckCircle2 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
+import { AlertCircle, CheckCircle2 } from "lucide-react"
+import { useState } from "react"
 
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState("")
@@ -39,6 +39,7 @@ export default function ResetPasswordPage() {
         linkText: "Sign up",
         href: "/auth/signup",
       }}
+      hideSocialButtons={true}
     >
       {message && (
         <Alert className="border-primary/50 text-primary">
