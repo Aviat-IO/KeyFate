@@ -154,275 +154,300 @@ export function NewSecretForm() {
       )}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <FormField
-            control={form.control}
-            name="title"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Secret Title</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder="Example: Grandma's Recipe Book Location"
-                    disabled={isSubmitting}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {/* Secret Details Section */}
+          <div className="rounded-lg border p-6">
+            <h2 className="text-lg font-semibold mb-4">Secret Details</h2>
+            <div className="space-y-6">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Secret Title</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Example: Grandma's Recipe Book Location"
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <FormField
-            control={form.control}
-            name="secretMessageContent"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>
-                  Secret Message <LockIcon className="ml-1 inline h-4 w-4" />
-                </FormLabel>
-                <FormControl>
-                  <Textarea
-                    {...field}
-                    placeholder="Your secret message. This will be securely split into shares after submission."
-                    rows={5}
-                    disabled={isSubmitting}
-                  />
-                </FormControl>
-                <FormDescription>
-                  This message will be split using Shamir's Secret Sharing.
-                  You'll manage the shares on the next page.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              <FormField
+                control={form.control}
+                name="secretMessageContent"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Secret Message <LockIcon className="ml-1 inline h-4 w-4" />
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        placeholder="Your secret message. This will be securely split into shares after submission."
+                        rows={5}
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      This message will be split using Shamir's Secret Sharing.
+                      You'll manage the shares on the next page.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
 
-          <h3 className="pt-4 text-lg font-medium">Recipient Details</h3>
-          <FormField
-            control={form.control}
-            name="recipient_name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Recipient&apos;s Name</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder="Jane Doe"
-                    disabled={isSubmitting}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {/* Recipient Information Section */}
+          <div className="rounded-lg border p-6">
+            <h2 className="text-lg font-semibold mb-4">Recipient Information</h2>
+            <div className="space-y-6">
+              <FormField
+                control={form.control}
+                name="recipient_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Recipient's Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Jane Doe"
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <FormField
-            control={form.control}
-            name="contact_method"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Recipient&apos;s Primary Contact Method</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  disabled={isSubmitting}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select contact method" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="email">Email</SelectItem>
-                    <SelectItem value="phone">
-                      Phone (Not yet supported for notifications)
-                    </SelectItem>
-                    <SelectItem value="both">
-                      Both (Email preferred for now)
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormDescription>
-                  How the recipient will be primarily contacted. Email is used
-                  for share notifications.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {(contactMethod === "email" || contactMethod === "both") && (
-            <FormField
-              control={form.control}
-              name="recipient_email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Recipient&apos;s Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      {...field}
-                      placeholder="recipient@example.com"
+              <FormField
+                control={form.control}
+                name="contact_method"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Recipient's Primary Contact Method</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
                       disabled={isSubmitting}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select contact method" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="email">Email</SelectItem>
+                        <SelectItem value="phone">
+                          Phone (Not yet supported for notifications)
+                        </SelectItem>
+                        <SelectItem value="both">
+                          Both (Email preferred for now)
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      How the recipient will be primarily contacted. Email is used
+                      for share notifications.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {(contactMethod === "email" || contactMethod === "both") && (
+                <FormField
+                  control={form.control}
+                  name="recipient_email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Recipient's Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="email"
+                          {...field}
+                          placeholder="recipient@example.com"
+                          disabled={isSubmitting}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               )}
-            />
-          )}
 
-          {(contactMethod === "phone" || contactMethod === "both") && (
-            <FormField
-              control={form.control}
-              name="recipient_phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Recipient&apos;s Phone Number</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="tel"
-                      {...field}
-                      placeholder="+1234567890"
-                      disabled={isSubmitting}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Include country code if applicable.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
+              {(contactMethod === "phone" || contactMethod === "both") && (
+                <FormField
+                  control={form.control}
+                  name="recipient_phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Recipient's Phone Number</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="tel"
+                          {...field}
+                          placeholder="+1234567890"
+                          disabled={isSubmitting}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Include country code if applicable.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               )}
-            />
-          )}
+            </div>
+          </div>
 
-          <h3 className="pt-4 text-lg font-medium">Check-in Configuration</h3>
-          <FormField
-            control={form.control}
-            name="check_in_days"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Check-in Frequency (days)</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    {...field}
-                    min="2"
-                    disabled={isSubmitting}
-                  />
-                </FormControl>
-                <FormDescription>
-                  How often you need to check in to keep the secret active.
-                  Minimum 7 days.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {/* Check-in Settings Section */}
+          <div className="rounded-lg border p-6">
+            <h2 className="text-lg font-semibold mb-4">Check-in Settings</h2>
+            <div className="space-y-6">
+              <FormField
+                control={form.control}
+                name="check_in_days"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Check-in Frequency (days)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        min="2"
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      How often you need to check in to keep the secret active.
+                      Minimum 7 days.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
 
-          <Accordion type="single" collapsible className="w-full pt-4">
-            <AccordionItem value="sss-config">
-              <AccordionTrigger>
-                Advanced: Secret Sharing Configuration
-              </AccordionTrigger>
-              <AccordionContent className="space-y-4 p-1">
-                <Alert>
-                  <Info className="h-4 w-4" />
-                  <AlertTitle>Secret Sharing Details</AlertTitle>
-                  <AlertDescription>
-                    <ul className="list-disc space-y-1 pl-5">
-                      <li>
-                        Your secret message will be split into a number of
-                        cryptographic "shares".
-                      </li>
-                      <li>
-                        A minimum number of shares (threshold) will be required
-                        to reconstruct the original message.
-                      </li>
-                      <li>
-                        KeyFate will securely store one share (encrypted again
-                        by our server). You will manage the others on the next
-                        page.
-                      </li>
-                    </ul>
-                  </AlertDescription>
-                </Alert>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
-                  <FormField
-                    control={form.control}
-                    name="sss_shares_total"
-                    render={({ field: { onChange, value, ...field } }) => (
-                      <FormItem>
-                        <FormLabel>Total Shares to Create</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            value={value?.toString() ?? ""}
-                            min="2"
-                            max="10"
-                            onChange={(e) => {
-                              const val = e.target.value
-                              if (val === "") {
-                                onChange("")
-                              } else {
-                                const numValue = parseInt(val, 10)
-                                if (!isNaN(numValue)) {
-                                  onChange(numValue)
+          {/* Advanced Settings Section */}
+          <div className="rounded-lg border p-6">
+            <h2 className="text-lg font-semibold mb-4">
+              Advanced Settings
+              <span className="ml-2 text-sm font-normal text-muted-foreground">
+                (optional)
+              </span>
+            </h2>
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="sss-config" className="border-0">
+                <AccordionTrigger>
+                  Secret Sharing Configuration
+                </AccordionTrigger>
+                <AccordionContent className="space-y-4 p-1">
+                  <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertTitle>Secret Sharing Details</AlertTitle>
+                    <AlertDescription>
+                      <ul className="list-disc space-y-1 pl-5">
+                        <li>
+                          Your secret message will be split into a number of
+                          cryptographic "shares".
+                        </li>
+                        <li>
+                          A minimum number of shares (threshold) will be required
+                          to reconstruct the original message.
+                        </li>
+                        <li>
+                          KeyFate will securely store one share (encrypted again
+                          by our server). You will manage the others on the next
+                          page.
+                        </li>
+                      </ul>
+                    </AlertDescription>
+                  </Alert>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
+                    <FormField
+                      control={form.control}
+                      name="sss_shares_total"
+                      render={({ field: { onChange, value, ...field } }) => (
+                        <FormItem>
+                          <FormLabel>Total Shares to Create</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              value={value?.toString() ?? ""}
+                              min="2"
+                              max="10"
+                              onChange={(e) => {
+                                const val = e.target.value
+                                if (val === "") {
+                                  onChange("")
+                                } else {
+                                  const numValue = parseInt(val, 10)
+                                  if (!isNaN(numValue)) {
+                                    onChange(numValue)
+                                  }
                                 }
-                              }
-                            }}
-                            disabled={isSubmitting}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Total shares to split the secret into. Min 2, Max 10.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="sss_threshold"
-                    render={({ field: { onChange, value, ...field } }) => (
-                      <FormItem>
-                        <FormLabel>
-                          Shares Needed for Recovery (Threshold)
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            value={value?.toString() ?? ""}
-                            min="2"
-                            max="10"
-                            onChange={(e) => {
-                              const val = e.target.value
-                              if (val === "") {
-                                onChange("")
-                              } else {
-                                const numValue = parseInt(val, 10)
-                                if (!isNaN(numValue)) {
-                                  onChange(numValue)
+                              }}
+                              disabled={isSubmitting}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Total shares to split the secret into. Min 2, Max 10.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="sss_threshold"
+                      render={({ field: { onChange, value, ...field } }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Shares Needed for Recovery (Threshold)
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              value={value?.toString() ?? ""}
+                              min="2"
+                              max="10"
+                              onChange={(e) => {
+                                const val = e.target.value
+                                if (val === "") {
+                                  onChange("")
+                                } else {
+                                  const numValue = parseInt(val, 10)
+                                  if (!isNaN(numValue)) {
+                                    onChange(numValue)
+                                  }
                                 }
-                              }
-                            }}
-                            disabled={isSubmitting}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Minimum shares to reconstruct. Min 2, Max 10. Must be
-                          &lt;= total shares.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+                              }}
+                              disabled={isSubmitting}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Minimum shares to reconstruct. Min 2, Max 10. Must be
+                            &lt;= total shares.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
 
           <Button type="submit" disabled={isSubmitting} className="w-full">
             {isSubmitting
