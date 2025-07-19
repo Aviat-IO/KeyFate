@@ -231,7 +231,7 @@ describe("/api/secrets", () => {
       const data = await response.json();
 
       expect(response.status).toBe(400);
-      expect(data.error).toBe("Invalid check_in_days value.");
+      expect(data.error).toBe("Check-in days is required.");
     });
 
     it("should return 500 when database insert fails", async () => {

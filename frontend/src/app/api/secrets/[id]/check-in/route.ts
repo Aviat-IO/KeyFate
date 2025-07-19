@@ -29,28 +29,47 @@ export async function POST(
     const nextCheckIn = new Date();
     nextCheckIn.setDate(nextCheckIn.getDate() + secret.check_in_days);
 
-    const { error: updateError } = await supabase
-      .from("secrets")
-      .update({
-        last_check_in: new Date().toISOString(),
-        next_check_in: nextCheckIn.toISOString(),
-      })
-      .eq("id", id)
-      .eq("user_id", user.id);
+    // Use RPC function for check-in
+    const { error: rpcError } = await supabase.rpc("check_in_secret", {
+      p_secret_id: id,
+      p_user_id: user.id,
+      p_checked_in_at: new Date().toISOString(),
+      p_next_check_in: nextCheckIn.toISOString(),
+    });
 
-    if (updateError) {
-      console.error("Error updating check-in:", updateError);
+    if (rpcError) {
+      console.error("Error in check-in transaction:", rpcError);
       return NextResponse.json(
-        { error: "Failed to update check-in" },
+        { error: "Failed to record check-in" },
         { status: 500 },
       );
     }
 
-    return NextResponse.json({ success: true, next_check_in: nextCheckIn });
+    // Fetch updated secret
+    const { data: updatedSecret, error: updateFetchError } = await supabase
+      .from("secrets")
+      .select("*")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .single();
+
+    if (updateFetchError || !updatedSecret) {
+      console.error("Error fetching updated secret:", updateFetchError);
+      return NextResponse.json(
+        { error: "Failed to fetch updated secret" },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      secret: updatedSecret,
+      next_check_in: nextCheckIn,
+    });
   } catch (error) {
     console.error("Error in POST /api/secrets/[id]/check-in:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Internal Server Error" },
       { status: 500 },
     );
   }

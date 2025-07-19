@@ -27,25 +27,50 @@ export async function POST(
 
     const newStatus = secret.status === "active" ? "paused" : "active";
 
-    const { error: updateError } = await supabase
-      .from("secrets")
-      .update({ status: newStatus })
-      .eq("id", id)
-      .eq("user_id", user.id);
+    // Use RPC function for toggle operation
+    const { error: rpcError } = await supabase.rpc("toggle_secret_pause", {
+      p_secret_id: id,
+      p_user_id: user.id,
+      p_new_status: newStatus,
+      p_checked_in_at: new Date().toISOString(),
+      p_next_check_in: new Date(
+        Date.now() + secret.check_in_days * 24 * 60 * 60 * 1000,
+      ).toISOString(),
+    });
 
-    if (updateError) {
-      console.error("Error updating secret status:", updateError);
+    if (rpcError) {
+      console.error("Error in toggle operation:", rpcError);
       return NextResponse.json(
-        { error: "Failed to update secret status" },
+        { error: "Failed to update secret" },
         { status: 500 },
       );
     }
 
-    return NextResponse.json({ success: true, status: newStatus });
+    // Fetch updated secret
+    const { data: updatedSecret, error: updateFetchError } = await supabase
+      .from("secrets")
+      .select("*")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .single();
+
+    if (updateFetchError || !updatedSecret) {
+      console.error("Error fetching updated secret:", updateFetchError);
+      return NextResponse.json(
+        { error: "Failed to fetch updated secret" },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      secret: updatedSecret,
+      status: newStatus,
+    });
   } catch (error) {
     console.error("Error in POST /api/secrets/[id]/toggle-pause:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Internal Server Error" },
       { status: 500 },
     );
   }

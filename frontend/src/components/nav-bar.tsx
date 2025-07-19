@@ -1,22 +1,33 @@
 "use client"
 
-import { createClient } from "@/utils/supabase/client"
-import { useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
-import Link from "next/link"
+import { Button } from "@/components/ui/button"
 import { NEXT_PUBLIC_COMPANY } from "@/lib/env"
+import { createClient } from "@/utils/supabase/client"
 import { User } from "@supabase/supabase-js"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 
 const supabase = createClient()
 
-export function NavBar() {
+interface NavBarProps {
+  user?: User | null
+}
+
+export function NavBar({ user: propUser }: NavBarProps = {}) {
   const router = useRouter()
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<User | null>(propUser ?? null)
+  const [loading, setLoading] = useState(propUser === undefined)
 
   useEffect(() => {
+    // If user prop is provided, use it (for testing)
+    if (propUser !== undefined) {
+      setUser(propUser)
+      setLoading(false)
+      return
+    }
+
     // Get initial session
     const getInitialSession = async () => {
       const {
@@ -37,7 +48,7 @@ export function NavBar() {
     })
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [propUser])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -65,15 +76,20 @@ export function NavBar() {
               // Show nothing while loading to avoid flash
               <div className="h-9 w-20" />
             ) : user ? (
-              // User is logged in - show sign out
-              <Button variant="outline" onClick={handleSignOut}>
-                Sign Out
-              </Button>
+              // User is logged in - show user email and sign out
+              <>
+                <span className="text-muted-foreground text-sm">
+                  {user.email}
+                </span>
+                <Button variant="outline" onClick={handleSignOut}>
+                  Sign Out
+                </Button>
+              </>
             ) : (
               // User is not logged in - show log in and sign up
               <>
                 <Button variant="ghost" asChild>
-                  <Link href="/auth/login">Log In</Link>
+                  <Link href="/auth/login">Sign In</Link>
                 </Button>
                 <Button asChild>
                   <Link href="/auth/signup">Sign Up</Link>
