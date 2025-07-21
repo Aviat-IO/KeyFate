@@ -3,6 +3,7 @@ import { Tables } from "@/types";
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
+import { encryptMessage } from "@/lib/encryption";
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,9 +34,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Encrypt the server share before storing (only if not already provided)
+    let encryptedServerShare: string;
+    let iv: string;
+    let authTag: string;
+
+    if (validatedData.iv && validatedData.auth_tag) {
+      // Use provided encrypted data (for testing/backward compatibility)
+      encryptedServerShare = validatedData.server_share;
+      iv = validatedData.iv;
+      authTag = validatedData.auth_tag;
+    } else {
+      // Encrypt the plain server share
+      const encrypted = await encryptMessage(validatedData.server_share);
+      encryptedServerShare = encrypted.encrypted;
+      iv = encrypted.iv;
+      authTag = encrypted.authTag;
+    }
+
     // Handle contact method logic
     const insertData = {
       ...validatedData,
+      server_share: encryptedServerShare,
+      iv: iv,
+      auth_tag: authTag,
       user_id: user.user.id,
     } as Tables<"secrets">["Insert"];
 

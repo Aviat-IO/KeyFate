@@ -133,45 +133,58 @@ describe("/api/secrets", () => {
       const data = await response.json();
 
       expect(response.status).toBe(400);
-      expect(data.error).toBe(
-        "Missing encrypted server share, IV, or auth tag.",
-      );
+      expect(data.error).toBe("Missing server share.");
     });
 
-    it("should return 400 when iv is missing", async () => {
-      const invalidData = { ...validSecretData, iv: undefined };
+    it("should create a secret successfully when iv and auth_tag are missing (plain server share)", async () => {
+      const mockSecretId = "secret-123";
+      const plainSecretData = { ...validSecretData };
+      delete plainSecretData.iv;
+      delete plainSecretData.auth_tag;
+
+      // Mock successful database operations
+      const mockInsert = vi.fn().mockReturnThis();
+      const mockSelect = vi.fn().mockReturnThis();
+      const mockSingle = vi.fn().mockResolvedValue({
+        data: { id: mockSecretId },
+        error: null,
+      });
+
+      mockSupabaseClient.from.mockReturnValue(createMockSupabaseChain({
+        insert: mockInsert,
+        select: mockSelect,
+        single: mockSingle,
+      }));
+
+      mockSupabaseClient.rpc.mockResolvedValue({ error: null });
 
       const mockRequest = new Request("http://localhost/api/secrets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(invalidData),
+        body: JSON.stringify(plainSecretData),
       });
 
       const response = await POST(mockRequest);
       const data = await response.json();
 
-      expect(response.status).toBe(400);
-      expect(data.error).toBe(
-        "Missing encrypted server share, IV, or auth tag.",
-      );
-    });
-
-    it("should return 400 when auth_tag is missing", async () => {
-      const invalidData = { ...validSecretData, auth_tag: undefined };
-
-      const mockRequest = new Request("http://localhost/api/secrets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(invalidData),
-      });
-
-      const response = await POST(mockRequest);
-      const data = await response.json();
-
-      expect(response.status).toBe(400);
-      expect(data.error).toBe(
-        "Missing encrypted server share, IV, or auth tag.",
-      );
+      expect(response.status).toBe(200);
+      expect(data.secretId).toBe(mockSecretId);
+      expect(mockInsert).toHaveBeenCalledWith([
+        expect.objectContaining({
+          user_id: mockUser.id,
+          title: plainSecretData.title,
+          server_share: expect.any(String), // Should be encrypted
+          iv: expect.any(String), // Should be generated
+          auth_tag: expect.any(String), // Should be generated
+          recipient_name: plainSecretData.recipient_name,
+          recipient_email: plainSecretData.recipient_email,
+          contact_method: plainSecretData.contact_method,
+          check_in_days: 30,
+          status: "active",
+          sss_shares_total: 3,
+          sss_threshold: 2,
+        }),
+      ]);
     });
 
     it("should return 400 when SSS parameters are invalid", async () => {

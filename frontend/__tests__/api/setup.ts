@@ -20,6 +20,22 @@ vi.mock("next/server", () => ({
       headers: new Map(),
     })),
   },
+  NextRequest: class MockNextRequest extends Request {
+    constructor(input: RequestInfo | URL, init?: RequestInit) {
+      super(input, init);
+    }
+    get cookies() {
+      return {
+        getAll: vi.fn(() => []),
+        set: vi.fn(),
+        get: vi.fn(),
+        delete: vi.fn(),
+      };
+    }
+    get nextUrl() {
+      return new URL(this.url);
+    }
+  },
 }));
 
 // Mock Supabase client
@@ -73,8 +89,14 @@ vi.mock("@/lib/server-env", () => ({
 
 // Mock encryption functions
 vi.mock("@/lib/encryption", () => ({
-  encryptMessage: vi.fn(),
-  decryptMessage: vi.fn(),
+  encryptMessage: vi.fn(() =>
+    Promise.resolve({
+      encrypted: "encrypted-data",
+      iv: "base64-iv",
+      authTag: "base64-auth-tag",
+    })
+  ),
+  decryptMessage: vi.fn(() => Promise.resolve("decrypted-data")),
 }));
 
 // Mock crypto for encrypt/decrypt routes

@@ -321,13 +321,13 @@ export function NewSecretForm() {
                       <Input
                         type="number"
                         {...field}
-                        min="2"
+                        min="3"
                         disabled={isSubmitting}
                       />
                     </FormControl>
                     <FormDescription>
                       How often you need to check in to keep the secret active.
-                      Minimum 7 days.
+                      Minimum 3 days.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

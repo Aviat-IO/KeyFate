@@ -63,14 +63,10 @@ export type SecretFormValues = z.infer<typeof secretFormSchema>;
 export const secretSchema = z.object({
   title: z.string().min(1, "Title is required"),
   server_share: z.string({
-    required_error: "Missing encrypted server share, IV, or auth tag.",
-  }).min(1, "Missing encrypted server share, IV, or auth tag."),
-  iv: z.string({
-    required_error: "Missing encrypted server share, IV, or auth tag.",
-  }).min(1, "Missing encrypted server share, IV, or auth tag."),
-  auth_tag: z.string({
-    required_error: "Missing encrypted server share, IV, or auth tag.",
-  }).min(1, "Missing encrypted server share, IV, or auth tag."),
+    required_error: "Missing server share.",
+  }).min(1, "Missing server share."),
+  iv: z.string().optional(),
+  auth_tag: z.string().optional(),
   recipient_name: z.string().min(1, "Recipient name is required"),
   recipient_email: z.string().email().nullable().optional(),
   recipient_phone: z.string().nullable().optional(),
