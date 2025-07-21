@@ -25,15 +25,15 @@ export default function VerifyEmailPage() {
 
     setLoading(true)
     try {
-      const { error } = await supabase.auth.resend({
+      const { error: resendError } = await supabase.auth.resend({
         type: "signup",
         email: email,
       })
 
-      if (error) {
+      if (resendError) {
         toast({
           title: "Error",
-          description: error.message,
+          description: resendError.message,
           variant: "destructive",
         })
       } else {
@@ -43,7 +43,7 @@ export default function VerifyEmailPage() {
             "Verification email has been resent. Please check your inbox.",
         })
       }
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to resend verification email. Please try again.",

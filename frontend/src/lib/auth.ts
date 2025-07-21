@@ -54,7 +54,7 @@ export function parseTokensFromHash(hash: string): AuthTokens | null {
  */
 export async function establishSessionFromTokens(
   tokens: AuthTokens,
-): Promise<{ data: any; error: any }> {
+): Promise<{ data: unknown; error: unknown }> {
   const supabase = createClient();
 
   try {
@@ -93,8 +93,8 @@ export function clearTokensFromUrl(): void {
  */
 export async function completeAuthFlow(hash: string): Promise<{
   success: boolean;
-  data?: any;
-  error?: any;
+  data?: unknown;
+  error?: unknown;
 }> {
   const tokens = parseTokensFromHash(hash);
 

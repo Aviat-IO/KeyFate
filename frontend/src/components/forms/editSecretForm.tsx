@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -31,7 +32,18 @@ const formSchema = z.object({
   recipient_email: z.string().email().optional().or(z.literal("")),
   recipient_phone: z.string().optional().or(z.literal("")),
   contact_method: z.enum(["email", "phone", "both"]),
-  check_in_days: z.number().min(1).max(365).default(90),
+  check_in_days: z.union([z.string(), z.number()]).transform((val) => {
+    if (typeof val === "string") {
+      const num = parseInt(val, 10)
+      return isNaN(num) ? undefined : num
+    }
+    return val
+  }).pipe(
+    z.number({
+      required_error: "Check-in days is required.",
+      invalid_type_error: "Check-in days must be a number.",
+    }).min(2, "Check-in frequency must be at least 2 days.").max(365),
+  ),
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -41,13 +53,20 @@ interface EditSecretFormProps {
   secretId: string
 }
 
-export function EditSecretForm({ initialData, secretId }: EditSecretFormProps) {
+interface EditSecretFormProps {
+  initialData: FormData
+  secretId: string
+  isPaid?: boolean
+}
+
+export function EditSecretForm({ initialData, secretId, isPaid = false }: EditSecretFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
+    mode: "onBlur",
     defaultValues: initialData,
   })
 
@@ -215,26 +234,46 @@ export function EditSecretForm({ initialData, secretId }: EditSecretFormProps) {
                 name="check_in_days"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Check-in Interval</FormLabel>
-                    <Select
-                      onValueChange={(value) => field.onChange(Number(value))}
-                      defaultValue={field.value.toString()}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="How often should you check in?" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="1">Daily</SelectItem>
-                        <SelectItem value="7">Weekly</SelectItem>
-                        <SelectItem value="14">Every 2 weeks</SelectItem>
-                        <SelectItem value="30">Monthly</SelectItem>
-                        <SelectItem value="90">Every 3 months</SelectItem>
-                        <SelectItem value="180">Every 6 months</SelectItem>
-                        <SelectItem value="365">Yearly</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Check-in Frequency</FormLabel>
+                    <FormControl>
+                      {isPaid ? (
+                        <Input
+                          type="number"
+                          {...field}
+                          min="2"
+                          max="365"
+                          disabled={loading}
+                          placeholder="Enter custom days"
+                        />
+                      ) : (
+                        <Select
+                          onValueChange={(value) => field.onChange(Number(value))}
+                          defaultValue={field.value.toString()}
+                          disabled={loading}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="How often should you check in?" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="2">Daily</SelectItem>
+                            <SelectItem value="7">Weekly</SelectItem>
+                            <SelectItem value="14">Every 2 weeks</SelectItem>
+                            <SelectItem value="30">Monthly</SelectItem>
+                            <SelectItem value="90">Every 3 months</SelectItem>
+                            <SelectItem value="180">Every 6 months</SelectItem>
+                            <SelectItem value="365">Yearly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </FormControl>
+                    <FormDescription>
+                      {isPaid 
+                        ? "How often you need to check in to keep the secret active. Minimum 2 days."
+                        : "How often you need to check in to keep the secret active. Upgrade to set custom intervals."
+                      }
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

@@ -35,7 +35,11 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import sss from "shamirs-secret-sharing"
 
-export function NewSecretForm() {
+interface NewSecretFormProps {
+  isPaid?: boolean
+}
+
+export function NewSecretForm({ isPaid = false }: NewSecretFormProps) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
 
@@ -316,18 +320,44 @@ export function NewSecretForm() {
                 name="check_in_days"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Check-in Frequency (days)</FormLabel>
+                    <FormLabel>Check-in Frequency</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        min="3"
-                        disabled={isSubmitting}
-                      />
+                      {isPaid ? (
+                        <Input
+                          type="number"
+                          {...field}
+                          min="2"
+                          disabled={isSubmitting}
+                          placeholder="Enter custom days"
+                        />
+                      ) : (
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          disabled={isSubmitting}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select frequency" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="2">Daily</SelectItem>
+                            <SelectItem value="7">Weekly</SelectItem>
+                            <SelectItem value="14">Every 2 weeks</SelectItem>
+                            <SelectItem value="30">Monthly</SelectItem>
+                            <SelectItem value="90">Every 3 months</SelectItem>
+                            <SelectItem value="180">Every 6 months</SelectItem>
+                            <SelectItem value="365">Yearly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
                     </FormControl>
                     <FormDescription>
-                      How often you need to check in to keep the secret active.
-                      Minimum 3 days.
+                      {isPaid 
+                        ? "How often you need to check in to keep the secret active. Minimum 2 days."
+                        : "How often you need to check in to keep the secret active. Upgrade to set custom intervals."
+                      }
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -375,28 +405,29 @@ export function NewSecretForm() {
                     <FormField
                       control={form.control}
                       name="sss_shares_total"
-                      render={({ field: { onChange, value, ...field } }) => (
+                      render={({ field }) => (
                         <FormItem>
                           <FormLabel>Total Shares to Create</FormLabel>
                           <FormControl>
                             <Input
                               type="number"
-                              value={value?.toString() ?? ""}
                               min="2"
                               max="10"
+                              disabled={isSubmitting}
+                              {...field}
                               onChange={(e) => {
                                 const val = e.target.value
                                 if (val === "") {
-                                  onChange("")
+                                  field.onChange("")
                                 } else {
                                   const numValue = parseInt(val, 10)
                                   if (!isNaN(numValue)) {
-                                    onChange(numValue)
+                                    field.onChange(numValue)
+                                  } else {
+                                    field.onChange(val)
                                   }
                                 }
                               }}
-                              disabled={isSubmitting}
-                              {...field}
                             />
                           </FormControl>
                           <FormDescription>
@@ -409,7 +440,7 @@ export function NewSecretForm() {
                     <FormField
                       control={form.control}
                       name="sss_threshold"
-                      render={({ field: { onChange, value, ...field } }) => (
+                      render={({ field }) => (
                         <FormItem>
                           <FormLabel>
                             Shares Needed for Recovery (Threshold)
@@ -417,22 +448,23 @@ export function NewSecretForm() {
                           <FormControl>
                             <Input
                               type="number"
-                              value={value?.toString() ?? ""}
                               min="2"
                               max="10"
+                              disabled={isSubmitting}
+                              {...field}
                               onChange={(e) => {
                                 const val = e.target.value
                                 if (val === "") {
-                                  onChange("")
+                                  field.onChange("")
                                 } else {
                                   const numValue = parseInt(val, 10)
                                   if (!isNaN(numValue)) {
-                                    onChange(numValue)
+                                    field.onChange(numValue)
+                                  } else {
+                                    field.onChange(val)
                                   }
                                 }
                               }}
-                              disabled={isSubmitting}
-                              {...field}
                             />
                           </FormControl>
                           <FormDescription>

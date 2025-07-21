@@ -34,7 +34,11 @@ export default function UpdatePasswordPage() {
         if (result.success) {
           setSessionEstablished(true)
         } else {
-          setError(result.error || "Invalid password reset link")
+          setError(
+            typeof result.error === "string" 
+              ? result.error 
+              : "Invalid password reset link"
+          )
         }
       } catch (error) {
         console.error("[UpdatePassword] Exception during auth flow:", error)
