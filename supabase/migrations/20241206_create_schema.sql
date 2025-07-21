@@ -226,19 +226,19 @@ CREATE OR REPLACE FUNCTION public.toggle_secret_pause(
     p_next_check_in TIMESTAMPTZ
 ) RETURNS void
 SECURITY DEFINER
-SET search_path = public, extensions
+SET search_path = ''
 AS $$
 BEGIN
     -- Update the secret status
-    UPDATE secrets
-    SET status = p_new_status::secret_status,
+    UPDATE public.secrets
+    SET status = p_new_status::public.secret_status,
         last_check_in = p_checked_in_at,
         next_check_in = p_next_check_in
     WHERE id = p_secret_id
     AND user_id = p_user_id;
 
     -- Record the check-in history
-    INSERT INTO checkin_history (
+    INSERT INTO public.checkin_history (
         secret_id,
         user_id,
         checked_in_at,

@@ -30,7 +30,7 @@ CREATE OR REPLACE FUNCTION create_check_in_token(
   p_expires_in INTERVAL DEFAULT INTERVAL '24 hours'
 ) RETURNS TEXT
 SECURITY DEFINER
-SET search_path = public, extensions
+SET search_path = ''
 LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -46,10 +46,10 @@ BEGIN
   END IF;
 
   -- Generate a secure random token
-  v_token := encode(gen_random_bytes(32), 'hex');
+  v_token := encode(public.gen_random_bytes(32), 'hex');
 
   -- Insert the token
-  INSERT INTO check_in_tokens (
+  INSERT INTO public.check_in_tokens (
     secret_id,
     token,
     expires_at
