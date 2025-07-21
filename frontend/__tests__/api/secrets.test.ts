@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { NextRequest } from "next/server";
 import { mockSupabaseClient } from "./setup";
 
 // Import setup to apply mocks
@@ -74,7 +75,7 @@ describe("/api/secrets", () => {
 
       mockSupabaseClient.rpc.mockResolvedValue({ error: null });
 
-      const mockRequest = new Request("http://localhost/api/secrets", {
+      const mockRequest = new NextRequest("http://localhost/api/secrets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(validSecretData),
@@ -97,6 +98,7 @@ describe("/api/secrets", () => {
           status: "active",
           sss_shares_total: 3,
           sss_threshold: 2,
+          next_check_in: expect.any(String),
         }),
       ]);
     });
@@ -107,7 +109,7 @@ describe("/api/secrets", () => {
         error: null,
       });
 
-      const mockRequest = new Request("http://localhost/api/secrets", {
+      const mockRequest = new NextRequest("http://localhost/api/secrets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(validSecretData),

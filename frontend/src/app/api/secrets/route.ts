@@ -59,6 +59,9 @@ export async function POST(request: NextRequest) {
       iv: iv,
       auth_tag: authTag,
       user_id: user.user.id,
+      next_check_in: new Date(
+        Date.now() + validatedData.check_in_days * 24 * 60 * 60 * 1000,
+      ).toISOString(),
     } as Tables<"secrets">["Insert"];
 
     // Set recipient_email to null for phone-only contact
@@ -87,9 +90,7 @@ export async function POST(request: NextRequest) {
         "schedule_secret_reminders",
         {
           p_secret_id: data.id,
-          p_next_check_in: new Date(
-            Date.now() + validatedData.check_in_days * 24 * 60 * 60 * 1000,
-          ).toISOString(),
+          p_next_check_in: insertData.next_check_in,
         },
       );
 
