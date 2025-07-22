@@ -1,9 +1,10 @@
 import { SecretCard } from "@/components/secret-card"
 import { Button } from "@/components/ui/button"
-import { Suspense } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { LoadingIndicator } from "@/components/ui/loading-indicator"
 import { createClient } from "@/utils/supabase/server"
 import Link from "next/link"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Suspense } from "react"
 
 async function SecretsLoader() {
   const supabase = await createClient()
@@ -54,27 +55,8 @@ async function SecretsLoader() {
 
 function LoadingSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6 xl:grid-cols-3">
-      {[...Array(6)].map((_, i) => (
-        <Card key={i} className="animate-pulse">
-          <CardHeader>
-            <div className="space-y-2">
-              <div className="h-4 w-2/3 rounded bg-gray-200"></div>
-              <div className="h-3 w-1/2 rounded bg-gray-200"></div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="h-3 w-full rounded bg-gray-200"></div>
-              <div className="h-3 w-3/4 rounded bg-gray-200"></div>
-              <div className="mt-4 flex justify-end gap-2">
-                <div className="h-8 w-16 rounded bg-gray-200"></div>
-                <div className="h-8 w-16 rounded bg-gray-200"></div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+    <div className="flex min-h-[400px] items-center justify-center">
+      <LoadingIndicator text="Loading your secrets..." size="md" />
     </div>
   )
 }
