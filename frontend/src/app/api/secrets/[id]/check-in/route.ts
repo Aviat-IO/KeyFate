@@ -11,8 +11,11 @@ export async function POST(
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
+      console.error("Auth error:", authError);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    console.log(`Checking in secret ${id} for user ${user.id}`);
 
     const { data: secret, error: fetchError } = await supabase
       .from("secrets")
@@ -22,12 +25,20 @@ export async function POST(
       .single();
 
     if (fetchError || !secret) {
+      console.error("Secret fetch error:", fetchError);
       return NextResponse.json({ error: "Secret not found" }, { status: 404 });
     }
 
     // Calculate next check-in
     const nextCheckIn = new Date();
     nextCheckIn.setDate(nextCheckIn.getDate() + secret.check_in_days);
+
+    console.log(`Calling check_in_secret RPC with:`, {
+      p_secret_id: id,
+      p_user_id: user.id,
+      p_checked_in_at: new Date().toISOString(),
+      p_next_check_in: nextCheckIn.toISOString(),
+    });
 
     // Use RPC function for check-in
     const { error: rpcError } = await supabase.rpc("check_in_secret", {
@@ -40,7 +51,7 @@ export async function POST(
     if (rpcError) {
       console.error("Error in check-in transaction:", rpcError);
       return NextResponse.json(
-        { error: "Failed to record check-in" },
+        { error: `Failed to record check-in: ${rpcError.message}` },
         { status: 500 },
       );
     }
@@ -61,6 +72,8 @@ export async function POST(
       );
     }
 
+    console.log("Check-in successful for secret:", id);
+
     return NextResponse.json({
       success: true,
       secret: updatedSecret,
@@ -68,8 +81,11 @@ export async function POST(
     });
   } catch (error) {
     console.error("Error in POST /api/secrets/[id]/check-in:", error);
+    const errorMessage = error instanceof Error
+      ? error.message
+      : "Internal Server Error";
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: errorMessage },
       { status: 500 },
     );
   }

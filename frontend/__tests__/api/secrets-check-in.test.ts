@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mockSupabaseClient } from "./setup";
 
@@ -49,7 +50,7 @@ describe("/api/secrets/[id]/check-in", () => {
 
     mockSupabaseClient.rpc.mockResolvedValue({ error: null });
 
-    const mockRequest = new Request(
+    const mockRequest = new NextRequest(
       "http://localhost/api/secrets/secret-123/check-in",
       {
         method: "POST",
@@ -78,7 +79,7 @@ describe("/api/secrets/[id]/check-in", () => {
       error: null,
     });
 
-    const mockRequest = new Request(
+    const mockRequest = new NextRequest(
       "http://localhost/api/secrets/secret-123/check-in",
       {
         method: "POST",
@@ -111,7 +112,7 @@ describe("/api/secrets/[id]/check-in", () => {
       delete: vi.fn().mockReturnThis(),
     });
 
-    const mockRequest = new Request(
+    const mockRequest = new NextRequest(
       "http://localhost/api/secrets/secret-123/check-in",
       {
         method: "POST",
@@ -144,11 +145,12 @@ describe("/api/secrets/[id]/check-in", () => {
       delete: vi.fn().mockReturnThis(),
     });
 
+    const transactionError = new Error("Transaction failed");
     mockSupabaseClient.rpc.mockResolvedValue({
-      error: new Error("Transaction failed"),
+      error: transactionError,
     });
 
-    const mockRequest = new Request(
+    const mockRequest = new NextRequest(
       "http://localhost/api/secrets/secret-123/check-in",
       {
         method: "POST",
@@ -161,7 +163,7 @@ describe("/api/secrets/[id]/check-in", () => {
     const data = await response.json();
 
     expect(response.status).toBe(500);
-    expect(data.error).toBe("Failed to record check-in");
+    expect(data.error).toBe("Failed to record check-in: Transaction failed");
   });
 
   it("should return 500 when fetching updated secret fails", async () => {
@@ -188,7 +190,7 @@ describe("/api/secrets/[id]/check-in", () => {
 
     mockSupabaseClient.rpc.mockResolvedValue({ error: null });
 
-    const mockRequest = new Request(
+    const mockRequest = new NextRequest(
       "http://localhost/api/secrets/secret-123/check-in",
       {
         method: "POST",
@@ -205,11 +207,10 @@ describe("/api/secrets/[id]/check-in", () => {
   });
 
   it("should handle unexpected errors gracefully", async () => {
-    mockSupabaseClient.auth.getUser.mockRejectedValue(
-      new Error("Unexpected error"),
-    );
+    const unexpectedError = new Error("Unexpected error");
+    mockSupabaseClient.auth.getUser.mockRejectedValue(unexpectedError);
 
-    const mockRequest = new Request(
+    const mockRequest = new NextRequest(
       "http://localhost/api/secrets/secret-123/check-in",
       {
         method: "POST",
@@ -222,6 +223,6 @@ describe("/api/secrets/[id]/check-in", () => {
     const data = await response.json();
 
     expect(response.status).toBe(500);
-    expect(data.error).toBe("Internal Server Error");
+    expect(data.error).toBe("Unexpected error");
   });
 });

@@ -33,7 +33,10 @@ export function CheckInButton({
       )
 
       if (!response.ok) {
-        throw new Error("Failed to check in")
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(
+          `HTTP ${response.status}: ${errorData.error || response.statusText}`,
+        )
       }
 
       const res = await response.json()
@@ -42,10 +45,13 @@ export function CheckInButton({
       onCheckInSuccess?.(updatedSecret)
     } catch (error) {
       console.error("Error checking in:", error)
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred"
+
       toast({
         variant: "destructive",
         title: "Check-in failed",
-        description: "Please try again later.",
+        description: errorMessage,
       })
     } finally {
       setLoading(false)
