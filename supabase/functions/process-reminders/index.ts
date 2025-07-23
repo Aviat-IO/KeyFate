@@ -10,6 +10,8 @@ import {
 } from "../_shared/env.ts";
 import { Reminder, Secret } from "../_shared/types.ts";
 
+const BATCH_SIZE = 50;
+
 type ReminderWithSecret = Reminder & {
   secret: Secret | null;
 };
@@ -130,7 +132,7 @@ async function processReminders(
     )
     .eq("status", "pending")
     .lte("scheduled_for", new Date().toISOString())
-    .range(from, from + 49)
+    .range(from, from + BATCH_SIZE - 1)
     .order("scheduled_for", { ascending: true });
 
   console.log("Reminders error:", remindersError);
@@ -311,7 +313,7 @@ async function processReminders(
 
   return {
     processed: processedReminders.length,
-    hasMore: processedReminders.length === 50,
+    hasMore: processedReminders.length === BATCH_SIZE,
   };
 }
 
@@ -371,7 +373,7 @@ Deno.serve(async (req) => {
       );
       totalProcessed += processed;
       hasMore = moreReminders;
-      from += 50;
+      from += BATCH_SIZE;
 
       // Add a small delay between batches to avoid rate limits
       if (hasMore) {
