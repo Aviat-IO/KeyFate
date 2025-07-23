@@ -32,9 +32,9 @@ describe("ThemeToggle", () => {
 
     const button = screen.getByRole("button")
 
-    // Check for SVG elements (icons)
+    // Check for SVG elements (icons) - should render one icon at a time
     const svgElements = button.querySelectorAll("svg")
-    expect(svgElements).toHaveLength(2) // Sun and Moon icons
+    expect(svgElements).toHaveLength(1) // Only one icon is rendered at a time
   })
 
   it("should toggle from light to dark theme", () => {
