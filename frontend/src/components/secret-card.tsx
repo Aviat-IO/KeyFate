@@ -127,7 +127,7 @@ export function SecretCard({ secret }: SecretCardProps) {
       title:
         updatedSecret.status === "active" ? "Secret resumed" : "Secret paused",
       description: `"${secret.title}" has been ${
-        updatedSecret.status === "active" ? "resumed" : "paused"
+        updatedSecret.status === "active" ? "resumed and a check-in has been applied" : "paused"
       }.`,
       duration: 6000,
     })
@@ -187,7 +187,7 @@ export function SecretCard({ secret }: SecretCardProps) {
     ) {
       return null
     }
-    return `Last: ${format(secretState.last_check_in)}`
+    return `Last checkin: ${format(secretState.last_check_in)}`
   }
 
   return (
@@ -253,7 +253,7 @@ export function SecretCard({ secret }: SecretCardProps) {
         <div className="hidden md:block">
           <div className="mb-2 flex items-start justify-between">
             <div className="flex-1">
-              <h3 className="mb-1 text-base font-semibold">
+              <h3 className="mb-3 text-base font-semibold">
                 {secretState.title}
               </h3>
               <TooltipProvider>
