@@ -162,6 +162,23 @@ export function SecretCard({ secret }: SecretCardProps) {
     return `Triggers ${format(secretState.next_check_in)}`
   }
 
+  const getTriggerTimeTooltip = () => {
+    if (secretState.is_triggered || serverShareDeleted) {
+      return null
+    }
+    
+    const triggerDate = new Date(secretState.next_check_in)
+    return triggerDate.toLocaleString(undefined, {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZoneName: 'short'
+    })
+  }
+
   const getLastCheckInText = () => {
     if (
       !secretState.last_check_in ||
@@ -195,15 +212,35 @@ export function SecretCard({ secret }: SecretCardProps) {
             </Badge>
           </div>
 
-          <div className="text-muted-foreground flex items-center gap-2 text-xs">
-            <User className="h-3 w-3" />
-            <span className="truncate">{secretState.recipient_name}</span>
-          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="text-muted-foreground flex items-center gap-2 text-xs cursor-help">
+                  <User className="h-3 w-3" />
+                  <span className="truncate">{secretState.recipient_name}</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="whitespace-pre-line">{getContactDetails()}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
-          <div className="text-muted-foreground flex items-center gap-2 text-xs">
-            <Clock className="h-3 w-3" />
-            <span>{getTimingText()}</span>
-          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="text-muted-foreground flex items-center gap-2 text-xs cursor-help">
+                  <Clock className="h-3 w-3" />
+                  <span>{getTimingText()}</span>
+                </div>
+              </TooltipTrigger>
+              {getTriggerTimeTooltip() && (
+                <TooltipContent>
+                  <p>Will trigger on {getTriggerTimeTooltip()}</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
 
           {getLastCheckInText() && (
             <div className="text-muted-foreground text-xs">
@@ -222,7 +259,7 @@ export function SecretCard({ secret }: SecretCardProps) {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="text-muted-foreground flex items-center gap-2 text-sm">
+                    <div className="text-muted-foreground flex items-center gap-2 text-sm cursor-help">
                       <User className="h-4 w-4" />
                       <span>Recipient: {secretState.recipient_name}</span>
                     </div>
@@ -256,10 +293,21 @@ export function SecretCard({ secret }: SecretCardProps) {
           </div>
 
           <div className="flex flex-col gap-1">
-            <div className="text-muted-foreground flex items-center gap-2 text-sm">
-              <Clock className="h-4 w-4" />
-              <span>{getTimingText()}</span>
-            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="text-muted-foreground flex items-center gap-2 text-sm cursor-help">
+                    <Clock className="h-4 w-4" />
+                    <span>{getTimingText()}</span>
+                  </div>
+                </TooltipTrigger>
+                {getTriggerTimeTooltip() && (
+                  <TooltipContent>
+                    <p>Will trigger on {getTriggerTimeTooltip()}</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
 
             {getLastCheckInText() && (
               <div className="text-muted-foreground ml-6 text-xs">
