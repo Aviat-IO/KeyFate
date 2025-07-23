@@ -25,8 +25,13 @@ export function CheckInButton({
     setLoading(true)
 
     try {
+      // Ensure the URL has a protocol
+      const baseUrl = NEXT_PUBLIC_SITE_URL.startsWith('http') 
+        ? NEXT_PUBLIC_SITE_URL 
+        : `http://${NEXT_PUBLIC_SITE_URL}`
+      
       const response = await fetch(
-        `${NEXT_PUBLIC_SITE_URL}/api/secrets/${secretId}/check-in`,
+        `${baseUrl}/api/secrets/${secretId}/check-in`,
         {
           method: "POST",
         },
