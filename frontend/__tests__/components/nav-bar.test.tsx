@@ -70,6 +70,13 @@ describe("NavBar", () => {
       expect(screen.queryByText("Sign Out")).not.toBeInTheDocument()
     })
 
+    it("should render secret sharing tool link", () => {
+      render(<NavBar user={null} />)
+
+      const secretSharingLink = screen.getByText("Recover Secret").closest("a")
+      expect(secretSharingLink).toHaveAttribute("href", "/decrypt")
+    })
+
     it("should render KeyFate logo linking to home", () => {
       render(<NavBar user={null} />)
 
@@ -148,6 +155,13 @@ describe("NavBar", () => {
       render(<NavBar user={mockUser} />)
 
       expect(screen.getByTestId("theme-toggle")).toBeInTheDocument()
+    })
+
+    it("should render secret sharing tool link when authenticated", () => {
+      render(<NavBar user={mockUser} />)
+
+      const secretSharingLink = screen.getByText("Recover Secret").closest("a")
+      expect(secretSharingLink).toHaveAttribute("href", "/decrypt")
     })
   })
 

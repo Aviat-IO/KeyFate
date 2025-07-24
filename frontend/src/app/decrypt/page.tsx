@@ -1,33 +1,59 @@
+"use client"
+
+import { Footer } from "@/components/footer"
+import { NavBar } from "@/components/nav-bar"
 import { SssDecryptor } from "@/components/sss-decryptor"
+import { useSearchParams } from "next/navigation"
 import { Suspense } from "react"
 
-// TODO: Implement parsing of initial shares from URL query params if needed
-// For example: ?share1=xxxx&share2=yyyy
-// const initialSharesFromQuery = (searchParams?: { [key: string]: string | string[] | undefined }) => {
-//   if (!searchParams) return [];
-//   const shares: string[] = [];
-//   if (searchParams.share1 && typeof searchParams.share1 === 'string') shares.push(searchParams.share1);
-//   if (searchParams.share2 && typeof searchParams.share2 === 'string') shares.push(searchParams.share2);
-//   // Add more share params if necessary
-//   return shares;
-// };
+function DecryptContent() {
+  const searchParams = useSearchParams()
 
-export default function DecryptPage(/*{ searchParams }: { searchParams?: { [key: string]: string | string[] | undefined } }*/) {
-  // const initialShares = initialSharesFromQuery(searchParams);
+  // Extract shares from query parameters (share1, share2, share3, etc.)
+  const extractSharesFromParams = () => {
+    const shares: string[] = []
+    let shareIndex = 1
+
+    while (true) {
+      const shareValue = searchParams.get(`share${shareIndex}`)
+      if (shareValue) {
+        shares.push(shareValue)
+        shareIndex++
+      } else {
+        break
+      }
+    }
+
+    return shares
+  }
+
+  const initialShares = extractSharesFromParams()
 
   return (
-    <div className="container mx-auto min-h-screen px-4 py-12 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-2xl">
+    <div className="w-full max-w-2xl">
+      <SssDecryptor initialShares={initialShares} />
+    </div>
+  )
+}
+
+export default function DecryptPage() {
+  return (
+    <div className="bg-background min-h-screen">
+      <div className="bg-background/90 supports-[backdrop-filter]:bg-background/50 sticky top-0 z-50 border-b backdrop-blur">
+        <NavBar />
+      </div>
+
+      <div className="container mx-auto flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
         <Suspense
           fallback={
             <div className="text-center text-lg">Loading Decryptor...</div>
           }
         >
-          {/* <SssDecryptor initialShares={initialShares} /> */}
-          <SssDecryptor />{" "}
-          {/* For now, not passing initial shares from query params */}
+          <DecryptContent />
         </Suspense>
       </div>
+
+      <Footer />
     </div>
   )
 }

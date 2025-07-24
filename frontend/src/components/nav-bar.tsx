@@ -70,6 +70,9 @@ export function NavBar({ user: propUser }: NavBarProps = {}) {
                 <Link href="/pricing">Pricing</Link>
               </Button>
             )}
+            <Button variant="ghost" asChild>
+              <Link href="/decrypt">Recover Secret</Link>
+            </Button>
             <ThemeToggle />
 
             {loading ? (

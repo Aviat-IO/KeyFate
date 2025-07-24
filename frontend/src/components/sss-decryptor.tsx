@@ -3,14 +3,18 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/hooks/use-toast"
 import { Buffer } from "buffer"
 import {
+  Check,
   Copy,
+  Info,
   PlusCircle,
   ShieldAlert,
   ShieldCheck,
   Trash2,
 } from "lucide-react"
+import Link from "next/link"
 import { useState } from "react"
 import sss from "shamirs-secret-sharing"
 
@@ -19,6 +23,7 @@ type SssDecryptorProps = {
 }
 
 export function SssDecryptor({ initialShares = [] }: SssDecryptorProps) {
+  const { toast } = useToast()
   const [shares, setShares] = useState<string[]>(() => {
     // Initialize with at least two empty strings if no initial shares, or fill with initialShares
     const defaults = ["", ""]
@@ -29,6 +34,7 @@ export function SssDecryptor({ initialShares = [] }: SssDecryptorProps) {
   const [recoveredSecret, setRecoveredSecret] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isCopied, setIsCopied] = useState(false)
 
   const handleShareChange = (index: number, value: string) => {
     const newShares = [...shares]
@@ -101,99 +107,174 @@ export function SssDecryptor({ initialShares = [] }: SssDecryptorProps) {
     }
   }
 
-  return (
-    <div className="space-y-6 rounded-lg border p-6 shadow-md">
-      <h2 className="text-2xl font-semibold">Recover Secret with Shares</h2>
-      <p className="text-muted-foreground">
-        Enter your Shamir\'s Secret Sharing shares below. You need a minimum
-        number of correct shares (as per the threshold set during creation) to
-        recover the original secret. Shares are typically hexadecimal strings.
-      </p>
+  const handleCopySecret = async () => {
+    if (!recoveredSecret) return
 
-      <div className="space-y-4">
-        {shares.map((share, index) => (
-          <div key={index} className="flex items-center space-x-2">
-            <Textarea
-              placeholder={`Share ${index + 1} (hexadecimal format)`}
-              value={share}
-              onChange={(e) => handleShareChange(index, e.target.value)}
-              rows={2}
-              className="flex-grow font-mono text-sm"
-              disabled={isLoading}
-            />
-            {shares.length > 2 && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => removeShareInput(index)}
-                disabled={isLoading}
-                aria-label="Remove share"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        ))}
-        <Button
-          type="button"
-          variant="outline"
-          onClick={addShareInput}
-          disabled={isLoading}
-          className="w-full sm:w-auto"
-        >
-          <PlusCircle className="mr-2 h-4 w-4" /> Add Another Share
-        </Button>
+    try {
+      await navigator.clipboard.writeText(recoveredSecret)
+      setIsCopied(true)
+      toast({
+        title: "Copied!",
+        description: "Secret copied to clipboard successfully.",
+        duration: 3000,
+      })
+
+      // Reset the copied state after 2 seconds
+      setTimeout(() => {
+        setIsCopied(false)
+      }, 2000)
+    } catch (error) {
+      toast({
+        title: "Copy failed",
+        description: "Failed to copy secret to clipboard.",
+        variant: "destructive",
+        duration: 3000,
+      })
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center">
+        <h1 className="mb-4 text-3xl font-bold">Secret Recovery</h1>
       </div>
 
-      <Button
-        type="button"
-        onClick={handleCombineShares}
-        disabled={isLoading || shares.filter((s) => s.trim() !== "").length < 2}
-        className="w-full text-lg"
-        size="lg"
-      >
-        {isLoading ? "Recovering..." : "Recover Secret"}
-      </Button>
+      <div className="space-y-6 rounded-lg border p-6 shadow-md">
+        <div>
+          <h2 className="mb-2 text-xl font-semibold">Enter Your Shares</h2>
+          <p className="text-muted-foreground text-sm">
+            Enter your Shamir's Secret Sharing shares below. You need a minimum
+            number of correct shares (as per the threshold set during creation)
+            to recover the original secret. Shares are typically hexadecimal
+            strings.
+          </p>
+        </div>
 
-      {error && (
-        <Alert variant="destructive">
-          <ShieldAlert className="h-4 w-4" />
-          <AlertTitle>Recovery Failed</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+        <div className="space-y-4">
+          {shares.map((share, index) => (
+            <div key={index} className="flex items-center space-x-2">
+              <Textarea
+                placeholder={`Share ${index + 1} (hexadecimal format)`}
+                value={share}
+                onChange={(e) => handleShareChange(index, e.target.value)}
+                rows={2}
+                className="flex-grow font-mono text-sm"
+                disabled={isLoading}
+              />
+              {shares.length > 2 && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeShareInput(index)}
+                  disabled={isLoading}
+                  aria-label="Remove share"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={addShareInput}
+            disabled={isLoading}
+            className="w-full sm:w-auto"
+          >
+            <PlusCircle className="mr-2 h-4 w-4" /> Add Another Share
+          </Button>
+        </div>
 
-      {recoveredSecret && (
-        <Alert
-          variant="default"
-          className="border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-900/30"
+        <Button
+          type="button"
+          onClick={handleCombineShares}
+          disabled={
+            isLoading || shares.filter((s) => s.trim() !== "").length < 2
+          }
+          className="w-full text-lg"
+          size="lg"
         >
-          <ShieldCheck className="h-4 w-4 text-green-600 dark:text-green-400" />
-          <AlertTitle className="text-green-700 dark:text-green-300">
-            Secret Recovered Successfully!
-          </AlertTitle>
-          <AlertDescription className="space-y-2">
-            <p className="text-green-800 dark:text-green-200">
-              Your original secret is:
+          {isLoading ? "Recovering..." : "Recover Secret"}
+        </Button>
+
+        {error && (
+          <Alert variant="destructive">
+            <ShieldAlert className="h-4 w-4" />
+            <AlertTitle>Recovery Failed</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {recoveredSecret && (
+          <Alert
+            variant="default"
+            className="border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-900/30"
+          >
+            <ShieldCheck className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <AlertTitle className="text-green-700 dark:text-green-300">
+              Secret Recovered Successfully!
+            </AlertTitle>
+            <AlertDescription className="space-y-2">
+              <p className="text-green-800 dark:text-green-200">
+                Your original secret is:
+              </p>
+              <Textarea
+                value={recoveredSecret}
+                readOnly
+                rows={4}
+                className="bg-muted mt-2 w-full select-all rounded-md border p-3 font-mono text-sm"
+              />
+              <Button
+                type="button"
+                variant={isCopied ? "default" : "outline"}
+                size="sm"
+                className={`mt-2 transition-all duration-200 ${
+                  isCopied
+                    ? "border-green-600 bg-green-600 text-white hover:bg-green-700"
+                    : ""
+                }`}
+                onClick={handleCopySecret}
+                disabled={isCopied}
+              >
+                {isCopied ? (
+                  <>
+                    <Check className="mr-2 h-3 w-3" /> Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="mr-2 h-3 w-3" /> Copy Recovered Secret
+                  </>
+                )}
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
+
+      <div className="border-muted bg-muted/30 rounded-lg border p-4">
+        <div className="flex items-start space-x-3">
+          <Info className="text-muted-foreground mt-0.5 h-4 w-4" />
+          <div className="space-y-2 text-sm">
+            <p className="text-muted-foreground">
+              <strong>Educational demonstration:</strong> This tool runs
+              entirely in your browser. Your shares are processed locally and
+              never sent to servers. For maximum security with sensitive
+              secrets, we recommend running this tool locally on your own
+              device.
             </p>
-            <Textarea
-              value={recoveredSecret}
-              readOnly
-              rows={4}
-              className="bg-muted mt-2 w-full select-all rounded-md border p-3 font-mono text-sm"
-            />
             <Button
-              type="button"
-              variant="outline"
+              variant="link"
               size="sm"
-              className="mt-2"
-              onClick={() => navigator.clipboard.writeText(recoveredSecret)}
+              asChild
+              className="text-muted-foreground h-auto p-0 text-xs"
             >
-              <Copy className="mr-2 h-3 w-3" /> Copy Recovered Secret
+              <Link href="/local-instructions">
+                Get setup instructions for local use →
+              </Link>
             </Button>
-          </AlertDescription>
-        </Alert>
-      )}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
