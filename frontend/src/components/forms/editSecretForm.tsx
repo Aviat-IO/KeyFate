@@ -1,5 +1,6 @@
 "use client"
 
+import { DeleteConfirm } from "@/components/delete-confirm"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
@@ -19,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { DeleteConfirm } from "@/components/delete-confirm"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { AlertCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -33,18 +33,24 @@ const formSchema = z.object({
   recipient_email: z.string().email().optional().or(z.literal("")),
   recipient_phone: z.string().optional().or(z.literal("")),
   contact_method: z.enum(["email", "phone", "both"]),
-  check_in_days: z.union([z.string(), z.number()]).transform((val) => {
-    if (typeof val === "string") {
-      const num = parseInt(val, 10)
-      return isNaN(num) ? undefined : num
-    }
-    return val
-  }).pipe(
-    z.number({
-      required_error: "Check-in days is required.",
-      invalid_type_error: "Check-in days must be a number.",
-    }).min(2, "Check-in frequency must be at least 2 days.").max(365),
-  ),
+  check_in_days: z
+    .union([z.string(), z.number()])
+    .transform((val) => {
+      if (typeof val === "string") {
+        const num = parseInt(val, 10)
+        return isNaN(num) ? undefined : num
+      }
+      return val
+    })
+    .pipe(
+      z
+        .number({
+          required_error: "Check-in days is required.",
+          invalid_type_error: "Check-in days must be a number.",
+        })
+        .min(2, "Check-in frequency must be at least 2 days.")
+        .max(365),
+    ),
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -60,7 +66,11 @@ interface EditSecretFormProps {
   isPaid?: boolean
 }
 
-export function EditSecretForm({ initialData, secretId, isPaid = false }: EditSecretFormProps) {
+export function EditSecretForm({
+  initialData,
+  secretId,
+  isPaid = false,
+}: EditSecretFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -143,7 +153,7 @@ export function EditSecretForm({ initialData, secretId, isPaid = false }: EditSe
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           {/* Secret Details Section */}
           <div className="rounded-lg border p-6">
-            <h2 className="text-lg font-semibold mb-4">Secret Details</h2>
+            <h2 className="mb-4 text-lg font-semibold">Secret Details</h2>
             <div className="space-y-6">
               <FormField
                 control={form.control}
@@ -166,7 +176,9 @@ export function EditSecretForm({ initialData, secretId, isPaid = false }: EditSe
 
           {/* Recipient Information Section */}
           <div className="rounded-lg border p-6">
-            <h2 className="text-lg font-semibold mb-4">Recipient Information</h2>
+            <h2 className="mb-4 text-lg font-semibold">
+              Recipient Information
+            </h2>
             <div className="space-y-6">
               <FormField
                 control={form.control}
@@ -203,7 +215,9 @@ export function EditSecretForm({ initialData, secretId, isPaid = false }: EditSe
                       <SelectContent>
                         <SelectItem value="email">Email</SelectItem>
                         <SelectItem value="phone">Phone</SelectItem>
-                        <SelectItem value="both">Both Email and Phone</SelectItem>
+                        <SelectItem value="both">
+                          Both Email and Phone
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -259,7 +273,7 @@ export function EditSecretForm({ initialData, secretId, isPaid = false }: EditSe
 
           {/* Check-in Settings Section */}
           <div className="rounded-lg border p-6">
-            <h2 className="text-lg font-semibold mb-4">Check-in Settings</h2>
+            <h2 className="mb-4 text-lg font-semibold">Check-in Settings</h2>
             <div className="space-y-6">
               <FormField
                 control={form.control}
@@ -279,7 +293,9 @@ export function EditSecretForm({ initialData, secretId, isPaid = false }: EditSe
                         />
                       ) : (
                         <Select
-                          onValueChange={(value) => field.onChange(Number(value))}
+                          onValueChange={(value) =>
+                            field.onChange(Number(value))
+                          }
                           defaultValue={field.value.toString()}
                           disabled={loading}
                         >
@@ -303,8 +319,7 @@ export function EditSecretForm({ initialData, secretId, isPaid = false }: EditSe
                     <FormDescription>
                       {isPaid
                         ? "How often you need to check in to keep the secret active. Minimum 2 days."
-                        : "How often you need to check in to keep the secret active. Upgrade to set custom intervals."
-                      }
+                        : "How often you need to check in to keep the secret active. Upgrade to set custom intervals."}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -314,7 +329,7 @@ export function EditSecretForm({ initialData, secretId, isPaid = false }: EditSe
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row justify-between space-y-3 sm:space-y-0 sm:space-x-4 pt-6">
+          <div className="flex flex-col justify-between space-y-3 pt-6 sm:flex-row sm:space-x-4 sm:space-y-0">
             <Button
               type="button"
               variant="destructive"
@@ -324,13 +339,14 @@ export function EditSecretForm({ initialData, secretId, isPaid = false }: EditSe
             >
               Delete Secret
             </Button>
-            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+            <div className="flex flex-col space-y-3 sm:flex-row sm:space-x-4 sm:space-y-0">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => router.back()}
                 disabled={loading || deleteLoading}
                 className="w-full sm:w-auto"
+                data-testid="form-cancel-button"
               >
                 Cancel
               </Button>

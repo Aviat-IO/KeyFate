@@ -41,11 +41,17 @@ describe("/api/secrets/[id] DELETE", () => {
 
         const deleteChain = {
             delete: vi.fn().mockReturnThis(),
-            eq: vi.fn().mockResolvedValue({
-                error: null,
-            }),
+            eq: vi.fn().mockReturnThis(),
             single: vi.fn(),
         };
+
+        // The delete operation calls .eq() twice (for id and user_id)
+        // First .eq() call returns this, second .eq() call returns the result
+        deleteChain.eq
+            .mockReturnValueOnce(deleteChain) // First .eq("id", id) returns this
+            .mockResolvedValueOnce({ // Second .eq("user_id", user.id) returns result
+                error: null,
+            });
 
         // Setup from() to return appropriate chains
         mockSupabaseClient.from
@@ -177,11 +183,6 @@ describe("/api/secrets/[id] DELETE", () => {
             data: mockSecret,
             error: null,
         });
-        const mockDelete = vi.fn().mockReturnThis();
-        const mockDeleteEq = vi.fn().mockResolvedValue({
-            error: new Error("Delete failed"),
-        });
-
         // First call to from() returns select chain for verification
         // Second call to from() returns delete chain for deletion
         mockSupabaseClient.from
@@ -197,14 +198,19 @@ describe("/api/secrets/[id] DELETE", () => {
                 select: vi.fn(),
                 eq: vi.fn(),
                 single: vi.fn(),
-                delete: mockDelete,
+                delete: vi.fn().mockReturnValue({
+                    eq: vi.fn().mockReturnValue({
+                        eq: vi.fn().mockResolvedValue({
+                            error: {
+                                message: "Delete failed",
+                                code: "PGRST301",
+                            },
+                        }),
+                    }),
+                }),
                 insert: vi.fn().mockReturnThis(),
                 update: vi.fn().mockReturnThis(),
             });
-
-        mockDelete.mockReturnValue({
-            eq: mockDeleteEq,
-        });
 
         const mockRequest = new Request(
             "http://localhost/api/secrets/secret-123",

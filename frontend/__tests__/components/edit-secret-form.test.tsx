@@ -1,12 +1,13 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react"
 import { EditSecretForm } from "@/components/forms/editSecretForm"
-import { vi, describe, it, expect, beforeEach } from "vitest"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
 // Mock Next.js router
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
     back: vi.fn(),
+    refresh: vi.fn(),
   }),
 }))
 
@@ -21,7 +22,7 @@ vi.mock("@/components/delete-confirm", () => ({
     onConfirm,
     title,
     description,
-    loading
+    loading,
   }: any) => (
     <div data-testid="delete-confirm" data-open={open}>
       {open && (
@@ -67,11 +68,13 @@ describe("EditSecretForm", () => {
         initialData={mockInitialData}
         secretId="test-id"
         isPaid={false}
-      />
+      />,
     )
 
     // Should show select dropdown with current value
-    const selectTrigger = screen.getByRole("combobox", { name: /check-in frequency/i })
+    const selectTrigger = screen.getByRole("combobox", {
+      name: /check-in frequency/i,
+    })
     expect(selectTrigger).toBeInTheDocument()
 
     // Click to open dropdown and check options
@@ -82,7 +85,9 @@ describe("EditSecretForm", () => {
     expect(screen.getByRole("option", { name: "Monthly" })).toBeInTheDocument()
 
     // Should show upgrade message
-    expect(screen.getByText(/upgrade to set custom intervals/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/upgrade to set custom intervals/i),
+    ).toBeInTheDocument()
   })
 
   it("should show number input for paid users", () => {
@@ -91,7 +96,7 @@ describe("EditSecretForm", () => {
         initialData={mockInitialData}
         secretId="test-id"
         isPaid={true}
-      />
+      />,
     )
 
     // Should show number input with current value
@@ -117,11 +122,13 @@ describe("EditSecretForm", () => {
         initialData={mockInitialData}
         secretId="test-id"
         isPaid={false}
-      />
+      />,
     )
 
     // Change the check-in frequency using select
-    const selectTrigger = screen.getByRole("combobox", { name: /check-in frequency/i })
+    const selectTrigger = screen.getByRole("combobox", {
+      name: /check-in frequency/i,
+    })
     fireEvent.click(selectTrigger)
 
     // Select weekly
@@ -157,7 +164,7 @@ describe("EditSecretForm", () => {
         initialData={mockInitialData}
         secretId="test-id"
         isPaid={true}
-      />
+      />,
     )
 
     // Change the check-in frequency using number input
@@ -187,7 +194,7 @@ describe("EditSecretForm", () => {
         initialData={mockInitialData}
         secretId="test-id"
         isPaid={true}
-      />
+      />,
     )
 
     // Enter invalid value
@@ -197,17 +204,14 @@ describe("EditSecretForm", () => {
 
     // Wait for validation error
     await waitFor(() => {
-      expect(screen.getByText("Check-in frequency must be at least 2 days.")).toBeInTheDocument()
+      expect(
+        screen.getByText("Check-in frequency must be at least 2 days."),
+      ).toBeInTheDocument()
     })
   })
 
   it("should render delete button with destructive styling", () => {
-    render(
-      <EditSecretForm
-        initialData={mockInitialData}
-        secretId="test-id"
-      />
-    )
+    render(<EditSecretForm initialData={mockInitialData} secretId="test-id" />)
 
     const deleteButton = screen.getByText("Delete Secret")
     expect(deleteButton).toBeInTheDocument()
@@ -215,12 +219,7 @@ describe("EditSecretForm", () => {
   })
 
   it("should show delete confirmation modal when delete button is clicked", () => {
-    render(
-      <EditSecretForm
-        initialData={mockInitialData}
-        secretId="test-id"
-      />
-    )
+    render(<EditSecretForm initialData={mockInitialData} secretId="test-id" />)
 
     const deleteButton = screen.getByText("Delete Secret")
     fireEvent.click(deleteButton)
@@ -228,19 +227,16 @@ describe("EditSecretForm", () => {
     // Modal should be open
     const modal = screen.getByTestId("delete-confirm")
     expect(modal).toHaveAttribute("data-open", "true")
-    expect(screen.getByTestId("delete-title")).toHaveTextContent("Delete Secret")
+    expect(screen.getByTestId("delete-title")).toHaveTextContent(
+      "Delete Secret",
+    )
     expect(screen.getByTestId("delete-description")).toHaveTextContent(
-      "Are you sure you want to delete this secret? This action cannot be undone and the secret will be permanently removed."
+      "Are you sure you want to delete this secret? This action cannot be undone and the secret will be permanently removed.",
     )
   })
 
   it("should close delete modal when cancel is clicked", () => {
-    render(
-      <EditSecretForm
-        initialData={mockInitialData}
-        secretId="test-id"
-      />
-    )
+    render(<EditSecretForm initialData={mockInitialData} secretId="test-id" />)
 
     // Open modal
     const deleteButton = screen.getByText("Delete Secret")
@@ -262,12 +258,7 @@ describe("EditSecretForm", () => {
       json: async () => ({ success: true }),
     })
 
-    render(
-      <EditSecretForm
-        initialData={mockInitialData}
-        secretId="test-id"
-      />
-    )
+    render(<EditSecretForm initialData={mockInitialData} secretId="test-id" />)
 
     // Open modal and confirm delete
     const deleteButton = screen.getByText("Delete Secret")
@@ -291,12 +282,7 @@ describe("EditSecretForm", () => {
       json: async () => ({ error: "Failed to delete secret" }),
     })
 
-    render(
-      <EditSecretForm
-        initialData={mockInitialData}
-        secretId="test-id"
-      />
-    )
+    render(<EditSecretForm initialData={mockInitialData} secretId="test-id" />)
 
     // Open modal and confirm delete
     const deleteButton = screen.getByText("Delete Secret")
@@ -318,18 +304,20 @@ describe("EditSecretForm", () => {
   it("should show loading state during delete", async () => {
     // Mock slow delete response
     ;(global.fetch as any).mockImplementation(
-      () => new Promise(resolve => setTimeout(() => resolve({
-        ok: true,
-        json: async () => ({ success: true })
-      }), 100))
+      () =>
+        new Promise((resolve) =>
+          setTimeout(
+            () =>
+              resolve({
+                ok: true,
+                json: async () => ({ success: true }),
+              }),
+            100,
+          ),
+        ),
     )
 
-    render(
-      <EditSecretForm
-        initialData={mockInitialData}
-        secretId="test-id"
-      />
-    )
+    render(<EditSecretForm initialData={mockInitialData} secretId="test-id" />)
 
     // Open modal and confirm delete
     const deleteButton = screen.getByText("Delete Secret")
@@ -345,20 +333,22 @@ describe("EditSecretForm", () => {
   })
 
   it("should disable all buttons during delete operation", async () => {
-    // Mock slow delete response
+    // Mock slow delete response - make it slower to catch the disabled state
     ;(global.fetch as any).mockImplementation(
-      () => new Promise(resolve => setTimeout(() => resolve({
-        ok: true,
-        json: async () => ({ success: true })
-      }), 100))
+      () =>
+        new Promise((resolve) =>
+          setTimeout(
+            () =>
+              resolve({
+                ok: true,
+                json: async () => ({ success: true }),
+              }),
+            1000, // Increased from 100ms to 1000ms
+          ),
+        ),
     )
 
-    render(
-      <EditSecretForm
-        initialData={mockInitialData}
-        secretId="test-id"
-      />
-    )
+    render(<EditSecretForm initialData={mockInitialData} secretId="test-id" />)
 
     // Open modal and confirm delete
     const deleteButton = screen.getByText("Delete Secret")
@@ -367,24 +357,24 @@ describe("EditSecretForm", () => {
     const confirmButton = screen.getByTestId("delete-confirm-button")
     fireEvent.click(confirmButton)
 
-    // All form buttons should be disabled during delete
-    await waitFor(() => {
-      expect(screen.getByText("Cancel")).toBeDisabled()
-      expect(screen.getByText("Save Changes")).toBeDisabled()
-      expect(deleteButton).toBeDisabled()
-    })
+    // Wait a tiny bit for the state to update, then check buttons are disabled
+    await waitFor(
+      () => {
+        // Get the form's cancel button specifically (not the modal's)
+        const formCancelButton = screen.getByTestId("form-cancel-button")
+        expect(formCancelButton).toBeDisabled()
+        expect(screen.getByText("Save Changes")).toBeDisabled()
+        expect(deleteButton).toBeDisabled()
+      },
+      { timeout: 1000 },
+    )
   })
 
   it("should handle network error during delete", async () => {
     // Mock network error
     ;(global.fetch as any).mockRejectedValueOnce(new Error("Network error"))
 
-    render(
-      <EditSecretForm
-        initialData={mockInitialData}
-        secretId="test-id"
-      />
-    )
+    render(<EditSecretForm initialData={mockInitialData} secretId="test-id" />)
 
     // Open modal and confirm delete
     const deleteButton = screen.getByText("Delete Secret")

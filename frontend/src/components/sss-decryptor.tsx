@@ -124,6 +124,7 @@ export function SssDecryptor({ initialShares = [] }: SssDecryptorProps) {
         setIsCopied(false)
       }, 2000)
     } catch (error) {
+      console.error("Error copying secret:", error)
       toast({
         title: "Copy failed",
         description: "Failed to copy secret to clipboard.",
