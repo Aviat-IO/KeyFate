@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { DeleteConfirm } from "@/components/delete-confirm"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { AlertCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -63,6 +64,8 @@ export function EditSecretForm({ initialData, secretId, isPaid = false }: EditSe
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -95,6 +98,35 @@ export function EditSecretForm({ initialData, secretId, isPaid = false }: EditSe
       )
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleDelete() {
+    setDeleteLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`/api/secrets/${secretId}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Failed to delete secret")
+      }
+
+      // Close modal and redirect
+      setShowDeleteModal(false)
+      router.push("/dashboard")
+      router.refresh()
+    } catch (error) {
+      console.error("Error deleting secret:", error)
+      setError(
+        error instanceof Error ? error.message : "Failed to delete secret",
+      )
+      setShowDeleteModal(false)
+    } finally {
+      setDeleteLoading(false)
     }
   }
 
@@ -269,7 +301,7 @@ export function EditSecretForm({ initialData, secretId, isPaid = false }: EditSe
                       )}
                     </FormControl>
                     <FormDescription>
-                      {isPaid 
+                      {isPaid
                         ? "How often you need to check in to keep the secret active. Minimum 2 days."
                         : "How often you need to check in to keep the secret active. Upgrade to set custom intervals."
                       }
@@ -282,21 +314,47 @@ export function EditSecretForm({ initialData, secretId, isPaid = false }: EditSe
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6">
+          <div className="flex flex-col sm:flex-row justify-between space-y-3 sm:space-y-0 sm:space-x-4 pt-6">
             <Button
               type="button"
-              variant="outline"
-              onClick={() => router.back()}
+              variant="destructive"
+              onClick={() => setShowDeleteModal(true)}
+              disabled={loading || deleteLoading}
               className="w-full sm:w-auto"
             >
-              Cancel
+              Delete Secret
             </Button>
-            <Button type="submit" disabled={loading} className="w-full sm:w-auto">
-              {loading ? "Saving..." : "Save Changes"}
-            </Button>
+            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.back()}
+                disabled={loading || deleteLoading}
+                className="w-full sm:w-auto"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={loading || deleteLoading}
+                className="w-full sm:w-auto"
+              >
+                {loading ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
           </div>
         </form>
       </Form>
+
+      <DeleteConfirm
+        open={showDeleteModal}
+        onOpenChange={setShowDeleteModal}
+        onConfirm={handleDelete}
+        title="Delete Secret"
+        description="Are you sure you want to delete this secret? This action cannot be undone and the secret will be permanently removed."
+        confirmText="Delete Secret"
+        loading={deleteLoading}
+      />
     </>
   )
 }

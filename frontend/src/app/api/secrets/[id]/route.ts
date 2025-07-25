@@ -117,14 +117,27 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { error } = await supabase
+    // First verify the secret exists and belongs to the user
+    const { data: secret, error: fetchError } = await supabase
+      .from("secrets")
+      .select("id")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .single();
+
+    if (fetchError || !secret) {
+      return NextResponse.json({ error: "Secret not found" }, { status: 404 });
+    }
+
+    // Delete the secret (RLS policies ensure user can only delete their own secrets)
+    const { error: deleteError } = await supabase
       .from("secrets")
       .delete()
       .eq("id", id)
       .eq("user_id", user.id);
 
-    if (error) {
-      console.error("Error deleting secret:", error);
+    if (deleteError) {
+      console.error("Error deleting secret:", deleteError);
       return NextResponse.json(
         { error: "Failed to delete secret" },
         { status: 500 },
