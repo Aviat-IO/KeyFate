@@ -30,6 +30,15 @@ gen-types:
 reset-and-seed:
 	@echo "🚀 Full database reset and seed process..."
 	@echo ""
+	@echo "Step 0: Generating seed data with current ENCRYPTION_KEY..."
+	@if [ -z "$$ENCRYPTION_KEY" ]; then \
+		echo "❌ Error: ENCRYPTION_KEY environment variable is required"; \
+		echo "💡 Set it in your .envrc file or export it"; \
+		echo "💡 Example: export ENCRYPTION_KEY=0ipPbGjZ+qwqrzR5xPkMPrP+NgkKqfef/Stoh/dRD90="; \
+		exit 1; \
+	fi
+	node generate-seed-data.js
+	@echo ""
 	@echo "Step 1: Resetting database with migrations and seed.sql..."
 	supabase db reset
 	@echo ""
