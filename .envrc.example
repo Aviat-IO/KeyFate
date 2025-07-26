@@ -1,0 +1,8 @@
+# Copy this file to .envrc and add your actual service role key
+# Then run: direnv allow
+
+export SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+
+# Optional: Add other development environment variables
+# export NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+# export NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
