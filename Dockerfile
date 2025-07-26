@@ -52,7 +52,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY frontend/ ./
 
 # Copy supabase types to match TypeScript path alias (@/supabase/* -> ../supabase/*)
-COPY supabase/database.types.ts ../supabase/database.types.ts
+COPY supabase/types.ts ../supabase/types.ts
 COPY supabase/types/ ../supabase/types/
 
 # Build the application

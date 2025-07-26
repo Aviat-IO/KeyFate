@@ -8,13 +8,13 @@ dev:
 
 copy-types:
 	@if [ -d ../supabase ]; then \
-		cd ../supabase && supabase gen types typescript --local > ../frontend/src/types/database.types.ts; \
-	elif [ -f ../database.types.ts ]; then \
+		cd ../supabase && supabase gen types typescript --local > ../frontend/src/types/types.ts; \
+	elif [ -f ../types.ts ]; then \
 		echo "Using existing database types from root directory"; \
-		cp ../database.types.ts src/types/database.types.ts; \
+		cp ../types.ts src/types/types.ts; \
 	else \
 		echo "No database types available, creating empty file"; \
-		touch src/types/database.types.ts; \
+		touch src/types/types.ts; \
 	fi
 
 build: install copy-types
