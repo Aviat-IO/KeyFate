@@ -64,36 +64,7 @@ INSERT INTO secrets (
   sss_shares_total, sss_threshold, status, last_check_in, next_check_in,
   created_at, updated_at, is_triggered, triggered_at
 ) VALUES
-('990e8400-e29b-41d4-a716-446655440001', '48a35ccd-e1e4-458b-86ec-5bd88a0addc7', 'Bitcoin Wallet Recovery', 'Recipient', 'ceo@aviat.io', 'email', 7,
-'iWzFv1Hh6CTuZLxBDZ+BCRSAGPCqTHNT6JE0Gbt4h5I1Bq6aDJ5O/A==', 'G/pIMn/GgRVyx5Qa', 'QWvjmA3JeaTM9eG7+li8gQ==',
-3, 2, 'active', NOW() - INTERVAL '7 days', NOW() - INTERVAL '1 minute', NOW() - INTERVAL '15 days', NOW(), false, null),
-('990e8400-e29b-41d4-a716-446655440002', '48a35ccd-e1e4-458b-86ec-5bd88a0addc7', 'Buried Gold Location', 'Recipient', 'ceo@aviat.io', 'email', 7,
-'VqB3r9sjAexFs8hfirt+JA1gBeClRnMJ5oU8AFr16VZE3CXefoaX1evCmq/B', 'KazI0l4HWsxEjlDM', 'wnbzIegFh9+0p9MHoqR5Jg==',
-3, 2, 'active', NOW() - INTERVAL '6 days 23 hours 55 minutes', NOW() + INTERVAL '5 minutes', NOW() - INTERVAL '15 days', NOW(), false, null),
-('990e8400-e29b-41d4-a716-446655440003', '48a35ccd-e1e4-458b-86ec-5bd88a0addc7', 'Safe Combination', 'Recipient', 'ceo@aviat.io', 'email', 7,
-'uWiBZzUZ4KzAQ1SnMB9Vv6V3D7auQ5BjEre0Nk8ni7Vodkfq0hfrNony', 'gI14GZxJjY2kCapa', 'UXUXve45EDSSMggJdW5Djw==',
-3, 2, 'active', NOW() - INTERVAL '1 day', NOW() + INTERVAL '1 month', NOW() - INTERVAL '15 days', NOW(), false, null),
-('990e8400-e29b-41d4-a716-446655440011', '836f82db-9912-4b34-8101-1f16b49dfa5f', 'Personal Documents Location', 'Recipient', 'recipient@example.com', 'email', 7,
-'tXyVJ0mHm/Xj7ErvrGaLewyNjFEtqDBSeTAMfJAL/lmP3XGyaVsvfAcNgwM=', '8YBus7FywPXKm5P3', 'lD060SnfwX8WDaywamoSwQ==',
-3, 2, 'active', NOW() - INTERVAL '2 days', NOW() + INTERVAL '5 days', NOW() - INTERVAL '15 days', NOW(), false, null),
-('990e8400-e29b-41d4-a716-446655440021', '2734a10c-2335-480b-8bf3-efc468cf89de', 'Offshore Account Details', 'Recipient', 'recipient@example.com', 'email', 7,
-'T/gh3hWR+WjikWDi/rhp/4E52aVYV3lho0dfpTK2xS4Gf7Un0cHIjuj4', '4mokPNwCAQT10xBq', 'WP8QaWnKDx2aqJWLJbveGw==',
-3, 2, 'active', NOW() - INTERVAL '1 day', NOW() + INTERVAL '6 days', NOW() - INTERVAL '15 days', NOW(), false, null),
-('990e8400-e29b-41d4-a716-446655440022', '2734a10c-2335-480b-8bf3-efc468cf89de', 'Server Access Keys', 'Recipient', 'recipient@example.com', 'email', 7,
-'/70sPfhZbxQC5kpRe3upJ3nA/ki6RojooRcNuAI7+h7ACh0U9miY', '1diJaAf3n+fdxt5b', 'iKkjyTmR/oadL0bYXAxjYw==',
-3, 2, 'active', NOW() - INTERVAL '3 days', NOW() + INTERVAL '11 days', NOW() - INTERVAL '15 days', NOW(), false, null),
-('990e8400-e29b-41d4-a716-446655440023', '2734a10c-2335-480b-8bf3-efc468cf89de', 'Bitcoin Wallet Recovery', 'Recipient', 'recipient@example.com', 'email', 7,
-'mnHvR9opJ7P1S5Zghk79IjwqK7pkq07ax05cIB9vLKXleOCWjfgqV+k=', 'E6gKdZKQNPfZEB7Q', 'PqUDvhiFs+TS80mg7NGkNQ==',
-3, 2, 'paused', NOW() - INTERVAL '5 days', NOW() + INTERVAL '2 days', NOW() - INTERVAL '15 days', NOW(), false, null),
-('990e8400-e29b-41d4-a716-446655440024', '2734a10c-2335-480b-8bf3-efc468cf89de', 'Buried Gold Location', 'Recipient', 'recipient@example.com', 'email', 7,
-'LDKRB7k5g958ZA/BmI9XBeo4F4PKRE1W7IWFpcINev2zGJVzpJU=', 'SAyt9JlOaNNVSxJP', 'yVzuX9b8Ha7kJHASyicTpQ==',
-3, 2, 'active', NOW() - INTERVAL '4 days', NOW() + INTERVAL '3 days', NOW() - INTERVAL '15 days', NOW(), false, null),
-('990e8400-e29b-41d4-a716-446655440031', '78dd97e7-1ce4-4a41-8fdc-69e3371f2175', 'Safe Combination', 'Recipient', 'recipient@example.com', 'email', 7,
-'n6AMuTKNCukQjBGbnrGzM8/AEhGSBbviWfvCQHqXypwixXG21/+kP62Opg==', 'qSV1dgkhliyJJyLQ', 'BqaecBzZOIvp2jZoS2ZJlg==',
-3, 2, 'active', NOW() - INTERVAL '1 day', NOW() + INTERVAL '6 days', NOW() - INTERVAL '15 days', NOW(), false, null),
-('990e8400-e29b-41d4-a716-446655440032', '78dd97e7-1ce4-4a41-8fdc-69e3371f2175', 'Server Access Keys', 'Recipient', 'recipient@example.com', 'email', 7,
-'woL5uVKoSq71bRsPD5yasVOmoLoALCxNYSDtLJVQnxcHyND5ma+fJQ==', 'ahyy23XRGcUro1j8', 'RcEuZwszQomNDPftCxZOMg==',
-3, 2, 'active', NOW() - INTERVAL '2 days', NOW() + INTERVAL '12 days', NOW() - INTERVAL '15 days', NOW(), false, null);
+{{ENCRYPTED_SECRETS}};
 
 -- Check-in history (sample entries for each secret)
 INSERT INTO checkin_history (id, secret_id, user_id, checked_in_at, next_check_in, created_at) VALUES

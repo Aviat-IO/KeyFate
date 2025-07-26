@@ -32,8 +32,16 @@ export async function decrypt(
   encryptedWithTag.set(encryptedArray);
   encryptedWithTag.set(authTagArray, encryptedArray.length);
 
-  // Import the key
-  const keyBuffer = new TextEncoder().encode(ENCRYPTION_KEY);
+  // Import the key - handle both raw and base64 encoded keys
+  let keyBuffer;
+  try {
+    // Try to decode as base64 first
+    keyBuffer = Uint8Array.from(atob(ENCRYPTION_KEY), (c) => c.charCodeAt(0));
+  } catch {
+    // If that fails, treat as raw string
+    keyBuffer = new TextEncoder().encode(ENCRYPTION_KEY);
+  }
+
   const cryptoKey = await crypto.subtle.importKey(
     "raw",
     keyBuffer,
