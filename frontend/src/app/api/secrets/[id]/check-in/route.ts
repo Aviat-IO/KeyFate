@@ -11,11 +11,9 @@ export async function POST(
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      console.error("Auth error:", authError);
+      authError && console.error("Auth error:", authError);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    console.log(`Checking in secret ${id} for user ${user.id}`);
 
     const { data: secret, error: fetchError } = await supabase
       .from("secrets")
@@ -32,13 +30,6 @@ export async function POST(
     // Calculate next check-in
     const nextCheckIn = new Date();
     nextCheckIn.setDate(nextCheckIn.getDate() + secret.check_in_days);
-
-    console.log(`Calling check_in_secret RPC with:`, {
-      p_secret_id: id,
-      p_user_id: user.id,
-      p_checked_in_at: new Date().toISOString(),
-      p_next_check_in: nextCheckIn.toISOString(),
-    });
 
     // Use RPC function for check-in
     const { error: rpcError } = await supabase.rpc("check_in_secret", {
@@ -71,8 +62,6 @@ export async function POST(
         { status: 500 },
       );
     }
-
-    console.log("Check-in successful for secret:", id);
 
     return NextResponse.json({
       success: true,

@@ -68,7 +68,6 @@ export async function establishSessionFromTokens(
       return { data: null, error };
     }
 
-    console.log("[Auth] Session set successfully:", data);
     return { data, error: null };
   } catch (error) {
     console.error("[Auth] Exception setting session:", error);

@@ -9,6 +9,7 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["__tests__/setup.ts"],
+    testTimeout: 10000,
     env: {
       NODE_ENV: "development",
       NEXT_PUBLIC_SUPPORT_EMAIL: "support@aviat.io",

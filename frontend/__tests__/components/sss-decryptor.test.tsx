@@ -268,9 +268,17 @@ describe("SssDecryptor", () => {
     const copyButton = screen.getByRole("button", {
       name: /copy recovered secret/i,
     })
-    fireEvent.click(copyButton)
+
+    await act(async () => {
+      fireEvent.click(copyButton)
+    })
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith("secret to copy")
+
+    // Wait for the setTimeout to complete to avoid act() warnings
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 2100))
+    })
   })
 
   it("should clear previous results when shares change", () => {

@@ -56,22 +56,3 @@ Object.defineProperty(global, "crypto", {
     getRandomValues: (arr: any) => arr.fill(0),
   },
 });
-
-// Suppress expected console errors in tests
-const originalError = console.error;
-beforeAll(() => {
-  console.error = (...args: any[]) => {
-    if (
-      typeof args[0] === "string" &&
-      (args[0].includes("Error checking in:") ||
-        args[0].includes("Error saving contact methods:"))
-    ) {
-      return;
-    }
-    originalError.call(console, ...args);
-  };
-});
-
-afterAll(() => {
-  console.error = originalError;
-});

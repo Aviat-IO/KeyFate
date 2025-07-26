@@ -79,6 +79,9 @@ describe("Auth Pages", () => {
         error: "Invalid verification link",
       })
 
+      // Suppress expected console error for this test
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+
       render(<VerifyPage />)
 
       await waitFor(() => {
@@ -87,12 +90,18 @@ describe("Auth Pages", () => {
           "/auth/login?error=Email verification failed. Please try again.",
         )
       })
+
+      // Restore console.error
+      consoleSpy.mockRestore()
     })
 
     it("should handle auth flow exception", async () => {
       const { completeAuthFlow } = await import("@/lib/auth")
       ;(completeAuthFlow as any).mockRejectedValue(new Error("Network error"))
 
+      // Suppress expected console error for this test
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+
       render(<VerifyPage />)
 
       await waitFor(() => {
@@ -101,6 +110,9 @@ describe("Auth Pages", () => {
           "/auth/login?error=Email verification failed. Please try again.",
         )
       })
+
+      // Restore console.error
+      consoleSpy.mockRestore()
     })
   })
 

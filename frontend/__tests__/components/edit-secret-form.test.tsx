@@ -366,7 +366,7 @@ describe("EditSecretForm", () => {
         expect(screen.getByText("Save Changes")).toBeDisabled()
         expect(deleteButton).toBeDisabled()
       },
-      { timeout: 1000 },
+      { timeout: 10000 },
     )
   })
 

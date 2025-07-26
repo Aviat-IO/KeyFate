@@ -102,7 +102,7 @@ describe("CodeBlock Component", () => {
 
   it("should render JavaScript code with syntax highlighting", () => {
     const jsCode =
-      "import React from 'react'\nconst name = 'test'\nconsole.log('hello')"
+      "import React from 'react'\nconst name = 'test'\nconst message = 'hello'"
     render(<CodeBlock code={jsCode} language="javascript" />)
 
     // Check that the code element contains JavaScript content
@@ -112,14 +112,22 @@ describe("CodeBlock Component", () => {
     expect(codeElement?.innerHTML).toContain("const")
   })
 
-  it("should copy code to clipboard when button clicked", async () => {
+    it("should copy code to clipboard when button clicked", async () => {
     const testCode = "git clone repo.git"
     render(<CodeBlock code={testCode} />)
 
     const copyButton = screen.getByRole("button")
-    fireEvent.click(copyButton)
+
+    await act(async () => {
+      fireEvent.click(copyButton)
+    })
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(testCode)
+
+    // Wait for the setTimeout to complete
+    await act(async () => {
+      vi.advanceTimersByTime(2000)
+    })
   })
 
   it("should show check icon after copying", async () => {
@@ -134,6 +142,11 @@ describe("CodeBlock Component", () => {
     // Should show check icon immediately after click
     const checkIcon = copyButton.querySelector(".text-green-600")
     expect(checkIcon).toBeInTheDocument()
+
+    // Wait for the setTimeout to complete
+    await act(async () => {
+      vi.advanceTimersByTime(2000)
+    })
   })
 
   it("should revert to copy icon after timeout", async () => {
@@ -161,11 +174,18 @@ describe("CodeBlock Component", () => {
     const copyButton = screen.getByRole("button")
 
     // Click multiple times
-    fireEvent.click(copyButton)
-    fireEvent.click(copyButton)
-    fireEvent.click(copyButton)
+    await act(async () => {
+      fireEvent.click(copyButton)
+      fireEvent.click(copyButton)
+      fireEvent.click(copyButton)
+    })
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(3)
+
+    // Wait for the setTimeout to complete
+    await act(async () => {
+      vi.advanceTimersByTime(2000)
+    })
   })
 
   it("should handle clipboard errors gracefully", () => {

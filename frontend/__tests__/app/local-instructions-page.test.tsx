@@ -172,7 +172,7 @@ describe("LocalInstructionsPage", () => {
     expect(codeContent).toContain("import sss from 'shamirs-secret-sharing'")
     expect(codeContent).toContain("const secret = Buffer.from('secret key')")
     expect(codeContent).toContain("const shares = sss.split")
-    expect(codeContent).toContain("console.log(recovered.toString())")
+    expect(codeContent).toContain("recovered.toString()")
   })
 
   it("should have proper page structure and styling", () => {

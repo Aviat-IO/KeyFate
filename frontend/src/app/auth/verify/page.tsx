@@ -14,13 +14,10 @@ function VerifyContent() {
       const token = searchParams.get("token")
       const type = searchParams.get("type")
 
-      console.log("[Verify] Token:", token)
-      console.log("[Verify] Type:", type)
 
       // Check if we have tokens in the URL fragment (from Supabase redirect)
       const hash = window.location.hash
       if (hash && hash.includes("access_token")) {
-        console.log("[Verify] Found tokens in URL fragment")
 
         try {
           const result = await completeAuthFlow(hash)
@@ -63,7 +60,6 @@ function VerifyContent() {
             return
           }
 
-          console.log("[Verify] Success:", data)
           // Redirect to dashboard on successful verification
           router.push("/dashboard")
         } catch (error) {
