@@ -1,8 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
-import { Database, Secret } from "../../types.ts";
+import { Secret } from "../../types.ts";
 import { decrypt } from "../_shared/crypto.ts";
 import { getSecretTriggerTemplate } from "../_shared/email-templates.ts";
 import { API_URL, SERVICE_ROLE_KEY } from "../_shared/env.ts";
+import { Database } from "../../database.types.ts";
 
 interface ProcessError extends Error {
   message: string;

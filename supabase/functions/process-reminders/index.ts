@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { corsHeaders } from "../_shared/cors.ts";
+import { Database } from "../_shared/database.types.ts";
 import { getReminderEmailTemplate } from "../_shared/email-templates.ts";
 import {
   ANON_KEY,
@@ -7,7 +8,7 @@ import {
   SERVICE_ROLE_KEY,
   SITE_URL,
 } from "../_shared/env.ts";
-import { Database, Reminder, Secret } from "../_shared/types.ts";
+import { Reminder, Secret } from "../_shared/types.ts";
 
 const BATCH_SIZE = 50;
 

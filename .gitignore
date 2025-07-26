@@ -28,7 +28,6 @@ yarn-error.log*
 next-env.d.ts
 
 # Generated database types (copied from supabase/)
-frontend/src/types/types.ts
 frontend/src/types/database.types.ts
 
 # supabase
