@@ -4,6 +4,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
+import { NEXT_PUBLIC_COMPANY } from "@/lib/env"
 import { Buffer } from "buffer"
 import {
   Check,
@@ -144,10 +145,10 @@ export function SssDecryptor({ initialShares = [] }: SssDecryptorProps) {
         <div>
           <h2 className="mb-2 text-xl font-semibold">Enter Your Shares</h2>
           <p className="text-muted-foreground text-sm">
-            Enter your Shamir's Secret Sharing shares below. You need a minimum
+            Enter your {NEXT_PUBLIC_COMPANY} shares below. You need a minimum
             number of correct shares (as per the threshold set during creation)
-            to recover the original secret. Shares are typically hexadecimal
-            strings.
+            to recover the original secret (shares are typically hexadecimal
+            strings).
           </p>
         </div>
 
@@ -155,7 +156,7 @@ export function SssDecryptor({ initialShares = [] }: SssDecryptorProps) {
           {shares.map((share, index) => (
             <div key={index} className="flex items-center space-x-2">
               <Textarea
-                placeholder={`Share ${index + 1} (hexadecimal format)`}
+                placeholder={`Share ${index + 1} (from ${NEXT_PUBLIC_COMPANY} or your trusted contact)`}
                 value={share}
                 onChange={(e) => handleShareChange(index, e.target.value)}
                 rows={2}
@@ -267,7 +268,7 @@ export function SssDecryptor({ initialShares = [] }: SssDecryptorProps) {
               variant="link"
               size="sm"
               asChild
-              className="text-muted-foreground h-auto p-0 text-xs"
+              className="text-muted-foreground h-auto p-0 text-xs underline"
             >
               <Link href="/local-instructions">
                 Get setup instructions for local use →
