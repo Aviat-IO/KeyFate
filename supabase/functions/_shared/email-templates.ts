@@ -265,7 +265,7 @@ export function getSecretTriggerTemplate({
   }/decrypt?share1=${
     encodeURIComponent(secretMessage)
   }" style="background-color: #dc2626; border-radius: 6px; color: #ffffff !important; display: inline-block; font-size: 14px; font-weight: bold; margin: 16px 0; padding: 12px 24px; text-decoration: none; text-align: center;">
-                      Recover Secret (Share 1 Prefilled)
+                      Recover Secret
                     </a>
                   </div>
 
