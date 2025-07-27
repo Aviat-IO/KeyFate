@@ -37,12 +37,6 @@ reset-and-seed:
 		echo "💡 Example: export ENCRYPTION_KEY=0ipPbGjZ+qwqrzR5xPkMPrP+NgkKqfef/Stoh/dRD90="; \
 		exit 1; \
 	fi
-	node generate-seed-data.js
-	@echo ""
-	@echo "Step 1: Resetting database with migrations and seed.sql..."
-	supabase db reset
-	@echo ""
-	@echo "Step 2: Creating auth users with specific UUIDs..."
 	@if [ -z "$$SUPABASE_SERVICE_ROLE_KEY" ]; then \
 		echo "❌ Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required"; \
 		echo "💡 Get it from: Supabase Dashboard > Settings > API > service_role key"; \
@@ -50,6 +44,12 @@ reset-and-seed:
 		echo "💡 Or use direnv: create .envrc with 'export SUPABASE_SERVICE_ROLE_KEY=your_key'"; \
 		exit 1; \
 	fi
+	node generate-seed-data.js
+	@echo ""
+	@echo "Step 1: Resetting database with migrations and seed.sql..."
+	supabase db reset
+	@echo ""
+	@echo "Step 2: Creating auth users with specific UUIDs..."
 	@cd ../frontend && node create-seed-users.js
 	@echo ""
 	@echo "Step 3: Verifying seed data..."
