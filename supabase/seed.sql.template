@@ -102,8 +102,8 @@ INSERT INTO recipient_access_tokens (id, secret_id, token, expires_at, created_a
 
 -- Reminders for active secrets
 INSERT INTO reminders (id, secret_id, user_id, type, scheduled_for, status, created_at) VALUES
--- CEO Secret 2 (already due) - should be triggered
-('dd0e8400-e29b-41d4-a716-446655440001', '990e8400-e29b-41d4-a716-446655440002', '48a35ccd-e1e4-458b-86ec-5bd88a0addc7', '1_hour', NOW() - INTERVAL '1 hour', 'pending', NOW()),
+-- CEO Secret 2 (Buried Gold Location) - reminder ready in 30 seconds for testing
+('dd0e8400-e29b-41d4-a716-446655440001', '990e8400-e29b-41d4-a716-446655440002', '48a35ccd-e1e4-458b-86ec-5bd88a0addc7', '1_hour', NOW() + INTERVAL '30 seconds', 'pending', NOW()),
 
 -- CEO Secret 3 (30 days) - future reminders
 ('dd0e8400-e29b-41d4-a716-446655440002', '990e8400-e29b-41d4-a716-446655440003', '48a35ccd-e1e4-458b-86ec-5bd88a0addc7', '7_days', NOW() + INTERVAL '23 days', 'pending', NOW()),
@@ -141,9 +141,9 @@ INSERT INTO admin_notifications (id, type, severity, title, message, metadata, c
 -- Summary:
 -- ✓ 4 users (1 free, 3 pro tiers)
 -- ✓ 10 secrets total with dynamically generated encrypted server shares
--- ✓ CEO user has 3 secrets: 1 triggered, 1 triggering in 5 min, 1 triggering in 30 days
+-- ✓ CEO user has 3 secrets: 1 triggered, 1 with reminder ready in 30s (triggers in 5 min), 1 triggering in 30 days
 -- ✓ Check-in history and tokens for all secrets
--- ✓ Appropriate reminders scheduled
+-- ✓ Reminders scheduled (including one ready in 30 seconds for testing)
 -- ✓ Sample admin notifications
 -- ✓ Mixed contact methods (email, phone, both)
 

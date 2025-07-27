@@ -73,7 +73,7 @@ For **Option B** (full seed), you'll need:
 The `ceo@aviat.io` user has secrets designed to test different trigger scenarios:
 
 1. **Bitcoin Wallet Recovery** - 🔴 **Already triggered** (2 days ago)
-2. **Buried Gold Location** - 🟡 **Triggering in 5 minutes**
+2. **Buried Gold Location** - 🟡 **Reminder ready in 30 seconds** (triggers in 5 minutes)
 3. **Safe Combination** - 🟢 **Triggering in 30 days**
 
 ## 🗂️ Sample Secret Types
@@ -114,6 +114,15 @@ This seed data enables testing:
 - ✅ Check-in reminder systems
 - ✅ Admin notification workflows
 - ✅ Secret sharing and recovery processes
+
+### Testing Reminder System
+
+To test the reminder processing system:
+
+1. **Seed the database:** `cd supabase && make reset-and-seed`
+2. **Start reminder processor:** `cd scripts && ./trigger-reminders.sh`
+3. **Wait 30-60 seconds** - The "Buried Gold Location" secret for CEO will have a reminder ready to process
+4. **Check logs** - You should see reminder processing activity in the script output
 
 ## 🔄 Refreshing Data
 
