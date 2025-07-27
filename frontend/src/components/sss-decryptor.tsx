@@ -16,7 +16,7 @@ import {
   Trash2,
 } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import sss from "shamirs-secret-sharing"
 
 type SssDecryptorProps = {
@@ -25,6 +25,9 @@ type SssDecryptorProps = {
 
 export function SssDecryptor({ initialShares = [] }: SssDecryptorProps) {
   const { toast } = useToast()
+  const firstTextareaRef = useRef<HTMLTextAreaElement>(null)
+  const secondTextareaRef = useRef<HTMLTextAreaElement>(null)
+
   const [shares, setShares] = useState<string[]>(() => {
     // Initialize with at least two empty strings if no initial shares, or fill with initialShares
     const defaults = ["", ""]
@@ -36,6 +39,17 @@ export function SssDecryptor({ initialShares = [] }: SssDecryptorProps) {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
+
+  // Focus the appropriate textarea when component mounts
+  useEffect(() => {
+    if (shares[0] && shares[0].trim() !== "" && secondTextareaRef.current) {
+      // If first share is filled, focus on second textarea
+      secondTextareaRef.current.focus()
+    } else if (firstTextareaRef.current) {
+      // If first share is empty, focus on first textarea
+      firstTextareaRef.current.focus()
+    }
+  }, [])
 
   const handleShareChange = (index: number, value: string) => {
     const newShares = [...shares]
@@ -156,6 +170,13 @@ export function SssDecryptor({ initialShares = [] }: SssDecryptorProps) {
           {shares.map((share, index) => (
             <div key={index} className="flex items-center space-x-2">
               <Textarea
+                ref={
+                  index === 0
+                    ? firstTextareaRef
+                    : index === 1
+                      ? secondTextareaRef
+                      : undefined
+                }
                 placeholder={`Share ${index + 1} (from ${NEXT_PUBLIC_COMPANY} or your trusted contact)`}
                 value={share}
                 onChange={(e) => handleShareChange(index, e.target.value)}
