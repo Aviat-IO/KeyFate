@@ -45,3 +45,4 @@ supabase/prod-migrations/*
 
 # Other
 *.crt
+supabase/seed.sql
