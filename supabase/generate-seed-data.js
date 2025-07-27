@@ -17,6 +17,9 @@ const ENCRYPTION_KEY_BYTES = Buffer.from(ENCRYPTION_KEY, 'base64');
 // Test data to encrypt - properly distributed across users
 const testSecrets = [
     // CEO (48a35ccd-e1e4-458b-86ec-5bd88a0addc7) - 3 secrets with special timing
+    // - Secret 1: Triggers in 1 minute (past due)
+    // - Secret 2: Reminder ready in 30 seconds, triggers in 5 minutes
+    // - Secret 3: Triggers in 30 days
   {
     id: '990e8400-e29b-41d4-a716-446655440001',
     userId: '48a35ccd-e1e4-458b-86ec-5bd88a0addc7',
@@ -207,6 +210,10 @@ async function generateSeedSQL() {
 
   console.log(`Generated seed.sql with ${encryptedSecrets.length} encrypted secrets`);
   console.log('You can now run: make reset-and-seed');
+  console.log('\nTo test reminder system:');
+  console.log('1. Run: make reset-and-seed');
+  console.log('2. Run: cd scripts && ./trigger-reminders.sh');
+  console.log('3. Wait 30-60 seconds for CEO\'s "Buried Gold Location" reminder to be ready');
 }
 
 generateSeedSQL().catch(console.error);
