@@ -45,7 +45,7 @@ describe("SssDecryptor", () => {
 
     // Should have 2 share inputs by default
     const shareInputs = screen.getAllByPlaceholderText(
-      /Share \d+ \(hexadecimal format\)/,
+      /Share \d+ \(from KeyFate or your trusted contact\)/,
     )
     expect(shareInputs).toHaveLength(2)
   })
@@ -56,7 +56,7 @@ describe("SssDecryptor", () => {
 
     // Should have 3 share inputs pre-filled
     const shareInputs = screen.getAllByPlaceholderText(
-      /Share \d+ \(hexadecimal format\)/,
+      /Share \d+ \(from KeyFate or your trusted contact\)/,
     )
     expect(shareInputs).toHaveLength(3)
     expect(shareInputs[0]).toHaveValue("abc123")
@@ -69,7 +69,7 @@ describe("SssDecryptor", () => {
     render(<SssDecryptor initialShares={initialShares} />)
 
     const shareInputs = screen.getAllByPlaceholderText(
-      /Share \d+ \(hexadecimal format\)/,
+      /Share \d+ \(from KeyFate or your trusted contact\)/,
     )
     expect(shareInputs).toHaveLength(2) // Should still have minimum 2 inputs
     expect(shareInputs[0]).toHaveValue("abc123")
@@ -102,7 +102,7 @@ describe("SssDecryptor", () => {
 
     // Should now have 3 share inputs
     const shareInputs = screen.getAllByPlaceholderText(
-      /Share \d+ \(hexadecimal format\)/,
+      /Share \d+ \(from KeyFate or your trusted contact\)/,
     )
     expect(shareInputs).toHaveLength(3)
   })
@@ -122,7 +122,7 @@ describe("SssDecryptor", () => {
 
     // Should be back to 2 shares
     const shareInputs = screen.getAllByPlaceholderText(
-      /Share \d+ \(hexadecimal format\)/,
+      /Share \d+ \(from KeyFate or your trusted contact\)/,
     )
     expect(shareInputs).toHaveLength(2)
   })
@@ -145,7 +145,7 @@ describe("SssDecryptor", () => {
 
     // Fill in shares
     const shareInputs = screen.getAllByPlaceholderText(
-      /Share \d+ \(hexadecimal format\)/,
+      /Share \d+ \(from KeyFate or your trusted contact\)/,
     )
     fireEvent.change(shareInputs[0], { target: { value: "abc123" } })
     fireEvent.change(shareInputs[1], { target: { value: "def456" } })
@@ -179,7 +179,7 @@ describe("SssDecryptor", () => {
 
     // Fill in invalid shares (non-hex characters)
     const shareInputs = screen.getAllByPlaceholderText(
-      /Share \d+ \(hexadecimal format\)/,
+      /Share \d+ \(from KeyFate or your trusted contact\)/,
     )
     fireEvent.change(shareInputs[0], { target: { value: "invalid" } })
     fireEvent.change(shareInputs[1], { target: { value: "shares" } })
@@ -206,7 +206,7 @@ describe("SssDecryptor", () => {
 
     // Fill in invalid hex
     const shareInputs = screen.getAllByPlaceholderText(
-      /Share \d+ \(hexadecimal format\)/,
+      /Share \d+ \(from KeyFate or your trusted contact\)/,
     )
     fireEvent.change(shareInputs[0], { target: { value: "not-hex!" } })
     fireEvent.change(shareInputs[1], { target: { value: "abc123" } })
@@ -227,7 +227,7 @@ describe("SssDecryptor", () => {
 
     // Only fill one share
     const shareInputs = screen.getAllByPlaceholderText(
-      /Share \d+ \(hexadecimal format\)/,
+      /Share \d+ \(from KeyFate or your trusted contact\)/,
     )
     fireEvent.change(shareInputs[0], { target: { value: "abc123" } })
 
@@ -248,7 +248,7 @@ describe("SssDecryptor", () => {
 
     // Simulate successful recovery first
     const shareInputs = screen.getAllByPlaceholderText(
-      /Share \d+ \(hexadecimal format\)/,
+      /Share \d+ \(from KeyFate or your trusted contact\)/,
     )
     fireEvent.change(shareInputs[0], { target: { value: "abc123" } })
     fireEvent.change(shareInputs[1], { target: { value: "def456" } })
@@ -277,7 +277,7 @@ describe("SssDecryptor", () => {
 
     // Wait for the setTimeout to complete to avoid act() warnings
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 2100))
+      await new Promise((resolve) => setTimeout(resolve, 2100))
     })
   })
 
@@ -291,7 +291,7 @@ describe("SssDecryptor", () => {
 
     // First recovery
     const shareInputs = screen.getAllByPlaceholderText(
-      /Share \d+ \(hexadecimal format\)/,
+      /Share \d+ \(from KeyFate or your trusted contact\)/,
     )
     fireEvent.change(shareInputs[0], { target: { value: "abc123" } })
     fireEvent.change(shareInputs[1], { target: { value: "def456" } })
@@ -320,7 +320,7 @@ describe("SssDecryptor", () => {
 
     // Add one share
     const shareInputs = screen.getAllByPlaceholderText(
-      /Share \d+ \(hexadecimal format\)/,
+      /Share \d+ \(from KeyFate or your trusted contact\)/,
     )
     fireEvent.change(shareInputs[0], { target: { value: "abc123" } })
 
