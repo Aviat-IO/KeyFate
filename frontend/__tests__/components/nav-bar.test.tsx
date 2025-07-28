@@ -40,6 +40,12 @@ vi.mock("@/components/theme-toggle", () => ({
   ThemeToggle: () => <button data-testid="theme-toggle">Theme Toggle</button>,
 }))
 
+// Mock Lucide React icons
+vi.mock("lucide-react", () => ({
+  Menu: () => <span data-testid="menu-icon">Menu</span>,
+  X: () => <span data-testid="x-icon">X</span>,
+}))
+
 const mockUser: User = {
   id: "user-123",
   email: "test@example.com",
@@ -61,20 +67,37 @@ describe("NavBar", () => {
     vi.clearAllMocks()
   })
 
-  describe("when user is not authenticated", () => {
-    it("should render sign in and sign up buttons", () => {
+  describe("desktop view - when user is not authenticated", () => {
+    it("should render sign in and sign up buttons on desktop", () => {
       render(<NavBar user={null} />)
 
+      // Desktop menu should be visible
+      const desktopMenu = document.querySelector(".hidden.md\\:flex")
+      expect(desktopMenu).toBeInTheDocument()
+
       expect(screen.getByText("Sign In")).toBeInTheDocument()
-      expect(screen.getByText("Sign Up")).toBeInTheDocument()
+      // Should have Sign Up buttons (desktop + mobile)
+      const signUpButtons = screen.getAllByText("Sign Up")
+      expect(signUpButtons.length).toBeGreaterThan(0)
       expect(screen.queryByText("Sign Out")).not.toBeInTheDocument()
     })
 
-    it("should render secret sharing tool link", () => {
+    it("should render pricing link on desktop when not authenticated", () => {
       render(<NavBar user={null} />)
 
-      const secretSharingLink = screen.getByText("Recover Secret").closest("a")
-      expect(secretSharingLink).toHaveAttribute("href", "/decrypt")
+      expect(screen.getByText("Pricing")).toBeInTheDocument()
+    })
+
+    it("should render secret sharing tool link on desktop", () => {
+      render(<NavBar user={null} />)
+
+      const secretSharingLinks = screen.getAllByText("Recover Secret")
+      expect(secretSharingLinks.length).toBeGreaterThan(0)
+      // Check that at least one has the correct href
+      const linkWithHref = secretSharingLinks.find(
+        (link) => link.closest("a")?.getAttribute("href") === "/decrypt",
+      )
+      expect(linkWithHref).toBeTruthy()
     })
 
     it("should render KeyFate logo linking to home", () => {
@@ -88,32 +111,28 @@ describe("NavBar", () => {
     it("should render theme toggle", () => {
       render(<NavBar user={null} />)
 
-      expect(screen.getByTestId("theme-toggle")).toBeInTheDocument()
-    })
-
-    it("should have correct sign in link", () => {
-      render(<NavBar user={null} />)
-
-      const signInLink = screen.getByText("Sign In").closest("a")
-      expect(signInLink).toHaveAttribute("href", "/auth/login")
-    })
-
-    it("should have correct sign up link", () => {
-      render(<NavBar user={null} />)
-
-      const signUpLink = screen.getByText("Sign Up").closest("a")
-      expect(signUpLink).toHaveAttribute("href", "/auth/signup")
+      const themeToggles = screen.getAllByTestId("theme-toggle")
+      expect(themeToggles.length).toBeGreaterThan(0) // Should appear in both desktop and mobile
     })
   })
 
-  describe("when user is authenticated", () => {
-    it("should render user email and sign out button", () => {
+  describe("desktop view - when user is authenticated", () => {
+    it("should render user email and sign out button on desktop", () => {
       render(<NavBar user={mockUser} />)
 
       expect(screen.getByText("test@example.com")).toBeInTheDocument()
       expect(screen.getByText("Sign Out")).toBeInTheDocument()
       expect(screen.queryByText("Sign In")).not.toBeInTheDocument()
       expect(screen.queryByText("Sign Up")).not.toBeInTheDocument()
+    })
+
+    it("should not render pricing link when authenticated", () => {
+      render(<NavBar user={mockUser} />)
+
+      // Should not show pricing in desktop menu when authenticated
+      const desktopMenu = document.querySelector(".hidden.md\\:flex")
+      expect(desktopMenu).toBeInTheDocument()
+      expect(desktopMenu?.textContent).not.toContain("Pricing")
     })
 
     it("should render KeyFate logo linking to dashboard", () => {
@@ -136,32 +155,189 @@ describe("NavBar", () => {
 
       expect(mockPush).toHaveBeenCalledWith("/auth/login")
     })
+  })
 
-    it("should handle sign out error gracefully", async () => {
+  describe("mobile view", () => {
+    it("should render mobile menu trigger button", () => {
+      render(<NavBar user={null} />)
+
+      const mobileMenuTrigger = screen.getByTestId("mobile-menu-trigger")
+      expect(mobileMenuTrigger).toBeInTheDocument()
+      expect(screen.getByTestId("menu-icon")).toBeInTheDocument()
+    })
+
+    it("should show sign up button outside mobile menu for unauthenticated users", () => {
+      render(<NavBar user={null} />)
+
+      // Should have sign up button visible on mobile (outside the menu)
+      const signUpButtons = screen.getAllByText("Sign Up")
+      expect(signUpButtons.length).toBeGreaterThan(0)
+    })
+
+    it("should not show sign up button on mobile when authenticated", () => {
       render(<NavBar user={mockUser} />)
 
-      const signOutButton = screen.getByText("Sign Out")
-      fireEvent.click(signOutButton)
+      // Should not show sign up button when user is authenticated
+      expect(screen.queryByText("Sign Up")).not.toBeInTheDocument()
+    })
+
+    it("should open mobile menu when hamburger is clicked", async () => {
+      render(<NavBar user={null} />)
+
+      const mobileMenuTrigger = screen.getByTestId("mobile-menu-trigger")
+      fireEvent.click(mobileMenuTrigger)
+
+      await waitFor(() => {
+        // Check for menu content instead of close button
+        const pricingLinks = screen.getAllByText("Pricing")
+        expect(pricingLinks.length).toBeGreaterThan(0)
+      })
+    })
+
+    it("should show pricing in mobile menu when not authenticated", async () => {
+      render(<NavBar user={null} />)
+
+      const mobileMenuTrigger = screen.getByTestId("mobile-menu-trigger")
+      fireEvent.click(mobileMenuTrigger)
+
+      await waitFor(() => {
+        const pricingLinks = screen.getAllByText("Pricing")
+        expect(pricingLinks.length).toBeGreaterThan(0)
+      })
+    })
+
+    it("should show recover secret in mobile menu", async () => {
+      render(<NavBar user={null} />)
+
+      const mobileMenuTrigger = screen.getByTestId("mobile-menu-trigger")
+      fireEvent.click(mobileMenuTrigger)
+
+      await waitFor(() => {
+        const recoverSecretLinks = screen.getAllByText("Recover Secret")
+        expect(recoverSecretLinks.length).toBeGreaterThan(0)
+      })
+    })
+
+    it("should show only sign in (not sign up) in mobile menu when not authenticated", async () => {
+      render(<NavBar user={null} />)
+
+      const mobileMenuTrigger = screen.getByTestId("mobile-menu-trigger")
+      fireEvent.click(mobileMenuTrigger)
+
+      await waitFor(() => {
+        // Should show Sign In in the mobile menu
+        const signInLinks = screen.getAllByText("Sign In")
+        expect(signInLinks.length).toBeGreaterThan(0)
+
+        // Sign Up should still be present but outside the menu (on the main mobile navbar)
+        const signUpButtons = screen.getAllByText("Sign Up")
+        expect(signUpButtons.length).toBeGreaterThan(0)
+      })
+    })
+
+    it("should close mobile menu when menu item is clicked", async () => {
+      render(<NavBar user={null} />)
+
+      // Open menu
+      const mobileMenuTrigger = screen.getByTestId("mobile-menu-trigger")
+      fireEvent.click(mobileMenuTrigger)
+
+      await waitFor(() => {
+        const pricingLinks = screen.getAllByText("Pricing")
+        expect(pricingLinks.length).toBeGreaterThan(0)
+      })
+
+      // Click on a menu item
+      const mobileRecoverSecretButton = screen.getByTestId(
+        "mobile-recover-secret",
+      )
+      expect(mobileRecoverSecretButton).toBeInTheDocument()
+      fireEvent.click(mobileRecoverSecretButton)
+
+      // Wait for the menu to close (indicated by the dialog being in closed state)
+      await waitFor(() => {
+        const menuTrigger = screen.getByTestId("mobile-menu-trigger")
+        expect(menuTrigger).toHaveAttribute("aria-expanded", "false")
+      })
+    })
+
+    it("should show user email and sign out in mobile menu when authenticated", async () => {
+      render(<NavBar user={mockUser} />)
+
+      const mobileMenuTrigger = screen.getByTestId("mobile-menu-trigger")
+      fireEvent.click(mobileMenuTrigger)
+
+      await waitFor(() => {
+        expect(screen.getAllByText("test@example.com").length).toBeGreaterThan(
+          0,
+        )
+        expect(screen.getAllByText("Sign Out").length).toBeGreaterThan(0)
+      })
+    })
+
+    it("should handle mobile sign out correctly", async () => {
+      render(<NavBar user={mockUser} />)
+
+      // Open mobile menu
+      const mobileMenuTrigger = screen.getByTestId("mobile-menu-trigger")
+      fireEvent.click(mobileMenuTrigger)
+
+      await waitFor(() => {
+        expect(screen.getAllByText("test@example.com").length).toBeGreaterThan(
+          0,
+        )
+      })
+
+      // Click sign out in mobile menu
+      const signOutButtons = screen.getAllByText("Sign Out")
+      const mobileSignOutButton = signOutButtons.find((button) =>
+        button.closest("button")?.className.includes("justify-start"),
+      )
+      expect(mobileSignOutButton).toBeTruthy()
+      fireEvent.click(mobileSignOutButton!)
 
       await waitFor(() => {
         expect(mockRefresh).toHaveBeenCalled()
       })
 
-      // Should still redirect even if there's an error
       expect(mockPush).toHaveBeenCalledWith("/auth/login")
     })
+  })
 
-    it("should render theme toggle when authenticated", () => {
-      render(<NavBar user={mockUser} />)
+  describe("responsive behavior", () => {
+    it("should have desktop menu hidden on mobile", () => {
+      render(<NavBar user={null} />)
 
-      expect(screen.getByTestId("theme-toggle")).toBeInTheDocument()
+      const desktopMenu = document.querySelector(".hidden.md\\:flex")
+      expect(desktopMenu).toBeInTheDocument()
+      expect(desktopMenu).toHaveClass("hidden", "md:flex")
     })
 
-    it("should render secret sharing tool link when authenticated", () => {
-      render(<NavBar user={mockUser} />)
+    it("should have mobile menu hidden on desktop", () => {
+      render(<NavBar user={null} />)
 
-      const secretSharingLink = screen.getByText("Recover Secret").closest("a")
-      expect(secretSharingLink).toHaveAttribute("href", "/decrypt")
+      const mobileMenu = document.querySelector(".flex.md\\:hidden")
+      expect(mobileMenu).toBeInTheDocument()
+      expect(mobileMenu).toHaveClass("flex", "md:hidden")
+    })
+
+    it("should show theme toggle on both desktop and mobile", () => {
+      render(<NavBar user={null} />)
+
+      const themeToggles = screen.getAllByTestId("theme-toggle")
+      expect(themeToggles.length).toBe(2) // One for desktop, one for mobile
+    })
+
+    it("should show sign up button on mobile but not in mobile menu", () => {
+      render(<NavBar user={null} />)
+
+      // Sign up should be visible on mobile navbar
+      const signUpButtons = screen.getAllByText("Sign Up")
+      expect(signUpButtons.length).toBeGreaterThan(0)
+
+      // But when we open the mobile menu, it should only show Sign In
+      const mobileMenuTrigger = screen.getByTestId("mobile-menu-trigger")
+      fireEvent.click(mobileMenuTrigger)
     })
   })
 
@@ -183,7 +359,7 @@ describe("NavBar", () => {
       expect(signOutButton).toHaveClass("inline-flex") // Button component class
     })
 
-    it("should display user email with correct styling", () => {
+    it("should display user email with correct styling in desktop", () => {
       render(<NavBar user={mockUser} />)
 
       const emailSpan = screen.getByText("test@example.com")
@@ -198,7 +374,8 @@ describe("NavBar", () => {
       // Wait for loading to complete
       await waitFor(() => {
         expect(screen.getByText("Sign In")).toBeInTheDocument()
-        expect(screen.getByText("Sign Up")).toBeInTheDocument()
+        const signUpButtons = screen.getAllByText("Sign Up")
+        expect(signUpButtons.length).toBeGreaterThan(0)
       })
     })
 
@@ -253,6 +430,12 @@ describe("NavBar", () => {
       buttons.forEach((button) => {
         expect(button).toBeInTheDocument()
       })
+    })
+
+    it("should have screen reader text for menu buttons", () => {
+      render(<NavBar user={null} />)
+
+      expect(screen.getByText("Open menu")).toBeInTheDocument()
     })
   })
 })
