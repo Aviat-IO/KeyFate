@@ -46,3 +46,4 @@ supabase/prod-migrations/*
 # Other
 *.crt
 supabase/seed.sql
+reset_databases.sh

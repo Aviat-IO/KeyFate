@@ -48,6 +48,7 @@ The deployment has been migrated from the Makefile (`make deploy-staging` and `m
    - Organization and billing account details
    - Public environment variables (NEXT_PUBLIC_*)
    - Secret environment variables (stored in Secret Manager)
+   - Supabase configuration for cron jobs
 
 3. **Deploy**:
 
@@ -60,6 +61,66 @@ The deployment has been migrated from the Makefile (`make deploy-staging` and `m
    cd terragrunt/prod
    terragrunt apply
    ```
+
+## Supabase Configuration
+
+The infrastructure automatically configures Supabase cron jobs for your application using the consolidated migration approach. This eliminates the need for manual SQL execution and ensures consistent cron job setup across all environments.
+
+### Required Variables
+
+For Supabase cron job configuration, ensure these variables are set in your `terraform.tfvars`:
+
+```hcl
+# Supabase Configuration
+next_public_supabase_url    = "https://your-project-id.supabase.co"
+supabase_service_role_key   = "your-service-role-key-here"
+db_url                      = "postgresql://postgres:[password]@db.[project-id].supabase.co:5432/postgres"
+```
+
+### How It Works
+
+1. **Automatic Configuration**: When you run `terragrunt apply`, the infrastructure:
+   - Applies all database migrations (including the consolidated schema)
+   - Automatically configures the `cron_config` table with your environment settings
+   - Verifies that cron jobs are properly scheduled
+
+2. **Idempotent Operations**: The SQL configuration is idempotent, meaning:
+   - Safe to run multiple times
+   - Updates configuration if values change
+   - No manual intervention required
+
+3. **Environment-Specific**: Each environment (dev/prod) gets its own cron configuration:
+   - **Dev**: Points to your development Supabase project
+   - **Prod**: Points to your production Supabase project
+
+### Prerequisites
+
+Ensure you have either:
+- **PostgreSQL client** (`psql`) installed on your system, OR
+- **Supabase CLI** installed and configured
+
+Install via:
+```bash
+# PostgreSQL client (recommended)
+brew install postgresql        # macOS
+apt-get install postgresql-client  # Ubuntu/Debian
+
+# OR Supabase CLI
+npm install -g supabase
+```
+
+### Verification
+
+After deployment, the infrastructure automatically verifies the configuration and displays:
+- Cron configuration status
+- Scheduled cron jobs ('check-secrets', 'process-reminders')
+- Service role key status
+
+You can also manually verify by checking the Supabase logs or running:
+```sql
+SELECT * FROM cron_config;
+SELECT * FROM cron.job WHERE jobname IN ('check-secrets', 'process-reminders');
+```
 
 ## Automated Image Building
 
