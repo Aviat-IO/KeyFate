@@ -77,7 +77,7 @@ export default function Home() {
 
           <p className="text-muted-foreground animate-in fade-in slide-in-from-bottom-8 delay-400 mb-12 text-xl leading-relaxed duration-700 md:text-2xl">
             Securely share critical information with trusted contacts if you
-            can't check in.{" "}
+            become unavailable.{" "}
             <span className="text-foreground font-medium">
               Perfect for crypto keys, sensitive documents, and estate planning.
             </span>
@@ -201,8 +201,7 @@ export default function Home() {
             <CardContent>
               <p className="text-muted-foreground mb-4 text-sm">
                 Ensure your digital assets and important accounts can be
-                accessed by your loved ones. No more lost passwords or
-                inaccessible accounts when it matters most.
+                accessed by your loved ones, even during difficult or overwhelming times when immediate access is crucial.
               </p>
               <div className="space-y-2">
                 <div className="text-muted-foreground flex items-center text-xs">
