@@ -35,6 +35,17 @@ export default function TermsOfServicePage() {
             Terms. If you do not agree to these Terms, you may not access or use
             the Service.
           </p>
+          <p>
+            <strong>Payment Processing:</strong> For paid subscriptions, our
+            payment processing is handled by Paddle. By using our paid services,
+            you also agree to comply with{" "}
+            <a href="https://www.paddle.com/legal/terms"
+            className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
+            Paddle's Terms of Service</a> and{" "}
+            <a href="https://www.paddle.com/help/start/intro-to-paddle/what-am-i-not-allowed-to-sell-on-paddle"
+            className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
+            Acceptable Use Policy</a>.
+          </p>
         </section>
 
         <section>
@@ -143,7 +154,32 @@ export default function TermsOfServicePage() {
             <li>
               Store content that violates export control laws or regulations
             </li>
+            <li>
+              Store or transmit content that violates Paddle's Acceptable Use Policy,
+              including but not limited to: adult content, gambling, illegal drugs,
+              weapons, counterfeit goods, or any content that promotes violence,
+              discrimination, or illegal activities
+            </li>
+            <li>
+              Use the Service for money laundering, terrorist financing, or other
+              financial crimes
+            </li>
+            <li>
+              Store content that could be used to harm minors or vulnerable individuals
+            </li>
+            <li>
+              Use the Service to facilitate any activity that violates payment
+              processor terms of service or financial regulations
+            </li>
           </ul>
+          <p className="mt-4 text-sm text-muted-foreground">
+            <strong>Important:</strong> This Service must comply with Paddle's Acceptable Use Policy
+            available at <a href="https://www.paddle.com/help/start/intro-to-paddle/what-am-i-not-allowed-to-sell-on-paddle"
+            className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
+            paddle.com/help/start/intro-to-paddle/what-am-i-not-allowed-to-sell-on-paddle</a>.
+            Violation of these policies may result in immediate account termination and
+            reporting to relevant authorities.
+          </p>
         </section>
 
         <section>
@@ -189,7 +225,51 @@ export default function TermsOfServicePage() {
             <li>
               We may change pricing with 30 days' notice to existing subscribers
             </li>
+            <li>
+              All payments are processed securely through Paddle, our payment
+              processor
+            </li>
+            <li>
+              You agree to comply with Paddle's terms of service and acceptable
+              use policies
+            </li>
           </ul>
+        </section>
+
+        <section>
+          <h2 className="mb-4 text-2xl font-semibold">6.1 Payment Processor Compliance</h2>
+          <p>
+            Our payment processing is handled by Paddle, a third-party payment
+            processor. By using our paid services, you acknowledge and agree to:
+          </p>
+          <ul className="list-disc space-y-1 pl-6">
+            <li>
+              Comply with Paddle's Acceptable Use Policy and Terms of Service
+            </li>
+            <li>
+              Provide accurate billing information and maintain valid payment
+              methods
+            </li>
+            <li>
+              Not use our service for any activities prohibited by Paddle or
+              applicable financial regulations
+            </li>
+            <li>
+              Understand that Paddle may suspend or terminate payment processing
+              if they determine your use violates their policies
+            </li>
+            <li>
+              Accept that we may be required to share information with Paddle
+              for compliance and fraud prevention purposes
+            </li>
+          </ul>
+          <p className="mt-4 text-sm text-muted-foreground">
+            <strong>Paddle's Acceptable Use Policy:</strong> You can review Paddle's
+            complete Acceptable Use Policy at{" "}
+            <a href="https://www.paddle.com/help/start/intro-to-paddle/what-am-i-not-allowed-to-sell-on-paddle"
+            className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
+            paddle.com/help/start/intro-to-paddle/what-am-i-not-allowed-to-sell-on-paddle</a>.
+          </p>
         </section>
 
         <section>
