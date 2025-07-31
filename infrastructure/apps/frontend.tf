@@ -3,39 +3,75 @@ locals {
   frontend_app_name  = "frontend"
   frontend_app_dir   = "${path.module}/../../../../../../frontend"
   frontend_image_tag = md5(join("", [for f in fileset(local.frontend_app_dir, "**") : filemd5("${local.frontend_app_dir}/${f}")]))
+  # Include this file in the hash to force rebuild when Terraform config changes
+  terraform_config_hash = filemd5("${path.module}/frontend.tf")
 }
 
 # Build and push the frontend image when source files change
 resource "null_resource" "build_and_push_frontend" {
   triggers = {
-    app_dir_hash = local.frontend_image_tag
+    app_dir_hash     = local.frontend_image_tag
+    terraform_config = local.terraform_config_hash
   }
 
   provisioner "local-exec" {
     command     = <<-EOT
+      set -e
       echo "Frontend directory hash: ${self.triggers.app_dir_hash}"
+      echo "Terraform config hash: ${self.triggers.terraform_config}"
 
-      BUILD_TAG=${var.region}-docker.pkg.dev/${module.project.id}/${module.artifact_registry.name}/${local.frontend_app_name}:${self.triggers.app_dir_hash}
+      BUILD_TAG=${var.region}-docker.pkg.dev/${module.project.id}/${module.artifact_registry.name}/${local.frontend_app_name}:latest
 
-      gcloud builds submit ${local.frontend_app_dir}/.. \
-        --project=${module.project.id} \
-        --config=${local.frontend_app_dir}/../cloudbuild.yaml \
-        --substitutions=_IMAGE_TAG="$BUILD_TAG",_NEXT_PUBLIC_SITE_URL="${var.next_public_site_url}",_NEXT_PUBLIC_SUPABASE_URL="${var.next_public_supabase_url}",_NEXT_PUBLIC_SUPABASE_ANON_KEY="${var.next_public_supabase_anon_key}",_NEXT_PUBLIC_COMPANY="${var.next_public_company}",_NEXT_PUBLIC_PARENT_COMPANY="${var.next_public_parent_company}",_NEXT_PUBLIC_SUPPORT_EMAIL="${var.next_public_support_email}"
+      echo "Building image: $BUILD_TAG"
 
-      if gcloud run services describe ${local.frontend_app_name} \
-          --region=${var.region} \
-          --project=${module.project.id} &>/dev/null; then
-        gcloud run deploy ${local.frontend_app_name} \
-          --image=$BUILD_TAG \
-          --region=${var.region} \
-          --platform=managed \
-          --project=${module.project.id}
-      fi
+      # Ensure we're authenticated with gcloud
+      gcloud auth list --filter=status:ACTIVE --format="value(account)" | head -1 > /dev/null || gcloud auth login
+
+      # Configure Docker to use gcloud as a credential helper
+      gcloud auth configure-docker ${var.region}-docker.pkg.dev --quiet
+
+      # Build the Docker image locally
+      docker build \
+        --build-arg NEXT_PUBLIC_SITE_URL="${var.next_public_site_url}" \
+        --build-arg NEXT_PUBLIC_SUPABASE_URL="${var.next_public_supabase_url}" \
+        --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="${var.next_public_supabase_anon_key}" \
+        --build-arg NEXT_PUBLIC_COMPANY="${var.next_public_company}" \
+        --build-arg NEXT_PUBLIC_PARENT_COMPANY="${var.next_public_parent_company}" \
+        --build-arg NEXT_PUBLIC_SUPPORT_EMAIL="${var.next_public_support_email}" \
+        -t $BUILD_TAG \
+        -f ${local.frontend_app_dir}/Dockerfile \
+        ${local.frontend_app_dir}
+
+      echo "Image built successfully. Pushing to Artifact Registry..."
+
+      # Push the image to Artifact Registry
+      docker push $BUILD_TAG
+
+      echo "Image pushed successfully: $BUILD_TAG"
+
+      # Wait a moment for the image to be available
+      sleep 10
+
+      # Verify the image exists in Artifact Registry
+      gcloud artifacts docker images describe $BUILD_TAG --format="value(name)" || {
+        echo "ERROR: Image not found in Artifact Registry after push"
+        exit 1
+      }
+
+      echo "Image verified in Artifact Registry"
     EOT
     interpreter = ["bash", "-c"]
   }
 
-  depends_on = [module.artifact_registry, google_project_iam_member.cloud_build_permissions]
+  depends_on = [module.artifact_registry]
+}
+
+# Data source to verify the image exists in Artifact Registry
+data "google_artifact_registry_repository" "frontend_repo" {
+  location      = var.region
+  repository_id = module.artifact_registry.name
+  project       = module.project.id
+  depends_on    = [null_resource.build_and_push_frontend]
 }
 
 # Service account for the frontend Cloud Run service
@@ -67,7 +103,7 @@ module "cloud_run" {
 
   containers = {
     frontend = {
-      image = "${module.artifact_registry.url}/${local.frontend_app_name}:${local.frontend_image_tag}"
+      image = "${module.artifact_registry.url}/${local.frontend_app_name}:latest"
       ports = {
         default = {
           container_port = 3000
@@ -129,6 +165,7 @@ module "cloud_run" {
 
   depends_on = [
     null_resource.build_and_push_frontend,
+    data.google_artifact_registry_repository.frontend_repo,
     module.frontend_service_account,
     module.frontend_secrets
   ]
