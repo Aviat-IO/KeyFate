@@ -49,7 +49,7 @@ export function SssDecryptor({ initialShares = [] }: SssDecryptorProps) {
       // If first share is empty, focus on first textarea
       firstTextareaRef.current.focus()
     }
-  }, [])
+  }, [shares])
 
   const handleShareChange = (index: number, value: string) => {
     const newShares = [...shares]
