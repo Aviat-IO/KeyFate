@@ -5,6 +5,9 @@ locals {
   frontend_image_tag = md5(join("", [for f in fileset(local.frontend_app_dir, "**") : filemd5("${local.frontend_app_dir}/${f}")]))
   # Include this file in the hash to force rebuild when Terraform config changes
   terraform_config_hash = filemd5("${path.module}/frontend.tf")
+  # Get the latest git commit hash for image tagging
+  git_commit_hash = trimspace(data.external.git_commit.result.commit_hash)
+
 }
 
 # Build and push the frontend image when source files change
@@ -20,7 +23,7 @@ resource "null_resource" "build_and_push_frontend" {
       echo "Frontend directory hash: ${self.triggers.app_dir_hash}"
       echo "Terraform config hash: ${self.triggers.terraform_config}"
 
-      BUILD_TAG=${var.region}-docker.pkg.dev/${module.project.id}/${module.artifact_registry.name}/${local.frontend_app_name}:latest
+      BUILD_TAG=${var.region}-docker.pkg.dev/${module.project.id}/${module.artifact_registry.name}/${local.frontend_app_name}:${local.git_commit_hash}
 
       echo "Building image: $BUILD_TAG"
 
@@ -32,12 +35,7 @@ resource "null_resource" "build_and_push_frontend" {
 
       # Build the Docker image locally
       docker build \
-        --build-arg NEXT_PUBLIC_SITE_URL="${var.next_public_site_url}" \
-        --build-arg NEXT_PUBLIC_SUPABASE_URL="${var.next_public_supabase_url}" \
-        --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="${var.next_public_supabase_anon_key}" \
-        --build-arg NEXT_PUBLIC_COMPANY="${var.next_public_company}" \
-        --build-arg NEXT_PUBLIC_PARENT_COMPANY="${var.next_public_parent_company}" \
-        --build-arg NEXT_PUBLIC_SUPPORT_EMAIL="${var.next_public_support_email}" \
+        --platform linux/amd64 \
         -t $BUILD_TAG \
         -f ${local.frontend_app_dir}/Dockerfile \
         ${local.frontend_app_dir}
@@ -64,6 +62,11 @@ resource "null_resource" "build_and_push_frontend" {
   }
 
   depends_on = [module.artifact_registry]
+}
+
+# Data source to get the latest git commit hash
+data "external" "git_commit" {
+  program = ["bash", "-c", "echo '{\"commit_hash\": \"'$(git rev-parse HEAD)'\"}'"]
 }
 
 # Data source to verify the image exists in Artifact Registry
@@ -103,7 +106,7 @@ module "cloud_run" {
 
   containers = {
     frontend = {
-      image = "${module.artifact_registry.url}/${local.frontend_app_name}:latest"
+      image = "${module.artifact_registry.url}/${local.frontend_app_name}:${local.git_commit_hash}"
       ports = {
         default = {
           container_port = 3000
@@ -111,7 +114,13 @@ module "cloud_run" {
       }
       # Additional environment variables from terraform.tfvars
       env = {
-        ENV = var.env
+        ENV                           = var.env
+        NEXT_PUBLIC_SITE_URL          = var.next_public_site_url
+        NEXT_PUBLIC_SUPABASE_URL      = var.next_public_supabase_url
+        NEXT_PUBLIC_SUPABASE_ANON_KEY = var.next_public_supabase_anon_key
+        NEXT_PUBLIC_COMPANY           = var.next_public_company
+        NEXT_PUBLIC_PARENT_COMPANY    = var.next_public_parent_company
+        NEXT_PUBLIC_SUPPORT_EMAIL     = var.next_public_support_email
       }
       # Secret environment variables from Secret Manager
       env_from_key = {
@@ -167,7 +176,8 @@ module "cloud_run" {
     null_resource.build_and_push_frontend,
     data.google_artifact_registry_repository.frontend_repo,
     module.frontend_service_account,
-    module.frontend_secrets
+    module.frontend_secrets,
+    data.external.git_commit
   ]
 }
 
