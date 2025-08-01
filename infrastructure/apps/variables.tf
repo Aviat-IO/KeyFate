@@ -91,13 +91,11 @@ variable "next_public_company" {
 variable "next_public_parent_company" {
   description = "Parent company name"
   type        = string
-  default     = "Aviat"
 }
 
 variable "next_public_support_email" {
   description = "Support email address"
   type        = string
-  default     = "support@aviat.io"
 }
 
 variable "next_public_supabase_url" {
