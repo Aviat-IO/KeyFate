@@ -60,8 +60,8 @@ export function StripeCheckoutButton({
         const loginUrl = `/auth/login?next=${encodeURIComponent(returnUrl)}`
         window.location.href = loginUrl
       } else {
-        await response.json()
-        console.error("Checkout failed")
+        const res = await response.json()
+        console.error("Checkout failed", res)
         // You could show a toast notification here
       }
     } catch (error) {
