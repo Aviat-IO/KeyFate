@@ -7,23 +7,26 @@
 ## Phase 1: Database & Core Infrastructure
 
 ### Task 1.1: Database Schema Implementation
+
 - [x] Create user_tiers table with tier definitions
-- [x] Create user_subscriptions table for Paddle integration
+- [x] Create user_subscriptions table for Stripe integration
 - [x] Create subscription_usage table for tracking limits
 - [x] Create database migration files
 - [x] Update TypeScript database types
 - [x] Add default free tier for existing users
 
-### Task 1.2: Paddle Environment Setup
-- [ ] Create Paddle sandbox account
-- [x] Configure environment variables for Paddle
-- [ ] Set up Paddle product catalog (Free, Standard, Pro)
-- [ ] Create Paddle pricing for monthly/annual options
-- [ ] Test Paddle API connectivity
+### Task 1.2: Stripe Environment Setup
+
+- [ ] Create Stripe account and get API keys
+- [x] Configure environment variables for Stripe
+- [ ] Set up Stripe product catalog (Free, Pro)
+- [ ] Create Stripe pricing for monthly/annual options
+- [ ] Test Stripe API connectivity
 
 ## Phase 2: Backend Integration
 
 ### Task 2.1: Subscription Management API
+
 - [x] Create getUserTier() function
 - [x] Create updateUserTier() function
 - [x] Create getUserUsage() function
@@ -31,27 +34,31 @@
 - [x] Add error handling and logging
 
 ### Task 2.2: Feature Gating System
+
 - [ ] Create enforceSecretLimit() middleware
 - [ ] Create enforceRecipientLimit() middleware
 - [ ] Update secret creation endpoints with limits
 - [ ] Update secret modification endpoints with limits
 - [ ] Add usage calculation triggers
 
-### Task 2.3: Paddle Webhook Handler
+### Task 2.3: Stripe Webhook Handler
+
 - [x] Create webhook endpoint (/api/webhook)
 - [x] Implement webhook signature verification
-- [x] Handle subscription.created events
-- [x] Handle subscription.updated events
-- [x] Handle subscription.canceled events
-- [x] Handle payment.succeeded events
-- [ ] Handle payment.failed events
+- [x] Handle customer.subscription.created events
+- [x] Handle customer.subscription.updated events
+- [x] Handle customer.subscription.deleted events
+- [x] Handle invoice.payment_succeeded events
+- [ ] Handle invoice.payment_failed events
+- [ ] Handle customer.subscription.trial_will_end events
 - [x] Add webhook event logging
 
 ## Phase 3: Frontend Implementation
 
 ### Task 3.1: Pricing Page
+
 - [x] Create PricingPage component
-- [x] Integrate Paddle.js for checkout
+- [x] Integrate Stripe Checkout for payments
 - [x] Add tier comparison table
 - [x] Implement responsive design
 - [x] Add pricing toggle (monthly/annual)
@@ -61,6 +68,7 @@
 - [x] Update homepage pricing section with correct information
 
 ### Task 3.2: Usage Indicators
+
 - [x] Create UsageIndicator component
 - [x] Add usage progress bars
 - [x] Create upgrade prompts when near limits
@@ -68,6 +76,7 @@
 - [ ] Add usage indicators in secret creation
 
 ### Task 3.3: Subscription Management
+
 - [x] Create SubscriptionManager component
 - [x] Display current plan and usage
 - [x] Add payment method management
@@ -76,6 +85,7 @@
 - [ ] Create subscription management route (/subscription)
 
 ### Task 3.4: User Experience Enhancement
+
 - [ ] Add upgrade CTAs throughout app
 - [ ] Create payment success page
 - [ ] Create payment failure handling
@@ -85,6 +95,7 @@
 ## Phase 4: Testing & Refinement
 
 ### Task 4.1: End-to-End Testing
+
 - [ ] Test complete subscription flow
 - [ ] Test webhook processing
 - [ ] Test feature gating accuracy
@@ -93,6 +104,7 @@
 - [ ] Test tier upgrades/downgrades
 
 ### Task 4.2: Performance Optimization
+
 - [ ] Optimize usage tracking queries
 - [ ] Implement tier status caching
 - [ ] Add database indexes for performance
@@ -100,6 +112,7 @@
 - [ ] Add rate limiting for API calls
 
 ### Task 4.3: Error Handling & Monitoring
+
 - [ ] Add comprehensive error logging
 - [ ] Create subscription health monitoring
 - [ ] Add webhook failure notifications
@@ -109,6 +122,7 @@
 ## Integration Tasks
 
 ### Task I.1: Update Existing Components
+
 - [ ] Update secret creation form with limit checks
 - [ ] Update dashboard to show tier information
 - [ ] Update navigation to include pricing/subscription
@@ -116,15 +130,17 @@
 - [ ] Update user profile with subscription info
 
 ### Task I.2: Environment Configuration
-- [ ] Add Paddle environment variables to production
-- [ ] Configure webhook endpoints in Paddle dashboard
-- [ ] Set up production pricing in Paddle
+
+- [ ] Add Stripe environment variables to production
+- [ ] Configure webhook endpoints in Stripe dashboard
+- [ ] Set up production pricing in Stripe
 - [ ] Configure error monitoring for payments
 - [ ] Set up billing notification emails
 
 ## Verification Tasks
 
 ### Task V.1: Technical Verification
+
 - [ ] Verify all database constraints work correctly
 - [ ] Verify webhook signature validation
 - [ ] Verify feature gating prevents overuse
@@ -132,6 +148,7 @@
 - [ ] Verify subscription data sync accuracy
 
 ### Task V.2: Security Verification
+
 - [ ] Audit webhook security implementation
 - [ ] Verify no payment data is stored locally
 - [ ] Verify API key security
@@ -139,6 +156,7 @@
 - [ ] Verify user data protection in payment flows
 
 ### Task V.3: User Experience Verification
+
 - [ ] Test upgrade flows are intuitive
 - [ ] Verify usage indicators are helpful
 - [ ] Test graceful limit enforcement
@@ -148,22 +166,25 @@
 ## Current Status: Phase 1 Complete, Phase 2 Complete, Phase 3 Mostly Complete
 
 **Completed:**
+
 - ✅ Database schema with subscription tables (updated for Free + Pro tiers only)
 - ✅ TypeScript types for subscription functionality
-- ✅ Paddle.js dependency installed
+- ✅ Stripe integration dependencies installed
 - ✅ Tier configuration constants (updated with new specifications)
-- ✅ Paddle webhook handler (Edge Function)
+- ✅ Stripe webhook handler (Edge Function)
 - ✅ Subscription management API functions
-- ✅ Paddle integration service for frontend
+- ✅ Stripe integration service for frontend
 - ✅ UsageIndicator component with multiple variants
-- ✅ PricingPage component with Paddle checkout
+- ✅ PricingPage component with Stripe checkout
 - ✅ SubscriptionManager component for plan management
 
 **Updated Tier Specifications:**
+
 - **Free Tier:** 1 secret, 1 recipient, intervals (1 week, 1 month, 1 year), no templates
 - **Pro Tier:** 10 secrets, 5 recipients, flexible intervals (1 day to 3 years), templates, email support
 
 **Recent Updates:**
+
 - ✅ Updated pricing to $9/month and $90/year (17% annual discount)
 - ✅ Created comprehensive refunds policy page at `/refunds`
 - ✅ Updated to use shadcn progress component
@@ -174,7 +195,8 @@
 - ✅ Fixed dark mode styling across all subscription components
 
 **Next Actions:**
-1. Set up Paddle sandbox account and product catalog (Task 1.2)
+
+1. Set up Stripe account and product catalog (Task 1.2)
 2. Create pricing and subscription management routes
 3. Integrate usage indicators into existing dashboard
 4. Implement feature gating system for secret creation

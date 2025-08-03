@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Check, Crown } from "lucide-react"
 import Link from "next/link"
+import { StripeCheckoutButton } from "./StripeCheckoutButton"
 
 interface PricingCardProps {
   title: string
@@ -12,7 +13,8 @@ interface PricingCardProps {
   savingsText?: string
   features: string[]
   buttonText: string
-  buttonHref: string
+  buttonHref?: string
+  stripeLookupKey?: string
   isPopular?: boolean
   className?: string
 }
@@ -26,6 +28,7 @@ export function PricingCard({
   features,
   buttonText,
   buttonHref,
+  stripeLookupKey,
   isPopular = false,
   className = "",
 }: PricingCardProps) {
@@ -63,13 +66,33 @@ export function PricingCard({
           ))}
         </ul>
 
-        <Button
-          className="w-full"
-          variant={isPopular ? "default" : "outline"}
-          asChild
-        >
-          <Link href={buttonHref}>{buttonText}</Link>
-        </Button>
+        {/* Use StripeCheckoutButton for paid tiers, regular Link for free tier */}
+        {stripeLookupKey ? (
+          <div className="space-y-2">
+            <StripeCheckoutButton lookupKey={stripeLookupKey}>
+              {buttonText}
+            </StripeCheckoutButton>
+            <p className="text-muted-foreground text-center text-xs">
+              Sign up or log in to continue
+            </p>
+          </div>
+        ) : buttonHref ? (
+          <Button
+            className="w-full"
+            variant={isPopular ? "default" : "outline"}
+            asChild
+          >
+            <Link href={buttonHref}>{buttonText}</Link>
+          </Button>
+        ) : (
+          <Button
+            className="w-full"
+            variant={isPopular ? "default" : "outline"}
+            disabled
+          >
+            {buttonText}
+          </Button>
+        )}
       </CardContent>
     </Card>
   )

@@ -7,11 +7,13 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get("code");
   const token = requestUrl.searchParams.get("token");
   const type = requestUrl.searchParams.get("type");
+  const nextUrl = requestUrl.searchParams.get("next");
 
   console.log("[Callback] Request URL:", request.url);
   console.log("[Callback] Code:", code);
   console.log("[Callback] Token:", token);
   console.log("[Callback] Type:", type);
+  console.log("[Callback] Next URL:", nextUrl);
 
   const supabase = await createClient();
 
@@ -57,10 +59,13 @@ export async function GET(request: Request) {
   // But only if we don't have a code (which would be OAuth)
   if (!code) {
     const redirectUrl = new URL("/auth/verify", NEXT_PUBLIC_SITE_URL);
+    if (nextUrl) {
+      redirectUrl.searchParams.set("next", nextUrl);
+    }
     return NextResponse.redirect(redirectUrl);
   }
 
-  // For OAuth flows, redirect to dashboard
-  const redirectUrl = new URL("/dashboard", NEXT_PUBLIC_SITE_URL);
+  // For OAuth flows, redirect to next URL if provided, otherwise to dashboard
+  const redirectUrl = new URL(nextUrl || "/dashboard", NEXT_PUBLIC_SITE_URL);
   return NextResponse.redirect(redirectUrl);
 }

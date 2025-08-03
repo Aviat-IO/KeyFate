@@ -552,7 +552,7 @@ CREATE OR REPLACE FUNCTION create_check_in_token(
   p_expires_in INTERVAL DEFAULT INTERVAL '24 hours'
 ) RETURNS TEXT
 SECURITY DEFINER
-SET search_path = 'public, extensions'
+SET search_path = 'public'
 LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -567,8 +567,8 @@ BEGIN
     RAISE EXCEPTION 'Unauthorized. Only service_role can create check-in tokens.';
   END IF;
 
-  -- Generate a secure random token using gen_random_bytes from extensions schema
-  v_token := encode(gen_random_bytes(32), 'hex');
+  -- Generate a secure random token using gen_random_bytes from public schema
+  v_token := encode(public.gen_random_bytes(32), 'hex');
 
   -- Insert the token
   INSERT INTO public.check_in_tokens (

@@ -43,7 +43,7 @@ export default function DecryptPage() {
         <NavBar />
       </div>
 
-      <div className="container mx-auto flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
+      <div className="mx-auto flex min-h-[calc(100vh-4rem)] items-center justify-center px-0 sm:px-4 py-12">
         <Suspense
           fallback={
             <div className="text-center text-lg">Loading Decryptor...</div>

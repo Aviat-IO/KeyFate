@@ -94,7 +94,17 @@ Deno.serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const token = url.searchParams.get("token");
+    let token = url.searchParams.get("token");
+
+    // If no token in URL params, try to get it from request body for POST requests
+    if (!token && req.method === "POST") {
+      try {
+        const body = await req.json();
+        token = body.token;
+      } catch {
+        // Ignore JSON parsing errors
+      }
+    }
 
     if (!token) {
       return new Response(
@@ -129,7 +139,6 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     const checkInError = error as CheckInError;
-    console.error("Error processing check-in:", checkInError);
 
     // If token is expired or used, redirect to sign in
     if (

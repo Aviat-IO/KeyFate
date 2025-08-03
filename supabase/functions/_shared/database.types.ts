@@ -17,10 +17,10 @@ export type Database = {
     Functions: {
       graphql: {
         Args: {
+          extensions?: Json
           operationName?: string
           query?: string
           variables?: Json
-          extensions?: Json
         }
         Returns: Json
       }
@@ -68,7 +68,29 @@ export type Database = {
           title?: string
           type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "admin_notifications_acknowledged_by_fkey"
+            columns: ["acknowledged_by"]
+            isOneToOne: false
+            referencedRelation: "subscription_management"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "admin_notifications_acknowledged_by_fkey"
+            columns: ["acknowledged_by"]
+            isOneToOne: false
+            referencedRelation: "user_tier_info"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "admin_notifications_acknowledged_by_fkey"
+            columns: ["acknowledged_by"]
+            isOneToOne: false
+            referencedRelation: "user_usage_info"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       check_in_tokens: {
         Row: {
@@ -138,7 +160,52 @@ export type Database = {
             referencedRelation: "secrets"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "checkin_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_management"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "checkin_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_tier_info"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "checkin_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_usage_info"
+            referencedColumns: ["user_id"]
+          },
         ]
+      }
+      cron_config: {
+        Row: {
+          created_at: string
+          id: number
+          project_url: string
+          service_role_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          project_url?: string
+          service_role_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          project_url?: string
+          service_role_key?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       recipient_access_tokens: {
         Row: {
@@ -223,6 +290,27 @@ export type Database = {
             referencedRelation: "secrets"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "reminders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_management"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "reminders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_tier_info"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "reminders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_usage_info"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       secrets: {
@@ -292,29 +380,66 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "secrets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_management"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "secrets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_tier_info"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "secrets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_usage_info"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
-      subscription_usage: {
+      tiers: {
         Row: {
+          created_at: string
+          custom_intervals: boolean
+          display_name: string
           id: string
-          last_calculated: string
-          secrets_count: number
-          total_recipients: number
-          user_id: string
+          max_recipients_per_secret: number
+          max_secrets: number
+          name: Database["public"]["Enums"]["subscription_tier"]
+          price_monthly: number | null
+          price_yearly: number | null
+          updated_at: string
         }
         Insert: {
+          created_at?: string
+          custom_intervals?: boolean
+          display_name: string
           id?: string
-          last_calculated?: string
-          secrets_count?: number
-          total_recipients?: number
-          user_id: string
+          max_recipients_per_secret: number
+          max_secrets: number
+          name: Database["public"]["Enums"]["subscription_tier"]
+          price_monthly?: number | null
+          price_yearly?: number | null
+          updated_at?: string
         }
         Update: {
+          created_at?: string
+          custom_intervals?: boolean
+          display_name?: string
           id?: string
-          last_calculated?: string
-          secrets_count?: number
-          total_recipients?: number
-          user_id?: string
+          max_recipients_per_secret?: number
+          max_secrets?: number
+          name?: Database["public"]["Enums"]["subscription_tier"]
+          price_monthly?: number | null
+          price_yearly?: number | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -346,7 +471,29 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_contact_methods_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_management"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_contact_methods_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_tier_info"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_contact_methods_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_usage_info"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       user_subscriptions: {
         Row: {
@@ -355,9 +502,12 @@ export type Database = {
           current_period_end: string | null
           current_period_start: string | null
           id: string
-          paddle_customer_id: string | null
-          paddle_subscription_id: string | null
+          provider: string | null
+          provider_customer_id: string | null
+          provider_subscription_id: string | null
           status: Database["public"]["Enums"]["subscription_status"]
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
           tier_name: Database["public"]["Enums"]["subscription_tier"]
           updated_at: string
           user_id: string
@@ -368,9 +518,12 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           id?: string
-          paddle_customer_id?: string | null
-          paddle_subscription_id?: string | null
+          provider?: string | null
+          provider_customer_id?: string | null
+          provider_subscription_id?: string | null
           status?: Database["public"]["Enums"]["subscription_status"]
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           tier_name?: Database["public"]["Enums"]["subscription_tier"]
           updated_at?: string
           user_id: string
@@ -381,53 +534,160 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           id?: string
-          paddle_customer_id?: string | null
-          paddle_subscription_id?: string | null
+          provider?: string | null
+          provider_customer_id?: string | null
+          provider_subscription_id?: string | null
           status?: Database["public"]["Enums"]["subscription_status"]
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           tier_name?: Database["public"]["Enums"]["subscription_tier"]
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "subscription_management"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_tier_info"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_usage_info"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       user_tiers: {
         Row: {
           created_at: string
-          custom_intervals: boolean
           id: string
-          max_recipients_per_secret: number
-          max_secrets: number
-          tier_name: Database["public"]["Enums"]["subscription_tier"]
+          tier_id: string
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
-          custom_intervals?: boolean
           id?: string
-          max_recipients_per_secret?: number
-          max_secrets?: number
-          tier_name?: Database["public"]["Enums"]["subscription_tier"]
+          tier_id: string
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
-          custom_intervals?: boolean
           id?: string
-          max_recipients_per_secret?: number
-          max_secrets?: number
-          tier_name?: Database["public"]["Enums"]["subscription_tier"]
+          tier_id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_tiers_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "tiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_tiers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "subscription_management"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_tiers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_tier_info"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_tiers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_usage_info"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      subscription_management: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          current_period_end: string | null
+          current_period_start: string | null
+          current_secrets_count: number | null
+          current_total_recipients: number | null
+          email: string | null
+          max_recipients_per_secret: number | null
+          max_secrets: number | null
+          provider: string | null
+          provider_customer_id: string | null
+          provider_subscription_id: string | null
+          subscription_status:
+            | Database["public"]["Enums"]["subscription_status"]
+            | null
+          tier_display_name: string | null
+          tier_name: Database["public"]["Enums"]["subscription_tier"] | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      user_tier_info: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          current_period_end: string | null
+          current_period_start: string | null
+          custom_intervals: boolean | null
+          email: string | null
+          max_recipients_per_secret: number | null
+          max_secrets: number | null
+          price_monthly: number | null
+          price_yearly: number | null
+          provider: string | null
+          subscription_status:
+            | Database["public"]["Enums"]["subscription_status"]
+            | null
+          tier_display_name: string | null
+          tier_name: Database["public"]["Enums"]["subscription_tier"] | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      user_usage_info: {
+        Row: {
+          can_create_secret: boolean | null
+          current_secrets_count: number | null
+          current_total_recipients: number | null
+          email: string | null
+          max_recipients_per_secret: number | null
+          max_secrets: number | null
+          tier_name: Database["public"]["Enums"]["subscription_tier"] | null
+          user_id: string | null
         }
         Relationships: []
       }
     }
-    Views: {
-      [_ in never]: never
-    }
     Functions: {
+      assign_user_tier: {
+        Args: {
+          p_tier_name: Database["public"]["Enums"]["subscription_tier"]
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       calculate_user_usage: {
         Args: { p_user_id: string }
         Returns: {
@@ -441,16 +701,36 @@ export type Database = {
       }
       check_in_secret: {
         Args: {
-          p_secret_id: string
-          p_user_id: string
           p_checked_in_at: string
           p_next_check_in: string
+          p_secret_id: string
+          p_user_id: string
         }
         Returns: undefined
       }
       create_check_in_token: {
-        Args: { p_secret_id: string; p_expires_in?: unknown }
+        Args: { p_expires_in?: unknown; p_secret_id: string }
         Returns: string
+      }
+      get_cron_config: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          base_url: string
+          auth_header: string
+        }[]
+      }
+      get_tier_by_name: {
+        Args: { p_tier_name: Database["public"]["Enums"]["subscription_tier"] }
+        Returns: {
+          id: string
+          name: Database["public"]["Enums"]["subscription_tier"]
+          display_name: string
+          max_secrets: number
+          max_recipients_per_secret: number
+          custom_intervals: boolean
+          price_monthly: number
+          price_yearly: number
+        }[]
       }
       get_user_tier: {
         Args: { p_user_id: string }
@@ -463,24 +743,33 @@ export type Database = {
         }[]
       }
       handle_failed_reminder: {
-        Args: { p_reminder_id: string; p_error: string }
+        Args: { p_error: string; p_reminder_id: string }
         Returns: undefined
       }
       initialize_free_tiers: {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      migrate_user_subscription_provider: {
+        Args: {
+          p_provider: string
+          p_provider_customer_id?: string
+          p_provider_subscription_id?: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       schedule_secret_reminders: {
-        Args: { p_secret_id: string; p_next_check_in: string }
+        Args: { p_next_check_in: string; p_secret_id: string }
         Returns: undefined
       }
       toggle_secret_pause: {
         Args: {
+          p_checked_in_at: string
+          p_new_status: string
+          p_next_check_in: string
           p_secret_id: string
           p_user_id: string
-          p_new_status: string
-          p_checked_in_at: string
-          p_next_check_in: string
         }
         Returns: undefined
       }

@@ -1,12 +1,13 @@
 "use server";
 
+import { serverEnv } from "@/lib/server-env";
 import crypto from "crypto";
 
 let ENCRYPTION_KEY: Buffer | null = null;
 
 function getEncryptionKey(): Buffer {
   if (!ENCRYPTION_KEY) {
-    const ENCRYPTION_KEY_BASE64 = process.env.ENCRYPTION_KEY!;
+    const ENCRYPTION_KEY_BASE64 = serverEnv.ENCRYPTION_KEY;
     if (!ENCRYPTION_KEY_BASE64) {
       throw new Error("Invalid encryption key");
     }

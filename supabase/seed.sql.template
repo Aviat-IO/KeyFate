@@ -22,7 +22,6 @@ DELETE FROM secrets;
 DELETE FROM user_contact_methods;
 DELETE FROM user_subscriptions;
 DELETE FROM user_tiers;
-DELETE FROM subscription_usage;
 DELETE FROM admin_notifications;
 
 -- User contact methods
@@ -32,30 +31,23 @@ INSERT INTO user_contact_methods (id, user_id, email, phone, preferred_method, c
 ('550e8400-e29b-41d4-a716-446655440003', '2734a10c-2335-480b-8bf3-efc468cf89de', 'alice.smith@company.com', '+1-555-0123', 'both', NOW(), NOW()),
 ('550e8400-e29b-41d4-a716-446655440004', '78dd97e7-1ce4-4a41-8fdc-69e3371f2175', NULL, '+1-555-0456', 'phone', NOW(), NOW());
 
--- User subscriptions
+-- User subscriptions (using new provider-agnostic schema)
 -- Free user subscription
 INSERT INTO user_subscriptions (id, user_id, tier_name, status, created_at, updated_at) VALUES
 ('660e8400-e29b-41d4-a716-446655440002', '836f82db-9912-4b34-8101-1f16b49dfa5f', 'free', 'active', NOW(), NOW());
 
--- Pro user subscriptions
-INSERT INTO user_subscriptions (id, user_id, tier_name, status, created_at, updated_at, current_period_start, current_period_end, paddle_customer_id, paddle_subscription_id) VALUES
-('660e8400-e29b-41d4-a716-446655440001', '48a35ccd-e1e4-458b-86ec-5bd88a0addc7', 'pro', 'active', NOW(), NOW(), NOW() - INTERVAL '15 days', NOW() + INTERVAL '15 days', 'cust_48a35ccd', 'sub_48a35ccd'),
-('660e8400-e29b-41d4-a716-446655440003', '2734a10c-2335-480b-8bf3-efc468cf89de', 'pro', 'active', NOW(), NOW(), NOW() - INTERVAL '15 days', NOW() + INTERVAL '15 days', 'cust_2734a10c', 'sub_2734a10c'),
-('660e8400-e29b-41d4-a716-446655440004', '78dd97e7-1ce4-4a41-8fdc-69e3371f2175', 'pro', 'active', NOW(), NOW(), NOW() - INTERVAL '15 days', NOW() + INTERVAL '15 days', 'cust_78dd97e7', 'sub_78dd97e7');
+-- Pro user subscriptions (migrated from paddle to generic provider)
+INSERT INTO user_subscriptions (id, user_id, tier_name, status, created_at, updated_at, current_period_start, current_period_end, provider, provider_customer_id, provider_subscription_id) VALUES
+('660e8400-e29b-41d4-a716-446655440001', '48a35ccd-e1e4-458b-86ec-5bd88a0addc7', 'pro', 'active', NOW(), NOW(), NOW() - INTERVAL '15 days', NOW() + INTERVAL '15 days', 'paddle', 'cust_48a35ccd', 'sub_48a35ccd'),
+('660e8400-e29b-41d4-a716-446655440003', '2734a10c-2335-480b-8bf3-efc468cf89de', 'pro', 'active', NOW(), NOW(), NOW() - INTERVAL '15 days', NOW() + INTERVAL '15 days', 'paddle', 'cust_2734a10c', 'sub_2734a10c'),
+('660e8400-e29b-41d4-a716-446655440004', '78dd97e7-1ce4-4a41-8fdc-69e3371f2175', 'pro', 'active', NOW(), NOW(), NOW() - INTERVAL '15 days', NOW() + INTERVAL '15 days', 'paddle', 'cust_78dd97e7', 'sub_78dd97e7');
 
--- User tiers
-INSERT INTO user_tiers (id, user_id, tier_name, max_secrets, max_recipients_per_secret, custom_intervals, created_at, updated_at) VALUES
-('770e8400-e29b-41d4-a716-446655440001', '48a35ccd-e1e4-458b-86ec-5bd88a0addc7', 'pro', 100, 10, true, NOW(), NOW()),
-('770e8400-e29b-41d4-a716-446655440002', '836f82db-9912-4b34-8101-1f16b49dfa5f', 'free', 1, 1, false, NOW(), NOW()),
-('770e8400-e29b-41d4-a716-446655440003', '2734a10c-2335-480b-8bf3-efc468cf89de', 'pro', 100, 10, true, NOW(), NOW()),
-('770e8400-e29b-41d4-a716-446655440004', '78dd97e7-1ce4-4a41-8fdc-69e3371f2175', 'pro', 100, 10, true, NOW(), NOW());
-
--- Subscription usage
-INSERT INTO subscription_usage (id, user_id, secrets_count, total_recipients, last_calculated) VALUES
-('880e8400-e29b-41d4-a716-446655440001', '48a35ccd-e1e4-458b-86ec-5bd88a0addc7', 3, 3, NOW()),
-('880e8400-e29b-41d4-a716-446655440002', '836f82db-9912-4b34-8101-1f16b49dfa5f', 1, 1, NOW()),
-('880e8400-e29b-41d4-a716-446655440003', '2734a10c-2335-480b-8bf3-efc468cf89de', 4, 4, NOW()),
-('880e8400-e29b-41d4-a716-446655440004', '78dd97e7-1ce4-4a41-8fdc-69e3371f2175', 2, 2, NOW());
+-- User tiers (using new normalized schema with tier_id references)
+INSERT INTO user_tiers (id, user_id, tier_id, created_at, updated_at) VALUES
+('770e8400-e29b-41d4-a716-446655440001', '48a35ccd-e1e4-458b-86ec-5bd88a0addc7', (SELECT id FROM tiers WHERE name = 'pro'), NOW(), NOW()),
+('770e8400-e29b-41d4-a716-446655440002', '836f82db-9912-4b34-8101-1f16b49dfa5f', (SELECT id FROM tiers WHERE name = 'free'), NOW(), NOW()),
+('770e8400-e29b-41d4-a716-446655440003', '2734a10c-2335-480b-8bf3-efc468cf89de', (SELECT id FROM tiers WHERE name = 'pro'), NOW(), NOW()),
+('770e8400-e29b-41d4-a716-446655440004', '78dd97e7-1ce4-4a41-8fdc-69e3371f2175', (SELECT id FROM tiers WHERE name = 'pro'), NOW(), NOW());
 
 -- Secrets (with dynamically generated encrypted server shares)
 INSERT INTO secrets (
@@ -146,6 +138,7 @@ INSERT INTO admin_notifications (id, type, severity, title, message, metadata, c
 -- ✓ Reminders scheduled (including one ready in 30 seconds for testing)
 -- ✓ Sample admin notifications
 -- ✓ Mixed contact methods (email, phone, both)
+-- ✓ Updated to use new normalized schema (tiers table, provider-agnostic subscriptions)
 
 -- Secret Content Examples (what's encrypted in server_share):
 -- - Bitcoin wallet seed phrases

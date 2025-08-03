@@ -87,7 +87,26 @@ vi.mock("@/lib/server-env", () => ({
   SUPABASE_SERVICE_ROLE_KEY: "test-service-role-key",
 }));
 
-// Mock encryption functions
+// Mock Node.js crypto module
+const mockCrypto = {
+  randomBytes: vi.fn(() =>
+    Buffer.from([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+  ),
+  createCipheriv: vi.fn(() => ({
+    update: vi.fn(() => Buffer.from([1, 2, 3, 4])),
+    final: vi.fn(() => Buffer.from([5, 6, 7, 8])),
+    getAuthTag: vi.fn(() => Buffer.from([9, 10, 11, 12, 13, 14, 15, 16])),
+  })),
+  createDecipheriv: vi.fn(() => ({
+    update: vi.fn(() => Buffer.from([1, 2, 3, 4])),
+    final: vi.fn(() => Buffer.from([5, 6, 7, 8])),
+    setAuthTag: vi.fn(),
+  })),
+};
+
+vi.mock("crypto", () => mockCrypto);
+
+// Mock encryption functions with expected return values
 vi.mock("@/lib/encryption", () => ({
   encryptMessage: vi.fn(() =>
     Promise.resolve({
@@ -96,7 +115,7 @@ vi.mock("@/lib/encryption", () => ({
       authTag: "base64-auth-tag",
     })
   ),
-  decryptMessage: vi.fn(() => Promise.resolve("decrypted-data")),
+  decryptMessage: vi.fn(() => Promise.resolve("decrypted message")),
 }));
 
 // Mock crypto for encrypt/decrypt routes
@@ -137,4 +156,4 @@ Object.defineProperty(global, "TextDecoder", {
   },
 });
 
-export { mockCookieStore, mockSupabaseClient };
+export { mockCookieStore, mockCrypto, mockSupabaseClient };

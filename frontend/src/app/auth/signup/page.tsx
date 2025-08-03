@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { supabase } from "@/lib/supabase"
 import { AlertCircle } from "lucide-react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useState } from "react"
 
 export default function SignUpPage() {
@@ -16,6 +16,8 @@ export default function SignUpPage() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const nextUrl = searchParams.get("next")
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -24,7 +26,9 @@ export default function SignUpPage() {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: nextUrl
+            ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextUrl)}`
+            : `${window.location.origin}/auth/callback`,
         },
       })
       if (error) throw error
@@ -41,7 +45,11 @@ export default function SignUpPage() {
         <>
           Or{" "}
           <Link
-            href="/auth/login"
+            href={
+              nextUrl
+                ? `/auth/login?next=${encodeURIComponent(nextUrl)}`
+                : "/auth/login"
+            }
             className="text-primary hover:text-primary/90 transition hover:underline"
           >
             sign in
@@ -53,7 +61,9 @@ export default function SignUpPage() {
       rightLink={{
         text: "Have an account?",
         linkText: "Sign in",
-        href: "/auth/login",
+        href: nextUrl
+          ? `/auth/login?next=${encodeURIComponent(nextUrl)}`
+          : "/auth/login",
       }}
     >
       {error && (

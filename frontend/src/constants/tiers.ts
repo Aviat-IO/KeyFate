@@ -21,8 +21,8 @@ export const TIER_CONFIGS: Record<SubscriptionTier, TierConfig> = {
       annual: 0,
     },
     priceIds: {
-      monthly: "pri_free_monthly", // Placeholder - will be updated with actual Paddle price IDs
-      annual: "pri_free_annual",
+      monthly: "free", // Free tier doesn't need Stripe price IDs
+      annual: "free",
     },
     featured: false,
   },
@@ -47,12 +47,18 @@ export const TIER_CONFIGS: Record<SubscriptionTier, TierConfig> = {
       annual: 90.00,
     },
     priceIds: {
-      monthly: "pri_pro_monthly", // Placeholder
-      annual: "pri_pro_annual",
+      monthly: "pro_monthly", // Stripe lookup key
+      annual: "pro_yearly", // Stripe lookup key
     },
     featured: true,
   },
 };
+
+// Stripe lookup keys for easy reference
+export const STRIPE_LOOKUP_KEYS = {
+  PRO_MONTHLY: "pro_monthly",
+  PRO_YEARLY: "pro_yearly",
+} as const;
 
 export const TIER_ORDER: SubscriptionTier[] = ["free", "pro"];
 
@@ -72,6 +78,15 @@ export function getTierByPriceId(priceId: string): SubscriptionTier | null {
     }
   }
   return null;
+}
+
+// New helper to get lookup key by tier and billing period
+export function getLookupKey(
+  tier: SubscriptionTier,
+  period: "monthly" | "annual",
+): string | null {
+  if (tier === "free") return null;
+  return TIER_CONFIGS[tier].priceIds[period];
 }
 
 export function formatPrice(price: number): string {
