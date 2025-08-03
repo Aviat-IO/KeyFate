@@ -17,8 +17,11 @@ export type UserSubscriptionInsert =
 export type UserSubscriptionUpdate =
   Database["public"]["Tables"]["user_subscriptions"]["Update"];
 
-export type SubscriptionUsage =
-  Database["public"]["Tables"]["subscription_usage"]["Row"];
+// Usage data from calculate_user_usage function
+export interface SubscriptionUsage {
+  secrets_count: number;
+  total_recipients: number;
+}
 
 // Tier configuration interface
 export interface TierConfig {
@@ -41,9 +44,22 @@ export interface TierConfig {
   featured: boolean;
 }
 
-// User tier info with usage
+// User tier info with usage (normalized schema)
 export interface UserTierInfo {
-  tier: UserTier;
+  tier: UserTier & {
+    tiers: {
+      id: string;
+      name: SubscriptionTier;
+      display_name: string;
+      max_secrets: number;
+      max_recipients_per_secret: number;
+      custom_intervals: boolean;
+      price_monthly: number | null;
+      price_yearly: number | null;
+      created_at: string;
+      updated_at: string;
+    };
+  };
   subscription?: UserSubscription;
   usage: SubscriptionUsage;
   limits: {

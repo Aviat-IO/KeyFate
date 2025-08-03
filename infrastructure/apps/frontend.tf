@@ -33,9 +33,10 @@ resource "null_resource" "build_and_push_frontend" {
       # Configure Docker to use gcloud as a credential helper
       gcloud auth configure-docker ${var.region}-docker.pkg.dev --quiet
 
-      # Build the Docker image locally
+      # Build the Docker image locally with environment-specific build arg
       docker build \
         --platform linux/amd64 \
+        --build-arg BUILD_ENV=${var.env} \
         -t $BUILD_TAG \
         -f ${local.frontend_app_dir}/Dockerfile \
         ${local.frontend_app_dir}
@@ -114,13 +115,14 @@ module "cloud_run" {
       }
       # Additional environment variables from terraform.tfvars
       env = {
-        ENV                           = var.env
-        NEXT_PUBLIC_SITE_URL          = var.next_public_site_url
-        NEXT_PUBLIC_SUPABASE_URL      = var.next_public_supabase_url
-        NEXT_PUBLIC_SUPABASE_ANON_KEY = var.next_public_supabase_anon_key
-        NEXT_PUBLIC_COMPANY           = var.next_public_company
-        NEXT_PUBLIC_PARENT_COMPANY    = var.next_public_parent_company
-        NEXT_PUBLIC_SUPPORT_EMAIL     = var.next_public_support_email
+        ENV                                = var.env
+        NEXT_PUBLIC_SITE_URL               = var.next_public_site_url
+        NEXT_PUBLIC_SUPABASE_URL           = var.next_public_supabase_url
+        NEXT_PUBLIC_SUPABASE_ANON_KEY      = var.next_public_supabase_anon_key
+        NEXT_PUBLIC_COMPANY                = var.next_public_company
+        NEXT_PUBLIC_PARENT_COMPANY         = var.next_public_parent_company
+        NEXT_PUBLIC_SUPPORT_EMAIL          = var.next_public_support_email
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = var.next_public_stripe_publishable_key
       }
       # Secret environment variables from Secret Manager
       env_from_key = {
@@ -146,6 +148,10 @@ module "cloud_run" {
         }
         SUPABASE_SERVICE_ROLE_KEY = {
           secret  = "projects/${module.project.number}/secrets/supabase-service-role-key"
+          version = "latest"
+        }
+        STRIPE_SECRET_KEY = {
+          secret  = "projects/${module.project.number}/secrets/stripe-secret-key"
           version = "latest"
         }
       }

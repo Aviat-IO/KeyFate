@@ -1,5 +1,5 @@
-import { afterAll, beforeAll, vi } from "vitest";
 import "@testing-library/jest-dom";
+import { vi } from "vitest";
 
 // Mock Next.js router
 vi.mock("next/navigation", () => ({
@@ -20,6 +20,27 @@ vi.mock("@/lib/supabase", () => ({
   createClient: () => ({
     auth: {
       getUser: vi.fn(),
+      signInWithOAuth: vi.fn(),
+      signOut: vi.fn(),
+    },
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      insert: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+      delete: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn(),
+    })),
+  }),
+}));
+
+// Mock Supabase client for components
+vi.mock("@/utils/supabase/client", () => ({
+  createClient: () => ({
+    auth: {
+      getUser: vi.fn(() =>
+        Promise.resolve({ data: { user: null }, error: null })
+      ),
       signInWithOAuth: vi.fn(),
       signOut: vi.fn(),
     },

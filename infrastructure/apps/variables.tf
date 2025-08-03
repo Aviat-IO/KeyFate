@@ -145,6 +145,17 @@ variable "google_client_secret" {
   sensitive   = true
 }
 
+variable "stripe_secret_key" {
+  description = "Stripe secret API key"
+  type        = string
+  sensitive   = true
+}
+
+variable "next_public_stripe_publishable_key" {
+  description = "Stripe publishable key (public)"
+  type        = string
+}
+
 variable "custom_domain" {
   description = "Custom domain for the Cloud Run service (e.g., staging.keyfate.com)"
   type        = string

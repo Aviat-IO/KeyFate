@@ -1,104 +1,91 @@
 "use client"
 
-import { CheckCircle2 } from "lucide-react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useState, Suspense } from "react"
+import { Button } from "@/components/ui/button"
+import { useToast } from "@/hooks/use-toast"
+import { NEXT_PUBLIC_SUPABASE_URL } from "@/lib/env"
+import { useSearchParams } from "next/navigation"
+import { Suspense, useState } from "react"
 
 function CheckInContent() {
-  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
   const searchParams = useSearchParams()
+  const { toast } = useToast()
+
   const token = searchParams.get("token")
-  const [status, setStatus] = useState<"loading" | "success" | "error">(
-    "loading",
-  )
-  const [message, setMessage] = useState("")
-  const [secretTitle, setSecretTitle] = useState("")
-  const [nextCheckIn, setNextCheckIn] = useState("")
 
-  useEffect(() => {
-    async function processCheckIn() {
-      if (!token) {
-        router.push("/auth/login?next=/dashboard")
-        return
-      }
-
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/check-in?token=${token}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          },
-        )
-
-        const data = await response.json()
-
-        if (data.redirect) {
-          router.push(data.redirect)
-          return
-        }
-
-        if (data.error) {
-          setStatus("error")
-          setMessage(data.error)
-          return
-        }
-
-        setStatus("success")
-        setSecretTitle(data.secretTitle)
-        setNextCheckIn(data.nextCheckIn)
-      } catch {
-        setStatus("error")
-        setMessage("An error occurred while processing your check-in.")
-      }
-    }
-
-    processCheckIn()
-  }, [token, router])
-
-  if (status === "loading") {
+  if (!token) {
     return (
-      <div className="flex min-h-[50vh] flex-col items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-semibold">
-            Processing your check-in...
-          </h2>
-          <p className="text-muted-foreground mt-2">Please wait a moment.</p>
+      <div className="mx-auto sm:px-4 py-8">
+        <div className="mx-auto max-w-md pt-16 text-center">
+          <h1 className="text-destructive mb-4 text-2xl font-bold">
+            Invalid Check-In Link
+          </h1>
+          <p className="text-muted-foreground">
+            This check-in link is missing required information.
+          </p>
         </div>
       </div>
     )
   }
 
-  if (status === "error") {
-    return (
-      <div className="flex min-h-[50vh] flex-col items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-destructive text-2xl font-semibold">
-            Check-in Failed
-          </h2>
-          <p className="text-muted-foreground mt-2">{message}</p>
-        </div>
-      </div>
-    )
+  const handleCheckIn = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch(
+        `${NEXT_PUBLIC_SUPABASE_URL}/functions/v1/check-in?token=${token}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      )
+
+      const data = await response.json()
+
+      if (response.ok) {
+        toast({
+          title: "Check-in successful!",
+          description: `Your secret "${data.secretTitle}" timer has been reset. Next check-in: ${data.nextCheckIn}`,
+        })
+      } else {
+        throw new Error(data.error || "Check-in failed")
+      }
+    } catch (error) {
+      console.error("Check-in error:", error)
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred"
+      toast({
+        title: "Check-in failed",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
-    <div className="flex min-h-[50vh] flex-col items-center justify-center">
-      <div className="text-center">
-        <CheckCircle2 className="mx-auto h-12 w-12 text-green-500" />
-        <h2 className="mt-4 text-2xl font-semibold">Check-in Successful!</h2>
-        <p className="mt-2">
-          You have successfully checked in for{" "}
-          <span className="font-semibold">{secretTitle}</span>!
+    <div className="mx-auto sm:px-4 py-8">
+      <div className="mx-auto max-w-md space-y-6 pt-32 text-center">
+        <h1 className="text-3xl font-bold">Secret Check-In</h1>
+
+        <p className="text-muted-foreground">
+          Click the button below to check in and reset your secret's timer.
         </p>
-        <p className="mt-2">
-          Your secret now will be triggered at{" "}
-          <span className="font-semibold">{nextCheckIn} UTC</span>.
-        </p>
-        <p className="text-muted-foreground mt-2">
-          You will receive reminder notifications before then.
+
+        <Button
+          onClick={handleCheckIn}
+          disabled={isLoading}
+          size="lg"
+          className="w-full"
+        >
+          {isLoading ? "Checking in..." : "Check In Now"}
+        </Button>
+
+        <p className="text-muted-foreground text-sm">
+          This will update your last check-in time and prevent your secret from
+          being triggered.
         </p>
       </div>
     </div>

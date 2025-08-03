@@ -185,19 +185,26 @@ async function processReminders(
 
         let notificationSent = false;
 
-        // Create a one-time check-in token
-        const { data: token, error: tokenError } = await supabaseAdmin
-          .rpc("create_check_in_token", {
-            p_secret_id: secret.id,
+        // Generate a secure random token directly in the Edge Function
+        const tokenBytes = new Uint8Array(32);
+        crypto.getRandomValues(tokenBytes);
+        const token = Array.from(
+          tokenBytes,
+          (byte) => byte.toString(16).padStart(2, "0"),
+        ).join("");
+
+        // Insert the token directly into the database
+        const { error: insertError } = await supabaseAdmin
+          .from("check_in_tokens")
+          .insert({
+            secret_id: secret.id,
+            token: token,
+            expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000)
+              .toISOString(), // 24 hours
           });
 
-        if (tokenError) {
-          console.error("Failed to create check-in token:", tokenError);
-          throw new Error("Failed to create check-in token");
-        }
-
-        if (!token) {
-          console.error("No token returned from create_check_in_token");
+        if (insertError) {
+          console.error("Failed to insert check-in token:", insertError);
           throw new Error("Failed to create check-in token");
         }
 

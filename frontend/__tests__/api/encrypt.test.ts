@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Import setup to apply mocks
@@ -7,6 +8,10 @@ import "./setup";
 process.env.ENCRYPTION_KEY = "a".repeat(32);
 
 import { POST } from "@/app/api/encrypt/route";
+import { encryptMessage } from "@/lib/encryption";
+
+// Mock the encryption module
+vi.mocked(encryptMessage);
 
 describe("/api/encrypt", () => {
   beforeEach(() => {
@@ -36,7 +41,13 @@ describe("/api/encrypt", () => {
   });
 
   it("should encrypt a message successfully", async () => {
-    const mockRequest = new Request("http://localhost/api/encrypt", {
+    vi.mocked(encryptMessage).mockResolvedValue({
+      encrypted: "encrypted-data",
+      iv: "base64-iv",
+      authTag: "base64-auth-tag",
+    });
+
+    const mockRequest = new NextRequest("http://localhost/api/encrypt", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: "test message" }),
@@ -52,7 +63,7 @@ describe("/api/encrypt", () => {
   });
 
   it("should return 400 when message is missing", async () => {
-    const mockRequest = new Request("http://localhost/api/encrypt", {
+    const mockRequest = new NextRequest("http://localhost/api/encrypt", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({}),
@@ -66,7 +77,7 @@ describe("/api/encrypt", () => {
   });
 
   it("should return 400 when message is empty", async () => {
-    const mockRequest = new Request("http://localhost/api/encrypt", {
+    const mockRequest = new NextRequest("http://localhost/api/encrypt", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: "" }),
@@ -80,23 +91,10 @@ describe("/api/encrypt", () => {
   });
 
   it("should return 500 when encryption fails", async () => {
-    // Mock crypto.subtle.encrypt to throw an error
-    Object.defineProperty(global, "crypto", {
-      value: {
-        getRandomValues: vi.fn((arr) => {
-          for (let i = 0; i < arr.length; i++) {
-            arr[i] = Math.floor(Math.random() * 256);
-          }
-          return arr;
-        }),
-        subtle: {
-          importKey: vi.fn(() => Promise.resolve({})),
-          encrypt: vi.fn(() => Promise.reject(new Error("Encryption failed"))),
-        },
-      },
-    });
+    // Mock encryption to throw an error
+    vi.mocked(encryptMessage).mockRejectedValue(new Error("Encryption failed"));
 
-    const mockRequest = new Request("http://localhost/api/encrypt", {
+    const mockRequest = new NextRequest("http://localhost/api/encrypt", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: "test message" }),
@@ -110,7 +108,7 @@ describe("/api/encrypt", () => {
   });
 
   it("should handle invalid JSON request", async () => {
-    const mockRequest = new Request("http://localhost/api/encrypt", {
+    const mockRequest = new NextRequest("http://localhost/api/encrypt", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: "invalid json",
@@ -124,25 +122,13 @@ describe("/api/encrypt", () => {
   });
 
   it("should use correct encryption parameters", async () => {
-    const mockImportKey = vi.fn(() => Promise.resolve({}));
-    const mockEncrypt = vi.fn(() => Promise.resolve(new ArrayBuffer(16)));
-
-    Object.defineProperty(global, "crypto", {
-      value: {
-        getRandomValues: vi.fn((arr) => {
-          for (let i = 0; i < arr.length; i++) {
-            arr[i] = i % 256;
-          }
-          return arr;
-        }),
-        subtle: {
-          importKey: mockImportKey,
-          encrypt: mockEncrypt,
-        },
-      },
+    vi.mocked(encryptMessage).mockResolvedValue({
+      encrypted: "encrypted-data",
+      iv: "base64-iv",
+      authTag: "base64-auth-tag",
     });
 
-    const mockRequest = new Request("http://localhost/api/encrypt", {
+    const mockRequest = new NextRequest("http://localhost/api/encrypt", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: "test message" }),
@@ -150,23 +136,7 @@ describe("/api/encrypt", () => {
 
     await POST(mockRequest);
 
-    // Verify importKey was called with correct parameters
-    expect(mockImportKey).toHaveBeenCalledWith(
-      "raw",
-      expect.any(Uint8Array),
-      { name: "AES-GCM" },
-      false,
-      ["encrypt"],
-    );
-
-    // Verify encrypt was called with correct parameters
-    expect(mockEncrypt).toHaveBeenCalledWith(
-      {
-        name: "AES-GCM",
-        iv: expect.any(Uint8Array),
-      },
-      {},
-      expect.any(Uint8Array),
-    );
+    // Verify encryptMessage was called with correct parameters
+    expect(encryptMessage).toHaveBeenCalledWith("test message");
   });
 });

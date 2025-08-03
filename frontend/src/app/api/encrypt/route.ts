@@ -1,50 +1,29 @@
-export async function POST(req: Request) {
+import { encryptMessage } from "@/lib/encryption";
+import { NextRequest, NextResponse } from "next/server";
+
+export async function POST(request: NextRequest) {
   try {
-    const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY!;
-    if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length !== 32) {
-      throw new Error("Invalid encryption key");
-    }
-    const { message } = await req.json();
+    const { message } = await request.json();
 
-    if (!message) {
-      return Response.json({ error: "Missing message to encrypt" }, {
-        status: 400,
-      });
+    if (!message || message === "") {
+      return NextResponse.json(
+        { error: "Missing message to encrypt" },
+        { status: 400 },
+      );
     }
 
-    // Generate a random IV
-    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const result = await encryptMessage(message);
 
-    // Convert the encryption key to proper format
-    const keyBuffer = new TextEncoder().encode(ENCRYPTION_KEY);
-    const cryptoKey = await crypto.subtle.importKey(
-      "raw",
-      keyBuffer,
-      { name: "AES-GCM" },
-      false,
-      ["encrypt"],
-    );
-
-    // Encrypt the message
-    const encodedMessage = new TextEncoder().encode(message);
-    const encryptedBuffer = await crypto.subtle.encrypt(
-      {
-        name: "AES-GCM",
-        iv,
-      },
-      cryptoKey,
-      encodedMessage,
-    );
-
-    // Convert to base64 for storage
-    const encryptedArray = Array.from(new Uint8Array(encryptedBuffer));
-    const ivArray = Array.from(iv);
-
-    return Response.json({
-      encryptedMessage: btoa(String.fromCharCode(...encryptedArray)),
-      iv: btoa(String.fromCharCode(...ivArray)),
+    return NextResponse.json({
+      encryptedMessage: result.encrypted,
+      iv: result.iv,
+      authTag: result.authTag,
     });
-  } catch {
-    return Response.json({ error: "Encryption failed" }, { status: 500 });
+  } catch (error) {
+    console.error("Encryption error:", error);
+    return NextResponse.json(
+      { error: "Encryption failed" },
+      { status: 500 },
+    );
   }
 }

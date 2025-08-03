@@ -15,7 +15,7 @@ import { createClient } from "@/utils/supabase/client"
 import { User } from "@supabase/supabase-js"
 import { Menu } from "lucide-react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 const supabase = createClient()
@@ -26,9 +26,12 @@ interface NavBarProps {
 
 export function NavBar({ user: propUser }: NavBarProps = {}) {
   const router = useRouter()
+  const pathname = usePathname()
   const [user, setUser] = useState<User | null>(propUser ?? null)
   const [loading, setLoading] = useState(propUser === undefined)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isProUser, setIsProUser] = useState(false)
+  const [checkingSubscription, setCheckingSubscription] = useState(false)
 
   useEffect(() => {
     // If user prop is provided, use it (for testing)
@@ -60,6 +63,40 @@ export function NavBar({ user: propUser }: NavBarProps = {}) {
     return () => subscription.unsubscribe()
   }, [propUser])
 
+  // Check subscription status when user changes
+  useEffect(() => {
+    const checkSubscriptionStatus = async () => {
+      if (!user) {
+        setIsProUser(false)
+        return
+      }
+
+      setCheckingSubscription(true)
+      try {
+        const { data: tier } = await supabase
+          .from("user_tiers")
+          .select(
+            `
+            tier_id,
+            tiers!inner(name)
+          `,
+          )
+          .eq("user_id", user.id)
+          .maybeSingle()
+
+        // If no tier exists, assume free tier
+        setIsProUser(tier?.tiers?.name === "pro")
+      } catch (error) {
+        console.error("Error checking subscription status:", error)
+        setIsProUser(false)
+      } finally {
+        setCheckingSubscription(false)
+      }
+    }
+
+    checkSubscriptionStatus()
+  }, [user])
+
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     setMobileMenuOpen(false) // Close mobile menu
@@ -76,9 +113,20 @@ export function NavBar({ user: propUser }: NavBarProps = {}) {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link href={user ? "/dashboard" : "/"} className="text-xl font-bold">
-            {NEXT_PUBLIC_COMPANY}
-          </Link>
+          <div className="flex items-center space-x-4">
+            <Link
+              href={user ? "/dashboard" : "/"}
+              className="text-xl font-bold"
+            >
+              {NEXT_PUBLIC_COMPANY}
+            </Link>
+            {/* Dashboard link when authenticated user is on home page */}
+            {user && pathname === "/" && (
+              <Button variant="ghost" asChild>
+                <Link href="/dashboard">Dashboard</Link>
+              </Button>
+            )}
+          </div>
 
           {/* Desktop Menu */}
           <div className="hidden items-center space-x-4 md:flex">
@@ -96,11 +144,13 @@ export function NavBar({ user: propUser }: NavBarProps = {}) {
               // Show nothing while loading to avoid flash
               <div className="h-9 w-20" />
             ) : user ? (
-              // User is logged in - show user email and sign out
+              // User is logged in - show upgrade button if not pro, and sign out
               <>
-                <span className="text-muted-foreground text-sm">
-                  {user.email}
-                </span>
+                {!checkingSubscription && !isProUser && (
+                  <Button asChild>
+                    <Link href="/pricing">Upgrade to Pro</Link>
+                  </Button>
+                )}
                 <Button variant="outline" onClick={handleSignOut}>
                   Sign Out
                 </Button>
@@ -166,6 +216,26 @@ export function NavBar({ user: propUser }: NavBarProps = {}) {
                     </>
                   )}
 
+                  {/* Dashboard link when authenticated user is on home page */}
+                  {user && pathname === "/" && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        asChild
+                        className="h-12 justify-start"
+                        data-testid="mobile-dashboard"
+                      >
+                        <Link
+                          href="/dashboard"
+                          onClick={handleMobileMenuItemClick}
+                        >
+                          Dashboard
+                        </Link>
+                      </Button>
+                      <Separator className="my-1" />
+                    </>
+                  )}
+
                   <Button
                     variant="ghost"
                     asChild
@@ -181,12 +251,18 @@ export function NavBar({ user: propUser }: NavBarProps = {}) {
                     // Show nothing while loading to avoid flash
                     <div className="h-9" />
                   ) : user ? (
-                    // User is logged in - show user email and sign out
+                    // User is logged in - show upgrade button if not pro, and sign out
                     <>
                       <Separator className="my-1" />
-                      <div className="text-muted-foreground bg-muted/50 rounded-md border px-3 py-3 text-sm">
-                        {user.email}
-                      </div>
+                      {!checkingSubscription && !isProUser && (
+                        <Button
+                          asChild
+                          className="h-12 justify-start"
+                          onClick={handleMobileMenuItemClick}
+                        >
+                          <Link href="/pricing">Upgrade to Pro</Link>
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         onClick={handleSignOut}

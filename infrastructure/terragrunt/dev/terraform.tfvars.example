@@ -23,6 +23,7 @@ next_public_support_email = "support@aviat.io"
 next_public_supabase_url = "https://your-supabase-project.supabase.co"
 next_public_supabase_anon_key = "your-anon-key"
 next_public_graphql_url = "https://your-supabase-project.supabase.co/graphql/v1"
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = "your-public-stripe-key"
 
 # Custom domain configuration
 custom_domain = "staging.keyfate.com"
@@ -34,3 +35,4 @@ supabase_service_role_key = "your-service-role-key"
 supabase_jwt_secret = "your-jwt-secret"
 google_client_id = "your-google-client-id"
 google_client_secret = "your-google-client-secret"
+stripe_secret_key = "your-stripe-secret-key"

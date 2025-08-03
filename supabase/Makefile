@@ -73,4 +73,24 @@ verify-seed:
 
 # Development functions
 functions-serve:
-	supabase functions serve --env-file functions/.env.development.local
+	supabase functions serve --env-file functions/.env.development.local --no-verify-jwt
+
+# Deploy functions to staging
+deploy-functions-staging:
+	@echo "🚀 Deploying functions to staging..."
+	@read -p "Enter Supabase staging project ID: " project_id; \
+	echo "Deploying to project: $$project_id"; \
+	supabase functions deploy --project-ref $$project_id; \
+	echo "Deploying check-in function with --no-verify-jwt..."; \
+	supabase functions deploy check-in --project-ref $$project_id --no-verify-jwt; \
+	echo "✅ Functions deployed to staging successfully!"
+
+# Deploy functions to production
+deploy-functions-prod:
+	@echo "🚀 Deploying functions to production..."
+	@read -p "Enter Supabase production project ID: " project_id; \
+	echo "Deploying to project: $$project_id"; \
+	supabase functions deploy --project-ref $$project_id; \
+	echo "Deploying check-in function with --no-verify-jwt..."; \
+	supabase functions deploy check-in --project-ref $$project_id --no-verify-jwt; \
+	echo "✅ Functions deployed to production successfully!"

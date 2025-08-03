@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createClient } from "@/utils/supabase/client"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useState } from "react"
 
 const supabase = createClient()
@@ -16,6 +16,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const nextUrl = searchParams.get("next")
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,7 +33,9 @@ export default function LoginPage() {
       if (error) {
         setError(error.message)
       } else {
-        router.push("/dashboard")
+        // Redirect to next URL if provided, otherwise to dashboard
+        const redirectUrl = nextUrl || "/dashboard"
+        router.push(redirectUrl)
         router.refresh()
       }
     } catch (error) {
@@ -50,7 +54,7 @@ export default function LoginPage() {
       rightLink={{
         text: "No account?",
         linkText: "Sign up",
-        href: "/auth/signup",
+        href: nextUrl ? `/auth/signup?next=${encodeURIComponent(nextUrl)}` : "/auth/signup",
       }}
     >
       <form onSubmit={handleEmailLogin} className="space-y-3">

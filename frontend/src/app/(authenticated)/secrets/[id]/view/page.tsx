@@ -112,7 +112,7 @@ export default async function ViewSecretPage({ params }: ViewSecretPageProps) {
   const StatusIcon = statusInfo.icon
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="mx-auto sm:px-4 py-8 max-w-4xl">
       {/* Header */}
       <div className="mb-6 flex items-center gap-4">
         <Link href="/dashboard">

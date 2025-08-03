@@ -1,54 +1,35 @@
-export async function POST(req: Request) {
+import { decryptMessage } from "@/lib/encryption";
+import { NextRequest, NextResponse } from "next/server";
+
+export async function POST(request: NextRequest) {
   try {
-    const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY!;
-    if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length !== 32) {
-      throw new Error("Invalid encryption key");
-    }
-    const { encryptedMessage, iv } = await req.json();
+    const { encryptedMessage, iv, authTag } = await request.json();
 
     if (!encryptedMessage || !iv) {
-      return Response.json({ error: "Missing encryptedMessage or iv" }, {
-        status: 400,
-      });
+      return NextResponse.json(
+        { error: "Missing encryptedMessage or iv" },
+        { status: 400 },
+      );
     }
 
-    // Convert base64 strings back to Uint8Arrays
-    const encryptedArray = Uint8Array.from(
-      atob(encryptedMessage)
-        .split("")
-        .map((c) => c.charCodeAt(0)),
+    // Convert base64 strings back to buffers
+    const ivBuffer = Buffer.from(iv, "base64");
+    const authTagBuffer = authTag
+      ? Buffer.from(authTag, "base64")
+      : Buffer.alloc(16);
+
+    const decrypted = await decryptMessage(
+      encryptedMessage,
+      ivBuffer,
+      authTagBuffer,
     );
 
-    const ivArray = Uint8Array.from(
-      atob(iv)
-        .split("")
-        .map((c) => c.charCodeAt(0)),
+    return NextResponse.json({ decryptedMessage: decrypted });
+  } catch (error) {
+    console.error("Decryption error:", error);
+    return NextResponse.json(
+      { error: "Decryption failed" },
+      { status: 500 },
     );
-
-    // Import the key
-    const keyBuffer = new TextEncoder().encode(ENCRYPTION_KEY);
-    const cryptoKey = await crypto.subtle.importKey(
-      "raw",
-      keyBuffer,
-      { name: "AES-GCM" },
-      false,
-      ["decrypt"],
-    );
-
-    // Decrypt the message
-    const decryptedBuffer = await crypto.subtle.decrypt(
-      {
-        name: "AES-GCM",
-        iv: ivArray,
-      },
-      cryptoKey,
-      encryptedArray,
-    );
-
-    const decryptedMessage = new TextDecoder().decode(decryptedBuffer);
-
-    return Response.json({ decryptedMessage });
-  } catch {
-    return Response.json({ error: "Decryption failed" }, { status: 500 });
   }
 }

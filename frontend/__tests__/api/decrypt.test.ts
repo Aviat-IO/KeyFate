@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Import setup to apply mocks
@@ -7,6 +8,10 @@ import "./setup";
 process.env.ENCRYPTION_KEY = "a".repeat(32);
 
 import { POST } from "@/app/api/decrypt/route";
+import { decryptMessage } from "@/lib/encryption";
+
+// Mock the encryption module
+vi.mocked(decryptMessage);
 
 describe("/api/decrypt", () => {
   beforeEach(() => {
@@ -31,17 +36,9 @@ describe("/api/decrypt", () => {
 
   it("should decrypt a message successfully", async () => {
     // Mock successful decryption
-    const mockDecryptedBuffer = new TextEncoder().encode("decrypted message");
-    Object.defineProperty(global, "crypto", {
-      value: {
-        subtle: {
-          importKey: vi.fn(() => Promise.resolve({})),
-          decrypt: vi.fn(() => Promise.resolve(mockDecryptedBuffer.buffer)),
-        },
-      },
-    });
+    vi.mocked(decryptMessage).mockResolvedValue("decrypted message");
 
-    const mockRequest = new Request("http://localhost/api/decrypt", {
+    const mockRequest = new NextRequest("http://localhost/api/decrypt", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -58,7 +55,7 @@ describe("/api/decrypt", () => {
   });
 
   it("should return 400 when encryptedMessage is missing", async () => {
-    const mockRequest = new Request("http://localhost/api/decrypt", {
+    const mockRequest = new NextRequest("http://localhost/api/decrypt", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ iv: "aXYxMjM=" }),
@@ -72,7 +69,7 @@ describe("/api/decrypt", () => {
   });
 
   it("should return 400 when iv is missing", async () => {
-    const mockRequest = new Request("http://localhost/api/decrypt", {
+    const mockRequest = new NextRequest("http://localhost/api/decrypt", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ encryptedMessage: "dGVzdA==" }),
@@ -86,7 +83,7 @@ describe("/api/decrypt", () => {
   });
 
   it("should return 400 when both parameters are missing", async () => {
-    const mockRequest = new Request("http://localhost/api/decrypt", {
+    const mockRequest = new NextRequest("http://localhost/api/decrypt", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({}),
@@ -100,17 +97,10 @@ describe("/api/decrypt", () => {
   });
 
   it("should return 500 when decryption fails", async () => {
-    // Mock crypto.subtle.decrypt to throw an error
-    Object.defineProperty(global, "crypto", {
-      value: {
-        subtle: {
-          importKey: vi.fn(() => Promise.resolve({})),
-          decrypt: vi.fn(() => Promise.reject(new Error("Decryption failed"))),
-        },
-      },
-    });
+    // Mock decryption to throw an error
+    vi.mocked(decryptMessage).mockRejectedValue(new Error("Decryption failed"));
 
-    const mockRequest = new Request("http://localhost/api/decrypt", {
+    const mockRequest = new NextRequest("http://localhost/api/decrypt", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -127,7 +117,7 @@ describe("/api/decrypt", () => {
   });
 
   it("should handle invalid JSON request", async () => {
-    const mockRequest = new Request("http://localhost/api/decrypt", {
+    const mockRequest = new NextRequest("http://localhost/api/decrypt", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: "invalid json",
@@ -141,19 +131,9 @@ describe("/api/decrypt", () => {
   });
 
   it("should use correct decryption parameters", async () => {
-    const mockImportKey = vi.fn(() => Promise.resolve({}));
-    const mockDecrypt = vi.fn(() => Promise.resolve(new ArrayBuffer(16)));
+    vi.mocked(decryptMessage).mockResolvedValue("decrypted message");
 
-    Object.defineProperty(global, "crypto", {
-      value: {
-        subtle: {
-          importKey: mockImportKey,
-          decrypt: mockDecrypt,
-        },
-      },
-    });
-
-    const mockRequest = new Request("http://localhost/api/decrypt", {
+    const mockRequest = new NextRequest("http://localhost/api/decrypt", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -164,37 +144,25 @@ describe("/api/decrypt", () => {
 
     await POST(mockRequest);
 
-    // Verify importKey was called with correct parameters
-    expect(mockImportKey).toHaveBeenCalledWith(
-      "raw",
-      expect.any(Uint8Array),
-      { name: "AES-GCM" },
-      false,
-      ["decrypt"],
-    );
-
-    // Verify decrypt was called with correct parameters
-    expect(mockDecrypt).toHaveBeenCalledWith(
-      {
-        name: "AES-GCM",
-        iv: expect.any(Uint8Array),
-      },
-      {},
-      expect.any(Uint8Array),
+    // Verify decryptMessage was called with correct parameters
+    expect(decryptMessage).toHaveBeenCalledWith(
+      "dGVzdA==",
+      expect.any(Buffer),
+      expect.any(Buffer),
     );
   });
 
   it("should handle invalid base64 input gracefully", async () => {
-    // Mock atob to throw an error for invalid base64
-    const originalAtob = global.atob;
-    global.atob = vi.fn((str) => {
+    // Mock Buffer.from to throw an error for invalid base64
+    const originalBufferFrom = Buffer.from;
+    (Buffer.from as any) = vi.fn((str: any, encoding?: any) => {
       if (str.includes("!@#")) {
         throw new Error("Invalid base64");
       }
-      return originalAtob(str);
+      return originalBufferFrom(str, encoding);
     });
 
-    const mockRequest = new Request("http://localhost/api/decrypt", {
+    const mockRequest = new NextRequest("http://localhost/api/decrypt", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -209,7 +177,7 @@ describe("/api/decrypt", () => {
     expect(response.status).toBe(500);
     expect(data.error).toBe("Decryption failed");
 
-    // Restore original atob
-    global.atob = originalAtob;
+    // Restore original Buffer.from
+    Buffer.from = originalBufferFrom;
   });
 });

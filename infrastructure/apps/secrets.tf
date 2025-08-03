@@ -21,6 +21,9 @@ module "frontend_secrets" {
     supabase-service-role-key = {
       locations = [var.region]
     }
+    stripe-secret-key = {
+      locations = [var.region]
+    }
   }
 
   versions = {
@@ -42,6 +45,9 @@ module "frontend_secrets" {
     supabase-service-role-key = {
       current = { enabled = true, data = var.supabase_service_role_key }
     }
+    stripe-secret-key = {
+      current = { enabled = true, data = var.stripe_secret_key }
+    }
   }
 
   iam = {
@@ -61,6 +67,9 @@ module "frontend_secrets" {
       "roles/secretmanager.secretAccessor" = ["serviceAccount:${module.frontend_service_account.email}"]
     }
     supabase-service-role-key = {
+      "roles/secretmanager.secretAccessor" = ["serviceAccount:${module.frontend_service_account.email}"]
+    }
+    stripe-secret-key = {
       "roles/secretmanager.secretAccessor" = ["serviceAccount:${module.frontend_service_account.email}"]
     }
   }

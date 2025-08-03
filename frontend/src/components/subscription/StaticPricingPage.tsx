@@ -2,7 +2,7 @@
 
 import { BillingToggle } from "@/components/subscription/BillingToggle"
 import { PricingCard } from "@/components/subscription/PricingCard"
-import { TIER_CONFIGS } from "@/constants/tiers"
+import { TIER_CONFIGS, getLookupKey } from "@/constants/tiers"
 import { Check } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
@@ -16,7 +16,7 @@ export function StaticPricingPage({ className = "" }: StaticPricingPageProps) {
     "yearly",
   )
 
-  // Static pricing without Paddle dependency
+  // Static pricing without external dependency
   const STATIC_PRICING = {
     pro: {
       monthly: {
@@ -33,6 +33,10 @@ export function StaticPricingPage({ className = "" }: StaticPricingPageProps) {
   }
 
   const proData = STATIC_PRICING.pro[billingPeriod]
+  const proLookupKey = getLookupKey(
+    "pro",
+    billingPeriod === "monthly" ? "monthly" : "annual",
+  )
 
   return (
     <div className={`space-y-8 ${className}`}>
@@ -72,7 +76,7 @@ export function StaticPricingPage({ className = "" }: StaticPricingPageProps) {
           savingsText={proData.savingsText}
           features={TIER_CONFIGS.pro.features}
           buttonText="Get Started with Pro"
-          buttonHref="/auth/signup"
+          stripeLookupKey={proLookupKey || undefined}
           isPopular={true}
         />
       </div>
@@ -110,8 +114,8 @@ export function StaticPricingPage({ className = "" }: StaticPricingPageProps) {
               What payment methods do you accept?
             </h3>
             <p className="text-muted-foreground text-sm">
-              We accept all major credit cards, PayPal, and bank transfers
-              through our secure payment processor Paddle.
+              We accept all major credit cards and other payment methods through
+              our secure payment processor Stripe.
             </p>
           </div>
 

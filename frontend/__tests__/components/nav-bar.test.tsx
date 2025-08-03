@@ -6,11 +6,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 // Mock Next.js router
 const mockPush = vi.fn()
 const mockRefresh = vi.fn()
+const mockPathname = vi.fn().mockReturnValue("/")
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: mockPush,
     refresh: mockRefresh,
   }),
+  usePathname: () => mockPathname(),
 }))
 
 // Mock Supabase
@@ -65,6 +67,7 @@ const mockUser: User = {
 describe("NavBar", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockPathname.mockReturnValue("/")
   })
 
   describe("desktop view - when user is not authenticated", () => {
@@ -117,10 +120,10 @@ describe("NavBar", () => {
   })
 
   describe("desktop view - when user is authenticated", () => {
-    it("should render user email and sign out button on desktop", () => {
+    it("should render sign out button but not user email on desktop", () => {
       render(<NavBar user={mockUser} />)
 
-      expect(screen.getByText("test@example.com")).toBeInTheDocument()
+      expect(screen.queryByText("test@example.com")).not.toBeInTheDocument()
       expect(screen.getByText("Sign Out")).toBeInTheDocument()
       expect(screen.queryByText("Sign In")).not.toBeInTheDocument()
       expect(screen.queryByText("Sign Up")).not.toBeInTheDocument()
@@ -133,6 +136,22 @@ describe("NavBar", () => {
       const desktopMenu = document.querySelector(".hidden.md\\:flex")
       expect(desktopMenu).toBeInTheDocument()
       expect(desktopMenu?.textContent).not.toContain("Pricing")
+    })
+
+    it("should render Dashboard link when authenticated user is on home route", () => {
+      mockPathname.mockReturnValue("/")
+      render(<NavBar user={mockUser} />)
+
+      const dashboardLink = screen.getByText("Dashboard")
+      expect(dashboardLink).toBeInTheDocument()
+      expect(dashboardLink.closest("a")).toHaveAttribute("href", "/dashboard")
+    })
+
+    it("should not render Dashboard link when authenticated user is not on home route", () => {
+      mockPathname.mockReturnValue("/some-other-page")
+      render(<NavBar user={mockUser} />)
+
+      expect(screen.queryByText("Dashboard")).not.toBeInTheDocument()
     })
 
     it("should render KeyFate logo linking to dashboard", () => {
@@ -261,16 +280,14 @@ describe("NavBar", () => {
       })
     })
 
-    it("should show user email and sign out in mobile menu when authenticated", async () => {
+    it("should show sign out but not user email in mobile menu when authenticated", async () => {
       render(<NavBar user={mockUser} />)
 
       const mobileMenuTrigger = screen.getByTestId("mobile-menu-trigger")
       fireEvent.click(mobileMenuTrigger)
 
       await waitFor(() => {
-        expect(screen.getAllByText("test@example.com").length).toBeGreaterThan(
-          0,
-        )
+        expect(screen.queryByText("test@example.com")).not.toBeInTheDocument()
         expect(screen.getAllByText("Sign Out").length).toBeGreaterThan(0)
       })
     })
@@ -283,9 +300,7 @@ describe("NavBar", () => {
       fireEvent.click(mobileMenuTrigger)
 
       await waitFor(() => {
-        expect(screen.getAllByText("test@example.com").length).toBeGreaterThan(
-          0,
-        )
+        expect(screen.getAllByText("Sign Out").length).toBeGreaterThan(0)
       })
 
       // Click sign out in mobile menu
@@ -301,6 +316,32 @@ describe("NavBar", () => {
       })
 
       expect(mockPush).toHaveBeenCalledWith("/auth/login")
+    })
+
+    it("should show Dashboard link in mobile menu when authenticated user is on home route", async () => {
+      mockPathname.mockReturnValue("/")
+      render(<NavBar user={mockUser} />)
+
+      const mobileMenuTrigger = screen.getByTestId("mobile-menu-trigger")
+      fireEvent.click(mobileMenuTrigger)
+
+      await waitFor(() => {
+        const dashboardButton = screen.getByTestId("mobile-dashboard")
+        expect(dashboardButton).toBeInTheDocument()
+        expect(dashboardButton.textContent).toBe("Dashboard")
+      })
+    })
+
+    it("should not show Dashboard link in mobile menu when authenticated user is not on home route", async () => {
+      mockPathname.mockReturnValue("/some-other-page")
+      render(<NavBar user={mockUser} />)
+
+      const mobileMenuTrigger = screen.getByTestId("mobile-menu-trigger")
+      fireEvent.click(mobileMenuTrigger)
+
+      await waitFor(() => {
+        expect(screen.queryByTestId("mobile-dashboard")).not.toBeInTheDocument()
+      })
     })
   })
 
@@ -359,11 +400,10 @@ describe("NavBar", () => {
       expect(signOutButton).toHaveClass("inline-flex") // Button component class
     })
 
-    it("should display user email with correct styling in desktop", () => {
+    it("should not display user email in desktop", () => {
       render(<NavBar user={mockUser} />)
 
-      const emailSpan = screen.getByText("test@example.com")
-      expect(emailSpan).toHaveClass("text-muted-foreground", "text-sm")
+      expect(screen.queryByText("test@example.com")).not.toBeInTheDocument()
     })
   })
 
@@ -384,7 +424,8 @@ describe("NavBar", () => {
       render(<NavBar user={userWithoutEmail as any} />)
 
       expect(screen.getByText("Sign Out")).toBeInTheDocument()
-      // Should not crash when email is undefined
+      // Email is not displayed anyway, so this should work fine
+      expect(screen.queryByText("undefined")).not.toBeInTheDocument()
     })
 
     it("should handle multiple rapid sign out clicks", async () => {
