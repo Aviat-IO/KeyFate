@@ -36,7 +36,7 @@ resource "null_resource" "build_and_push_frontend" {
       # Build the Docker image locally with environment-specific build arg
       docker build \
         --platform linux/amd64 \
-        --build-arg BUILD_ENV=${var.env} \
+        --build-arg BUILD_ENV=${var.env == "prod" ? "production" : "staging"} \
         -t $BUILD_TAG \
         -f ${local.frontend_app_dir}/Dockerfile \
         ${local.frontend_app_dir}
