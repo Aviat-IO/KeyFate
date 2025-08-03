@@ -722,21 +722,21 @@ export type Database = {
       get_tier_by_name: {
         Args: { p_tier_name: Database["public"]["Enums"]["subscription_tier"] }
         Returns: {
+          price_monthly: number
+          price_yearly: number
+          custom_intervals: boolean
           id: string
           name: Database["public"]["Enums"]["subscription_tier"]
           display_name: string
           max_secrets: number
           max_recipients_per_secret: number
-          custom_intervals: boolean
-          price_monthly: number
-          price_yearly: number
         }[]
       }
       get_user_tier: {
         Args: { p_user_id: string }
         Returns: {
-          tier_name: Database["public"]["Enums"]["subscription_tier"]
           max_secrets: number
+          tier_name: Database["public"]["Enums"]["subscription_tier"]
           max_recipients_per_secret: number
           custom_intervals: boolean
           subscription_status: Database["public"]["Enums"]["subscription_status"]
