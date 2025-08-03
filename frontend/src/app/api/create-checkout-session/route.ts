@@ -115,7 +115,10 @@ async function createCheckoutSession(lookupKey: string) {
         `${NEXT_PUBLIC_SITE_URL}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${NEXT_PUBLIC_SITE_URL}/pricing?canceled=true`,
       billingAddressCollection: "auto" as const,
-      automaticTax: { enabled: true },
+      automaticTax: { enabled: false },
+      // customerUpdate: {
+      //   address: "auto",
+      // },
       metadata: {
         user_id: user.id,
       },
