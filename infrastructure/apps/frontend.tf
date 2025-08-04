@@ -115,14 +115,14 @@ module "cloud_run" {
       }
       # Additional environment variables from terraform.tfvars
       env = {
-        ENV                                = var.env
-        NEXT_PUBLIC_SITE_URL               = var.next_public_site_url
-        NEXT_PUBLIC_SUPABASE_URL           = var.next_public_supabase_url
-        NEXT_PUBLIC_SUPABASE_ANON_KEY      = var.next_public_supabase_anon_key
         NEXT_PUBLIC_COMPANY                = var.next_public_company
+        NEXT_PUBLIC_ENV                    = var.env
         NEXT_PUBLIC_PARENT_COMPANY         = var.next_public_parent_company
-        NEXT_PUBLIC_SUPPORT_EMAIL          = var.next_public_support_email
+        NEXT_PUBLIC_SITE_URL               = var.next_public_site_url
         NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = var.next_public_stripe_publishable_key
+        NEXT_PUBLIC_SUPABASE_ANON_KEY      = var.next_public_supabase_anon_key
+        NEXT_PUBLIC_SUPABASE_URL           = var.next_public_supabase_url
+        NEXT_PUBLIC_SUPPORT_EMAIL          = var.next_public_support_email
       }
       # Secret environment variables from Secret Manager
       env_from_key = {

@@ -75,22 +75,46 @@ verify-seed:
 functions-serve:
 	supabase functions serve --env-file functions/.env.development.local --no-verify-jwt
 
-# Deploy functions to staging
-deploy-functions-staging:
-	@echo "🚀 Deploying functions to staging..."
-	@read -p "Enter Supabase staging project ID: " project_id; \
-	echo "Deploying to project: $$project_id"; \
-	supabase functions deploy --project-ref $$project_id; \
-	echo "Deploying check-in function with --no-verify-jwt..."; \
-	supabase functions deploy check-in --project-ref $$project_id --no-verify-jwt; \
-	echo "✅ Functions deployed to staging successfully!"
+link-staging: link-env
+	@if [ -z "$$SUPABASE_PROJECT_ID_STAGING" ]; then \
+		read -p "Enter Supabase staging project ID: " project_id; \
+		export SUPABASE_PROJECT_ID_STAGING=$$project_id; \
+	fi
+	npx @dotenvx/dotenvx run -f .env.staging -- npx supabase link --project-ref $$SUPABASE_PROJECT_ID_STAGING
+link-prod: link-env
+	@if [ -z "$$SUPABASE_PROJECT_ID_PROD" ]; then \
+		read -p "Enter Supabase production project ID: " project_id; \
+		export SUPABASE_PROJECT_ID_PROD=$$project_id; \
+	fi
+	npx @dotenvx/dotenvx run -f .env.production -- npx supabase link --project-ref $$SUPABASE_PROJECT_ID_PROD
 
-# Deploy functions to production
-deploy-functions-prod:
-	@echo "🚀 Deploying functions to production..."
-	@read -p "Enter Supabase production project ID: " project_id; \
-	echo "Deploying to project: $$project_id"; \
-	supabase functions deploy --project-ref $$project_id; \
-	echo "Deploying check-in function with --no-verify-jwt..."; \
-	supabase functions deploy check-in --project-ref $$project_id --no-verify-jwt; \
+deploy-db-staging: link-staging
+	npx @dotenvx/dotenvx run -f .env.staging -- npx supabase db push
+deploy-db-prod: link-prod
+	npx @dotenvx/dotenvx run -f .env.production -- npx supabase db push
+
+deploy-config-staging: link-staging
+	npx @dotenvx/dotenvx run -f .env.staging -- npx supabase config push
+deploy-config-prod: link-prod
+	npx @dotenvx/dotenvx run -f .env.production -- npx supabase config push
+
+deploy-functions-staging: link-staging
+	npx @dotenvx/dotenvx run -f .env.staging -- npx supabase functions deploy
+	npx @dotenvx/dotenvx run -f .env.staging -- npx supabase functions deploy check-in --no-verify-jwt
+deploy-functions-prod: link-prod
+	npx @dotenvx/dotenvx run -f .env.production -- npx supabase functions deploy
+	npx @dotenvx/dotenvx run -f .env.production -- npx supabase functions deploy check-in --no-verify-jwt
 	echo "✅ Functions deployed to production successfully!"
+
+deploy-staging: deploy-config-staging deploy-functions-staging deploy-db-staging
+deploy-prod: deploy-config-prod deploy-functions-prod deploy-db-prod
+
+link-env:
+	@if [ ! -L .env ]; then ln -s ../frontend/.env.development.local .env; fi
+	@if [ ! -L .env.staging ]; then ln -s ../frontend/.env.staging.local .env.staging; fi
+	@if [ ! -L .env.production ]; then ln -s ../frontend/.env.production.local .env.production; fi
+
+unlink-env:
+	unlink .env
+	unlink .env.staging
+	unlink .env.production
