@@ -57,7 +57,7 @@ export default function Home() {
         </div>
 
         {/* Content */}
-        <div className="relative z-10 mx-auto max-w-4xl text-center">
+        <div className="relative z-10 mx-auto max-w-5xl text-center">
           <Badge
             variant="outline"
             className="animate-in fade-in slide-in-from-bottom-4 mb-6 text-sm duration-700"
@@ -75,9 +75,10 @@ export default function Home() {
             Protected
           </h1>
 
-          <p className="text-muted-foreground animate-in fade-in slide-in-from-bottom-8 delay-400 mb-12 text-xl leading-relaxed duration-700 md:text-2xl">
+          <p className="text-muted-foreground animate-in fade-in slide-in-from-bottom-8 delay-400 my-12 text-xl leading-relaxed duration-700 md:text-2xl">
             Securely share critical information with trusted contacts if you
-            become unavailable.{" "}
+            become unavailable.
+            <br />
             <span className="text-foreground font-medium">
               Perfect for crypto keys, sensitive documents, and estate planning.
             </span>
