@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { NEXT_PUBLIC_SITE_URL } from "@/lib/env"
 import { createClient } from "@/utils/supabase/client"
 import { useState } from "react"
 
@@ -13,7 +14,7 @@ export function SocialButtons() {
   const handleGoogleLogin = async () => {
     setLoading(true)
     try {
-      const redirectUrl = `${window.location.origin}/auth/callback`
+      const redirectUrl = `${NEXT_PUBLIC_SITE_URL}/auth/callback`
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",

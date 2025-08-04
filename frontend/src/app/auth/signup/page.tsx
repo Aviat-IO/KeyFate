@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { NEXT_PUBLIC_SITE_URL } from "@/lib/env"
 import { supabase } from "@/lib/supabase"
 import { AlertCircle } from "lucide-react"
 import Link from "next/link"
@@ -27,8 +28,8 @@ export default function SignUpPage() {
         password,
         options: {
           emailRedirectTo: nextUrl
-            ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextUrl)}`
-            : `${window.location.origin}/auth/callback`,
+            ? `${NEXT_PUBLIC_SITE_URL}/auth/callback?next=${encodeURIComponent(nextUrl)}`
+            : `${NEXT_PUBLIC_SITE_URL}/auth/callback`,
         },
       })
       if (error) throw error
