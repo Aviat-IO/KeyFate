@@ -19,7 +19,7 @@ test:
 # Type generation
 gen-types:
 	@echo "Generating database types..."
-	npx supabase gen types typescript --local > database.types.ts
+	supabase gen types typescript --local > database.types.ts
 	@echo "Copying types to functions shared directory..."
 	cp database.types.ts functions/_shared/database.types.ts
 	@echo "Copying types to root directory..."
@@ -80,34 +80,53 @@ link-staging: link-env
 		read -p "Enter Supabase staging project ID: " project_id; \
 		export SUPABASE_PROJECT_ID_STAGING=$$project_id; \
 	fi
-	npx @dotenvx/dotenvx run -f .env.staging -- npx supabase link --project-ref $$SUPABASE_PROJECT_ID_STAGING
+	supabase link --project-ref $$SUPABASE_PROJECT_ID_STAGING
 link-prod: link-env
 	@if [ -z "$$SUPABASE_PROJECT_ID_PROD" ]; then \
 		read -p "Enter Supabase production project ID: " project_id; \
 		export SUPABASE_PROJECT_ID_PROD=$$project_id; \
 	fi
-	npx @dotenvx/dotenvx run -f .env.production -- npx supabase link --project-ref $$SUPABASE_PROJECT_ID_PROD
+	supabase link --project-ref $$SUPABASE_PROJECT_ID_PROD
 
 deploy-db-staging: link-staging
-	npx @dotenvx/dotenvx run -f .env.staging -- npx supabase db push
+	supabase db push
 deploy-db-prod: link-prod
-	npx @dotenvx/dotenvx run -f .env.production -- npx supabase db push
+	supabase db push
 
 deploy-config-staging: link-staging
-	npx @dotenvx/dotenvx run -f .env.staging -- npx supabase config push
+	supabase config push
 deploy-config-prod: link-prod
-	npx @dotenvx/dotenvx run -f .env.production -- npx supabase config push
+	supabase config push
 
 deploy-functions-staging: link-staging
-	npx @dotenvx/dotenvx run -f .env.staging -- npx supabase functions deploy
-	npx @dotenvx/dotenvx run -f .env.staging -- npx supabase functions deploy check-in --no-verify-jwt
+	supabase functions deploy
+	supabase functions deploy check-in --no-verify-jwt
 deploy-functions-prod: link-prod
-	npx @dotenvx/dotenvx run -f .env.production -- npx supabase functions deploy
-	npx @dotenvx/dotenvx run -f .env.production -- npx supabase functions deploy check-in --no-verify-jwt
+	supabase functions deploy
+	supabase functions deploy check-in --no-verify-jwt
 	echo "✅ Functions deployed to production successfully!"
 
-deploy-staging: deploy-config-staging deploy-functions-staging deploy-db-staging
-deploy-prod: deploy-config-prod deploy-functions-prod deploy-db-prod
+deploy-staging: deploy-config-staging set-secrets-staging deploy-functions-staging deploy-db-staging
+deploy-prod: deploy-config-prod set-secrets-prod deploy-functions-prod deploy-db-prod
+
+# Set secrets for Edge Functions
+set-secrets-staging: link-staging
+	@echo "🔐 Setting secrets for staging Edge Functions..."
+	supabase secrets set DB_URL="$$(grep DB_URL .env.staging | cut -d'=' -f2-)"
+	supabase secrets set ENCRYPTION_KEY="$$(grep ENCRYPTION_KEY .env.staging | cut -d'=' -f2-)"
+	supabase secrets set SERVICE_ROLE_KEY="$$(grep SUPABASE_SERVICE_ROLE_KEY .env.staging | cut -d'=' -f2-)"
+	supabase secrets set SENDGRID_API_KEY="$$(grep SENDGRID_API_KEY .env.staging | cut -d'=' -f2-)"
+	supabase secrets set SITE_URL="$$(grep NEXT_PUBLIC_SITE_URL .env.staging | cut -d'=' -f2-)"
+	@echo "✅ Secrets set for staging!"
+
+set-secrets-prod: link-prod
+	@echo "🔐 Setting secrets for production Edge Functions..."
+	supabase secrets set DB_URL="$$(grep DB_URL .env.production | cut -d'=' -f2-)"
+	supabase secrets set ENCRYPTION_KEY="$$(grep ENCRYPTION_KEY .env.production | cut -d'=' -f2-)"
+	supabase secrets set SERVICE_ROLE_KEY="$$(grep SUPABASE_SERVICE_ROLE_KEY .env.production | cut -d'=' -f2-)"
+	supabase secrets set SENDGRID_API_KEY="$$(grep SENDGRID_API_KEY .env.production | cut -d'=' -f2-)"
+	supabase secrets set SITE_URL="$$(grep NEXT_PUBLIC_SITE_URL .env.production | cut -d'=' -f2-)"
+	@echo "✅ Secrets set for production!"
 
 link-env:
 	@if [ ! -L .env ]; then ln -s ../frontend/.env.development.local .env; fi
