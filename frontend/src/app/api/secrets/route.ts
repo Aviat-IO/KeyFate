@@ -1,6 +1,6 @@
 import { secretSchema } from "@/lib/schemas/secret";
 import { Tables } from "@/types";
-import { createClient } from "@/utils/supabase/server";
+import { createClient, createServiceRoleClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { encryptMessage } from "@/lib/encryption";
@@ -8,6 +8,7 @@ import { encryptMessage } from "@/lib/encryption";
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
+    const supabaseAdmin = createServiceRoleClient();
 
     const { data: user, error: userError } = await supabase.auth.getUser();
     if (userError || !user.user) {
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
       insertData.recipient_email = null;
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("secrets")
       .insert([insertData])
       .select()
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
     // Schedule reminder (mock implementation for tests)
     let warning = undefined;
     try {
-      const { error: reminderError } = await supabase.rpc(
+      const { error: reminderError } = await supabaseAdmin.rpc(
         "schedule_secret_reminders",
         {
           p_secret_id: data.id,

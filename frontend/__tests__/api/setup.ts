@@ -62,6 +62,7 @@ vi.mock("@supabase/ssr", () => ({
 // Mock the server utils directly
 vi.mock("@/utils/supabase/server", () => ({
   createClient: vi.fn(() => Promise.resolve(mockSupabaseClient)),
+  createServiceRoleClient: vi.fn(() => mockSupabaseClient),
 }));
 
 // Mock Supabase client package (for client-side usage)
