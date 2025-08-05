@@ -36,11 +36,11 @@ INSERT INTO user_contact_methods (id, user_id, email, phone, preferred_method, c
 INSERT INTO user_subscriptions (id, user_id, tier_name, status, created_at, updated_at) VALUES
 ('660e8400-e29b-41d4-a716-446655440002', '836f82db-9912-4b34-8101-1f16b49dfa5f', 'free', 'active', NOW(), NOW());
 
--- Pro user subscriptions (migrated from paddle to generic provider)
+-- Pro user subscriptions (using generic provider schema)
 INSERT INTO user_subscriptions (id, user_id, tier_name, status, created_at, updated_at, current_period_start, current_period_end, provider, provider_customer_id, provider_subscription_id) VALUES
-('660e8400-e29b-41d4-a716-446655440001', '48a35ccd-e1e4-458b-86ec-5bd88a0addc7', 'pro', 'active', NOW(), NOW(), NOW() - INTERVAL '15 days', NOW() + INTERVAL '15 days', 'paddle', 'cust_48a35ccd', 'sub_48a35ccd'),
-('660e8400-e29b-41d4-a716-446655440003', '2734a10c-2335-480b-8bf3-efc468cf89de', 'pro', 'active', NOW(), NOW(), NOW() - INTERVAL '15 days', NOW() + INTERVAL '15 days', 'paddle', 'cust_2734a10c', 'sub_2734a10c'),
-('660e8400-e29b-41d4-a716-446655440004', '78dd97e7-1ce4-4a41-8fdc-69e3371f2175', 'pro', 'active', NOW(), NOW(), NOW() - INTERVAL '15 days', NOW() + INTERVAL '15 days', 'paddle', 'cust_78dd97e7', 'sub_78dd97e7');
+('660e8400-e29b-41d4-a716-446655440001', '48a35ccd-e1e4-458b-86ec-5bd88a0addc7', 'pro', 'active', NOW(), NOW(), NOW() - INTERVAL '15 days', NOW() + INTERVAL '15 days', 'stripe', 'cus_48a35ccd', 'sub_48a35ccd'),
+('660e8400-e29b-41d4-a716-446655440003', '2734a10c-2335-480b-8bf3-efc468cf89de', 'pro', 'active', NOW(), NOW(), NOW() - INTERVAL '15 days', NOW() + INTERVAL '15 days', 'stripe', 'cus_2734a10c', 'sub_2734a10c'),
+('660e8400-e29b-41d4-a716-446655440004', '78dd97e7-1ce4-4a41-8fdc-69e3371f2175', 'pro', 'active', NOW(), NOW(), NOW() - INTERVAL '15 days', NOW() + INTERVAL '15 days', 'stripe', 'cus_78dd97e7', 'sub_78dd97e7');
 
 -- User tiers (using new normalized schema with tier_id references)
 INSERT INTO user_tiers (id, user_id, tier_id, created_at, updated_at) VALUES
