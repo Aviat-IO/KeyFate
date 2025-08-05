@@ -63,7 +63,7 @@ function LoadingSkeleton() {
 
 export default async function DashboardPage() {
   return (
-    <div className="mx-auto sm:px-4 py-8">
+    <div className="mx-auto py-8 sm:px-4">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-bold">Your Secrets</h1>
         <Button asChild variant="outline">
