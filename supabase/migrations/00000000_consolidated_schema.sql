@@ -969,6 +969,9 @@ CREATE POLICY "Tiers are viewable by authenticated users" ON public.tiers
 
 -- Grant permissions
 GRANT EXECUTE ON FUNCTION create_check_in_token TO service_role, authenticated;
+GRANT EXECUTE ON FUNCTION public.check_in_secret(UUID, UUID, TIMESTAMPTZ, TIMESTAMPTZ) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.toggle_secret_pause(UUID, UUID, TEXT, TIMESTAMPTZ, TIMESTAMPTZ) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.schedule_secret_reminders(UUID, TIMESTAMPTZ) TO service_role;
 GRANT EXECUTE ON FUNCTION public.migrate_user_subscription_provider(UUID, TEXT, TEXT, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_tier_by_name(subscription_tier) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.assign_user_tier(UUID, subscription_tier) TO authenticated;

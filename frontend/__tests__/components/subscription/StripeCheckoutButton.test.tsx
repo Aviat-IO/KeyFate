@@ -216,7 +216,7 @@ describe("StripeCheckoutButton", () => {
     fireEvent.click(button)
 
     await waitFor(() => {
-      expect(consoleSpy).toHaveBeenCalledWith("Checkout failed")
+      expect(consoleSpy).toHaveBeenCalledWith("Checkout failed", { error: "Bad request" })
     })
 
     consoleSpy.mockRestore()
