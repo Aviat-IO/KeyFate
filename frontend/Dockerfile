@@ -24,16 +24,16 @@ ARG BUILD_ENV=production
 
 # Copy appropriate environment files based on BUILD_ENV
 RUN if [ "$BUILD_ENV" = "staging" ]; then \
-      echo "Building for staging environment"; \
-      cp .env.staging .env.production 2>/dev/null || true; \
-      cp .env.staging.local .env.production.local 2>/dev/null || true; \
-    elif [ "$BUILD_ENV" = "development" ]; then \
-      echo "Building for development environment"; \
-      cp .env.development .env.production 2>/dev/null || true; \
-      cp .env.development.local .env.production.local 2>/dev/null || true; \
-    else \
-      echo "Building for production environment"; \
-    fi
+  echo "Building for staging environment"; \
+  cp .env.staging .env.production 2>/dev/null || true; \
+  cp .env.staging.local .env.production.local 2>/dev/null || true; \
+  elif [ "$BUILD_ENV" = "development" ]; then \
+  echo "Building for development environment"; \
+  cp .env.development .env.production 2>/dev/null || true; \
+  cp .env.development.local .env.production.local 2>/dev/null || true; \
+  else \
+  echo "Building for production environment"; \
+  fi
 
 # Build the app
 RUN pnpm build
