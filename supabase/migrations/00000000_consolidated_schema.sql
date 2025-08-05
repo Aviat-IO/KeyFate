@@ -708,6 +708,43 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Create a trigger to automatically assign free tier to new users
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_free_tier_id UUID;
+BEGIN
+  -- Get the free tier ID
+  SELECT id INTO v_free_tier_id FROM public.tiers WHERE name = 'free' LIMIT 1;
+
+  -- If no free tier exists, create it
+  IF v_free_tier_id IS NULL THEN
+    INSERT INTO public.tiers (name, display_name, max_secrets, max_recipients_per_secret, custom_intervals, price_monthly, price_yearly)
+    VALUES ('free', 'Free', 1, 1, FALSE, 0.00, 0.00)
+    RETURNING id INTO v_free_tier_id;
+  END IF;
+
+  -- Assign free tier to the new user
+  INSERT INTO public.user_tiers (user_id, tier_id)
+  VALUES (NEW.id, v_free_tier_id)
+  ON CONFLICT (user_id) DO NOTHING;
+
+  RETURN NEW;
+END $$;
+
+-- Create the trigger for new user creation
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_new_user();
+
+-- Grant execute permission on the trigger function
+GRANT EXECUTE ON FUNCTION public.handle_new_user() TO service_role;
+
 -- Helper functions for subscription management
 CREATE OR REPLACE FUNCTION public.migrate_user_subscription_provider(
   p_user_id UUID,
@@ -976,6 +1013,18 @@ GRANT EXECUTE ON FUNCTION public.migrate_user_subscription_provider(UUID, TEXT, 
 GRANT EXECUTE ON FUNCTION public.get_tier_by_name(subscription_tier) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.assign_user_tier(UUID, subscription_tier) TO authenticated;
 GRANT SELECT ON public.tiers TO authenticated;
+
+-- Grant additional permissions to authenticated users for Google OAuth compatibility
+GRANT USAGE ON SCHEMA public TO authenticated;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.secrets TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.user_contact_methods TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.checkin_history TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.reminders TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.recipient_access_tokens TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.check_in_tokens TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.user_tiers TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.user_subscriptions TO authenticated;
 
 -- Add is_super_admin column to auth.users if it doesn't exist
 DO $$
