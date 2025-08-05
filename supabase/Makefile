@@ -69,7 +69,7 @@ verify-seed:
 	@psql $(shell supabase status --output env | grep DB_URL | cut -d'=' -f2-) -c "SELECT id, email FROM auth.users ORDER BY email;" 2>/dev/null || echo "No auth users found"
 	@echo ""
 	@echo "User-Secret Summary:"
-	@psql $(shell supabase status --output env | grep DB_URL | cut -d'=' -f2-) -c "SELECT u.email, COUNT(s.id) as secrets, ut.tier_name FROM auth.users u LEFT JOIN secrets s ON u.id = s.user_id LEFT JOIN user_tiers ut ON u.id = ut.user_id GROUP BY u.email, ut.tier_name ORDER BY u.email;" 2>/dev/null || echo "Failed to query data"
+	@psql $(shell supabase status --output env | grep DB_URL | cut -d'=' -f2-) -c "SELECT u.email, COUNT(s.id) as secrets, t.name as tier_name FROM auth.users u LEFT JOIN secrets s ON u.id = s.user_id LEFT JOIN user_tiers ut ON u.id = ut.user_id LEFT JOIN tiers t ON ut.tier_id = t.id GROUP BY u.email, t.name ORDER BY u.email;" 2>/dev/null || echo "Failed to query data"
 
 # Development functions
 functions-serve:

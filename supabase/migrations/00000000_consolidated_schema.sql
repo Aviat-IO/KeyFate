@@ -12,22 +12,6 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" SCHEMA public;
 CREATE EXTENSION IF NOT EXISTS pgcrypto SCHEMA public;
 CREATE EXTENSION IF NOT EXISTS pg_net WITH SCHEMA extensions;
 
--- Handle pg_cron extension (may already exist in different schema)
-DO $$
-BEGIN
-    -- Try to create in extensions schema, but don't fail if it exists elsewhere
-    BEGIN
-        CREATE EXTENSION IF NOT EXISTS pg_cron WITH SCHEMA extensions;
-    EXCEPTION
-        WHEN dependent_objects_still_exist THEN
-            -- Extension exists with dependencies, skip creation
-            RAISE NOTICE 'pg_cron extension already exists with dependencies, skipping';
-        WHEN duplicate_object THEN
-            -- Extension already exists, skip creation
-            RAISE NOTICE 'pg_cron extension already exists, skipping';
-    END;
-END $$;
-
 -- Grant usage on extensions schema
 REVOKE ALL ON SCHEMA extensions FROM public;
 GRANT USAGE ON SCHEMA extensions TO postgres, service_role;
@@ -95,7 +79,27 @@ DROP TABLE IF EXISTS public.recipient_access_tokens CASCADE;
 DROP TABLE IF EXISTS public.check_in_tokens CASCADE;
 DROP TABLE IF EXISTS public.user_tiers CASCADE;
 DROP TABLE IF EXISTS public.user_subscriptions CASCADE;
-DROP TABLE IF EXISTS public.subscription_usage CASCADE;
+DROP TABLE IF EXISTS public.tiers CASCADE;
+
+-- Create tiers table to define tier features
+CREATE TABLE IF NOT EXISTS public.tiers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name subscription_tier NOT NULL UNIQUE,
+  display_name TEXT NOT NULL,
+  max_secrets INTEGER NOT NULL,
+  max_recipients_per_secret INTEGER NOT NULL,
+  custom_intervals BOOLEAN NOT NULL DEFAULT FALSE,
+  price_monthly DECIMAL(10,2),
+  price_yearly DECIMAL(10,2),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert default tier definitions
+INSERT INTO public.tiers (name, display_name, max_secrets, max_recipients_per_secret, custom_intervals, price_monthly, price_yearly) VALUES
+  ('free', 'Free', 1, 1, FALSE, 0.00, 0.00),
+  ('pro', 'Pro', 10, 5, TRUE, 9.00, 90.00)
+ON CONFLICT (name) DO NOTHING;
 
 -- Create user_contact_methods table
 CREATE TABLE user_contact_methods (
@@ -156,25 +160,23 @@ CREATE TABLE check_in_tokens (
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create user_tiers table (from migration 20241229_add_subscription_tables)
+-- Create user_tiers table (normalized schema with tier_id references)
 CREATE TABLE IF NOT EXISTS public.user_tiers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  tier_name subscription_tier NOT NULL DEFAULT 'free',
-  max_secrets INTEGER NOT NULL DEFAULT 1,
-  max_recipients_per_secret INTEGER NOT NULL DEFAULT 1,
-  custom_intervals BOOLEAN NOT NULL DEFAULT FALSE,
+  tier_id UUID NOT NULL REFERENCES public.tiers(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT unique_user_tier UNIQUE(user_id)
 );
 
--- Create user_subscriptions table (from migration 20241229_add_subscription_tables)
+-- Create user_subscriptions table (provider-agnostic schema)
 CREATE TABLE IF NOT EXISTS public.user_subscriptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  paddle_subscription_id TEXT UNIQUE,
-  paddle_customer_id TEXT,
+  provider TEXT,
+  provider_customer_id TEXT,
+  provider_subscription_id TEXT,
   status subscription_status NOT NULL DEFAULT 'active',
   tier_name subscription_tier NOT NULL DEFAULT 'free',
   current_period_start TIMESTAMPTZ,
@@ -182,17 +184,9 @@ CREATE TABLE IF NOT EXISTS public.user_subscriptions (
   cancel_at_period_end BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT unique_user_subscription UNIQUE(user_id)
-);
-
--- Create subscription_usage table (from migration 20241229_add_subscription_tables)
-CREATE TABLE IF NOT EXISTS public.subscription_usage (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  secrets_count INTEGER NOT NULL DEFAULT 0,
-  total_recipients INTEGER NOT NULL DEFAULT 0,
-  last_calculated TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT unique_user_usage UNIQUE(user_id)
+  CONSTRAINT unique_user_subscription UNIQUE(user_id),
+  CONSTRAINT unique_provider_subscription_id UNIQUE(provider, provider_subscription_id),
+  CONSTRAINT check_provider_not_null CHECK (provider IS NOT NULL OR (provider_customer_id IS NULL AND provider_subscription_id IS NULL))
 );
 
 -- Create reminders table
@@ -241,12 +235,12 @@ CREATE INDEX idx_recipient_access_tokens_expires_at ON public.recipient_access_t
 CREATE INDEX idx_check_in_tokens_token ON check_in_tokens(token);
 
 CREATE INDEX IF NOT EXISTS idx_user_tiers_user_id ON public.user_tiers(user_id);
-CREATE INDEX IF NOT EXISTS idx_user_tiers_tier_name ON public.user_tiers(tier_name);
+CREATE INDEX IF NOT EXISTS idx_user_tiers_tier_id ON public.user_tiers(tier_id);
 CREATE INDEX IF NOT EXISTS idx_user_subscriptions_user_id ON public.user_subscriptions(user_id);
-CREATE INDEX IF NOT EXISTS idx_user_subscriptions_paddle_subscription_id ON public.user_subscriptions(paddle_subscription_id);
-CREATE INDEX IF NOT EXISTS idx_user_subscriptions_paddle_customer_id ON public.user_subscriptions(paddle_customer_id);
+CREATE INDEX IF NOT EXISTS idx_user_subscriptions_provider ON public.user_subscriptions(provider);
+CREATE INDEX IF NOT EXISTS idx_user_subscriptions_provider_customer_id ON public.user_subscriptions(provider_customer_id);
+CREATE INDEX IF NOT EXISTS idx_user_subscriptions_provider_subscription_id ON public.user_subscriptions(provider_subscription_id);
 CREATE INDEX IF NOT EXISTS idx_user_subscriptions_status ON public.user_subscriptions(status);
-CREATE INDEX IF NOT EXISTS idx_subscription_usage_user_id ON public.subscription_usage(user_id);
 
 CREATE INDEX idx_secrets_trigger_check ON secrets (status, is_triggered, next_check_in) WHERE status = 'active' AND is_triggered = false;
 CREATE INDEX idx_reminders_status_scheduled ON reminders (status, scheduled_for) WHERE status = 'pending';
@@ -275,6 +269,11 @@ CREATE TRIGGER update_user_tiers_updated_at
 
 CREATE TRIGGER update_user_subscriptions_updated_at
     BEFORE UPDATE ON public.user_subscriptions
+    FOR EACH ROW
+    EXECUTE FUNCTION public.update_updated_at_column();
+
+CREATE TRIGGER update_tiers_updated_at
+    BEFORE UPDATE ON public.tiers
     FOR EACH ROW
     EXECUTE FUNCTION public.update_updated_at_column();
 
@@ -585,7 +584,7 @@ BEGIN
 END;
 $$;
 
--- Subscription-related functions (from migration 20241229_add_subscription_tables)
+-- Subscription-related functions
 CREATE OR REPLACE FUNCTION public.get_user_tier(p_user_id UUID)
 RETURNS TABLE (
   tier_name subscription_tier,
@@ -600,25 +599,15 @@ AS $$
 BEGIN
   RETURN QUERY
   SELECT
-    ut.tier_name,
-    ut.max_secrets,
-    ut.max_recipients_per_secret,
-    ut.custom_intervals,
+    t.name as tier_name,
+    t.max_secrets,
+    t.max_recipients_per_secret,
+    t.custom_intervals,
     COALESCE(us.status, 'active'::subscription_status) as subscription_status
   FROM public.user_tiers ut
+  JOIN public.tiers t ON ut.tier_id = t.id
   LEFT JOIN public.user_subscriptions us ON ut.user_id = us.user_id
   WHERE ut.user_id = p_user_id;
-
-  -- If no tier exists, return free tier defaults
-  IF NOT FOUND THEN
-    RETURN QUERY
-    SELECT
-      'free'::subscription_tier as tier_name,
-      2 as max_secrets,
-      1 as max_recipients_per_secret,
-      FALSE as custom_intervals,
-      'active'::subscription_status as subscription_status;
-  END IF;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -648,15 +637,6 @@ BEGIN
   WHERE user_id = p_user_id
   AND status != 'triggered';
 
-  -- Update or insert usage record
-  INSERT INTO public.subscription_usage (user_id, secrets_count, total_recipients, last_calculated)
-  VALUES (p_user_id, v_secrets_count, v_total_recipients, CURRENT_TIMESTAMP)
-  ON CONFLICT (user_id)
-  DO UPDATE SET
-    secrets_count = v_secrets_count,
-    total_recipients = v_total_recipients,
-    last_calculated = CURRENT_TIMESTAMP;
-
   RETURN QUERY
   SELECT v_secrets_count, v_total_recipients;
 END;
@@ -671,22 +651,19 @@ DECLARE
   v_current_count INTEGER;
   v_max_secrets INTEGER;
 BEGIN
-  -- Get current usage and tier limits
-  SELECT su.secrets_count, ut.max_secrets
-  INTO v_current_count, v_max_secrets
-  FROM public.subscription_usage su
-  LEFT JOIN public.user_tiers ut ON su.user_id = ut.user_id
-  WHERE su.user_id = p_user_id;
+  -- Get current usage
+  SELECT secrets_count INTO v_current_count
+  FROM public.calculate_user_usage(p_user_id);
 
-  -- If no usage record, calculate it
-  IF v_current_count IS NULL THEN
-    SELECT secrets_count INTO v_current_count
-    FROM public.calculate_user_usage(p_user_id);
-  END IF;
+  -- Get tier limits
+  SELECT t.max_secrets INTO v_max_secrets
+  FROM public.user_tiers ut
+  JOIN public.tiers t ON ut.tier_id = t.id
+  WHERE ut.user_id = p_user_id;
 
   -- If no tier record, use free tier default
   IF v_max_secrets IS NULL THEN
-    v_max_secrets := 2;
+    v_max_secrets := 1;
   END IF;
 
   RETURN v_current_count < v_max_secrets;
@@ -700,8 +677,16 @@ SET search_path = ''
 AS $$
 DECLARE
   v_count INTEGER := 0;
+  v_free_tier_id UUID;
   user_record RECORD;
 BEGIN
+  -- Get free tier ID
+  SELECT id INTO v_free_tier_id FROM public.tiers WHERE name = 'free';
+
+  IF v_free_tier_id IS NULL THEN
+    RAISE EXCEPTION 'Free tier not found in tiers table';
+  END IF;
+
   -- Add free tier for all existing users without tiers
   FOR user_record IN
     SELECT au.id as user_id
@@ -709,11 +694,12 @@ BEGIN
     LEFT JOIN public.user_tiers ut ON au.id = ut.user_id
     WHERE ut.user_id IS NULL
   LOOP
-    INSERT INTO public.user_tiers (user_id, tier_name, max_secrets, max_recipients_per_secret, custom_intervals)
-    VALUES (user_record.user_id, 'free', 1, 1, FALSE);
-
-    -- Calculate initial usage
-    PERFORM public.calculate_user_usage(user_record.user_id);
+    INSERT INTO public.user_tiers (user_id, tier_id)
+    SELECT
+      user_record.user_id,
+      t.id
+    FROM public.tiers t
+    WHERE t.name = 'free';
 
     v_count := v_count + 1;
   END LOOP;
@@ -722,20 +708,88 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION public.update_usage_on_secret_change()
-RETURNS TRIGGER
+-- Helper functions for subscription management
+CREATE OR REPLACE FUNCTION public.migrate_user_subscription_provider(
+  p_user_id UUID,
+  p_provider TEXT,
+  p_provider_customer_id TEXT DEFAULT NULL,
+  p_provider_subscription_id TEXT DEFAULT NULL
+)
+RETURNS BOOLEAN
 SECURITY DEFINER
 SET search_path = ''
 AS $$
 BEGIN
-  -- Update usage for the affected user
-  IF TG_OP = 'DELETE' THEN
-    PERFORM public.calculate_user_usage(OLD.user_id);
-    RETURN OLD;
-  ELSE
-    PERFORM public.calculate_user_usage(NEW.user_id);
-    RETURN NEW;
+  UPDATE public.user_subscriptions
+  SET
+    provider = p_provider,
+    provider_customer_id = p_provider_customer_id,
+    provider_subscription_id = p_provider_subscription_id
+  WHERE user_id = p_user_id;
+
+  RETURN FOUND;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION public.get_tier_by_name(p_tier_name subscription_tier)
+RETURNS TABLE (
+  id UUID,
+  name subscription_tier,
+  display_name TEXT,
+  max_secrets INTEGER,
+  max_recipients_per_secret INTEGER,
+  custom_intervals BOOLEAN,
+  price_monthly DECIMAL(10,2),
+  price_yearly DECIMAL(10,2)
+)
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    t.id,
+    t.name,
+    t.display_name,
+    t.max_secrets,
+    t.max_recipients_per_secret,
+    t.custom_intervals,
+    t.price_monthly,
+    t.price_yearly
+  FROM public.tiers t
+  WHERE t.name = p_tier_name;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION public.assign_user_tier(
+  p_user_id UUID,
+  p_tier_name subscription_tier
+)
+RETURNS BOOLEAN
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_tier_id UUID;
+BEGIN
+  -- Get tier ID
+  SELECT id INTO v_tier_id
+  FROM public.tiers
+  WHERE name = p_tier_name;
+
+  IF v_tier_id IS NULL THEN
+    RETURN FALSE;
   END IF;
+
+  -- Insert or update user tier
+  INSERT INTO public.user_tiers (user_id, tier_id)
+  VALUES (p_user_id, v_tier_id)
+  ON CONFLICT (user_id)
+  DO UPDATE SET
+    tier_id = EXCLUDED.tier_id,
+    updated_at = CURRENT_TIMESTAMP;
+
+  RETURN TRUE;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -752,11 +806,6 @@ CREATE TRIGGER schedule_reminders_trigger
   WHEN (NEW.next_check_in IS NOT NULL AND NEW.status = 'active')
   EXECUTE FUNCTION schedule_reminders_on_secret_change();
 
-CREATE TRIGGER update_usage_on_secret_change_trigger
-  AFTER INSERT OR UPDATE OR DELETE ON public.secrets
-  FOR EACH ROW
-  EXECUTE FUNCTION public.update_usage_on_secret_change();
-
 -- Enable RLS on all tables
 ALTER TABLE public.secrets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reminders ENABLE ROW LEVEL SECURITY;
@@ -767,7 +816,7 @@ ALTER TABLE public.recipient_access_tokens ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.check_in_tokens ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_tiers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.subscription_usage ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tiers ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS policies for secrets
 CREATE POLICY "Users can view their own secrets"
@@ -902,7 +951,7 @@ CREATE POLICY "Service role can manage all tiers"
   WITH CHECK (true);
 
 -- RLS Policies for user_subscriptions
-CREATE POLICY "Users can view their own subscription"
+CREATE POLICY "Users can view their own subscriptions"
   ON public.user_subscriptions
   FOR SELECT
   USING ((select auth.uid()) = user_id);
@@ -914,21 +963,16 @@ CREATE POLICY "Service role can manage all subscriptions"
   USING (true)
   WITH CHECK (true);
 
--- RLS Policies for subscription_usage
-CREATE POLICY "Users can view their own usage"
-  ON public.subscription_usage
-  FOR SELECT
-  USING ((select auth.uid()) = user_id);
-
-CREATE POLICY "Service role can manage all usage"
-  ON public.subscription_usage
-  FOR ALL
-  TO service_role
-  USING (true)
-  WITH CHECK (true);
+-- RLS Policies for tiers
+CREATE POLICY "Tiers are viewable by authenticated users" ON public.tiers
+  FOR SELECT TO authenticated USING (true);
 
 -- Grant permissions
 GRANT EXECUTE ON FUNCTION create_check_in_token TO service_role, authenticated;
+GRANT EXECUTE ON FUNCTION public.migrate_user_subscription_provider(UUID, TEXT, TEXT, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_tier_by_name(subscription_tier) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.assign_user_tier(UUID, subscription_tier) TO authenticated;
+GRANT SELECT ON public.tiers TO authenticated;
 
 -- Add is_super_admin column to auth.users if it doesn't exist
 DO $$
@@ -942,6 +986,72 @@ BEGIN
     ALTER TABLE auth.users ADD COLUMN is_super_admin BOOLEAN NOT NULL DEFAULT false;
   END IF;
 END $$;
+
+-- Create secure views for easy access to user information
+-- These views use SECURITY INVOKER and only expose data for the authenticated user
+CREATE OR REPLACE VIEW public.user_tier_info AS
+SELECT
+  auth.uid() as user_id,
+  t.name as tier_name,
+  t.display_name as tier_display_name,
+  t.max_secrets,
+  t.max_recipients_per_secret,
+  t.custom_intervals,
+  t.price_monthly,
+  t.price_yearly,
+  us.status as subscription_status,
+  us.provider,
+  us.current_period_start,
+  us.current_period_end,
+  us.cancel_at_period_end
+FROM public.user_tiers ut
+JOIN public.tiers t ON ut.tier_id = t.id
+LEFT JOIN public.user_subscriptions us ON ut.user_id = us.user_id
+WHERE ut.user_id = auth.uid();
+
+CREATE OR REPLACE VIEW public.user_usage_info AS
+SELECT
+  auth.uid() as user_id,
+  t.name as tier_name,
+  t.max_secrets,
+  t.max_recipients_per_secret,
+  (SELECT secrets_count FROM public.calculate_user_usage(auth.uid())) as current_secrets_count,
+  (SELECT total_recipients FROM public.calculate_user_usage(auth.uid())) as current_total_recipients,
+  (SELECT secrets_count FROM public.calculate_user_usage(auth.uid())) < t.max_secrets as can_create_secret
+FROM public.user_tiers ut
+JOIN public.tiers t ON ut.tier_id = t.id
+WHERE ut.user_id = auth.uid();
+
+CREATE OR REPLACE VIEW public.subscription_management AS
+SELECT
+  auth.uid() as user_id,
+  t.name as tier_name,
+  t.display_name as tier_display_name,
+  us.provider,
+  us.provider_customer_id,
+  us.provider_subscription_id,
+  us.status as subscription_status,
+  us.current_period_start,
+  us.current_period_end,
+  us.cancel_at_period_end,
+  (SELECT secrets_count FROM public.calculate_user_usage(auth.uid())) as current_secrets_count,
+  t.max_secrets,
+  (SELECT total_recipients FROM public.calculate_user_usage(auth.uid())) as current_total_recipients,
+  t.max_recipients_per_secret
+FROM public.user_tiers ut
+JOIN public.tiers t ON ut.tier_id = t.id
+LEFT JOIN public.user_subscriptions us ON ut.user_id = us.user_id
+WHERE ut.user_id = auth.uid();
+
+-- Set views to SECURITY INVOKER after creation
+ALTER VIEW public.user_tier_info SET (security_invoker = true);
+ALTER VIEW public.user_usage_info SET (security_invoker = true);
+ALTER VIEW public.subscription_management SET (security_invoker = true);
+
+-- Grant permissions for views
+GRANT SELECT ON public.user_tier_info TO authenticated;
+GRANT SELECT ON public.user_usage_info TO authenticated;
+GRANT SELECT ON public.subscription_management TO authenticated;
 
 -- Initialize free tiers for existing users (this will handle new users after reset)
 SELECT public.initialize_free_tiers();
