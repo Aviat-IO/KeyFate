@@ -1,29 +1,39 @@
 locals {
-  # frontend_app_dir   = "${path.module}/../../frontend"
-  frontend_app_name  = "frontend"
-  frontend_app_dir   = "${path.module}/../../../../../../frontend"
-  frontend_image_tag = md5(join("", [for f in fileset(local.frontend_app_dir, "**") : filemd5("${local.frontend_app_dir}/${f}")]))
-  # Include this file in the hash to force rebuild when Terraform config changes
-  terraform_config_hash = filemd5("${path.module}/frontend.tf")
-  # Get the latest git commit hash for image tagging
-  git_commit_hash = trimspace(data.external.git_commit.result.commit_hash)
+  frontend_app_name = "frontend"
+  frontend_app_dir  = "${path.module}/../../../../../../frontend"
 
+  # Create a comprehensive hash that includes both file contents and terraform config
+  frontend_content_hash = md5(join("", [
+    for f in fileset(local.frontend_app_dir, "**") : filemd5("${local.frontend_app_dir}/${f}")
+  ]))
+  terraform_config_hash = filemd5("${path.module}/frontend.tf")
+
+  # Combine content hash with terraform config for complete rebuild trigger
+  combined_hash = md5("${local.frontend_content_hash}-${local.terraform_config_hash}")
+
+  # Use the combined hash as the image tag to ensure Cloud Run updates
+  image_tag = local.combined_hash
+
+  # Get git commit for reference (used in labels, not image tag)
+  git_commit_hash = trimspace(data.external.git_commit.result.commit_hash)
 }
 
 # Build and push the frontend image when source files change
+# This resource ensures that both the image build AND Cloud Run deployment
+# are triggered consistently when frontend code changes
 resource "null_resource" "build_and_push_frontend" {
   triggers = {
-    app_dir_hash     = local.frontend_image_tag
-    terraform_config = local.terraform_config_hash
+    # Use the same hash for both triggering and image tagging
+    combined_hash = local.combined_hash
   }
 
   provisioner "local-exec" {
     command     = <<-EOT
       set -e
-      echo "Frontend directory hash: ${self.triggers.app_dir_hash}"
-      echo "Terraform config hash: ${self.triggers.terraform_config}"
+      echo "Combined hash: ${self.triggers.combined_hash}"
+      echo "Git commit: ${local.git_commit_hash}"
 
-      BUILD_TAG=${var.region}-docker.pkg.dev/${module.project.id}/${module.artifact_registry.name}/${local.frontend_app_name}:${local.git_commit_hash}
+      BUILD_TAG=${var.region}-docker.pkg.dev/${module.project.id}/${module.artifact_registry.name}/${local.frontend_app_name}:${local.image_tag}
 
       echo "Building image: $BUILD_TAG"
 
@@ -107,7 +117,7 @@ module "cloud_run" {
 
   containers = {
     frontend = {
-      image = "${module.artifact_registry.url}/${local.frontend_app_name}:${local.git_commit_hash}"
+      image = "${module.artifact_registry.url}/${local.frontend_app_name}:${local.image_tag}"
       ports = {
         default = {
           container_port = 3000
@@ -123,6 +133,8 @@ module "cloud_run" {
         NEXT_PUBLIC_SUPABASE_ANON_KEY      = var.next_public_supabase_anon_key
         NEXT_PUBLIC_SUPABASE_URL           = var.next_public_supabase_url
         NEXT_PUBLIC_SUPPORT_EMAIL          = var.next_public_support_email
+        # Force revision update when code changes by including hash as env var
+        DEPLOYMENT_HASH = local.image_tag
       }
       # Secret environment variables from Secret Manager
       env_from_key = {
@@ -168,6 +180,11 @@ module "cloud_run" {
   revision = {
     max_instance_count = var.max_instances
     min_instance_count = var.min_instances
+    # Force new revision when image changes
+    annotations = {
+      "deployment.hash" = local.image_tag
+      "git.commit"      = local.git_commit_hash
+    }
   }
 
   iam = {
@@ -182,8 +199,7 @@ module "cloud_run" {
     null_resource.build_and_push_frontend,
     data.google_artifact_registry_repository.frontend_repo,
     module.frontend_service_account,
-    module.frontend_secrets,
-    data.external.git_commit
+    module.frontend_secrets
   ]
 }
 
@@ -201,4 +217,17 @@ resource "google_cloud_run_domain_mapping" "frontend_domain" {
   spec {
     route_name = module.cloud_run.service_name
   }
+}
+
+# Output for debugging deployment
+output "frontend_deployment_info" {
+  value = {
+    image_tag         = local.image_tag
+    git_commit        = local.git_commit_hash
+    content_hash      = local.frontend_content_hash
+    terraform_hash    = local.terraform_config_hash
+    full_image_url    = "${module.artifact_registry.url}/${local.frontend_app_name}:${local.image_tag}"
+    cloud_run_service = module.cloud_run.service_name
+  }
+  description = "Frontend deployment information for debugging"
 }
