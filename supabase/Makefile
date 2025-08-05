@@ -124,18 +124,18 @@ deploy-prod: deploy-config-prod set-secrets-prod deploy-functions-prod deploy-db
 # Set secrets for Edge Functions
 set-secrets-staging: link-staging
 	@echo "🔐 Setting secrets for staging Edge Functions..."
-	supabase secrets set DB_URL="$$(grep DB_URL .env.staging | cut -d'=' -f2-)"
-	supabase secrets set ENCRYPTION_KEY="$$(grep ENCRYPTION_KEY .env.staging | cut -d'=' -f2-)"
-	supabase secrets set SERVICE_ROLE_KEY="$$(grep SUPABASE_SERVICE_ROLE_KEY .env.staging | cut -d'=' -f2-)"
-	supabase secrets set SENDGRID_API_KEY="$$(grep SENDGRID_API_KEY .env.staging | cut -d'=' -f2-)"
-	supabase secrets set SITE_URL="$$(grep NEXT_PUBLIC_SITE_URL .env.staging | cut -d'=' -f2-)"
+	supabase secrets set DB_URL="$$(grep DB_URL .env | cut -d'=' -f2-)"
+	supabase secrets set ENCRYPTION_KEY="$$(grep ENCRYPTION_KEY .env | cut -d'=' -f2-)"
+	supabase secrets set SERVICE_ROLE_KEY="$$(grep SUPABASE_SERVICE_ROLE_KEY .env | cut -d'=' -f2-)"
+	supabase secrets set SENDGRID_API_KEY="$$(grep SENDGRID_API_KEY .env | cut -d'=' -f2-)"
+	supabase secrets set SITE_URL="$$(grep NEXT_PUBLIC_SITE_URL .env | cut -d'=' -f2-)"
 	@echo "✅ Secrets set for staging!"
 
 set-secrets-prod: link-prod
 	@echo "🔐 Setting secrets for production Edge Functions..."
-	supabase secrets set DB_URL="$$(grep DB_URL .env.production | cut -d'=' -f2-)"
-	supabase secrets set ENCRYPTION_KEY="$$(grep ENCRYPTION_KEY .env.production | cut -d'=' -f2-)"
-	supabase secrets set SERVICE_ROLE_KEY="$$(grep SUPABASE_SERVICE_ROLE_KEY .env.production | cut -d'=' -f2-)"
-	supabase secrets set SENDGRID_API_KEY="$$(grep SENDGRID_API_KEY .env.production | cut -d'=' -f2-)"
-	supabase secrets set SITE_URL="$$(grep NEXT_PUBLIC_SITE_URL .env.production | cut -d'=' -f2-)"
+	supabase secrets set DB_URL="$$(grep DB_URL .env | cut -d'=' -f2-)"
+	supabase secrets set ENCRYPTION_KEY="$$(grep ENCRYPTION_KEY .env | cut -d'=' -f2-)"
+	supabase secrets set SERVICE_ROLE_KEY="$$(grep SUPABASE_SERVICE_ROLE_KEY .env | cut -d'=' -f2-)"
+	supabase secrets set SENDGRID_API_KEY="$$(grep SENDGRID_API_KEY .env | cut -d'=' -f2-)"
+	supabase secrets set SITE_URL="$$(grep NEXT_PUBLIC_SITE_URL .env | cut -d'=' -f2-)"
 	@echo "✅ Secrets set for production!"
