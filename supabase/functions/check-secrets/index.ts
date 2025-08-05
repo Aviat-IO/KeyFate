@@ -1,9 +1,14 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+import { corsHeaders } from "../_shared/cors.ts";
 import { decrypt } from "../_shared/crypto.ts";
 import { Database } from "../_shared/database.types.ts";
 import { getSecretTriggerTemplate } from "../_shared/email-templates.ts";
 import { API_URL, SERVICE_ROLE_KEY } from "../_shared/env.ts";
 import { Secret } from "../_shared/types.ts";
+import {
+  createUnauthorizedResponse,
+  validateServiceRoleAuth,
+} from "../_shared/auth.ts";
 
 interface ProcessError extends Error {
   message: string;
@@ -100,7 +105,16 @@ async function processSecret(
   }
 }
 
-Deno.serve(async (_req) => {
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  // Validate service role authentication
+  if (!validateServiceRoleAuth(req)) {
+    return createUnauthorizedResponse();
+  }
+
   try {
     const supabaseAdmin = createClient<Database>(
       API_URL,
@@ -129,7 +143,7 @@ Deno.serve(async (_req) => {
       return new Response(
         JSON.stringify({ message: "No secrets to process" }),
         {
-          headers: { "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 200,
         },
       );
@@ -137,11 +151,11 @@ Deno.serve(async (_req) => {
 
     // Process each secret
     const results = await Promise.all(
-      secrets.map((secret) => processSecret(secret, supabaseAdmin)),
+      secrets.map((secret: Secret) => processSecret(secret, supabaseAdmin)),
     );
 
     return new Response(JSON.stringify({ results }), {
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
@@ -150,7 +164,7 @@ Deno.serve(async (_req) => {
       JSON.stringify({ error: processError.message }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       },
     );
   }

@@ -9,6 +9,10 @@ import {
   SITE_URL,
 } from "../_shared/env.ts";
 import { Reminder, Secret } from "../_shared/types.ts";
+import {
+  createUnauthorizedResponse,
+  validateServiceRoleAuth,
+} from "../_shared/auth.ts";
 
 const BATCH_SIZE = 50;
 
@@ -329,6 +333,11 @@ Deno.serve(async (req) => {
 
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
+  }
+
+  // Validate service role authentication
+  if (!validateServiceRoleAuth(req)) {
+    return createUnauthorizedResponse();
   }
 
   try {

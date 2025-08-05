@@ -15,5 +15,6 @@ module "project" {
     "artifactregistry.googleapis.com",
     "secretmanager.googleapis.com",
     "storage.googleapis.com",
+    "cloudscheduler.googleapis.com",
   ]
 }
