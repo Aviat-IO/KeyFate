@@ -111,10 +111,15 @@ deploy-config-prod: link-prod
 	supabase config push --project-ref $$SUPABASE_PROJECT_ID_PROD
 
 deploy-functions-staging: link-staging
-	supabase functions deploy
+	supabase functions deploy check-secrets
+	supabase functions deploy process-reminders
+	supabase functions deploy send-email
 	supabase functions deploy check-in --no-verify-jwt
+	echo "✅ Functions deployed to staging successfully!"
 deploy-functions-prod: link-prod
-	supabase functions deploy
+	supabase functions deploy check-secrets
+	supabase functions deploy process-reminders
+	supabase functions deploy send-email
 	supabase functions deploy check-in --no-verify-jwt
 	echo "✅ Functions deployed to production successfully!"
 
