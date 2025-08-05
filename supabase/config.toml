@@ -214,7 +214,7 @@ enabled = true
 client_id = "env(GOOGLE_CLIENT_ID)"
 secret = "env(GOOGLE_CLIENT_SECRET)"
 url = "env(NEXT_PUBLIC_SITE_URL)"
-redirect_uri = "env(SUPABASE_AUTH_HOST)/auth/v1/callback"
+redirect_uri = "env(NEXT_PUBLIC_SUPABASE_URL)/auth/v1/callback"
 skip_nonce_check = false
 
 # Use Firebase Auth as a third-party provider alongside Supabase Auth.

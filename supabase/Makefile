@@ -75,13 +75,25 @@ verify-seed:
 functions-serve:
 	supabase functions serve --env-file functions/.env.development.local --no-verify-jwt
 
-link-staging: link-env
+link-dev-env:
+	@if [ ! -L .env ]; then ln -s ../frontend/.env.development.local .env; fi
+link-staging-env:
+	@if [ ! -L .env ]; then ln -s ../frontend/.env.staging.local .env; fi
+link-prod-env:
+	@if [ ! -L .env ]; then ln -s ../frontend/.env.production.local .env; fi
+
+unlink-env:
+	-unlink .env 2>/dev/null || true
+	-unlink .env.staging 2>/dev/null || true
+	-unlink .env.production 2>/dev/null || true
+
+link-staging: unlink-env link-staging-env
 	@if [ -z "$$SUPABASE_PROJECT_ID_STAGING" ]; then \
 		read -p "Enter Supabase staging project ID: " project_id; \
 		export SUPABASE_PROJECT_ID_STAGING=$$project_id; \
 	fi
 	supabase link --project-ref $$SUPABASE_PROJECT_ID_STAGING
-link-prod: link-env
+link-prod: unlink-env link-prod-env
 	@if [ -z "$$SUPABASE_PROJECT_ID_PROD" ]; then \
 		read -p "Enter Supabase production project ID: " project_id; \
 		export SUPABASE_PROJECT_ID_PROD=$$project_id; \
@@ -89,14 +101,14 @@ link-prod: link-env
 	supabase link --project-ref $$SUPABASE_PROJECT_ID_PROD
 
 deploy-db-staging: link-staging
-	supabase db push
+	supabase db push --linked
 deploy-db-prod: link-prod
-	supabase db push
+	supabase db push --linked
 
 deploy-config-staging: link-staging
-	supabase config push
+	supabase config push --project-ref $$SUPABASE_PROJECT_ID_STAGING
 deploy-config-prod: link-prod
-	supabase config push
+	supabase config push --project-ref $$SUPABASE_PROJECT_ID_PROD
 
 deploy-functions-staging: link-staging
 	supabase functions deploy
@@ -127,13 +139,3 @@ set-secrets-prod: link-prod
 	supabase secrets set SENDGRID_API_KEY="$$(grep SENDGRID_API_KEY .env.production | cut -d'=' -f2-)"
 	supabase secrets set SITE_URL="$$(grep NEXT_PUBLIC_SITE_URL .env.production | cut -d'=' -f2-)"
 	@echo "✅ Secrets set for production!"
-
-link-env:
-	@if [ ! -L .env ]; then ln -s ../frontend/.env.development.local .env; fi
-	@if [ ! -L .env.staging ]; then ln -s ../frontend/.env.staging.local .env.staging; fi
-	@if [ ! -L .env.production ]; then ln -s ../frontend/.env.production.local .env.production; fi
-
-unlink-env:
-	unlink .env
-	unlink .env.staging
-	unlink .env.production
