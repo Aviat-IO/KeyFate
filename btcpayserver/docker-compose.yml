@@ -1,0 +1,43 @@
+# Docker Compose for BTCPay Server local development
+# Based on btcpayserver-docker repository patterns
+
+services:
+  btcpayserver:
+    build: .
+    ports:
+      - "8080:80"
+    environment:
+      # Core settings
+      - BTCPAY_NETWORK=testnet
+      - BTCPAY_EXTERNALURL=http://localhost:8080
+      - BTCPAY_EXPLORERURL=https://blockstream.info/testnet
+
+      # Database - BTCPay Server expects .NET connection string format, not URI format
+      # Convert your Supabase URI: postgresql://postgres:password@host:5432/database
+      # To .NET format: User ID=postgres;Password=password;Host=host;Port=5432;Database=database
+      - BTCPAY_POSTGRES=User ID=postgres;Password=your-password;Host=db.your-project.supabase.co;Port=5432;Database=btcpayserver;SSL Mode=Require
+
+      # Additional debugging
+      - BTCPAY_VERBOSE=1
+
+      # Logging
+      - BTCPAY_LOGS=debug
+      - BTCPAY_DEBUGLOG=btcpay.log
+
+      # Development settings
+      - BTCPAY_DISABLE_REGISTRATION=false
+      - ASPNETCORE_ENVIRONMENT=Development
+
+    volumes:
+      - btcpay_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  btcpay_data:
+    driver: local

@@ -15,6 +15,25 @@ A secure digital service that automatically triggers an alarm or other emergency
 - **Infrastructure:** Google Cloud Run, Terraform, Terragrunt
 - **Security:** Client-side Shamir's Secret Sharing, Secret Manager
 
+## SSL Authentication
+
+For secure connections to Supabase with SSL enforcement enabled, you need to download and configure the CA certificate:
+
+1. **Download the CA certificate** from your Supabase project dashboard under Database Settings > SSL Configuration
+2. **Add the certificate to your trusted authorities**:
+
+   ```bash
+   cat {location of downloaded prod-ca-2021.crt} >> ~/.postgres/root.crt
+   ```
+
+3. **Connect using `verify-full` SSL mode** for maximum security:
+
+   ```bash
+   psql "postgresql://aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=verify-full" -U postgres.<user>
+   ```
+
+For more details, see the [Supabase SSL Enforcement documentation](https://supabase.com/docs/guides/platform/ssl-enforcement).
+
 ## TODO
 
 - [x] Add tests

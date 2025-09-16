@@ -24,6 +24,15 @@ module "frontend_secrets" {
     stripe-secret-key = {
       locations = [var.region]
     }
+    btcpay-api-key = {
+      locations = [var.region]
+    }
+    btcpay-store-id = {
+      locations = [var.region]
+    }
+    btcpay-webhook-secret = {
+      locations = [var.region]
+    }
   }
 
   versions = {
@@ -48,6 +57,15 @@ module "frontend_secrets" {
     stripe-secret-key = {
       current = { enabled = true, data = var.stripe_secret_key }
     }
+    btcpay-api-key = {
+      current = { enabled = true, data = var.btcpay_api_key }
+    }
+    btcpay-store-id = {
+      current = { enabled = true, data = var.btcpay_store_id }
+    }
+    btcpay-webhook-secret = {
+      current = { enabled = true, data = var.btcpay_webhook_secret }
+    }
   }
 
   iam = {
@@ -70,6 +88,15 @@ module "frontend_secrets" {
       "roles/secretmanager.secretAccessor" = ["serviceAccount:${module.frontend_service_account.email}"]
     }
     stripe-secret-key = {
+      "roles/secretmanager.secretAccessor" = ["serviceAccount:${module.frontend_service_account.email}"]
+    }
+    btcpay-api-key = {
+      "roles/secretmanager.secretAccessor" = ["serviceAccount:${module.frontend_service_account.email}"]
+    }
+    btcpay-store-id = {
+      "roles/secretmanager.secretAccessor" = ["serviceAccount:${module.frontend_service_account.email}"]
+    }
+    btcpay-webhook-secret = {
       "roles/secretmanager.secretAccessor" = ["serviceAccount:${module.frontend_service_account.email}"]
     }
   }

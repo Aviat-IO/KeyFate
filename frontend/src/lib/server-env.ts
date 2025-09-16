@@ -23,6 +23,38 @@ function getStripeWebhookSecret(): string {
   return secret;
 }
 
+function getBTCPayServerUrl(): string {
+  const url = process.env.BTCPAY_SERVER_URL;
+  if (!url) {
+    throw new Error("BTCPAY_SERVER_URL is not set");
+  }
+  return url;
+}
+
+function getBTCPayApiKey(): string {
+  const key = process.env.BTCPAY_API_KEY;
+  if (!key) {
+    throw new Error("BTCPAY_API_KEY is not set");
+  }
+  return key;
+}
+
+function getBTCPayStoreId(): string {
+  const id = process.env.BTCPAY_STORE_ID;
+  if (!id) {
+    throw new Error("BTCPAY_STORE_ID is not set");
+  }
+  return id;
+}
+
+function getBTCPayWebhookSecret(): string {
+  const secret = process.env.BTCPAY_WEBHOOK_SECRET;
+  if (!secret) {
+    throw new Error("BTCPAY_WEBHOOK_SECRET is not set");
+  }
+  return secret;
+}
+
 function getEncryptionKey(): string {
   const key = process.env.ENCRYPTION_KEY;
   if (!key) {
@@ -36,6 +68,10 @@ let _cachedSupabaseKey: string | undefined;
 let _cachedStripeKey: string | undefined;
 let _cachedStripeWebhookSecret: string | undefined;
 let _cachedEncryptionKey: string | undefined;
+let _cachedBTCPayServerUrl: string | undefined;
+let _cachedBTCPayApiKey: string | undefined;
+let _cachedBTCPayStoreId: string | undefined;
+let _cachedBTCPayWebhookSecret: string | undefined;
 
 export function getSUPABASE_SERVICE_ROLE_KEY(): string {
   if (_cachedSupabaseKey === undefined) {
@@ -65,6 +101,34 @@ export function getENCRYPTION_KEY(): string {
   return _cachedEncryptionKey;
 }
 
+export function getBTCPAY_SERVER_URL(): string {
+  if (_cachedBTCPayServerUrl === undefined) {
+    _cachedBTCPayServerUrl = getBTCPayServerUrl();
+  }
+  return _cachedBTCPayServerUrl;
+}
+
+export function getBTCPAY_API_KEY(): string {
+  if (_cachedBTCPayApiKey === undefined) {
+    _cachedBTCPayApiKey = getBTCPayApiKey();
+  }
+  return _cachedBTCPayApiKey;
+}
+
+export function getBTCPAY_STORE_ID(): string {
+  if (_cachedBTCPayStoreId === undefined) {
+    _cachedBTCPayStoreId = getBTCPayStoreId();
+  }
+  return _cachedBTCPayStoreId;
+}
+
+export function getBTCPAY_WEBHOOK_SECRET(): string {
+  if (_cachedBTCPayWebhookSecret === undefined) {
+    _cachedBTCPayWebhookSecret = getBTCPayWebhookSecret();
+  }
+  return _cachedBTCPayWebhookSecret;
+}
+
 // Lazy serverEnv object that only validates when properties are accessed
 export const serverEnv = {
   get SUPABASE_SERVICE_ROLE_KEY(): string {
@@ -78,5 +142,17 @@ export const serverEnv = {
   },
   get ENCRYPTION_KEY(): string {
     return getENCRYPTION_KEY();
+  },
+  get BTCPAY_SERVER_URL(): string {
+    return getBTCPAY_SERVER_URL();
+  },
+  get BTCPAY_API_KEY(): string {
+    return getBTCPAY_API_KEY();
+  },
+  get BTCPAY_STORE_ID(): string {
+    return getBTCPAY_STORE_ID();
+  },
+  get BTCPAY_WEBHOOK_SECRET(): string {
+    return getBTCPAY_WEBHOOK_SECRET();
   },
 };

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Check, Crown } from "lucide-react"
 import Link from "next/link"
+import { PaymentMethodSelector } from "./PaymentMethodSelector"
 import { StripeCheckoutButton } from "./StripeCheckoutButton"
 
 interface PricingCardProps {
@@ -15,6 +16,7 @@ interface PricingCardProps {
   buttonText: string
   buttonHref?: string
   stripeLookupKey?: string
+  billingPeriod?: "monthly" | "yearly"
   isPopular?: boolean
   className?: string
 }
@@ -29,6 +31,7 @@ export function PricingCard({
   buttonText,
   buttonHref,
   stripeLookupKey,
+  billingPeriod,
   isPopular = false,
   className = "",
 }: PricingCardProps) {
@@ -68,14 +71,22 @@ export function PricingCard({
 
         {/* Use StripeCheckoutButton for paid tiers, regular Link for free tier */}
         {stripeLookupKey ? (
-          <div className="space-y-2">
-            <StripeCheckoutButton lookupKey={stripeLookupKey}>
-              {buttonText}
-            </StripeCheckoutButton>
-            <p className="text-muted-foreground text-center text-xs">
-              Sign up or log in to continue
-            </p>
-          </div>
+          billingPeriod ? (
+            <PaymentMethodSelector
+              lookupKey={stripeLookupKey}
+              amount={billingPeriod === "monthly" ? 9 : 90}
+              interval={billingPeriod === "monthly" ? "monthly" : "yearly"}
+            />
+          ) : (
+            <div className="space-y-2">
+              <StripeCheckoutButton lookupKey={stripeLookupKey}>
+                {buttonText}
+              </StripeCheckoutButton>
+              <p className="text-muted-foreground text-center text-xs">
+                Sign up or log in to continue
+              </p>
+            </div>
+          )
         ) : buttonHref ? (
           <Button
             className="w-full"

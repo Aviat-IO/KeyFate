@@ -77,6 +77,7 @@ export function StaticPricingPage({ className = "" }: StaticPricingPageProps) {
           features={TIER_CONFIGS.pro.features}
           buttonText="Get Started with Pro"
           stripeLookupKey={proLookupKey || undefined}
+          billingPeriod={billingPeriod}
           isPopular={true}
         />
       </div>

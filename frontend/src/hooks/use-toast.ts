@@ -14,6 +14,7 @@ type ToasterToast = ToastProps & {
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: ToastActionElement;
+  persistent?: boolean;
 };
 
 type ActionType = {
@@ -54,8 +55,8 @@ interface State {
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
-const addToRemoveQueue = (toastId: string) => {
-  if (toastTimeouts.has(toastId)) {
+const addToRemoveQueue = (toastId: string, persistent: boolean = false) => {
+  if (toastTimeouts.has(toastId) || persistent) {
     return;
   }
 
@@ -90,10 +91,11 @@ export const reducer = (state: State, action: Action): State => {
       const { toastId } = action;
 
       if (toastId) {
-        addToRemoveQueue(toastId);
+        const toast = state.toasts.find((t) => t.id === toastId);
+        addToRemoveQueue(toastId, toast?.persistent);
       } else {
         state.toasts.forEach((toast) => {
-          addToRemoveQueue(toast.id);
+          addToRemoveQueue(toast.id, toast.persistent);
         });
       }
 
