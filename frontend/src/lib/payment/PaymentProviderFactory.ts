@@ -1,7 +1,8 @@
 import { PaymentProvider } from "./interfaces/PaymentProvider";
 import { StripeProvider } from "./providers/StripeProvider";
+import { BTCPayProvider } from "./providers/BTCPayProvider";
 
-export type PaymentProviderType = "stripe";
+export type PaymentProviderType = "stripe" | "btcpay";
 
 export interface PaymentProviderConfig {
   provider: PaymentProviderType;
@@ -21,6 +22,18 @@ export class PaymentProviderFactory {
           throw new Error("Stripe requires secretKey");
         }
         return new StripeProvider(config.config.secretKey);
+      case "btcpay":
+        if (
+          !config.config.serverUrl || !config.config.apiKey ||
+          !config.config.storeId
+        ) {
+          throw new Error("BTCPay requires serverUrl, apiKey, and storeId");
+        }
+        return new BTCPayProvider({
+          serverUrl: config.config.serverUrl,
+          apiKey: config.config.apiKey,
+          storeId: config.config.storeId,
+        });
       default:
         throw new Error(`Unsupported payment provider: ${config.provider}`);
     }

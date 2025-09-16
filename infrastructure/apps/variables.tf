@@ -161,3 +161,28 @@ variable "custom_domain" {
   type        = string
   default     = ""
 }
+
+# BTCPay Server configuration (external hosting)
+variable "btcpay_server_url" {
+  description = "External BTCPay Server URL (e.g., https://btcpay.keyfate.com)"
+  type        = string
+  default     = ""
+}
+
+variable "btcpay_api_key" {
+  description = "BTCPay Server API key for creating invoices"
+  type        = string
+  sensitive   = true
+}
+
+variable "btcpay_store_id" {
+  description = "BTCPay Server store ID"
+  type        = string
+  sensitive   = true
+}
+
+variable "btcpay_webhook_secret" {
+  description = "BTCPay Server webhook secret for verification"
+  type        = string
+  sensitive   = true
+}

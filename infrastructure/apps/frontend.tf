@@ -133,6 +133,8 @@ module "cloud_run" {
         NEXT_PUBLIC_SUPABASE_ANON_KEY      = var.next_public_supabase_anon_key
         NEXT_PUBLIC_SUPABASE_URL           = var.next_public_supabase_url
         NEXT_PUBLIC_SUPPORT_EMAIL          = var.next_public_support_email
+        NEXT_PUBLIC_BTCPAY_SERVER_URL      = var.btcpay_server_url
+        BTCPAY_SERVER_URL                  = var.btcpay_server_url
         # Force revision update when code changes by including hash as env var
         DEPLOYMENT_HASH = local.image_tag
       }
@@ -164,6 +166,18 @@ module "cloud_run" {
         }
         STRIPE_SECRET_KEY = {
           secret  = "projects/${module.project.number}/secrets/stripe-secret-key"
+          version = "latest"
+        }
+        BTCPAY_API_KEY = {
+          secret  = "projects/${module.project.number}/secrets/btcpay-api-key"
+          version = "latest"
+        }
+        BTCPAY_STORE_ID = {
+          secret  = "projects/${module.project.number}/secrets/btcpay-store-id"
+          version = "latest"
+        }
+        BTCPAY_WEBHOOK_SECRET = {
+          secret  = "projects/${module.project.number}/secrets/btcpay-webhook-secret"
           version = "latest"
         }
       }

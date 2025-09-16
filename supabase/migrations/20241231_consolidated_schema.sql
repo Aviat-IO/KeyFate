@@ -1107,3 +1107,4 @@ GRANT SELECT ON public.subscription_management TO authenticated;
 
 -- Initialize free tiers for existing users (this will handle new users after reset)
 SELECT public.initialize_free_tiers();
+

@@ -93,6 +93,8 @@ link-staging: unlink-env link-staging-env
 		export SUPABASE_PROJECT_ID_STAGING=$$project_id; \
 	fi
 	supabase link --project-ref $$SUPABASE_PROJECT_ID_STAGING
+
+# psql "sslmode=verify-full sslrootcert=./staging-ca-2021.crt host=aws-0-us-east-1.pooler.supabase.com dbname=postgres user=postgres.$$SUPABASE_PROJECT_ID_STAGING"
 link-prod: unlink-env link-prod-env
 	@if [ -z "$$SUPABASE_PROJECT_ID_PROD" ]; then \
 		read -p "Enter Supabase production project ID: " project_id; \

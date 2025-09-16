@@ -8,6 +8,7 @@ import { Suspense, useState } from "react"
 
 function CheckInContent() {
   const [isLoading, setIsLoading] = useState(false)
+  const [isSuccessful, setIsSuccessful] = useState(false)
   const searchParams = useSearchParams()
   const { toast } = useToast()
 
@@ -15,7 +16,7 @@ function CheckInContent() {
 
   if (!token) {
     return (
-      <div className="mx-auto sm:px-4 py-8">
+      <div className="mx-auto py-8 sm:px-4">
         <div className="mx-auto max-w-md pt-16 text-center">
           <h1 className="text-destructive mb-4 text-2xl font-bold">
             Invalid Check-In Link
@@ -44,9 +45,12 @@ function CheckInContent() {
       const data = await response.json()
 
       if (response.ok) {
+        setIsSuccessful(true)
         toast({
           title: "Check-in successful!",
           description: `Your secret "${data.secretTitle}" timer has been reset. Next check-in: ${data.nextCheckIn}`,
+          variant: "success",
+          persistent: true,
         })
       } else {
         throw new Error(data.error || "Check-in failed")
@@ -66,27 +70,35 @@ function CheckInContent() {
   }
 
   return (
-    <div className="mx-auto sm:px-4 py-8">
+    <div className="mx-auto py-8 sm:px-4">
       <div className="mx-auto max-w-md space-y-6 pt-32 text-center">
         <h1 className="text-3xl font-bold">Secret Check-In</h1>
 
         <p className="text-muted-foreground">
-          Click the button below to check in and reset your secret's timer.
+          {isSuccessful
+            ? "Your secret's timer has been successfully reset. You can close this page."
+            : "Click the button below to check in and reset your secret's timer."}
         </p>
 
         <Button
           onClick={handleCheckIn}
-          disabled={isLoading}
+          disabled={isLoading || isSuccessful}
           size="lg"
           className="w-full"
         >
-          {isLoading ? "Checking in..." : "Check In Now"}
+          {isLoading
+            ? "Checking in..."
+            : isSuccessful
+              ? "Check-in Complete"
+              : "Check In Now"}
         </Button>
 
-        <p className="text-muted-foreground text-sm">
-          This will update your last check-in time and prevent your secret from
-          being triggered.
-        </p>
+        {!isSuccessful && (
+          <p className="text-muted-foreground text-sm">
+            This will update your last check-in time and prevent your secret
+            from being triggered.
+          </p>
+        )}
       </div>
     </div>
   )

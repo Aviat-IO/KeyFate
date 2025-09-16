@@ -102,6 +102,18 @@ async function handleSubscriptionChange(
       tier_name: tier.name,
     });
 
+  // Also update user_tiers based on mapped tier
+  const { data: mappedTier } = await supabase
+    .from("tiers")
+    .select("id")
+    .eq("name", tier.name)
+    .single();
+  if (mappedTier?.id) {
+    await supabase
+      .from("user_tiers")
+      .upsert({ user_id: userId, tier_id: mappedTier.id });
+  }
+
   console.log(`Subscription ${subscription.status} for user ${userId}`);
 }
 

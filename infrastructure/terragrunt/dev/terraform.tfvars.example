@@ -2,9 +2,10 @@
 # Copy this file to terraform.tfvars and fill in the values
 
 # Organization and billing info
-folder_id = "870745208278" # LoginLoop
-organization_id = "115297153788" # aviat.io
-billing_account = "01A677-2C61EB-9BD9E1" # Fixed typo: was "billing_acocunt"
+# Organization and billing info
+folder_id = "GOOGLE_CLOUD_FOLDER_ID"
+organization_id = "GOOGLE_CLOUD_ORGANIZATION_ID" # yourdomain.com
+billing_account = "GOOGLE_CLOUD_BILLING_ACCOUNT_ID"
 
 # Cloud Run configuration
 cpu_limit = "1000m"
@@ -13,17 +14,17 @@ cpu_boost = true
 max_instances = 10
 min_instances = 0
 allow_unauthenticated = true
-deletion_protection = false
+deletion_protection = true
 
 # Public environment variables (NEXT_PUBLIC_*)
-next_public_site_url = "https://keyfate-dev.example.com"
-next_public_company = "KeyFate"
-next_public_parent_company = "Aviat"
-next_public_support_email = "support@aviat.io"
+next_public_site_url = "https://yourdomain.com"
+next_public_company = "Company"
+next_public_parent_company = "Your Parent Company"
+next_public_support_email = "support@yourdomain.com"
 next_public_supabase_url = "https://your-supabase-project.supabase.co"
 next_public_supabase_anon_key = "your-anon-key"
 next_public_graphql_url = "https://your-supabase-project.supabase.co/graphql/v1"
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = "your-public-stripe-key"
+next_public_stripe_publishable_key = "your-public-stripe-key"
 
 # Custom domain configuration
 custom_domain = "staging.keyfate.com"
@@ -36,3 +37,10 @@ supabase_jwt_secret = "your-jwt-secret"
 google_client_id = "your-google-client-id"
 google_client_secret = "your-google-client-secret"
 stripe_secret_key = "your-stripe-secret-key"
+
+# BTCPay Server configuration (external hosting)
+# Set these to your own BTCPay Server instance
+btcpay_server_url = "https://btcpay.yourdomain.com"
+btcpay_api_key = "your-btcpay-api-key"
+btcpay_store_id = "your-btcpay-store-id"
+btcpay_webhook_secret = "your-btcpay-webhook-secret"
