@@ -4,28 +4,13 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { STRIPE_LOOKUP_KEYS } from "@/constants/tiers"
-import { createClient } from "@/utils/supabase/client"
-import { User } from "@supabase/supabase-js"
-import { useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
 import { BillingPortalButton } from "./BillingPortalButton"
 import { StripeCheckoutButton } from "./StripeCheckoutButton"
 
-const supabase = createClient()
-
 export function UserPricingActions() {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function loadUserData() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      setUser(user)
-      setLoading(false)
-    }
-    loadUserData()
-  }, [])
+  const { data: session, status } = useSession()
+  const loading = status === "loading"
 
   if (loading) {
     return (
@@ -40,7 +25,7 @@ export function UserPricingActions() {
     )
   }
 
-  if (!user) {
+  if (!session?.user) {
     return (
       <Card>
         <CardHeader>
@@ -70,7 +55,7 @@ export function UserPricingActions() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <p className="text-muted-foreground text-sm">Email: {user.email}</p>
+          <p className="text-muted-foreground text-sm">Email: {session.user.email}</p>
         </div>
 
         <div className="space-y-3">

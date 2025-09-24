@@ -1,6 +1,8 @@
+import { authConfig } from "@/lib/auth-config";
 import { NEXT_PUBLIC_SITE_URL } from "@/lib/env";
 import { getFiatPaymentProvider } from "@/lib/payment";
-import { createClient } from "@/utils/supabase/server";
+import type { Session } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 
 // Handle GET requests for post-authentication redirects
@@ -33,12 +35,13 @@ async function createCheckoutSession(lookupKey: string) {
   try {
     console.log(`🔍 Creating checkout session for lookup key: ${lookupKey}`);
 
-    // Get user from Supabase auth
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      console.log("❌ Authentication failed:", authError);
+    // Get user from NextAuth
+    const session = (await getServerSession(authConfig as any)) as
+      | Session
+      | null;
+    const user = session?.user;
+    if (!user?.email || !(user as any).id) {
+      console.log("❌ Authentication failed: missing session user");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -53,37 +56,10 @@ async function createCheckoutSession(lookupKey: string) {
 
     // Try to get existing subscription with Stripe customer ID
     // Handle case where Stripe columns might not exist yet
-    try {
-      const { data: existingSubscription } = await supabase
-        .from("user_subscriptions")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
-
-      // Check if stripe_customer_id column exists and has a value
-      if (
-        existingSubscription && "stripe_customer_id" in existingSubscription &&
-        existingSubscription.stripe_customer_id
-      ) {
-        customerId = existingSubscription.stripe_customer_id as string;
-        console.log(`✅ Using existing customer: ${customerId}`);
-      } else {
-        // Create new customer
-        console.log("🆕 Creating new Stripe customer...");
-        customerId = await fiatPaymentProvider.createCustomer(user.email!, {
-          user_id: user.id,
-        });
-        console.log(`✅ Created new customer: ${customerId}`);
-      }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (_error) {
-      // If column doesn't exist or other error, create new customer
-      console.log("🆕 Creating new Stripe customer (fallback)...");
-      customerId = await fiatPaymentProvider.createCustomer(user.email!, {
-        user_id: user.id,
-      });
-      console.log(`✅ Created new customer (fallback): ${customerId}`);
-    }
+    // Create or resolve customer by email (provider handles mapping)
+    customerId = await fiatPaymentProvider.createCustomer(user.email!, {
+      user_id: (user as any).id,
+    });
 
     // Get price by lookup key
     console.log("🔍 Fetching prices from Stripe...");
@@ -120,20 +96,20 @@ async function createCheckoutSession(lookupKey: string) {
       //   address: "auto",
       // },
       metadata: {
-        user_id: user.id,
+        user_id: (user as any).id,
       },
     };
 
     console.log("Session config:", JSON.stringify(sessionConfig, null, 2));
 
-    const session = await fiatPaymentProvider.createCheckoutSession(
+    const checkoutSession = await fiatPaymentProvider.createCheckoutSession(
       sessionConfig,
     );
 
-    console.log(`✅ Checkout session created: ${session.id}`);
-    console.log(`🔗 Redirecting to: ${session.url}`);
+    console.log(`✅ Checkout session created: ${checkoutSession.id}`);
+    console.log(`🔗 Redirecting to: ${checkoutSession.url}`);
 
-    return NextResponse.redirect(session.url, 303);
+    return NextResponse.redirect(checkoutSession.url, 303);
   } catch (error) {
     console.error("❌ Error creating checkout session:", error);
 

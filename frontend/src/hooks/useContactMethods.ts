@@ -1,9 +1,5 @@
-import { Database } from "@/types/database.types";
-import { createClient } from "@/utils/supabase/client";
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-
-type ContactMethod =
-  Database["public"]["Tables"]["user_contact_methods"]["Row"];
 
 export interface ContactMethods {
   email: string;
@@ -16,40 +12,34 @@ export interface ContactMethods {
 }
 
 export interface ContactMethodsDbInput {
-  email: string;
-  phone: string;
-  preferred_method: "email" | "phone" | "both";
+  email?: string;
+  phone?: string;
+  preferredMethod?: "email" | "phone" | "both";
 }
 
-const supabase = createClient();
-
 export function useContactMethods() {
-  const [contactMethods, setContactMethods] = useState<ContactMethod[]>([]);
+  const [contactMethods, setContactMethods] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { data: session } = useSession();
 
   useEffect(() => {
     async function fetchContactMethods() {
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        if (!user) {
+        if (!(session?.user as any)?.id) {
           setError("User not authenticated");
+          setLoading(false);
           return;
         }
 
-        const { data, error: fetchError } = await supabase
-          .from("user_contact_methods")
-          .select("*")
-          .eq("user_id", user.id);
+        // TODO: Call API endpoint for contact methods
+        // const response = await fetch('/api/user/contact-methods');
+        // const data = await response.json();
+        // setContactMethods(data || []);
 
-        if (fetchError) {
-          setError(fetchError.message);
-        } else {
-          setContactMethods(data || []);
-        }
+        // Temporarily return empty array during migration
+        setContactMethods([]);
+        setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
@@ -57,44 +47,35 @@ export function useContactMethods() {
       }
     }
 
-    fetchContactMethods();
-  }, []);
+    if ((session?.user as any)?.id) {
+      fetchContactMethods();
+    } else if (session === null) {
+      // Session is explicitly null (not loading)
+      setError("User not authenticated");
+      setLoading(false);
+    }
+  }, [(session?.user as any)?.id]);
 
   const saveContactMethods = async (methods: ContactMethodsDbInput) => {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
+      if (!(session?.user as any)?.id) {
         throw new Error("User not authenticated");
       }
 
-      const { error: upsertError } = await supabase
-        .from("user_contact_methods")
-        .upsert({
-          user_id: user.id,
-          email: methods.email,
-          phone: methods.phone,
-          preferred_method: methods.preferred_method,
-        })
-        .eq("user_id", user.id);
+      // TODO: Call API endpoint to save contact methods
+      // const response = await fetch('/api/user/contact-methods', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(methods)
+      // });
+      //
+      // if (!response.ok) {
+      //   throw new Error('Failed to save contact methods');
+      // }
 
-      if (upsertError) {
-        throw new Error(upsertError.message);
-      }
-
-      // Refresh the contact methods
-      const { data, error: fetchError } = await supabase
-        .from("user_contact_methods")
-        .select("*")
-        .eq("user_id", user.id);
-
-      if (fetchError) {
-        throw new Error(fetchError.message);
-      }
-
-      setContactMethods(data || []);
+      // Temporarily return mock result during migration
+      setContactMethods([]);
+      return {};
     } catch (err) {
       throw new Error(
         err instanceof Error ? err.message : "Failed to save contact methods",

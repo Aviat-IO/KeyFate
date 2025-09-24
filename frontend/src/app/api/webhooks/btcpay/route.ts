@@ -1,7 +1,7 @@
 import { getCryptoPaymentProvider } from "@/lib/payment";
 import { serverEnv } from "@/lib/server-env";
-import { createClient } from "@/utils/supabase/server";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { subscriptionService } from "@/lib/services/subscription-service";
+import { emailService } from "@/lib/services/email-service";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -25,43 +25,43 @@ export async function POST(request: NextRequest) {
             serverEnv.BTCPAY_WEBHOOK_SECRET,
         );
 
-        const supabase = await createClient();
+        // Extract user ID from event metadata
+        const userId = extractUserIdFromBTCPayEvent(event);
 
-        // Handle different event types
-        switch (event.type) {
-            case "InvoiceSettled":
-                await handleInvoiceSettled(
-                    event.data.object as Record<string, unknown>,
-                    supabase,
-                );
-                break;
-            case "InvoiceExpired":
-                await handleInvoiceExpired(
-                    event.data.object as Record<string, unknown>,
-                );
-                break;
-            case "InvoiceInvalid":
-                await handleInvoiceInvalid(
-                    event.data.object as Record<string, unknown>,
-                );
-                break;
-            case "InvoiceProcessing":
-                await handleInvoiceProcessing(
-                    event.data.object as Record<string, unknown>,
-                );
-                break;
-            case "InvoiceCreated":
-                await handleInvoiceCreated(
-                    event.data.object as Record<string, unknown>,
-                );
-                break;
-            default:
-                console.log(`Unhandled BTCPay event type: ${event.type}`);
+        if (!userId) {
+            console.error("No user_id found in BTCPay webhook event metadata");
+            await emailService.sendAdminAlert({
+                type: "webhook_failure",
+                severity: "medium",
+                message: "BTCPay webhook missing user_id",
+                details: {
+                    eventType: event.type,
+                    eventId: event.id || "unknown",
+                    provider: "btcpay",
+                },
+            });
+            return NextResponse.json({ error: "No user_id in metadata" }, { status: 400 });
         }
+
+        // Handle event using subscription service
+        await subscriptionService.handleBTCPayWebhook(event, userId);
 
         return NextResponse.json({ received: true });
     } catch (error) {
         console.error("BTCPay webhook error:", error);
+
+        // Send admin alert for webhook failures
+        await emailService.sendAdminAlert({
+            type: "webhook_failure",
+            severity: "high",
+            message: "BTCPay webhook processing failed",
+            details: {
+                error: error instanceof Error ? error.message : "Unknown error",
+                stack: error instanceof Error ? error.stack : undefined,
+                provider: "btcpay",
+                timestamp: new Date().toISOString(),
+            },
+        });
 
         // Provide more specific error responses
         if (
@@ -93,75 +93,20 @@ export async function POST(request: NextRequest) {
     }
 }
 
-async function handleInvoiceSettled(
-    invoice: Record<string, unknown>,
-    supabase: SupabaseClient,
-) {
-    const metadata = (invoice.metadata as Record<string, string>) || {};
-    const userId = metadata.user_id;
-    if (!userId) {
-        console.error("No user_id in invoice metadata");
-        return;
-    }
+// Helper function to extract user ID from BTCPay webhook event
+function extractUserIdFromBTCPayEvent(event: any): string | null {
+    try {
+        const eventData = event.data.object as Record<string, unknown>;
 
-    if (metadata.mode === "subscription") {
-        await supabase
-            .from("user_subscriptions")
-            .upsert({
-                user_id: userId,
-                provider: "btcpay",
-                provider_subscription_id: String(invoice.id || ""),
-                status: "active",
-                tier_name: "pro",
-                current_period_start: new Date(),
-                current_period_end: calculateNextBillingDate(
-                    (metadata.interval as string) || "month",
-                ),
-            });
-
-        // Ensure user_tiers reflects Pro
-        const { data: proTier } = await supabase
-            .from("tiers")
-            .select("id")
-            .eq("name", "pro")
-            .single();
-        if (proTier?.id) {
-            await supabase
-                .from("user_tiers")
-                .upsert({ user_id: userId, tier_id: proTier.id });
+        // Try to get user_id from metadata
+        const metadata = eventData.metadata as Record<string, string> | undefined;
+        if (metadata?.user_id) {
+            return metadata.user_id;
         }
-    }
-    console.log(`Bitcoin payment settled for user ${userId}`);
-}
 
-async function handleInvoiceExpired(invoice: Record<string, unknown>) {
-    console.log(`Invoice expired: ${String(invoice.id || "unknown")}`);
-}
-
-async function handleInvoiceInvalid(invoice: Record<string, unknown>) {
-    console.log(`Invoice invalid: ${String(invoice.id || "unknown")}`);
-}
-
-async function handleInvoiceProcessing(invoice: Record<string, unknown>) {
-    console.log(`Invoice processing: ${String(invoice.id || "unknown")}`);
-}
-
-async function handleInvoiceCreated(invoice: Record<string, unknown>) {
-    console.log(`Invoice created: ${String(invoice.id || "unknown")}`);
-    // TODO: Save a record of the invoice in the database. Can be used to send coupons later.
-}
-
-function calculateNextBillingDate(interval: string): Date {
-    const now = new Date();
-    switch (interval) {
-        case "month":
-            now.setMonth(now.getMonth() + 1);
-            return now;
-        case "year":
-            now.setFullYear(now.getFullYear() + 1);
-            return now;
-        default:
-            now.setMonth(now.getMonth() + 1);
-            return now;
+        return null;
+    } catch (error) {
+        console.error("Error extracting user ID from BTCPay event:", error);
+        return null;
     }
 }

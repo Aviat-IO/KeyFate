@@ -1,4 +1,4 @@
-import { createClient } from "@/utils/supabase/client";
+// import { createClient } from "@/utils/supabase/client";
 
 export interface AuthTokens {
   access_token: string;
@@ -55,20 +55,18 @@ export function parseTokensFromHash(hash: string): AuthTokens | null {
 export async function establishSessionFromTokens(
   tokens: AuthTokens,
 ): Promise<{ data: unknown; error: unknown }> {
-  const supabase = createClient();
+  // const supabase = createClient();
 
   try {
-    const { data, error } = await supabase.auth.setSession({
-      access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token,
-    });
+    // TODO: Replace with NextAuth session management
+    // const { data, error } = await supabase.auth.setSession({
+    //   access_token: tokens.access_token,
+    //   refresh_token: tokens.refresh_token,
+    // });
 
-    if (error) {
-      console.error("[Auth] Error setting session:", error);
-      return { data: null, error };
-    }
-
-    return { data, error: null };
+    // Temporary implementation - this function needs to be updated for NextAuth
+    console.warn("[Auth] establishSessionFromTokens is deprecated - use NextAuth instead");
+    return { data: null, error: "Function deprecated - use NextAuth" };
   } catch (error) {
     console.error("[Auth] Exception setting session:", error);
     return { data: null, error };

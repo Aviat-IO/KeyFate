@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  pgbouncer:
+    image: pgbouncer/pgbouncer:latest
+    container_name: keyfate-pgbouncer
+    environment:
+      DATABASES_HOST: ${DB_HOST:-127.0.0.1}
+      DATABASES_PORT: ${DB_PORT:-5432}
+      DATABASES_DBNAME: ${DB_NAME:-keyfate}
+      DATABASES_USER: ${DB_USER:-keyfate_app}
+      DATABASES_PASSWORD: ${DB_PASSWORD}
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 100
+      DEFAULT_POOL_SIZE: 20
+      MIN_POOL_SIZE: 5
+      RESERVE_POOL_SIZE: 5
+      SERVER_ROUND_ROBIN: 1
+      LOG_CONNECTIONS: 1
+      LOG_DISCONNECTIONS: 1
+      AUTH_TYPE: md5
+    ports:
+      - "6432:5432"
+    volumes:
+      - ./pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 5432"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Cloud SQL Proxy for local development
+  cloud-sql-proxy:
+    image: gcr.io/cloudsql-docker/gce-proxy:1.33.14
+    container_name: keyfate-cloud-sql-proxy
+    command: /cloud_sql_proxy -instances=${CLOUD_SQL_CONNECTION_NAME}=tcp:0.0.0.0:5432
+    ports:
+      - "5432:5432"
+    volumes:
+      - ${GOOGLE_APPLICATION_CREDENTIALS}:/config/service-account.json:ro
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /config/service-account.json
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "netstat -an | grep :5432 | grep LISTEN"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

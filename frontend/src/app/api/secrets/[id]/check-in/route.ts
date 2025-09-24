@@ -1,4 +1,11 @@
-import { createClient } from "@/utils/supabase/server";
+import { authConfig } from "@/lib/auth-config";
+import { ensureUserExists } from "@/lib/auth/user-verification";
+import { db, secretsService } from "@/lib/db/drizzle";
+import type { SecretUpdate } from "@/lib/db/schema";
+import { checkinHistory } from "@/lib/db/schema";
+import { mapDrizzleSecretToApiShape } from "@/lib/db/secret-mapper";
+import type { Session } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(
@@ -7,66 +14,67 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createClient();
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      // authError && console.error("Auth error:", authError);
+    // Use NextAuth for authentication
+    const session = (await getServerSession(
+      authConfig as Parameters<typeof getServerSession>[0],
+    )) as
+      | Session
+      | null;
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: secret, error: fetchError } = await supabase
-      .from("secrets")
-      .select("*")
-      .eq("id", id)
-      .eq("user_id", user.id)
-      .single();
+    // Ensure user exists in database before creating check-in history
+    try {
+      const userVerification = await ensureUserExists(session);
+      console.log("[Check-in API] User verification result:", {
+        exists: userVerification.exists,
+        created: userVerification.created,
+        userId: session.user.id,
+      });
+    } catch (userError) {
+      console.error("[Check-in API] User verification failed:", userError);
+      return NextResponse.json(
+        { error: "Failed to verify user account" },
+        { status: 500 },
+      );
+    }
 
-    if (fetchError || !secret) {
-      console.error("Secret fetch error:", fetchError);
+    const secret = await secretsService.getById(id, session.user.id);
+
+    if (!secret) {
       return NextResponse.json({ error: "Secret not found" }, { status: 404 });
     }
 
     // Calculate next check-in
+    const now = new Date();
     const nextCheckIn = new Date();
-    nextCheckIn.setDate(nextCheckIn.getDate() + secret.check_in_days);
+    nextCheckIn.setDate(nextCheckIn.getDate() + secret.checkInDays);
 
-    // Use RPC function for check-in
-    const { error: rpcError } = await supabase.rpc("check_in_secret", {
-      p_secret_id: id,
-      p_user_id: user.id,
-      p_checked_in_at: new Date().toISOString(),
-      p_next_check_in: nextCheckIn.toISOString(),
+    // Update the secret with new check-in times
+    const updatePayload = { lastCheckIn: now, nextCheckIn } as SecretUpdate;
+    const updatedSecret = await secretsService.update(id, updatePayload);
+
+    if (!updatedSecret) {
+      return NextResponse.json({ error: "Failed to update secret" }, {
+        status: 500,
+      });
+    }
+
+    // Record check-in history
+    await db.insert(checkinHistory).values({
+      secretId: id,
+      userId: session.user.id,
+      checkedInAt: now,
+      nextCheckIn: nextCheckIn,
     });
 
-    if (rpcError) {
-      console.error("Error in check-in transaction:", rpcError);
-      return NextResponse.json(
-        { error: `Failed to record check-in: ${rpcError.message}` },
-        { status: 500 },
-      );
-    }
-
-    // Fetch updated secret
-    const { data: updatedSecret, error: updateFetchError } = await supabase
-      .from("secrets")
-      .select("*")
-      .eq("id", id)
-      .eq("user_id", user.id)
-      .single();
-
-    if (updateFetchError || !updatedSecret) {
-      console.error("Error fetching updated secret:", updateFetchError);
-      return NextResponse.json(
-        { error: "Failed to fetch updated secret" },
-        { status: 500 },
-      );
-    }
-
+    const mapped = mapDrizzleSecretToApiShape(updatedSecret);
     return NextResponse.json({
       success: true,
-      secret: updatedSecret,
-      next_check_in: nextCheckIn,
+      secret: mapped,
+      next_check_in: mapped.next_check_in,
     });
   } catch (error) {
     console.error("Error in POST /api/secrets/[id]/check-in:", error);

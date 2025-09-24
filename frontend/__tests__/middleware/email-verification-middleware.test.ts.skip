@@ -1,0 +1,238 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { NextRequest, NextResponse } from 'next/server'
+
+// Mock the Supabase middleware first
+const mockUpdateSession = vi.fn()
+
+vi.mock('@/utils/supabase/middleware', () => ({
+  updateSession: mockUpdateSession
+}))
+
+vi.mock('@/lib/env', () => ({
+  NEXT_PUBLIC_SITE_URL: 'http://localhost:3000'
+}))
+
+vi.mock('next/server', () => ({
+  NextRequest: vi.fn(),
+  NextResponse: {
+    redirect: vi.fn(),
+    next: vi.fn()
+  }
+}))
+
+// Import after mocking
+const { checkEmailVerificationMiddleware } = await import('@/lib/middleware/email-verification')
+
+// Mock the user data
+const mockUser = {
+  id: '123',
+  email: 'user@example.com',
+  email_verified: false,
+  app_metadata: { provider: 'email' }
+}
+
+describe('Email Verification Middleware', () => {
+  let mockRequest: NextRequest
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockRequest = {
+      nextUrl: {
+        pathname: '/dashboard',
+        clone: () => ({
+          pathname: '/auth/verify-email',
+          searchParams: {
+            set: vi.fn()
+          }
+        })
+      }
+    } as unknown as NextRequest
+  })
+
+  describe('checkEmailVerificationMiddleware', () => {
+    it('should allow access to public routes without verification', async () => {
+      // Arrange
+      mockRequest.nextUrl.pathname = '/auth/login'
+      const mockNextResponse = NextResponse.next()
+      mockUpdateSession.mockResolvedValue({
+        user: mockUser,
+        supabaseResponse: mockNextResponse
+      })
+
+      // Act
+      const result = await checkEmailVerificationMiddleware(mockRequest)
+
+      // Assert
+      expect(result).toBe(mockNextResponse)
+      expect(NextResponse.redirect).not.toHaveBeenCalled()
+    })
+
+    it('should allow access to verification routes without verification', async () => {
+      // Arrange
+      mockRequest.nextUrl.pathname = '/auth/verify-email'
+      const mockNextResponse = NextResponse.next()
+      mockUpdateSession.mockResolvedValue({
+        user: mockUser,
+        supabaseResponse: mockNextResponse
+      })
+
+      // Act
+      const result = await checkEmailVerificationMiddleware(mockRequest)
+
+      // Assert
+      expect(result).toBe(mockNextResponse)
+      expect(NextResponse.redirect).not.toHaveBeenCalled()
+    })
+
+    it('should redirect unverified users to verification page for protected routes', async () => {
+      // Arrange
+      mockRequest.nextUrl.pathname = '/dashboard'
+      mockUpdateSession.mockResolvedValue({
+        user: { ...mockUser, email_verified: false },
+        supabaseResponse: NextResponse.next()
+      })
+
+      const mockRedirect = vi.fn()
+      NextResponse.redirect = mockRedirect
+
+      // Act
+      await checkEmailVerificationMiddleware(mockRequest)
+
+      // Assert
+      expect(mockRedirect).toHaveBeenCalled()
+    })
+
+    it('should allow verified users to access protected routes', async () => {
+      // Arrange
+      mockRequest.nextUrl.pathname = '/dashboard'
+      const mockNextResponse = NextResponse.next()
+      mockUpdateSession.mockResolvedValue({
+        user: { ...mockUser, email_verified: true },
+        supabaseResponse: mockNextResponse
+      })
+
+      // Act
+      const result = await checkEmailVerificationMiddleware(mockRequest)
+
+      // Assert
+      expect(result).toBe(mockNextResponse)
+      expect(NextResponse.redirect).not.toHaveBeenCalled()
+    })
+
+    it('should allow OAuth users to access protected routes even without explicit verification', async () => {
+      // Arrange
+      mockRequest.nextUrl.pathname = '/dashboard'
+      const oauthUser = {
+        ...mockUser,
+        app_metadata: { provider: 'google' },
+        email_verified: false // Google should be trusted
+      }
+
+      const mockNextResponse = NextResponse.next()
+      mockUpdateSession.mockResolvedValue({
+        user: oauthUser,
+        supabaseResponse: mockNextResponse
+      })
+
+      // Act
+      const result = await checkEmailVerificationMiddleware(mockRequest)
+
+      // Assert
+      expect(result).toBe(mockNextResponse)
+      expect(NextResponse.redirect).not.toHaveBeenCalled()
+    })
+
+    it('should handle users without email gracefully', async () => {
+      // Arrange
+      mockRequest.nextUrl.pathname = '/dashboard'
+      const mockUser = { id: '123', email: null, email_verified: false, app_metadata: { provider: 'email' } }
+      mockUpdateSession.mockResolvedValue({
+        user: mockUser,
+        supabaseResponse: NextResponse.next()
+      })
+
+      // Mock redirect response
+      const mockRedirectResponse = { type: 'redirect' } as any
+      const mockRedirect = vi.fn().mockReturnValue(mockRedirectResponse)
+      NextResponse.redirect = mockRedirect
+
+      // Act
+      const result = await checkEmailVerificationMiddleware(mockRequest)
+
+      // Assert
+      expect(result).toBe(mockRedirectResponse)
+      // Should redirect to verification page since user needs verification
+      expect(mockRedirect).toHaveBeenCalled()
+    })
+
+    it('should handle middleware errors gracefully', async () => {
+      // Arrange
+      mockRequest.nextUrl.pathname = '/dashboard'
+      mockUpdateSession.mockRejectedValue(new Error('Supabase error'))
+
+      // Act
+      const result = await checkEmailVerificationMiddleware(mockRequest)
+
+      // Assert
+      expect(result).toBeDefined()
+      // Should not crash and handle error by returning NextResponse.next()
+    })
+  })
+
+  describe('Route Classification', () => {
+    const publicRoutes = [
+      '/auth/login',
+      '/auth/signup',
+      '/auth/reset-password',
+      '/auth/verify-email',
+      '/auth/verify',
+      '/auth/callback',
+      '/'
+    ]
+
+    const protectedRoutes = [
+      '/dashboard',
+      '/secrets',
+      '/secrets/123',
+      '/profile',
+      '/settings'
+    ]
+
+    publicRoutes.forEach(route => {
+      it(`should classify ${route} as a public route`, async () => {
+        // Arrange
+        mockRequest.nextUrl.pathname = route
+        mockUpdateSession.mockResolvedValue({
+          user: { ...mockUser, email_verified: false },
+          supabaseResponse: NextResponse.next()
+        })
+
+        // Act
+        const result = await checkEmailVerificationMiddleware(mockRequest)
+
+        // Assert
+        expect(NextResponse.redirect).not.toHaveBeenCalled()
+      })
+    })
+
+    protectedRoutes.forEach(route => {
+      it(`should require verification for ${route}`, async () => {
+        // Arrange
+        mockRequest.nextUrl.pathname = route
+        mockUpdateSession.mockResolvedValue({
+          user: { ...mockUser, email_verified: false },
+          supabaseResponse: NextResponse.next()
+        })
+
+        const mockRedirect = vi.fn()
+        NextResponse.redirect = mockRedirect
+
+        // Act
+        await checkEmailVerificationMiddleware(mockRequest)
+
+        // Assert
+        expect(mockRedirect).toHaveBeenCalled()
+      })
+    })
+  })
+})

@@ -5,6 +5,7 @@
 
 # dependencies
 /node_modules
+node_modules/
 
 # next.js
 /.next/
@@ -46,3 +47,6 @@ supabase/prod-migrations/*
 *.crt
 supabase/seed.sql
 reset_databases.sh
+
+**/metrics/*.json
+**/metrics/*.log

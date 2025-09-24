@@ -4,25 +4,15 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { createClient } from "@/utils/supabase/client"
-import { User } from "@supabase/supabase-js"
+// import { createClient } from "@/utils/supabase/client"
+// import { User } from "@supabase/supabase-js"
 
-const supabase = createClient()
+// // const supabase = createClient()
 
 export function SubscriptionManager() {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function getUser() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      setUser(user)
-      setLoading(false)
-    }
-    getUser()
-  }, [])
+  // Temporarily disabled during Supabase to NextAuth migration
+  const loading = false
+  const user = null
 
   if (loading) {
     return (

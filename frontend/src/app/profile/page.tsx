@@ -18,7 +18,7 @@ export default function ProfilePage() {
       const dbMethods: ContactMethodsDbInput = {
         email: methods.email,
         phone: methods.phone,
-        preferred_method: methods.preferred_method,
+        preferredMethod: methods.preferred_method,
       }
       await saveContactMethods(dbMethods)
       toast({
@@ -50,7 +50,7 @@ export default function ProfilePage() {
         telegram_username: "", // Not in database
         whatsapp: "", // Not in database
         signal: "", // Not in database
-        preferred_method: firstContactMethod.preferred_method,
+        preferred_method: firstContactMethod.preferredMethod as any,
         check_in_days: 90, // Default value
       }
     : null

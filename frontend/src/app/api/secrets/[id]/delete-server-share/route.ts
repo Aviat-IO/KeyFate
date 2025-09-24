@@ -1,4 +1,9 @@
-import { createClient } from "@/utils/supabase/server";
+import { authConfig } from "@/lib/auth-config";
+import { db } from "@/lib/db/drizzle";
+import { secrets } from "@/lib/db/schema";
+import { and, eq } from "drizzle-orm";
+import type { Session } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
 
 export async function POST(
@@ -7,43 +12,31 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createClient();
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const session = (await getServerSession(authConfig as any)) as
+      | Session
+      | null;
+    const user = session?.user as
+      | (Session["user"] & { id?: string })
+      | undefined
+      | null;
+    if (!user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Verify ownership
-    const { data: secret, error: fetchError } = await supabase
-      .from("secrets")
-      .select("*")
-      .eq("id", id)
-      .eq("user_id", user.id)
-      .single();
-
-    if (fetchError || !secret) {
-      return NextResponse.json({ error: "Secret not found" }, { status: 404 });
-    }
-
-    // Delete the server share and update status to paused
-    const { error: updateError } = await supabase
-      .from("secrets")
-      .update({
-        server_share: null,
+    // Verify ownership and update in one go
+    const result = await db
+      .update(secrets)
+      .set({
+        serverShare: null,
         iv: null,
-        auth_tag: null,
+        authTag: null,
         status: "paused",
-      })
-      .eq("id", id)
-      .eq("user_id", user.id);
-
-    if (updateError) {
-      console.error("Error deleting server share:", updateError);
-      return NextResponse.json(
-        { error: "Failed to delete server share" },
-        { status: 500 },
-      );
+        updatedAt: new Date(),
+      } as any)
+      .where(and(eq(secrets.id, id), eq(secrets.userId, user.id)))
+      .returning();
+    if (result.length === 0) {
+      return NextResponse.json({ error: "Secret not found" }, { status: 404 });
     }
 
     return NextResponse.json({ success: true });

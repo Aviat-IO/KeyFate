@@ -1,39 +1,25 @@
-// Create seed users with specific UUIDs for development
+// Create seed users directly in Postgres via Drizzle
 // Usage: node create-seed-users.js
-// Make sure to get your Service Role Key from Supabase Dashboard > Settings > API
+// Requires: DATABASE_URL in environment
 
-const { createClient } = require("@supabase/supabase-js")
+const postgres = require("postgres")
+const { drizzle } = require("drizzle-orm/postgres-js")
 
-// Local Supabase configuration
-const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "http://127.0.0.1:54321"
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-if (!SERVICE_ROLE_KEY) {
-  console.error(
-    "❌ Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required",
-  )
+const DATABASE_URL = process.env.DATABASE_URL
+if (!DATABASE_URL) {
+  console.error("❌ Error: DATABASE_URL environment variable is required")
   console.log(
-    "💡 Get it from: Supabase Dashboard > Settings > API > service_role key",
-  )
-  console.log(
-    "💡 Then run: SUPABASE_SERVICE_ROLE_KEY=your_key_here node create-seed-users.js",
-  )
-  console.log(
-    "💡 Or use direnv: create .envrc with 'export SUPABASE_SERVICE_ROLE_KEY=your_key_here'",
+    "💡 Example: DATABASE_URL=postgres://user:pass@host:5432/db node create-seed-users.js",
   )
   process.exit(1)
 }
 
-const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-})
+const client = postgres(DATABASE_URL)
+const db = drizzle(client)
+const { users: usersTable } = require("./dist/lib/db/schema.js")
 
 // These UUIDs match the seeded database records
-const users = [
+const seedUsers = [
   {
     id: "48a35ccd-e1e4-458b-86ec-5bd88a0addc7",
     email: "ceo@aviat.io",
@@ -62,55 +48,26 @@ const users = [
 
 async function createUsers() {
   console.log("🔐 Creating seed users with specific UUIDs...\n")
+  // Test DB connection
+  await db.execute("select 1;")
+  console.log("✅ Connected to Postgres successfully")
 
-  // Test connection first
-  try {
-    const { data, error } = await supabase.auth.admin.listUsers({
-      page: 1,
-      perPage: 1,
-    })
-    if (error) {
-      console.error("❌ Failed to connect to Supabase Auth:", error.message)
-      process.exit(1)
-    }
-    console.log("✅ Connected to Supabase Auth successfully")
-  } catch (err) {
-    console.error("❌ Connection test failed:", err.message)
-    process.exit(1)
-  }
-
-  for (const user of users) {
+  for (const user of seedUsers) {
     try {
       console.log(`Creating user: ${user.email}...`)
 
-      const { data, error } = await supabase.auth.admin.createUser({
-        email: user.email,
-        password: user.password,
-        id: user.id, // Changed from user_id to id
-        email_confirm: true,
-        user_metadata: {
+      // Upsert user record
+      await db
+        .insert(usersTable)
+        .values({
+          id: user.id,
+          email: user.email.toLowerCase(),
           name: user.name,
-        },
-      })
-
-      if (error) {
-        if (
-          error.message.includes("already registered") ||
-          error.message.includes("already exists")
-        ) {
-          console.log(`✅ User ${user.email} already exists (${user.id})`)
-        } else {
-          console.error(`❌ Error creating ${user.email}:`, error.message)
-          console.error("Full error details:", error)
-        }
-      } else {
-        console.log(`✅ Created: ${user.email} (${user.id})`)
-        if (data.user) {
-          console.log(
-            `   📧 Email confirmed: ${data.user.email_confirmed_at ? "Yes" : "No"}`,
-          )
-        }
-      }
+          password: null,
+          emailVerified: new Date(),
+        })
+        .onConflictDoNothing()
+      console.log(`✅ Ensured user exists: ${user.email} (${user.id})`)
     } catch (err) {
       console.error(`❌ Failed to create ${user.email}:`, err.message)
       console.error("Stack trace:", err.stack)
@@ -122,7 +79,7 @@ async function createUsers() {
 
   console.log("\n🎉 Seed users setup complete!")
   console.log("\n📧 You can now login with any of these accounts:")
-  users.forEach((user) => {
+  seedUsers.forEach((user) => {
     console.log(`   ${user.email} / password123`)
   })
 

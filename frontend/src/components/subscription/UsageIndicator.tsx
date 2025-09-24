@@ -4,39 +4,13 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { createClient } from "@/utils/supabase/client"
-import { User } from "@supabase/supabase-js"
-
-const supabase = createClient()
+import { useSession } from "next-auth/react"
 
 export function UsageIndicator() {
-  const [user, setUser] = useState<User | null>(null)
-  const [secretCount, setSecretCount] = useState(0)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function getUserAndSecrets() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (user) {
-        setUser(user)
-
-        // Get secret count
-        const { count } = await supabase
-          .from("secrets")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", user.id)
-
-        setSecretCount(count || 0)
-      }
-
-      setLoading(false)
-    }
-
-    getUserAndSecrets()
-  }, [])
+  // Temporarily disabled during Supabase to NextAuth migration
+  const user = null
+  const secretCount = 0
+  const loading = false
 
   if (loading) {
     return (

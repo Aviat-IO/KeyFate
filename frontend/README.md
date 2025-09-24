@@ -37,10 +37,6 @@ Next.js frontend for the KeyFate dead man's switch platform.
 Create `.env.local` for development:
 
 ```env
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-local-anon-key
-
 # App Configuration
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_COMPANY=KeyFate

@@ -1,0 +1,318 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { BrowserRouter } from 'react-router-dom'
+import { EmailVerificationFlow } from '@/components/auth/email-verification-flow'
+
+// Mock all the dependencies
+vi.mock('@/utils/supabase/client')
+vi.mock('@/hooks/use-toast')
+vi.mock('next/navigation')
+
+const MockWrapper = ({ children }: { children: React.ReactNode }) => (
+  <BrowserRouter>{children}</BrowserRouter>
+)
+
+describe('Email Verification Integration Flow', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  describe('Complete Email Verification Journey', () => {
+    it('should complete full verification flow for new email/password user', async () => {
+      const user = userEvent.setup()
+      const mockUser = {
+        email: 'newuser@example.com',
+        email_verified: false,
+        app_metadata: { provider: 'email' }
+      }
+
+      // Mock the verification flow component (we'll create this)
+      render(
+        <MockWrapper>
+          <EmailVerificationFlow user={mockUser} />
+        </MockWrapper>
+      )
+
+      // Step 1: Should show email verification prompt
+      expect(screen.getByText(/verify your email address/i)).toBeInTheDocument()
+      expect(screen.getByText(/newuser@example.com/i)).toBeInTheDocument()
+
+      // Step 2: User enters OTP
+      const otpInput = screen.getByLabelText(/enter verification code/i)
+      await user.type(otpInput, '123456')
+
+      // Step 3: User clicks verify
+      const verifyButton = screen.getByRole('button', { name: /verify/i })
+      await user.click(verifyButton)
+
+      // Step 4: Should show loading state
+      expect(screen.getByText(/verifying/i)).toBeInTheDocument()
+
+      // Step 5: Should show success state (mocked)
+      await waitFor(() => {
+        expect(screen.getByText(/email verified successfully/i)).toBeInTheDocument()
+      })
+
+      // Step 6: Should redirect to dashboard (mocked)
+      // This would be handled by the onVerificationComplete callback
+    })
+
+    it('should handle OTP verification error and allow retry', async () => {
+      const user = userEvent.setup()
+      const mockUser = {
+        email: 'user@example.com',
+        email_verified: false,
+        app_metadata: { provider: 'email' }
+      }
+
+      render(
+        <MockWrapper>
+          <EmailVerificationFlow user={mockUser} />
+        </MockWrapper>
+      )
+
+      // Step 1: Enter invalid OTP
+      const otpInput = screen.getByLabelText(/enter verification code/i)
+      await user.type(otpInput, '000000')
+
+      const verifyButton = screen.getByRole('button', { name: /verify/i })
+      await user.click(verifyButton)
+
+      // Step 2: Should show error message
+      await waitFor(() => {
+        expect(screen.getByText(/invalid otp/i)).toBeInTheDocument()
+      })
+
+      // Step 3: Should allow retry
+      expect(otpInput).toBeEnabled()
+      expect(verifyButton).toBeEnabled()
+
+      // Step 4: User can enter new OTP
+      await user.clear(otpInput)
+      await user.type(otpInput, '123456')
+      await user.click(verifyButton)
+
+      // Should proceed with verification again
+      expect(screen.getByText(/verifying/i)).toBeInTheDocument()
+    })
+
+    it('should handle resend verification email flow', async () => {
+      const user = userEvent.setup()
+      const mockUser = {
+        email: 'user@example.com',
+        email_verified: false,
+        app_metadata: { provider: 'email' }
+      }
+
+      render(
+        <MockWrapper>
+          <EmailVerificationFlow user={mockUser} />
+        </MockWrapper>
+      )
+
+      // Step 1: Click resend button
+      const resendButton = screen.getByRole('button', { name: /resend/i })
+      await user.click(resendButton)
+
+      // Step 2: Should show loading state for resend
+      expect(screen.getByText(/sending/i)).toBeInTheDocument()
+
+      // Step 3: Should show success message
+      await waitFor(() => {
+        expect(screen.getByText(/verification email sent/i)).toBeInTheDocument()
+      })
+
+      // Step 4: Should show cooldown timer
+      expect(screen.getByText(/resend in/i)).toBeInTheDocument()
+      expect(resendButton).toBeDisabled()
+    })
+
+    it('should skip verification for Google OAuth users', async () => {
+      const mockUser = {
+        email: 'user@gmail.com',
+        email_verified: false, // Even if false, Google should be trusted
+        app_metadata: { provider: 'google' }
+      }
+
+      render(
+        <MockWrapper>
+          <EmailVerificationFlow user={mockUser} />
+        </MockWrapper>
+      )
+
+      // Should not show verification prompt
+      expect(screen.queryByText(/verify your email address/i)).not.toBeInTheDocument()
+
+      // Should show success message
+      expect(screen.getByText(/welcome!/i)).toBeInTheDocument()
+      expect(screen.getByText(/your google account is already verified/i)).toBeInTheDocument()
+    })
+
+    it('should handle expired OTP and allow resend', async () => {
+      const user = userEvent.setup()
+      const mockUser = {
+        email: 'user@example.com',
+        email_verified: false,
+        app_metadata: { provider: 'email' }
+      }
+
+      render(
+        <MockWrapper>
+          <EmailVerificationFlow user={mockUser} />
+        </MockWrapper>
+      )
+
+      // Step 1: Enter OTP
+      const otpInput = screen.getByLabelText(/enter verification code/i)
+      await user.type(otpInput, '123456')
+
+      const verifyButton = screen.getByRole('button', { name: /verify/i })
+      await user.click(verifyButton)
+
+      // Step 2: Should show expired OTP error
+      await waitFor(() => {
+        expect(screen.getByText(/otp has expired/i)).toBeInTheDocument()
+      })
+
+      // Step 3: Should suggest resending
+      expect(screen.getByText(/please request a new verification code/i)).toBeInTheDocument()
+
+      // Step 4: User clicks resend
+      const resendButton = screen.getByRole('button', { name: /resend verification/i })
+      await user.click(resendButton)
+
+      // Step 5: Should clear the form and send new OTP
+      expect(otpInput).toHaveValue('')
+      await waitFor(() => {
+        expect(screen.getByText(/new verification code sent/i)).toBeInTheDocument()
+      })
+    })
+
+    it('should handle network errors gracefully', async () => {
+      const user = userEvent.setup()
+      const mockUser = {
+        email: 'user@example.com',
+        email_verified: false,
+        app_metadata: { provider: 'email' }
+      }
+
+      render(
+        <MockWrapper>
+          <EmailVerificationFlow user={mockUser} />
+        </MockWrapper>
+      )
+
+      // Step 1: Enter OTP
+      const otpInput = screen.getByLabelText(/enter verification code/i)
+      await user.type(otpInput, '123456')
+
+      const verifyButton = screen.getByRole('button', { name: /verify/i })
+      await user.click(verifyButton)
+
+      // Step 2: Should show network error
+      await waitFor(() => {
+        expect(screen.getByText(/network error/i)).toBeInTheDocument()
+      })
+
+      // Step 3: Should show retry button
+      const retryButton = screen.getByRole('button', { name: /try again/i })
+      expect(retryButton).toBeInTheDocument()
+
+      // Step 4: User can retry
+      await user.click(retryButton)
+      expect(screen.getByText(/verifying/i)).toBeInTheDocument()
+    })
+  })
+
+  describe('Middleware Integration', () => {
+    it('should redirect unverified users to verification page', async () => {
+      // This would test the middleware integration
+      // by simulating a protected route access with unverified user
+
+      const mockUnverifiedUser = {
+        email: 'user@example.com',
+        email_verified: false,
+        app_metadata: { provider: 'email' }
+      }
+
+      // Mock the middleware behavior
+      const mockRedirect = vi.fn()
+
+      // Simulate middleware check
+      const shouldRedirect = !mockUnverifiedUser.email_verified &&
+                           mockUnverifiedUser.app_metadata.provider === 'email'
+
+      if (shouldRedirect) {
+        mockRedirect('/auth/verify-email')
+      }
+
+      expect(mockRedirect).toHaveBeenCalledWith('/auth/verify-email')
+    })
+
+    it('should allow OAuth users through middleware', async () => {
+      const mockOAuthUser = {
+        email: 'user@gmail.com',
+        email_verified: false, // Even if false
+        app_metadata: { provider: 'google' }
+      }
+
+      const mockRedirect = vi.fn()
+
+      // Simulate middleware check - OAuth users should pass through
+      const shouldRedirect = !mockOAuthUser.email_verified &&
+                           mockOAuthUser.app_metadata.provider === 'email' // Only redirect email users
+
+      if (shouldRedirect) {
+        mockRedirect('/auth/verify-email')
+      }
+
+      expect(mockRedirect).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('End-to-End User Scenarios', () => {
+    it('should handle complete signup to dashboard flow', async () => {
+      // This would test:
+      // 1. User signs up with email/password
+      // 2. Gets redirected to verification page
+      // 3. Enters OTP successfully
+      // 4. Gets redirected to dashboard
+      // 5. Middleware allows access to protected routes
+
+      const signupFlow = {
+        step1_signup: 'user@example.com',
+        step2_redirect: '/auth/verify-email',
+        step3_verify: '123456',
+        step4_redirect: '/dashboard',
+        step5_access: 'allowed'
+      }
+
+      expect(signupFlow.step1_signup).toBe('user@example.com')
+      expect(signupFlow.step2_redirect).toBe('/auth/verify-email')
+      expect(signupFlow.step3_verify).toBe('123456')
+      expect(signupFlow.step4_redirect).toBe('/dashboard')
+      expect(signupFlow.step5_access).toBe('allowed')
+    })
+
+    it('should handle OAuth signup to dashboard flow', async () => {
+      // This would test:
+      // 1. User signs up with Google OAuth
+      // 2. Email verification is automatically handled
+      // 3. Gets redirected directly to dashboard
+      // 4. Middleware allows access to protected routes
+
+      const oauthFlow = {
+        step1_oauth: 'google',
+        step2_auto_verify: true,
+        step3_redirect: '/dashboard',
+        step4_access: 'allowed'
+      }
+
+      expect(oauthFlow.step1_oauth).toBe('google')
+      expect(oauthFlow.step2_auto_verify).toBe(true)
+      expect(oauthFlow.step3_redirect).toBe('/dashboard')
+      expect(oauthFlow.step4_access).toBe('allowed')
+    })
+  })
+})

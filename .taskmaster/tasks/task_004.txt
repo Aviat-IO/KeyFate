@@ -1,0 +1,11 @@
+# Task ID: 4
+# Title: Frontend Payment Flow Integration
+# Status: pending
+# Dependencies: 3
+# Priority: high
+# Description: Complete frontend integration for Stripe and BTCPay checkout flows with billing portal
+# Details:
+Frontend payment components exist but need integration completion. Implement: 1) Connect StripeCheckoutButton and BTCPayCheckoutButton to backend APIs, 2) Complete billing portal session creation and management, 3) Implement subscription status updates in real-time, 4) Add payment success/failure handling with user feedback, 5) Complete UserPricingActions component integration, 6) Add usage limit enforcement based on subscription tier, 7) Implement subscription cancellation and reactivation flows.
+
+# Test Strategy:
+Component tests for payment flows, integration tests with payment provider test modes, E2E tests for complete subscription lifecycle, accessibility tests for payment forms

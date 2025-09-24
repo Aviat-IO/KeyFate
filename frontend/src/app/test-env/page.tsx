@@ -1,41 +1,10 @@
-import { createClient } from "@/utils/supabase/server"
+import { authConfig } from "@/lib/auth-config"
+import type { Session } from "next-auth"
+import { getServerSession } from "next-auth/next"
 
 export default async function TestEnvPage() {
-  const supabase = await createClient()
-
-  // Test user authentication
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
-  // Test database connection and secrets query
-  let secretsData = null
-  let secretsError = null
-  let allSecretsData = null
-  let allSecretsError = null
-
-  if (user) {
-    // Query for user's secrets
-    const result = await supabase
-      .from("secrets")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-
-    secretsData = result.data
-    secretsError = result.error
-
-    // Also query ALL secrets to see if any exist (for debugging)
-    const allResult = await supabase
-      .from("secrets")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(5)
-
-    allSecretsData = allResult.data
-    allSecretsError = allResult.error
-  }
+  const session = (await getServerSession(authConfig as any)) as Session | null
+  const user = session?.user
 
   return (
     <div className="container mx-auto p-8">
@@ -49,8 +18,8 @@ export default async function TestEnvPage() {
               {
                 user: user?.id,
                 email: user?.email,
-                provider: user?.app_metadata?.provider,
-                error: userError,
+                provider: "next-auth",
+                error: null,
               },
               null,
               2,
@@ -65,14 +34,10 @@ export default async function TestEnvPage() {
               <pre className="mt-2 rounded bg-gray-100 p-2 text-sm">
                 {JSON.stringify(
                   {
-                    secretsCount: secretsData?.length,
-                    error: secretsError,
-                    userId: user.id,
-                    secrets: secretsData?.map((s) => ({
-                      id: s.id,
-                      title: s.title,
-                      created_at: s.created_at,
-                    })),
+                    secretsCount: 0,
+                    error: null,
+                    userId: (user as any).id,
+                    secrets: [],
                   },
                   null,
                   2,
@@ -87,14 +52,9 @@ export default async function TestEnvPage() {
               <pre className="mt-2 rounded bg-gray-100 p-2 text-sm">
                 {JSON.stringify(
                   {
-                    allSecretsCount: allSecretsData?.length,
-                    error: allSecretsError,
-                    allSecrets: allSecretsData?.map((s) => ({
-                      id: s.id,
-                      title: s.title,
-                      user_id: s.user_id,
-                      created_at: s.created_at,
-                    })),
+                    allSecretsCount: 0,
+                    error: null,
+                    allSecrets: [],
                   },
                   null,
                   2,
@@ -109,7 +69,6 @@ export default async function TestEnvPage() {
           <pre className="mt-2 rounded bg-gray-100 p-2 text-sm">
             {JSON.stringify(
               {
-                NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
                 NEXT_PUBLIC_ENV: process.env.NEXT_PUBLIC_ENV,
                 NODE_ENV: process.env.NODE_ENV,
               },

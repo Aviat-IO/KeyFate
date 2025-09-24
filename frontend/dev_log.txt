@@ -1,0 +1,16 @@
+
+> keyfate@0.1.0 dev
+> next dev --turbopack
+
+ ⚠ Port 3000 is in use, trying 3001 instead.
+ ⚠ Port 3001 is in use, trying 3002 instead.
+ ⚠ Port 3002 is in use, trying 3003 instead.
+ ⚠ Port 3003 is in use, trying 3004 instead.
+   ▲ Next.js 15.0.3 (Turbopack)
+   - Local:        http://localhost:3004
+   - Environments: .env.development.local, .env.local, .env.development
+
+ ✓ Starting...
+ ✓ Compiled in 169ms
+ ✓ Ready in 729ms
+[?25h

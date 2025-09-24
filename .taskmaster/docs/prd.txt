@@ -1,0 +1,422 @@
+# Product Requirements Document: KeyFate Dead Man's Switch Platform
+
+## Project Overview
+
+**Project Name**: KeyFate (Dead Man's Switch)
+
+**Vision**: A secure digital service that automatically triggers secret disclosure when the user is incapacitated, using client-side Shamir's Secret Sharing for maximum security and privacy.
+
+**Mission**: Provide individuals (journalists, estate planners, cryptocurrency holders) with a trusted, secure dead man's switch platform that ensures critical information reaches intended recipients without compromising user privacy.
+
+## Executive Summary
+
+KeyFate is a security-focused dead man's switch platform that enables users to safely store and automatically disclose sensitive information to designated recipients if they fail to check in within specified intervals. The platform uses client-side Shamir's Secret Sharing to ensure that sensitive data never exists in plain text on our servers, providing mathematically provable security guarantees.
+
+## Core User Stories
+
+### Primary User Journey
+1. **User Registration & Setup**
+   - As a user, I want to sign up using Google OAuth or email authentication so I can quickly access the platform
+   - As a user, I want to verify my email address so the platform can trust my identity
+   - As a user, I want to be automatically assigned to the free tier so I can start using the service immediately
+
+2. **Secret Creation & Management**
+   - As a user, I want to create a secret and have it automatically encrypted using Shamir's Secret Sharing entirely in my browser so my sensitive data never leaves my device in plain text
+   - As a user, I want to specify a recipient (name, email, phone) who will receive my secret if triggered
+   - As a user, I want to set a custom check-in interval (days) so I can control when the dead man's switch activates
+   - As a user, I want to pause and resume secrets so I can temporarily disable them when needed
+
+3. **Check-in System**
+   - As a user, I want to receive reminder notifications (email) at strategic intervals (25%, 50%, 7 days, 3 days, 24 hours, 12 hours, 1 hour before deadline) so I don't accidentally trigger my secrets
+   - As a user, I want to check in via email links or the dashboard so I can reset my countdown easily
+   - As a user, I want to see my check-in status clearly displayed so I know when I need to check in next
+
+4. **Secret Disclosure Process**
+   - As a user, I want my designated recipient to automatically receive access to my secret if I fail to check in after all reminders
+   - As a recipient, I want to receive clear instructions and secure access to disclosed secrets
+   - As a user, I want the ability to immediately trigger secret disclosure manually if needed in an emergency
+
+5. **Subscription & Payment Management**
+   - As a free user, I want to create 1 secret with 1 recipient so I can try the service
+   - As a pro user, I want to create up to 10 secrets with up to 5 recipients each and have access to custom intervals and templates
+   - As a user, I want to pay via credit card (Stripe) or Bitcoin (BTCPay Server) for flexibility
+   - As a user, I want to manage my subscription through a billing portal
+
+## Functional Requirements
+
+### 1. Authentication & User Management
+- **Google OAuth Integration**: Seamless sign-in with Google accounts
+- **Email Authentication**: Traditional email/password authentication with verification
+- **Account Management**: Profile settings, contact methods, security preferences
+- **Tier Management**: Automatic free tier assignment, pro tier upgrades
+
+### 2. Secret Management System
+- **Client-Side Encryption**:
+  - Shamir's Secret Sharing implementation (3 shares, 2 required for reconstruction)
+  - Original secrets never transmitted to servers
+  - Only 1 encrypted share stored server-side (insufficient for reconstruction)
+- **Secret CRUD Operations**: Create, read, update (limited), delete secrets
+- **Secret Status Management**: Active, paused, triggered states
+- **Recipient Management**: Multiple recipients per secret (tier-dependent)
+- **Flexible Intervals**: Custom check-in periods (pro feature)
+
+### 3. Check-in & Reminder System
+- **Automated Reminder Scheduling**:
+  - Percentage-based: 25%, 50% of interval remaining
+  - Fixed intervals: 7 days, 3 days, 24 hours, 12 hours, 1 hour
+- **Multiple Check-in Methods**:
+  - Dashboard check-in buttons
+  - Secure email links (tokenized)
+  - Emergency check-in via authenticated API
+- **Check-in History Tracking**: Complete audit trail of all check-ins
+
+### 4. Secret Disclosure & Recipient Access
+- **Automatic Triggering**: Secrets disclosed when check-in deadline passes
+- **Recipient Notification**: Email notifications with secure access links
+- **Secure Access Portal**: Time-limited, tokenized access to disclosed secrets
+- **Manual Triggering**: Emergency disclosure capability for urgent situations
+
+### 5. Payment & Subscription System
+- **Multi-Provider Support**:
+  - Stripe integration for credit/debit cards
+  - BTCPay Server integration for Bitcoin payments
+  - Provider-agnostic architecture for future payment methods
+- **Tier Management**: Free and Pro tier features and limitations
+- **Billing Management**: Subscription creation, modification, cancellation
+- **Usage Monitoring**: Track secret and recipient counts against tier limits
+
+### 6. Administrative & Security Features
+- **Audit Logging**: Comprehensive logs for security and debugging
+- **Failed Reminder Handling**: Retry logic with admin notifications
+- **Rate Limiting**: Protection against abuse and excessive API calls
+- **GDPR Compliance**: User data deletion and privacy controls
+
+## Technical Requirements
+
+### Frontend Architecture
+- **Framework**: Next.js 14 with App Router
+- **Language**: TypeScript for type safety
+- **Styling**: Tailwind CSS with Shadcn UI components
+- **State Management**: React hooks and server state
+- **Encryption**: Client-side Shamir's Secret Sharing library
+- **Authentication**: Supabase Auth integration
+
+### Backend Architecture
+- **Database**: Supabase PostgreSQL with Row Level Security
+- **Authentication**: Supabase Auth with Google OAuth
+- **API**: Next.js API routes + Supabase Edge Functions
+- **Payments**: Stripe and BTCPay Server integration
+- **Email**: Supabase email templates and SMTP
+- **Scheduling**: Supabase cron jobs for reminders and cleanup
+
+### Infrastructure & Deployment
+- **Hosting**: Google Cloud Run (via Terraform/Terragrunt)
+- **Database**: Supabase managed PostgreSQL
+- **CDN**: Automatic through Cloud Run
+- **SSL**: Automatic through Google Load Balancer
+- **Monitoring**: Cloud Run metrics and logging
+- **Secrets Management**: Google Secret Manager
+
+### Security Requirements
+- **Cryptographic Standards**:
+  - Client-side Shamir's Secret Sharing (3,2 scheme)
+  - AES-GCM encryption for server-side share storage
+  - Secure random token generation
+- **Data Protection**:
+  - Row Level Security on all database tables
+  - Input validation and sanitization
+  - SQL injection prevention
+  - XSS protection
+- **Authentication Security**:
+  - JWT-based session management
+  - Secure token expiration policies
+  - Rate limiting on authentication endpoints
+
+### Performance Requirements
+- **Page Load Times**: < 2 seconds for dashboard
+- **API Response Times**: < 500ms for check-in operations
+- **Database Queries**: Optimized indexes for all frequent queries
+- **Caching**: Appropriate caching strategies for static content
+- **Scalability**: Support for 10,000+ concurrent users
+
+## Data Models & Database Schema
+
+### Core Tables
+```sql
+-- Users (managed by Supabase Auth)
+auth.users (
+  id UUID PRIMARY KEY,
+  email TEXT UNIQUE,
+  email_verified BOOLEAN,
+  is_super_admin BOOLEAN DEFAULT FALSE
+)
+
+-- Subscription tiers
+tiers (
+  id UUID PRIMARY KEY,
+  name subscription_tier NOT NULL, -- 'free', 'pro'
+  max_secrets INTEGER,
+  max_recipients_per_secret INTEGER,
+  custom_intervals BOOLEAN,
+  price_monthly DECIMAL(10,2),
+  price_yearly DECIMAL(10,2)
+)
+
+-- User tier assignments
+user_tiers (
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id),
+  tier_id UUID REFERENCES tiers(id),
+  UNIQUE(user_id)
+)
+
+-- Subscription management
+user_subscriptions (
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id),
+  provider TEXT, -- 'stripe', 'btcpay'
+  provider_customer_id TEXT,
+  provider_subscription_id TEXT,
+  status subscription_status,
+  tier_name subscription_tier,
+  current_period_start TIMESTAMPTZ,
+  current_period_end TIMESTAMPTZ,
+  cancel_at_period_end BOOLEAN,
+  UNIQUE(user_id)
+)
+
+-- Secrets
+secrets (
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id),
+  title TEXT NOT NULL,
+  server_share TEXT, -- Encrypted server share (nullable)
+  recipient_name TEXT NOT NULL,
+  recipient_email TEXT,
+  recipient_phone TEXT,
+  contact_method contact_method, -- 'email', 'phone', 'both'
+  check_in_days INTEGER DEFAULT 90,
+  last_check_in TIMESTAMPTZ,
+  next_check_in TIMESTAMPTZ,
+  status secret_status DEFAULT 'active', -- 'active', 'paused', 'triggered'
+  is_triggered BOOLEAN DEFAULT FALSE,
+  triggered_at TIMESTAMPTZ,
+  iv TEXT, -- Initialization vector (nullable)
+  auth_tag TEXT, -- Authentication tag (nullable)
+  sss_shares_total INTEGER DEFAULT 3,
+  sss_threshold INTEGER DEFAULT 2
+)
+
+-- Check-in history
+checkin_history (
+  id UUID PRIMARY KEY,
+  secret_id UUID REFERENCES secrets(id),
+  user_id UUID REFERENCES auth.users(id),
+  checked_in_at TIMESTAMPTZ,
+  next_check_in TIMESTAMPTZ
+)
+
+-- Reminders
+reminders (
+  id UUID PRIMARY KEY,
+  secret_id UUID REFERENCES secrets(id),
+  user_id UUID REFERENCES auth.users(id),
+  type reminder_type, -- '25_percent', '50_percent', '7_days', etc.
+  sent_at TIMESTAMPTZ,
+  scheduled_for TIMESTAMPTZ,
+  status reminder_status DEFAULT 'pending', -- 'pending', 'sent', 'failed'
+  error TEXT,
+  retry_count INTEGER DEFAULT 0
+)
+
+-- Secure tokens
+check_in_tokens (
+  id UUID PRIMARY KEY,
+  secret_id UUID REFERENCES secrets(id),
+  token TEXT UNIQUE,
+  expires_at TIMESTAMPTZ,
+  used_at TIMESTAMPTZ
+)
+
+recipient_access_tokens (
+  id UUID PRIMARY KEY,
+  secret_id UUID REFERENCES secrets(id),
+  token TEXT UNIQUE,
+  expires_at TIMESTAMPTZ,
+  used_at TIMESTAMPTZ
+)
+```
+
+## API Specification
+
+### Authentication Endpoints
+- `GET /api/auth/session` - Get current user session
+- `POST /api/auth/signout` - Sign out user
+
+### Secret Management
+- `GET /api/secrets` - List user's secrets
+- `POST /api/secrets` - Create new secret
+- `GET /api/secrets/[id]` - Get specific secret
+- `PUT /api/secrets/[id]` - Update secret (limited fields)
+- `DELETE /api/secrets/[id]` - Delete secret
+- `POST /api/secrets/[id]/check-in` - Manual check-in
+- `POST /api/secrets/[id]/pause` - Pause/resume secret
+
+### Check-in System
+- `GET /api/check-in/[token]` - Check-in via email token
+- `POST /api/check-in/verify` - Verify check-in token
+
+### Recipient Access
+- `GET /api/recipient/[token]` - Access disclosed secret
+- `POST /api/recipient/[token]/acknowledge` - Acknowledge receipt
+
+### Subscription & Billing
+- `GET /api/user/tier` - Get user's current tier and usage
+- `POST /api/stripe/create-checkout-session` - Create Stripe checkout
+- `POST /api/stripe/create-portal-session` - Create billing portal session
+- `POST /api/webhooks/stripe` - Handle Stripe webhooks
+- `POST /api/btcpay/create-checkout` - Create BTCPay checkout
+- `POST /api/webhooks/btcpay` - Handle BTCPay webhooks
+
+## User Experience Design
+
+### Navigation & Layout
+- **Clean Header**: Logo, navigation, user menu, theme toggle
+- **Responsive Design**: Mobile-first approach with desktop optimization
+- **Dashboard**: Central hub for secret management and status overview
+- **Settings Pages**: Account, billing, contact preferences
+
+### Key User Flows
+1. **New User Onboarding**:
+   - Google OAuth or email signup → Email verification → Dashboard tour → Create first secret
+2. **Secret Creation**:
+   - Click "New Secret" → Fill form → Client-side encryption → Success confirmation
+3. **Check-in Process**:
+   - Email reminder → Click link → Confirmed → Next check-in scheduled
+4. **Upgrade Flow**:
+   - Hit limit → Upgrade prompt → Payment selection → Checkout → Pro features unlocked
+
+### Visual Design Principles
+- **Security-First**: Visual cues emphasizing security and encryption
+- **Minimal Distraction**: Clean, focused interface for critical functionality
+- **Trust Building**: Professional design with clear security messaging
+- **Accessibility**: WCAG 2.1 AA compliance for all users
+
+## Testing Strategy
+
+### Unit Testing (179 tests across 19 files)
+- **Utility Functions**: Encryption, validation, helpers
+- **React Components**: All major components with user interactions
+- **UI Components**: Shadcn components with variants
+- **Custom Hooks**: Toast, contact methods, theme management
+- **Database Functions**: Query builders, type safety
+
+### Integration Testing
+- **Authentication Flows**: Google OAuth, email signup, session management
+- **Secret Lifecycle**: Creation → Check-ins → Disclosure process
+- **Payment Flows**: Stripe and BTCPay checkout processes
+- **Email Systems**: Reminder sending, token verification
+
+### End-to-End Testing
+- **Complete User Journeys**: Signup → Create secret → Check-in → Expiry
+- **Cross-Browser Testing**: Chrome, Firefox, Safari, Edge
+- **Mobile Testing**: Responsive design validation
+- **Security Testing**: Encryption validation, token security
+
+### Security Testing
+- **Penetration Testing**: Third-party security audit planned
+- **Cryptographic Validation**: SSS implementation verification
+- **Input Validation**: SQL injection, XSS prevention
+- **Authentication Testing**: Session management, token validation
+
+## Implementation Phases
+
+### Phase 1: Core MVP (Completed)
+- ✅ User authentication (Google OAuth + email)
+- ✅ Secret creation with client-side Shamir's Secret Sharing
+- ✅ Basic check-in system with reminders
+- ✅ Secret pause/resume functionality
+- ✅ Comprehensive unit testing framework
+- ✅ Terms of Service and Privacy Policy
+
+### Phase 2: Payment & Subscription System (In Progress)
+- ✅ Multi-provider payment interface design
+- ✅ Stripe integration with comprehensive provider abstraction
+- ✅ BTCPay Server integration for Bitcoin payments
+- ✅ Database schema for subscription management
+- ✅ Tier-based feature restrictions
+- [ ] Complete webhook handling and subscription lifecycle
+- [ ] Frontend integration for payment flows
+- [ ] Billing portal integration
+
+### Phase 3: Production Readiness
+- [ ] Email verification system completion
+- [ ] Production deployment to Google Cloud Run
+- [ ] SMTP configuration for reliable email delivery
+- [ ] Monitoring and alerting setup
+- [ ] Performance optimization and caching
+- [ ] Security audit and penetration testing
+
+### Phase 4: Enhanced Features (v2)
+- [ ] SMS reminders and recipient verification
+- [ ] Contact management and import (Google/Apple Contacts)
+- [ ] Bulk operations and secret templates
+- [ ] Advanced reporting and audit logs
+- [ ] API for third-party integrations
+
+## Success Metrics
+
+### User Engagement
+- **User Registration Rate**: Target 500 new users/month
+- **Secret Creation Rate**: Average 1.5 secrets per active user
+- **Check-in Compliance**: >95% of users check in before final reminder
+- **Free-to-Paid Conversion**: Target 10% conversion rate
+
+### Technical Performance
+- **Uptime**: 99.9% availability (8.7 hours downtime/year)
+- **Response Times**: <500ms for all API endpoints
+- **Email Delivery**: >98% successful delivery rate
+- **Zero Data Breaches**: Maintain perfect security record
+
+### Business Metrics
+- **Monthly Recurring Revenue**: Target $10K MRR by end of year 1
+- **Customer Acquisition Cost**: <$25 per paid user
+- **Churn Rate**: <5% monthly churn for paid users
+- **Net Promoter Score**: >70 NPS rating
+
+## Risk Management
+
+### Technical Risks
+- **Cryptographic Implementation**: Mitigation through third-party security audit
+- **Email Delivery Issues**: Multiple SMTP providers and fallback systems
+- **Database Failures**: Automated backups and disaster recovery procedures
+- **Scaling Challenges**: Load testing and performance monitoring
+
+### Business Risks
+- **Regulatory Changes**: GDPR compliance and data retention policies
+- **Competition**: Focus on security and user experience differentiation
+- **Market Adoption**: Educational content and security-first marketing
+
+### Security Risks
+- **Key Management**: Secure encryption key storage and rotation
+- **Social Engineering**: User education and verification procedures
+- **System Compromise**: Defense in depth and incident response plan
+
+## Compliance & Legal
+
+### Data Protection
+- **GDPR Compliance**: User data deletion, consent management, privacy by design
+- **Data Retention**: Automatic secret deletion after triggering (configurable periods)
+- **Cross-Border Data**: Supabase EU region for European users
+
+### Terms of Service
+- **Liability Limitations**: Clear disclaimers about service availability
+- **User Responsibilities**: Guidelines for appropriate secret content
+- **Termination Procedures**: Account deletion and data cleanup processes
+
+### Intellectual Property
+- **Open Source Dependencies**: License compliance verification
+- **Proprietary Code**: Copyright protection and trade secret management
+- **Third-Party Services**: Terms compliance for Supabase, Stripe, BTCPay
+
+This PRD serves as the comprehensive foundation for KeyFate's continued development, ensuring all stakeholders understand the project's goals, requirements, and implementation strategy. The focus on security, user privacy, and reliability reflects the critical nature of the dead man's switch use case while maintaining a clear path to business success.

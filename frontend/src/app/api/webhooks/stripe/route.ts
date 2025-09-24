@@ -1,8 +1,8 @@
 import { getFiatPaymentProvider } from "@/lib/payment";
 import type { WebhookEvent } from "@/lib/payment/interfaces/PaymentProvider";
 import { serverEnv } from "@/lib/server-env";
-import { createClient } from "@/utils/supabase/server";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { subscriptionService } from "@/lib/services/subscription-service";
+import { emailService } from "@/lib/services/email-service";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -26,156 +26,77 @@ export async function POST(request: NextRequest) {
       serverEnv.STRIPE_WEBHOOK_SECRET,
     );
 
-    const supabase = await createClient();
+    // Extract user ID from event metadata
+    const userId = extractUserIdFromEvent(event);
 
-    // Handle different event types
-    switch (event.type) {
-      case "customer.subscription.created":
-      case "customer.subscription.updated":
-        await handleSubscriptionChange(event, supabase);
-        break;
-
-      case "customer.subscription.deleted":
-        await handleSubscriptionCanceled(event, supabase);
-        break;
-
-      case "invoice.payment_succeeded":
-        await handlePaymentSucceeded(event);
-        break;
-
-      case "invoice.payment_failed":
-        await handlePaymentFailed(event);
-        break;
-
-      case "customer.subscription.trial_will_end":
-        await handleTrialWillEnd(event);
-        break;
-
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
+    if (!userId) {
+      console.error("No user_id found in webhook event metadata");
+      await emailService.sendAdminAlert({
+        type: "webhook_failure",
+        severity: "medium",
+        message: "Stripe webhook missing user_id",
+        details: {
+          eventType: event.type,
+          eventId: event.id || "unknown",
+          provider: "stripe",
+        },
+      });
+      return NextResponse.json({ error: "No user_id in metadata" }, { status: 400 });
     }
+
+    // Handle event using subscription service
+    await subscriptionService.handleStripeWebhook(event, userId);
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error("Webhook error:", error);
-    return NextResponse.json({ error: "Webhook processing failed" }, {
-      status: 400,
-    });
-  }
-}
+    console.error("Stripe webhook error:", error);
 
-async function handleSubscriptionChange(
-  event: WebhookEvent,
-  supabase: SupabaseClient,
-) {
-  const subscription = event.data.object as Record<string, unknown>;
-  const customerId = subscription.customer as string;
-  const userId = (subscription.metadata as Record<string, string>)?.user_id;
-
-  if (!userId) {
-    console.error("No user_id in subscription metadata");
-    return;
-  }
-
-  // Determine tier based on price
-  const items = subscription.items as {
-    data: Array<{ price: { id: string } }>;
-  };
-  const priceId = items.data[0].price.id;
-  const tier = getTierFromPriceId(priceId);
-
-  // Upsert subscription record
-  await supabase
-    .from("user_subscriptions")
-    .upsert({
-      user_id: userId,
-      stripe_customer_id: customerId,
-      stripe_subscription_id: subscription.id as string,
-      status: subscription.status as string,
-      current_period_start: new Date(
-        (subscription.current_period_start as number) * 1000,
-      ),
-      current_period_end: new Date(
-        (subscription.current_period_end as number) * 1000,
-      ),
-      cancel_at_period_end: subscription.cancel_at_period_end as boolean,
-      tier_name: tier.name,
+    // Send admin alert for webhook failures
+    await emailService.sendAdminAlert({
+      type: "webhook_failure",
+      severity: "high",
+      message: "Stripe webhook processing failed",
+      details: {
+        error: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined,
+        provider: "stripe",
+        timestamp: new Date().toISOString(),
+      },
     });
 
-  // Also update user_tiers based on mapped tier
-  const { data: mappedTier } = await supabase
-    .from("tiers")
-    .select("id")
-    .eq("name", tier.name)
-    .single();
-  if (mappedTier?.id) {
-    await supabase
-      .from("user_tiers")
-      .upsert({ user_id: userId, tier_id: mappedTier.id });
+    // Determine error type for appropriate response
+    if (error instanceof Error && error.message.includes("Invalid webhook signature")) {
+      return NextResponse.json({ error: "Invalid webhook signature" }, { status: 401 });
+    }
+
+    return NextResponse.json({ error: "Webhook processing failed" }, { status: 400 });
   }
-
-  console.log(`Subscription ${subscription.status} for user ${userId}`);
 }
 
-async function handleSubscriptionCanceled(
-  event: WebhookEvent,
-  supabase: SupabaseClient,
-) {
-  const subscription = event.data.object as Record<string, unknown>;
-  const userId = (subscription.metadata as Record<string, string>)?.user_id;
+// Helper function to extract user ID from webhook event
+function extractUserIdFromEvent(event: WebhookEvent): string | null {
+  try {
+    const eventData = event.data.object as Record<string, unknown>;
 
-  if (!userId) {
-    console.error("No user_id in subscription metadata");
-    return;
+    // Try to get user_id from metadata
+    const metadata = eventData.metadata as Record<string, string> | undefined;
+    if (metadata?.user_id) {
+      return metadata.user_id;
+    }
+
+    // For invoice events, try to get from subscription metadata
+    if (event.type.startsWith("invoice.")) {
+      const subscriptionId = eventData.subscription as string;
+      if (subscriptionId) {
+        // Note: In a real implementation, you'd need to fetch the subscription
+        // from Stripe to get its metadata. For now, we'll try other approaches.
+        console.warn(`Invoice event ${event.type} missing user_id in metadata, subscription: ${subscriptionId}`);
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Error extracting user ID from event:", error);
+    return null;
   }
-
-  // Update subscription to canceled status
-  await supabase
-    .from("user_subscriptions")
-    .update({
-      status: "canceled",
-      updated_at: new Date(),
-    })
-    .eq("stripe_subscription_id", subscription.id as string);
-
-  console.log(`Subscription canceled for user ${userId}`);
-}
-
-async function handlePaymentSucceeded(event: WebhookEvent) {
-  const invoice = event.data.object as Record<string, unknown>;
-  const subscriptionId = invoice.subscription as string;
-
-  // Log successful payment
-  console.log(`Payment succeeded for subscription ${subscriptionId}`);
-
-  // Could update payment history table here
-}
-
-async function handlePaymentFailed(event: WebhookEvent) {
-  const invoice = event.data.object as Record<string, unknown>;
-  const subscriptionId = invoice.subscription as string;
-
-  // Log failed payment
-  console.log(`Payment failed for subscription ${subscriptionId}`);
-
-  // Could send notification email here
-}
-
-async function handleTrialWillEnd(event: WebhookEvent) {
-  const subscription = event.data.object as Record<string, unknown>;
-  const userId = (subscription.metadata as Record<string, string>)?.user_id;
-
-  console.log(`Trial will end for user ${userId}`);
-
-  // Could send trial ending notification here
-}
-
-function getTierFromPriceId(priceId: string) {
-  // Map price IDs to tiers - this should match your Stripe product setup
-  const priceToTierMap: Record<string, { name: "free" | "pro"; id: string }> = {
-    price_pro_monthly: { name: "pro", id: "pro" },
-    price_pro_yearly: { name: "pro", id: "pro" },
-  };
-
-  return priceToTierMap[priceId] || { name: "free" as const, id: "free" };
 }

@@ -1,0 +1,11 @@
+# Task ID: 7
+# Title: SMS Reminder Implementation
+# Status: pending
+# Dependencies: 6
+# Priority: medium
+# Description: Implement SMS notifications for reminders and check-ins using Twilio integration
+# Details:
+Add SMS capability to complement email reminders. Tasks: 1) Integrate Twilio API for SMS sending, 2) Update contact methods to support SMS preferences, 3) Implement SMS templates for reminders and notifications, 4) Add phone number verification flow, 5) Update reminder processing to send both email and SMS based on user preferences, 6) Implement SMS delivery tracking and failure handling, 7) Add SMS opt-out handling for compliance, 8) Update database schema for SMS delivery logs.
+
+# Test Strategy:
+SMS delivery tests, phone number validation tests, integration tests with Twilio, compliance tests for opt-out handling, cost monitoring tests
