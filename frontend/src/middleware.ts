@@ -20,6 +20,12 @@ const VERIFICATION_ALLOWED_ROUTES = [
   "/api/auth/verification-status",
 ] as const;
 
+// Cron routes that require Bearer token authentication instead of user sessions
+// These routes are called by Google Cloud Scheduler with Authorization: Bearer <CRON_SECRET>
+const CRON_ROUTES = [
+  "/api/cron",
+] as const;
+
 // Auth-related routes (API and pages)
 const AUTH_ROUTES = [
   "/api/auth",
@@ -66,6 +72,47 @@ function isVerificationAllowedRoute(pathname: string): boolean {
  */
 function isAuthRoute(pathname: string): boolean {
   return AUTH_ROUTES.some((route) => pathname.startsWith(route));
+}
+
+/**
+ * Check if a route is a cron route that requires Bearer token authentication
+ * @param pathname - The pathname to check
+ * @returns true if the route is a cron route
+ */
+function isCronRoute(pathname: string): boolean {
+  return CRON_ROUTES.some((route) => pathname.startsWith(route));
+}
+
+/**
+ * Validate Bearer token authentication for cron routes
+ * Used by Google Cloud Scheduler to authenticate with cron endpoints
+ * @param req - The incoming request
+ * @returns true if the request has valid Bearer token authentication
+ */
+function validateCronAuth(req: NextRequest): boolean {
+  console.log("[Middleware] Validating cron authentication...");
+
+  const header = req.headers.get("authorization") || req.headers.get("Authorization");
+  console.log("[Middleware] Authorization header present:", !!header);
+  console.log("[Middleware] Authorization header format:", header ? "Bearer " + header.slice(0, 20) + "..." : "None");
+
+  if (!header?.startsWith("Bearer ")) {
+    console.log("[Middleware] No Bearer token found in authorization header");
+    return false;
+  }
+
+  const token = header.slice(7).trim();
+  const cronSecret = process.env.CRON_SECRET;
+
+  console.log("[Middleware] CRON_SECRET environment variable present:", !!cronSecret);
+  console.log("[Middleware] CRON_SECRET length:", cronSecret?.length || 0);
+  console.log("[Middleware] Token length:", token.length);
+  console.log("[Middleware] Token preview:", token.slice(0, 8) + "...");
+
+  const isValid = !!cronSecret && token === cronSecret;
+  console.log("[Middleware] Token validation result:", isValid);
+
+  return isValid;
 }
 
 /**
@@ -170,11 +217,13 @@ export async function middleware(req: NextRequest) {
       token = null;
     }
 
-    // Check if this is a public route
+    // Check route classification
     const isPublic = isPublicRoute(pathname);
+    const isCron = isCronRoute(pathname);
     console.log(`[Middleware] Route classification:`, {
       pathname,
       isPublic,
+      isCron,
       isAuth: isAuthRoute(pathname),
     });
 
@@ -193,6 +242,24 @@ export async function middleware(req: NextRequest) {
     if (isPublic) {
       console.log("[Middleware] Allowing access to public route");
       return NextResponse.next();
+    }
+
+    // Handle cron routes with Bearer token authentication
+    // Google Cloud Scheduler uses Authorization: Bearer <CRON_SECRET>
+    if (isCron) {
+      if (validateCronAuth(req)) {
+        console.log("[Middleware] Valid cron authentication, allowing access");
+        return NextResponse.next();
+      } else {
+        console.log("[Middleware] Invalid cron authentication");
+        return NextResponse.json(
+          {
+            error: "Unauthorized",
+            code: "INVALID_CRON_TOKEN",
+          },
+          { status: 401 },
+        );
+      }
     }
 
     // Handle protected routes - require authentication
