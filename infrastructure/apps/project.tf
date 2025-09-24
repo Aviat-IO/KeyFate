@@ -1,5 +1,5 @@
 module "project" {
-  source          = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/project"
+  source          = "git::https://github.com/GoogleCloudPlatform/cloud-foundation-fabric.git//modules/project"
   billing_account = var.billing_account
   name            = var.project_id
 
@@ -16,5 +16,8 @@ module "project" {
     "secretmanager.googleapis.com",
     "storage.googleapis.com",
     "cloudscheduler.googleapis.com",
+    "sqladmin.googleapis.com",
+    "servicenetworking.googleapis.com",
+    "compute.googleapis.com",
   ]
 }

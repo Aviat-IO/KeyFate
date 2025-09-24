@@ -3,21 +3,21 @@ import {
   type ResponseCookies,
 } from "next/dist/server/web/spec-extension/cookies";
 
-interface ClearSupabaseCookiesParams {
+interface ClearAuthCookiesParams {
   requestCookies: RequestCookies;
   responseCookies: ResponseCookies;
   domain: string;
 }
 
-export function clearSupabaseCookies({
+export function clearAuthCookies({
   requestCookies,
   responseCookies,
   domain,
-}: ClearSupabaseCookiesParams) {
+}: ClearAuthCookiesParams) {
   // Get all cookies
   const cookies = requestCookies.getAll();
 
-  // Clear Supabase cookies
+  // Clear legacy auth and external service cookies
   cookies.forEach((cookie) => {
     if (
       cookie.name.startsWith("sb-") ||

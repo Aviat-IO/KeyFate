@@ -1,8 +1,7 @@
+import { db } from "@/lib/db/drizzle";
+import { checkInTokens, secrets } from "@/lib/db/schema";
 import { decryptMessage } from "@/lib/encryption";
-import { NEXT_PUBLIC_SUPABASE_URL } from "@/lib/env";
-import { getSUPABASE_SERVICE_ROLE_KEY } from "@/lib/server-env";
-import { Database, Secret, Tables } from "@/types";
-import { createClient, PostgrestError } from "@supabase/supabase-js";
+import { and, eq, sql } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -24,29 +23,19 @@ export async function GET(
     });
   }
 
-  const supabaseAdmin = createClient<Database>(
-    NEXT_PUBLIC_SUPABASE_URL,
-    getSUPABASE_SERVICE_ROLE_KEY(),
-    {
-      auth: { persistSession: false, autoRefreshToken: false },
-      db: { schema: "public" },
-    },
-  );
-
   try {
     // 1. Fetch and validate the token
-    const { data: tokenData, error: tokenError }: {
-      data: Tables<"recipient_access_tokens"> | null;
-      error: PostgrestError | null;
-    } = await supabaseAdmin
-      .from("recipient_access_tokens")
-      .select("*")
-      .eq("token", token)
-      .eq("secret_id", id)
-      .single();
+    const tokenRows = await db
+      .select()
+      .from(checkInTokens)
+      .where(
+        and(eq(checkInTokens.token, token), eq(checkInTokens.secretId, id)),
+      )
+      .limit(1);
+    const tokenData = tokenRows[0];
 
-    if (tokenError || !tokenData) {
-      console.error("Token validation error:", tokenError);
+    if (!tokenData) {
+      console.error("Token validation error: not found");
       return NextResponse.json(
         { error: "Invalid or expired token." },
         { status: 403 },
@@ -54,8 +43,8 @@ export async function GET(
     }
 
     const now = new Date();
-    if (tokenData.used_at) {
-      const usedAtDate = new Date(tokenData.used_at);
+    if (tokenData.usedAt) {
+      const usedAtDate = new Date(tokenData.usedAt);
       const gracePeriodEnds = new Date(
         usedAtDate.getTime() + 24 * 60 * 60 * 1000,
       ); // 24 hour grace period
@@ -71,7 +60,7 @@ export async function GET(
       // If within grace period, allow access but don't update used_at again.
     }
 
-    if (now > new Date(tokenData.expires_at)) {
+    if (now > new Date(tokenData.expiresAt)) {
       return NextResponse.json(
         { error: "Token has expired." },
         { status: 403 },
@@ -79,21 +68,23 @@ export async function GET(
     }
 
     // 2. Fetch the secret
-    const { data: secret, error: secretError }: {
-      data: Pick<Secret, "server_share" | "iv" | "auth_tag"> | null;
-      error: PostgrestError | null;
-    } = await supabaseAdmin
-      .from("secrets")
-      .select("server_share, iv, auth_tag")
-      .eq("id", id)
-      .single();
+    const secretRows = await db
+      .select({
+        serverShare: secrets.serverShare,
+        iv: secrets.iv,
+        authTag: secrets.authTag,
+      })
+      .from(secrets)
+      .where(eq(secrets.id, id))
+      .limit(1);
+    const secret = secretRows[0];
 
-    if (secretError || !secret) {
-      console.error("Secret fetch error:", secretError);
+    if (!secret) {
+      console.error("Secret fetch error: not found");
       return NextResponse.json({ error: "Secret not found." }, { status: 404 });
     }
 
-    if (!secret.server_share || !secret.iv || !secret.auth_tag) {
+    if (!secret.serverShare || !secret.iv || !secret.authTag) {
       console.error("Secret data incomplete for decryption:", secret);
       return NextResponse.json(
         {
@@ -106,22 +97,16 @@ export async function GET(
 
     // 3. Decrypt the server share
     const decryptedServerShare = await decryptMessage(
-      secret.server_share,
+      secret.serverShare,
       Buffer.from(secret.iv, "base64"),
-      Buffer.from(secret.auth_tag, "base64"),
+      Buffer.from(secret.authTag, "base64"),
     );
 
     // 4. Mark token as used if it hasn't been marked already
-    if (!tokenData.used_at) {
-      const { error: updateTokenError } = await supabaseAdmin
-        .from("recipient_access_tokens")
-        .update({ used_at: now.toISOString() })
-        .eq("id", tokenData.id);
-
-      if (updateTokenError) {
-        console.error("Failed to mark token as used:", updateTokenError);
-        // Non-critical for returning the share, but should be logged/monitored
-      }
+    if (!tokenData.usedAt) {
+      await db.execute(
+        sql`update "check_in_tokens" set "used_at" = ${now} where "id" = ${tokenData.id}`,
+      );
     }
 
     return NextResponse.json({ serverShare: decryptedServerShare });

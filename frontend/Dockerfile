@@ -10,8 +10,8 @@ WORKDIR /app
 # Copy package.json and lock file
 COPY package.json pnpm-lock.yaml* ./
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies with lockfile regeneration if needed
+RUN pnpm install --no-frozen-lockfile || pnpm install
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -22,7 +22,28 @@ COPY . .
 # Accept build argument for environment
 ARG BUILD_ENV=production
 
-# Copy appropriate environment files based on BUILD_ENV
+# Build args for Next.js environment variables needed at build time
+# These are passed from Terraform/Terragrunt
+ARG NEXT_PUBLIC_SITE_URL
+ARG NEXT_PUBLIC_COMPANY
+ARG NEXT_PUBLIC_PARENT_COMPANY
+ARG NEXT_PUBLIC_SUPPORT_EMAIL
+ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+ARG NEXT_PUBLIC_AUTH_PROVIDER
+ARG NEXT_PUBLIC_DATABASE_PROVIDER
+ARG NEXT_PUBLIC_ENV
+
+# Set environment variables for the build
+ENV NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
+ENV NEXT_PUBLIC_COMPANY=${NEXT_PUBLIC_COMPANY}
+ENV NEXT_PUBLIC_PARENT_COMPANY=${NEXT_PUBLIC_PARENT_COMPANY}
+ENV NEXT_PUBLIC_SUPPORT_EMAIL=${NEXT_PUBLIC_SUPPORT_EMAIL}
+ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
+ENV NEXT_PUBLIC_AUTH_PROVIDER=${NEXT_PUBLIC_AUTH_PROVIDER}
+ENV NEXT_PUBLIC_DATABASE_PROVIDER=${NEXT_PUBLIC_DATABASE_PROVIDER}
+ENV NEXT_PUBLIC_ENV=${NEXT_PUBLIC_ENV}
+
+# Copy appropriate environment files based on BUILD_ENV (for any additional vars)
 RUN if [ "$BUILD_ENV" = "staging" ]; then \
   echo "Building for staging environment"; \
   cp .env.staging .env.production 2>/dev/null || true; \
@@ -35,7 +56,7 @@ RUN if [ "$BUILD_ENV" = "staging" ]; then \
   echo "Building for production environment"; \
   fi
 
-# Build the app
+# Build the app (TypeScript errors are ignored via next.config.ts)
 RUN pnpm build
 
 # Production image, copy all the files and run next

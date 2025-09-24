@@ -1,4 +1,8 @@
-import { createClient } from "@/utils/supabase/server";
+import { authConfig } from "@/lib/auth-config";
+import { secretsService } from "@/lib/db/drizzle";
+import { mapDrizzleSecretToApiShape } from "@/lib/db/secret-mapper";
+import type { Session } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
 
 export async function POST(
@@ -7,64 +11,39 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createClient();
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    // Use NextAuth for authentication
+    const session = (await getServerSession(authConfig as any)) as
+      | Session
+      | null;
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: secret, error: fetchError } = await supabase
-      .from("secrets")
-      .select("*")
-      .eq("id", id)
-      .eq("user_id", user.id)
-      .single();
+    const secret = await secretsService.getById(id, session.user.id);
 
-    if (fetchError || !secret) {
+    if (!secret) {
       return NextResponse.json({ error: "Secret not found" }, { status: 404 });
     }
 
     const newStatus = secret.status === "active" ? "paused" : "active";
 
-    // Use RPC function for toggle operation
-    const { error: rpcError } = await supabase.rpc("toggle_secret_pause", {
-      p_secret_id: id,
-      p_user_id: user.id,
-      p_new_status: newStatus,
-      p_checked_in_at: new Date().toISOString(),
-      p_next_check_in: new Date(
-        Date.now() + secret.check_in_days * 24 * 60 * 60 * 1000,
-      ).toISOString(),
-    });
+    // Update the secret status
+    const updatedSecret = await secretsService.update(
+      id,
+      { status: newStatus as "active" | "paused" } as any,
+    );
 
-    if (rpcError) {
-      console.error("Error in toggle operation:", rpcError);
-      return NextResponse.json(
-        { error: "Failed to update secret" },
-        { status: 500 },
-      );
+    if (!updatedSecret) {
+      return NextResponse.json({ error: "Failed to update secret" }, {
+        status: 500,
+      });
     }
 
-    // Fetch updated secret
-    const { data: updatedSecret, error: updateFetchError } = await supabase
-      .from("secrets")
-      .select("*")
-      .eq("id", id)
-      .eq("user_id", user.id)
-      .single();
-
-    if (updateFetchError || !updatedSecret) {
-      console.error("Error fetching updated secret:", updateFetchError);
-      return NextResponse.json(
-        { error: "Failed to fetch updated secret" },
-        { status: 500 },
-      );
-    }
-
+    const mapped = mapDrizzleSecretToApiShape(updatedSecret);
     return NextResponse.json({
       success: true,
-      secret: updatedSecret,
+      secret: mapped,
       status: newStatus,
     });
   } catch (error) {

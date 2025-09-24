@@ -1,15 +1,14 @@
-import { StaticPricingPage } from "@/components/subscription/StaticPricingPage"
-import { PricingPage } from "@/components/subscription/PricingPage"
-import { NavBar } from "@/components/nav-bar"
 import { Footer } from "@/components/footer"
-import { createClient } from "@/utils/supabase/server"
+import { NavBar } from "@/components/nav-bar"
+import { PricingPage } from "@/components/subscription/PricingPage"
+import { StaticPricingPage } from "@/components/subscription/StaticPricingPage"
+import { authConfig } from "@/lib/auth-config"
+import type { Session } from "next-auth"
+import { getServerSession } from "next-auth/next"
 
 export default async function Pricing() {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const session = (await getServerSession(authConfig as any)) as Session | null
+  const user = session?.user
 
   return (
     <div className="bg-background min-h-screen">

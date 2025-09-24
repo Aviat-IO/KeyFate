@@ -1,5 +1,6 @@
 import { StripeCheckoutButton } from "@/components/subscription/StripeCheckoutButton"
 import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { useSession } from "next-auth/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 // Mock fetch
@@ -10,39 +11,41 @@ const mockFetch = global.fetch as any
 delete (window as any).location
 window.location = { href: "" } as any
 
-// Mock Supabase client
-const mockGetUser = vi.fn()
-vi.mock("@/utils/supabase/client", () => ({
-  createClient: () => ({
-    auth: {
-      getUser: mockGetUser,
-    },
-  }),
-}))
+vi.mock("next-auth/react")
+const mockUseSession = vi.mocked(useSession as unknown as () => any)
 
 describe("StripeCheckoutButton", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     window.location.href = ""
     // Default to authenticated user
-    mockGetUser.mockResolvedValue({
+    mockUseSession.mockReturnValue({
+      status: "authenticated",
       data: { user: { id: "test-user-id", email: "test@example.com" } },
-      error: null,
+      update: vi.fn(),
     })
   })
 
   it("should render button with children text after auth check", async () => {
+    // Start as loading to show skeleton
+    mockUseSession.mockReturnValueOnce({
+      status: "loading",
+      data: null,
+      update: vi.fn(),
+    })
+    // Then authenticated on next call
+    mockUseSession.mockReturnValueOnce({
+      status: "authenticated",
+      data: { user: { id: "test-user-id", email: "test@example.com" } },
+      update: vi.fn(),
+    })
     render(
       <StripeCheckoutButton lookupKey="pro_monthly">
         Subscribe to Pro
       </StripeCheckoutButton>,
     )
 
-    // Initially shows loading while checking auth
-    expect(screen.getByRole("button")).toHaveTextContent("Loading...")
-    expect(screen.getByRole("button")).toBeDisabled()
-
-    // Wait for auth check to complete
+    // Wait for auth check to complete and final state
     await waitFor(() => {
       expect(screen.getByRole("button")).toHaveTextContent("Subscribe to Pro")
       expect(screen.getByRole("button")).not.toBeDisabled()
@@ -97,9 +100,10 @@ describe("StripeCheckoutButton", () => {
 
   it("should redirect to login for unauthenticated user", async () => {
     // Mock unauthenticated user
-    mockGetUser.mockResolvedValue({
-      data: { user: null },
-      error: null,
+    mockUseSession.mockReturnValue({
+      status: "unauthenticated",
+      data: null,
+      update: vi.fn(),
     })
 
     render(
@@ -118,9 +122,10 @@ describe("StripeCheckoutButton", () => {
 
     // Should redirect to login with next parameter
     await waitFor(() => {
-      expect(window.location.href).toContain("/auth/login")
-      expect(window.location.href).toContain("next=")
-      expect(window.location.href).toContain("create-checkout-session")
+      expect(window.location.href).toContain("/auth/signin?callbackUrl=")
+      expect(decodeURIComponent(window.location.href)).toContain(
+        "/api/create-checkout-session",
+      )
     })
   })
 
@@ -216,7 +221,9 @@ describe("StripeCheckoutButton", () => {
     fireEvent.click(button)
 
     await waitFor(() => {
-      expect(consoleSpy).toHaveBeenCalledWith("Checkout failed", { error: "Bad request" })
+      expect(consoleSpy).toHaveBeenCalledWith("Checkout failed", {
+        error: "Bad request",
+      })
     })
 
     consoleSpy.mockRestore()

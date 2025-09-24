@@ -296,7 +296,11 @@ export function EditSecretForm({
                           onValueChange={(value) =>
                             field.onChange(Number(value))
                           }
-                          defaultValue={field.value.toString()}
+                          defaultValue={
+                            field.value != null
+                              ? String(field.value)
+                              : undefined
+                          }
                           disabled={loading}
                         >
                           <FormControl>

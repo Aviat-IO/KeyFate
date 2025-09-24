@@ -1,4 +1,9 @@
-import { createClient } from "@/utils/supabase/server";
+import { authConfig } from "@/lib/auth-config";
+import { db } from "@/lib/db/drizzle";
+import { secrets } from "@/lib/db/schema";
+import { and, eq } from "drizzle-orm";
+import type { Session } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
 
 export async function POST(
@@ -7,25 +12,29 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createClient();
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const session = (await getServerSession(authConfig as any)) as
+      | Session
+      | null;
+    const user = session?.user as
+      | (Session["user"] & { id?: string })
+      | undefined
+      | null;
+    if (!user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: secret, error: fetchError } = await supabase
-      .from("secrets")
-      .select("*")
-      .eq("id", id)
-      .eq("user_id", user.id)
-      .single();
+    const result = await db
+      .select()
+      .from(secrets)
+      .where(and(eq(secrets.id, id), eq(secrets.userId, user.id)))
+      .limit(1);
+    const secret = result[0];
 
-    if (fetchError || !secret) {
+    if (!secret) {
       return NextResponse.json({ error: "Secret not found" }, { status: 404 });
     }
 
-    if (!secret.server_share) {
+    if (!secret.serverShare) {
       return NextResponse.json({ error: "No server share to reveal" }, {
         status: 404,
       });
@@ -33,9 +42,9 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      server_share: secret.server_share,
+      server_share: secret.serverShare,
       iv: secret.iv,
-      auth_tag: secret.auth_tag,
+      auth_tag: secret.authTag,
     });
   } catch (error) {
     console.error(

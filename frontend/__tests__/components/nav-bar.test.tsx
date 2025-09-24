@@ -1,7 +1,9 @@
 import { NavBar } from "@/components/nav-bar"
-import type { User } from "@supabase/supabase-js"
 import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { SessionProvider } from "next-auth/react"
+import { ReactNode } from "react"
+import * as NextAuth from "next-auth/react"
 
 // Mock Next.js router
 const mockPush = vi.fn()
@@ -13,6 +15,15 @@ vi.mock("next/navigation", () => ({
     refresh: mockRefresh,
   }),
   usePathname: () => mockPathname(),
+}))
+
+// Mock NextAuth
+const mockUseSession = vi.fn()
+const mockSignOut = vi.fn()
+vi.mock("next-auth/react", () => ({
+  useSession: () => mockUseSession(),
+  SessionProvider: ({ children }: { children: ReactNode }) => children,
+  signOut: vi.fn()
 }))
 
 // Mock Supabase
@@ -48,31 +59,29 @@ vi.mock("lucide-react", () => ({
   X: () => <span data-testid="x-icon">X</span>,
 }))
 
-const mockUser: User = {
-  id: "user-123",
-  email: "test@example.com",
-  aud: "authenticated",
-  role: "authenticated",
-  email_confirmed_at: "2024-01-01T00:00:00Z",
-  phone: "",
-  confirmed_at: "2024-01-01T00:00:00Z",
-  last_sign_in_at: "2024-01-01T00:00:00Z",
-  app_metadata: {},
-  user_metadata: {},
-  identities: [],
-  created_at: "2024-01-01T00:00:00Z",
-  updated_at: "2024-01-01T00:00:00Z",
+const mockSession = {
+  user: {
+    id: "user-123",
+    email: "test@example.com",
+    name: "Test User"
+  },
+  expires: "2024-12-31T23:59:59.999Z"
 }
 
 describe("NavBar", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockPathname.mockReturnValue("/")
+    // Default to no session
+    mockUseSession.mockReturnValue({
+      data: null,
+      status: "unauthenticated"
+    })
   })
 
   describe("desktop view - when user is not authenticated", () => {
     it("should render sign in and sign up buttons on desktop", () => {
-      render(<NavBar user={null} />)
+      render(<NavBar />)
 
       // Desktop menu should be visible
       const desktopMenu = document.querySelector(".hidden.md\\:flex")
@@ -86,13 +95,13 @@ describe("NavBar", () => {
     })
 
     it("should render pricing link on desktop when not authenticated", () => {
-      render(<NavBar user={null} />)
+      render(<NavBar />)
 
       expect(screen.getByText("Pricing")).toBeInTheDocument()
     })
 
     it("should render secret sharing tool link on desktop", () => {
-      render(<NavBar user={null} />)
+      render(<NavBar />)
 
       const secretSharingLinks = screen.getAllByText("Recover Secret")
       expect(secretSharingLinks.length).toBeGreaterThan(0)
@@ -104,7 +113,7 @@ describe("NavBar", () => {
     })
 
     it("should render KeyFate logo linking to home", () => {
-      render(<NavBar user={null} />)
+      render(<NavBar />)
 
       const logo = screen.getByText("KeyFate")
       expect(logo).toBeInTheDocument()
@@ -112,7 +121,7 @@ describe("NavBar", () => {
     })
 
     it("should render theme toggle", () => {
-      render(<NavBar user={null} />)
+      render(<NavBar />)
 
       const themeToggles = screen.getAllByTestId("theme-toggle")
       expect(themeToggles.length).toBeGreaterThan(0) // Should appear in both desktop and mobile
@@ -121,7 +130,13 @@ describe("NavBar", () => {
 
   describe("desktop view - when user is authenticated", () => {
     it("should render sign out button but not user email on desktop", () => {
-      render(<NavBar user={mockUser} />)
+      // Set authenticated session
+      mockUseSession.mockReturnValue({
+        data: mockSession,
+        status: "authenticated"
+      })
+
+      render(<NavBar />)
 
       expect(screen.queryByText("test@example.com")).not.toBeInTheDocument()
       expect(screen.getByText("Sign Out")).toBeInTheDocument()
@@ -130,7 +145,13 @@ describe("NavBar", () => {
     })
 
     it("should not render pricing link when authenticated", () => {
-      render(<NavBar user={mockUser} />)
+      // Set authenticated session
+      mockUseSession.mockReturnValue({
+        data: mockSession,
+        status: "authenticated"
+      })
+
+      render(<NavBar />)
 
       // Should not show pricing in desktop menu when authenticated
       const desktopMenu = document.querySelector(".hidden.md\\:flex")
@@ -140,7 +161,13 @@ describe("NavBar", () => {
 
     it("should render Dashboard link when authenticated user is on home route", () => {
       mockPathname.mockReturnValue("/")
-      render(<NavBar user={mockUser} />)
+      // Set authenticated session
+      mockUseSession.mockReturnValue({
+        data: mockSession,
+        status: "authenticated"
+      })
+
+      render(<NavBar />)
 
       const dashboardLink = screen.getByText("Dashboard")
       expect(dashboardLink).toBeInTheDocument()
@@ -149,13 +176,25 @@ describe("NavBar", () => {
 
     it("should not render Dashboard link when authenticated user is not on home route", () => {
       mockPathname.mockReturnValue("/some-other-page")
-      render(<NavBar user={mockUser} />)
+      // Set authenticated session
+      mockUseSession.mockReturnValue({
+        data: mockSession,
+        status: "authenticated"
+      })
+
+      render(<NavBar />)
 
       expect(screen.queryByText("Dashboard")).not.toBeInTheDocument()
     })
 
     it("should render KeyFate logo linking to dashboard", () => {
-      render(<NavBar user={mockUser} />)
+      // Set authenticated session
+      mockUseSession.mockReturnValue({
+        data: mockSession,
+        status: "authenticated"
+      })
+
+      render(<NavBar />)
 
       const logo = screen.getByText("KeyFate")
       expect(logo).toBeInTheDocument()
@@ -163,22 +202,28 @@ describe("NavBar", () => {
     })
 
     it("should handle sign out correctly", async () => {
-      render(<NavBar user={mockUser} />)
+      // Set authenticated session
+      mockUseSession.mockReturnValue({
+        data: mockSession,
+        status: "authenticated"
+      })
+
+      render(<NavBar />)
+
+      const signOutSpy = vi.spyOn(NextAuth, 'signOut').mockResolvedValue(undefined)
 
       const signOutButton = screen.getByText("Sign Out")
       fireEvent.click(signOutButton)
 
       await waitFor(() => {
-        expect(mockRefresh).toHaveBeenCalled()
+        expect(signOutSpy).toHaveBeenCalledWith({ callbackUrl: "/sign-in" })
       })
-
-      expect(mockPush).toHaveBeenCalledWith("/auth/login")
     })
   })
 
   describe("mobile view", () => {
     it("should render mobile menu trigger button", () => {
-      render(<NavBar user={null} />)
+      render(<NavBar />)
 
       const mobileMenuTrigger = screen.getByTestId("mobile-menu-trigger")
       expect(mobileMenuTrigger).toBeInTheDocument()
@@ -186,7 +231,7 @@ describe("NavBar", () => {
     })
 
     it("should show sign up button outside mobile menu for unauthenticated users", () => {
-      render(<NavBar user={null} />)
+      render(<NavBar />)
 
       // Should have sign up button visible on mobile (outside the menu)
       const signUpButtons = screen.getAllByText("Sign Up")
@@ -194,14 +239,20 @@ describe("NavBar", () => {
     })
 
     it("should not show sign up button on mobile when authenticated", () => {
-      render(<NavBar user={mockUser} />)
+      // Set authenticated session
+      mockUseSession.mockReturnValue({
+        data: mockSession,
+        status: "authenticated"
+      })
+
+      render(<NavBar />)
 
       // Should not show sign up button when user is authenticated
       expect(screen.queryByText("Sign Up")).not.toBeInTheDocument()
     })
 
     it("should open mobile menu when hamburger is clicked", async () => {
-      render(<NavBar user={null} />)
+      render(<NavBar />)
 
       const mobileMenuTrigger = screen.getByTestId("mobile-menu-trigger")
       fireEvent.click(mobileMenuTrigger)
@@ -214,7 +265,7 @@ describe("NavBar", () => {
     })
 
     it("should show pricing in mobile menu when not authenticated", async () => {
-      render(<NavBar user={null} />)
+      render(<NavBar />)
 
       const mobileMenuTrigger = screen.getByTestId("mobile-menu-trigger")
       fireEvent.click(mobileMenuTrigger)
@@ -226,7 +277,7 @@ describe("NavBar", () => {
     })
 
     it("should show recover secret in mobile menu", async () => {
-      render(<NavBar user={null} />)
+      render(<NavBar />)
 
       const mobileMenuTrigger = screen.getByTestId("mobile-menu-trigger")
       fireEvent.click(mobileMenuTrigger)
@@ -238,7 +289,7 @@ describe("NavBar", () => {
     })
 
     it("should show only sign in (not sign up) in mobile menu when not authenticated", async () => {
-      render(<NavBar user={null} />)
+      render(<NavBar />)
 
       const mobileMenuTrigger = screen.getByTestId("mobile-menu-trigger")
       fireEvent.click(mobileMenuTrigger)
@@ -255,7 +306,7 @@ describe("NavBar", () => {
     })
 
     it("should close mobile menu when menu item is clicked", async () => {
-      render(<NavBar user={null} />)
+      render(<NavBar />)
 
       // Open menu
       const mobileMenuTrigger = screen.getByTestId("mobile-menu-trigger")
@@ -281,7 +332,13 @@ describe("NavBar", () => {
     })
 
     it("should show sign out but not user email in mobile menu when authenticated", async () => {
-      render(<NavBar user={mockUser} />)
+      // Set authenticated session
+      mockUseSession.mockReturnValue({
+        data: mockSession,
+        status: "authenticated"
+      })
+
+      render(<NavBar />)
 
       const mobileMenuTrigger = screen.getByTestId("mobile-menu-trigger")
       fireEvent.click(mobileMenuTrigger)
@@ -293,7 +350,13 @@ describe("NavBar", () => {
     })
 
     it("should handle mobile sign out correctly", async () => {
-      render(<NavBar user={mockUser} />)
+      // Set authenticated session
+      mockUseSession.mockReturnValue({
+        data: mockSession,
+        status: "authenticated"
+      })
+
+      render(<NavBar />)
 
       // Open mobile menu
       const mobileMenuTrigger = screen.getByTestId("mobile-menu-trigger")
@@ -309,18 +372,24 @@ describe("NavBar", () => {
         button.closest("button")?.className.includes("justify-start"),
       )
       expect(mobileSignOutButton).toBeTruthy()
+      const signOutSpy = vi.spyOn(NextAuth, 'signOut').mockResolvedValue(undefined)
+
       fireEvent.click(mobileSignOutButton!)
 
       await waitFor(() => {
-        expect(mockRefresh).toHaveBeenCalled()
+        expect(signOutSpy).toHaveBeenCalledWith({ callbackUrl: "/sign-in" })
       })
-
-      expect(mockPush).toHaveBeenCalledWith("/auth/login")
     })
 
     it("should show Dashboard link in mobile menu when authenticated user is on home route", async () => {
       mockPathname.mockReturnValue("/")
-      render(<NavBar user={mockUser} />)
+      // Set authenticated session
+      mockUseSession.mockReturnValue({
+        data: mockSession,
+        status: "authenticated"
+      })
+
+      render(<NavBar />)
 
       const mobileMenuTrigger = screen.getByTestId("mobile-menu-trigger")
       fireEvent.click(mobileMenuTrigger)
@@ -334,7 +403,13 @@ describe("NavBar", () => {
 
     it("should not show Dashboard link in mobile menu when authenticated user is not on home route", async () => {
       mockPathname.mockReturnValue("/some-other-page")
-      render(<NavBar user={mockUser} />)
+      // Set authenticated session
+      mockUseSession.mockReturnValue({
+        data: mockSession,
+        status: "authenticated"
+      })
+
+      render(<NavBar />)
 
       const mobileMenuTrigger = screen.getByTestId("mobile-menu-trigger")
       fireEvent.click(mobileMenuTrigger)
@@ -347,7 +422,7 @@ describe("NavBar", () => {
 
   describe("responsive behavior", () => {
     it("should have desktop menu hidden on mobile", () => {
-      render(<NavBar user={null} />)
+      render(<NavBar />)
 
       const desktopMenu = document.querySelector(".hidden.md\\:flex")
       expect(desktopMenu).toBeInTheDocument()
@@ -355,7 +430,7 @@ describe("NavBar", () => {
     })
 
     it("should have mobile menu hidden on desktop", () => {
-      render(<NavBar user={null} />)
+      render(<NavBar />)
 
       const mobileMenu = document.querySelector(".flex.md\\:hidden")
       expect(mobileMenu).toBeInTheDocument()
@@ -363,14 +438,14 @@ describe("NavBar", () => {
     })
 
     it("should show theme toggle on both desktop and mobile", () => {
-      render(<NavBar user={null} />)
+      render(<NavBar />)
 
       const themeToggles = screen.getAllByTestId("theme-toggle")
       expect(themeToggles.length).toBe(2) // One for desktop, one for mobile
     })
 
     it("should show sign up button on mobile but not in mobile menu", () => {
-      render(<NavBar user={null} />)
+      render(<NavBar />)
 
       // Sign up should be visible on mobile navbar
       const signUpButtons = screen.getAllByText("Sign Up")
@@ -384,7 +459,7 @@ describe("NavBar", () => {
 
   describe("layout and styling", () => {
     it("should have correct navigation structure", () => {
-      render(<NavBar user={null} />)
+      render(<NavBar />)
 
       const nav = screen.getByRole("navigation")
       expect(nav).toHaveClass("bg-background/95", "border-b", "backdrop-blur")
@@ -394,14 +469,26 @@ describe("NavBar", () => {
     })
 
     it("should have correct button styling", () => {
-      render(<NavBar user={mockUser} />)
+      // Set authenticated session
+      mockUseSession.mockReturnValue({
+        data: mockSession,
+        status: "authenticated"
+      })
+
+      render(<NavBar />)
 
       const signOutButton = screen.getByText("Sign Out")
       expect(signOutButton).toHaveClass("inline-flex") // Button component class
     })
 
     it("should not display user email in desktop", () => {
-      render(<NavBar user={mockUser} />)
+      // Set authenticated session
+      mockUseSession.mockReturnValue({
+        data: mockSession,
+        status: "authenticated"
+      })
+
+      render(<NavBar />)
 
       expect(screen.queryByText("test@example.com")).not.toBeInTheDocument()
     })
@@ -409,7 +496,8 @@ describe("NavBar", () => {
 
   describe("edge cases", () => {
     it("should handle undefined user", async () => {
-      render(<NavBar user={undefined} />)
+      // Default state is already no session, so just render
+      render(<NavBar />)
 
       // Wait for loading to complete
       await waitFor(() => {
@@ -420,8 +508,16 @@ describe("NavBar", () => {
     })
 
     it("should handle user without email", () => {
-      const userWithoutEmail = { ...mockUser, email: undefined }
-      render(<NavBar user={userWithoutEmail as any} />)
+      const sessionWithoutEmail = {
+        ...mockSession,
+        user: { ...mockSession.user, email: undefined }
+      }
+      mockUseSession.mockReturnValue({
+        data: sessionWithoutEmail,
+        status: "authenticated"
+      })
+
+      render(<NavBar />)
 
       expect(screen.getByText("Sign Out")).toBeInTheDocument()
       // Email is not displayed anyway, so this should work fine
@@ -429,8 +525,15 @@ describe("NavBar", () => {
     })
 
     it("should handle multiple rapid sign out clicks", async () => {
-      render(<NavBar user={mockUser} />)
+      // Set authenticated session
+      mockUseSession.mockReturnValue({
+        data: mockSession,
+        status: "authenticated"
+      })
 
+      render(<NavBar />)
+
+      const signOutSpy = vi.spyOn(NextAuth, 'signOut').mockResolvedValue(undefined)
       const signOutButton = screen.getByText("Sign Out")
 
       // Click multiple times rapidly
@@ -439,24 +542,24 @@ describe("NavBar", () => {
       fireEvent.click(signOutButton)
 
       await waitFor(() => {
-        expect(mockRefresh).toHaveBeenCalled()
+        expect(signOutSpy).toHaveBeenCalled()
       })
 
-      // Should handle multiple clicks gracefully
-      expect(mockPush).toHaveBeenCalledWith("/auth/login")
+      // Should handle multiple clicks gracefully - may be called multiple times
+      expect(signOutSpy).toHaveBeenCalledWith({ callbackUrl: "/sign-in" })
     })
   })
 
   describe("accessibility", () => {
     it("should have proper navigation landmark", () => {
-      render(<NavBar user={null} />)
+      render(<NavBar />)
 
       const nav = screen.getByRole("navigation")
       expect(nav).toBeInTheDocument()
     })
 
     it("should have accessible links", () => {
-      render(<NavBar user={null} />)
+      render(<NavBar />)
 
       const links = screen.getAllByRole("link")
       links.forEach((link) => {
@@ -465,7 +568,13 @@ describe("NavBar", () => {
     })
 
     it("should have accessible buttons", () => {
-      render(<NavBar user={mockUser} />)
+      // Set authenticated session
+      mockUseSession.mockReturnValue({
+        data: mockSession,
+        status: "authenticated"
+      })
+
+      render(<NavBar />)
 
       const buttons = screen.getAllByRole("button")
       buttons.forEach((button) => {
@@ -474,7 +583,7 @@ describe("NavBar", () => {
     })
 
     it("should have screen reader text for menu buttons", () => {
-      render(<NavBar user={null} />)
+      render(<NavBar />)
 
       expect(screen.getByText("Open menu")).toBeInTheDocument()
     })

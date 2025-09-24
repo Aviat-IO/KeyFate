@@ -1,0 +1,381 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Complete Email Verification System Implementation",
+        "description": "Fix Google OAuth email verification and implement complete email verification workflow with OTP",
+        "details": "The current system shows email verification is not working properly with NextAuth. Need to: 1) Configure email verification for NextAuth system, 2) Fix Google OAuth flow in NextAuth to properly handle email verification, 3) Update auth middleware to enforce email verification, 4) Add email verification UI components and flows, 5) Test both Google OAuth and email/password verification flows. This blocks user onboarding and security.",
+        "testStrategy": "Unit tests for verification components, integration tests for auth flows, E2E tests for complete verification journey from signup to verified state",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Configure Email Verification for NextAuth System",
+            "description": "Set up email verification workflow for NextAuth-based authentication system",
+            "dependencies": [],
+            "details": "Configure email verification for NextAuth authentication. Set up email verification flow with tokens/links, create custom email templates for verification emails, configure SMTP settings for direct email delivery (not through Supabase), and set appropriate verification timeouts and retry limits.",
+            "status": "cancelled",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Fix Google OAuth Email Verification in NextAuth",
+            "description": "Update NextAuth Google OAuth flow to properly handle email verification status",
+            "dependencies": [],
+            "details": "Fix NextAuth Google OAuth implementation to properly set email verification status in the database. Ensure Google OAuth users are automatically marked as email verified in the user table, update session to reflect verification status, and handle edge cases for existing users.",
+            "status": "done",
+            "testStrategy": "TDD approach with comprehensive test suite: 36 tests covering email verification enforcement, profile validation, type safety, error handling, and end-to-end flows. All tests passing with 100% coverage of verification scenarios."
+          },
+          {
+            "id": 3,
+            "title": "Update Authentication Middleware to Enforce Email Verification",
+            "description": "Modify auth middleware to check email verification status and redirect unverified users",
+            "dependencies": [
+              "1.2"
+            ],
+            "details": "Update existing auth middleware to check user.meta.email_verified status, implement proper redirects for unverified users, create verification enforcement logic, and ensure protected routes require verified email addresses.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Create Email Verification UI Components and User Flows",
+            "description": "Develop frontend components for email verification process including verification pages and user feedback",
+            "dependencies": [
+              "1.3"
+            ],
+            "details": "Create email verification page component, implement OTP input form, design resend verification email functionality, add user feedback for verification status, create verification success/error states, and ensure responsive design across devices.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Implement Email Verification Status Management",
+            "description": "Add backend logic for managing email verification state and handling verification events",
+            "dependencies": [
+              "1.4"
+            ],
+            "details": "Implement API endpoints for verification status checks, handle OTP validation logic, manage verification state transitions, implement verification token management, add proper error handling for verification failures, and ensure secure verification process.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Add Comprehensive Testing for All Verification Flows",
+            "description": "Create complete test suite covering email verification, Google OAuth, and all verification scenarios",
+            "dependencies": [
+              "1.5"
+            ],
+            "details": "Write unit tests for verification components and logic, create integration tests for email/password and Google OAuth flows, implement E2E tests for complete verification journey, test edge cases and error scenarios, add performance tests for email delivery, and ensure test coverage meets quality standards.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Production SMTP Configuration and Email Delivery Setup",
+        "description": "Configure production-ready SMTP service for reliable email delivery of reminders and notifications",
+        "details": "Current email system needs production SMTP configuration. Implement: 1) Configure SMTP provider (SendGrid/Mailgun/AWS SES) for direct email sending, 2) Create custom email templates for reminders, check-ins, and notifications in the application, 3) Implement email delivery monitoring and retry logic, 4) Set up email authentication (SPF/DKIM), 5) Handle bounce/complaint processing via SMTP provider webhooks, 6) Implement batch email processing without Supabase limitations. This is critical for core functionality.",
+        "testStrategy": "Integration tests for SMTP delivery, unit tests for email templates, load testing for batch email processing, monitoring tests for delivery failures",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Complete Stripe and BTCPay Webhook Integration",
+        "description": "Finalize webhook handling and subscription lifecycle management for both payment providers",
+        "details": "Payment system is partially implemented but needs completion. Tasks: 1) Complete Stripe webhook handlers for all subscription events (created, updated, deleted, payment failed), 2) Implement BTCPay webhook processing for Bitcoin payments, 3) Add subscription status synchronization with database, 4) Implement proper error handling and retry logic for failed webhooks, 5) Add webhook signature verification, 6) Update user tier management based on payment events, 7) Handle edge cases like partial payments, refunds, chargebacks.",
+        "testStrategy": "Integration tests with webhook simulators, unit tests for payment event handlers, E2E tests for complete payment flows, security tests for webhook verification",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Complete Stripe webhook handlers for all subscription events",
+            "description": "Implement comprehensive Stripe webhook handlers for subscription lifecycle events including created, updated, deleted, and payment failed",
+            "dependencies": [],
+            "details": "Create webhook endpoints and handlers for all Stripe subscription events: customer.subscription.created, customer.subscription.updated, customer.subscription.deleted, invoice.payment_failed, invoice.payment_succeeded. Ensure proper event processing and database updates for subscription status changes.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Implement BTCPay webhook processing for Bitcoin payments",
+            "description": "Build BTCPay Server webhook integration to handle Bitcoin payment notifications and status updates",
+            "dependencies": [],
+            "details": "Implement BTCPay webhook endpoints to process Bitcoin payment events including payment received, confirmed, expired, and settled. Handle BTCPay-specific event structure and update subscription status accordingly for Bitcoin payments.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Add subscription status synchronization with database",
+            "description": "Implement bidirectional sync between payment provider webhook events and local subscription database",
+            "dependencies": [
+              "3.1",
+              "3.2"
+            ],
+            "details": "Create subscription status sync logic to ensure database reflects current payment provider state. Handle subscription activation, cancellation, renewal, and suspension states. Include conflict resolution for simultaneous updates from different sources.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Implement webhook signature verification",
+            "description": "Add security validation for incoming webhook requests from both Stripe and BTCPay",
+            "dependencies": [],
+            "details": "Implement webhook signature verification using Stripe's webhook signatures and BTCPay's security headers. Validate incoming requests to prevent unauthorized webhook calls and ensure request authenticity. Add proper error handling for invalid signatures.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Add error handling and retry logic for failed webhooks",
+            "description": "Implement robust error handling, logging, and retry mechanisms for webhook processing failures",
+            "dependencies": [
+              "3.1",
+              "3.2",
+              "3.3",
+              "3.4"
+            ],
+            "details": "Create comprehensive error handling for webhook failures including network timeouts, database errors, and malformed payloads. Implement exponential backoff retry logic, dead letter queues for persistent failures, and detailed logging for debugging webhook issues.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Update user tier management based on payment events",
+            "description": "Implement automatic user tier updates triggered by subscription payment events",
+            "dependencies": [
+              "3.3"
+            ],
+            "details": "Create logic to automatically update user tiers and permissions based on subscription status changes. Handle tier upgrades, downgrades, and access revocation based on payment success/failure events. Include grace periods for failed payments.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 7,
+            "title": "Handle edge cases for partial payments, refunds, and chargebacks",
+            "description": "Implement comprehensive handling of complex payment scenarios and dispute resolution",
+            "dependencies": [
+              "3.5",
+              "3.6"
+            ],
+            "details": "Handle edge cases including partial payments, prorated refunds, subscription chargebacks, and disputed transactions. Implement proper subscription status updates for these scenarios, including temporary suspension for disputes and reactivation after resolution.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Frontend Payment Flow Integration",
+        "description": "Complete frontend integration for Stripe and BTCPay checkout flows with billing portal",
+        "details": "Frontend payment components exist but need integration completion. Implement: 1) Connect StripeCheckoutButton and BTCPayCheckoutButton to backend APIs, 2) Complete billing portal session creation and management, 3) Implement subscription status updates in real-time, 4) Add payment success/failure handling with user feedback, 5) Complete UserPricingActions component integration, 6) Add usage limit enforcement based on subscription tier, 7) Implement subscription cancellation and reactivation flows.",
+        "testStrategy": "Component tests for payment flows, integration tests with payment provider test modes, E2E tests for complete subscription lifecycle, accessibility tests for payment forms",
+        "priority": "high",
+        "dependencies": [
+          3
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 5,
+        "title": "Production Infrastructure Deployment",
+        "description": "Deploy application to Google Cloud Run with Google Cloud SQL PostgreSQL database and proper staging and production environments",
+        "status": "pending",
+        "dependencies": [
+          2,
+          3
+        ],
+        "priority": "high",
+        "details": "Infrastructure is configured with Terraform/Terragrunt for Google Cloud deployment. Tasks: 1) Deploy staging environment to Google Cloud Run, 2) Set up Google Cloud SQL PostgreSQL instance with VPC configuration, 3) Configure SSL certificates and custom domain, 4) Deploy fresh schema using Drizzle ORM to Cloud SQL, 5) Configure proper IAM roles for Cloud SQL access, 6) Implement CI/CD pipeline for automated deployments, 7) Configure environment variables for Cloud SQL connection, 8) Set up database backup and monitoring, 9) Deploy production environment with complete Google Cloud infrastructure stack.",
+        "testStrategy": "Infrastructure tests, Cloud SQL connection tests, Drizzle migration tests, deployment pipeline tests, smoke tests for both environments, performance tests under load, database backup/restore tests",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Deploy staging environment to Google Cloud Run",
+            "description": "Set up and deploy the staging environment using existing Terraform/Terragrunt configuration to Google Cloud Run",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Execute Terraform deployment for staging environment, configure Cloud Run service with appropriate resource limits, verify application deployment and health checks",
+            "testStrategy": "Cloud Run deployment validation, health check tests, resource limit verification"
+          },
+          {
+            "id": 2,
+            "title": "Set up Google Cloud SQL PostgreSQL instance with VPC configuration",
+            "description": "Deploy Cloud SQL PostgreSQL instance with proper VPC configuration, security settings, and high availability",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Create Cloud SQL PostgreSQL 15 instance with VPC peering, configure SSL/TLS encryption, set up authorized networks, enable high availability for production, configure storage auto-increase and backup settings. Use keyfate-db-production instance name with us-central1 region.",
+            "testStrategy": "Cloud SQL instance connectivity tests, SSL certificate validation, VPC peering verification, backup configuration tests"
+          },
+          {
+            "id": 3,
+            "title": "Configure SSL certificates and custom domain",
+            "description": "Set up SSL certificates and configure custom domain mapping for both staging and production environments",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "details": "Configure Google-managed SSL certificates, set up custom domain mapping for Cloud Run services, verify HTTPS redirects and certificate validation",
+            "testStrategy": "SSL certificate validation, custom domain resolution tests, HTTPS redirect verification"
+          },
+          {
+            "id": 4,
+            "title": "Deploy fresh schema using Drizzle ORM to Cloud SQL",
+            "description": "Execute Drizzle migrations to deploy the complete database schema to the new Cloud SQL instance",
+            "status": "pending",
+            "dependencies": [
+              2
+            ],
+            "details": "Configure Drizzle connection to Cloud SQL using DATABASE_URL, run initial schema migration including all tables (secrets, user_subscriptions, reminder_jobs, etc.), verify all enums and constraints are properly created, test data integrity",
+            "testStrategy": "Schema migration validation, table creation verification, constraint testing, Drizzle ORM connection tests"
+          },
+          {
+            "id": 5,
+            "title": "Configure proper IAM roles for Cloud SQL access",
+            "description": "Set up IAM roles and service accounts for secure Cloud SQL access from Cloud Run",
+            "status": "pending",
+            "dependencies": [
+              2
+            ],
+            "details": "Create Cloud SQL client service account, configure IAM roles (Cloud SQL Client, Cloud SQL Instance User), set up Cloud SQL Proxy authentication, configure workload identity for Cloud Run service account",
+            "testStrategy": "IAM role verification, service account authentication tests, Cloud SQL Proxy connection validation"
+          },
+          {
+            "id": 6,
+            "title": "Implement CI/CD pipeline for automated deployments",
+            "description": "Create automated deployment pipeline with proper testing stages and deployment approvals",
+            "status": "pending",
+            "dependencies": [
+              3,
+              4
+            ],
+            "details": "Configure GitHub Actions or Cloud Build pipeline, implement automated testing stages including Drizzle migrations, set up deployment approvals, configure rollback procedures, add database migration steps to pipeline",
+            "testStrategy": "Pipeline execution tests, automated testing validation, deployment approval workflow tests, rollback procedure verification"
+          },
+          {
+            "id": 7,
+            "title": "Configure environment variables for Cloud SQL connection",
+            "description": "Set up secure environment variable and secrets management for Cloud SQL connectivity using Google Secret Manager",
+            "status": "pending",
+            "dependencies": [
+              4,
+              5
+            ],
+            "details": "Migrate DATABASE_URL and CLOUD_SQL_CONNECTION_NAME to Google Secret Manager, configure environment-specific variables for staging and production, implement secure secret rotation procedures, update Cloud Run service configuration with secret references",
+            "testStrategy": "Secret Manager integration tests, environment variable validation, Cloud SQL connection string verification"
+          },
+          {
+            "id": 8,
+            "title": "Set up database backup and monitoring",
+            "description": "Configure automated backups, monitoring, and alerting for Cloud SQL instance",
+            "status": "pending",
+            "dependencies": [
+              4
+            ],
+            "details": "Configure automated daily backups with point-in-time recovery, set up Cloud Monitoring dashboards for database metrics, configure alerting policies for database performance and availability, integrate with Cloud Logging for query analysis",
+            "testStrategy": "Backup restoration tests, monitoring dashboard validation, alert policy verification, performance metric collection tests"
+          },
+          {
+            "id": 9,
+            "title": "Deploy production environment with complete Google Cloud infrastructure stack",
+            "description": "Deploy production environment with all components integrated including Cloud Run, Cloud SQL, monitoring, and security",
+            "status": "pending",
+            "dependencies": [
+              6,
+              7,
+              8
+            ],
+            "details": "Execute complete production deployment using Terraform/Terragrunt, verify Cloud Run to Cloud SQL connectivity, test complete application functionality, implement blue/green deployment strategy, validate all monitoring and alerting systems",
+            "testStrategy": "End-to-end deployment tests, production connectivity validation, blue/green deployment verification, complete system integration tests"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Cron Job Implementation and Testing",
+        "description": "Implement and verify automated reminder processing and secret disclosure cron jobs",
+        "details": "Cron functionality is critical but untested in production. Implement: 1) Deploy reminder processing using GitHub Actions or Google Cloud Scheduler, 2) Configure cron jobs for reminder processing (multiple intervals: 25%, 50%, 7 days, 3 days, 24h, 12h, 1h), 3) Implement secret disclosure automation when deadlines pass, 4) Add monitoring and alerting for cron job failures, 5) Implement dead letter queue for failed notifications, 6) Test cron job execution in staging environment, 7) Add admin dashboard for monitoring cron job status.",
+        "testStrategy": "Cron job execution tests, reminder timing accuracy tests, failure recovery tests, load tests for batch processing, integration tests with email system",
+        "priority": "high",
+        "dependencies": [
+          2,
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "SMS Reminder Implementation",
+        "description": "Implement SMS notifications for reminders and check-ins using Twilio integration",
+        "details": "Add SMS capability to complement email reminders. Tasks: 1) Integrate Twilio API for SMS sending, 2) Update contact methods to support SMS preferences, 3) Implement SMS templates for reminders and notifications, 4) Add phone number verification flow, 5) Update reminder processing to send both email and SMS based on user preferences, 6) Implement SMS delivery tracking and failure handling, 7) Add SMS opt-out handling for compliance, 8) Update database schema for SMS delivery logs.",
+        "testStrategy": "SMS delivery tests, phone number validation tests, integration tests with Twilio, compliance tests for opt-out handling, cost monitoring tests",
+        "priority": "medium",
+        "dependencies": [
+          6
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "Security Audit and Penetration Testing",
+        "description": "Conduct comprehensive security audit focusing on cryptographic implementation and data protection",
+        "details": "Security is critical for a dead man's switch service. Tasks: 1) Third-party security audit of Shamir's Secret Sharing implementation, 2) Penetration testing of authentication and authorization, 3) Vulnerability assessment of API endpoints, 4) Review of data encryption at rest and in transit, 5) Audit of secret storage and reconstruction processes, 6) Review of session management and token security, 7) Assessment of input validation and SQL injection protection, 8) Review of client-side encryption implementation, 9) Audit of payment processing security.",
+        "testStrategy": "Security testing with professional tools, manual penetration testing, cryptographic validation, compliance verification, threat modeling validation",
+        "priority": "high",
+        "dependencies": [
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Performance Optimization and Monitoring",
+        "description": "Implement comprehensive monitoring, optimize performance, and establish SLA compliance",
+        "details": "Ensure production readiness with performance optimization. Tasks: 1) Set up APM monitoring (New Relic/DataDog), 2) Implement performance budgets and monitoring, 3) Optimize database queries with proper indexing, 4) Implement caching strategies for static content, 5) Add real-time uptime monitoring and alerting, 6) Optimize Next.js build and loading performance, 7) Implement error tracking and user feedback collection, 8) Set up performance dashboards and alerts, 9) Load testing for target user capacity (10,000+ concurrent users).",
+        "testStrategy": "Performance benchmarking, load testing, stress testing, monitoring validation, SLA compliance testing, user experience performance testing",
+        "priority": "medium",
+        "dependencies": [
+          5,
+          6
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Enhanced User Features and UX Improvements",
+        "description": "Implement advanced features like contact management, bulk operations, and improved user experience",
+        "details": "Add features for improved user experience and retention. Tasks: 1) Implement contact import from Google/Apple Contacts APIs, 2) Add bulk operations for managing multiple secrets, 3) Create secret templates for common use cases, 4) Implement advanced reporting and audit logs dashboard, 5) Add account export functionality for GDPR compliance, 6) Implement user onboarding tour and help system, 7) Add API endpoints for third-party integrations, 8) Create admin dashboard for user management, 9) Implement user feedback and rating system.",
+        "testStrategy": "Feature tests for new functionality, usability testing, API integration tests, accessibility compliance tests, user acceptance testing",
+        "priority": "low",
+        "dependencies": [
+          4,
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-09-16T12:50:17.322Z",
+      "updated": "2025-09-17T15:49:34.665Z",
+      "description": "Tasks for master context"
+    }
+  }
+}

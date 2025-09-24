@@ -1,9 +1,8 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { createClient } from "@/utils/supabase/client"
-import { User } from "@supabase/supabase-js"
-import { useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
+import { useState } from "react"
 
 interface StripeCheckoutButtonProps {
   lookupKey: string
@@ -17,29 +16,17 @@ export function StripeCheckoutButton({
   disabled,
 }: StripeCheckoutButtonProps) {
   const [loading, setLoading] = useState(false)
-  const [user, setUser] = useState<User | null>(null)
-  const [checkingAuth, setCheckingAuth] = useState(true)
-  const supabase = createClient()
-
-  useEffect(() => {
-    async function getUser() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      setUser(user)
-      setCheckingAuth(false)
-    }
-    getUser()
-  }, [supabase.auth])
+  const { data: session, status } = useSession()
+  const checkingAuth = status === "loading"
 
   const handleCheckout = async () => {
     setLoading(true)
 
     try {
       // If user is not authenticated, redirect to login with return URL
-      if (!user) {
+      if (!session?.user) {
         const returnUrl = `${window.location.origin}/api/create-checkout-session?lookup_key=${lookupKey}&redirect_after_auth=true`
-        const loginUrl = `/auth/login?next=${encodeURIComponent(returnUrl)}`
+        const loginUrl = `/auth/signin?callbackUrl=${encodeURIComponent(returnUrl)}`
         window.location.href = loginUrl
         return
       }
@@ -57,7 +44,7 @@ export function StripeCheckoutButton({
       } else if (response.status === 401) {
         // User session expired, redirect to login
         const returnUrl = `${window.location.origin}/api/create-checkout-session?lookup_key=${lookupKey}&redirect_after_auth=true`
-        const loginUrl = `/auth/login?next=${encodeURIComponent(returnUrl)}`
+        const loginUrl = `/auth/signin?callbackUrl=${encodeURIComponent(returnUrl)}`
         window.location.href = loginUrl
       } else {
         const res = await response.json()

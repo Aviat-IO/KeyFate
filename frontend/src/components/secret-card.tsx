@@ -31,7 +31,7 @@ interface StatusBadge {
 
 function getStatusBadge(
   status: Secret["status"],
-  nextCheckIn: string,
+  nextCheckIn: Date | null,
   isTriggered: boolean,
   serverShareDeleted: boolean,
 ): StatusBadge {
@@ -57,7 +57,7 @@ function getStatusBadge(
   }
 
   const now = new Date()
-  const checkInDate = new Date(nextCheckIn)
+  const checkInDate = nextCheckIn ? new Date(nextCheckIn) : new Date()
   const daysUntilCheckIn = Math.ceil(
     (checkInDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
   )
@@ -84,13 +84,13 @@ function getStatusBadge(
 
 export function SecretCard({ secret }: SecretCardProps) {
   const [secretState, setSecretState] = useState<Secret>(secret)
-  const serverShareDeleted = !secretState.server_share
+  const serverShareDeleted = !secretState.serverShare
   const [statusBadge, setStatusBadge] = useState<StatusBadge>(
     getStatusBadge(
       secret.status,
-      secret.next_check_in,
-      secret.is_triggered,
-      !secret.server_share,
+      secret.nextCheckIn,
+      secret.isTriggered,
+      !secret.serverShare,
     ),
   )
 
@@ -98,15 +98,15 @@ export function SecretCard({ secret }: SecretCardProps) {
     setStatusBadge(
       getStatusBadge(
         secretState.status,
-        secretState.next_check_in,
-        secretState.is_triggered,
+        secretState.nextCheckIn,
+        secretState.isTriggered,
         serverShareDeleted,
       ),
     )
   }, [
     secretState.status,
-    secretState.next_check_in,
-    secretState.is_triggered,
+    secretState.nextCheckIn,
+    secretState.isTriggered,
     serverShareDeleted,
   ])
 
@@ -135,39 +135,39 @@ export function SecretCard({ secret }: SecretCardProps) {
 
   const getContactDetails = () => {
     const details = []
-    if (secretState.recipient_email) {
-      details.push(`Email: ${secretState.recipient_email}`)
+    if (secretState.recipientEmail) {
+      details.push(`Email: ${secretState.recipientEmail}`)
     }
-    if (secretState.recipient_phone) {
-      details.push(`Phone: ${secretState.recipient_phone}`)
+    if (secretState.recipientPhone) {
+      details.push(`Phone: ${secretState.recipientPhone}`)
     }
     return details.join("\n")
   }
 
   const canCheckIn = useMemo(() => {
-    if (!secretState.last_check_in) return true
-    const lastCheckIn = new Date(secretState.last_check_in)
+    if (!secretState.lastCheckIn) return true
+    const lastCheckIn = new Date(secretState.lastCheckIn)
     const fifteenMinutesAgo = new Date()
     fifteenMinutesAgo.setMinutes(fifteenMinutesAgo.getMinutes() - 15)
     return lastCheckIn < fifteenMinutesAgo
-  }, [secretState.last_check_in])
+  }, [secretState.lastCheckIn])
 
   const getTimingText = () => {
-    if (secretState.is_triggered) {
-      return `Sent ${format(secretState.triggered_at!)}`
+    if (secretState.isTriggered) {
+      return `Sent ${format(secretState.triggeredAt!)}`
     }
     if (serverShareDeleted) {
       return "Disabled"
     }
-    return `Triggers ${format(secretState.next_check_in)}`
+    return `Triggers ${format(secretState.nextCheckIn || new Date())}`
   }
 
   const getTriggerTimeTooltip = () => {
-    if (secretState.is_triggered || serverShareDeleted) {
+    if (secretState.isTriggered || serverShareDeleted) {
       return null
     }
     
-    const triggerDate = new Date(secretState.next_check_in)
+    const triggerDate = secretState.nextCheckIn ? new Date(secretState.nextCheckIn) : new Date()
     return triggerDate.toLocaleString(undefined, {
       weekday: 'long',
       year: 'numeric',
@@ -181,20 +181,20 @@ export function SecretCard({ secret }: SecretCardProps) {
 
   const getLastCheckInText = () => {
     if (
-      !secretState.last_check_in ||
-      secretState.is_triggered ||
+      !secretState.lastCheckIn ||
+      secretState.isTriggered ||
       serverShareDeleted
     ) {
       return null
     }
-    return `Last checkin: ${format(secretState.last_check_in)}`
+    return `Last checkin: ${format(secretState.lastCheckIn)}`
   }
 
   return (
     <Card
       className={cn(
         "transition-all duration-200 hover:shadow-md",
-        secretState.is_triggered && "border-destructive/50 bg-destructive/5",
+        secretState.isTriggered && "border-destructive/50 bg-destructive/5",
         secretState.status === "paused" && "border-accent bg-accent/10",
         serverShareDeleted &&
           "border-muted-foreground/30 bg-muted/50 opacity-90",
@@ -217,7 +217,7 @@ export function SecretCard({ secret }: SecretCardProps) {
               <TooltipTrigger asChild>
                 <div className="text-muted-foreground flex items-center gap-2 text-xs cursor-help">
                   <User className="h-3 w-3" />
-                  <span className="truncate">{secretState.recipient_name}</span>
+                  <span className="truncate">{secretState.recipientName}</span>
                 </div>
               </TooltipTrigger>
               <TooltipContent>
@@ -261,7 +261,7 @@ export function SecretCard({ secret }: SecretCardProps) {
                   <TooltipTrigger asChild>
                     <div className="text-muted-foreground flex items-center gap-2 text-sm cursor-help">
                       <User className="h-4 w-4" />
-                      <span>Recipient: {secretState.recipient_name}</span>
+                      <span>Recipient: {secretState.recipientName}</span>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -329,7 +329,7 @@ export function SecretCard({ secret }: SecretCardProps) {
 
         {/* Action Buttons - Responsive layout */}
         <div className="flex items-center justify-end gap-2">
-          {!secretState.is_triggered ? (
+          {!secretState.isTriggered ? (
             <>
               {/* Check-in button - only on larger screens or when urgent */}
               {!serverShareDeleted &&

@@ -1,7 +1,5 @@
 "use client"
 
-import { completeAuthFlow } from "@/lib/auth"
-import { createClient } from "@/utils/supabase/client"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect } from "react"
 
@@ -10,78 +8,31 @@ function VerifyContent() {
   const searchParams = useSearchParams()
 
   useEffect(() => {
-    const handleVerification = async () => {
-      const token = searchParams.get("token")
-      const type = searchParams.get("type")
+    // Legacy route - redirect to new verify-email page
+    const token = searchParams.get("token")
+    const type = searchParams.get("type")
 
+    let redirectPath = "/auth/verify-email"
 
-      // Check if we have tokens in the URL fragment (from Supabase redirect)
-      const hash = window.location.hash
-      if (hash && hash.includes("access_token")) {
+    const params = new URLSearchParams()
+    if (token) params.set("token", token)
+    if (type) params.set("type", type)
 
-        try {
-          const result = await completeAuthFlow(hash)
-
-          if (result.success) {
-            // Redirect to dashboard
-            router.push("/dashboard")
-            return
-          } else {
-            console.error("[Verify] Auth flow failed:", result.error)
-            router.push(
-              "/auth/login?error=Email verification failed. Please try again.",
-            )
-            return
-          }
-        } catch (error) {
-          console.error("[Verify] Exception during auth flow:", error)
-          router.push(
-            "/auth/login?error=Email verification failed. Please try again.",
-          )
-          return
-        }
-      }
-
-      // Handle direct token verification (if Supabase config is updated)
-      if (token && type === "signup") {
-        const supabase = createClient()
-
-        try {
-          const { error } = await supabase.auth.verifyOtp({
-            token_hash: token,
-            type: "signup",
-          })
-
-          if (error) {
-            console.error("[Verify] Error:", error)
-            router.push(
-              "/auth/login?error=Email verification failed. Please try again.",
-            )
-            return
-          }
-
-          // Redirect to dashboard on successful verification
-          router.push("/dashboard")
-        } catch (error) {
-          console.error("[Verify] Exception:", error)
-          router.push(
-            "/auth/login?error=Email verification failed. Please try again.",
-          )
-        }
-      }
+    if (params.toString()) {
+      redirectPath += `?${params.toString()}`
     }
 
-    handleVerification()
+    router.replace(redirectPath)
   }, [router, searchParams])
 
   return (
     <div className="flex min-h-screen items-center justify-center">
       <div className="text-center">
         <h2 className="text-center text-3xl font-bold tracking-tight">
-          Verifying your email...
+          Redirecting to email verification...
         </h2>
         <p className="text-muted-foreground mt-2 text-center text-sm">
-          Please wait while we verify your email address.
+          Please wait while we redirect you to the new verification page.
         </p>
       </div>
     </div>

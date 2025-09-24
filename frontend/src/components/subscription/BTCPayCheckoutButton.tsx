@@ -2,10 +2,9 @@
 
 import { Button } from "@/components/ui/button"
 import { Subscription } from "@/lib/payment/interfaces/PaymentProvider"
-import { createClient } from "@/utils/supabase/client"
-import { User } from "@supabase/supabase-js"
+import { useSession } from "next-auth/react"
 import { Bitcoin } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 interface BTCPayCheckoutButtonProps {
   amount: number
@@ -25,26 +24,14 @@ export function BTCPayCheckoutButton({
   disabled,
 }: BTCPayCheckoutButtonProps) {
   const [loading, setLoading] = useState(false)
-  const [user, setUser] = useState<User | null>(null)
-  const [checkingAuth, setCheckingAuth] = useState(true)
-  const supabase = createClient()
-
-  useEffect(() => {
-    async function getUser() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      setUser(user)
-      setCheckingAuth(false)
-    }
-    getUser()
-  }, [supabase.auth])
+  const { data: session, status } = useSession()
+  const checkingAuth = status === "loading"
 
   const handleCheckout = async () => {
     setLoading(true)
 
     try {
-      if (!user) {
+      if (!session?.user) {
         const params = new URLSearchParams({
           amount: String(amount),
           currency,
@@ -55,7 +42,7 @@ export function BTCPayCheckoutButton({
           params.set("interval", interval)
         }
         const returnUrl = `${window.location.origin}/api/create-btcpay-checkout?${params.toString()}`
-        const loginUrl = `/auth/login?next=${encodeURIComponent(returnUrl)}`
+        const loginUrl = `/auth/signin?callbackUrl=${encodeURIComponent(returnUrl)}`
         window.location.href = loginUrl
         return
       }
@@ -80,7 +67,7 @@ export function BTCPayCheckoutButton({
           params.set("interval", interval)
         }
         const returnUrl = `${window.location.origin}/api/create-btcpay-checkout?${params.toString()}`
-        const loginUrl = `/auth/login?next=${encodeURIComponent(returnUrl)}`
+        const loginUrl = `/auth/signin?callbackUrl=${encodeURIComponent(returnUrl)}`
         window.location.href = loginUrl
       } else {
         const res = await response.json()

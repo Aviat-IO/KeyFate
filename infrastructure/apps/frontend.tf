@@ -1,6 +1,7 @@
 locals {
   frontend_app_name = "frontend"
-  frontend_app_dir  = "${path.module}/../../../../../../frontend"
+  # Use variable if provided (from Terragrunt), otherwise fall back to relative path
+  frontend_app_dir = var.frontend_dir != "" ? var.frontend_dir : abspath("${path.module}/../../frontend")
 
   # Create a comprehensive hash that includes both file contents and terraform config
   frontend_content_hash = md5(join("", [
@@ -43,10 +44,18 @@ resource "null_resource" "build_and_push_frontend" {
       # Configure Docker to use gcloud as a credential helper
       gcloud auth configure-docker ${var.region}-docker.pkg.dev --quiet
 
-      # Build the Docker image locally with environment-specific build arg
+      # Build the Docker image locally with environment-specific build args
       docker build \
         --platform linux/amd64 \
         --build-arg BUILD_ENV=${var.env == "prod" ? "production" : "staging"} \
+        --build-arg NEXT_PUBLIC_SITE_URL="${var.next_public_site_url}" \
+        --build-arg NEXT_PUBLIC_COMPANY="${var.next_public_company}" \
+        --build-arg NEXT_PUBLIC_PARENT_COMPANY="${var.next_public_parent_company}" \
+        --build-arg NEXT_PUBLIC_SUPPORT_EMAIL="${var.next_public_support_email}" \
+        --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="${var.next_public_stripe_publishable_key}" \
+        --build-arg NEXT_PUBLIC_AUTH_PROVIDER="${var.next_public_auth_provider}" \
+        --build-arg NEXT_PUBLIC_DATABASE_PROVIDER="${var.next_public_database_provider}" \
+        --build-arg NEXT_PUBLIC_ENV="${var.env}" \
         -t $BUILD_TAG \
         -f ${local.frontend_app_dir}/Dockerfile \
         ${local.frontend_app_dir}
@@ -90,7 +99,7 @@ data "google_artifact_registry_repository" "frontend_repo" {
 
 # Service account for the frontend Cloud Run service
 module "frontend_service_account" {
-  source       = "github.com/GoogleCloudPlatform/cloud-foundation-fabric//modules/iam-service-account"
+  source       = "git::https://github.com/GoogleCloudPlatform/cloud-foundation-fabric.git//modules/iam-service-account"
   project_id   = module.project.id
   name         = "frontend-service"
   display_name = "Frontend Service Account"
@@ -108,7 +117,7 @@ module "frontend_service_account" {
 
 # Cloud Run service for the frontend
 module "cloud_run" {
-  source     = "github.com/GoogleCloudPlatform/cloud-foundation-fabric//modules/cloud-run-v2"
+  source     = "git::https://github.com/GoogleCloudPlatform/cloud-foundation-fabric.git//modules/cloud-run-v2"
   project_id = module.project.id
   name       = local.frontend_app_name
   region     = var.region
@@ -130,8 +139,8 @@ module "cloud_run" {
         NEXT_PUBLIC_PARENT_COMPANY         = var.next_public_parent_company
         NEXT_PUBLIC_SITE_URL               = var.next_public_site_url
         NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = var.next_public_stripe_publishable_key
-        NEXT_PUBLIC_SUPABASE_ANON_KEY      = var.next_public_supabase_anon_key
-        NEXT_PUBLIC_SUPABASE_URL           = var.next_public_supabase_url
+        NEXT_PUBLIC_AUTH_PROVIDER          = var.next_public_auth_provider
+        NEXT_PUBLIC_DATABASE_PROVIDER      = var.next_public_database_provider
         NEXT_PUBLIC_SUPPORT_EMAIL          = var.next_public_support_email
         NEXT_PUBLIC_BTCPAY_SERVER_URL      = var.btcpay_server_url
         BTCPAY_SERVER_URL                  = var.btcpay_server_url
@@ -140,8 +149,8 @@ module "cloud_run" {
       }
       # Secret environment variables from Secret Manager
       env_from_key = {
-        DB_URL = {
-          secret  = "projects/${module.project.number}/secrets/db-url"
+        DATABASE_URL = {
+          secret  = "projects/${module.project.number}/secrets/database-url"
           version = "latest"
         }
         ENCRYPTION_KEY = {
@@ -156,12 +165,8 @@ module "cloud_run" {
           secret  = "projects/${module.project.number}/secrets/google-client-secret"
           version = "latest"
         }
-        SUPABASE_JWT_SECRET = {
-          secret  = "projects/${module.project.number}/secrets/supabase-jwt-secret"
-          version = "latest"
-        }
-        SUPABASE_SERVICE_ROLE_KEY = {
-          secret  = "projects/${module.project.number}/secrets/supabase-service-role-key"
+        NEXTAUTH_SECRET = {
+          secret  = "projects/${module.project.number}/secrets/nextauth-secret"
           version = "latest"
         }
         STRIPE_SECRET_KEY = {
@@ -180,6 +185,10 @@ module "cloud_run" {
           secret  = "projects/${module.project.number}/secrets/btcpay-webhook-secret"
           version = "latest"
         }
+        CRON_SECRET = {
+          secret  = google_secret_manager_secret.cron_secret.id
+          version = "latest"
+        }
       }
       resources = {
         limits = {
@@ -191,9 +200,12 @@ module "cloud_run" {
     }
   }
 
-  revision = {
+  service_config = {
     max_instance_count = var.max_instances
     min_instance_count = var.min_instances
+  }
+
+  revision = {
     # Force new revision when image changes
     annotations = {
       "deployment.hash" = local.image_tag
@@ -213,7 +225,8 @@ module "cloud_run" {
     null_resource.build_and_push_frontend,
     data.google_artifact_registry_repository.frontend_repo,
     module.frontend_service_account,
-    module.frontend_secrets
+    module.frontend_secrets,
+    google_secret_manager_secret_version.database_url
   ]
 }
 

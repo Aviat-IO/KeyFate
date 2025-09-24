@@ -1,6 +1,6 @@
 "use client"
 
-import { createClient } from "@/utils/supabase/client"
+import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
@@ -8,29 +8,26 @@ interface AuthLayoutProps {
   children: React.ReactNode
 }
 
-const supabase = createClient()
-
 export default function AuthLayout({ children }: AuthLayoutProps) {
+  const { data: session, status } = useSession()
   const router = useRouter()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const checkUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (user) {
-        router.push("/dashboard")
-      } else {
-        setLoading(false)
-      }
+    if (status === "loading") {
+      return // Still loading session
     }
 
-    checkUser()
-  }, [router])
+    if (session?.user) {
+      // User is authenticated, redirect to dashboard
+      router.push("/dashboard")
+    } else {
+      // User is not authenticated, show auth pages
+      setLoading(false)
+    }
+  }, [session, status, router])
 
-  if (loading) {
+  if (loading || status === "loading") {
     return <div>Loading...</div>
   }
 

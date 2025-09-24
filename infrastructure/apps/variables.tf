@@ -33,6 +33,12 @@ variable "folder_id" {
   type        = string
 }
 
+variable "frontend_dir" {
+  description = "Absolute path to the frontend directory"
+  type        = string
+  default     = ""
+}
+
 # Cloud Run specific variables
 variable "cpu_limit" {
   description = "CPU limit for the container"
@@ -98,19 +104,28 @@ variable "next_public_support_email" {
   type        = string
 }
 
-variable "next_public_supabase_url" {
-  description = "Public Supabase URL"
+# Authentication service configuration (replacing Supabase)
+variable "next_public_auth_provider" {
+  description = "Authentication provider (e.g., 'google', 'custom')"
   type        = string
+  default     = "google"
 }
 
-variable "next_public_supabase_anon_key" {
-  description = "Public Supabase anonymous key"
+variable "next_public_database_provider" {
+  description = "Database provider identifier"
   type        = string
+  default     = "cloudsql"
 }
 
 # Secret variables (sensitive)
-variable "db_url" {
-  description = "Database connection URL"
+# variable "db_url" {
+#   description = "Database connection URL"
+#   type        = string
+#   sensitive   = true
+# }
+
+variable "db_password" {
+  description = "Database password for Cloud SQL user"
   type        = string
   sensitive   = true
 }
@@ -121,14 +136,8 @@ variable "encryption_key" {
   sensitive   = true
 }
 
-variable "supabase_service_role_key" {
-  description = "Supabase service role key"
-  type        = string
-  sensitive   = true
-}
-
-variable "supabase_jwt_secret" {
-  description = "Supabase JWT secret"
+variable "nextauth_secret" {
+  description = "NextAuth.js secret for session encryption"
   type        = string
   sensitive   = true
 }
@@ -186,3 +195,4 @@ variable "btcpay_webhook_secret" {
   type        = string
   sensitive   = true
 }
+

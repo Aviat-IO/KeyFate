@@ -11,97 +11,27 @@ import {
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { NEXT_PUBLIC_COMPANY } from "@/lib/env"
-import { createClient } from "@/utils/supabase/client"
-import { User } from "@supabase/supabase-js"
 import { Menu } from "lucide-react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { usePathname } from "next/navigation"
+import { useSession, signOut } from "next-auth/react"
+import { useState } from "react"
 
-const supabase = createClient()
-
-interface NavBarProps {
-  user?: User | null
-}
-
-export function NavBar({ user: propUser }: NavBarProps = {}) {
-  const router = useRouter()
+export function NavBar() {
   const pathname = usePathname()
-  const [user, setUser] = useState<User | null>(propUser ?? null)
-  const [loading, setLoading] = useState(propUser === undefined)
+  const { data: session, status } = useSession()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [isProUser, setIsProUser] = useState(false)
-  const [checkingSubscription, setCheckingSubscription] = useState(false)
 
-  useEffect(() => {
-    // If user prop is provided, use it (for testing)
-    if (propUser !== undefined) {
-      setUser(propUser)
-      setLoading(false)
-      return
-    }
+  const user = session?.user as { id?: string; name?: string; email?: string; image?: string } | undefined
+  const loading = status === "loading"
 
-    // Get initial session
-    const getInitialSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-      setUser(session?.user ?? null)
-      setLoading(false)
-    }
-
-    getInitialSession()
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [propUser])
-
-  // Check subscription status when user changes
-  useEffect(() => {
-    const checkSubscriptionStatus = async () => {
-      if (!user) {
-        setIsProUser(false)
-        return
-      }
-
-      setCheckingSubscription(true)
-      try {
-        const { data: tier } = await supabase
-          .from("user_tiers")
-          .select(
-            `
-            tier_id,
-            tiers!inner(name)
-          `,
-          )
-          .eq("user_id", user.id)
-          .maybeSingle()
-
-        // If no tier exists, assume free tier
-        setIsProUser(tier?.tiers?.name === "pro")
-      } catch (error) {
-        console.error("Error checking subscription status:", error)
-        setIsProUser(false)
-      } finally {
-        setCheckingSubscription(false)
-      }
-    }
-
-    checkSubscriptionStatus()
-  }, [user])
+  // For now, assume all users are free tier until we implement proper subscription checking
+  const isProUser = false
+  const checkingSubscription = false
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
+    await signOut({ callbackUrl: "/sign-in" })
     setMobileMenuOpen(false) // Close mobile menu
-    router.push("/auth/login")
-    router.refresh()
   }
 
   const handleMobileMenuItemClick = () => {
@@ -159,10 +89,10 @@ export function NavBar({ user: propUser }: NavBarProps = {}) {
               // User is not logged in - show log in and sign up
               <>
                 <Button variant="ghost" asChild>
-                  <Link href="/auth/login">Sign In</Link>
+                  <Link href="/sign-in">Sign In</Link>
                 </Button>
                 <Button asChild>
-                  <Link href="/auth/signup">Sign Up</Link>
+                  <Link href="/sign-in">Sign Up</Link>
                 </Button>
               </>
             )}
@@ -175,7 +105,7 @@ export function NavBar({ user: propUser }: NavBarProps = {}) {
             {/* Show Sign Up button on mobile for unauthenticated users */}
             {!loading && !user && (
               <Button asChild size="sm">
-                <Link href="/auth/signup">Sign Up</Link>
+                <Link href="/sign-in">Sign Up</Link>
               </Button>
             )}
 
@@ -281,7 +211,7 @@ export function NavBar({ user: propUser }: NavBarProps = {}) {
                         className="h-12 justify-start"
                       >
                         <Link
-                          href="/auth/login"
+                          href="/sign-in"
                           onClick={handleMobileMenuItemClick}
                         >
                           Sign In

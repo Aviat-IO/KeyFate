@@ -1,0 +1,390 @@
+/**
+ * TDD Test Suite: Dashboard Hanging Issue Debug
+ *
+ * This test suite follows TDD methodology to identify and fix the dashboard hanging issue.
+ * Based on logs, authentication succeeds but dashboard hangs in "pending" state.
+ *
+ * Focus areas:
+ * 1. Dashboard page session handling
+ * 2. Authentication layout wrapper
+ * 3. Database connection and secrets service
+ * 4. Client-side redirect loops
+ */
+
+import React from 'react';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import { getServerSession } from 'next-auth/next';
+import { redirect } from 'next/navigation';
+import DashboardPage from '@/app/(authenticated)/dashboard/page';
+import AuthenticatedLayout from '@/app/(authenticated)/layout';
+import { secretsService } from '@/lib/db/drizzle';
+
+// Mock next-auth
+vi.mock('next-auth/next', () => ({
+  getServerSession: vi.fn(),
+}));
+
+// Mock next/navigation
+vi.mock('next/navigation', () => ({
+  redirect: vi.fn(),
+}));
+
+// Mock secrets service
+vi.mock('@/lib/db/drizzle', () => ({
+  secretsService: {
+    getAllByUser: vi.fn(),
+  },
+}));
+
+// Mock auth config
+vi.mock('@/lib/auth-config', () => ({
+  authConfig: {
+    providers: [],
+    callbacks: {},
+  },
+}));
+
+// Mock components
+vi.mock('@/components/nav-bar', () => ({
+  NavBar: () => ({
+    type: 'nav',
+    props: { 'data-testid': 'nav-bar', children: 'NavBar' },
+  }),
+}));
+
+vi.mock('@/components/secret-card', () => ({
+  SecretCard: ({ secret }: { secret: any }) => ({
+    type: 'div',
+    props: { 'data-testid': 'secret-card', children: secret.title },
+  }),
+}));
+
+vi.mock('@/components/ui/loading-indicator', () => ({
+  LoadingIndicator: ({ text }: { text?: string }) => ({
+    type: 'div',
+    props: { 'data-testid': 'loading-indicator', children: text || 'Loading...' },
+  }),
+}));
+
+vi.mock('@/components/ui/button', () => ({
+  Button: ({ children, asChild, ...props }: any) => {
+    if (asChild) {
+      return {
+        type: 'div',
+        props: { ...props, children },
+      };
+    }
+    return {
+      type: 'button',
+      props: { ...props, children },
+    };
+  },
+}));
+
+vi.mock('@/components/ui/card', () => ({
+  Card: ({ children, ...props }: any) => ({
+    type: 'div',
+    props: { ...props, children },
+  }),
+  CardContent: ({ children, ...props }: any) => ({
+    type: 'div',
+    props: { ...props, children },
+  }),
+  CardHeader: ({ children, ...props }: any) => ({
+    type: 'div',
+    props: { ...props, children },
+  }),
+  CardTitle: ({ children, ...props }: any) => ({
+    type: 'h2',
+    props: { ...props, children },
+  }),
+}));
+
+vi.mock('next/link', () => ({
+  default: ({ children, href, ...props }: any) => ({
+    type: 'a',
+    props: { href, ...props, children },
+  }),
+}));
+
+describe('Dashboard Hanging Issue Debug', () => {
+  const mockSession = {
+    user: {
+      id: 'test-user-id',
+      email: 'test@example.com',
+      name: 'Test User',
+    },
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    console.log = vi.fn();
+    console.error = vi.fn();
+  });
+
+  afterEach(() => {
+    vi.resetAllMocks();
+  });
+
+  describe('RED PHASE - Failing Tests to Identify Issues', () => {
+    it('should identify authentication layout session handling issue', async () => {
+      // Test: Authentication layout should handle session properly without hanging
+      const mockGetServerSession = vi.mocked(getServerSession);
+      const mockRedirect = vi.mocked(redirect);
+
+      // Scenario 1: Valid session should render layout
+      mockGetServerSession.mockResolvedValue(mockSession);
+
+      const LayoutComponent = () => (
+        <AuthenticatedLayout>
+          <div>Test content</div>
+        </AuthenticatedLayout>
+      );
+
+      // This should NOT hang or cause infinite loops
+      const startTime = Date.now();
+      const { container } = render(<LayoutComponent />);
+      const renderTime = Date.now() - startTime;
+
+      // Layout should render quickly (< 100ms)
+      expect(renderTime).toBeLessThan(100);
+      expect(mockRedirect).not.toHaveBeenCalled();
+
+      // Wait for async operations
+      await waitFor(() => {
+        expect(screen.getByTestId('nav-bar')).toBeInTheDocument();
+      });
+
+      expect(container).toMatchSnapshot();
+    });
+
+    it('should identify dashboard page session handling issue', async () => {
+      // Test: Dashboard page should handle session properly without hanging
+      const mockGetServerSession = vi.mocked(getServerSession);
+      const mockSecretsService = vi.mocked(secretsService.getAllByUser);
+
+      // Setup valid session
+      mockGetServerSession.mockResolvedValue(mockSession);
+      mockSecretsService.mockResolvedValue([]);
+
+      // This should NOT hang
+      const startTime = Date.now();
+      render(<DashboardPage />);
+      const renderTime = Date.now() - startTime;
+
+      // Dashboard should render quickly (< 100ms for initial render)
+      expect(renderTime).toBeLessThan(100);
+
+      // Should show loading state initially
+      expect(screen.getByTestId('loading-indicator')).toBeInTheDocument();
+
+      // Wait for async operations to complete
+      await waitFor(() => {
+        expect(screen.getByText('No Secrets Yet')).toBeInTheDocument();
+      }, { timeout: 5000 });
+
+      expect(mockSecretsService).toHaveBeenCalledWith('test-user-id');
+    });
+
+    it('should identify database connection timeout issue', async () => {
+      // Test: Database operations should not hang indefinitely
+      const mockGetServerSession = vi.mocked(getServerSession);
+      const mockSecretsService = vi.mocked(secretsService.getAllByUser);
+
+      mockGetServerSession.mockResolvedValue(mockSession);
+
+      // Simulate database hanging
+      mockSecretsService.mockImplementation(() => {
+        return new Promise((resolve) => {
+          // Simulate hanging database connection
+          setTimeout(resolve, 10000); // 10 seconds
+        });
+      });
+
+      render(<DashboardPage />);
+
+      // Should show loading state
+      expect(screen.getByTestId('loading-indicator')).toBeInTheDocument();
+
+      // After reasonable timeout (2 seconds), should show error or handle gracefully
+      await waitFor(() => {
+        // Either should still be loading (which indicates the hang)
+        // or should have error handling
+        const hasLoadingOrError = screen.queryByTestId('loading-indicator') ||
+                                 screen.queryByText(/error/i);
+        expect(hasLoadingOrError).toBeTruthy();
+      }, { timeout: 2000 });
+
+      // This test should FAIL initially, showing the hanging issue
+      expect(true).toBe(false); // This will fail, identifying the hanging issue
+    });
+
+    it('should identify secrets service getAllByUser hanging issue', async () => {
+      // Test: Secrets service should handle errors gracefully
+      const mockGetServerSession = vi.mocked(getServerSession);
+      const mockSecretsService = vi.mocked(secretsService.getAllByUser);
+
+      mockGetServerSession.mockResolvedValue(mockSession);
+
+      // Simulate service throwing an error that might cause hanging
+      mockSecretsService.mockRejectedValue(new Error('Database connection timeout'));
+
+      render(<DashboardPage />);
+
+      // Should handle error gracefully and not hang
+      await waitFor(() => {
+        expect(screen.getByText(/Error Loading Secrets/i)).toBeInTheDocument();
+      }, { timeout: 3000 });
+
+      expect(mockSecretsService).toHaveBeenCalledWith('test-user-id');
+    });
+
+    it('should identify authentication flow redirect loop issue', async () => {
+      // Test: Authentication flow should not create redirect loops
+      const mockGetServerSession = vi.mocked(getServerSession);
+      const mockRedirect = vi.mocked(redirect);
+
+      // Test various session states that might cause loops
+      const testCases = [
+        { session: null, shouldRedirect: true },
+        { session: { user: null }, shouldRedirect: true },
+        { session: { user: { id: null } }, shouldRedirect: true },
+        { session: mockSession, shouldRedirect: false },
+      ];
+
+      for (const testCase of testCases) {
+        vi.clearAllMocks();
+        mockGetServerSession.mockResolvedValue(testCase.session as any);
+
+        try {
+          render(<AuthenticatedLayout><div>Test</div></AuthenticatedLayout>);
+
+          if (testCase.shouldRedirect) {
+            await waitFor(() => {
+              expect(mockRedirect).toHaveBeenCalledWith('/sign-in');
+            });
+          } else {
+            // Should not redirect
+            expect(mockRedirect).not.toHaveBeenCalled();
+          }
+        } catch (error) {
+          // Redirect throws an error in test environment
+          if (testCase.shouldRedirect) {
+            expect(mockRedirect).toHaveBeenCalledWith('/sign-in');
+          }
+        }
+      }
+    });
+
+    it('should identify session loading timeout issue', async () => {
+      // Test: Session loading should not hang indefinitely
+      const mockGetServerSession = vi.mocked(getServerSession);
+
+      // Simulate hanging session loading
+      mockGetServerSession.mockImplementation(() => {
+        return new Promise((resolve) => {
+          setTimeout(() => resolve(mockSession), 10000); // 10 seconds
+        });
+      });
+
+      const startTime = Date.now();
+
+      try {
+        render(<AuthenticatedLayout><div>Test</div></AuthenticatedLayout>);
+
+        // Should not hang for more than 2 seconds
+        await waitFor(() => {
+          const elapsed = Date.now() - startTime;
+          expect(elapsed).toBeLessThan(2000);
+        }, { timeout: 2000 });
+      } catch (error) {
+        const elapsed = Date.now() - startTime;
+        // If it times out, it confirms the hanging issue
+        expect(elapsed).toBeGreaterThan(2000);
+        expect(true).toBe(false); // This will fail, confirming the issue
+      }
+    });
+  });
+
+  describe('Analysis Phase - Understanding the Root Cause', () => {
+    it('should analyze console logs to identify hanging point', async () => {
+      // Test: Check console logs to identify where the hang occurs
+      const mockGetServerSession = vi.mocked(getServerSession);
+      const mockSecretsService = vi.mocked(secretsService.getAllByUser);
+      const consoleLogSpy = vi.spyOn(console, 'log');
+
+      mockGetServerSession.mockResolvedValue(mockSession);
+      mockSecretsService.mockResolvedValue([]);
+
+      render(<DashboardPage />);
+
+      await waitFor(() => {
+        expect(screen.getByText('No Secrets Yet')).toBeInTheDocument();
+      });
+
+      // Analyze console logs to understand the flow
+      const logCalls = consoleLogSpy.mock.calls.map(call => call[0]);
+
+      // Should see authentication layout logs
+      expect(logCalls.some(log =>
+        typeof log === 'string' && log.includes('[AuthenticatedLayout]')
+      )).toBe(true);
+
+      // Should see dashboard logs
+      expect(logCalls.some(log =>
+        typeof log === 'string' && log.includes('[Dashboard]')
+      )).toBe(true);
+
+      // Should see secrets loading logs
+      expect(logCalls.some(log =>
+        typeof log === 'string' && log.includes('SecretsLoader')
+      )).toBe(true);
+    });
+
+    it('should test database connection health', async () => {
+      // Test: Verify database connection is healthy
+      const mockSecretsService = vi.mocked(secretsService.getAllByUser);
+
+      // Test with different scenarios
+      const testCases = [
+        { mockResult: [], description: 'empty results' },
+        { mockResult: [{ id: '1', title: 'Test Secret' }], description: 'with data' },
+        { mockError: new Error('Connection failed'), description: 'connection error' },
+      ];
+
+      for (const testCase of testCases) {
+        vi.clearAllMocks();
+
+        if (testCase.mockError) {
+          mockSecretsService.mockRejectedValue(testCase.mockError);
+        } else {
+          mockSecretsService.mockResolvedValue(testCase.mockResult as any);
+        }
+
+        const startTime = Date.now();
+
+        try {
+          await secretsService.getAllByUser('test-user-id');
+          const elapsed = Date.now() - startTime;
+
+          // Database calls should complete quickly (< 1 second)
+          expect(elapsed).toBeLessThan(1000);
+        } catch (error) {
+          const elapsed = Date.now() - startTime;
+
+          // Even errors should fail quickly, not hang
+          expect(elapsed).toBeLessThan(1000);
+        }
+      }
+    });
+  });
+
+  describe('Implementation Phase - Will be added after fixing issues', () => {
+    // These tests will be added once we identify and fix the hanging issues
+    it.todo('should implement timeout wrapper for database operations');
+    it.todo('should implement error boundaries for dashboard components');
+    it.todo('should implement session validation caching');
+    it.todo('should implement graceful degradation for database failures');
+  });
+});

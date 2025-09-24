@@ -1,5 +1,5 @@
 module "artifact_registry" {
-  source     = "github.com/GoogleCloudPlatform/cloud-foundation-fabric//modules/artifact-registry"
+  source     = "git::https://github.com/GoogleCloudPlatform/cloud-foundation-fabric.git//modules/artifact-registry"
   project_id = module.project.id
   location   = var.region
   name       = "keyfate-registry"

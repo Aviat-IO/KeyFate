@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
-import { NEXT_PUBLIC_SUPABASE_URL } from "@/lib/env"
 import { useSearchParams } from "next/navigation"
 import { Suspense, useState } from "react"
 
@@ -33,12 +32,10 @@ function CheckInContent() {
     setIsLoading(true)
     try {
       const response = await fetch(
-        `${NEXT_PUBLIC_SUPABASE_URL}/functions/v1/check-in?token=${token}`,
+        `/api/check-in?token=${encodeURIComponent(token)}`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
         },
       )
 
@@ -48,7 +45,7 @@ function CheckInContent() {
         setIsSuccessful(true)
         toast({
           title: "Check-in successful!",
-          description: `Your secret "${data.secretTitle}" timer has been reset. Next check-in: ${data.nextCheckIn}`,
+          description: data.message ?? `Next check-in: ${data.nextCheckIn}`,
           variant: "success",
           persistent: true,
         })

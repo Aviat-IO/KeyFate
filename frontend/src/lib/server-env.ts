@@ -1,12 +1,4 @@
 // Delay validation until runtime to avoid build-time errors
-function getSupabaseServiceRoleKey(): string {
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!key) {
-    throw new Error("SUPABASE_SERVICE_ROLE_KEY is not set");
-  }
-  return key;
-}
-
 function getStripeSecretKey(): string {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) {
@@ -64,7 +56,6 @@ function getEncryptionKey(): string {
 }
 
 // Export lazy getters that only validate when accessed
-let _cachedSupabaseKey: string | undefined;
 let _cachedStripeKey: string | undefined;
 let _cachedStripeWebhookSecret: string | undefined;
 let _cachedEncryptionKey: string | undefined;
@@ -72,13 +63,6 @@ let _cachedBTCPayServerUrl: string | undefined;
 let _cachedBTCPayApiKey: string | undefined;
 let _cachedBTCPayStoreId: string | undefined;
 let _cachedBTCPayWebhookSecret: string | undefined;
-
-export function getSUPABASE_SERVICE_ROLE_KEY(): string {
-  if (_cachedSupabaseKey === undefined) {
-    _cachedSupabaseKey = getSupabaseServiceRoleKey();
-  }
-  return _cachedSupabaseKey;
-}
 
 export function getSTRIPE_SECRET_KEY(): string {
   if (_cachedStripeKey === undefined) {
@@ -131,9 +115,6 @@ export function getBTCPAY_WEBHOOK_SECRET(): string {
 
 // Lazy serverEnv object that only validates when properties are accessed
 export const serverEnv = {
-  get SUPABASE_SERVICE_ROLE_KEY(): string {
-    return getSUPABASE_SERVICE_ROLE_KEY();
-  },
   get STRIPE_SECRET_KEY(): string {
     return getSTRIPE_SECRET_KEY();
   },

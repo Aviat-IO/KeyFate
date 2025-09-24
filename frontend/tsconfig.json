@@ -6,6 +6,7 @@
       "dom.iterable",
       "esnext"
     ],
+    "types": ["vitest/globals", "@testing-library/jest-dom"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": false,
@@ -18,8 +19,7 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "paths": {
-      "@/*": ["./src/*"],
-      "@/supabase/*": ["../supabase/*"]
+      "@/*": ["./src/*"]
     },
     "plugins": [
       {
@@ -34,6 +34,7 @@
     "**/*.tsx"
 , "vitest.config.mts"  ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "scripts"
   ]
 }

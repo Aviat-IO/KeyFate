@@ -2,23 +2,25 @@
 
 BTCPay Server requires its own dedicated database to avoid conflicts with your main application schema.
 
-## Option 1: Create Database via Supabase Dashboard
+## Option 1: Local Development (Docker)
 
-1. Go to your Supabase project dashboard
-2. Navigate to **SQL Editor**
-3. Run this command to create a dedicated database for BTCPay Server:
+Create the database in your local PostgreSQL container:
 
-```sql
+```bash
+# Connect to local PostgreSQL instance
+docker exec -it dead-mans-switch-postgres-1 psql -U postgres
+
+# Create the BTCPay Server database
 CREATE DATABASE btcpayserver;
 ```
 
-## Option 2: Create Database via psql
+## Option 2: Production (Google Cloud SQL)
 
-If you have direct PostgreSQL access:
+Create the database via Cloud SQL Admin or psql:
 
 ```bash
-# Connect to your Supabase PostgreSQL instance
-psql "postgresql://postgres:your-password@db.your-project.supabase.co:5432/postgres"
+# Connect to your Cloud SQL PostgreSQL instance
+psql "postgresql://postgres:your-password@your-cloudsql-instance:5432/postgres"
 
 # Create the BTCPay Server database
 CREATE DATABASE btcpayserver;
@@ -31,14 +33,20 @@ GRANT ALL PRIVILEGES ON DATABASE btcpayserver TO postgres;
 
 BTCPay Server expects the PostgreSQL connection string in .NET format:
 
+### Local Development
 ```
-User ID=postgres;Password=your-password;Host=db.your-project.supabase.co;Port=5432;Database=btcpayserver;SSL Mode=Require
+User ID=postgres;Password=postgres;Host=localhost;Port=5432;Database=btcpayserver
+```
+
+### Production (Cloud SQL)
+```
+User ID=postgres;Password=your-password;Host=your-cloudsql-instance;Port=5432;Database=btcpayserver;SSL Mode=Require
 ```
 
 **Important Notes:**
 
 1. **Separate Database**: BTCPay Server should use its own database (`btcpayserver`) instead of sharing the main `postgres` database with your application
-2. **SSL Required**: Supabase requires SSL connections, so `SSL Mode=Require` is necessary
+2. **SSL Required**: Production environments require SSL connections, so `SSL Mode=Require` is necessary
 3. **Permissions**: Ensure the database user has full permissions to create/modify tables and schemas
 4. **Migration**: BTCPay Server will automatically create its schema on first startup
 
@@ -58,10 +66,10 @@ If you get migration errors:
 
 For local development (docker-compose):
 ```bash
-BTCPAY_POSTGRES=User ID=postgres;Password=your-password;Host=db.your-project.supabase.co;Port=5432;Database=btcpayserver;SSL Mode=Require
+BTCPAY_POSTGRES=User ID=postgres;Password=postgres;Host=localhost;Port=5432;Database=btcpayserver
 ```
 
 For production (terraform.tfvars):
 ```hcl
-btcpay_db_connection = "User ID=postgres;Password=your-password;Host=db.your-project.supabase.co;Port=5432;Database=btcpayserver;SSL Mode=Require"
+btcpay_db_connection = "User ID=postgres;Password=your-password;Host=your-cloudsql-instance;Port=5432;Database=btcpayserver;SSL Mode=Require"
 ```

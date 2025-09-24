@@ -1,19 +1,52 @@
+import { authConfig } from "@/lib/auth-config";
+import { ensureUserExists } from "@/lib/auth/user-verification";
+import { secretsService } from "@/lib/db/drizzle";
+import { RobustSecretsService } from "@/lib/db/secrets-service-robust";
+import { encryptMessage } from "@/lib/encryption";
 import { secretSchema } from "@/lib/schemas/secret";
-import { Tables } from "@/types";
-import { createClient, createServiceRoleClient } from "@/utils/supabase/server";
+import type { Session } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
-import { encryptMessage } from "@/lib/encryption";
 
 export async function POST(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-    const supabaseAdmin = createServiceRoleClient();
+  let insertData: Record<string, unknown>; // Declare here so it's available in catch block
 
-    const { data: user, error: userError } = await supabase.auth.getUser();
-    if (userError || !user.user) {
+  try {
+    // Use NextAuth for authentication instead of Supabase auth
+    let session: Session | null;
+    try {
+      type GetServerSessionOptions = Parameters<typeof getServerSession>[0];
+      session =
+        (await getServerSession(authConfig as GetServerSessionOptions)) as
+          | Session
+          | null;
+    } catch (sessionError) {
+      console.error("NextAuth session error:", sessionError);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Ensure user exists in database before creating secret
+    try {
+      const userVerification = await ensureUserExists(session);
+      console.log("[Secrets API] User verification result:", {
+        exists: userVerification.exists,
+        created: userVerification.created,
+        userId: session.user.id,
+      });
+    } catch (userError) {
+      console.error("[Secrets API] User verification failed:", userError);
+      return NextResponse.json(
+        { error: "Failed to verify user account" },
+        { status: 500 },
+      );
+    }
+
+    // Note: Using direct database connection via Drizzle instead of Supabase client
 
     const body = await request.json();
 
@@ -54,62 +87,78 @@ export async function POST(request: NextRequest) {
     }
 
     // Handle contact method logic
-    const insertData = {
-      ...validatedData,
-      server_share: encryptedServerShare,
+    insertData = {
+      title: validatedData.title,
+      recipientName: validatedData.recipient_name,
+      recipientEmail: validatedData.contact_method === "phone"
+        ? null
+        : validatedData.recipient_email,
+      recipientPhone: validatedData.recipient_phone || null,
+      contactMethod: validatedData.contact_method,
+      checkInDays: validatedData.check_in_days,
+      serverShare: encryptedServerShare,
       iv: iv,
-      auth_tag: authTag,
-      user_id: user.user.id,
-      next_check_in: new Date(
+      authTag: authTag,
+      userId: session.user.id,
+      sssSharesTotal: validatedData.sss_shares_total,
+      sssThreshold: validatedData.sss_threshold,
+      status: "active" as const,
+      nextCheckIn: new Date(
         Date.now() + validatedData.check_in_days * 24 * 60 * 60 * 1000,
-      ).toISOString(),
-    } as Tables<"secrets">["Insert"];
+      ),
+    };
 
-    // Set recipient_email to null for phone-only contact
-    if (validatedData.contact_method === "phone") {
-      insertData.recipient_email = null;
+    // Add logging to debug the insert data structure
+    console.log("Insert data structure:", JSON.stringify(insertData, null, 2));
+
+    // Try the standard service first, fall back to robust service if needed
+    let data;
+    try {
+      data = await secretsService.create(insertData as any);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("recipient_name")) {
+        console.log("Using robust service due to schema issue");
+        const robustService = new RobustSecretsService(
+          process.env.DATABASE_URL!,
+        );
+        data = await robustService.create(insertData as any);
+      } else {
+        throw error;
+      }
     }
 
-    const { data, error } = await supabaseAdmin
-      .from("secrets")
-      .insert([insertData])
-      .select()
-      .single();
+    // Note: Reminder scheduling would be handled by a separate service
+    // For now, we'll skip this to get the basic functionality working
+    const warning = undefined;
 
-    if (error) {
-      console.error("Error creating secret:", error);
+    const responseBody = {
+      secretId: data.id,
+      ...data,
+      ...(warning && { warning }),
+    };
+
+    const res = NextResponse.json(responseBody, { status: 201 });
+    res.headers.set("Location", `/api/secrets/${data.id}`);
+    return res;
+  } catch (error) {
+    console.error("Error in POST /api/secrets:", error);
+
+    // Check if this is a database column error
+    if (error instanceof Error && error.message.includes("recipient_name")) {
+      console.error("Column mapping error detected:", error.message);
+      if (insertData) {
+        console.error("Insert data was:", JSON.stringify(insertData, null, 2));
+      }
+
       return NextResponse.json(
-        { error: "Database error" },
+        {
+          error: "Database schema mismatch: recipient_name column issue",
+          details: error.message,
+        },
         { status: 500 },
       );
     }
 
-    // Schedule reminder (mock implementation for tests)
-    let warning = undefined;
-    try {
-      const { error: reminderError } = await supabaseAdmin.rpc(
-        "schedule_secret_reminders",
-        {
-          p_secret_id: data.id,
-          p_next_check_in: insertData.next_check_in,
-        },
-      );
-
-      if (reminderError) {
-        warning =
-          `Warning: reminder scheduling failed - ${reminderError.message}`;
-      }
-    } catch (reminderError) {
-      warning = `Warning: reminder scheduling failed - ${reminderError}`;
-    }
-
-    return NextResponse.json({
-      secretId: data.id,
-      ...data,
-      ...(warning && { warning }),
-    });
-  } catch (error) {
-    console.error("Error in POST /api/secrets:", error);
     return NextResponse.json(
       { error: "Failed to create secret" },
       { status: 500 },

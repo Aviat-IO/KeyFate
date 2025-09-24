@@ -1,5 +1,5 @@
 import CheckInPage from "@/app/check-in/page"
-import { render, screen, waitFor } from "@testing-library/react"
+import { act, render, screen, waitFor } from "@testing-library/react"
 import { vi } from "vitest"
 
 // Mock Next.js navigation
@@ -13,9 +13,7 @@ vi.mock("@/hooks/use-toast", () => ({
 }))
 
 // Mock environment variable
-vi.mock("@/lib/env", () => ({
-  NEXT_PUBLIC_SUPABASE_URL: "https://test.supabase.co",
-}))
+vi.mock("@/lib/env", () => ({}))
 
 describe("CheckInPage", () => {
   beforeEach(() => {
@@ -23,8 +21,10 @@ describe("CheckInPage", () => {
     global.fetch = vi.fn()
   })
 
-  it("renders check-in form with token", () => {
-    render(<CheckInPage />)
+  it("renders check-in form with token", async () => {
+    await act(async () => {
+      render(<CheckInPage />)
+    })
 
     expect(screen.getByText("Secret Check-In")).toBeInTheDocument()
     expect(screen.getByText("Check In Now")).toBeInTheDocument()
@@ -51,10 +51,15 @@ describe("CheckInPage", () => {
 
     global.fetch = vi.fn().mockResolvedValue(mockResponse)
 
-    render(<CheckInPage />)
+    await act(async () => {
+      render(<CheckInPage />)
+    })
 
     const checkInButton = screen.getByText("Check In Now")
-    checkInButton.click()
+
+    await act(async () => {
+      checkInButton.click()
+    })
 
     // Wait for the success state to be reflected in the UI
     await waitFor(() => {
@@ -84,10 +89,15 @@ describe("CheckInPage", () => {
 
     global.fetch = vi.fn().mockResolvedValue(mockResponse)
 
-    render(<CheckInPage />)
+    await act(async () => {
+      render(<CheckInPage />)
+    })
 
     const checkInButton = screen.getByText("Check In Now")
-    checkInButton.click()
+
+    await act(async () => {
+      checkInButton.click()
+    })
 
     // Wait for the error to be handled
     await waitFor(() => {
@@ -102,10 +112,15 @@ describe("CheckInPage", () => {
   it("handles network errors", async () => {
     global.fetch = vi.fn().mockRejectedValue(new Error("Network error"))
 
-    render(<CheckInPage />)
+    await act(async () => {
+      render(<CheckInPage />)
+    })
 
     const checkInButton = screen.getByText("Check In Now")
-    checkInButton.click()
+
+    await act(async () => {
+      checkInButton.click()
+    })
 
     // Wait for the error to be handled
     await waitFor(() => {
@@ -126,10 +141,15 @@ describe("CheckInPage", () => {
 
     global.fetch = vi.fn().mockReturnValue(loadingPromise)
 
-    render(<CheckInPage />)
+    await act(async () => {
+      render(<CheckInPage />)
+    })
 
     const checkInButton = screen.getByText("Check In Now")
-    checkInButton.click()
+
+    await act(async () => {
+      checkInButton.click()
+    })
 
     // Should show loading state
     await waitFor(() => {
@@ -138,6 +158,8 @@ describe("CheckInPage", () => {
     })
 
     // Resolve the promise to clean up
-    resolvePromise!({ ok: true, json: () => Promise.resolve({}) })
+    await act(async () => {
+      resolvePromise!({ ok: true, json: () => Promise.resolve({}) })
+    })
   })
 })

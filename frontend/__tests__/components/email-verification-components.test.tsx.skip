@@ -1,0 +1,291 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import {
+  OTPVerificationForm,
+  EmailVerificationStatus,
+  ResendVerificationButton,
+  EmailVerificationPrompt
+} from '@/components/auth/email-verification'
+
+// Mock toast hook
+const mockToast = vi.fn()
+vi.mock('@/hooks/use-toast', () => ({
+  useToast: () => ({ toast: mockToast })
+}))
+
+// Mock email verification functions
+vi.mock('@/lib/email-verification', () => ({
+  verifyEmailWithOTP: vi.fn(),
+  sendVerificationOTP: vi.fn(),
+  checkEmailVerificationStatus: vi.fn(),
+  resendVerificationEmail: vi.fn()
+}))
+
+// Mock router
+const mockPush = vi.fn()
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: mockPush }),
+  useSearchParams: () => ({
+    get: vi.fn().mockReturnValue('user@example.com')
+  })
+}))
+
+describe('Email Verification Components', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  describe('OTPVerificationForm', () => {
+    const mockProps = {
+      email: 'user@example.com',
+      onSuccess: vi.fn(),
+      onError: vi.fn()
+    }
+
+    it('should render OTP input form', () => {
+      render(<OTPVerificationForm {...mockProps} />)
+
+      expect(screen.getByLabelText(/enter verification code/i)).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /verify/i })).toBeInTheDocument()
+    })
+
+    it('should handle OTP input with 6 digits', async () => {
+      const user = userEvent.setup()
+      render(<OTPVerificationForm {...mockProps} />)
+
+      const otpInput = screen.getByLabelText(/enter verification code/i)
+      await user.type(otpInput, '123456')
+
+      expect(otpInput).toHaveValue('123456')
+    })
+
+    it('should limit OTP input to 6 digits', async () => {
+      const user = userEvent.setup()
+      render(<OTPVerificationForm {...mockProps} />)
+
+      const otpInput = screen.getByLabelText(/enter verification code/i)
+      await user.type(otpInput, '1234567890')
+
+      expect(otpInput).toHaveValue('123456')
+    })
+
+    it('should call verification function on form submit', async () => {
+      const { verifyEmailWithOTP } = await import('@/lib/email-verification')
+      ;(verifyEmailWithOTP as any).mockResolvedValue({ success: true })
+
+      const user = userEvent.setup()
+      render(<OTPVerificationForm {...mockProps} />)
+
+      const otpInput = screen.getByLabelText(/enter verification code/i)
+      const submitButton = screen.getByRole('button', { name: /verify/i })
+
+      await user.type(otpInput, '123456')
+      await user.click(submitButton)
+
+      expect(verifyEmailWithOTP).toHaveBeenCalledWith('user@example.com', '123456')
+    })
+
+    it('should show loading state during verification', async () => {
+      const { verifyEmailWithOTP } = await import('@/lib/email-verification')
+      ;(verifyEmailWithOTP as any).mockImplementation(() =>
+        new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000))
+      )
+
+      const user = userEvent.setup()
+      render(<OTPVerificationForm {...mockProps} />)
+
+      const otpInput = screen.getByLabelText(/enter verification code/i)
+      const submitButton = screen.getByRole('button', { name: /verify/i })
+
+      await user.type(otpInput, '123456')
+      await user.click(submitButton)
+
+      expect(screen.getByRole('button', { name: /verifying/i })).toBeInTheDocument()
+      expect(submitButton).toBeDisabled()
+    })
+
+    it('should handle verification success', async () => {
+      const { verifyEmailWithOTP } = await import('@/lib/email-verification')
+      ;(verifyEmailWithOTP as any).mockResolvedValue({
+        success: true,
+        user: { email_verified: true }
+      })
+
+      const user = userEvent.setup()
+      render(<OTPVerificationForm {...mockProps} />)
+
+      const otpInput = screen.getByLabelText(/enter verification code/i)
+      const submitButton = screen.getByRole('button', { name: /verify/i })
+
+      await user.type(otpInput, '123456')
+      await user.click(submitButton)
+
+      await waitFor(() => {
+        expect(mockProps.onSuccess).toHaveBeenCalled()
+      })
+    })
+
+    it('should handle verification error', async () => {
+      const { verifyEmailWithOTP } = await import('@/lib/email-verification')
+      ;(verifyEmailWithOTP as any).mockResolvedValue({
+        success: false,
+        error: 'Invalid OTP'
+      })
+
+      const user = userEvent.setup()
+      render(<OTPVerificationForm {...mockProps} />)
+
+      const otpInput = screen.getByLabelText(/enter verification code/i)
+      const submitButton = screen.getByRole('button', { name: /verify/i })
+
+      await user.type(otpInput, '000000')
+      await user.click(submitButton)
+
+      await waitFor(() => {
+        expect(mockProps.onError).toHaveBeenCalledWith('Invalid OTP')
+      })
+    })
+  })
+
+  describe('EmailVerificationStatus', () => {
+    it('should show verified status for verified users', async () => {
+      const { checkEmailVerificationStatus } = await import('@/lib/email-verification')
+      ;(checkEmailVerificationStatus as any).mockResolvedValue({
+        isVerified: true,
+        user: { email: 'user@example.com' }
+      })
+
+      render(<EmailVerificationStatus />)
+
+      await waitFor(() => {
+        expect(screen.getByText(/email verified/i)).toBeInTheDocument()
+        expect(screen.getByTestId('verified-icon')).toBeInTheDocument()
+      })
+    })
+
+    it('should show unverified status for unverified users', async () => {
+      const { checkEmailVerificationStatus } = await import('@/lib/email-verification')
+      ;(checkEmailVerificationStatus as any).mockResolvedValue({
+        isVerified: false,
+        user: { email: 'user@example.com' }
+      })
+
+      render(<EmailVerificationStatus />)
+
+      await waitFor(() => {
+        expect(screen.getByText(/email not verified/i)).toBeInTheDocument()
+        expect(screen.getByTestId('unverified-icon')).toBeInTheDocument()
+      })
+    })
+
+    it('should show loading state while checking status', async () => {
+      const { checkEmailVerificationStatus } = await import('@/lib/email-verification')
+      ;(checkEmailVerificationStatus as any).mockImplementation(() =>
+        new Promise(resolve => setTimeout(() => resolve({ isVerified: true }), 1000))
+      )
+
+      render(<EmailVerificationStatus />)
+
+      expect(screen.getByTestId('loading-spinner')).toBeInTheDocument()
+    })
+  })
+
+  describe('ResendVerificationButton', () => {
+    const mockProps = {
+      email: 'user@example.com',
+      onSuccess: vi.fn(),
+      onError: vi.fn()
+    }
+
+    it('should render resend button', () => {
+      render(<ResendVerificationButton {...mockProps} />)
+
+      expect(screen.getByRole('button', { name: /resend verification email/i })).toBeInTheDocument()
+    })
+
+    it('should call resend function on click', async () => {
+      const { resendVerificationEmail } = await import('@/lib/email-verification')
+      ;(resendVerificationEmail as any).mockResolvedValue({ success: true })
+
+      const user = userEvent.setup()
+      render(<ResendVerificationButton {...mockProps} />)
+
+      const resendButton = screen.getByRole('button', { name: /resend verification email/i })
+      await user.click(resendButton)
+
+      expect(resendVerificationEmail).toHaveBeenCalledWith('user@example.com')
+    })
+
+    it('should show cooldown timer after successful resend', async () => {
+      const { resendVerificationEmail } = await import('@/lib/email-verification')
+      ;(resendVerificationEmail as any).mockResolvedValue({ success: true })
+
+      const user = userEvent.setup()
+      render(<ResendVerificationButton {...mockProps} />)
+
+      const resendButton = screen.getByRole('button', { name: /resend verification email/i })
+      await user.click(resendButton)
+
+      await waitFor(() => {
+        expect(screen.getByText(/resend in/i)).toBeInTheDocument()
+        expect(resendButton).toBeDisabled()
+      })
+    })
+
+    it('should handle rate limiting gracefully', async () => {
+      const { resendVerificationEmail } = await import('@/lib/email-verification')
+      ;(resendVerificationEmail as any).mockResolvedValue({
+        success: false,
+        error: 'Rate limit exceeded'
+      })
+
+      const user = userEvent.setup()
+      render(<ResendVerificationButton {...mockProps} />)
+
+      const resendButton = screen.getByRole('button', { name: /resend verification email/i })
+      await user.click(resendButton)
+
+      await waitFor(() => {
+        expect(mockProps.onError).toHaveBeenCalledWith('Rate limit exceeded')
+      })
+    })
+  })
+
+  describe('EmailVerificationPrompt', () => {
+    const mockProps = {
+      email: 'user@example.com',
+      onVerificationComplete: vi.fn()
+    }
+
+    it('should render complete verification prompt', () => {
+      render(<EmailVerificationPrompt {...mockProps} />)
+
+      expect(screen.getByText(/verify your email address/i)).toBeInTheDocument()
+      expect(screen.getByText(/user@example.com/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/enter verification code/i)).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /resend/i })).toBeInTheDocument()
+    })
+
+    it('should handle successful verification flow', async () => {
+      const { verifyEmailWithOTP } = await import('@/lib/email-verification')
+      ;(verifyEmailWithOTP as any).mockResolvedValue({
+        success: true,
+        user: { email_verified: true }
+      })
+
+      const user = userEvent.setup()
+      render(<EmailVerificationPrompt {...mockProps} />)
+
+      const otpInput = screen.getByLabelText(/enter verification code/i)
+      const verifyButton = screen.getByRole('button', { name: /verify/i })
+
+      await user.type(otpInput, '123456')
+      await user.click(verifyButton)
+
+      await waitFor(() => {
+        expect(mockProps.onVerificationComplete).toHaveBeenCalled()
+      })
+    })
+  })
+})

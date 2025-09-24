@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { clearSupabaseCookies } from "@/lib/cookies";
+import { clearAuthCookies } from "@/lib/cookies";
 
 describe("Cookie Management", () => {
-  describe("clearSupabaseCookies", () => {
-    it("should clear Supabase-related cookies", () => {
+  describe("clearAuthCookies", () => {
+    it("should clear legacy auth cookies", () => {
       const mockRequestCookies = {
         getAll: vi.fn().mockReturnValue([
           { name: "sb-auth-token", value: "token123" },
@@ -19,7 +19,7 @@ describe("Cookie Management", () => {
         set: vi.fn(),
       };
 
-      clearSupabaseCookies({
+      clearAuthCookies({
         requestCookies: mockRequestCookies as any,
         responseCookies: mockResponseCookies as any,
         domain: "example.com",
@@ -72,7 +72,7 @@ describe("Cookie Management", () => {
         set: vi.fn(),
       };
 
-      clearSupabaseCookies({
+      clearAuthCookies({
         requestCookies: mockRequestCookies as any,
         responseCookies: mockResponseCookies as any,
         domain: "example.com",
@@ -98,7 +98,7 @@ describe("Cookie Management", () => {
         set: vi.fn(),
       };
 
-      clearSupabaseCookies({
+      clearAuthCookies({
         requestCookies: mockRequestCookies as any,
         responseCookies: mockResponseCookies as any,
         domain: "test.com",
