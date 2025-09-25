@@ -14,22 +14,41 @@ let connectionOptions: any = {};
 
 // Check if this is a Unix socket connection (for Cloud SQL)
 if (connectionString.includes("/cloudsql/")) {
-  // Extract components from the special format
-  // Format: postgresql://user:pass@/database?host=/cloudsql/PROJECT:REGION:INSTANCE
-  const match = connectionString.match(/postgresql:\/\/([^:]+):([^@]+)@\/([^?]+)\?host=([^&]+)/);
+  // Manual parsing for Unix socket format with special characters in password
+  // Format: postgresql://username:password@/database?host=/cloudsql/PROJECT:REGION:INSTANCE
 
-  if (match) {
-    const [, username, password, database, host] = match;
+  // Extract username
+  const usernameMatch = connectionString.match(/^postgresql:\/\/([^:]+):/);
+  const username = usernameMatch ? usernameMatch[1] : '';
+
+  // Extract database and host
+  const dbHostMatch = connectionString.match(/@\/([^?]+)\?host=([^&\s]+)/);
+  const database = dbHostMatch ? dbHostMatch[1] : '';
+  const host = dbHostMatch ? dbHostMatch[2] : '';
+
+  // Extract password - it's between "username:" and "@/database"
+  const passwordStart = connectionString.indexOf(`${username}:`) + username.length + 1;
+  const passwordEnd = connectionString.indexOf(`@/${database}`);
+  const password = connectionString.substring(passwordStart, passwordEnd);
+
+  if (username && database && host && password) {
     connectionOptions = {
-      host, // Unix socket path like /cloudsql/PROJECT:REGION:INSTANCE
+      host,      // Unix socket path: /cloudsql/PROJECT:REGION:INSTANCE
       database,
       username,
-      password,
-      // Unix sockets don't use SSL
-      ssl: false,
+      password,  // Keep password as-is, including special characters
+      ssl: false // Unix sockets don't need SSL
     };
+
+    console.log('Parsed Unix socket connection:', {
+      host,
+      database,
+      username,
+      passwordLength: password.length,
+      passwordEndsWithEquals: password.endsWith('=')
+    });
   } else {
-    // Fallback to standard URL parsing
+    console.error('Failed to parse Unix socket connection string');
     connectionOptions = connectionString;
   }
 } else {
@@ -69,6 +88,18 @@ const connectionConfig = {
     statement_timeout: parseInt(process.env.DB_STATEMENT_TIMEOUT || "30000"), // 30 seconds in ms
   },
 };
+
+// Debug logging in production to help troubleshoot
+if (process.env.NODE_ENV === 'production' && typeof connectionOptions === 'object') {
+  console.log('Database connection config:', {
+    host: connectionOptions.host,
+    database: connectionOptions.database,
+    username: connectionOptions.username,
+    // Don't log password, but show its length for debugging
+    passwordLength: connectionOptions.password?.length,
+    ssl: connectionOptions.ssl,
+  });
+}
 
 // Create the connection with enhanced configuration
 const client = typeof connectionOptions === 'string'
