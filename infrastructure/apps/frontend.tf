@@ -148,6 +148,12 @@ module "cloud_run" {
         NEXTAUTH_URL                       = var.next_public_site_url
         # Force revision update when code changes by including hash as env var
         DEPLOYMENT_HASH = local.image_tag
+        # Database connection timeout and pooling settings
+        DB_CONNECT_TIMEOUT    = "30"     # 30 seconds connection timeout
+        DB_POOL_MAX          = "20"     # Maximum pool connections
+        DB_POOL_MIN          = "5"      # Minimum pool connections
+        DB_IDLE_TIMEOUT      = "600"    # 10 minutes idle timeout
+        DB_STATEMENT_TIMEOUT = "30000"  # 30 seconds statement timeout
       }
       # Secret environment variables from Secret Manager
       env_from_key = {
@@ -205,6 +211,12 @@ module "cloud_run" {
   service_config = {
     max_instance_count = var.max_instances
     min_instance_count = var.min_instances
+
+    # VPC connector for private Cloud SQL access
+    vpc_connector_config = {
+      connector = google_vpc_access_connector.vpc_connector.id
+      egress    = "PRIVATE_RANGES_ONLY" # Only route private traffic through VPC
+    }
   }
 
   revision = {
@@ -228,7 +240,8 @@ module "cloud_run" {
     data.google_artifact_registry_repository.frontend_repo,
     module.frontend_service_account,
     module.frontend_secrets,
-    google_secret_manager_secret_version.database_url
+    google_secret_manager_secret_version.database_url,
+    google_vpc_access_connector.vpc_connector
   ]
 }
 
