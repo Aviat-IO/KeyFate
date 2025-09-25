@@ -15,6 +15,13 @@
       "when": 1758214780335,
       "tag": "0001_damp_harry_osborn",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1758820674526,
+      "tag": "0002_exotic_odin",
+      "breakpoints": true
     }
   ]
 }
