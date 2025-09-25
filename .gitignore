@@ -50,3 +50,7 @@ reset_databases.sh
 
 **/metrics/*.json
 **/metrics/*.log
+
+# Drizzle
+frontend/drizzle-staging.config.ts
+frontend/drizzle-production.config.ts
