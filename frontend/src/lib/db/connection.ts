@@ -9,10 +9,43 @@ if (!connectionString) {
   throw new Error("DATABASE_URL environment variable is not set");
 }
 
+// Parse connection string for Cloud SQL Unix socket support
+let connectionOptions: any = {};
+
+// Check if this is a Unix socket connection (for Cloud SQL)
+if (connectionString.includes("/cloudsql/")) {
+  // Extract components from the special format
+  // Format: postgresql://user:pass@/database?host=/cloudsql/PROJECT:REGION:INSTANCE
+  const match = connectionString.match(/postgresql:\/\/([^:]+):([^@]+)@\/([^?]+)\?host=([^&]+)/);
+
+  if (match) {
+    const [, username, password, database, host] = match;
+    connectionOptions = {
+      host, // Unix socket path like /cloudsql/PROJECT:REGION:INSTANCE
+      database,
+      username,
+      password,
+      // Unix sockets don't use SSL
+      ssl: false,
+    };
+  } else {
+    // Fallback to standard URL parsing
+    connectionOptions = connectionString;
+  }
+} else {
+  // Standard TCP connection
+  connectionOptions = connectionString;
+}
+
 // Enhanced connection configuration with pooling
 const connectionConfig = {
-  // SSL configuration - use proper type for postgres.js
-  ssl: process.env.NODE_ENV === "production" ? ("require" as const) : false,
+  // Use parsed options or connection string
+  ...(typeof connectionOptions === 'object' ? connectionOptions : {}),
+
+  // SSL configuration - only for TCP connections
+  ssl: typeof connectionOptions === 'string' && process.env.NODE_ENV === "production"
+    ? ("require" as const)
+    : false,
 
   // Connection pooling settings
   max: parseInt(process.env.DB_POOL_MAX || "20"), // Maximum connections in pool
@@ -38,7 +71,9 @@ const connectionConfig = {
 };
 
 // Create the connection with enhanced configuration
-const client = postgres(connectionString, connectionConfig);
+const client = typeof connectionOptions === 'string'
+  ? postgres(connectionOptions, connectionConfig)
+  : postgres(connectionConfig);
 
 // Create Drizzle database instance
 export const db = drizzle(client, { schema });

@@ -224,6 +224,8 @@ module "cloud_run" {
     annotations = {
       "deployment.hash" = local.image_tag
       "git.commit"      = local.git_commit_hash
+      # Add Cloud SQL connection for proper database access
+      "run.googleapis.com/cloudsql-instances" = module.cloudsql_instance.connection_name
     }
   }
 
