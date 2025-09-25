@@ -1,14 +1,14 @@
 import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
 import * as schema from "./schema";
+import { createPostgresConnection } from "./connection-parser";
 
 const connectionString = process.env.DATABASE_URL || "postgresql://postgres:dev_password_change_in_prod@localhost:5432/keyfate_dev";
 
 // For migrations and single queries
-const migrationClient = postgres(connectionString, { max: 1 });
+const migrationClient = createPostgresConnection(connectionString, { max: 1 });
 
 // For application use
-const queryClient = postgres(connectionString);
+const queryClient = createPostgresConnection(connectionString);
 
 // Create the drizzle database instance
 export const db = drizzle(queryClient, {

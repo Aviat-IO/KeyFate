@@ -1,18 +1,41 @@
 import { and, desc, eq, lt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
 import { secrets, users } from "./schema";
+import { createPostgresConnection } from "./connection-parser";
 
-// Database URL from environment
-const databaseUrl = process.env.DATABASE_URL;
-
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL environment variable is not set");
-}
-
-// Create the connection
-const client = postgres(databaseUrl);
+// Create the connection using shared parser
+console.log('🔍 DRIZZLE DEBUG - DATABASE_URL:', process.env.DATABASE_URL?.replace(/:[^:@]+@/, ':***@')); // Hide password
+const client = createPostgresConnection(process.env.DATABASE_URL!);
 export const db = drizzle(client);
+
+// CRITICAL DEBUG: Test database connection and verify which database/schema we're in
+(async () => {
+  try {
+    const currentDb = await client`SELECT current_database() as db, current_schema() as schema`;
+    console.log('🔍 DRIZZLE DEBUG - Connected to:', currentDb[0]);
+
+    // Check if secrets table exists in current schema
+    const tableExists = await client`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = current_schema()
+        AND table_name = 'secrets'
+      ) as exists
+    `;
+    console.log('🔍 DRIZZLE DEBUG - Secrets table exists:', tableExists[0]);
+
+    // List all tables in current schema
+    const allTables = await client`
+      SELECT table_name
+      FROM information_schema.tables
+      WHERE table_schema = current_schema()
+      ORDER BY table_name
+    `;
+    console.log('🔍 DRIZZLE DEBUG - All tables in current schema:', allTables.map(t => t.table_name));
+  } catch (error) {
+    console.error('🔍 DRIZZLE DEBUG - Database test failed:', error);
+  }
+})();
 
 // Export tables for use in auth configuration
 export { users };
