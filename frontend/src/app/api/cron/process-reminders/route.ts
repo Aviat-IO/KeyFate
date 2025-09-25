@@ -44,8 +44,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ processed: due.length });
   } catch (error) {
     console.error("process-reminders error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, {
-      status: 500,
-    });
+
+    // Provide more detailed error information for debugging
+    const errorDetails = {
+      error: "Database operation failed",
+      message: error instanceof Error ? error.message : "Unknown error",
+      code: error && typeof error === 'object' && 'code' in error ? error.code : undefined,
+      timestamp: new Date().toISOString(),
+    };
+
+    console.error("process-reminders detailed error:", errorDetails);
+
+    return NextResponse.json(errorDetails, { status: 500 });
   }
 }

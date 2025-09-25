@@ -19,5 +19,6 @@ module "project" {
     "sqladmin.googleapis.com",
     "servicenetworking.googleapis.com",
     "compute.googleapis.com",
+    "vpcaccess.googleapis.com",
   ]
 }

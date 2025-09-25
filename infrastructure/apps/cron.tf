@@ -78,11 +78,8 @@ resource "google_cloud_scheduler_job" "process_reminders" {
       "Content-Type"  = "application/json"
     }
 
-    # OAuth token configuration to use the service account
-    oidc_token {
-      service_account_email = module.cloud_scheduler_service_account.email
-      audience              = var.next_public_site_url
-    }
+    # Using simple Bearer token authentication instead of OIDC
+    # The Authorization header above contains the Bearer token for authentication
 
     # Empty body for POST request
     body = base64encode("{}")
@@ -122,11 +119,8 @@ resource "google_cloud_scheduler_job" "check_secrets" {
       "Content-Type"  = "application/json"
     }
 
-    # OAuth token configuration to use the service account
-    oidc_token {
-      service_account_email = module.cloud_scheduler_service_account.email
-      audience              = var.next_public_site_url
-    }
+    # Using simple Bearer token authentication instead of OIDC
+    # The Authorization header above contains the Bearer token for authentication
 
     # Empty body for POST request
     body = base64encode("{}")
