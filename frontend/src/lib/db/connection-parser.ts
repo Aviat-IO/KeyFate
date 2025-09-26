@@ -57,15 +57,26 @@ export function createPostgresConnection(connectionString: string, options: any 
     connectionOptions = connectionString;
 
     // CRITICAL: Log which database we're connecting to for TCP connections too
-    const dbMatch = connectionString.match(/\/([^?]+)(\?|$)/);
-    const database = dbMatch ? dbMatch[1] : 'unknown';
-    console.log('🔍 DATABASE DEBUG - App connecting to database via TCP:', database);
+    // Fix the regex to properly extract database name from standard PostgreSQL URLs
+    const tcpMatch = connectionString.match(/postgresql:\/\/[^@]+@([^\/]+)\/([^?]+)/);
+    if (tcpMatch) {
+      const host = tcpMatch[1];
+      const database = tcpMatch[2];
+      console.log('🔍 DATABASE DEBUG - TCP Connection:', {
+        host,
+        database,
+        format: 'standard TCP'
+      });
+    }
   }
 
   // Create the connection with proper configuration
   return typeof connectionOptions === 'string'
     ? postgres(connectionOptions, {
-        ssl: process.env.NODE_ENV === "production" ? "require" : false,
+        // For private IP connections within VPC, SSL is not required
+        // The connection string will specify sslmode if needed
+        ssl: false,
+        connect_timeout: 30,  // Increase timeout to 30 seconds
         ...options
       })
     : postgres({ ...connectionOptions, ...options });
