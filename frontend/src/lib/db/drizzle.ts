@@ -22,16 +22,25 @@ export const db = drizzle(client);
         AND table_name = 'secrets'
       ) as exists
     `;
-    console.log('🔍 DRIZZLE DEBUG - Secrets table exists:', tableExists[0]);
+    console.log('🔍 DRIZZLE DEBUG - Secrets table exists in current schema:', tableExists[0]);
 
-    // List all tables in current schema
+    // List all tables in ALL schemas
     const allTables = await client`
+      SELECT table_schema, table_name
+      FROM information_schema.tables
+      WHERE table_schema NOT IN ('information_schema', 'pg_catalog')
+      ORDER BY table_schema, table_name
+    `;
+    console.log('🔍 DRIZZLE DEBUG - All tables in database:', allTables.map(t => `${t.table_schema}.${t.table_name}`));
+
+    // Check specifically for drizzle schema
+    const drizzleTables = await client`
       SELECT table_name
       FROM information_schema.tables
-      WHERE table_schema = current_schema()
+      WHERE table_schema = 'drizzle'
       ORDER BY table_name
     `;
-    console.log('🔍 DRIZZLE DEBUG - All tables in current schema:', allTables.map(t => t.table_name));
+    console.log('🔍 DRIZZLE DEBUG - Tables in drizzle schema:', drizzleTables.map(t => t.table_name));
   } catch (error) {
     console.error('🔍 DRIZZLE DEBUG - Database test failed:', error);
   }
