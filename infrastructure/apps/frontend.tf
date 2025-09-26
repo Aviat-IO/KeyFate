@@ -245,6 +245,47 @@ module "cloud_run" {
   ]
 }
 
+# Automatically update traffic to latest revision after deployment
+resource "null_resource" "update_traffic" {
+  triggers = {
+    # Trigger when the image changes or Cloud Run service updates
+    image_tag = local.image_tag
+    service_id = module.cloud_run.id
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      set -e
+      echo "Waiting for Cloud Run service to be ready..."
+      sleep 15
+
+      echo "Getting latest revision..."
+      LATEST_REVISION=$(gcloud run services describe ${local.frontend_app_name} \
+        --region=${var.region} \
+        --project=${module.project.id} \
+        --format="value(status.latestCreatedRevisionName)")
+
+      echo "Latest revision: $LATEST_REVISION"
+
+      if [ -n "$LATEST_REVISION" ]; then
+        echo "Updating traffic to send 100% to latest revision: $LATEST_REVISION"
+        gcloud run services update-traffic ${local.frontend_app_name} \
+          --region=${var.region} \
+          --project=${module.project.id} \
+          --to-latest \
+          --quiet || true
+
+        echo "Traffic updated successfully to latest revision"
+      else
+        echo "Could not determine latest revision, skipping traffic update"
+      fi
+    EOT
+    interpreter = ["bash", "-c"]
+  }
+
+  depends_on = [module.cloud_run]
+}
+
 # Domain mapping for custom domain
 resource "google_cloud_run_domain_mapping" "frontend_domain" {
   count    = var.custom_domain != "" ? 1 : 0
