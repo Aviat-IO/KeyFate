@@ -3,10 +3,27 @@ locals {
   # Use variable if provided (from Terragrunt), otherwise fall back to relative path
   frontend_app_dir = var.frontend_dir != "" ? var.frontend_dir : abspath("${path.module}/../../frontend")
 
-  # Create a comprehensive hash that includes both file contents and terraform config
-  frontend_content_hash = md5(join("", [
-    for f in fileset(local.frontend_app_dir, "**") : filemd5("${local.frontend_app_dir}/${f}")
-  ]))
+  # Only track actual source code that affects the build
+  # This is much faster and prevents unnecessary rebuilds
+  frontend_source_patterns = [
+    "app/**/*.{ts,tsx,js,jsx,css}",
+    "components/**/*.{ts,tsx,js,jsx,css}",
+    "lib/**/*.{ts,tsx,js,jsx}",
+    "utils/**/*.{ts,tsx,js,jsx}",
+    "public/**",
+    "*.config.{js,ts}",
+    "package.json",
+    "Dockerfile"
+  ]
+
+  # Efficient hash calculation - only files that actually matter
+  frontend_content_hash = md5(join("", flatten([
+    for pattern in local.frontend_source_patterns : [
+      for f in try(fileset(local.frontend_app_dir, pattern), []) :
+        can(filemd5("${local.frontend_app_dir}/${f}")) ? filemd5("${local.frontend_app_dir}/${f}") : ""
+    ]
+  ])))
+
   terraform_config_hash = filemd5("${path.module}/frontend.tf")
 
   # Combine content hash with terraform config for complete rebuild trigger
@@ -44,7 +61,10 @@ resource "null_resource" "build_and_push_frontend" {
       # Configure Docker to use gcloud as a credential helper
       gcloud auth configure-docker ${var.region}-docker.pkg.dev --quiet
 
-      # Build the Docker image locally with environment-specific build args
+      # Build the Docker image with layer caching
+      # Pull the previous image for cache if it exists
+      docker pull $BUILD_TAG 2>/dev/null || true
+
       docker build \
         --platform linux/amd64 \
         --build-arg BUILD_ENV=${var.env == "prod" ? "production" : "staging"} \
@@ -56,6 +76,7 @@ resource "null_resource" "build_and_push_frontend" {
         --build-arg NEXT_PUBLIC_AUTH_PROVIDER="${var.next_public_auth_provider}" \
         --build-arg NEXT_PUBLIC_DATABASE_PROVIDER="${var.next_public_database_provider}" \
         --build-arg NEXT_PUBLIC_ENV="${var.env}" \
+        --cache-from $BUILD_TAG \
         -t $BUILD_TAG \
         -f ${local.frontend_app_dir}/Dockerfile \
         ${local.frontend_app_dir}
@@ -257,28 +278,16 @@ resource "null_resource" "update_traffic" {
     command = <<-EOT
       set -e
       echo "Waiting for Cloud Run service to be ready..."
-      sleep 15
+      sleep 5
 
-      echo "Getting latest revision..."
-      LATEST_REVISION=$(gcloud run services describe ${local.frontend_app_name} \
+      echo "Updating traffic to latest revision..."
+      gcloud run services update-traffic ${local.frontend_app_name} \
         --region=${var.region} \
         --project=${module.project.id} \
-        --format="value(status.latestCreatedRevisionName)")
+        --to-latest \
+        --quiet || true
 
-      echo "Latest revision: $LATEST_REVISION"
-
-      if [ -n "$LATEST_REVISION" ]; then
-        echo "Updating traffic to send 100% to latest revision: $LATEST_REVISION"
-        gcloud run services update-traffic ${local.frontend_app_name} \
-          --region=${var.region} \
-          --project=${module.project.id} \
-          --to-latest \
-          --quiet || true
-
-        echo "Traffic updated successfully to latest revision"
-      else
-        echo "Could not determine latest revision, skipping traffic update"
-      fi
+      echo "Traffic updated successfully"
     EOT
     interpreter = ["bash", "-c"]
   }

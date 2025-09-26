@@ -1,0 +1,36 @@
+# Example: Override for production to ensure state refresh
+# Copy this to terragrunt.hcl in prod folder if you want safer production deploys
+
+include {
+  path = find_in_parent_folders("root.hcl")
+}
+
+locals {
+  environment = "prod"
+  root_config = read_terragrunt_config(find_in_parent_folders("root.hcl"))
+  project_id = "${local.root_config.locals.project_prefix}${local.root_config.locals.project_name}-${local.environment}"
+  tf_state_project_id = local.root_config.locals.tf_state_project_id
+}
+
+terraform {
+  source = "../../apps"
+
+  # Override the ultra-fast settings for production safety
+  extra_arguments "prod_safe_apply" {
+    commands = ["apply"]
+    arguments = [
+      "-parallelism=30",  # Still fast but not maximum
+      "-refresh=true"     # IMPORTANT: Enable refresh for production
+    ]
+  }
+
+  extra_arguments "prod_safe_plan" {
+    commands = ["plan"]
+    arguments = [
+      "-parallelism=30",
+      "-refresh=true"     # IMPORTANT: Enable refresh for production
+    ]
+  }
+}
+
+# Rest of your prod configuration...

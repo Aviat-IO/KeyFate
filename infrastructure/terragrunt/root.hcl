@@ -8,26 +8,40 @@ locals {
 
 # Ultra-fast optimizations applied to all terragrunt configurations
 terraform {
-  # Ultra-fast optimizations applied automatically to all child configs
-  extra_arguments "ultra_fast_plan" {
-    commands = ["plan"]
-    arguments = [
-      "-parallelism=20",
-      "-refresh=false"
-    ]
-  }
-
+  # Maximum speed optimizations for all operations
   extra_arguments "ultra_fast_init" {
     commands = ["init"]
     arguments = [
-      "-upgrade=false"
+      "-upgrade=false",
+      "-backend=true",
+      "-get=true",
+      "-input=false"
     ]
   }
 
   extra_arguments "ultra_fast_apply" {
     commands = ["apply"]
     arguments = [
-      "-parallelism=20"
+      "-parallelism=50",
+      "-refresh=false",
+      "-compact-warnings"
+    ]
+  }
+
+  extra_arguments "ultra_fast_plan" {
+    commands = ["plan"]
+    arguments = [
+      "-parallelism=50",
+      "-refresh=false",
+      "-compact-warnings"
+    ]
+  }
+
+  extra_arguments "ultra_fast_destroy" {
+    commands = ["destroy"]
+    arguments = [
+      "-parallelism=50",
+      "-refresh=false"
     ]
   }
 }
