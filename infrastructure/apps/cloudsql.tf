@@ -207,9 +207,13 @@ resource "google_vpc_access_connector" "vpc_connector" {
   region        = var.region
   network       = module.vpc.name
   ip_cidr_range = "10.1.0.0/28" # /28 gives 16 IPs, sufficient for Cloud Run connector
-  machine_type  = "e2-micro"  # Cheapest instance type - ~$5-7/month per instance
+  machine_type  = "f1-micro"  # Small but reliable instance type
   min_instances = 2  # Minimum required by Google Cloud
-  max_instances = 3  # Keep costs low - scale up to 3 instances max
+  max_instances = 10  # Increased for better scalability under load
+
+  # Increase throughput for better performance
+  min_throughput = 200  # Minimum 200 Mbps
+  max_throughput = 1000 # Maximum 1000 Mbps
 
   depends_on = [module.vpc]
 }

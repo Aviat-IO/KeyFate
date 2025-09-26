@@ -1,6 +1,7 @@
-import { db } from "@/lib/db/drizzle";
+import { connectionManager } from "@/lib/db/drizzle";
 import { secrets } from "@/lib/db/schema";
 import { and, eq, isNotNull, lte } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/postgres-js";
 import { NextRequest, NextResponse } from "next/server";
 
 function authorize(req: NextRequest): boolean {
@@ -34,6 +35,27 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    console.log("[check-secrets] Starting database operation...");
+
+    // Get connection stats for monitoring
+    const stats = connectionManager.getStats();
+    console.log("[check-secrets] Connection stats:", stats);
+
+    // Get database connection with retry logic
+    const connectionString = process.env.DATABASE_URL;
+    if (!connectionString) {
+      throw new Error('DATABASE_URL environment variable is not set');
+    }
+
+    const client = await connectionManager.getConnection(connectionString, {
+      max: 5,
+      idle_timeout: 20,
+      connect_timeout: 10,
+      max_lifetime: 60 * 5,
+    });
+
+    const db = drizzle(client);
+
     const now = new Date();
     const toTrigger = await db
       .select()
@@ -47,21 +69,32 @@ export async function POST(req: NextRequest) {
         ),
       );
 
+    console.log(`[check-secrets] Found ${toTrigger.length} secrets to trigger`);
+
     // Placeholder: add email send + update status logic here
     const processed = toTrigger.length;
-    return NextResponse.json({ processed });
+    return NextResponse.json({
+      processed,
+      stats: connectionManager.getStats(),
+      timestamp: new Date().toISOString()
+    });
   } catch (error) {
-    console.error("check-secrets error:", error);
+    console.error("[check-secrets] Error:", error);
+
+    // Get connection stats for debugging
+    const stats = connectionManager.getStats();
+    console.error("[check-secrets] Connection stats on error:", stats);
 
     // Provide more detailed error information for debugging
     const errorDetails = {
       error: "Database operation failed",
       message: error instanceof Error ? error.message : "Unknown error",
       code: error && typeof error === 'object' && 'code' in error ? error.code : undefined,
+      connectionStats: stats,
       timestamp: new Date().toISOString(),
     };
 
-    console.error("check-secrets detailed error:", errorDetails);
+    console.error("[check-secrets] Detailed error:", errorDetails);
 
     return NextResponse.json(errorDetails, { status: 500 });
   }
