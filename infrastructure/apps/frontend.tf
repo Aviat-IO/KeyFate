@@ -169,12 +169,14 @@ module "cloud_run" {
         NEXTAUTH_URL                       = var.next_public_site_url
         # Force revision update when code changes by including hash as env var
         DEPLOYMENT_HASH = local.image_tag
-        # Database connection timeout and pooling settings
-        DB_CONNECT_TIMEOUT    = "30"     # 30 seconds connection timeout
-        DB_POOL_MAX          = "20"     # Maximum pool connections
-        DB_POOL_MIN          = "5"      # Minimum pool connections
-        DB_IDLE_TIMEOUT      = "600"    # 10 minutes idle timeout
+        # Database connection timeout and pooling settings - optimized for VPC connector
+        DB_CONNECT_TIMEOUT    = "10"     # 10 seconds connection timeout (fail fast)
+        DB_POOL_MAX          = "5"      # Reduced max pool connections to prevent exhaustion
+        DB_POOL_MIN          = "1"      # Minimum pool connections
+        DB_IDLE_TIMEOUT      = "20"     # 20 seconds idle timeout (release connections faster)
         DB_STATEMENT_TIMEOUT = "30000"  # 30 seconds statement timeout
+        DB_MAX_LIFETIME      = "300"    # 5 minutes max connection lifetime
+        DEBUG_DB             = "true"   # Enable database debugging in staging
       }
       # Secret environment variables from Secret Manager
       env_from_key = {

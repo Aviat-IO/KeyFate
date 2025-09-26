@@ -1,6 +1,4 @@
-import { db } from "@/lib/db/drizzle";
-import { secrets } from "@/lib/db/schema";
-import { and, eq, lte } from "drizzle-orm";
+import { secretsService, connectionManager } from "@/lib/db/drizzle";
 import { NextRequest, NextResponse } from "next/server";
 
 function authorize(req: NextRequest): boolean {
@@ -34,26 +32,47 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const now = new Date();
-    const due = await db
-      .select()
-      .from(secrets)
-      .where(and(eq(secrets.status, "active"), lte(secrets.nextCheckIn, now)));
+    console.log("[process-reminders] Starting database operation...");
+
+    // Get connection stats for monitoring
+    const stats = connectionManager.getStats();
+    console.log("[process-reminders] Connection stats:", stats);
+
+    // Check database health first
+    const isHealthy = await secretsService.healthCheck();
+    if (!isHealthy) {
+      console.error("[process-reminders] Database health check failed");
+      // Try to reconnect
+      await connectionManager.closeConnection();
+    }
+
+    // Use the service method which handles async initialization
+    const due = await secretsService.getOverdue();
+    console.log(`[process-reminders] Found ${due.length} overdue secrets`);
 
     // For now, just report counts. Actual email sending logic can be added here or via services.
-    return NextResponse.json({ processed: due.length });
+    return NextResponse.json({
+      processed: due.length,
+      stats: connectionManager.getStats(),
+      timestamp: new Date().toISOString()
+    });
   } catch (error) {
-    console.error("process-reminders error:", error);
+    console.error("[process-reminders] Error:", error);
+
+    // Get connection stats for debugging
+    const stats = connectionManager.getStats();
+    console.error("[process-reminders] Connection stats on error:", stats);
 
     // Provide more detailed error information for debugging
     const errorDetails = {
       error: "Database operation failed",
       message: error instanceof Error ? error.message : "Unknown error",
       code: error && typeof error === 'object' && 'code' in error ? error.code : undefined,
+      connectionStats: stats,
       timestamp: new Date().toISOString(),
     };
 
-    console.error("process-reminders detailed error:", errorDetails);
+    console.error("[process-reminders] Detailed error:", errorDetails);
 
     return NextResponse.json(errorDetails, { status: 500 });
   }
