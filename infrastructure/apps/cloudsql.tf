@@ -102,7 +102,7 @@ module "cloudsql_instance" {
   }
 
   ssl = {
-    mode = "ENCRYPTED_ONLY"
+    mode = "ALLOW_UNENCRYPTED_AND_ENCRYPTED"  # Allow both SSL and non-SSL connections
   }
 
   depends_on = [google_service_networking_connection.private_vpc_connection]
@@ -130,8 +130,8 @@ resource "google_secret_manager_secret" "database_url" {
 resource "google_secret_manager_secret_version" "database_url" {
   secret      = google_secret_manager_secret.database_url.id
   # Cloud Run v2 doesn't mount Unix sockets - use private IP via VPC connector
-  # This will work with our connection-parser.ts TCP connection handling
-  secret_data = "postgresql://${local.db_user}:${var.db_password}@${module.cloudsql_instance.ip}:5432/${local.db_name}?sslmode=require"
+  # Private IP connections within VPC don't require SSL
+  secret_data = "postgresql://${local.db_user}:${var.db_password}@${module.cloudsql_instance.ip}:5432/${local.db_name}"
 }
 
 # Additional secret for private IP connection (for VPC-based connections)
