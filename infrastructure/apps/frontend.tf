@@ -245,6 +245,9 @@ module "cloud_run" {
     annotations = {
       "deployment.hash" = local.image_tag
       "git.commit"      = local.git_commit_hash
+      # VPC connector annotations must be on the revision template
+      "run.googleapis.com/vpc-access-connector" = google_vpc_access_connector.vpc_connector.name
+      "run.googleapis.com/vpc-access-egress" = "private-ranges-only"
     }
   }
 
@@ -266,12 +269,13 @@ module "cloud_run" {
   ]
 }
 
-# Automatically update traffic to latest revision after deployment
-resource "null_resource" "update_traffic" {
+# Automatically configure VPC connector and update traffic after deployment
+resource "null_resource" "configure_service" {
   triggers = {
     # Trigger when the image changes or Cloud Run service updates
     image_tag = local.image_tag
     service_id = module.cloud_run.id
+    vpc_connector = google_vpc_access_connector.vpc_connector.name
   }
 
   provisioner "local-exec" {
@@ -279,6 +283,16 @@ resource "null_resource" "update_traffic" {
       set -e
       echo "Waiting for Cloud Run service to be ready..."
       sleep 5
+
+      echo "Configuring VPC connector for Cloud Run service..."
+      gcloud run services update ${local.frontend_app_name} \
+        --region=${var.region} \
+        --project=${module.project.id} \
+        --vpc-connector=${google_vpc_access_connector.vpc_connector.name} \
+        --vpc-egress=private-ranges-only \
+        --quiet
+
+      echo "VPC connector configured successfully"
 
       echo "Updating traffic to latest revision..."
       gcloud run services update-traffic ${local.frontend_app_name} \
@@ -292,7 +306,7 @@ resource "null_resource" "update_traffic" {
     interpreter = ["bash", "-c"]
   }
 
-  depends_on = [module.cloud_run]
+  depends_on = [module.cloud_run, google_vpc_access_connector.vpc_connector]
 }
 
 # Domain mapping for custom domain
