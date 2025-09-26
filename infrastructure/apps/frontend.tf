@@ -214,7 +214,7 @@ module "cloud_run" {
 
     # VPC connector for private Cloud SQL access
     vpc_connector_config = {
-      connector = google_vpc_access_connector.vpc_connector.id
+      connector = google_vpc_access_connector.vpc_connector.name
       egress    = "PRIVATE_RANGES_ONLY" # Only route private traffic through VPC
     }
   }

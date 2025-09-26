@@ -132,6 +132,7 @@ if (!validation.isValid) {
 Initiates Google OAuth authentication flow.
 
 **Parameters:**
+
 - `options.redirectTo` (string, optional): URL to redirect after successful authentication
 
 **Returns:** `Promise<OAuthResult>`
@@ -147,6 +148,7 @@ Handles OAuth callback and validates the session.
 Validates OAuth state parameter for CSRF protection.
 
 **Parameters:**
+
 - `received` (string): State parameter from callback
 - `expected` (string): Expected state value
 
@@ -159,6 +161,7 @@ Validates OAuth state parameter for CSRF protection.
 Validates OAuth configuration.
 
 **Parameters:**
+
 - `config` (OAuthConfig, optional): Configuration to validate
 
 **Returns:** `ValidationResult`
