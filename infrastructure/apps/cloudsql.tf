@@ -129,9 +129,9 @@ resource "google_secret_manager_secret" "database_url" {
 
 resource "google_secret_manager_secret_version" "database_url" {
   secret      = google_secret_manager_secret.database_url.id
-  # Use Unix socket for Cloud Run connections via Cloud SQL proxy
-  # Special format that our connection.ts can parse
-  secret_data = "postgresql://${local.db_user}:${var.db_password}@/${local.db_name}?host=/cloudsql/${module.cloudsql_instance.connection_name}"
+  # Cloud Run v2 doesn't mount Unix sockets - use private IP via VPC connector
+  # This will work with our connection-parser.ts TCP connection handling
+  secret_data = "postgresql://${local.db_user}:${var.db_password}@${module.cloudsql_instance.ip}:5432/${local.db_name}?sslmode=require"
 }
 
 # Additional secret for private IP connection (for VPC-based connections)
