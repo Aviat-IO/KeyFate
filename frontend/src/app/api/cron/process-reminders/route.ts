@@ -1,4 +1,7 @@
-import { secretsService, connectionManager } from "@/lib/db/drizzle";
+import { connectionManager } from "@/lib/db/drizzle";
+import { secrets } from "@/lib/db/schema";
+import { and, eq, lt } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/postgres-js";
 import { NextRequest, NextResponse } from "next/server";
 
 function authorize(req: NextRequest): boolean {
@@ -24,15 +27,32 @@ export async function POST(req: NextRequest) {
     // Get connection stats for monitoring
     const stats = connectionManager.getStats();
 
-    // Check database health first
-    const isHealthy = await secretsService.healthCheck();
-    if (!isHealthy) {
-      // Try to reconnect
-      await connectionManager.closeConnection();
+    // Get database connection with retry logic
+    const connectionString = process.env.DATABASE_URL;
+    if (!connectionString) {
+      throw new Error('DATABASE_URL environment variable is not set');
     }
 
-    // Use the service method which handles async initialization
-    const due = await secretsService.getOverdue();
+    const client = await connectionManager.getConnection(connectionString, {
+      max: 5,
+      idle_timeout: 20,
+      connect_timeout: 10,
+      max_lifetime: 60 * 5,
+    });
+
+    const db = drizzle(client);
+
+    // Get overdue secrets
+    const now = new Date();
+    const due = await db
+      .select()
+      .from(secrets)
+      .where(
+        and(
+          eq(secrets.status, "active"),
+          lt(secrets.nextCheckIn, now),
+        ),
+      );
 
     // For now, just report counts. Actual email sending logic can be added here or via services.
     return NextResponse.json({
