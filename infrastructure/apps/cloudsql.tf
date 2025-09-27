@@ -50,7 +50,7 @@ module "cloudsql_instance" {
   name       = local.db_instance
   region     = var.region
 
-  database_version = "POSTGRES_15"
+  database_version = "POSTGRES_17"
   # Cost-optimized instance sizes
   tier             = var.env == "prod" ? "db-standard-1" : "db-f1-micro"  # Reduced from db-standard-2
 
@@ -129,9 +129,9 @@ resource "google_secret_manager_secret" "database_url" {
 
 resource "google_secret_manager_secret_version" "database_url" {
   secret      = google_secret_manager_secret.database_url.id
-  # Cloud Run v2 doesn't mount Unix sockets - use private IP via VPC connector
-  # Private IP connections within VPC don't require SSL
-  secret_data = "postgresql://${local.db_user}:${var.db_password}@${module.cloudsql_instance.ip}:5432/${local.db_name}"
+  # Cloud Run v2 with explicit Cloud SQL connection mounts Unix socket at /cloudsql
+  # Format: postgresql://username:password@/database?host=/cloudsql/CONNECTION_NAME
+  secret_data = "postgresql://${local.db_user}:${var.db_password}@/${local.db_name}?host=/cloudsql/${module.cloudsql_instance.connection_name}"
 }
 
 # Additional secret for private IP connection (for VPC-based connections)
