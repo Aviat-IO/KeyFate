@@ -229,12 +229,9 @@ module "cloud_run" {
         startup_cpu_boost = var.cpu_boost
       }
       # Mount Cloud SQL volume
-      volume_mounts = [
-        {
-          name       = "cloudsql"
-          mount_path = "/cloudsql"
-        }
-      ]
+      volume_mounts = {
+        cloudsql = "/cloudsql"
+      }
     }
   }
 
@@ -255,16 +252,13 @@ module "cloud_run" {
       "deployment.hash" = local.image_tag
       "git.commit"      = local.git_commit_hash
     }
+  }
 
-    # Add Cloud SQL connection as a volume
-    volumes = [
-      {
-        name = "cloudsql"
-        cloud_sql_instance = {
-          instances = [module.cloudsql_instance.connection_name]
-        }
-      }
-    ]
+  # Add Cloud SQL connection as a volume
+  volumes = {
+    "cloudsql" = {
+      cloud_sql_instances = [module.cloudsql_instance.connection_name]
+    }
   }
 
   iam = {
