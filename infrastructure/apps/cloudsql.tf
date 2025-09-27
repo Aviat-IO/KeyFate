@@ -208,7 +208,7 @@ resource "google_vpc_access_connector" "vpc_connector" {
   network       = module.vpc.name
   ip_cidr_range = "10.1.0.0/28" # /28 gives 16 IPs, sufficient for Cloud Run connector
   machine_type  = "f1-micro"  # Small but reliable instance type
-  min_instances = var.env == "prod" ? 5 : 3   # Higher minimum for production
+  min_instances = 2  # Minimum required by Google Cloud (same for dev and prod)
   max_instances = var.env == "prod" ? 10 : 5  # Scale up to 10 in prod, 5 in dev/staging
 
   depends_on = [module.vpc]
