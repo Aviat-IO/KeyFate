@@ -5,28 +5,17 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { NextRequest, NextResponse } from "next/server";
 
 function authorize(req: NextRequest): boolean {
-  console.log("[check-secrets] Checking authorization...");
-
   const header = req.headers.get("authorization") ||
     req.headers.get("Authorization");
-  console.log("[check-secrets] Authorization header present:", !!header);
 
   if (!header?.startsWith("Bearer ")) {
-    console.log("[check-secrets] No Bearer token found");
     return false;
   }
 
   const token = header.slice(7).trim();
   const cronSecret = process.env.CRON_SECRET;
 
-  console.log("[check-secrets] CRON_SECRET present:", !!cronSecret);
-  console.log("[check-secrets] CRON_SECRET length:", cronSecret?.length || 0);
-  console.log("[check-secrets] Token length:", token.length);
-
-  const isValid = !!cronSecret && token === cronSecret;
-  console.log("[check-secrets] Authorization valid:", isValid);
-
-  return isValid;
+  return !!cronSecret && token === cronSecret;
 }
 
 export async function POST(req: NextRequest) {
@@ -35,11 +24,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    console.log("[check-secrets] Starting database operation...");
-
     // Get connection stats for monitoring
     const stats = connectionManager.getStats();
-    console.log("[check-secrets] Connection stats:", stats);
 
     // Get database connection with retry logic
     const connectionString = process.env.DATABASE_URL;
@@ -69,8 +55,6 @@ export async function POST(req: NextRequest) {
         ),
       );
 
-    console.log(`[check-secrets] Found ${toTrigger.length} secrets to trigger`);
-
     // Placeholder: add email send + update status logic here
     const processed = toTrigger.length;
     return NextResponse.json({
@@ -83,18 +67,14 @@ export async function POST(req: NextRequest) {
 
     // Get connection stats for debugging
     const stats = connectionManager.getStats();
-    console.error("[check-secrets] Connection stats on error:", stats);
 
-    // Provide more detailed error information for debugging
+    // Provide error information
     const errorDetails = {
       error: "Database operation failed",
       message: error instanceof Error ? error.message : "Unknown error",
-      code: error && typeof error === 'object' && 'code' in error ? error.code : undefined,
       connectionStats: stats,
       timestamp: new Date().toISOString(),
     };
-
-    console.error("[check-secrets] Detailed error:", errorDetails);
 
     return NextResponse.json(errorDetails, { status: 500 });
   }
