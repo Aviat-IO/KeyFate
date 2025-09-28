@@ -1,0 +1,29 @@
+steps:
+  # Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--no-cache'
+      - '--platform=linux/amd64'
+      - '--build-arg=BUILD_ENV=${_BUILD_ENV}'
+      - '-t=${_IMAGE_URL}'
+      - '-f=frontend/Dockerfile'
+      - './frontend'
+
+  # Push the image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '${_IMAGE_URL}'
+
+# Default substitutions (will be overridden by Terraform)
+substitutions:
+  _IMAGE_URL: '${_IMAGE_URL}'
+  _BUILD_ENV: 'staging'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'
+
+# Timeout for the entire build (20 minutes)
+timeout: '1200s'
