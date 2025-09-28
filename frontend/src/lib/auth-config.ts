@@ -6,9 +6,18 @@ import GoogleProvider from "next-auth/providers/google";
 import { assertValidOAuthConfig } from "./auth/oauth-config-validator";
 import { validatePassword } from "./auth/password";
 import { authenticateUser } from "./auth/users";
+import { withProductionConfig } from "./auth-config-production";
+import { validateAuthEnvironment } from "./auth/validate-env";
 
-// Validate OAuth configuration at startup (skip in test environment)
+// Validate auth environment and OAuth configuration at startup (skip in test environment)
 if (process.env.NODE_ENV !== "test") {
+  // First validate environment variables
+  const envValidation = validateAuthEnvironment();
+  if (!envValidation.isValid) {
+    console.error("[Auth Config] Missing environment variables:", envValidation.missing);
+  }
+
+  // Then validate OAuth configuration
   try {
     assertValidOAuthConfig();
   } catch (error) {
@@ -105,7 +114,7 @@ providers.push(
   }),
 );
 
-export const authConfig = {
+const baseAuthConfig = {
   providers,
   pages: {
     signIn: "/sign-in",
@@ -337,11 +346,8 @@ export const authConfig = {
   jwt: {
     secret: process.env.NEXTAUTH_SECRET,
   },
-  // Let NextAuth handle cookie configuration automatically
-  // It will use secure cookies in production (https) and regular cookies in development
   secret: process.env.NEXTAUTH_SECRET,
-  debug: process.env.NODE_ENV === "development",
-  // Use automatic URL detection or NEXTAUTH_URL env variable
-  // This is important for OAuth callbacks
-  useSecureCookies: process.env.NEXTAUTH_URL?.startsWith("https://") ?? false,
 };
+
+// Export the config with production-specific settings applied
+export const authConfig = withProductionConfig(baseAuthConfig);
