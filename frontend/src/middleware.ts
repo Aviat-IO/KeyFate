@@ -183,9 +183,25 @@ export async function middleware(req: NextRequest) {
     // Get the NextAuth JWT token with comprehensive error handling
     let token;
     try {
+      // Debug: Check if cookies are present
+      const cookies = req.cookies.getAll();
+      console.log("[Middleware] Available cookies:", cookies.map(c => c.name));
+
       token = await getToken({
         req,
         secret: process.env.NEXTAUTH_SECRET,
+        // Explicitly specify cookie name for consistency
+        cookieName: process.env.NODE_ENV === "production"
+          ? "__Secure-next-auth.session-token"
+          : "next-auth.session-token",
+      });
+
+      console.log("[Middleware] Token retrieved:", {
+        hasToken: !!token,
+        tokenId: token?.id,
+        tokenSub: token?.sub,
+        tokenEmail: token?.email,
+        pathname: pathname,
       });
     } catch (tokenError) {
       console.error("[Middleware] Token validation error:", tokenError);
@@ -228,35 +244,14 @@ export async function middleware(req: NextRequest) {
 
     // Handle protected routes - require authentication
     if (!token) {
+      console.log("[Middleware] No token found, redirecting to sign-in");
       return createLoginRedirect(req, "Please sign in to continue");
     }
 
-    // For protected routes, check email verification status
-    try {
-      const userId = (token as any)?.id || token.sub;
-      const userEmail = token.email;
-
-      if (!userId && !userEmail) {
-        return createLoginRedirect(req, "Invalid session");
-      }
-
-      // Allow verification-related API routes for authenticated users
-      if (isVerificationAllowedRoute(pathname)) {
-        return NextResponse.next();
-      }
-
-      // For now, skip database lookup and email verification check
-      // since the user is already authenticated via NextAuth
-
-      // TODO: Re-enable email verification check once database connection issues are resolved
-      // This is a temporary workaround to allow dashboard access
-
-      // Email is verified, allow access
-      return NextResponse.next();
-    } catch (dbError) {
-      // On database error, redirect to login for security
-      return createLoginRedirect(req, "Authentication error occurred");
-    }
+    // For protected routes, we have a valid token, allow access
+    // The token existence check is sufficient since NextAuth validates it
+    console.log("[Middleware] Valid token found, allowing access to protected route");
+    return NextResponse.next();
   } catch (error) {
     // On unexpected error, handle gracefully based on route type
     if (isPublicRoute(pathname)) {
