@@ -179,54 +179,21 @@ function createEmailVerificationRedirect(
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
+  // Skip middleware for static assets and Next.js internals
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api/auth") ||
+    pathname.includes(".") // static files
+  ) {
+    return NextResponse.next();
+  }
+
   try {
-    // Get the NextAuth JWT token with comprehensive error handling
-    let token;
-    try {
-      // Debug: Check if cookies are present
-      const cookies = req.cookies.getAll();
-      console.log("[Middleware] Available cookies:", cookies.map(c => c.name));
-
-      token = await getToken({
-        req,
-        secret: process.env.NEXTAUTH_SECRET,
-        // Use same cookie naming logic as auth-config
-        cookieName: process.env.NEXTAUTH_URL?.startsWith("https://")
-          ? "__Secure-next-auth.session-token"
-          : "next-auth.session-token",
-      });
-
-      console.log("[Middleware] Token retrieved:", {
-        hasToken: !!token,
-        tokenId: token?.id,
-        tokenSub: token?.sub,
-        tokenEmail: token?.email,
-        pathname: pathname,
-      });
-    } catch (tokenError) {
-      console.error("[Middleware] Token validation error:", tokenError);
-      // If we can't validate the token, treat as unauthenticated
-      token = null;
-    }
-
-    // Check route classification
+    // Check route classification first
     const isPublic = isPublicRoute(pathname);
     const isCron = isCronRoute(pathname);
 
-    // If user is authenticated and on sign-in page, redirect to dashboard
-    if (token && pathname === "/sign-in") {
-      console.log("[Middleware] Authenticated user on sign-in, redirecting to dashboard");
-      return createDashboardRedirect(req);
-    }
-
-    // Allow access to public routes (for unauthenticated users)
-    if (isPublic && !token) {
-      console.log("[Middleware] Unauthenticated user accessing public route");
-      return NextResponse.next();
-    }
-
     // Handle cron routes with Bearer token authentication
-    // Google Cloud Scheduler uses Authorization: Bearer <CRON_SECRET>
     if (isCron) {
       if (validateCronAuth(req)) {
         return NextResponse.next();
@@ -241,44 +208,93 @@ export async function middleware(req: NextRequest) {
       }
     }
 
-    // Handle protected routes - require authentication
-    if (!token) {
-      console.log("[Middleware] No token found, redirecting to sign-in");
-      return createLoginRedirect(req, "Please sign in to continue");
+    // Allow public routes without checking authentication
+    if (isPublic) {
+      return NextResponse.next();
     }
 
-    // For protected routes, we have a valid token, allow access
-    // The token existence check is sufficient since NextAuth validates it
-    console.log("[Middleware] Valid token found, allowing access to protected route");
+    // For protected routes, check authentication
+    let token;
+    try {
+      // Check for secure cookie in production
+      const isProduction = process.env.NEXTAUTH_URL?.startsWith("https://");
+      const cookieName = isProduction
+        ? "__Secure-next-auth.session-token"
+        : "next-auth.session-token";
+
+      // Also check for the callback cookie which might be present
+      const callbackCookieName = isProduction
+        ? "__Secure-next-auth.callback-url"
+        : "next-auth.callback-url";
+
+      // Log cookie debugging info in non-production
+      if (process.env.NODE_ENV !== "production") {
+        const cookies = req.cookies.getAll();
+        console.log("[Middleware] Checking cookies:", {
+          pathname,
+          cookieNames: cookies.map(c => c.name),
+          expectedCookie: cookieName,
+        });
+      }
+
+      token = await getToken({
+        req,
+        secret: process.env.NEXTAUTH_SECRET,
+        cookieName,
+      });
+
+      if (process.env.NODE_ENV !== "production") {
+        console.log("[Middleware] Token status:", {
+          hasToken: !!token,
+          pathname,
+        });
+      }
+    } catch (tokenError) {
+      // Silent fail - treat as unauthenticated
+      token = null;
+    }
+
+    // If no token for protected route, redirect to sign-in
+    if (!token) {
+      // Prevent redirect loop - if already on sign-in, allow access
+      if (pathname === "/sign-in") {
+        return NextResponse.next();
+      }
+      return createLoginRedirect(req);
+    }
+
+    // User is authenticated
+    // If on sign-in page, redirect to dashboard
+    if (pathname === "/sign-in") {
+      return createDashboardRedirect(req);
+    }
+
+    // Allow access to protected route
     return NextResponse.next();
   } catch (error) {
-    // On unexpected error, handle gracefully based on route type
-    if (isPublicRoute(pathname)) {
-      // Allow access to public routes even on error
+    console.error("[Middleware] Unexpected error:", error);
+    // On error, allow public routes and sign-in
+    if (isPublicRoute(pathname) || pathname === "/sign-in") {
       return NextResponse.next();
-    } else {
-      // Redirect to login for protected routes on error
-      return createLoginRedirect(req, "Authentication error occurred");
     }
+    // Redirect to sign-in for other routes
+    return createLoginRedirect(req);
   }
 }
 
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - api/auth (NextAuth API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     *
-     * This includes:
-     * - All page routes
-     * - Protected API routes (like /api/secrets)
-     * But excludes NextAuth API routes for proper authentication flow
+     * Match specific routes that need authentication checking:
+     * - Dashboard and protected pages
+     * - Sign-in page (for redirect logic)
+     * - API routes (except auth routes)
      */
-    "/((?!api/auth|_next/static|_next/image|favicon.ico).*)",
+    "/dashboard/:path*",
+    "/secrets/:path*",
+    "/profile/:path*",
+    "/sign-in",
+    "/api/((?!auth).*)",
+    "/",
   ],
-  // Use Node.js runtime to support database operations with postgres package
-  runtime: "nodejs",
 };
