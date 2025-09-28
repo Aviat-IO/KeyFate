@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
   // Experimental: Disable static optimization for builds with SessionProvider
   experimental: {
     forceSwcTransforms: true,
+    // Skip static page generation for error pages during build
+    isrMemoryCacheSize: 0,
   },
   env: {
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,

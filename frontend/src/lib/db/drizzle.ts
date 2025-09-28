@@ -19,22 +19,8 @@ export const db = new Proxy({} as any, {
   }
 });
 
-// Pre-initialize for legacy code that expects synchronous access
-// Skip during build phase to prevent database connection attempts
-(async () => {
-  const isBuildTime = process.env.NODE_ENV === undefined ||
-                     process.env.NEXT_PHASE === 'phase-production-build' ||
-                     process.env.NODE_ENV === 'test';
-
-  if (!isBuildTime) {
-    try {
-      dbInstance = await getDatabase();
-      console.log('🚀 DRIZZLE - Database pre-initialized for legacy code');
-    } catch (error) {
-      console.error('⚠️ DRIZZLE - Database pre-initialization failed (will retry on first use):', error);
-    }
-  }
-})();
+// Removed automatic pre-initialization to prevent build-time errors
+// Database will be initialized on first use via getDatabase()
 
 // Export tables for use in auth configuration
 export { users };

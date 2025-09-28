@@ -106,16 +106,30 @@ if (process.env.NODE_ENV === 'production' && typeof connectionOptions === 'objec
 }
 
 // Create the connection with enhanced configuration (only at runtime)
+// Use lazy initialization to prevent build-time errors
 let client: any = null;
 let db: any = null;
 
-if (!isBuildTime && connectionString) {
+// Lazy initialization function
+function initializeDatabase() {
+  if (client) return { client, db };
+
+  if (isBuildTime) {
+    throw new Error('Database not available during build phase');
+  }
+
+  if (!connectionString) {
+    throw new Error('DATABASE_URL environment variable is not set');
+  }
+
   client = typeof connectionOptions === 'string'
     ? postgres(connectionOptions, connectionConfig)
     : postgres(connectionConfig);
 
   // Create Drizzle database instance
   db = drizzle(client, { schema });
+
+  return { client, db };
 }
 
 // Export the database instance (will be null during build)
@@ -124,12 +138,13 @@ export { db, client };
 // Connection health check
 export async function checkDatabaseConnection(): Promise<boolean> {
   // During build time, return false but don't throw
-  if (!client || isBuildTime) {
+  if (isBuildTime) {
     return false;
   }
 
   try {
-    await client`SELECT 1`;
+    const { client: dbClient } = initializeDatabase();
+    await dbClient`SELECT 1`;
     return true;
   } catch (error) {
     console.error("Database connection failed:", error);
@@ -159,7 +174,7 @@ export async function checkDatabaseConnectionHealth(): Promise<{
   const startTime = Date.now();
 
   // During build time, return safe defaults
-  if (!client || isBuildTime) {
+  if (isBuildTime) {
     return {
       isHealthy: false,
       poolStats: getConnectionPoolStats(),
@@ -169,7 +184,8 @@ export async function checkDatabaseConnectionHealth(): Promise<{
   }
 
   try {
-    await client`SELECT 1 as health_check`;
+    const { client: dbClient } = initializeDatabase();
+    await dbClient`SELECT 1 as health_check`;
     const responseTime = Date.now() - startTime;
 
     return {
@@ -192,18 +208,21 @@ export async function checkDatabaseConnectionHealth(): Promise<{
 
 // Set user context for RLS (Row Level Security)
 export async function setUserContext(userId: string): Promise<void> {
-  if (!client || isBuildTime) {
+  if (isBuildTime) {
     return; // Skip during build time
   }
-  await client`SELECT set_current_user_id(${userId})`;
+  const { client: dbClient } = initializeDatabase();
+  await dbClient`SELECT set_current_user_id(${userId})`;
 }
 
 // Graceful shutdown with pool cleanup
 export async function closeDatabaseConnection(): Promise<void> {
-  if (!client || isBuildTime) {
-    return; // Skip during build time
+  if (isBuildTime || !client) {
+    return; // Skip during build time or if not initialized
   }
   console.log("Closing database connection pool...");
   await client.end({ timeout: 5 });
   console.log("Database connection pool closed.");
+  client = null;
+  db = null;
 }
