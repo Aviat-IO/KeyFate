@@ -109,9 +109,7 @@ export const authConfig = {
   providers,
   pages: {
     signIn: "/sign-in",
-    // Remove error page redirect to prevent NextAuth from redirecting on errors
-    // This allows client-side error handling without server-side redirects
-    // error: undefined - intentionally omitted to prevent redirects
+    error: "/auth/error",
   },
   callbacks: {
     /**
@@ -337,24 +335,13 @@ export const authConfig = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   jwt: {
-    // Ensure consistent cookie settings
     secret: process.env.NEXTAUTH_SECRET,
   },
-  cookies: {
-    sessionToken: {
-      // Use consistent cookie naming based on NEXTAUTH_URL
-      name: process.env.NEXTAUTH_URL?.startsWith("https://")
-        ? "__Secure-next-auth.session-token"
-        : "next-auth.session-token",
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        // Use secure cookies for HTTPS URLs
-        secure: process.env.NEXTAUTH_URL?.startsWith("https://") ?? false,
-      },
-    },
-  },
+  // Let NextAuth handle cookie configuration automatically
+  // It will use secure cookies in production (https) and regular cookies in development
   secret: process.env.NEXTAUTH_SECRET,
   debug: process.env.NODE_ENV === "development",
+  // Use automatic URL detection or NEXTAUTH_URL env variable
+  // This is important for OAuth callbacks
+  useSecureCookies: process.env.NEXTAUTH_URL?.startsWith("https://") ?? false,
 };
