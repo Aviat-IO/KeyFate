@@ -52,9 +52,14 @@ module "cloudsql_instance" {
 
   database_version = "POSTGRES_17"
   # Cost-optimized instance sizes
-  tier             = var.env == "prod" ? "db-standard-1" : "db-f1-micro"  # Reduced from db-standard-2
+  # Dev/Staging: db-f1-micro (shared CPU, 0.6 GB RAM, ~$7/month)
+  # Prod: db-g1-small (shared CPU, 1.7 GB RAM, ~$25/month) or db-standard-1 (1 vCPU, 3.75 GB RAM, ~$50/month)
+  tier             = var.env == "prod" ? "db-g1-small" : "db-f1-micro"
 
   terraform_deletion_protection = var.deletion_protection
+
+  # Availability configuration - ZONAL for dev/staging (no HA), REGIONAL for prod (HA)
+  availability_type = var.env == "prod" ? "REGIONAL" : "ZONAL"
 
   databases = [local.db_name]
 
@@ -81,8 +86,9 @@ module "cloudsql_instance" {
     start_time                     = "02:00"
     location                       = var.region
     point_in_time_recovery_enabled = var.env == "prod" ? true : false  # Disable PITR for dev
-    retention_count                = var.env == "prod" ? 7 : 3          # Reduced retention
-    log_retention_days             = var.env == "prod" ? 7 : 3          # Reduced log retention
+    retention_count                = var.env == "prod" ? 7 : 1          # Minimal retention for dev
+    log_retention_days             = var.env == "prod" ? 7 : 1          # Minimal log retention for dev
+    transaction_log_retention_days = var.env == "prod" ? 7 : 1          # Minimal transaction log retention
   }
 
   # Remove problematic flags for now - will add back once instance is created
@@ -129,6 +135,7 @@ resource "google_secret_manager_secret" "database_url" {
 
 resource "google_secret_manager_secret_version" "database_url" {
   secret      = google_secret_manager_secret.database_url.id
+  # Use Unix socket for reliable connection (avoiding VPC connector issues)
   # Cloud Run v2 with explicit Cloud SQL connection mounts Unix socket at /cloudsql
   # Format: postgresql://username:password@/database?host=/cloudsql/CONNECTION_NAME
   secret_data = "postgresql://${local.db_user}:${var.db_password}@/${local.db_name}?host=/cloudsql/${module.cloudsql_instance.connection_name}"
