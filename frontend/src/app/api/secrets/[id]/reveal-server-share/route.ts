@@ -1,5 +1,5 @@
 import { authConfig } from "@/lib/auth-config";
-import { db } from "@/lib/db/drizzle";
+import { getDatabase } from "@/lib/db/drizzle";
 import { secrets } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import type { Session } from "next-auth";
@@ -23,6 +23,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const db = await getDatabase();
     const result = await db
       .select()
       .from(secrets)

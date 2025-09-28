@@ -1,4 +1,4 @@
-import { db } from "@/lib/db/drizzle";
+import { getDatabase } from "@/lib/db/drizzle";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -194,6 +194,9 @@ export const authConfig = {
         try {
           const normalizedEmail = googleProfile.email.toLowerCase().trim();
 
+          // Get database connection
+          const db = await getDatabase();
+
           // Check if user already exists
           const existingUser = await db
             .select()
@@ -279,6 +282,7 @@ export const authConfig = {
 
           if (normalizedEmail) {
             console.log("[Auth] Looking up user in database...");
+            const db = await getDatabase();
             const dbUser = await db
               .select()
               .from(users)

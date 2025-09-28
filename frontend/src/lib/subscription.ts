@@ -4,7 +4,7 @@ import {
   TierLimits,
   UserTierInfo,
 } from "../types/subscription";
-import { db } from "./db/drizzle";
+import { getDatabase } from "./db/drizzle";
 import { userSubscriptions } from "./db/schema";
 
 // Get current user's tier information with usage and limits
@@ -12,6 +12,7 @@ export async function getUserTierInfo(
   userId: string,
 ): Promise<UserTierInfo | null> {
   try {
+    const db = await getDatabase();
     // Drizzle-based minimal stub until full tier system is migrated
     const [subscription] = await db
       .select()

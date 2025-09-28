@@ -6,7 +6,7 @@
  * before performing operations that require foreign key constraints.
  */
 
-import { db } from "@/lib/db/drizzle";
+import { getDatabase } from "@/lib/db/drizzle";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import type { Session } from "next-auth";
@@ -41,6 +41,7 @@ export async function ensureUserExists(
   const userEmail = session.user.email.toLowerCase().trim();
 
   try {
+    const db = await getDatabase();
     // Check if user exists by ID first (primary lookup)
     const existingUserById = await db
       .select()
@@ -122,6 +123,7 @@ export async function verifyUserExists(
   }
 
   try {
+    const db = await getDatabase();
     const existingUser = await db
       .select()
       .from(users)

@@ -90,27 +90,16 @@ function isCronRoute(pathname: string): boolean {
  * @returns true if the request has valid Bearer token authentication
  */
 function validateCronAuth(req: NextRequest): boolean {
-  console.log("[Middleware] Validating cron authentication...");
-
-  const header = req.headers.get("authorization") || req.headers.get("Authorization");
-  console.log("[Middleware] Authorization header present:", !!header);
-  console.log("[Middleware] Authorization header format:", header ? "Bearer " + header.slice(0, 20) + "..." : "None");
+  const header = req.headers.get("authorization") ||
+    req.headers.get("Authorization");
 
   if (!header?.startsWith("Bearer ")) {
-    console.log("[Middleware] No Bearer token found in authorization header");
     return false;
   }
 
   const token = header.slice(7).trim();
   const cronSecret = process.env.CRON_SECRET;
-
-  console.log("[Middleware] CRON_SECRET environment variable present:", !!cronSecret);
-  console.log("[Middleware] CRON_SECRET length:", cronSecret?.length || 0);
-  console.log("[Middleware] Token length:", token.length);
-  console.log("[Middleware] Token preview:", token.slice(0, 8) + "...");
-
   const isValid = !!cronSecret && token === cronSecret;
-  console.log("[Middleware] Token validation result:", isValid);
 
   return isValid;
 }
@@ -190,8 +179,6 @@ function createEmailVerificationRedirect(
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
-  console.log(`[Middleware] Processing request to: ${pathname}`);
-
   try {
     // Get the NextAuth JWT token with comprehensive error handling
     let token;
@@ -200,17 +187,6 @@ export async function middleware(req: NextRequest) {
         req,
         secret: process.env.NEXTAUTH_SECRET,
       });
-      console.log(
-        `[Middleware] Token validation result:`,
-        token ? "VALID" : "INVALID",
-      );
-      if (token) {
-        console.log(`[Middleware] Token details:`, {
-          id: (token as any)?.id || token.sub,
-          email: token.email,
-          name: token.name,
-        });
-      }
     } catch (tokenError) {
       console.error("[Middleware] Token validation error:", tokenError);
       // If we can't validate the token, treat as unauthenticated
@@ -220,27 +196,17 @@ export async function middleware(req: NextRequest) {
     // Check route classification
     const isPublic = isPublicRoute(pathname);
     const isCron = isCronRoute(pathname);
-    console.log(`[Middleware] Route classification:`, {
-      pathname,
-      isPublic,
-      isCron,
-      isAuth: isAuthRoute(pathname),
-    });
 
     // If user is authenticated and on an auth route (not API or verify-email), redirect to dashboard
     if (
       token && isAuthRoute(pathname) && !pathname.startsWith("/api/auth/") &&
       pathname !== "/auth/verify-email"
     ) {
-      console.log(
-        "[Middleware] Authenticated user on auth route, redirecting to dashboard",
-      );
       return createDashboardRedirect(req);
     }
 
     // Allow access to public routes
     if (isPublic) {
-      console.log("[Middleware] Allowing access to public route");
       return NextResponse.next();
     }
 
@@ -248,10 +214,8 @@ export async function middleware(req: NextRequest) {
     // Google Cloud Scheduler uses Authorization: Bearer <CRON_SECRET>
     if (isCron) {
       if (validateCronAuth(req)) {
-        console.log("[Middleware] Valid cron authentication, allowing access");
         return NextResponse.next();
       } else {
-        console.log("[Middleware] Invalid cron authentication");
         return NextResponse.json(
           {
             error: "Unauthorized",
@@ -264,7 +228,6 @@ export async function middleware(req: NextRequest) {
 
     // Handle protected routes - require authentication
     if (!token) {
-      console.log("[Middleware] No session found, redirecting to login");
       return createLoginRedirect(req, "Please sign in to continue");
     }
 
@@ -272,54 +235,35 @@ export async function middleware(req: NextRequest) {
     try {
       const userId = (token as any)?.id || token.sub;
       const userEmail = token.email;
-      console.log("[Middleware] User ID from token:", userId);
-      console.log("[Middleware] User email from token:", userEmail);
 
       if (!userId && !userEmail) {
-        console.log(
-          "[Middleware] No user ID or email found in token, redirecting to login",
-        );
         return createLoginRedirect(req, "Invalid session");
       }
 
       // Allow verification-related API routes for authenticated users
       if (isVerificationAllowedRoute(pathname)) {
-        console.log("[Middleware] Allowing access to verification route");
         return NextResponse.next();
       }
 
       // For now, skip database lookup and email verification check
       // since the user is already authenticated via NextAuth
-      console.log(
-        "[Middleware] Skipping database lookup - user is authenticated",
-      );
 
       // TODO: Re-enable email verification check once database connection issues are resolved
       // This is a temporary workaround to allow dashboard access
 
       // Email is verified, allow access
-      console.log(
-        `[Middleware] Authenticated and verified access granted to ${pathname}`,
-      );
       return NextResponse.next();
     } catch (dbError) {
-      console.error("[Middleware] Database error during user lookup:", dbError);
       // On database error, redirect to login for security
       return createLoginRedirect(req, "Authentication error occurred");
     }
   } catch (error) {
-    console.error("[Middleware] Unexpected error:", error);
-
     // On unexpected error, handle gracefully based on route type
     if (isPublicRoute(pathname)) {
       // Allow access to public routes even on error
-      console.log("[Middleware] Error on public route, allowing access");
       return NextResponse.next();
     } else {
       // Redirect to login for protected routes on error
-      console.log(
-        "[Middleware] Error on protected route, redirecting to login",
-      );
       return createLoginRedirect(req, "Authentication error occurred");
     }
   }

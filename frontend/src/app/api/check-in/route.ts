@@ -1,10 +1,11 @@
-import { db } from "@/lib/db/drizzle";
+import { getDatabase } from "@/lib/db/drizzle";
 import { checkInTokens, secrets } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
+    const db = await getDatabase();
     const url = new URL(req.url);
     const token = url.searchParams.get("token");
 

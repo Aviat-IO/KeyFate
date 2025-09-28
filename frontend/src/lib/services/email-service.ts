@@ -1,4 +1,4 @@
-import { db } from "@/lib/db/drizzle";
+import { getDatabase } from "@/lib/db/drizzle";
 import { emailNotifications, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { emailTemplates } from "./email-templates";
@@ -233,6 +233,7 @@ class EmailService {
 
   private async getUserById(userId: string) {
     try {
+      const db = await getDatabase();
       const [user] = await db
         .select()
         .from(users)
@@ -248,6 +249,7 @@ class EmailService {
 
   private async logEmailSuccess(recipientEmail: string, subject: string) {
     try {
+      const db = await getDatabase();
       await db.insert(emailNotifications).values({
         recipientEmail,
         secretId: "00000000-0000-0000-0000-000000000000", // Placeholder for system emails
@@ -266,6 +268,7 @@ class EmailService {
       const user = await this.getUserById(userId);
       const recipientEmail = user?.email || "unknown@example.com";
 
+      const db = await getDatabase();
       await db.insert(emailNotifications).values({
         recipientEmail,
         secretId: "00000000-0000-0000-0000-000000000000", // Placeholder for system emails

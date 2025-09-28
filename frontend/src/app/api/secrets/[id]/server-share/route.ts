@@ -1,4 +1,4 @@
-import { db } from "@/lib/db/drizzle";
+import { getDatabase } from "@/lib/db/drizzle";
 import { checkInTokens, secrets } from "@/lib/db/schema";
 import { decryptMessage } from "@/lib/encryption";
 import { and, eq, sql } from "drizzle-orm";
@@ -24,6 +24,7 @@ export async function GET(
   }
 
   try {
+    const db = await getDatabase();
     // 1. Fetch and validate the token
     const tokenRows = await db
       .select()
