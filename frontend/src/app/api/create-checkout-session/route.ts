@@ -5,6 +5,9 @@ import type { Session } from "next-auth";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 
+// Prevent static analysis during build
+export const dynamic = "force-dynamic";
+
 // Handle GET requests for post-authentication redirects
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

@@ -1,29 +1,28 @@
-const NEXT_PUBLIC_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL as string;
-if (!NEXT_PUBLIC_SITE_URL) {
-  throw new Error("NEXT_PUBLIC_SITE_URL is not set");
+// Helper function to check if we're in build mode
+const isBuildTime = process.env.NODE_ENV === undefined || process.env.NEXT_PHASE === 'phase-production-build';
+
+// Function to safely get environment variable with build-time fallback
+function getEnvVar(name: string, required: boolean = true): string {
+  const value = process.env[name];
+
+  if (!value && required && !isBuildTime) {
+    throw new Error(`${name} is not set`);
+  }
+
+  // Return empty string during build time to prevent errors
+  return value || (isBuildTime ? '' : '');
 }
+
+const NEXT_PUBLIC_SITE_URL = getEnvVar('NEXT_PUBLIC_SITE_URL');
 
 // NextAuth environment variables (checked in auth config)
-const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET as string;
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID as string;
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET as string;
+const NEXTAUTH_SECRET = getEnvVar('NEXTAUTH_SECRET', false);
+const GOOGLE_CLIENT_ID = getEnvVar('GOOGLE_CLIENT_ID', false);
+const GOOGLE_CLIENT_SECRET = getEnvVar('GOOGLE_CLIENT_SECRET', false);
 
-const NEXT_PUBLIC_SUPPORT_EMAIL = process.env
-  .NEXT_PUBLIC_SUPPORT_EMAIL as string;
-if (!NEXT_PUBLIC_SUPPORT_EMAIL) {
-  throw new Error("NEXT_PUBLIC_SUPPORT_EMAIL is not set");
-}
-
-const NEXT_PUBLIC_COMPANY = process.env.NEXT_PUBLIC_COMPANY as string;
-if (!NEXT_PUBLIC_COMPANY) {
-  throw new Error("NEXT_PUBLIC_COMPANY is not set");
-}
-
-const NEXT_PUBLIC_PARENT_COMPANY = process.env
-  .NEXT_PUBLIC_PARENT_COMPANY as string;
-if (!NEXT_PUBLIC_PARENT_COMPANY) {
-  throw new Error("NEXT_PUBLIC_PARENT_COMPANY is not set");
-}
+const NEXT_PUBLIC_SUPPORT_EMAIL = getEnvVar('NEXT_PUBLIC_SUPPORT_EMAIL');
+const NEXT_PUBLIC_COMPANY = getEnvVar('NEXT_PUBLIC_COMPANY');
+const NEXT_PUBLIC_PARENT_COMPANY = getEnvVar('NEXT_PUBLIC_PARENT_COMPANY');
 
 // Optional - only required when using Stripe frontend components
 const NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = process.env
