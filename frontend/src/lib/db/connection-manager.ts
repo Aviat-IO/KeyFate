@@ -108,9 +108,16 @@ class ConnectionManager {
     };
 
     // Parse connection string to extract details
+    const isUnixSocket = connectionString.includes('/cloudsql/') || connectionString.includes('host=/cloudsql/');
     const isPrivateIP = connectionString.includes('10.2.0.3') || connectionString.includes('10.0.') || connectionString.includes('10.1.');
 
-    if (isPrivateIP) {
+    if (isUnixSocket) {
+      console.log('🔌 Using Unix socket connection via Cloud SQL proxy');
+      // Unix socket connections don't need SSL
+      enhancedOptions.ssl = false;
+      // Reduce connection pool for Unix sockets
+      enhancedOptions.max = 3;
+    } else if (isPrivateIP) {
       console.log('🔍 Using private IP connection via VPC');
       // For VPC connections, SSL is not needed
       enhancedOptions.ssl = false;
