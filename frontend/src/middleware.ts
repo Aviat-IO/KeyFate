@@ -190,8 +190,8 @@ export async function middleware(req: NextRequest) {
       token = await getToken({
         req,
         secret: process.env.NEXTAUTH_SECRET,
-        // Explicitly specify cookie name for consistency
-        cookieName: process.env.NODE_ENV === "production"
+        // Use same cookie naming logic as auth-config
+        cookieName: process.env.NEXTAUTH_URL?.startsWith("https://")
           ? "__Secure-next-auth.session-token"
           : "next-auth.session-token",
       });
@@ -213,16 +213,15 @@ export async function middleware(req: NextRequest) {
     const isPublic = isPublicRoute(pathname);
     const isCron = isCronRoute(pathname);
 
-    // If user is authenticated and on an auth route (not API or verify-email), redirect to dashboard
-    if (
-      token && isAuthRoute(pathname) && !pathname.startsWith("/api/auth/") &&
-      pathname !== "/auth/verify-email"
-    ) {
+    // If user is authenticated and on sign-in page, redirect to dashboard
+    if (token && pathname === "/sign-in") {
+      console.log("[Middleware] Authenticated user on sign-in, redirecting to dashboard");
       return createDashboardRedirect(req);
     }
 
-    // Allow access to public routes
-    if (isPublic) {
+    // Allow access to public routes (for unauthenticated users)
+    if (isPublic && !token) {
+      console.log("[Middleware] Unauthenticated user accessing public route");
       return NextResponse.next();
     }
 
