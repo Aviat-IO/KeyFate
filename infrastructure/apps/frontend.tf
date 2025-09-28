@@ -143,6 +143,16 @@ module "cloud_run" {
         NEXTAUTH_URL                       = var.next_public_site_url
         # Environment indicator for runtime checks
         NEXT_PUBLIC_ENV                    = var.env
+        # All NEXT_PUBLIC_ variables that the app needs
+        NEXT_PUBLIC_SITE_URL               = var.next_public_site_url
+        NEXT_PUBLIC_COMPANY                = var.next_public_company
+        NEXT_PUBLIC_PARENT_COMPANY         = var.next_public_parent_company
+        NEXT_PUBLIC_SUPPORT_EMAIL          = var.next_public_support_email
+        NEXT_PUBLIC_AUTH_PROVIDER          = var.next_public_auth_provider
+        NEXT_PUBLIC_DATABASE_PROVIDER      = var.next_public_database_provider
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = var.next_public_stripe_publishable_key
+        NEXT_PUBLIC_BTCPAY_SERVER_URL      = var.btcpay_server_url
+        BTCPAY_SERVER_URL                  = var.btcpay_server_url
         # Force revision update when code changes by including hash as env var
         DEPLOYMENT_HASH = local.image_tag
         # Database connection timeout and pooling settings - optimized for VPC connector
