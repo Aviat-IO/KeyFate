@@ -248,14 +248,22 @@ export const authConfig = {
         sessionUser: session?.user?.email,
         tokenId: token?.id,
         tokenSub: token?.sub,
+        tokenEmail: token?.email,
       });
 
-      if (session?.user && (token.id || token.sub)) {
+      if (session?.user) {
+        // Always set the user ID from the token
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (session.user as any).id = token.id || token.sub;
+        // Also ensure email is set
+        if (!session.user.email && token.email) {
+          session.user.email = token.email as string;
+        }
         console.log(
           "[Auth] Session callback: Set user.id to:",
           token.id || token.sub,
+          "email:",
+          session.user.email,
         );
       }
       return session;
@@ -334,14 +342,16 @@ export const authConfig = {
   },
   cookies: {
     sessionToken: {
-      name: process.env.NODE_ENV === "production"
+      // Use consistent cookie naming based on NEXTAUTH_URL
+      name: process.env.NEXTAUTH_URL?.startsWith("https://")
         ? "__Secure-next-auth.session-token"
         : "next-auth.session-token",
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: process.env.NODE_ENV === "production",
+        // Use secure cookies for HTTPS URLs
+        secure: process.env.NEXTAUTH_URL?.startsWith("https://") ?? false,
       },
     },
   },

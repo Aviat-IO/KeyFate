@@ -64,11 +64,9 @@ class SessionCache {
 
     try {
       // Create and store the pending promise
-      type GetServerSessionOptions = Parameters<typeof getServerSession>[0];
+      // In App Router, getServerSession needs to be called with authConfig
       this.pendingPromise = withTimeout(
-        getServerSession(authConfig as GetServerSessionOptions) as Promise<
-          Session | null
-        >,
+        getServerSession(authConfig as any) as Promise<Session | null>,
         3000, // 3 second timeout
         "getServerSession",
       );
