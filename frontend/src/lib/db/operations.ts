@@ -1,5 +1,5 @@
 import { and, desc, eq, lt } from "drizzle-orm";
-import { db } from "./connection";
+import { getDatabase } from "./get-database";
 import {
   type Secret,
   type SecretInsert,
@@ -11,6 +11,7 @@ import {
 
 // Secrets operations - compatible with existing API
 export async function getAllSecrets(userId: string): Promise<Secret[]> {
+  const db = await getDatabase();
   const result = await db
     .select()
     .from(secrets)
@@ -21,6 +22,7 @@ export async function getAllSecrets(userId: string): Promise<Secret[]> {
 }
 
 export async function getSecret(id: string, userId: string): Promise<Secret> {
+  const db = await getDatabase();
   const result = await db
     .select()
     .from(secrets)
@@ -35,6 +37,7 @@ export async function getSecret(id: string, userId: string): Promise<Secret> {
 }
 
 export async function createSecret(secret: SecretInsert): Promise<Secret> {
+  const db = await getDatabase();
   const result = await db
     .insert(secrets)
     .values(secret)
@@ -57,6 +60,7 @@ export async function updateSecret(
     updatedAt: new Date(),
   };
 
+  const db = await getDatabase();
   const result = await db
     .update(secrets)
     .set(updateData)
@@ -71,6 +75,7 @@ export async function updateSecret(
 }
 
 export async function deleteSecret(id: string): Promise<void> {
+  const db = await getDatabase();
   const result = await db
     .delete(secrets)
     .where(eq(secrets.id, id))
@@ -83,6 +88,7 @@ export async function deleteSecret(id: string): Promise<void> {
 
 export async function getOverdueSecrets(): Promise<Secret[]> {
   const now = new Date();
+  const db = await getDatabase();
   const result = await db
     .select()
     .from(secrets)
@@ -106,6 +112,7 @@ export async function getSecretWithOwnership(
 export async function getUserContactMethods(
   userId: string,
 ): Promise<UserContactMethod[]> {
+  const db = await getDatabase();
   const result = await db
     .select()
     .from(userContactMethods)
@@ -119,6 +126,7 @@ export async function upsertUserContactMethods(userId: string, data: {
   phone?: string;
   preferredMethod?: "email" | "phone" | "both";
 }): Promise<UserContactMethod> {
+  const db = await getDatabase();
   // First try to update existing record
   const existingRecord = await db
     .select()
@@ -163,6 +171,7 @@ export async function upsertUserContactMethods(userId: string, data: {
 // Database health check
 export async function testDatabaseConnection(): Promise<boolean> {
   try {
+    const db = await getDatabase();
     await db.select({ count: secrets.id }).from(secrets).limit(1);
     return true;
   } catch (error) {

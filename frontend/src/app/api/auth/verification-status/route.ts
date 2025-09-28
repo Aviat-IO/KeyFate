@@ -1,5 +1,5 @@
 import { authConfig } from "@/lib/auth-config";
-import { db } from "@/lib/db/drizzle";
+import { getDatabase } from "@/lib/db/drizzle";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import type { Session } from "next-auth";
@@ -23,6 +23,7 @@ export async function GET(_request: Request) {
       );
     }
 
+    const db = await getDatabase();
     // Get user from database
     const userResult = await db
       .select()

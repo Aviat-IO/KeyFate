@@ -1,4 +1,4 @@
-import { db } from '@/lib/db/drizzle';
+import { getDatabase } from '@/lib/db/drizzle';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { hashPassword, verifyPassword } from './password';
@@ -28,6 +28,7 @@ export async function createUser(input: CreateUserInput): Promise<{
   isExistingUser?: boolean;
 }> {
   try {
+    const db = await getDatabase();
     // Check if user already exists
     const normalizedEmail = input.email.toLowerCase().trim();
     const existingUser = await db
@@ -125,6 +126,7 @@ export async function authenticateUser(input: AuthenticateUserInput): Promise<{
   error?: string;
 }> {
   try {
+    const db = await getDatabase();
     // Find user by email
     const normalizedEmail = input.email.toLowerCase().trim();
     const result = await db
@@ -172,6 +174,7 @@ export async function authenticateUser(input: AuthenticateUserInput): Promise<{
  */
 export async function getUserByEmail(email: string): Promise<typeof users.$inferSelect | null> {
   try {
+    const db = await getDatabase();
     const normalizedEmail = email.toLowerCase().trim();
     const result = await db
       .select()
@@ -200,6 +203,7 @@ export async function getUserByEmail(email: string): Promise<typeof users.$infer
  */
 export async function getUserById(id: string): Promise<typeof users.$inferSelect | null> {
   try {
+    const db = await getDatabase();
     const result = await db
       .select()
       .from(users)

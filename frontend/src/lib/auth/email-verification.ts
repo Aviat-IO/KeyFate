@@ -1,4 +1,4 @@
-import { db } from "@/lib/db/drizzle";
+import { getDatabase } from "@/lib/db/drizzle";
 import { users, verificationTokens } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
@@ -44,6 +44,7 @@ export async function createVerificationToken(email: string): Promise<{
   error?: string;
 }> {
   try {
+    const db = await getDatabase();
     const normalizedEmail = email.toLowerCase().trim();
 
     // Check if user exists
@@ -227,6 +228,7 @@ export async function checkEmailVerification(email: string): Promise<{
   user?: any;
 }> {
   try {
+    const db = await getDatabase();
     const normalizedEmail = email.toLowerCase().trim();
 
     const userResult = await db
@@ -268,6 +270,7 @@ export async function cleanupExpiredTokens(): Promise<{
   error?: string;
 }> {
   try {
+    const db = await getDatabase();
     const now = new Date();
 
     // Delete expired tokens

@@ -1,7 +1,6 @@
-import { connectionManager } from "@/lib/db/drizzle";
+import { getDatabase } from "@/lib/db/drizzle";
 import { secrets } from "@/lib/db/schema";
 import { and, eq, lt } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/postgres-js";
 import { NextRequest, NextResponse } from "next/server";
 
 function authorize(req: NextRequest): boolean {
@@ -24,23 +23,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Get connection stats for monitoring
-    const stats = connectionManager.getStats();
-
-    // Get database connection with retry logic
-    const connectionString = process.env.DATABASE_URL;
-    if (!connectionString) {
-      throw new Error('DATABASE_URL environment variable is not set');
-    }
-
-    const client = await connectionManager.getConnection(connectionString, {
-      max: 5,
-      idle_timeout: 20,
-      connect_timeout: 10,
-      max_lifetime: 60 * 5,
-    });
-
-    const db = drizzle(client);
+    // Get database connection using standard utility
+    const db = await getDatabase();
 
     // Get overdue secrets
     const now = new Date();
@@ -57,20 +41,15 @@ export async function POST(req: NextRequest) {
     // For now, just report counts. Actual email sending logic can be added here or via services.
     return NextResponse.json({
       processed: due.length,
-      stats: connectionManager.getStats(),
       timestamp: new Date().toISOString()
     });
   } catch (error) {
     console.error("[process-reminders] Error:", error);
 
-    // Get connection stats for debugging
-    const stats = connectionManager.getStats();
-
     // Provide error information
     const errorDetails = {
       error: "Database operation failed",
       message: error instanceof Error ? error.message : "Unknown error",
-      connectionStats: stats,
       timestamp: new Date().toISOString(),
     };
 

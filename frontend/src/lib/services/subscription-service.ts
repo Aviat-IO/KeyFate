@@ -1,4 +1,4 @@
-import { db } from "@/lib/db/drizzle";
+import { getDatabase } from "@/lib/db/drizzle";
 import {
   subscriptionStatusEnum,
   subscriptionTierEnum,
@@ -35,6 +35,7 @@ export interface UpdateSubscriptionData {
 
 class SubscriptionService {
   async createSubscription(data: CreateSubscriptionData) {
+    const db = await getDatabase();
     try {
       // Get tier ID from tier name
       const tier = await this.getTierByName(data.tierName);
@@ -77,6 +78,7 @@ class SubscriptionService {
   }
 
   async updateSubscription(userId: string, data: UpdateSubscriptionData) {
+    const db = await getDatabase();
     try {
       // Get tier ID if tier name is provided
       let tierId: string | undefined;
@@ -136,6 +138,7 @@ class SubscriptionService {
   }
 
   async getUserSubscription(userId: string) {
+    const db = await getDatabase();
     try {
       const subscription = await db
         .select()
@@ -151,6 +154,7 @@ class SubscriptionService {
   }
 
   async hasActiveSubscription(userId: string): Promise<boolean> {
+    const db = await getDatabase();
     try {
       const subscription = await db
         .select()
@@ -188,6 +192,7 @@ class SubscriptionService {
   }
 
   async getTierByName(tierName: SubscriptionTier) {
+    const db = await getDatabase();
     try {
       const [tier] = await db
         .select()
@@ -203,6 +208,7 @@ class SubscriptionService {
   }
 
   async getSubscriptionsByProvider(provider: SubscriptionProvider) {
+    const db = await getDatabase();
     try {
       return await db
         .select()
@@ -218,6 +224,7 @@ class SubscriptionService {
     provider: SubscriptionProvider,
     providerSubscriptionId: string,
   ) {
+    const db = await getDatabase();
     try {
       const [subscription] = await db
         .select()
