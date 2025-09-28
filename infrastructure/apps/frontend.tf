@@ -6,10 +6,11 @@ locals {
   # Only track actual source code that affects the build
   # This is much faster and prevents unnecessary rebuilds
   frontend_source_patterns = [
-    "app/**/*.{ts,tsx,js,jsx,css}",
-    "components/**/*.{ts,tsx,js,jsx,css}",
-    "lib/**/*.{ts,tsx,js,jsx}",
-    "utils/**/*.{ts,tsx,js,jsx}",
+    "src/app/**/*.{ts,tsx,js,jsx,css}",
+    "src/components/**/*.{ts,tsx,js,jsx,css}",
+    "src/lib/**/*.{ts,tsx,js,jsx}",
+    "src/utils/**/*.{ts,tsx,js,jsx}",
+    "src/**/*.{ts,tsx,js,jsx,css}",
     "public/**",
     "*.config.{js,ts}",
     "package.json",
