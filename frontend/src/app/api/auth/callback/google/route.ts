@@ -5,6 +5,9 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
+// Prevent static analysis during build
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   // Log the callback for debugging
   console.log("[OAuth Callback] Google callback received:", {

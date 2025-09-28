@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { checkDatabaseConnectionHealth } from "@/lib/db/connection";
 
+// Prevent static analysis during build
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const healthCheck = await checkDatabaseConnectionHealth();

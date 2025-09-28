@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 
+// Prevent static analysis during build
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const providers = {
     google: !!(
