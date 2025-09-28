@@ -26,34 +26,20 @@ export async function googleOAuthFlow(options: OAuthOptions = {}): Promise<OAuth
   })
 
   try {
-    const result = await signIn('google', {
+    // For OAuth providers, signIn will redirect the browser to the provider
+    // The redirect: true is implied for OAuth providers
+    // After successful auth, NextAuth will redirect to callbackUrl
+    await signIn('google', {
       callbackUrl: options.redirectTo || '/dashboard',
-      redirect: true,
-      ...options
     })
 
-    if (result?.error) {
-      console.error('[OAuth] Google OAuth flow failed', {
-        error: result.error,
-        url: result.url,
-        status: result.status
-      })
-
-      return {
-        success: false,
-        error: result.error
-      }
-    }
-
-    console.log('[OAuth] Google OAuth flow initiated successfully', {
-      success: true,
-      redirectUrl: result?.url
-    })
-
+    // This code won't be reached because signIn will redirect the page
+    // But we return success to satisfy TypeScript
     return {
       success: true
     }
   } catch (error) {
+    // This catch block will only be reached if there's an error before the redirect
     console.error('[OAuth] Unexpected error during Google OAuth flow:', {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
