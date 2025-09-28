@@ -3,9 +3,13 @@ import postgres from "postgres";
 import * as schema from "./schema";
 
 // Database connection configuration
+// Skip database setup during build phase
+const isBuildTime = process.env.NODE_ENV === undefined ||
+                   process.env.NEXT_PHASE === 'phase-production-build';
+
 const connectionString = process.env.DATABASE_URL;
 
-if (!connectionString) {
+if (!connectionString && !isBuildTime) {
   throw new Error("DATABASE_URL environment variable is not set");
 }
 
@@ -13,7 +17,7 @@ if (!connectionString) {
 let connectionOptions: any = {};
 
 // Check if this is a Unix socket connection (for Cloud SQL)
-if (connectionString.includes("/cloudsql/")) {
+if (connectionString && connectionString.includes("/cloudsql/")) {
   // Manual parsing for Unix socket format with special characters in password
   // Format: postgresql://username:password@/database?host=/cloudsql/PROJECT:REGION:INSTANCE
 
@@ -101,19 +105,29 @@ if (process.env.NODE_ENV === 'production' && typeof connectionOptions === 'objec
   });
 }
 
-// Create the connection with enhanced configuration
-const client = typeof connectionOptions === 'string'
-  ? postgres(connectionOptions, connectionConfig)
-  : postgres(connectionConfig);
+// Create the connection with enhanced configuration (only at runtime)
+let client: any = null;
+let db: any = null;
 
-// Create Drizzle database instance
-export const db = drizzle(client, { schema });
+if (!isBuildTime && connectionString) {
+  client = typeof connectionOptions === 'string'
+    ? postgres(connectionOptions, connectionConfig)
+    : postgres(connectionConfig);
 
-// Export the client for raw queries if needed
-export { client };
+  // Create Drizzle database instance
+  db = drizzle(client, { schema });
+}
+
+// Export the database instance (will be null during build)
+export { db, client };
 
 // Connection health check
 export async function checkDatabaseConnection(): Promise<boolean> {
+  // During build time, return false but don't throw
+  if (!client || isBuildTime) {
+    return false;
+  }
+
   try {
     await client`SELECT 1`;
     return true;
@@ -144,6 +158,16 @@ export async function checkDatabaseConnectionHealth(): Promise<{
 }> {
   const startTime = Date.now();
 
+  // During build time, return safe defaults
+  if (!client || isBuildTime) {
+    return {
+      isHealthy: false,
+      poolStats: getConnectionPoolStats(),
+      responseTime: 0,
+      error: "Database not available during build phase",
+    };
+  }
+
   try {
     await client`SELECT 1 as health_check`;
     const responseTime = Date.now() - startTime;
@@ -168,11 +192,17 @@ export async function checkDatabaseConnectionHealth(): Promise<{
 
 // Set user context for RLS (Row Level Security)
 export async function setUserContext(userId: string): Promise<void> {
+  if (!client || isBuildTime) {
+    return; // Skip during build time
+  }
   await client`SELECT set_current_user_id(${userId})`;
 }
 
 // Graceful shutdown with pool cleanup
 export async function closeDatabaseConnection(): Promise<void> {
+  if (!client || isBuildTime) {
+    return; // Skip during build time
+  }
   console.log("Closing database connection pool...");
   await client.end({ timeout: 5 });
   console.log("Database connection pool closed.");
