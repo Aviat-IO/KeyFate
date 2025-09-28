@@ -3,7 +3,7 @@
  * Ensures proper cookie and callback handling in production environments
  */
 
-import type { NextAuthOptions } from "next-auth";
+import type { AuthOptions } from "next-auth/core/types";
 
 /**
  * Get the base URL for callbacks, ensuring it works in all environments
@@ -108,7 +108,7 @@ export function getCookieConfig() {
 /**
  * Merge production configuration with base auth config
  */
-export function withProductionConfig(baseConfig: NextAuthOptions): NextAuthOptions {
+export function withProductionConfig(baseConfig: AuthOptions): AuthOptions {
   const baseUrl = getBaseUrl();
   const isSecure = shouldUseSecureCookies();
 
@@ -118,8 +118,6 @@ export function withProductionConfig(baseConfig: NextAuthOptions): NextAuthOptio
     cookies: getCookieConfig(),
     // Use secure cookies in production
     useSecureCookies: isSecure,
-    // Trust the host header in production (important for Cloud Run)
-    trustHost: true,
     // Debug only in development
     debug: process.env.NODE_ENV === "development",
   };

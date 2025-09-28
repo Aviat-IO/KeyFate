@@ -20,40 +20,29 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Accept build argument for environment
+# This determines which .env files to use
 ARG BUILD_ENV=production
 
-# Build args for Next.js environment variables needed at build time
-# These are passed from Terraform/Terragrunt
-ARG NEXT_PUBLIC_SITE_URL
-ARG NEXT_PUBLIC_COMPANY
-ARG NEXT_PUBLIC_PARENT_COMPANY
-ARG NEXT_PUBLIC_SUPPORT_EMAIL
-ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-ARG NEXT_PUBLIC_AUTH_PROVIDER
-ARG NEXT_PUBLIC_DATABASE_PROVIDER
-ARG NEXT_PUBLIC_ENV
-
-# Set environment variables for the build
-ENV NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
-ENV NEXT_PUBLIC_COMPANY=${NEXT_PUBLIC_COMPANY}
-ENV NEXT_PUBLIC_PARENT_COMPANY=${NEXT_PUBLIC_PARENT_COMPANY}
-ENV NEXT_PUBLIC_SUPPORT_EMAIL=${NEXT_PUBLIC_SUPPORT_EMAIL}
-ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
-ENV NEXT_PUBLIC_AUTH_PROVIDER=${NEXT_PUBLIC_AUTH_PROVIDER}
-ENV NEXT_PUBLIC_DATABASE_PROVIDER=${NEXT_PUBLIC_DATABASE_PROVIDER}
-ENV NEXT_PUBLIC_ENV=${NEXT_PUBLIC_ENV}
-
-# Copy appropriate environment files based on BUILD_ENV (for any additional vars)
+# Copy appropriate environment files based on BUILD_ENV
+# Note: .local files won't exist in the build context (git-ignored)
+# Next.js will automatically load .env.production during build
 RUN if [ "$BUILD_ENV" = "staging" ]; then \
   echo "Building for staging environment"; \
-  cp .env.staging .env.production 2>/dev/null || true; \
-  cp .env.staging.local .env.production.local 2>/dev/null || true; \
-  elif [ "$BUILD_ENV" = "development" ]; then \
-  echo "Building for development environment"; \
-  cp .env.development .env.production 2>/dev/null || true; \
-  cp .env.development.local .env.production.local 2>/dev/null || true; \
-  else \
+  if [ -f .env.staging ]; then \
+    cp .env.staging .env.production; \
+    echo "Copied .env.staging to .env.production"; \
+  fi; \
+  elif [ "$BUILD_ENV" = "production" ]; then \
   echo "Building for production environment"; \
+  if [ -f .env.production ]; then \
+    echo "Using .env.production"; \
+  fi; \
+  else \
+  echo "Building for development environment"; \
+  if [ -f .env.development ]; then \
+    cp .env.development .env.production; \
+    echo "Copied .env.development to .env.production"; \
+  fi; \
   fi
 
 # Build the app (TypeScript errors are ignored via next.config.ts)
@@ -84,6 +73,8 @@ USER nextjs
 EXPOSE 3000
 
 ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
+# The Next.js standalone server binds to :: (IPv6) / 0.0.0.0 (IPv4) by default
+# We don't set HOSTNAME as it would interfere with OAuth callback URLs
 
+# Start the standalone server
 CMD ["node", "server.js"]

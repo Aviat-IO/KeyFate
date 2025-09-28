@@ -6,6 +6,9 @@ import { SssDecryptor } from "@/components/sss-decryptor"
 import { useSearchParams } from "next/navigation"
 import { Suspense } from "react"
 
+// Force dynamic rendering to avoid static generation errors
+export const dynamic = "force-dynamic"
+
 function DecryptContent() {
   const searchParams = useSearchParams()
 

@@ -54,40 +54,22 @@ resource "null_resource" "build_and_push_frontend" {
 
       BUILD_TAG=${var.region}-docker.pkg.dev/${module.project.id}/${module.artifact_registry.name}/${local.frontend_app_name}:${local.image_tag}
 
-      echo "Building image: $BUILD_TAG"
+      echo "Building image via Cloud Build: $BUILD_TAG"
 
       # Ensure we're authenticated with gcloud
       gcloud auth list --filter=status:ACTIVE --format="value(account)" | head -1 > /dev/null || gcloud auth login
 
-      # Configure Docker to use gcloud as a credential helper
-      gcloud auth configure-docker ${var.region}-docker.pkg.dev --quiet
+      # Get the parent directory of frontend (the repo root)
+      REPO_ROOT=$(dirname ${local.frontend_app_dir})
 
-      # Build the Docker image with layer caching
-      # Pull the previous image for cache if it exists
-      docker pull $BUILD_TAG 2>/dev/null || true
+      # Use Cloud Build to build and push the image
+      # Only pass BUILD_ENV since all configuration now comes from .env files
+      gcloud builds submit $REPO_ROOT \
+        --project=${module.project.id} \
+        --config=${local.frontend_app_dir}/cloudbuild.yaml \
+        --substitutions="_IMAGE_URL=$BUILD_TAG,_BUILD_ENV=${var.env == "prod" ? "production" : "staging"}"
 
-      docker build \
-        --platform linux/amd64 \
-        --build-arg BUILD_ENV=${var.env == "prod" ? "production" : "staging"} \
-        --build-arg NEXT_PUBLIC_SITE_URL="${var.next_public_site_url}" \
-        --build-arg NEXT_PUBLIC_COMPANY="${var.next_public_company}" \
-        --build-arg NEXT_PUBLIC_PARENT_COMPANY="${var.next_public_parent_company}" \
-        --build-arg NEXT_PUBLIC_SUPPORT_EMAIL="${var.next_public_support_email}" \
-        --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="${var.next_public_stripe_publishable_key}" \
-        --build-arg NEXT_PUBLIC_AUTH_PROVIDER="${var.next_public_auth_provider}" \
-        --build-arg NEXT_PUBLIC_DATABASE_PROVIDER="${var.next_public_database_provider}" \
-        --build-arg NEXT_PUBLIC_ENV="${var.env}" \
-        --cache-from $BUILD_TAG \
-        -t $BUILD_TAG \
-        -f ${local.frontend_app_dir}/Dockerfile \
-        ${local.frontend_app_dir}
-
-      echo "Image built successfully. Pushing to Artifact Registry..."
-
-      # Push the image to Artifact Registry
-      docker push $BUILD_TAG
-
-      echo "Image pushed successfully: $BUILD_TAG"
+      echo "Cloud Build completed successfully!"
 
       # Wait a moment for the image to be available
       sleep 10
@@ -154,20 +136,13 @@ module "cloud_run" {
           container_port = 3000
         }
       }
-      # Additional environment variables from terraform.tfvars
+      # Runtime environment variables - these override .env file values if needed
+      # Most configuration comes from .env files baked into the image
       env = {
-        NEXT_PUBLIC_COMPANY                = var.next_public_company
-        NEXT_PUBLIC_ENV                    = var.env
-        NEXT_PUBLIC_PARENT_COMPANY         = var.next_public_parent_company
-        NEXT_PUBLIC_SITE_URL               = var.next_public_site_url
-        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = var.next_public_stripe_publishable_key
-        NEXT_PUBLIC_AUTH_PROVIDER          = var.next_public_auth_provider
-        NEXT_PUBLIC_DATABASE_PROVIDER      = var.next_public_database_provider
-        NEXT_PUBLIC_SUPPORT_EMAIL          = var.next_public_support_email
-        NEXT_PUBLIC_BTCPAY_SERVER_URL      = var.btcpay_server_url
-        BTCPAY_SERVER_URL                  = var.btcpay_server_url
         # NextAuth.js requires NEXTAUTH_URL for production deployments
         NEXTAUTH_URL                       = var.next_public_site_url
+        # Environment indicator for runtime checks
+        NEXT_PUBLIC_ENV                    = var.env
         # Force revision update when code changes by including hash as env var
         DEPLOYMENT_HASH = local.image_tag
         # Database connection timeout and pooling settings - optimized for VPC connector

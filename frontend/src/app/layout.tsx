@@ -3,13 +3,18 @@ import { Inter } from "next/font/google"
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from "@/components/theme-provider"
 import { SessionProvider } from "@/components/session-provider"
+import { Metadata } from "next"
 
 const inter = Inter({ subsets: ["latin"] })
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "KeyFate",
   description: "Your key to peace of mind",
 }
+
+// Prevent static generation for all pages due to SessionProvider
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
 
 export default function RootLayout({
   children,

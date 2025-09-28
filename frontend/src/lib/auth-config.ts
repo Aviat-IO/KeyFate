@@ -136,7 +136,7 @@ const baseAuthConfig = {
      *
      * Security: Prevents unverified Google accounts from accessing the system
      */
-    async signIn({ account, profile }) {
+    async signIn({ user, account, profile }) {
       // Check email verification for OAuth providers
       if (account?.provider === "google") {
         // Validate profile structure first
