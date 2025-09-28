@@ -2,8 +2,17 @@
 import postgres from "postgres";
 
 export function createPostgresConnection(connectionString: string, options: any = {}) {
-  if (!connectionString) {
+  // Skip during build phase to prevent database connection attempts
+  const isBuildTime = process.env.NODE_ENV === undefined ||
+                     process.env.NEXT_PHASE === 'phase-production-build';
+
+  if (!connectionString && !isBuildTime) {
     throw new Error("DATABASE_URL environment variable is not set");
+  }
+
+  // During build time, return null or throw a different error
+  if (isBuildTime) {
+    throw new Error('Database connections not available during build phase');
   }
 
   // Parse connection string for Cloud SQL Unix socket support

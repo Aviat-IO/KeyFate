@@ -25,10 +25,19 @@ export async function getDatabase(): Promise<PostgresJsDatabase<typeof schema>> 
     return dbInstance;
   }
 
+  // Skip during build phase to prevent database connection attempts
+  const isBuildTime = process.env.NODE_ENV === undefined ||
+                     process.env.NEXT_PHASE === 'phase-production-build';
+
   // Get connection string
   const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) {
+  if (!connectionString && !isBuildTime) {
     throw new Error('DATABASE_URL environment variable is not set');
+  }
+
+  // During build time, return a mock database instance
+  if (isBuildTime) {
+    throw new Error('Database not available during build phase - this should not be called');
   }
 
   try {
