@@ -54,7 +54,8 @@ tasks.md
 
 # Scripts and database files (not needed for frontend)
 scripts/
-db/
+# Only exclude root-level db directory, not frontend/src/lib/db
+/db/
 memory-bank/
 
 # Temporary files
