@@ -6,6 +6,9 @@ import type { Session } from "next-auth";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 
+// Prevent static analysis during build
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const amount = Number(searchParams.get("amount"));

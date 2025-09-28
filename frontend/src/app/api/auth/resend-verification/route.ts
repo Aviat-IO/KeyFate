@@ -3,6 +3,9 @@ import { resendVerificationEmail } from '@/lib/auth/email-verification';
 import { checkRateLimit } from '@/lib/auth/rate-limiting';
 import { z } from 'zod';
 
+// Prevent static analysis during build
+export const dynamic = "force-dynamic";
+
 const resendVerificationSchema = z.object({
   email: z.string().email('Invalid email address'),
 });
