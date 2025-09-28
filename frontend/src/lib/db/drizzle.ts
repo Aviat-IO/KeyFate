@@ -20,8 +20,13 @@ export const db = new Proxy({} as any, {
 });
 
 // Pre-initialize for legacy code that expects synchronous access
+// Skip during build phase to prevent database connection attempts
 (async () => {
-  if (process.env.NODE_ENV !== 'test') {
+  const isBuildTime = process.env.NODE_ENV === undefined ||
+                     process.env.NEXT_PHASE === 'phase-production-build' ||
+                     process.env.NODE_ENV === 'test';
+
+  if (!isBuildTime) {
     try {
       dbInstance = await getDatabase();
       console.log('🚀 DRIZZLE - Database pre-initialized for legacy code');
