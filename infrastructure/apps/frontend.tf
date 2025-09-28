@@ -337,3 +337,4 @@ output "frontend_deployment_info" {
   }
   description = "Frontend deployment information for debugging"
 }
+# Trigger rebuild Sat Sep 27 21:18:52 MDT 2025
