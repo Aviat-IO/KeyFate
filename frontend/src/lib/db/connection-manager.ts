@@ -111,12 +111,33 @@ class ConnectionManager {
     const isUnixSocket = connectionString.includes('/cloudsql/') || connectionString.includes('host=/cloudsql/');
     const isPrivateIP = connectionString.includes('10.2.0.3') || connectionString.includes('10.0.') || connectionString.includes('10.1.');
 
+    let actualConnectionString = connectionString;
+
     if (isUnixSocket) {
       console.log('🔌 Using Unix socket connection via Cloud SQL proxy');
-      // Unix socket connections don't need SSL
-      enhancedOptions.ssl = false;
-      // Reduce connection pool for Unix sockets
-      enhancedOptions.max = 3;
+
+      // Parse the Unix socket connection string
+      // Format: postgresql://user:pass@/database?host=/cloudsql/PROJECT:REGION:INSTANCE
+      const urlMatch = connectionString.match(/postgresql:\/\/([^:]+):([^@]+)@\/([^?]+)\?host=(.+)/);
+
+      if (urlMatch) {
+        const [, username, password, database, socketPath] = urlMatch;
+        console.log(`📝 Parsed Unix socket - Database: ${database}, Socket: ${socketPath}`);
+
+        // postgres.js needs the socket path as the host parameter
+        // Format for postgres.js with Unix socket
+        enhancedOptions.host = socketPath;
+        enhancedOptions.database = database;
+        enhancedOptions.username = username;
+        enhancedOptions.password = password;
+        enhancedOptions.ssl = false;
+        enhancedOptions.max = 3;
+
+        // Use a dummy connection string since we're passing all params via options
+        actualConnectionString = 'postgres://localhost';
+      } else {
+        console.error('⚠️ Failed to parse Unix socket connection string');
+      }
     } else if (isPrivateIP) {
       console.log('🔍 Using private IP connection via VPC');
       // For VPC connections, SSL is not needed
@@ -128,7 +149,7 @@ class ConnectionManager {
       try {
         console.log(`🔌 Connection attempt ${attempt}/${this.retryConfig.maxAttempts}`);
 
-        this.connection = postgres(connectionString, enhancedOptions);
+        this.connection = postgres(actualConnectionString, enhancedOptions);
 
         // Test the connection immediately
         const testResult = await this.connection`SELECT 1 as test, current_database() as db`;
