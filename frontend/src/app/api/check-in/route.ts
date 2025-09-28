@@ -3,6 +3,9 @@ import { checkInTokens, secrets } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
+// Prevent static analysis during build
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   try {
     const db = await getDatabase();

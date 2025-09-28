@@ -3,6 +3,9 @@ import { secrets } from "@/lib/db/schema";
 import { and, eq, isNotNull, lte } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
+// Prevent static analysis during build
+export const dynamic = "force-dynamic";
+
 function authorize(req: NextRequest): boolean {
   const header = req.headers.get("authorization") ||
     req.headers.get("Authorization");

@@ -4,6 +4,9 @@ import { and, eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+// Prevent static analysis during build
+export const dynamic = "force-dynamic";
+
 const verifyEmailSchema = z.object({
   token: z.string().min(1, "Token is required"),
   email: z.string().email("Invalid email address"),

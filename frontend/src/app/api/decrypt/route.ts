@@ -1,6 +1,9 @@
 import { decryptMessage } from "@/lib/encryption";
 import { NextRequest, NextResponse } from "next/server";
 
+// Prevent static analysis during build
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   try {
     const { encryptedMessage, iv, authTag } = await request.json();

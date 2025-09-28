@@ -4,6 +4,9 @@ import { subscriptionService } from "@/lib/services/subscription-service";
 import { emailService } from "@/lib/services/email-service";
 import { NextRequest, NextResponse } from "next/server";
 
+// Prevent static analysis during build
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
     try {
         const body = await request.text();

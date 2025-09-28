@@ -9,6 +9,9 @@ import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
+// Prevent static analysis during build
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   let insertData: Record<string, unknown>; // Declare here so it's available in catch block
 
