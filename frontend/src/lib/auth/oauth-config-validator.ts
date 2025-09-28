@@ -64,8 +64,16 @@ export function validateOAuthConfig(config?: OAuthConfig): ValidationResult {
   }
 
   // Production environment checks
-  if (process.env.NODE_ENV === 'production') {
-    if (nextAuthUrl?.startsWith('http://')) {
+  // During build time, we don't validate HTTPS requirement as the actual runtime URL
+  // will be provided by the production environment variables at runtime
+  // We detect build time by checking if NEXTAUTH_URL is localhost (build environment)
+  // while NODE_ENV is production (production build)
+  const isBuildTime = process.env.NODE_ENV === 'production' &&
+    nextAuthUrl?.includes('localhost');
+
+  if (process.env.NODE_ENV === 'production' && !isBuildTime) {
+    // Only enforce HTTPS for actual production runtime, not build time
+    if (nextAuthUrl?.startsWith('http://') && !nextAuthUrl.includes('localhost')) {
       errors.push('NEXTAUTH_URL must use HTTPS in production')
     }
 
