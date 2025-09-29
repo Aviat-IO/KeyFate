@@ -10,7 +10,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
-import { NEXT_PUBLIC_COMPANY } from "@/lib/env"
+import { useConfig } from "@/contexts/ConfigContext"
 import { Menu } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -20,6 +20,7 @@ import { useState } from "react"
 export function NavBar() {
   const pathname = usePathname()
   const { data: session, status } = useSession()
+  const { config } = useConfig()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const user = session?.user as { id?: string; name?: string; email?: string; image?: string } | undefined
@@ -48,7 +49,7 @@ export function NavBar() {
               href={user ? "/dashboard" : "/"}
               className="text-xl font-bold"
             >
-              {NEXT_PUBLIC_COMPANY}
+              {config?.company || "KeyFate"}
             </Link>
             {/* Dashboard link when authenticated user is on home page */}
             {user && pathname === "/" && (

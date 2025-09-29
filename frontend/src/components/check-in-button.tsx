@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
-import { NEXT_PUBLIC_SITE_URL } from "@/lib/env"
+import { useConfig } from "@/contexts/ConfigContext"
 import { Secret } from "@/types"
 import { CheckCircle, Loader2 } from "lucide-react"
 import { useState } from "react"
@@ -19,16 +19,18 @@ export function CheckInButton({
   variant = "outline",
 }: CheckInButtonProps) {
   const { toast } = useToast()
+  const { config } = useConfig()
   const [loading, setLoading] = useState(false)
 
   const handleCheckIn = async () => {
     setLoading(true)
 
     try {
-      // Ensure the URL has a protocol
-      const baseUrl = NEXT_PUBLIC_SITE_URL.startsWith("http")
-        ? NEXT_PUBLIC_SITE_URL
-        : `http://${NEXT_PUBLIC_SITE_URL}`
+      // Use config from context, fallback to relative URL if not available
+      const siteUrl = config?.siteUrl || ""
+      const baseUrl = siteUrl ? (
+        siteUrl.startsWith("http") ? siteUrl : `http://${siteUrl}`
+      ) : ""
 
       const response = await fetch(
         `${baseUrl}/api/secrets/${secretId}/check-in`,
