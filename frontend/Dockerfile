@@ -23,6 +23,40 @@ COPY . .
 # This determines which .env files to use
 ARG BUILD_ENV=production
 
+# Accept NEXT_PUBLIC_ variables as build arguments for staging/dev
+ARG NEXT_PUBLIC_COMPANY
+ARG NEXT_PUBLIC_ENV
+ARG NEXT_PUBLIC_PARENT_COMPANY
+ARG NEXT_PUBLIC_SITE_URL
+ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+ARG NEXT_PUBLIC_SUPPORT_EMAIL
+ARG NEXT_PUBLIC_AUTH_PROVIDER
+ARG NEXT_PUBLIC_DATABASE_PROVIDER
+ARG NEXT_PUBLIC_BTCPAY_SERVER_URL
+
+# Create .env.staging file if BUILD_ENV is staging and it doesn't exist
+RUN if [ "$BUILD_ENV" = "staging" ] && [ ! -f .env.staging ]; then \
+  echo "Creating .env.staging from build arguments"; \
+  echo "NEXT_PUBLIC_COMPANY=\"KeyFate\"" > .env.staging; \
+  echo "NEXT_PUBLIC_ENV=staging" >> .env.staging; \
+  echo "NEXT_PUBLIC_PARENT_COMPANY=\"Aviat, LLC\"" >> .env.staging; \
+  echo "NEXT_PUBLIC_SITE_URL=https://staging.keyfate.com" >> .env.staging; \
+  echo "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51RrR62RanDIU40YVFMjG7D718fANj5qHzMJJ2joRw1xa4Y8bGQ3TWflUVQ6mIt0HuuMPf2asZ6jhSV0VpeQWM0Eg00xJlCr8IX" >> .env.staging; \
+  echo "NEXT_PUBLIC_SUPPORT_EMAIL=support@aviat.io" >> .env.staging; \
+  echo "NEXT_PUBLIC_AUTH_PROVIDER=google" >> .env.staging; \
+  echo "NEXT_PUBLIC_DATABASE_PROVIDER=cloudsql" >> .env.staging; \
+  echo "NEXT_PUBLIC_BTCPAY_SERVER_URL=https://btcpay.keyfate.com" >> .env.staging; \
+  echo "" >> .env.staging; \
+  echo "# Dummy values for build-time requirements" >> .env.staging; \
+  echo "NEXTAUTH_URL=https://staging.keyfate.com" >> .env.staging; \
+  echo 'NEXTAUTH_SECRET="dummy-secret-for-build"' >> .env.staging; \
+  echo 'DATABASE_URL="postgresql://dummy@localhost/dummy"' >> .env.staging; \
+  echo 'GOOGLE_CLIENT_ID="dummy-client-id-for-build"' >> .env.staging; \
+  echo 'GOOGLE_CLIENT_SECRET="dummy-client-secret-for-build"' >> .env.staging; \
+  echo 'ENCRYPTION_KEY="dummy-encryption-key-for-build"' >> .env.staging; \
+  echo 'STRIPE_SECRET_KEY="sk_test_dummy"' >> .env.staging; \
+  fi
+
 # Copy appropriate environment files based on BUILD_ENV
 # Note: .local files won't exist in the build context (git-ignored)
 # Next.js will automatically load .env.production during build
