@@ -4,7 +4,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { NEXT_PUBLIC_COMPANY } from "@/lib/env"
+import { useConfig } from "@/contexts/ConfigContext"
 import { Buffer } from "buffer"
 import {
   Check,
@@ -25,6 +25,7 @@ type SssDecryptorProps = {
 
 export function SssDecryptor({ initialShares = [] }: SssDecryptorProps) {
   const { toast } = useToast()
+  const { config } = useConfig()
   const firstTextareaRef = useRef<HTMLTextAreaElement>(null)
   const secondTextareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -159,7 +160,7 @@ export function SssDecryptor({ initialShares = [] }: SssDecryptorProps) {
         <div>
           <h2 className="mb-2 text-xl font-semibold">Enter Your Shares</h2>
           <p className="text-muted-foreground text-sm">
-            Enter your {NEXT_PUBLIC_COMPANY} shares below. You need a minimum
+            Enter your {config?.company || "KeyFate"} shares below. You need a minimum
             number of correct shares (as per the threshold set during creation)
             to recover the original secret (shares are typically hexadecimal
             strings).
@@ -177,7 +178,7 @@ export function SssDecryptor({ initialShares = [] }: SssDecryptorProps) {
                       ? secondTextareaRef
                       : undefined
                 }
-                placeholder={`Share ${index + 1} (from ${NEXT_PUBLIC_COMPANY} or your trusted contact)`}
+                placeholder={`Share ${index + 1} (from ${config?.company || "KeyFate"} or your trusted contact)`}
                 value={share}
                 onChange={(e) => handleShareChange(index, e.target.value)}
                 rows={2}
