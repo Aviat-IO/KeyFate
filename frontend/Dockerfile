@@ -31,21 +31,37 @@ RUN if [ "$BUILD_ENV" = "staging" ]; then \
   if [ -f .env.staging ]; then \
     cp .env.staging .env.production; \
     echo "Copied .env.staging to .env.production"; \
+    cp .env.staging .env; \
+    echo "Also copied .env.staging to .env for build compatibility"; \
   fi; \
   elif [ "$BUILD_ENV" = "production" ]; then \
   echo "Building for production environment"; \
   if [ -f .env.production ]; then \
     echo "Using .env.production"; \
+    cp .env.production .env; \
+    echo "Also copied .env.production to .env for build compatibility"; \
   fi; \
   else \
   echo "Building for development environment"; \
   if [ -f .env.development ]; then \
     cp .env.development .env.production; \
     echo "Copied .env.development to .env.production"; \
+    cp .env.development .env; \
+    echo "Also copied .env.development to .env for build compatibility"; \
   fi; \
   fi
 
-# Build the app (TypeScript errors are ignored via next.config.ts)
+# Debug: Show what environment files exist
+RUN ls -la .env* || true
+
+# Debug: Show the content of .env files (without secrets)
+RUN if [ -f .env ]; then \
+    echo "=== .env file content (NEXT_PUBLIC vars only) ==="; \
+    grep "^NEXT_PUBLIC_" .env || echo "No NEXT_PUBLIC_ variables found"; \
+  fi
+
+# Build the app with environment variables loaded
+# Next.js will load .env and .env.production files during build
 RUN pnpm build
 
 # Production image, copy all the files and run next
