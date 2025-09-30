@@ -47,6 +47,9 @@ if (
   process.env.GOOGLE_CLIENT_SECRET !== "your-google-client-secret" &&
   process.env.GOOGLE_CLIENT_ID.endsWith(".apps.googleusercontent.com")
 ) {
+  // Get the correct base URL for OAuth redirects
+  const baseUrl = getBaseUrl();
+
   providers.push(
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -55,7 +58,9 @@ if (
         params: {
           prompt: "consent",
           access_type: "offline",
-          response_type: "code"
+          response_type: "code",
+          // Explicitly set the redirect URI
+          redirect_uri: `${baseUrl}/api/auth/callback/google`
         }
       }
     }),

@@ -11,7 +11,19 @@ import type { AuthOptions } from "next-auth/core/types";
 export function getBaseUrl(): string {
   // In production/staging, use NEXTAUTH_URL
   if (process.env.NEXTAUTH_URL) {
-    return process.env.NEXTAUTH_URL;
+    // Ensure it's not the container's internal address
+    if (!process.env.NEXTAUTH_URL.includes("0.0.0.0")) {
+      return process.env.NEXTAUTH_URL;
+    }
+    // If NEXTAUTH_URL contains 0.0.0.0, use NEXT_PUBLIC_SITE_URL
+    if (process.env.NEXT_PUBLIC_SITE_URL) {
+      return process.env.NEXT_PUBLIC_SITE_URL;
+    }
+  }
+
+  // Also check NEXT_PUBLIC_SITE_URL as a fallback
+  if (process.env.NEXT_PUBLIC_SITE_URL && !process.env.NEXT_PUBLIC_SITE_URL.includes("0.0.0.0")) {
+    return process.env.NEXT_PUBLIC_SITE_URL;
   }
 
   // In development, use localhost
