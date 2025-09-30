@@ -14,7 +14,10 @@ locals {
     "public/**",
     "*.config.{js,ts}",
     "package.json",
-    "Dockerfile"
+    "pnpm-lock.yaml",
+    "Dockerfile",
+    "cloudbuild.yaml",
+    ".dockerignore"
   ]
 
   # Efficient hash calculation - only files that actually matter
