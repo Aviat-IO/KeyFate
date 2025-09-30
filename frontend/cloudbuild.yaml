@@ -11,10 +11,11 @@ steps:
 
   # Build the Docker image with intelligent caching
   # Step 1: Build dependencies layer (rarely changes)
+  # NOTE: Temporarily disabled cache to fix BuildKit issue
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
-      - '--cache-from=${_IMAGE_URL}-cache-deps'
+      - '--no-cache'  # Temporarily disable cache to fix BuildKit issue
       - '--target=deps'
       - '--platform=linux/amd64'
       - '--build-arg=BUILD_ENV=${_BUILD_ENV}'
