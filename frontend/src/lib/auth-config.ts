@@ -6,7 +6,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { assertValidOAuthConfig } from "./auth/oauth-config-validator";
 import { validatePassword } from "./auth/password";
 import { authenticateUser } from "./auth/users";
-import { withProductionConfig } from "./auth-config-production";
+import { withProductionConfig, getBaseUrl } from "./auth-config-production";
 import { validateAuthEnvironment } from "./auth/validate-env";
 
 // Validate auth environment and OAuth configuration at startup (skip in test environment)
@@ -51,6 +51,13 @@ if (
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code"
+        }
+      }
     }),
   );
 } else if (process.env.NODE_ENV === "development") {
@@ -121,6 +128,33 @@ const baseAuthConfig = {
     error: "/auth/error",
   },
   callbacks: {
+    /**
+     * Ensure OAuth redirects use the correct base URL
+     */
+    async redirect({ url, baseUrl }) {
+      // Get the correct base URL from environment
+      const correctBaseUrl = getBaseUrl();
+
+      // If the URL is relative, use our correct base URL
+      if (url.startsWith("/")) {
+        return `${correctBaseUrl}${url}`;
+      }
+
+      // If the URL is for the wrong host (0.0.0.0), fix it
+      if (url.includes("0.0.0.0")) {
+        const fixedUrl = url.replace(/https?:\/\/0\.0\.0\.0(:\d+)?/, correctBaseUrl);
+        console.log("[Auth] Fixed redirect URL from", url, "to", fixedUrl);
+        return fixedUrl;
+      }
+
+      // If the URL is for the same site, allow it
+      if (url.startsWith(correctBaseUrl)) {
+        return url;
+      }
+
+      // Default to base URL for safety
+      return correctBaseUrl;
+    },
     /**
      * TASK 1.2: Google OAuth Email Verification Enforcement
      *
