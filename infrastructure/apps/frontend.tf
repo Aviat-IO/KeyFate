@@ -21,7 +21,7 @@ locals {
   frontend_content_hash = md5(join("", flatten([
     for pattern in local.frontend_source_patterns : [
       for f in try(fileset(local.frontend_app_dir, pattern), []) :
-        can(filemd5("${local.frontend_app_dir}/${f}")) ? filemd5("${local.frontend_app_dir}/${f}") : ""
+      can(filemd5("${local.frontend_app_dir}/${f}")) ? filemd5("${local.frontend_app_dir}/${f}") : ""
     ]
   ])))
 
@@ -140,9 +140,9 @@ module "cloud_run" {
       # Most configuration comes from .env files baked into the image
       env = {
         # NextAuth.js requires NEXTAUTH_URL for production deployments
-        NEXTAUTH_URL                       = var.next_public_site_url
+        NEXTAUTH_URL = var.next_public_site_url
         # Environment indicator for runtime checks
-        NEXT_PUBLIC_ENV                    = var.env
+        NEXT_PUBLIC_ENV = var.env
         # All NEXT_PUBLIC_ variables that the app needs
         NEXT_PUBLIC_SITE_URL               = var.next_public_site_url
         NEXT_PUBLIC_COMPANY                = var.next_public_company
@@ -156,13 +156,13 @@ module "cloud_run" {
         # Force revision update when code changes by including hash as env var
         DEPLOYMENT_HASH = local.image_tag
         # Database connection timeout and pooling settings - optimized for VPC connector
-        DB_CONNECT_TIMEOUT    = "10"     # 10 seconds connection timeout (fail fast)
-        DB_POOL_MAX          = "5"      # Reduced max pool connections to prevent exhaustion
-        DB_POOL_MIN          = "1"      # Minimum pool connections
-        DB_IDLE_TIMEOUT      = "20"     # 20 seconds idle timeout (release connections faster)
-        DB_STATEMENT_TIMEOUT = "30000"  # 30 seconds statement timeout
-        DB_MAX_LIFETIME      = "300"    # 5 minutes max connection lifetime
-        DEBUG_DB             = "true"   # Enable database debugging in staging
+        DB_CONNECT_TIMEOUT   = "10"    # 10 seconds connection timeout (fail fast)
+        DB_POOL_MAX          = "5"     # Reduced max pool connections to prevent exhaustion
+        DB_POOL_MIN          = "1"     # Minimum pool connections
+        DB_IDLE_TIMEOUT      = "20"    # 20 seconds idle timeout (release connections faster)
+        DB_STATEMENT_TIMEOUT = "30000" # 30 seconds statement timeout
+        DB_MAX_LIFETIME      = "300"   # 5 minutes max connection lifetime
+        DEBUG_DB             = "true"  # Enable database debugging in staging
       }
       # Secret environment variables from Secret Manager
       env_from_key = {
@@ -269,12 +269,12 @@ module "cloud_run" {
 resource "null_resource" "update_traffic" {
   triggers = {
     # Trigger when the image changes
-    image_tag = local.image_tag
+    image_tag  = local.image_tag
     service_id = module.cloud_run.id
   }
 
   provisioner "local-exec" {
-    command = <<-EOT
+    command     = <<-EOT
       set -e
       echo "Waiting for Cloud Run service to be ready..."
       sleep 5
