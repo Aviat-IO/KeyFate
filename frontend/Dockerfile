@@ -12,8 +12,8 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml* ./
 
 # Install dependencies with frozen lockfile for reproducibility
-# Use cache mount for pnpm store to speed up installs
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+# Note: Cloud Build doesn't support BuildKit cache mounts yet
+RUN pnpm install --frozen-lockfile
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -45,9 +45,9 @@ RUN if [ -f .env ]; then \
     grep "^NEXT_PUBLIC_" .env || echo "No NEXT_PUBLIC_ variables found"; \
   fi
 
-# Build the app with build cache for Next.js
-RUN --mount=type=cache,id=nextjs,target=/app/.next/cache \
-    pnpm build
+# Build the app
+# Note: Cloud Build doesn't support BuildKit cache mounts yet
+RUN pnpm build
 
 # Production image, copy all the files and run next
 FROM base AS runner
