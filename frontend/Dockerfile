@@ -1,23 +1,33 @@
+# Use specific version for reproducibility
 FROM node:22-alpine AS base
 
-# Install pnpm
-RUN npm install -g pnpm
+# Install pnpm globally with specific version for consistency
+RUN npm install -g pnpm@9
 
 # Install dependencies only when needed
 FROM base AS deps
 WORKDIR /app
 
-# Copy package.json and lock file
+# Copy only package files first (better caching)
 COPY package.json pnpm-lock.yaml* ./
 
-# Install dependencies with lockfile regeneration if needed
-RUN pnpm install --no-frozen-lockfile || pnpm install
+# Install dependencies with frozen lockfile for reproducibility
+# Use cache mount for pnpm store to speed up installs
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
+
+# Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+
+# Copy source code and build files
+# Order matters: less frequently changing files first
+COPY public ./public
+COPY src ./src
+COPY *.json *.ts *.js *.mjs ./
+COPY .env* ./
 
 # Accept build argument for environment
 # This determines which .env files to use
@@ -35,9 +45,9 @@ RUN if [ -f .env ]; then \
     grep "^NEXT_PUBLIC_" .env || echo "No NEXT_PUBLIC_ variables found"; \
   fi
 
-# Build the app with environment variables loaded
-# Next.js will load .env and .env.production files during build
-RUN pnpm build
+# Build the app with build cache for Next.js
+RUN --mount=type=cache,id=nextjs,target=/app/.next/cache \
+    pnpm build
 
 # Production image, copy all the files and run next
 FROM base AS runner
@@ -45,8 +55,9 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Create user/group in one layer
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
 
 # Copy the public folder
 COPY --from=builder /app/public ./public

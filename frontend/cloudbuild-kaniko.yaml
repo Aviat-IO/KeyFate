@@ -1,0 +1,32 @@
+# Optimized Cloud Build using Kaniko for superior caching
+steps:
+  # Build and push the Docker image using Kaniko
+  - name: 'gcr.io/kaniko-project/executor:latest'
+    args:
+      - '--cache=true'
+      - '--cache-ttl=168h'  # Cache for 1 week
+      - '--cache-repo=${_CACHE_REPO}'
+      - '--context=frontend'
+      - '--dockerfile=frontend/Dockerfile'
+      - '--destination=${_IMAGE_URL}'
+      - '--build-arg=BUILD_ENV=${_BUILD_ENV}'
+      - '--snapshot-mode=redo'
+      - '--use-new-run'
+      - '--compressed-caching=false'
+      - '--single-snapshot'
+
+# Default substitutions (will be overridden by Terraform)
+substitutions:
+  _IMAGE_URL: '${_IMAGE_URL}'
+  _BUILD_ENV: 'staging'
+  _CACHE_REPO: 'us-central1-docker.pkg.dev/${PROJECT_ID}/cloud-run/cache'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  # Kaniko works well with standard machines
+  machineType: 'E2_STANDARD_8'
+  # Disk size for build
+  diskSizeGb: 50
+
+# Timeout for the entire build (5 minutes should be enough with Kaniko caching)
+timeout: '300s'

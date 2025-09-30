@@ -1,0 +1,82 @@
+# Git
+.git
+.gitignore
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Node
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Next.js
+.next
+out
+build
+dist
+
+# Testing
+coverage
+.nyc_output
+__tests__
+__mocks__
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation
+README.md
+CONTRIBUTING.md
+CHANGELOG.md
+docs
+
+# Environment files (we handle these separately)
+.env.local
+.env.development
+.env.test
+
+# Temporary files
+tmp
+temp
+*.tmp
+*.temp
+
+# Logs
+logs
+*.log
+
+# Package manager files
+.pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# Cache directories
+.turbo
+.cache
+.parcel-cache
+
+# Misc
+.editorconfig
+.eslintcache
+.prettierignore
+.stylelintcache

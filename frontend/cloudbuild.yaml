@@ -1,16 +1,64 @@
 steps:
-  # Build the Docker image
+  # Pull the latest image for caching (if it exists)
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        docker pull ${_IMAGE_URL}-cache-deps || true
+        docker pull ${_IMAGE_URL}-cache-builder || true
+        docker pull ${_IMAGE_URL} || true
+
+  # Build the Docker image with intelligent caching
+  # Step 1: Build dependencies layer (rarely changes)
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
-      - '--no-cache'
+      - '--cache-from=${_IMAGE_URL}-cache-deps'
+      - '--target=deps'
+      - '--platform=linux/amd64'
+      - '--build-arg=BUILD_ENV=${_BUILD_ENV}'
+      - '-t=${_IMAGE_URL}-cache-deps'
+      - '-f=frontend/Dockerfile'
+      - './frontend'
+
+  # Step 2: Build the builder stage (changes when source code changes)
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--cache-from=${_IMAGE_URL}-cache-deps'
+      - '--cache-from=${_IMAGE_URL}-cache-builder'
+      - '--target=builder'
+      - '--platform=linux/amd64'
+      - '--build-arg=BUILD_ENV=${_BUILD_ENV}'
+      - '-t=${_IMAGE_URL}-cache-builder'
+      - '-f=frontend/Dockerfile'
+      - './frontend'
+
+  # Step 3: Build the final image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--cache-from=${_IMAGE_URL}-cache-deps'
+      - '--cache-from=${_IMAGE_URL}-cache-builder'
+      - '--cache-from=${_IMAGE_URL}'
       - '--platform=linux/amd64'
       - '--build-arg=BUILD_ENV=${_BUILD_ENV}'
       - '-t=${_IMAGE_URL}'
       - '-f=frontend/Dockerfile'
       - './frontend'
 
-  # Push the image to Artifact Registry
+  # Push all images for caching
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '${_IMAGE_URL}-cache-deps'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '${_IMAGE_URL}-cache-builder'
+
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
@@ -23,7 +71,10 @@ substitutions:
 
 options:
   logging: CLOUD_LOGGING_ONLY
-  machineType: 'E2_HIGHCPU_8'
+  # Use a machine with more CPU for faster builds
+  machineType: 'E2_HIGHCPU_32'
+  # Disk size for build
+  diskSizeGb: 100
 
-# Timeout for the entire build (20 minutes)
-timeout: '1200s'
+# Timeout for the entire build (10 minutes should be enough with caching)
+timeout: '600s'
