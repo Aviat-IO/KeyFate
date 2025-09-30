@@ -2,20 +2,32 @@
 .git/
 .gitignore
 
-# Node modules and package managers
+# Node modules and package managers (anywhere in the tree)
+**/node_modules/
 node_modules/
 .pnpm-store/
 .npm/
 .yarn/
 
-# Build artifacts and caches
+# Build artifacts and caches (anywhere in the tree)
+**/.next/
 .next/
+**/dist/
 dist/
+**/build/
 build/
 .turbo/
 .cache/
 coverage/
 .nyc_output/
+# Terraform and Terragrunt caches (CRITICAL - these are huge!)
+**/.terragrunt-cache/
+.terragrunt-cache/
+**/.terraform/
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
 
 # Development and IDE files
 .vscode/
@@ -92,6 +104,7 @@ __tests__/
 *.spec.js
 *.spec.ts
 *.spec.tsx
+
 
 # Development config files
 .eslintrc*
