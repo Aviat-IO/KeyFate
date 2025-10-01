@@ -1,52 +1,27 @@
-# Use specific version for reproducibility
 FROM node:22-alpine AS base
+RUN npm install -g pnpm
 
-# Install pnpm globally with specific version for consistency
-RUN npm install -g pnpm@9
-
-# Install dependencies only when needed
+# Install dependencies
 FROM base AS deps
 WORKDIR /app
-
-# Copy only package files first (better caching)
 COPY package.json pnpm-lock.yaml* ./
-
-# Install dependencies with frozen lockfile for reproducibility
-# Note: Cloud Build doesn't support BuildKit cache mounts yet
 RUN pnpm install --frozen-lockfile
 
-# Rebuild the source code only when needed
+# Build application
 FROM base AS builder
 WORKDIR /app
-
-# Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
+COPY . .
 
-# Copy source code and build files
-# Order matters: less frequently changing files first
-COPY public ./public
-COPY src ./src
-COPY *.json *.ts *.js *.mjs ./
-COPY .env* ./
-
-# Accept build argument for environment
-# This determines which .env files to use
+# Accept build arguments for Next.js build
 ARG BUILD_ENV=production
+ARG NEXTAUTH_URL
+ARG NEXT_PUBLIC_SITE_URL
 
-# Note: We don't need to copy .env files anymore since we're using runtime configuration
-# Environment variables will be injected at runtime by Cloud Run from Secret Manager
+# Set environment variables for build
+ENV NEXTAUTH_URL=$NEXTAUTH_URL
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 
-# Debug: Show what environment files exist
-RUN ls -la .env* || true
-
-# Debug: Show the content of .env files (without secrets)
-RUN if [ -f .env ]; then \
-    echo "=== .env file content (NEXT_PUBLIC vars only) ==="; \
-    grep "^NEXT_PUBLIC_" .env || echo "No NEXT_PUBLIC_ variables found"; \
-  fi
-
-# Build the app
-# Note: Cloud Build doesn't support BuildKit cache mounts yet
 RUN pnpm build
 
 # Production image, copy all the files and run next
@@ -54,10 +29,10 @@ FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV PORT=3000
 
-# Create user/group in one layer
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
 # Copy the public folder
 COPY --from=builder /app/public ./public

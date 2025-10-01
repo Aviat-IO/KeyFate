@@ -3,10 +3,10 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
+import { getBaseUrl, withProductionConfig } from "./auth-config-production";
 import { assertValidOAuthConfig } from "./auth/oauth-config-validator";
 import { validatePassword } from "./auth/password";
 import { authenticateUser } from "./auth/users";
-import { withProductionConfig, getBaseUrl } from "./auth-config-production";
 import { validateAuthEnvironment } from "./auth/validate-env";
 
 // Validate auth environment and OAuth configuration at startup (skip in test environment)
@@ -14,7 +14,10 @@ if (process.env.NODE_ENV !== "test") {
   // First validate environment variables
   const envValidation = validateAuthEnvironment();
   if (!envValidation.isValid) {
-    console.error("[Auth Config] Missing environment variables:", envValidation.missing);
+    console.error(
+      "[Auth Config] Missing environment variables:",
+      envValidation.missing,
+    );
   }
 
   // Then validate OAuth configuration
@@ -59,10 +62,9 @@ if (
           prompt: "consent",
           access_type: "offline",
           response_type: "code",
-          // Explicitly set the redirect URI
-          redirect_uri: `${baseUrl}/api/auth/callback/google`
-        }
-      }
+          redirect_uri: `${baseUrl}/api/auth/callback/google`,
+        },
+      },
     }),
   );
 } else if (process.env.NODE_ENV === "development") {
@@ -137,27 +139,14 @@ const baseAuthConfig = {
      * Ensure OAuth redirects use the correct base URL
      */
     async redirect({ url, baseUrl }) {
-      // Get the correct base URL from environment
       const correctBaseUrl = getBaseUrl();
 
-      // If the URL is relative, use our correct base URL
-      if (url.startsWith("/")) {
-        return `${correctBaseUrl}${url}`;
-      }
-
-      // If the URL is for the wrong host (0.0.0.0), fix it
+      if (url.startsWith("/")) return `${correctBaseUrl}${url}`;
       if (url.includes("0.0.0.0")) {
-        const fixedUrl = url.replace(/https?:\/\/0\.0\.0\.0(:\d+)?/, correctBaseUrl);
-        console.log("[Auth] Fixed redirect URL from", url, "to", fixedUrl);
-        return fixedUrl;
+        return url.replace(/https?:\/\/0\.0\.0\.0(:\d+)?/, correctBaseUrl);
       }
+      if (url.startsWith(correctBaseUrl)) return url;
 
-      // If the URL is for the same site, allow it
-      if (url.startsWith(correctBaseUrl)) {
-        return url;
-      }
-
-      // Default to base URL for safety
       return correctBaseUrl;
     },
     /**

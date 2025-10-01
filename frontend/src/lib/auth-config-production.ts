@@ -5,24 +5,29 @@
 
 import type { AuthOptions } from "next-auth/core/types";
 
+// Augment AuthOptions to include trustHost
+declare module "next-auth/core/types" {
+  interface AuthOptions {
+    trustHost?: boolean;
+  }
+}
+
 /**
  * Get the base URL for callbacks, ensuring it works in all environments
  */
 export function getBaseUrl(): string {
   // In production/staging, use NEXTAUTH_URL
-  if (process.env.NEXTAUTH_URL) {
-    // Ensure it's not the container's internal address
-    if (!process.env.NEXTAUTH_URL.includes("0.0.0.0")) {
-      return process.env.NEXTAUTH_URL;
-    }
-    // If NEXTAUTH_URL contains 0.0.0.0, use NEXT_PUBLIC_SITE_URL
-    if (process.env.NEXT_PUBLIC_SITE_URL) {
-      return process.env.NEXT_PUBLIC_SITE_URL;
-    }
+  if (
+    process.env.NEXTAUTH_URL && !process.env.NEXTAUTH_URL.includes("0.0.0.0")
+  ) {
+    return process.env.NEXTAUTH_URL;
   }
 
-  // Also check NEXT_PUBLIC_SITE_URL as a fallback
-  if (process.env.NEXT_PUBLIC_SITE_URL && !process.env.NEXT_PUBLIC_SITE_URL.includes("0.0.0.0")) {
+  // Fallback to NEXT_PUBLIC_SITE_URL
+  if (
+    process.env.NEXT_PUBLIC_SITE_URL &&
+    !process.env.NEXT_PUBLIC_SITE_URL.includes("0.0.0.0")
+  ) {
     return process.env.NEXT_PUBLIC_SITE_URL;
   }
 
@@ -31,7 +36,7 @@ export function getBaseUrl(): string {
     return "http://localhost:3000";
   }
 
-  // Fallback for edge cases
+  // Fallback for staging
   return "https://staging.keyfate.com";
 }
 
@@ -126,11 +131,10 @@ export function withProductionConfig(baseConfig: AuthOptions): AuthOptions {
 
   return {
     ...baseConfig,
-    // Ensure cookies are properly configured for production
     cookies: getCookieConfig(),
-    // Use secure cookies in production
     useSecureCookies: isSecure,
-    // Debug only in development
+    // Trust host headers when behind proxies (Cloud Run, etc.)
+    trustHost: true,
     debug: process.env.NODE_ENV === "development",
   };
 }

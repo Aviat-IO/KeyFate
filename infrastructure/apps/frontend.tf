@@ -70,7 +70,7 @@ resource "null_resource" "build_and_push_frontend" {
       gcloud builds submit $REPO_ROOT \
         --project=${module.project.id} \
         --config=${local.frontend_app_dir}/cloudbuild.yaml \
-        --substitutions="_IMAGE_URL=$BUILD_TAG,_BUILD_ENV=${var.env == "prod" ? "production" : "staging"}"
+        --substitutions="_IMAGE_URL=$BUILD_TAG,_BUILD_ENV=${var.env == "prod" ? "production" : "staging"},_NEXTAUTH_URL=${var.next_public_site_url},_NEXT_PUBLIC_SITE_URL=${var.next_public_site_url}"
 
       echo "Cloud Build completed successfully!"
 
@@ -144,6 +144,10 @@ module "cloud_run" {
       env = {
         # NextAuth.js requires NEXTAUTH_URL for production deployments
         NEXTAUTH_URL = var.next_public_site_url
+        # Also set internal override to ensure NextAuth never falls back to 0.0.0.0
+        NEXTAUTH_URL_INTERNAL = var.next_public_site_url
+        # Older NextAuth versions require this env to trust X-Forwarded-Host
+        AUTH_TRUST_HOST = "true"
         # Environment indicator for runtime checks
         NEXT_PUBLIC_ENV = var.env
         # All NEXT_PUBLIC_ variables that the app needs

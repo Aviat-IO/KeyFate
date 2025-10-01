@@ -48,6 +48,8 @@ CHANGELOG.md
 docs
 
 # Environment files (we handle these separately)
+.env
+.env.production
 .env.local
 .env.development
 .env.test
