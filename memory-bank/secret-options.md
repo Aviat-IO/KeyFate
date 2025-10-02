@@ -139,7 +139,7 @@ This section details the actual implementation choices and progress for using Sh
 ### Core Flow Implemented
 
 1. **Secret Creation (Client-Side Logic in `NewSecretForm.tsx`):
-    - User inputs their raw secret message, recipient details, check-in frequency, and SSS parameters (total shares N, threshold T).
+    - User inputs their raw secret message, recipient details, trigger deadline, and SSS parameters (total shares N, threshold T).
     - The SSS parameters (N, T) are configurable by the user (default N=3, T=2; min N=2, min T=2, max N/T=10; T <= N).
     - The raw secret is **never sent to the server**.
     - Client-side, the `shamirs-secret-sharing` library splits the secret message into N shares.

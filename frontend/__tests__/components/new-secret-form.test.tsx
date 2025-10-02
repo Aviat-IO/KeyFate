@@ -41,17 +41,17 @@ describe("NewSecretForm", () => {
   it("should show validation error for check_in_days on blur when value is less than 2", async () => {
     render(<NewSecretForm isPaid={true} />)
 
-    const checkInDaysInput = screen.getByLabelText(/check-in frequency/i)
-    
+    const checkInDaysInput = screen.getByLabelText(/trigger deadline/i)
+
     // Enter a value less than 2
     fireEvent.change(checkInDaysInput, { target: { value: "1" } })
-    
+
     // Trigger blur event
     fireEvent.blur(checkInDaysInput)
 
     // Wait for validation error to appear
     await waitFor(() => {
-      expect(screen.getByText("Check-in frequency must be at least 2 days.")).toBeInTheDocument()
+      expect(screen.getByText("Trigger deadline must be at least 2 days.")).toBeInTheDocument()
     })
   })
 
@@ -131,7 +131,7 @@ describe("NewSecretForm", () => {
     render(<NewSecretForm isPaid={false} />)
 
     // Should show select dropdown with default value
-    const selectTrigger = screen.getByRole("combobox", { name: /check-in frequency/i })
+    const selectTrigger = screen.getByRole("combobox", { name: /trigger deadline/i })
     expect(selectTrigger).toBeInTheDocument()
     
     // Click to open dropdown and check options
