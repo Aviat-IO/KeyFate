@@ -73,7 +73,7 @@ describe("EditSecretForm", () => {
 
     // Should show select dropdown with current value
     const selectTrigger = screen.getByRole("combobox", {
-      name: /check-in frequency/i,
+      name: /trigger deadline/i,
     })
     expect(selectTrigger).toBeInTheDocument()
 
@@ -125,9 +125,9 @@ describe("EditSecretForm", () => {
       />,
     )
 
-    // Change the check-in frequency using select
+    // Change the trigger deadline using select
     const selectTrigger = screen.getByRole("combobox", {
-      name: /check-in frequency/i,
+      name: /trigger deadline/i,
     })
     fireEvent.click(selectTrigger)
 
@@ -167,7 +167,7 @@ describe("EditSecretForm", () => {
       />,
     )
 
-    // Change the check-in frequency using number input
+    // Change the trigger deadline using number input
     const numberInput = screen.getByDisplayValue("90")
     fireEvent.change(numberInput, { target: { value: "45" } })
 
@@ -205,7 +205,7 @@ describe("EditSecretForm", () => {
     // Wait for validation error
     await waitFor(() => {
       expect(
-        screen.getByText("Check-in frequency must be at least 2 days."),
+        screen.getByText("Trigger deadline must be at least 2 days."),
       ).toBeInTheDocument()
     })
   })

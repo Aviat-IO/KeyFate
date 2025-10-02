@@ -49,6 +49,11 @@ export default withAuth(
           return true;
         }
 
+        // Cron endpoints use Bearer token authentication, not session auth
+        if (pathname.startsWith("/api/cron/")) {
+          return true;
+        }
+
         // Public routes are always authorized
         if (isPublicRoute) {
           return true;

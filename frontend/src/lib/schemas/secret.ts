@@ -8,7 +8,7 @@ export const secretFormSchema = z.object({
   recipient_phone: z.string().optional(),
   contact_method: z.enum(["email", "phone", "both"]),
   check_in_days: z.string().refine((val) => parseInt(val, 10) >= 2, {
-    message: "Check-in frequency must be at least 2 days.",
+    message: "Trigger deadline must be at least 2 days.",
   }),
   sss_shares_total: z
     .union([z.string(), z.number()])
@@ -81,7 +81,7 @@ export const secretSchema = z.object({
     z.number({
       required_error: "Check-in days is required.",
       invalid_type_error: "Check-in days must be a number.",
-    }).min(2, "Check-in frequency must be at least 2 days."),
+    }).min(2, "Trigger deadline must be at least 2 days."),
   ),
   next_check_in: z.string().optional(),
   status: z.enum(["active", "paused", "triggered"]).default("active"),

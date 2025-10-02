@@ -320,7 +320,7 @@ export function NewSecretForm({ isPaid = false }: NewSecretFormProps) {
                 name="check_in_days"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Check-in Frequency</FormLabel>
+                    <FormLabel>Trigger Deadline</FormLabel>
                     <FormControl>
                       {isPaid ? (
                         <Input

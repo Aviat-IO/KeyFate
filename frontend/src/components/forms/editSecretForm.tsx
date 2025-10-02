@@ -48,7 +48,7 @@ const formSchema = z.object({
           required_error: "Check-in days is required.",
           invalid_type_error: "Check-in days must be a number.",
         })
-        .min(2, "Check-in frequency must be at least 2 days.")
+        .min(2, "Trigger deadline must be at least 2 days.")
         .max(365),
     ),
 })
@@ -280,7 +280,7 @@ export function EditSecretForm({
                 name="check_in_days"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Check-in Frequency</FormLabel>
+                    <FormLabel>Trigger Deadline</FormLabel>
                     <FormControl>
                       {isPaid ? (
                         <Input
