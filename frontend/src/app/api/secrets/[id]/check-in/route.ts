@@ -1,6 +1,6 @@
 import { authConfig } from "@/lib/auth-config";
 import { ensureUserExists } from "@/lib/auth/user-verification";
-import { db, secretsService } from "@/lib/db/drizzle";
+import { getDatabase, secretsService } from "@/lib/db/drizzle";
 import type { SecretUpdate } from "@/lib/db/schema";
 import { checkinHistory } from "@/lib/db/schema";
 import { mapDrizzleSecretToApiShape } from "@/lib/db/secret-mapper";
@@ -66,7 +66,8 @@ export async function POST(
     }
 
     // Record check-in history
-    await db.insert(checkinHistory).values({
+    const database = await getDatabase();
+    await database.insert(checkinHistory).values({
       secretId: id,
       userId: session.user.id,
       checkedInAt: now,
