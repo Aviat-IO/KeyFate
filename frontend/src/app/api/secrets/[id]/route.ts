@@ -1,5 +1,5 @@
 import { authConfig } from "@/lib/auth-config";
-import { db, secretsService } from "@/lib/db/drizzle";
+import { getDatabase, secretsService } from "@/lib/db/drizzle";
 import {
   checkinHistory,
   checkInTokens,
@@ -137,6 +137,9 @@ export async function DELETE(
     }
 
     // Cascade delete related records inside a transaction
+    // Get database connection for transaction
+    const db = await getDatabase();
+
     await db.transaction(async (tx) => {
       await tx.delete(checkinHistory).where(eq(checkinHistory.secretId, id));
       await tx.delete(checkInTokens).where(eq(checkInTokens.secretId, id));
