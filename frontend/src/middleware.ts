@@ -8,11 +8,6 @@ export default withAuth(
     const { pathname } = request.nextUrl;
     const token = request.nextauth.token;
 
-    // Log for debugging
-    console.log("[Middleware withAuth] Path:", pathname);
-    console.log("[Middleware withAuth] Token exists:", !!token);
-    console.log("[Middleware withAuth] Token ID:", token?.id || token?.sub);
-
     // If user is authenticated and trying to access sign-in page, redirect to dashboard
     if (token && pathname === "/sign-in") {
       const url = request.nextUrl.clone();

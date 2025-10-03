@@ -189,24 +189,9 @@ const baseAuthConfig = {
         // Convert string values to boolean
         if (typeof emailVerified === "string") {
           isEmailVerified = emailVerified.toLowerCase() === "true";
-          console.log(
-            "[Auth] Google OAuth email verification status (string):",
-            {
-              email: googleProfile.email,
-              emailVerified: emailVerified,
-              converted: isEmailVerified,
-            },
-          );
         } else if (typeof emailVerified === "boolean") {
           // Handle boolean values
           isEmailVerified = emailVerified;
-          console.log(
-            "[Auth] Google OAuth email verification status (boolean):",
-            {
-              email: googleProfile.email,
-              emailVerified: emailVerified,
-            },
-          );
         } else {
           // If email_verified field is missing or not recognized type, treat as unverified
           console.warn(
@@ -251,14 +236,6 @@ const baseAuthConfig = {
             };
 
             await db.insert(users).values(userData);
-            console.log("[Auth] Created new user for Google OAuth:", {
-              email: normalizedEmail,
-              name: userData.name,
-            });
-          } else {
-            console.log("[Auth] Existing user found for Google OAuth:", {
-              email: normalizedEmail,
-            });
           }
 
           return true;
@@ -279,13 +256,6 @@ const baseAuthConfig = {
       return false; // Deny access by default
     },
     async session({ session, token }) {
-      console.log("[Auth] Session callback triggered:", {
-        sessionUser: session?.user?.email,
-        tokenId: token?.id,
-        tokenSub: token?.sub,
-        tokenEmail: token?.email,
-      });
-
       if (session?.user) {
         // Always set the user ID from the token
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -294,37 +264,18 @@ const baseAuthConfig = {
         if (!session.user.email && token.email) {
           session.user.email = token.email as string;
         }
-        console.log(
-          "[Auth] Session callback: Set user.id to:",
-          token.id || token.sub,
-          "email:",
-          session.user.email,
-        );
       }
       return session;
     },
     async jwt({ token, user, account, profile }) {
-      console.log("[Auth] JWT callback triggered:", {
-        hasToken: !!token,
-        hasUser: !!user,
-        hasAccount: !!account,
-        hasProfile: !!profile,
-        accountProvider: account?.provider,
-        tokenId: token?.id,
-        userEmail: (profile as any)?.email || user?.email,
-      });
-
       // For Google OAuth, always look up the user in the database by email
       if (account?.provider === "google" && profile) {
-        console.log("[Auth] Processing Google OAuth in JWT callback");
         try {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const googleProfile = profile as any;
           const normalizedEmail = googleProfile.email?.toLowerCase().trim();
-          console.log("[Auth] Normalized email:", normalizedEmail);
 
           if (normalizedEmail) {
-            console.log("[Auth] Looking up user in database...");
             const db = await getDatabase();
             const dbUser = await db
               .select()
@@ -332,17 +283,8 @@ const baseAuthConfig = {
               .where(eq(users.email, normalizedEmail))
               .limit(1);
 
-            console.log(
-              "[Auth] Database lookup result:",
-              dbUser.length > 0 ? "FOUND" : "NOT_FOUND",
-            );
-
             if (dbUser.length > 0) {
               token.id = dbUser[0].id;
-              console.log(
-                "[Auth] JWT callback: Set token.id to database user ID:",
-                dbUser[0].id,
-              );
             } else {
               console.error(
                 "[Auth] JWT callback: User not found in database for email:",
@@ -355,7 +297,6 @@ const baseAuthConfig = {
         }
       } else if (user) {
         // For credentials provider, use the user ID directly
-        console.log("[Auth] Processing credentials provider in JWT callback");
         token.id = user.id;
       }
 
@@ -363,7 +304,6 @@ const baseAuthConfig = {
         token.accessToken = account.access_token;
       }
 
-      console.log("[Auth] JWT callback final token.id:", token.id);
       return token;
     },
   },
