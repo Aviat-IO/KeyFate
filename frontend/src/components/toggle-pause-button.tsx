@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Secret } from "@/types"
+import { mapApiSecretToDrizzleShape } from "@/lib/db/secret-mapper"
 import { Loader2, PauseIcon, PlayIcon } from "lucide-react"
 import { useState } from "react"
 
@@ -28,7 +29,10 @@ export function TogglePauseButton({
       const data = await response.json()
       if (data.error) throw new Error(data.error)
 
-      onToggleSuccess(data.secret)
+      // Convert API response (snake_case) to Drizzle format (camelCase)
+      const updatedSecret = mapApiSecretToDrizzleShape(data.secret)
+
+      onToggleSuccess(updatedSecret)
     } catch (error) {
       console.error("Error toggling pause:", error)
     } finally {

@@ -113,7 +113,11 @@ export function SecretCard({ secret }: SecretCardProps) {
   const { toast } = useToast()
 
   const handleCheckInSuccess = (updatedSecret: Secret) => {
-    setSecretState(updatedSecret)
+    // Merge updated fields with existing state to preserve all metadata
+    setSecretState(prevState => ({
+      ...prevState,
+      ...updatedSecret,
+    }))
     toast({
       title: "Checked in successfully",
       description: `Your check-in for "${secret.title}" has been recorded.`,
@@ -122,7 +126,11 @@ export function SecretCard({ secret }: SecretCardProps) {
   }
 
   const handleToggleSuccess = (updatedSecret: Secret) => {
-    setSecretState(updatedSecret)
+    // Merge updated fields with existing state to preserve all metadata
+    setSecretState(prevState => ({
+      ...prevState,
+      ...updatedSecret,
+    }))
     toast({
       title:
         updatedSecret.status === "active" ? "Secret resumed" : "Secret paused",

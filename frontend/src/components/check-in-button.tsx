@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { useConfig } from "@/contexts/ConfigContext"
 import { Secret } from "@/types"
+import { mapApiSecretToDrizzleShape } from "@/lib/db/secret-mapper"
 import { CheckCircle, Loader2 } from "lucide-react"
 import { useState } from "react"
 
@@ -47,7 +48,10 @@ export function CheckInButton({
       }
 
       const res = await response.json()
-      const updatedSecret = res.secret as Secret
+      const apiSecret = res.secret
+
+      // Convert API response (snake_case) to Drizzle format (camelCase)
+      const updatedSecret = mapApiSecretToDrizzleShape(apiSecret)
 
       onCheckInSuccess?.(updatedSecret)
     } catch (error) {
