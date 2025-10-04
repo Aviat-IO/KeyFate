@@ -3,12 +3,12 @@
 # Status: pending
 # Dependencies: 2, 3
 # Priority: high
-# Description: Deploy application to Google Cloud Run with proper staging and production environments
+# Description: Deploy application to Google Cloud Run with Google Cloud SQL PostgreSQL database and proper staging and production environments
 # Details:
-Infrastructure is configured with Terraform/Terragrunt but needs deployment. Tasks: 1) Deploy staging environment to Google Cloud Run, 2) Configure SSL certificates and custom domain, 3) Set up production database with proper backups, 4) Configure monitoring and alerting (Cloud Monitoring, Sentry), 5) Implement CI/CD pipeline for automated deployments, 6) Configure environment variables and secrets management, 7) Set up log aggregation and monitoring, 8) Deploy production environment with blue/green deployment strategy.
+Infrastructure is configured with Terraform/Terragrunt for Google Cloud deployment. Tasks: 1) Deploy staging environment to Google Cloud Run, 2) Set up Google Cloud SQL PostgreSQL instance with VPC configuration, 3) Configure SSL certificates and custom domain, 4) Deploy fresh schema using Drizzle ORM to Cloud SQL, 5) Configure proper IAM roles for Cloud SQL access, 6) Implement CI/CD pipeline for automated deployments, 7) Configure environment variables for Cloud SQL connection, 8) Set up database backup and monitoring, 9) Deploy production environment with complete Google Cloud infrastructure stack.
 
 # Test Strategy:
-Infrastructure tests, deployment pipeline tests, smoke tests for both environments, performance tests under load, disaster recovery tests
+Infrastructure tests, Cloud SQL connection tests, Drizzle migration tests, deployment pipeline tests, smoke tests for both environments, performance tests under load, database backup/restore tests
 
 # Subtasks:
 ## 1. Deploy staging environment to Google Cloud Run [pending]
@@ -17,45 +17,51 @@ Infrastructure tests, deployment pipeline tests, smoke tests for both environmen
 ### Details:
 Execute Terraform deployment for staging environment, configure Cloud Run service with appropriate resource limits, verify application deployment and health checks
 
-## 2. Configure SSL certificates and custom domain [pending]
+## 2. Set up Google Cloud SQL PostgreSQL instance with VPC configuration [pending]
+### Dependencies: None
+### Description: Deploy Cloud SQL PostgreSQL instance with proper VPC configuration, security settings, and high availability
+### Details:
+Create Cloud SQL PostgreSQL 15 instance with VPC peering, configure SSL/TLS encryption, set up authorized networks, enable high availability for production, configure storage auto-increase and backup settings. Use keyfate-db-production instance name with us-central1 region.
+
+## 3. Configure SSL certificates and custom domain [pending]
 ### Dependencies: 5.1
 ### Description: Set up SSL certificates and configure custom domain mapping for both staging and production environments
 ### Details:
-Configure Google-managed SSL certificates, set up custom domain mapping, verify HTTPS redirects and certificate validation
+Configure Google-managed SSL certificates, set up custom domain mapping for Cloud Run services, verify HTTPS redirects and certificate validation
 
-## 3. Set up production database with proper backups [pending]
-### Dependencies: 5.1
-### Description: Deploy production database instance with automated backup configuration and disaster recovery procedures
+## 4. Deploy fresh schema using Drizzle ORM to Cloud SQL [pending]
+### Dependencies: 5.2
+### Description: Execute Drizzle migrations to deploy the complete database schema to the new Cloud SQL instance
 ### Details:
-Configure production database instance, set up automated daily backups, implement point-in-time recovery, test backup restoration procedures
+Configure Drizzle connection to Cloud SQL using DATABASE_URL, run initial schema migration including all tables (secrets, user_subscriptions, reminder_jobs, etc.), verify all enums and constraints are properly created, test data integrity
 
-## 4. Configure monitoring and alerting (Cloud Monitoring, Sentry) [pending]
-### Dependencies: 5.1
-### Description: Implement comprehensive monitoring and alerting system using Google Cloud Monitoring and Sentry integration
+## 5. Configure proper IAM roles for Cloud SQL access [pending]
+### Dependencies: 5.2
+### Description: Set up IAM roles and service accounts for secure Cloud SQL access from Cloud Run
 ### Details:
-Set up Cloud Monitoring dashboards, configure alerting policies for critical metrics, integrate Sentry for error tracking, set up notification channels
+Create Cloud SQL client service account, configure IAM roles (Cloud SQL Client, Cloud SQL Instance User), set up Cloud SQL Proxy authentication, configure workload identity for Cloud Run service account
 
-## 5. Implement CI/CD pipeline for automated deployments [pending]
-### Dependencies: 5.2, 5.3
+## 6. Implement CI/CD pipeline for automated deployments [pending]
+### Dependencies: 5.3, 5.4
 ### Description: Create automated deployment pipeline with proper testing stages and deployment approvals
 ### Details:
-Configure GitHub Actions or Cloud Build pipeline, implement automated testing stages, set up deployment approvals, configure rollback procedures
+Configure GitHub Actions or Cloud Build pipeline, implement automated testing stages including Drizzle migrations, set up deployment approvals, configure rollback procedures, add database migration steps to pipeline
 
-## 6. Configure environment variables and secrets management [pending]
-### Dependencies: 5.3
-### Description: Set up secure environment variable and secrets management using Google Secret Manager
+## 7. Configure environment variables for Cloud SQL connection [pending]
+### Dependencies: 5.4, 5.5
+### Description: Set up secure environment variable and secrets management for Cloud SQL connectivity using Google Secret Manager
 ### Details:
-Migrate sensitive configuration to Google Secret Manager, configure environment-specific variables, implement secure secret rotation procedures
+Migrate DATABASE_URL and CLOUD_SQL_CONNECTION_NAME to Google Secret Manager, configure environment-specific variables for staging and production, implement secure secret rotation procedures, update Cloud Run service configuration with secret references
 
-## 7. Set up log aggregation and monitoring [pending]
+## 8. Set up database backup and monitoring [pending]
 ### Dependencies: 5.4
-### Description: Configure centralized logging and log analysis for application monitoring and debugging
+### Description: Configure automated backups, monitoring, and alerting for Cloud SQL instance
 ### Details:
-Configure Google Cloud Logging, set up log-based metrics and alerts, implement structured logging in application, create log analysis dashboards
+Configure automated daily backups with point-in-time recovery, set up Cloud Monitoring dashboards for database metrics, configure alerting policies for database performance and availability, integrate with Cloud Logging for query analysis
 
-## 8. Deploy production environment with blue/green deployment strategy [pending]
-### Dependencies: 5.5, 5.6, 5.7
-### Description: Deploy production environment using blue/green deployment strategy for zero-downtime updates
+## 9. Deploy production environment with complete Google Cloud infrastructure stack [pending]
+### Dependencies: 5.6, 5.7, 5.8
+### Description: Deploy production environment with all components integrated including Cloud Run, Cloud SQL, monitoring, and security
 ### Details:
-Implement blue/green deployment configuration, test traffic switching mechanisms, configure health checks and rollback procedures, verify production deployment
+Execute complete production deployment using Terraform/Terragrunt, verify Cloud Run to Cloud SQL connectivity, test complete application functionality, implement blue/green deployment strategy, validate all monitoring and alerting systems
 

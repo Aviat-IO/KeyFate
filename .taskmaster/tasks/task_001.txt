@@ -5,23 +5,23 @@
 # Priority: high
 # Description: Fix Google OAuth email verification and implement complete email verification workflow with OTP
 # Details:
-The current system shows email verification is not working (user.meta.email_verified not set to true). Need to: 1) Enable email verification with OTP in Supabase settings, 2) Fix Google OAuth flow to properly set email_verified flag, 3) Update auth middleware to enforce email verification, 4) Add email verification UI components and flows, 5) Test both Google OAuth and email/password verification flows. This blocks user onboarding and security.
+The current system shows email verification is not working properly with NextAuth. Need to: 1) Configure email verification for NextAuth system, 2) Fix Google OAuth flow in NextAuth to properly handle email verification, 3) Update auth middleware to enforce email verification, 4) Add email verification UI components and flows, 5) Test both Google OAuth and email/password verification flows. This blocks user onboarding and security.
 
 # Test Strategy:
 Unit tests for verification components, integration tests for auth flows, E2E tests for complete verification journey from signup to verified state
 
 # Subtasks:
-## 1. Configure Supabase Email Settings and OTP Verification [pending]
+## 1. Configure Email Verification for NextAuth System [cancelled]
 ### Dependencies: None
-### Description: Enable email verification with OTP in Supabase settings and configure email authentication templates
+### Description: Set up email verification workflow for NextAuth-based authentication system
 ### Details:
-Configure Supabase Auth settings to enable email verification, set up OTP verification flow, customize email templates for verification emails, configure SMTP settings for email delivery, and set appropriate verification timeouts and retry limits.
+Configure email verification for NextAuth authentication. Set up email verification flow with tokens/links, create custom email templates for verification emails, configure SMTP settings for direct email delivery (not through Supabase), and set appropriate verification timeouts and retry limits.
 
-## 2. Fix Google OAuth Email Verification Flag Implementation [pending]
-### Dependencies: 1.1
-### Description: Update Google OAuth flow to properly set email_verified flag in user metadata
+## 2. Fix Google OAuth Email Verification in NextAuth [done]
+### Dependencies: None
+### Description: Update NextAuth Google OAuth flow to properly handle email verification status
 ### Details:
-Investigate current Google OAuth implementation, fix the issue where user.meta.email_verified is not being set to true, ensure Google OAuth users are automatically marked as email verified, and handle edge cases for existing users.
+Fix NextAuth Google OAuth implementation to properly set email verification status in the database. Ensure Google OAuth users are automatically marked as email verified in the user table, update session to reflect verification status, and handle edge cases for existing users.
 
 ## 3. Update Authentication Middleware to Enforce Email Verification [pending]
 ### Dependencies: 1.2

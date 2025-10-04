@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     const processed = toTrigger.length;
     return NextResponse.json({
       processed,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
     console.error("[check-secrets] Error:", error);
