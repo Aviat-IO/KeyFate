@@ -37,7 +37,7 @@ interface EmailOptions {
 }
 
 // Email sending result
-interface EmailResult {
+export interface EmailResult {
   success: boolean;
   messageId?: string;
   provider?: string;

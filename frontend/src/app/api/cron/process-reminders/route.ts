@@ -3,8 +3,9 @@ import { secrets, users } from "@/lib/db/schema";
 import { and, eq, lt } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { decryptMessage } from "@/lib/encryption";
-import { sendSecretDisclosureEmail, sendEmail } from "@/lib/email/email-service";
+import { sendSecretDisclosureEmail } from "@/lib/email/email-service";
 import { logEmailFailure } from "@/lib/email/email-failure-logger";
+import { sendAdminNotification } from "@/lib/email/admin-notification-service";
 
 // Prevent static analysis during build
 export const dynamic = "force-dynamic";
@@ -52,32 +53,6 @@ async function withRetry<T>(
   throw lastError!;
 }
 
-/**
- * Send admin notification for email failures
- */
-async function sendAdminNotification(
-  secretTitle: string,
-  recipientEmail: string,
-  errorMessage: string
-): Promise<void> {
-  try {
-    await sendEmail({
-      to: "support@aviat.io",
-      subject: `Email Delivery Failure - ${secretTitle}`,
-      html: `
-        <h2>Email Delivery Failure</h2>
-        <p><strong>Secret:</strong> ${secretTitle}</p>
-        <p><strong>Recipient:</strong> ${recipientEmail}</p>
-        <p><strong>Error:</strong> ${errorMessage}</p>
-        <p><strong>Time:</strong> ${new Date().toISOString()}</p>
-      `,
-      text: `Email Delivery Failure\n\nSecret: ${secretTitle}\nRecipient: ${recipientEmail}\nError: ${errorMessage}\nTime: ${new Date().toISOString()}`,
-      priority: "high",
-    });
-  } catch (error) {
-    console.error("[process-reminders] Failed to send admin notification:", error);
-  }
-}
 
 export async function POST(req: NextRequest) {
   if (!authorize(req)) {
@@ -163,14 +138,14 @@ export async function POST(req: NextRequest) {
             errorMessage: emailResult.error || "Unknown error",
           });
 
-          // Send admin notification for permanent failures
-          if (!emailResult.retryable) {
-            await sendAdminNotification(
-              secret.title,
-              secret.recipientEmail || "",
-              emailResult.error || "Unknown error"
-            );
-          }
+          // Send admin notification for critical failures (disclosure emails always critical)
+          await sendAdminNotification({
+            emailType: "disclosure",
+            recipient: secret.recipientEmail || "",
+            errorMessage: emailResult.error || "Unknown error",
+            secretTitle: secret.title,
+            timestamp: new Date(),
+          });
         }
       } catch (error) {
         console.error(`[process-reminders] Error processing secret ${secret.id}:`, error);
@@ -184,12 +159,14 @@ export async function POST(req: NextRequest) {
           errorMessage: error instanceof Error ? error.message : "Unknown error",
         });
 
-        // Send admin notification
-        await sendAdminNotification(
-          secret.title,
-          secret.recipientEmail || "",
-          error instanceof Error ? error.message : "Unknown error"
-        );
+        // Send admin notification for critical failures
+        await sendAdminNotification({
+          emailType: "disclosure",
+          recipient: secret.recipientEmail || "",
+          errorMessage: error instanceof Error ? error.message : "Unknown error",
+          secretTitle: secret.title,
+          timestamp: new Date(),
+        });
       }
     }
 

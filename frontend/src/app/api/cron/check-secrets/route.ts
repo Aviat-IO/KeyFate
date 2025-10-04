@@ -1,9 +1,10 @@
 import { getDatabase } from "@/lib/db/drizzle";
-import { secrets, checkInTokens, users } from "@/lib/db/schema";
-import { and, eq, isNotNull } from "drizzle-orm";
+import { secrets, checkInTokens, users, emailFailures } from "@/lib/db/schema";
+import { and, eq, isNotNull, desc } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { sendReminderEmail } from "@/lib/email/email-service";
 import { logEmailFailure } from "@/lib/email/email-failure-logger";
+import { sendAdminNotification } from "@/lib/email/admin-notification-service";
 import { randomBytes } from "crypto";
 
 // Prevent static analysis during build
@@ -157,6 +158,7 @@ async function processSecret(
 
     if (!result.success) {
       // Log failure to email_failures table
+      const db = await getDatabase();
       await logEmailFailure({
         emailType: "reminder",
         provider: (result.provider as "sendgrid" | "console-dev" | "resend") || "sendgrid",
@@ -164,6 +166,32 @@ async function processSecret(
         subject: `Check-in Reminder: ${secret.title}`,
         errorMessage: result.error || "Unknown error",
       });
+
+      // Check retry count for this recipient/secret combination
+      const recentFailures = await db.select()
+        .from(emailFailures)
+        .where(
+          and(
+            eq(emailFailures.emailType, "reminder"),
+            eq(emailFailures.recipient, user.email)
+          )
+        )
+        .orderBy(desc(emailFailures.createdAt))
+        .limit(5);
+
+      const retryCount = recentFailures.reduce((sum, f) => sum + f.retryCount, 0);
+
+      // Send admin notification if retry count exceeds threshold (>3 retries)
+      if (retryCount > 3) {
+        await sendAdminNotification({
+          emailType: "reminder",
+          recipient: user.email,
+          errorMessage: result.error || "Unknown error",
+          secretTitle: secret.title,
+          timestamp: new Date(),
+          retryCount,
+        });
+      }
 
       return {
         sent: false,
