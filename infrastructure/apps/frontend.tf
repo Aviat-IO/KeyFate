@@ -172,7 +172,6 @@ module "cloud_run" {
         DB_IDLE_TIMEOUT      = "20"    # 20 seconds idle timeout (release connections faster)
         DB_STATEMENT_TIMEOUT = "30000" # 30 seconds statement timeout
         DB_MAX_LIFETIME      = "300"   # 5 minutes max connection lifetime
-        DEBUG_DB             = "true"  # Enable database debugging in staging
       }
       # Secret environment variables from Secret Manager
       env_from_key = {
