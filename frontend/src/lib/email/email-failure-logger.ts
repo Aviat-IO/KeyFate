@@ -5,7 +5,7 @@
  * Supports retry tracking, resolution management, and cleanup policies
  */
 
-import { db } from '@/lib/db';
+import { db } from '@/lib/db/drizzle';
 import { emailFailures, type EmailFailure, type EmailFailureInsert } from '@/lib/db/schema';
 import { eq, and, lte, isNull, lt } from 'drizzle-orm';
 
