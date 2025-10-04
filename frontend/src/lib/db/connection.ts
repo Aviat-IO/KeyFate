@@ -44,13 +44,16 @@ if (connectionString && connectionString.includes("/cloudsql/")) {
       ssl: false // Unix sockets don't need SSL
     };
 
-    console.log('Parsed Unix socket connection:', {
-      host,
-      database,
-      username,
-      passwordLength: password.length,
-      passwordEndsWithEquals: password.endsWith('=')
-    });
+    // Only log in development or when DEBUG_DB is enabled
+    if (process.env.NODE_ENV === "development" || process.env.DEBUG_DB === "true") {
+      console.log('Parsed Unix socket connection:', {
+        host,
+        database,
+        username,
+        passwordLength: password.length,
+        passwordEndsWithEquals: password.endsWith('=')
+      });
+    }
   } else {
     console.error('Failed to parse Unix socket connection string');
     connectionOptions = connectionString;
@@ -93,8 +96,8 @@ const connectionConfig = {
   },
 };
 
-// Debug logging in production to help troubleshoot
-if (process.env.NODE_ENV === 'production' && typeof connectionOptions === 'object') {
+// Debug logging only when DEBUG_DB is enabled
+if (process.env.DEBUG_DB === 'true' && typeof connectionOptions === 'object') {
   console.log('Database connection config:', {
     host: connectionOptions.host,
     database: connectionOptions.database,
