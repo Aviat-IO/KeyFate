@@ -54,7 +54,7 @@ module "cloudsql_instance" {
   # Cost-optimized instance sizes
   # Dev/Staging: db-f1-micro (shared CPU, 0.6 GB RAM, ~$7/month)
   # Prod: db-g1-small (shared CPU, 1.7 GB RAM, ~$25/month) or db-standard-1 (1 vCPU, 3.75 GB RAM, ~$50/month)
-  tier             = var.env == "prod" ? "db-g1-small" : "db-f1-micro"
+  tier = var.env == "prod" ? "db-g1-small" : "db-f1-micro"
 
   terraform_deletion_protection = var.deletion_protection
 
@@ -69,7 +69,7 @@ module "cloudsql_instance" {
 
   network_config = {
     connectivity = {
-      public_ipv4 = var.cloudsql_enable_public_ip  # Controlled via variable
+      public_ipv4 = var.cloudsql_enable_public_ip # Controlled via variable
       psa_config = {
         private_network = module.vpc.self_link
         allocated_ip_ranges = {
@@ -77,7 +77,7 @@ module "cloudsql_instance" {
         }
       }
     }
-    authorized_networks = var.cloudsql_authorized_networks  # Controlled via variable
+    authorized_networks = var.cloudsql_authorized_networks # Controlled via variable
   }
 
   # Cost-optimized backup configuration
@@ -85,10 +85,10 @@ module "cloudsql_instance" {
     enabled                        = true
     start_time                     = "02:00"
     location                       = var.region
-    point_in_time_recovery_enabled = var.env == "prod" ? true : false  # Disable PITR for dev
-    retention_count                = var.env == "prod" ? 7 : 1          # Minimal retention for dev
-    log_retention_days             = var.env == "prod" ? 7 : 1          # Minimal log retention for dev
-    transaction_log_retention_days = var.env == "prod" ? 7 : 1          # Minimal transaction log retention
+    point_in_time_recovery_enabled = var.env == "prod" ? true : false # Disable PITR for dev
+    retention_count                = var.env == "prod" ? 7 : 1        # Minimal retention for dev
+    log_retention_days             = var.env == "prod" ? 7 : 1        # Minimal log retention for dev
+    transaction_log_retention_days = var.env == "prod" ? 7 : 1        # Minimal transaction log retention
   }
 
   # Remove problematic flags for now - will add back once instance is created
@@ -96,8 +96,8 @@ module "cloudsql_instance" {
 
   # Disable insights for cost optimization (only enable in prod if needed)
   insights_config = var.env == "prod" ? {
-    record_application_tags = false  # Disabled for cost optimization
-    record_client_address   = false  # Disabled for cost optimization
+    record_application_tags = false # Disabled for cost optimization
+    record_client_address   = false # Disabled for cost optimization
   } : null
 
   maintenance_config = {
@@ -108,7 +108,7 @@ module "cloudsql_instance" {
   }
 
   ssl = {
-    mode = "ALLOW_UNENCRYPTED_AND_ENCRYPTED"  # Allow both SSL and non-SSL connections
+    mode = "ALLOW_UNENCRYPTED_AND_ENCRYPTED" # Allow both SSL and non-SSL connections
   }
 
   depends_on = [google_service_networking_connection.private_vpc_connection]
@@ -134,7 +134,7 @@ resource "google_secret_manager_secret" "database_url" {
 }
 
 resource "google_secret_manager_secret_version" "database_url" {
-  secret      = google_secret_manager_secret.database_url.id
+  secret = google_secret_manager_secret.database_url.id
   # Use Unix socket for reliable connection (avoiding VPC connector issues)
   # Cloud Run v2 with explicit Cloud SQL connection mounts Unix socket at /cloudsql
   # Format: postgresql://username:password@/database?host=/cloudsql/CONNECTION_NAME
@@ -152,7 +152,7 @@ resource "google_secret_manager_secret" "database_url_private" {
 }
 
 resource "google_secret_manager_secret_version" "database_url_private" {
-  secret      = google_secret_manager_secret.database_url_private.id
+  secret = google_secret_manager_secret.database_url_private.id
   # Use private IP for VPC-based connections
   secret_data = "postgresql://${local.db_user}:${var.db_password}@${module.cloudsql_instance.ip}:5432/${local.db_name}?sslmode=require"
 }
@@ -170,8 +170,8 @@ resource "google_secret_manager_secret" "database_url_public" {
 }
 
 resource "google_secret_manager_secret_version" "database_url_public" {
-  count       = var.cloudsql_enable_public_ip ? 1 : 0
-  secret      = google_secret_manager_secret.database_url_public[0].id
+  count  = var.cloudsql_enable_public_ip ? 1 : 0
+  secret = google_secret_manager_secret.database_url_public[0].id
   # Access the public IP from the instances output
   secret_data = "postgresql://${local.db_user}:${var.db_password}@${module.cloudsql_instance.instances.primary.public_ip_address}:5432/${local.db_name}?sslmode=require"
 }
@@ -213,10 +213,10 @@ resource "google_vpc_access_connector" "vpc_connector" {
   name          = "keyfate-vpc-${var.env}"
   region        = var.region
   network       = module.vpc.name
-  ip_cidr_range = "10.1.0.0/28" # /28 gives 16 IPs, sufficient for Cloud Run connector
-  machine_type  = "f1-micro"  # Small but reliable instance type
-  min_instances = 2  # Minimum required by Google Cloud (same for dev and prod)
-  max_instances = var.env == "prod" ? 10 : 5  # Scale up to 10 in prod, 5 in dev/staging
+  ip_cidr_range = "10.1.0.0/28"              # /28 gives 16 IPs, sufficient for Cloud Run connector
+  machine_type  = "f1-micro"                 # Small but reliable instance type
+  min_instances = 2                          # Minimum required by Google Cloud (same for dev and prod)
+  max_instances = var.env == "prod" ? 10 : 5 # Scale up to 10 in prod, 5 in dev/staging
 
   depends_on = [module.vpc]
 }
@@ -253,19 +253,4 @@ output "cloudsql_info" {
     private_ip_range = google_compute_global_address.private_ip_address.address
   }
   description = "Cloud SQL instance information"
-}
-
-# Output the database URL secret name for use in other modules
-output "database_url_secret" {
-  value       = google_secret_manager_secret.database_url.secret_id
-  description = "Secret Manager secret ID for database URL"
-}
-
-# Output the VPC connector for use in other modules
-output "vpc_connector" {
-  value = {
-    id   = google_vpc_access_connector.vpc_connector.id
-    name = google_vpc_access_connector.vpc_connector.name
-  }
-  description = "VPC Access Connector information"
 }

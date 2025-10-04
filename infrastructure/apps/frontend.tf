@@ -316,17 +316,3 @@ resource "google_cloud_run_domain_mapping" "frontend_domain" {
     route_name = module.cloud_run.service_name
   }
 }
-
-# Output for debugging deployment
-output "frontend_deployment_info" {
-  value = {
-    image_tag         = local.image_tag
-    git_commit        = local.git_commit_hash
-    content_hash      = local.frontend_content_hash
-    terraform_hash    = local.terraform_config_hash
-    full_image_url    = "${module.artifact_registry.url}/${local.frontend_app_name}:${local.image_tag}"
-    cloud_run_service = module.cloud_run.service_name
-  }
-  description = "Frontend deployment information for debugging"
-}
-# Trigger rebuild Sat Sep 27 21:18:52 MDT 2025
