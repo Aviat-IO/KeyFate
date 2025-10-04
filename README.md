@@ -64,7 +64,8 @@ Option 1 - Direct SQL migration:
 
 ```bash
 # Connect to Cloud SQL instance and run migrations
-gcloud sql connect keyfate-postgres-staging --user=postgres --database=postgres --project=keyfate-dev < database/migrations/20241231_local_schema.sql.backup
+# Note: Both staging and prod use the 'keyfate' database (not environment-specific)
+gcloud sql connect keyfate-postgres-staging --user=postgres --database=keyfate --project=keyfate-dev < database/migrations/20241231_local_schema.sql.backup
 ```
 
 Option 2 - Using Drizzle ORM:
@@ -99,14 +100,14 @@ DATABASE_URL="postgresql://keyfate_app:password@localhost:54321/keyfate_dev?sslm
 
 # Option 1: Use Cloud Shell (runs within Google Cloud)
 # Open Cloud Shell at https://console.cloud.google.com
-# Then run:
-DATABASE_URL="postgresql://keyfate_app:YOUR_PASSWORD@10.2.0.3:5432/postgres" npm run db:studio
+# Then run (note: database name is 'keyfate'):
+DATABASE_URL="postgresql://keyfate_app:YOUR_PASSWORD@10.2.0.3:5432/keyfate" npm run db:studio
 
 # Option 2: Set up SSH tunnel through a VM in the same VPC
 # First SSH to a VM in the same network:
 gcloud compute ssh YOUR_VM_NAME --zone=us-central1-a -- -L 54321:10.2.0.3:5432
-# Then in another terminal:
-DATABASE_URL="postgresql://keyfate_app:YOUR_PASSWORD@localhost:54321/postgres" npm run db:studio
+# Then in another terminal (note: database name is 'keyfate'):
+DATABASE_URL="postgresql://keyfate_app:YOUR_PASSWORD@localhost:54321/keyfate" npm run db:studio
 
 # Option 3: Enable public IP on the Cloud SQL instance (less secure)
 # Go to Cloud Console > SQL > Your Instance > Edit > Connections > Add Network
@@ -114,11 +115,12 @@ DATABASE_URL="postgresql://keyfate_app:YOUR_PASSWORD@localhost:54321/postgres" n
 cloud-sql-proxy --port=54321 keyfate-dev:us-central1:keyfate-postgres-staging
 
 # For Cloud SQL with PUBLIC IP (less common)
+# Note: Database name is 'keyfate' (not environment-specific)
 cloud-sql-proxy --port=54321 keyfate-dev:us-central1:keyfate-postgres-staging
-DATABASE_URL="postgresql://keyfate_app:YOUR_PASSWORD@localhost:54321/postgres?sslmode=require" npm run db:studio
+DATABASE_URL="postgresql://keyfate_app:YOUR_PASSWORD@localhost:54321/keyfate?sslmode=require" npm run db:studio
 
 # Alternative: Direct connection if your IP is whitelisted
-DATABASE_URL="postgresql://keyfate_app:YOUR_PASSWORD@CLOUD_SQL_PUBLIC_IP:5432/postgres?sslmode=require" npm run db:studio
+DATABASE_URL="postgresql://keyfate_app:YOUR_PASSWORD@CLOUD_SQL_PUBLIC_IP:5432/keyfate?sslmode=require" npm run db:studio
 ```
 
 **Note:** If you get "instance does not have IP of type PUBLIC" error, your Cloud SQL instance is using private IP only. Use the private IP options above or enable public IP in the Cloud SQL console.

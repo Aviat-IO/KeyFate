@@ -1,4 +1,4 @@
-.PHONY: install dev stop clean test migrate seed deploy-staging deploy-prod help status reset-db debug-db test-db-connection clean-db ensure-database create-database
+.PHONY: install dev stop clean test migrate seed deploy-staging deploy-prod help status reset-db debug-db test-db-connection clean-db ensure-database create-database db-proxy-staging db-proxy-prod
 
 # Default target
 help:
@@ -20,6 +20,8 @@ help:
 	@echo "  make status           - Show status of all services"
 	@echo "  make debug-db         - Debug database connectivity issues"
 	@echo "  make test-db-connection - Quick database connection test"
+	@echo "  make db-proxy-staging - Connect to staging Cloud SQL via proxy (port 54321)"
+	@echo "  make db-proxy-prod    - Connect to production Cloud SQL via proxy (port 54321)"
 	@echo ""
 
 # Complete local environment setup
@@ -245,3 +247,19 @@ ensure-database:
 # Create database if it doesn't exist (internal helper)
 create-database:
 	@docker-compose exec -T postgres psql -U postgres -c "CREATE DATABASE keyfate_dev;" 2>/dev/null || echo "Database already exists or creation failed"
+
+# Connect to staging Cloud SQL via proxy
+db-proxy-staging:
+	@echo "🔌 Starting Cloud SQL Proxy for staging..."
+	@echo "📡 Connecting to: keyfate-dev:us-central1:keyfate-postgres-staging"
+	@echo "🌐 Proxy will be available at: localhost:54321"
+	@echo ""
+	@cloud-sql-proxy --port=54321 keyfate-dev:us-central1:keyfate-postgres-staging
+
+# Connect to production Cloud SQL via proxy
+db-proxy-prod:
+	@echo "🔌 Starting Cloud SQL Proxy for production..."
+	@echo "📡 Connecting to: keyfate-dev:us-central1:keyfate-postgres-prod"
+	@echo "🌐 Proxy will be available at: localhost:54321"
+	@echo ""
+	@cloud-sql-proxy --port=54321 keyfate-dev:us-central1:keyfate-postgres-prod
