@@ -20,6 +20,8 @@ export const reminderStatusEnum = pgEnum("reminder_status", ["pending", "sent", 
 export const reminderTypeEnum = pgEnum("reminder_type", ["25_percent", "50_percent", "7_days", "3_days", "24_hours", "12_hours", "1_hour"]);
 export const webhookStatusEnum = pgEnum("webhook_status", ["received", "processing", "processed", "failed", "retrying"]);
 export const paymentStatusEnum = pgEnum("payment_status", ["pending", "processing", "succeeded", "failed", "cancelled", "refunded"]);
+export const emailFailureTypeEnum = pgEnum("email_failure_type", ["reminder", "disclosure", "admin_notification", "verification"]);
+export const emailFailureProviderEnum = pgEnum("email_failure_provider", ["sendgrid", "console-dev", "resend"]);
 
 // NextAuth.js Tables
 export const users = pgTable("users", {
@@ -219,6 +221,18 @@ export const paymentHistory = pgTable("payment_history", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const emailFailures = pgTable("email_failures", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  emailType: emailFailureTypeEnum("email_type").notNull(),
+  provider: emailFailureProviderEnum("provider").notNull(),
+  recipient: text("recipient").notNull(),
+  subject: text("subject").notNull(),
+  errorMessage: text("error_message").notNull(),
+  retryCount: integer("retry_count").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  resolvedAt: timestamp("resolved_at"),
+});
+
 // Export types for use in application
 export type Secret = typeof secrets.$inferSelect;
 export type SecretInsert = typeof secrets.$inferInsert;
@@ -234,6 +248,8 @@ export type UserSubscription = typeof userSubscriptions.$inferSelect;
 export type SubscriptionTier = typeof subscriptionTiers.$inferSelect;
 export type WebhookEvent = typeof webhookEvents.$inferSelect;
 export type PaymentHistory = typeof paymentHistory.$inferSelect;
+export type EmailFailure = typeof emailFailures.$inferSelect;
+export type EmailFailureInsert = typeof emailFailures.$inferInsert;
 
 // NextAuth.js types
 export type User = typeof users.$inferSelect;
