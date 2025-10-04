@@ -8,7 +8,7 @@ set -e
 # Configuration
 PROJECT_ID=${GOOGLE_CLOUD_PROJECT:-"keyfate-production"}
 INSTANCE_NAME="keyfate-db-production"
-DATABASE_NAME="keyfate"
+DATABASE_NAME="keyfate"  # Note: Both staging and prod use 'keyfate' database
 APP_USER="keyfate_app"
 REGION="us-central1"
 TIER="db-custom-2-8192"  # 2 vCPU, 8GB RAM - adjust as needed

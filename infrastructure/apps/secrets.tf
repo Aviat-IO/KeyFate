@@ -75,5 +75,14 @@ module "frontend_secrets" {
         "roles/secretmanager.secretAccessor" = ["serviceAccount:${module.frontend_service_account.email}"]
       }
     }
+    sendgrid-api-key = {
+      # Remove regional location to use global automatic replication
+      versions = {
+        current = { enabled = true, data = var.sendgrid_api_key }
+      }
+      iam = {
+        "roles/secretmanager.secretAccessor" = ["serviceAccount:${module.frontend_service_account.email}"]
+      }
+    }
   }
 }

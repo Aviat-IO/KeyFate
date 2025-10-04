@@ -160,6 +160,9 @@ module "cloud_run" {
         NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = var.next_public_stripe_publishable_key
         NEXT_PUBLIC_BTCPAY_SERVER_URL      = var.btcpay_server_url
         BTCPAY_SERVER_URL                  = var.btcpay_server_url
+        # SendGrid configuration (non-sensitive)
+        SENDGRID_SENDER_NAME               = var.sendgrid_sender_name
+        SENDGRID_ADMIN_EMAIL               = var.sendgrid_admin_email
         # Force revision update when code changes by including hash as env var
         DEPLOYMENT_HASH = local.image_tag
         # Database connection timeout and pooling settings - optimized for VPC connector
@@ -211,6 +214,10 @@ module "cloud_run" {
         }
         CRON_SECRET = {
           secret  = google_secret_manager_secret.cron_secret.id
+          version = "latest"
+        }
+        SENDGRID_API_KEY = {
+          secret  = "projects/${module.project.number}/secrets/sendgrid-api-key"
           version = "latest"
         }
       }

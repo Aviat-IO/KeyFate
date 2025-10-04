@@ -71,7 +71,9 @@ The infrastructure automatically configures Supabase cron jobs for your applicat
 For Supabase cron job configuration, ensure these variables are set in your `terraform.tfvars`:
 
 ```hcl
+# Note: If using Cloud SQL instead of Supabase, the database name is 'keyfate' (not environment-specific)
 db_url = "postgresql://postgres:[password]@db.[project-id].supabase.co:5432/postgres"
+# For Cloud SQL: "postgresql://keyfate_app:[password]@[cloud-sql-ip]:5432/keyfate"
 ```
 
 ### How It Works

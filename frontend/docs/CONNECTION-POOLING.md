@@ -76,7 +76,7 @@ PgBouncer is configured with:
 # Database connection details
 DB_HOST=127.0.0.1
 DB_PORT=5432
-DB_NAME=keyfate
+DB_NAME=keyfate  # Note: Both staging and prod use 'keyfate' database
 DB_USER=keyfate_app
 DB_PASSWORD=your_secure_password
 
@@ -91,6 +91,7 @@ GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
 
 ```bash
 # Direct connection to Cloud SQL
+# Note: Both staging and prod use the same 'keyfate' database name
 DATABASE_URL="postgresql://user:pass@cloud-sql-ip:5432/keyfate?sslmode=require"
 ```
 

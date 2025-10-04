@@ -213,3 +213,21 @@ variable "cloudsql_authorized_networks" {
   # }
 }
 
+# SendGrid configuration
+variable "sendgrid_api_key" {
+  description = "SendGrid API key for sending emails"
+  type        = string
+  sensitive   = true
+}
+
+variable "sendgrid_sender_name" {
+  description = "SendGrid sender name for outgoing emails"
+  type        = string
+  default     = "KeyFate"
+}
+
+variable "sendgrid_admin_email" {
+  description = "SendGrid admin email address for notifications"
+  type        = string
+}
+
