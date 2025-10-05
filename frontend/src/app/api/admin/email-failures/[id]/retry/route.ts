@@ -30,14 +30,14 @@ async function isAdmin(req: NextRequest): Promise<boolean> {
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   if (!(await isAdmin(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const failureId = params.id;
+    const { id: failureId } = await params;
 
     // Fetch failure details
     const [failure] = await db
