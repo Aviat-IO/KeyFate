@@ -27,14 +27,14 @@ async function isAdmin(req: NextRequest): Promise<boolean> {
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   if (!(await isAdmin(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const failureId = params.id;
+    const { id: failureId } = await params;
 
     const dlq = new DeadLetterQueue();
     const resolved = await dlq.markResolved(failureId);
