@@ -6,6 +6,7 @@ import { decryptMessage } from "@/lib/encryption";
 import { sendSecretDisclosureEmail } from "@/lib/email/email-service";
 import { logEmailFailure } from "@/lib/email/email-failure-logger";
 import { sendAdminNotification } from "@/lib/email/admin-notification-service";
+import { EmailRetryService, calculateBackoffDelay } from "@/lib/email/email-retry-service";
 
 // Prevent static analysis during build
 export const dynamic = "force-dynamic";
@@ -25,7 +26,8 @@ function authorize(req: NextRequest): boolean {
 }
 
 /**
- * Implement exponential backoff retry logic
+ * Enhanced retry logic using EmailRetryService
+ * Falls back to legacy implementation if service unavailable
  */
 async function withRetry<T>(
   operation: () => Promise<T>,
@@ -44,8 +46,8 @@ async function withRetry<T>(
         throw lastError;
       }
 
-      // Exponential backoff with jitter
-      const delay = baseDelay * Math.pow(2, attempt - 1) + Math.random() * 1000;
+      // Use enhanced backoff calculation
+      const delay = calculateBackoffDelay(attempt, baseDelay);
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
