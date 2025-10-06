@@ -73,20 +73,32 @@ async function hasReminderBeenSent(
   secretId: string,
   reminderType: ReminderType
 ): Promise<boolean> {
-  const db = await getDatabase();
+  try {
+    const db = await getDatabase();
 
-  const existingReminder = await db.select()
-    .from(reminderJobs)
-    .where(
-      and(
-        eq(reminderJobs.secretId, secretId),
-        eq(reminderJobs.reminderType, reminderType),
-        eq(reminderJobs.status, 'sent')
+    console.log(`[check-secrets] Checking if reminder already sent: secretId=${secretId}, type=${reminderType}`);
+
+    const existingReminder = await db.select()
+      .from(reminderJobs)
+      .where(
+        and(
+          eq(reminderJobs.secretId, secretId),
+          eq(reminderJobs.reminderType, reminderType),
+          eq(reminderJobs.status, 'sent')
+        )
       )
-    )
-    .limit(1);
+      .limit(1);
 
-  return existingReminder.length > 0;
+    const alreadySent = existingReminder.length > 0;
+    console.log(`[check-secrets] Reminder check result: alreadySent=${alreadySent}, found ${existingReminder.length} records`);
+
+    return alreadySent;
+  } catch (error) {
+    console.error(`[check-secrets] Error checking reminder status:`, error);
+    // On error, return false to allow sending (fail open)
+    // This prevents blocking all reminders if there's a DB issue
+    return false;
+  }
 }
 
 /**
@@ -99,24 +111,38 @@ async function recordReminderSent(
   secretId: string,
   reminderType: ReminderType
 ): Promise<void> {
-  const db = await getDatabase();
+  try {
+    const db = await getDatabase();
 
-  const now = new Date();
+    const now = new Date();
 
-  // Insert reminder job record (status defaults to 'pending')
-  const [inserted] = await db.insert(reminderJobs).values({
-    secretId,
-    reminderType,
-    scheduledFor: now,
-  }).returning({ id: reminderJobs.id });
+    console.log(`[check-secrets] Recording reminder sent: secretId=${secretId}, type=${reminderType}`);
 
-  // Update status to 'sent' and set sentAt timestamp
-  if (inserted?.id) {
+    // Insert reminder job record (status defaults to 'pending')
+    const [inserted] = await db.insert(reminderJobs).values({
+      secretId,
+      reminderType,
+      scheduledFor: now,
+    }).returning({ id: reminderJobs.id });
+
+    if (!inserted?.id) {
+      console.error(`[check-secrets] Failed to insert reminder job - no ID returned`);
+      return;
+    }
+
+    console.log(`[check-secrets] Inserted reminder job with ID: ${inserted.id}`);
+
+    // Update status to 'sent' and set sentAt timestamp
     await db.execute(sql`
       UPDATE reminder_jobs
       SET status = 'sent', sent_at = ${now}
       WHERE id = ${inserted.id}
     `);
+
+    console.log(`[check-secrets] Updated reminder job status to 'sent' for ID: ${inserted.id}`);
+  } catch (error) {
+    console.error(`[check-secrets] Error recording reminder:`, error);
+    throw error; // Re-throw to bubble up to caller
   }
 }
 
@@ -285,8 +311,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const startTime = new Date();
+  console.log(`[check-secrets] Cron job started at ${startTime.toISOString()}`);
+
   try {
     const db = await getDatabase();
+
+    // Debug: Check if reminder_jobs table has any records
+    const existingReminderCount = await db.select({ count: sql<number>`count(*)` })
+      .from(reminderJobs);
+    console.log(`[check-secrets] Existing reminder_jobs count: ${existingReminderCount[0]?.count || 0}`);
 
     // Query all active secrets with server shares
     const allActiveSecrets = await db
@@ -304,6 +338,8 @@ export async function POST(req: NextRequest) {
         ),
       );
 
+    console.log(`[check-secrets] Found ${allActiveSecrets.length} active secrets to process`);
+
     let remindersProcessed = 0;
     let remindersSent = 0;
     let remindersFailed = 0;
@@ -312,23 +348,39 @@ export async function POST(req: NextRequest) {
     for (const row of allActiveSecrets) {
       const { secret, user } = row;
 
+      console.log(`[check-secrets] Processing secret ${secret.id} (title: ${secret.title})`);
+
       // Determine reminder type based on time remaining
       const reminderType = getReminderType(new Date(secret.nextCheckIn!), secret.checkInDays);
+
+      console.log(`[check-secrets] Reminder type for secret ${secret.id}: ${reminderType || 'none'}`);
 
       // Check if we should send a reminder
       if (reminderType) {
         // Check if this reminder type has already been sent
         const alreadySent = await hasReminderBeenSent(secret.id, reminderType);
 
-        if (!alreadySent) {
+        if (alreadySent) {
+          console.log(`[check-secrets] Skipping reminder for secret ${secret.id} - already sent ${reminderType}`);
+        } else {
+          console.log(`[check-secrets] Sending reminder for secret ${secret.id} - type: ${reminderType}`);
           remindersProcessed++;
 
           const result = await processSecret(secret, user);
 
           if (result.sent) {
             // Record that we sent this reminder
-            await recordReminderSent(secret.id, reminderType);
-            remindersSent++;
+            try {
+              await recordReminderSent(secret.id, reminderType);
+              remindersSent++;
+              console.log(`[check-secrets] Successfully recorded reminder for secret ${secret.id}`);
+            } catch (recordError) {
+              console.error(
+                `[check-secrets] Failed to record reminder for secret ${secret.id}:`,
+                recordError
+              );
+              // Continue processing even if recording fails
+            }
           } else {
             remindersFailed++;
             console.error(
