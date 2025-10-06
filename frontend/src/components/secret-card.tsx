@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/tooltip"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
+import { formatGranularTime } from "@/lib/time-utils"
 import { Secret } from "@/types"
 import { Clock, Pencil, User } from "lucide-react"
 import Link from "next/link"
@@ -167,7 +168,7 @@ export function SecretCard({ secret }: SecretCardProps) {
     if (serverShareDeleted) {
       return "Disabled"
     }
-    return `Triggers ${format(secretState.nextCheckIn || new Date())}`
+    return `Triggers in ${formatGranularTime(secretState.nextCheckIn || new Date())}`
   }
 
   const getTriggerTimeTooltip = () => {

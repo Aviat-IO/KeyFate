@@ -21,6 +21,26 @@ interface ReminderTemplateData {
   urgencyLevel?: 'low' | 'medium' | 'high' | 'critical';
 }
 
+/**
+ * Format time remaining for display
+ * Converts fractional days to hours when less than 1 day
+ */
+function formatTimeRemaining(daysRemaining: number): string {
+  if (daysRemaining === 0) {
+    return 'today';
+  }
+
+  if (daysRemaining < 1) {
+    // Convert to hours and round down
+    const hours = Math.floor(daysRemaining * 24);
+    return hours === 1 ? '1 hour' : `${hours} hours`;
+  }
+
+  // Round down to whole days
+  const days = Math.floor(daysRemaining);
+  return days === 1 ? '1 day' : `${days} days`;
+}
+
 interface DisclosureTemplateData {
   contactName: string;
   secretTitle: string;
@@ -113,6 +133,7 @@ export function renderBaseTemplate(data: BaseTemplateData): EmailTemplate {
     }
     .urgent {
       background-color: #dc3545;
+      color: #ffffff;
       border: 2px solid #dc3545;
       padding: 15px;
       border-radius: 6px;
@@ -185,7 +206,7 @@ export function renderVerificationTemplate(data: VerificationTemplateData): Emai
     </p>
 
     <div class="warning">
-      <p><strong>⏰ This verification link expires in ${data.expirationHours} hours.</strong></p>
+      <p><strong>This verification link expires in ${data.expirationHours} hours.</strong></p>
     </div>
 
     <p>If you didn't create an account with ${companyName}, you can safely ignore this email.</p>
@@ -211,23 +232,21 @@ export function renderVerificationTemplate(data: VerificationTemplateData): Emai
  */
 export function renderReminderTemplate(data: ReminderTemplateData): EmailTemplate {
   const urgencyConfig = {
-    low: { emoji: '📅', bgColor: '#e3f2fd', textColor: '#1976d2', label: 'Scheduled' },
-    medium: { emoji: '⚠️', bgColor: '#fff3cd', textColor: '#856404', label: 'Important' },
-    high: { emoji: '🚨', bgColor: '#f8d7da', textColor: '#721c24', label: 'URGENT' },
-    critical: { emoji: '🔴', bgColor: '#d32f2f', textColor: '#ffffff', label: 'CRITICAL' }
+    low: { bgColor: '#2563eb', textColor: '#ffffff', label: 'Scheduled' },
+    medium: { bgColor: '#2563eb', textColor: '#ffffff', label: 'Important' },
+    high: { bgColor: '#dc3545', textColor: '#ffffff', label: 'URGENT' },
+    critical: { bgColor: '#dc3545', textColor: '#ffffff', label: 'CRITICAL' }
   };
 
   const urgency = urgencyConfig[data.urgencyLevel || 'medium'];
-  const timeText = data.daysRemaining === 0 ? 'today' :
-                   data.daysRemaining === 1 ? '1 day' :
-                   `${data.daysRemaining} days`;
+  const timeText = formatTimeRemaining(data.daysRemaining);
 
-  const subject = `${urgency.emoji} ${urgency.label}: Check-in required in ${timeText} - ${data.secretTitle}`;
+  const subject = `${urgency.label}: Check-in required in ${timeText} - ${data.secretTitle}`;
 
   const content = `
     <div style="background-color: ${urgency.bgColor}; color: ${urgency.textColor}; padding: 20px; border-radius: 8px; margin: 20px 0;">
-      <h2 style="margin: 0 0 15px 0;">${urgency.emoji} Check-in Reminder</h2>
-      <p style="margin: 0; font-size: 16px; font-weight: bold;">
+      <h2 style="margin: 0 0 15px 0; color: ${urgency.textColor};">Check-in Reminder</h2>
+      <p style="margin: 0; font-size: 16px; font-weight: bold; color: ${urgency.textColor};">
         You need to check in for "${data.secretTitle}" in ${timeText}
       </p>
     </div>
@@ -237,7 +256,7 @@ export function renderReminderTemplate(data: ReminderTemplateData): EmailTemplat
     <p>This is a ${urgency.label.toLowerCase()} reminder that you need to check in for your secret:</p>
 
     <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin: 20px 0;">
-      <h3 style="margin: 0 0 10px 0;">📋 ${data.secretTitle}</h3>
+      <h3 style="margin: 0 0 10px 0;">${data.secretTitle}</h3>
       <p style="margin: 0;"><strong>Time remaining:</strong> ${timeText}</p>
     </div>
 
@@ -248,9 +267,9 @@ export function renderReminderTemplate(data: ReminderTemplateData): EmailTemplat
     <p>If you don't check in on time, your secret will be disclosed to your designated contacts as scheduled.</p>
 
     ${data.urgencyLevel === 'critical' || data.urgencyLevel === 'high' ? `
-    <div class="urgent">
-      <p><strong>⚠️ Time is running out!</strong></p>
-      <p>Please check in immediately to prevent automatic disclosure.</p>
+    <div style="background-color: #dc3545; color: #ffffff; padding: 15px; border-radius: 6px; margin: 15px 0;">
+      <p style="margin: 0; color: #ffffff;"><strong>Time is running out!</strong></p>
+      <p style="margin: 10px 0 0 0; color: #ffffff;">Please check in immediately to prevent automatic disclosure.</p>
     </div>
     ` : ''}
 
@@ -284,11 +303,11 @@ export function renderDisclosureTemplate(data: DisclosureTemplateData): EmailTem
     ? `${data.senderName} has manually shared this information with you.`
     : `${data.senderName} has not checked in as scheduled (last seen: ${lastSeenText}).`;
 
-  const subject = `🔒 Confidential Message from ${data.senderName} - ${data.secretTitle}`;
+  const subject = `Confidential Message from ${data.senderName} - ${data.secretTitle}`;
 
   const content = `
     <div style="border: 3px solid #dc3545; background-color: #fff5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-      <h1 style="margin: 0 0 15px 0; color: #dc3545;">🔒 Confidential Message</h1>
+      <h1 style="margin: 0 0 15px 0; color: #dc3545;">Confidential Message</h1>
       <p style="margin: 0; font-weight: bold; font-size: 16px;">
         This email contains sensitive information. Please handle with care.
       </p>
@@ -299,26 +318,26 @@ export function renderDisclosureTemplate(data: DisclosureTemplateData): EmailTem
     <p>${reasonText}</p>
 
     <div style="background: #f8f9fa; padding: 20px; border-radius: 6px; margin: 20px 0;">
-      <h3 style="margin: 0 0 15px 0;">📋 ${data.secretTitle}</h3>
+      <h3 style="margin: 0 0 15px 0;">${data.secretTitle}</h3>
       <p><strong>From:</strong> ${data.senderName}</p>
       ${data.senderLastSeen ? `<p><strong>Last seen:</strong> ${lastSeenText}</p>` : ''}
     </div>
 
     <div style="background: #fff3cd; padding: 15px; border-radius: 6px; margin: 20px 0;">
-      <h4 style="margin: 0 0 10px 0;">📝 Personal Message:</h4>
+      <h4 style="margin: 0 0 10px 0;">Personal Message:</h4>
       <p style="margin: 0; font-style: italic;">"${data.message}"</p>
     </div>
 
     <div style="background: #f8f9fa; padding: 20px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #2563eb;">
-      <h4 style="margin: 0 0 15px 0;">🔐 Confidential Content:</h4>
+      <h4 style="margin: 0 0 15px 0;">Confidential Content:</h4>
       <div style="background: white; padding: 15px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; word-break: break-word;">
 ${data.secretContent}
       </div>
     </div>
 
-    <div class="urgent">
-      <p><strong>⚠️ IMPORTANT SECURITY NOTICE</strong></p>
-      <ul>
+    <div style="background-color: #dc3545; color: #ffffff; padding: 15px; border-radius: 6px; margin: 15px 0;">
+      <p style="margin: 0; color: #ffffff;"><strong>IMPORTANT SECURITY NOTICE</strong></p>
+      <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #ffffff;">
         <li>This information is confidential and intended only for you</li>
         <li>Please store this information securely</li>
         <li>Do not share this content with unauthorized persons</li>

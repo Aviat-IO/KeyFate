@@ -52,9 +52,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Secret not found" }, { status: 404 });
     }
 
+    // Calculate next check-in using milliseconds to avoid DST issues
     const now = new Date();
-    const nextCheckIn = new Date();
-    nextCheckIn.setDate(nextCheckIn.getDate() + (secret.checkInDays ?? 30));
+    const nextCheckIn = new Date(now.getTime() + ((secret.checkInDays ?? 30) * 24 * 60 * 60 * 1000));
 
     await db
       .update(checkInTokens)

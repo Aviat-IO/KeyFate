@@ -1,4 +1,4 @@
-import { db } from "@/lib/db/drizzle";
+import { getDatabase } from "@/lib/db/drizzle";
 import { secrets, users } from "@/lib/db/schema";
 import { and, eq, lt } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
@@ -62,6 +62,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const db = await getDatabase();
+
     // Get overdue secrets
     const now = new Date();
     const overdueSecrets = await db
@@ -126,7 +128,7 @@ export async function POST(req: NextRequest) {
               status: "triggered",
               triggeredAt: new Date(),
               updatedAt: new Date(),
-            })
+            } as any)
             .where(eq(secrets.id, secret.id));
 
           processedCount++;
