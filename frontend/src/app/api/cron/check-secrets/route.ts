@@ -109,7 +109,8 @@ async function hasReminderBeenSent(
  */
 async function recordReminderSent(
   secretId: string,
-  reminderType: ReminderType
+  reminderType: ReminderType,
+  nextCheckIn: Date
 ): Promise<void> {
   try {
     const db = await getDatabase();
@@ -118,11 +119,42 @@ async function recordReminderSent(
 
     console.log(`[check-secrets] Recording reminder sent: secretId=${secretId}, type=${reminderType}`);
 
+    // Calculate when this reminder should have been scheduled
+    // scheduledFor = nextCheckIn - reminder threshold
+    let scheduledFor: Date;
+    const checkInTime = nextCheckIn.getTime();
+
+    switch(reminderType) {
+      case '1_hour':
+        scheduledFor = new Date(checkInTime - (1 * 60 * 60 * 1000));
+        break;
+      case '12_hours':
+        scheduledFor = new Date(checkInTime - (12 * 60 * 60 * 1000));
+        break;
+      case '24_hours':
+        scheduledFor = new Date(checkInTime - (24 * 60 * 60 * 1000));
+        break;
+      case '3_days':
+        scheduledFor = new Date(checkInTime - (3 * 24 * 60 * 60 * 1000));
+        break;
+      case '7_days':
+        scheduledFor = new Date(checkInTime - (7 * 24 * 60 * 60 * 1000));
+        break;
+      case '25_percent':
+      case '50_percent':
+        // For percentage-based reminders, use current time as we don't have checkInDays
+        // These are calculated dynamically based on the check-in period
+        scheduledFor = now;
+        break;
+    }
+
+    console.log(`[check-secrets] Calculated scheduledFor: ${scheduledFor.toISOString()} for ${reminderType} reminder (nextCheckIn: ${nextCheckIn.toISOString()})`);
+
     // Insert reminder job record (status defaults to 'pending')
     const [inserted] = await db.insert(reminderJobs).values({
       secretId,
       reminderType,
-      scheduledFor: now,
+      scheduledFor,
     }).returning({ id: reminderJobs.id });
 
     if (!inserted?.id) {
@@ -371,7 +403,7 @@ export async function POST(req: NextRequest) {
           if (result.sent) {
             // Record that we sent this reminder
             try {
-              await recordReminderSent(secret.id, reminderType);
+              await recordReminderSent(secret.id, reminderType, new Date(secret.nextCheckIn!));
               remindersSent++;
               console.log(`[check-secrets] Successfully recorded reminder for secret ${secret.id}`);
             } catch (recordError) {
