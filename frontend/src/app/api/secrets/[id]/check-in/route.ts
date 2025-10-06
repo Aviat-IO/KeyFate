@@ -50,10 +50,9 @@ export async function POST(
       return NextResponse.json({ error: "Secret not found" }, { status: 404 });
     }
 
-    // Calculate next check-in
+    // Calculate next check-in using milliseconds to avoid DST issues
     const now = new Date();
-    const nextCheckIn = new Date();
-    nextCheckIn.setDate(nextCheckIn.getDate() + secret.checkInDays);
+    const nextCheckIn = new Date(now.getTime() + (secret.checkInDays * 24 * 60 * 60 * 1000));
 
     // Update the secret with new check-in times
     const updatePayload = { lastCheckIn: now, nextCheckIn } as SecretUpdate;

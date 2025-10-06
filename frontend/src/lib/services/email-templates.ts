@@ -466,7 +466,7 @@ Dead Man's Switch - Secure Secret Management
         <body>
           <div class="container">
             <div class="header">
-              <h1>₿ Bitcoin Payment Confirmed</h1>
+              <h1>Bitcoin Payment Confirmed</h1>
             </div>
             <div class="content">
               <h2>Hello ${params.userName},</h2>
@@ -550,7 +550,7 @@ Dead Man's Switch - Secure Secret Management
         <body>
           <div class="container">
             <div class="header">
-              <h1>🚨 Admin Alert</h1>
+              <h1>Admin Alert</h1>
               <p>Severity: ${params.severity.toUpperCase()}</p>
             </div>
             <div class="content">

@@ -143,9 +143,9 @@ function getSeverityGuidance(severity: NotificationSeverity): string {
   switch (severity) {
     case "critical":
       return `
-        <div style="background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin: 20px 0;">
-          <p style="margin: 0; color: #721c24;"><strong>⚠️ CRITICAL ACTION REQUIRED</strong></p>
-          <p style="margin: 10px 0 0 0; color: #721c24;">
+        <div style="background-color: #dc3545; color: #ffffff; padding: 15px; margin: 20px 0; border-radius: 6px;">
+          <p style="margin: 0; color: #ffffff;"><strong>CRITICAL ACTION REQUIRED</strong></p>
+          <p style="margin: 10px 0 0 0; color: #ffffff;">
             A disclosure email has failed. The user's secret will not be delivered to the intended recipient.
             Immediate investigation and manual intervention may be required.
           </p>
@@ -153,27 +153,27 @@ function getSeverityGuidance(severity: NotificationSeverity): string {
       `;
     case "high":
       return `
-        <div style="background-color: #fff3cd; border-left: 4px solid #fd7e14; padding: 15px; margin: 20px 0;">
-          <p style="margin: 0; color: #856404;"><strong>⚡ HIGH PRIORITY</strong></p>
-          <p style="margin: 10px 0 0 0; color: #856404;">
+        <div style="background-color: #fd7e14; color: #ffffff; padding: 15px; margin: 20px 0; border-radius: 6px;">
+          <p style="margin: 0; color: #ffffff;"><strong>HIGH PRIORITY</strong></p>
+          <p style="margin: 10px 0 0 0; color: #ffffff;">
             A reminder email has failed multiple times. Check email service configuration and user contact details.
           </p>
         </div>
       `;
     case "medium":
       return `
-        <div style="background-color: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px; margin: 20px 0;">
-          <p style="margin: 0; color: #0c5460;"><strong>📋 MEDIUM PRIORITY</strong></p>
-          <p style="margin: 10px 0 0 0; color: #0c5460;">
+        <div style="background-color: #17a2b8; color: #ffffff; padding: 15px; margin: 20px 0; border-radius: 6px;">
+          <p style="margin: 0; color: #ffffff;"><strong>MEDIUM PRIORITY</strong></p>
+          <p style="margin: 10px 0 0 0; color: #ffffff;">
             A reminder email has failed. Monitor for additional failures. Automatic retries are in progress.
           </p>
         </div>
       `;
     case "low":
       return `
-        <div style="background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px; margin: 20px 0;">
-          <p style="margin: 0; color: #155724;"><strong>ℹ️ LOW PRIORITY</strong></p>
-          <p style="margin: 10px 0 0 0; color: #155724;">
+        <div style="background-color: #28a745; color: #ffffff; padding: 15px; margin: 20px 0; border-radius: 6px;">
+          <p style="margin: 0; color: #ffffff;"><strong>LOW PRIORITY</strong></p>
+          <p style="margin: 10px 0 0 0; color: #ffffff;">
             A verification or admin notification email has failed. No immediate action required.
           </p>
         </div>
@@ -187,13 +187,13 @@ function getSeverityGuidance(severity: NotificationSeverity): string {
 function getSeverityGuidanceText(severity: NotificationSeverity): string {
   switch (severity) {
     case "critical":
-      return "⚠️ CRITICAL ACTION REQUIRED: A disclosure email has failed. The user's secret will not be delivered. Immediate investigation required.";
+      return "CRITICAL ACTION REQUIRED: A disclosure email has failed. The user's secret will not be delivered. Immediate investigation required.";
     case "high":
-      return "⚡ HIGH PRIORITY: A reminder email has failed multiple times. Check email service configuration.";
+      return "HIGH PRIORITY: A reminder email has failed multiple times. Check email service configuration.";
     case "medium":
-      return "📋 MEDIUM PRIORITY: A reminder email has failed. Monitor for additional failures.";
+      return "MEDIUM PRIORITY: A reminder email has failed. Monitor for additional failures.";
     case "low":
-      return "ℹ️ LOW PRIORITY: A verification or admin notification email has failed. No immediate action required.";
+      return "LOW PRIORITY: A verification or admin notification email has failed. No immediate action required.";
   }
 }
 

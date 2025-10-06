@@ -1,6 +1,6 @@
 import { getDatabase } from "@/lib/db/drizzle";
-import { secrets, checkInTokens, users, emailFailures } from "@/lib/db/schema";
-import { and, eq, isNotNull, desc } from "drizzle-orm";
+import { secrets, checkInTokens, users, emailFailures, reminderJobs } from "@/lib/db/schema";
+import { and, eq, isNotNull, desc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { sendReminderEmail } from "@/lib/email/email-service";
 import { logEmailFailure } from "@/lib/email/email-failure-logger";
@@ -9,6 +9,116 @@ import { randomBytes } from "crypto";
 
 // Prevent static analysis during build
 export const dynamic = "force-dynamic";
+
+// Type definition for reminder types
+type ReminderType = '1_hour' | '12_hours' | '24_hours' | '3_days' | '7_days' | '25_percent' | '50_percent';
+
+/**
+ * Determine reminder type based on time remaining
+ * Returns null if no reminder threshold is met
+ */
+function getReminderType(
+  nextCheckIn: Date,
+  checkInDays: number
+): ReminderType | null {
+  const now = new Date();
+  const msRemaining = nextCheckIn.getTime() - now.getTime();
+
+  // Return null for expired check-ins
+  if (msRemaining <= 0) {
+    return null;
+  }
+
+  const hoursRemaining = msRemaining / (1000 * 60 * 60);
+  const daysRemaining = hoursRemaining / 24;
+  const totalHours = checkInDays * 24;
+  const percentRemaining = (hoursRemaining / totalHours) * 100;
+
+  // Critical: 1h before (highest priority)
+  if (hoursRemaining <= 1) {
+    return '1_hour';
+  }
+
+  // High urgency: 12h, 24h before
+  if (hoursRemaining <= 12) {
+    return '12_hours';
+  }
+  if (hoursRemaining <= 24) {
+    return '24_hours';
+  }
+
+  // Medium urgency: 3d, 7d before
+  if (daysRemaining <= 3) {
+    return '3_days';
+  }
+  if (daysRemaining <= 7) {
+    return '7_days';
+  }
+
+  // Low urgency: 25%, 50% of check-in period (lowest priority)
+  if (percentRemaining <= 25) {
+    return '25_percent';
+  }
+  if (percentRemaining <= 50) {
+    return '50_percent';
+  }
+
+  return null;
+}
+
+/**
+ * Check if a reminder has already been sent for this secret and reminder type
+ */
+async function hasReminderBeenSent(
+  secretId: string,
+  reminderType: ReminderType
+): Promise<boolean> {
+  const db = await getDatabase();
+
+  const existingReminder = await db.select()
+    .from(reminderJobs)
+    .where(
+      and(
+        eq(reminderJobs.secretId, secretId),
+        eq(reminderJobs.reminderType, reminderType),
+        eq(reminderJobs.status, 'sent')
+      )
+    )
+    .limit(1);
+
+  return existingReminder.length > 0;
+}
+
+/**
+ * Record that a reminder was sent
+ *
+ * Note: We insert with default status ('pending') then update to 'sent' and set sentAt
+ * This is a workaround for Drizzle type inference limitations
+ */
+async function recordReminderSent(
+  secretId: string,
+  reminderType: ReminderType
+): Promise<void> {
+  const db = await getDatabase();
+
+  const now = new Date();
+
+  // Insert reminder job record (status defaults to 'pending')
+  const [inserted] = await db.insert(reminderJobs).values({
+    secretId,
+    reminderType,
+    scheduledFor: now,
+  }).returning({ id: reminderJobs.id });
+
+  // Update status to 'sent' and set sentAt timestamp
+  if (inserted?.id) {
+    await db.execute(sql`
+      UPDATE reminder_jobs
+      SET status = 'sent', sent_at = ${now}
+      WHERE id = ${inserted.id}
+    `);
+  }
+}
 
 /**
  * Authorization helper
@@ -46,56 +156,6 @@ function calculateUrgency(
   } else {
     return "low";
   }
-}
-
-/**
- * Determine if a reminder should be sent based on interval thresholds
- * Reminder intervals: 25%, 50%, 7d, 3d, 24h, 12h, 1h
- */
-function shouldSendReminder(
-  nextCheckIn: Date,
-  checkInDays: number,
-): boolean {
-  const now = new Date();
-  const msRemaining = nextCheckIn.getTime() - now.getTime();
-  const hoursRemaining = msRemaining / (1000 * 60 * 60);
-  const daysRemaining = hoursRemaining / 24;
-  const totalHours = checkInDays * 24;
-
-  // Calculate percentage remaining
-  const percentRemaining = (hoursRemaining / totalHours) * 100;
-
-  // Send reminders at specific intervals
-  // Critical: 1h before
-  if (hoursRemaining <= 1 && hoursRemaining > 0) {
-    return true;
-  }
-
-  // High urgency: 12h, 24h before
-  if (
-    (hoursRemaining <= 12 && hoursRemaining > 11) ||
-    (hoursRemaining <= 24 && hoursRemaining > 23)
-  ) {
-    return true;
-  }
-
-  // Medium urgency: 3d, 7d before
-  if (
-    (daysRemaining <= 3 && daysRemaining > 2.9) ||
-    (daysRemaining <= 7 && daysRemaining > 6.9)
-  ) {
-    return true;
-  }
-
-  // Low urgency: 25%, 50% of check-in period
-  if (
-    (percentRemaining <= 50 && percentRemaining > 49) ||
-    (percentRemaining <= 25 && percentRemaining > 24)
-  ) {
-    return true;
-  }
-
-  return false;
 }
 
 /**
@@ -252,19 +312,29 @@ export async function POST(req: NextRequest) {
     for (const row of allActiveSecrets) {
       const { secret, user } = row;
 
-      // Check if reminder should be sent based on intervals
-      if (shouldSendReminder(new Date(secret.nextCheckIn!), secret.checkInDays)) {
-        remindersProcessed++;
+      // Determine reminder type based on time remaining
+      const reminderType = getReminderType(new Date(secret.nextCheckIn!), secret.checkInDays);
 
-        const result = await processSecret(secret, user);
+      // Check if we should send a reminder
+      if (reminderType) {
+        // Check if this reminder type has already been sent
+        const alreadySent = await hasReminderBeenSent(secret.id, reminderType);
 
-        if (result.sent) {
-          remindersSent++;
-        } else {
-          remindersFailed++;
-          console.error(
-            `[check-secrets] Failed to send reminder for secret ${secret.id}: ${result.error}`,
-          );
+        if (!alreadySent) {
+          remindersProcessed++;
+
+          const result = await processSecret(secret, user);
+
+          if (result.sent) {
+            // Record that we sent this reminder
+            await recordReminderSent(secret.id, reminderType);
+            remindersSent++;
+          } else {
+            remindersFailed++;
+            console.error(
+              `[check-secrets] Failed to send reminder for secret ${secret.id}: ${result.error}`,
+            );
+          }
         }
       }
     }

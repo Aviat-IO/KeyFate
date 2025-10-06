@@ -198,10 +198,10 @@ export const EMAIL_TEMPLATE_CONFIG = {
   },
   reminder: {
     subjectPrefix: {
-      low: '📅 Reminder',
-      medium: '⚠️ Important',
-      high: '🚨 URGENT',
-      critical: '🔴 CRITICAL'
+      low: 'Reminder',
+      medium: 'Important',
+      high: 'URGENT',
+      critical: 'CRITICAL'
     },
     priority: {
       low: 'normal' as const,
@@ -211,7 +211,7 @@ export const EMAIL_TEMPLATE_CONFIG = {
     }
   },
   disclosure: {
-    subjectPrefix: '🔒 Confidential Message',
+    subjectPrefix: 'Confidential Message',
     priority: 'high' as const,
     securityHeaders: {
       'X-Priority': '1',
