@@ -135,7 +135,7 @@ async function recordReminderSent(
     // Update status to 'sent' and set sentAt timestamp
     await db.execute(sql`
       UPDATE reminder_jobs
-      SET status = 'sent', sent_at = ${now}
+      SET status = 'sent', sent_at = ${now.toISOString()}
       WHERE id = ${inserted.id}
     `);
 
