@@ -70,6 +70,7 @@ interface ValidationResult {
 
 /**
  * Base email template with consistent branding
+ * Uses table-based layout for maximum email client compatibility
  */
 export function renderBaseTemplate(data: BaseTemplateData): EmailTemplate {
   const companyName = process.env.NEXT_PUBLIC_COMPANY || "Dead Man's Switch";
@@ -87,39 +88,9 @@ export function renderBaseTemplate(data: BaseTemplateData): EmailTemplate {
       font-family: Arial, sans-serif;
       line-height: 1.6;
       color: #333;
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 20px;
+      margin: 0;
+      padding: 0;
       background-color: #f9f9f9;
-    }
-    .container {
-      background-color: #ffffff;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 30px;
-      padding-bottom: 20px;
-      border-bottom: 2px solid #e0e0e0;
-    }
-    .logo {
-      font-size: 24px;
-      font-weight: bold;
-      color: #2563eb;
-      margin-bottom: 10px;
-    }
-    .content {
-      margin-bottom: 30px;
-    }
-    .footer {
-      text-align: center;
-      font-size: 12px;
-      color: #666;
-      margin-top: 30px;
-      padding-top: 20px;
-      border-top: 1px solid #e0e0e0;
     }
     .button {
       display: inline-block;
@@ -149,20 +120,39 @@ export function renderBaseTemplate(data: BaseTemplateData): EmailTemplate {
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <div class="logo">${companyName}</div>
-      <h1>${data.title}</h1>
-    </div>
-    <div class="content">
-      ${data.content}
-    </div>
-    <div class="footer">
-      ${data.footerText || ""}
-      <p>&copy; ${currentYear} ${companyName}. All rights reserved.</p>
-      <p>This is an automated message. Please do not reply to this email.</p>
-    </div>
-  </div>
+  <!-- Wrapper table for centering and max-width constraint -->
+  <!-- cspell:disable-next-line - cellspacing is valid HTML email attribute -->
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f9f9f9; margin: 0; padding: 0;">
+    <tr>
+      <td align="center" style="padding: 20px;">
+        <!-- Main content table with max-width -->
+        <!-- cspell:disable-next-line - cellspacing is valid HTML email attribute -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="text-align: center; padding: 30px 30px 20px 30px; border-bottom: 2px solid #e0e0e0;">
+              <div style="font-size: 24px; font-weight: bold; color: #2563eb; margin-bottom: 10px;">${companyName}</div>
+              <h1 style="margin: 0; font-size: 28px; color: #333;">${data.title}</h1>
+            </td>
+          </tr>
+          <!-- Content -->
+          <tr>
+            <td style="padding: 30px;">
+              ${data.content}
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="text-align: center; font-size: 12px; color: #666; padding: 20px 30px 30px 30px; border-top: 1px solid #e0e0e0;">
+              ${data.footerText || ""}
+              <p style="margin: 10px 0;">&copy; ${currentYear} ${companyName}. All rights reserved.</p>
+              <p style="margin: 10px 0;">This is an automated message. Please do not reply to this email.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`;
 
