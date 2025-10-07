@@ -5,7 +5,7 @@
  * Supports retry tracking, resolution management, and cleanup policies
  */
 
-import { db } from '@/lib/db/drizzle';
+import { getDatabase } from '@/lib/db/get-database';
 import { emailFailures, type EmailFailure, type EmailFailureInsert } from '@/lib/db/schema';
 import { eq, and, lte, isNull, lt } from 'drizzle-orm';
 
@@ -15,6 +15,7 @@ import { eq, and, lte, isNull, lt } from 'drizzle-orm';
 export async function logEmailFailure(
   failureData: EmailFailureInsert
 ): Promise<EmailFailure> {
+  const db = await getDatabase();
   const [logged] = await db.insert(emailFailures).values(failureData).returning();
   return logged;
 }
@@ -25,6 +26,7 @@ export async function logEmailFailure(
 export async function incrementRetryCount(
   failureId: string
 ): Promise<EmailFailure> {
+  const db = await getDatabase();
   const [existing] = await db.select()
     .from(emailFailures)
     .where(eq(emailFailures.id, failureId))
@@ -48,6 +50,7 @@ export async function incrementRetryCount(
 export async function resolveEmailFailure(
   failureId: string
 ): Promise<EmailFailure> {
+  const db = await getDatabase();
   const [resolved] = await db.update(emailFailures)
     .set({ resolvedAt: new Date() })
     .where(eq(emailFailures.id, failureId))
@@ -66,6 +69,7 @@ export async function resolveEmailFailure(
 export async function getUnresolvedFailures(
   limit: number = 100
 ): Promise<EmailFailure[]> {
+  const db = await getDatabase();
   return await db.select()
     .from(emailFailures)
     .where(isNull(emailFailures.resolvedAt))
@@ -79,6 +83,7 @@ export async function getFailuresByProvider(
   provider: 'sendgrid' | 'console-dev' | 'resend',
   limit: number = 100
 ): Promise<EmailFailure[]> {
+  const db = await getDatabase();
   return await db.select()
     .from(emailFailures)
     .where(eq(emailFailures.provider, provider))
@@ -92,6 +97,7 @@ export async function getFailuresByType(
   emailType: 'reminder' | 'disclosure' | 'admin_notification' | 'verification',
   limit: number = 100
 ): Promise<EmailFailure[]> {
+  const db = await getDatabase();
   return await db.select()
     .from(emailFailures)
     .where(eq(emailFailures.emailType, emailType))
@@ -107,6 +113,7 @@ export async function getFailuresByType(
 export async function cleanupOldFailures(
   retentionDays: number = 30
 ): Promise<number> {
+  const db = await getDatabase();
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
 
@@ -135,6 +142,7 @@ export async function getFailureStats(): Promise<{
   byProvider: Record<string, number>;
   byType: Record<string, number>;
 }> {
+  const db = await getDatabase();
   const allFailures = await db.select().from(emailFailures);
   const unresolvedFailures = allFailures.filter(f => f.resolvedAt === null);
 
