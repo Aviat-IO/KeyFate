@@ -12,6 +12,8 @@
     "test:watch": "vitest --watch",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
+    "test:report": "tsx scripts/generate-test-report.ts",
+    "test:report:md": "tsx scripts/generate-test-report.ts --markdown",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
