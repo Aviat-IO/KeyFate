@@ -8,11 +8,38 @@ export default withAuth(
     const { pathname } = request.nextUrl;
     const token = request.nextauth.token;
 
+    // Routes that don't require email verification
+    const verificationExemptRoutes = [
+      "/auth/verify-email",
+      "/auth/verify-email-nextauth",
+      "/api/auth/verify-email",
+      "/api/auth/verify-email-nextauth",
+      "/api/auth/resend-verification",
+      "/api/auth/verification-status",
+      "/sign-in",
+      "/auth/signup",
+      "/auth/error",
+    ];
+
     // If user is authenticated and trying to access sign-in page, redirect to dashboard
     if (token && pathname === "/sign-in") {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";
       return NextResponse.redirect(url);
+    }
+
+    // Check email verification status for authenticated users
+    if (token) {
+      const isVerificationExempt = verificationExemptRoutes.some(
+        route => pathname === route || pathname.startsWith(`${route}/`)
+      );
+
+      // If email is not verified and not on a verification-exempt route, redirect to verify-email page
+      if (!token.emailVerified && !isVerificationExempt) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/auth/verify-email";
+        return NextResponse.redirect(url);
+      }
     }
 
     // Allow the request to continue
