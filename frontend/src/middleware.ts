@@ -31,6 +31,7 @@ export default withAuth(
           "/sign-in",
           "/auth/signup",
           "/auth/verify-email",
+          "/check-in", // Allow unauthenticated access for token-based check-ins
           "/pricing",
           "/terms-of-service",
           "/privacy-policy",
@@ -46,6 +47,11 @@ export default withAuth(
 
         // Cron endpoints use Bearer token authentication, not session auth
         if (pathname.startsWith("/api/cron/")) {
+          return true;
+        }
+
+        // Check-in endpoint uses token-based authentication, not session auth
+        if (pathname === "/api/check-in") {
           return true;
         }
 
