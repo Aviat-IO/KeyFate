@@ -52,20 +52,20 @@ export const secretsService = {
       .orderBy(desc(secrets.createdAt));
   },
 
-  async update(id: string, data: Partial<typeof secrets.$inferInsert>) {
+  async update(id: string, userId: string, data: Partial<typeof secrets.$inferInsert>) {
     const database = await getDatabase();
     const [result] = await database
       .update(secrets)
       .set(data)
-      .where(eq(secrets.id, id))
+      .where(and(eq(secrets.id, id), eq(secrets.userId, userId)))
       .returning();
 
     return result;
   },
 
-  async delete(id: string) {
+  async delete(id: string, userId: string) {
     const database = await getDatabase();
-    await database.delete(secrets).where(eq(secrets.id, id));
+    await database.delete(secrets).where(and(eq(secrets.id, id), eq(secrets.userId, userId)));
   },
 
   async getOverdue() {

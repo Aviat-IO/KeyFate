@@ -1,0 +1,349 @@
+{
+  "totalFiles": 13,
+  "totalQueries": 34,
+  "critical": 0,
+  "warnings": 5,
+  "passed": 12,
+  "results": [
+    {
+      "file": "src/app/api/auth/verify-email/route.ts",
+      "line": 90,
+      "query": "\n    // Check if token is expired\n    if (verificationToken.expires < new Date()) {\n      // Clean u",
+      "table": "verificationTokens",
+      "hasUserFilter": false,
+      "filterType": "none",
+      "severity": "warning",
+      "message": "WARNING: Unknown table verificationTokens - verify filtering requirements"
+    },
+    {
+      "file": "src/app/api/auth/verify-email/route.ts",
+      "line": 124,
+      "query": "\n    // Check if user is already verified\n    if (user.emailVerified) {\n      // Still clean up the ",
+      "table": "verificationTokens",
+      "hasUserFilter": false,
+      "filterType": "none",
+      "severity": "warning",
+      "message": "WARNING: Unknown table verificationTokens - verify filtering requirements"
+    },
+    {
+      "file": "src/app/api/auth/verify-email/route.ts",
+      "line": 162,
+      "query": "        } as any)\n        .where(eq(users.id, user.id)),\n\n      // Delete the used verification toke",
+      "table": "verificationTokens",
+      "hasUserFilter": false,
+      "filterType": "none",
+      "severity": "warning",
+      "message": "WARNING: Unknown table verificationTokens - verify filtering requirements"
+    },
+    {
+      "file": "src/app/api/auth/verify-email-nextauth/route.ts",
+      "line": 62,
+      "query": "\n    // Check if token has expired\n    if (verificationRecord.expires < new Date()) {\n      // Clean",
+      "table": "verificationTokens",
+      "hasUserFilter": false,
+      "filterType": "none",
+      "severity": "warning",
+      "message": "WARNING: Unknown table verificationTokens - verify filtering requirements"
+    },
+    {
+      "file": "src/app/api/auth/verify-email-nextauth/route.ts",
+      "line": 97,
+      "query": "      );\n    }\n\n    // Remove the used verification token\n    await db\n      .delete(verificationTok",
+      "table": "verificationTokens",
+      "hasUserFilter": false,
+      "filterType": "none",
+      "severity": "warning",
+      "message": "WARNING: Unknown table verificationTokens - verify filtering requirements"
+    },
+    {
+      "file": "src/app/api/auth/verify-email/route.ts",
+      "line": 153,
+      "query": "\n    // Update user as verified and clean up token\n    await Promise.all([\n      // Mark email as ve",
+      "table": "users",
+      "hasUserFilter": false,
+      "filterType": "none",
+      "severity": "info",
+      "message": "INFO: System table users - verify admin/system context"
+    },
+    {
+      "file": "src/app/api/auth/verify-email-nextauth/route.ts",
+      "line": 76,
+      "query": "      );\n    }\n\n    // Update user's email verification status\n    const updateResult = await db\n   ",
+      "table": "users",
+      "hasUserFilter": false,
+      "filterType": "none",
+      "severity": "info",
+      "message": "INFO: System table users - verify admin/system context"
+    },
+    {
+      "file": "src/app/api/check-in/route.ts",
+      "line": 95,
+      "query": "    // Calculate next check-in using milliseconds to avoid DST issues\n    const now = new Date();\n  ",
+      "table": "checkInTokens",
+      "hasUserFilter": false,
+      "filterType": "none",
+      "severity": "info",
+      "message": "Check-in endpoint - token-based authentication"
+    },
+    {
+      "file": "src/app/api/check-in/route.ts",
+      "line": 100,
+      "query": "      .update(checkInTokens)\n      .set({ usedAt: now } as any)\n      .where(eq(checkInTokens.id, to",
+      "table": "secrets",
+      "hasUserFilter": false,
+      "filterType": "none",
+      "severity": "info",
+      "message": "Check-in endpoint - token-based authentication"
+    },
+    {
+      "file": "src/app/api/cron/check-secrets/route.ts",
+      "line": 169,
+      "query": "\n    console.log(`[check-secrets] Calculated scheduledFor: ${scheduledFor.toISOString()} for ${remin",
+      "table": "reminderJobs",
+      "hasUserFilter": false,
+      "filterType": "none",
+      "severity": "info",
+      "message": "System cron endpoint - no user filter required"
+    },
+    {
+      "file": "src/app/api/cron/check-secrets/route.ts",
+      "line": 251,
+      "query": "  // Token expires in 30 days\n  const expiresAt = new Date();\n  expiresAt.setDate(expiresAt.getDate(",
+      "table": "checkInTokens",
+      "hasUserFilter": false,
+      "filterType": "none",
+      "severity": "info",
+      "message": "System cron endpoint - no user filter required"
+    },
+    {
+      "file": "src/app/api/cron/process-reminders/route.ts",
+      "line": 126,
+      "query": "        );\n\n        if (emailResult.success) {\n          // Update secret status to triggered\n      ",
+      "table": "secrets",
+      "hasUserFilter": false,
+      "filterType": "none",
+      "severity": "info",
+      "message": "System cron endpoint - no user filter required"
+    },
+    {
+      "file": "src/app/api/secrets/[id]/check-in/route.ts",
+      "line": 69,
+      "query": "      });\n    }\n\n    // Record check-in history\n    const database = await getDatabase();\n    await ",
+      "table": "checkinHistory",
+      "hasUserFilter": false,
+      "filterType": "none",
+      "severity": "info",
+      "message": "INSERT operation - userId included in data"
+    },
+    {
+      "file": "src/lib/db/drizzle.ts",
+      "line": 32,
+      "query": "\n// Enhanced database service functions with error handling and retries\nexport const secretsService ",
+      "table": "secrets",
+      "hasUserFilter": false,
+      "filterType": "none",
+      "severity": "info",
+      "message": "INSERT operation - userId included in data"
+    },
+    {
+      "file": "src/lib/db/drizzle.ts",
+      "line": 89,
+      "query": "\n  // Health check method for monitoring\n  async healthCheck(): Promise<boolean> {\n    try {\n      c",
+      "table": "secrets",
+      "hasUserFilter": false,
+      "filterType": "none",
+      "severity": "info",
+      "message": "Health check - system query"
+    },
+    {
+      "file": "src/lib/db/operations.ts",
+      "line": 42,
+      "query": "}\n\nexport async function createSecret(secret: SecretInsert): Promise<Secret> {\n  const db = await ge",
+      "table": "secrets",
+      "hasUserFilter": false,
+      "filterType": "none",
+      "severity": "info",
+      "message": "INSERT operation - userId included in data"
+    },
+    {
+      "file": "src/lib/db/operations.ts",
+      "line": 157,
+      "query": "\n    return result[0];\n  } else {\n    // Insert new record\n    const result = await db\n      .insert",
+      "table": "userContactMethods",
+      "hasUserFilter": false,
+      "filterType": "none",
+      "severity": "info",
+      "message": "INSERT operation - userId included in data"
+    },
+    {
+      "file": "src/lib/db/secrets-service-robust.ts",
+      "line": 18,
+      "query": "  }\n\n  async create(data: typeof secrets.$inferInsert) {\n    try {\n      // First attempt: use the s",
+      "table": "secrets",
+      "hasUserFilter": false,
+      "filterType": "none",
+      "severity": "info",
+      "message": "INSERT operation - userId included in data"
+    },
+    {
+      "file": "src/lib/db/secrets-service-robust.ts",
+      "line": 51,
+      "query": "            `);\n\n            console.log('Added missing recipient_name column');\n\n            // Ret",
+      "table": "secrets",
+      "hasUserFilter": false,
+      "filterType": "none",
+      "severity": "info",
+      "message": "INSERT operation - userId included in data"
+    },
+    {
+      "file": "src/lib/services/email-service.ts",
+      "line": 253,
+      "query": "  }\n\n  private async logEmailSuccess(recipientEmail: string, subject: string) {\n    try {\n      cons",
+      "table": "emailNotifications",
+      "hasUserFilter": false,
+      "filterType": "none",
+      "severity": "info",
+      "message": "INSERT operation - userId included in data"
+    },
+    {
+      "file": "src/lib/services/email-service.ts",
+      "line": 272,
+      "query": "    try {\n      const user = await this.getUserById(userId);\n      const recipientEmail = user?.emai",
+      "table": "emailNotifications",
+      "hasUserFilter": false,
+      "filterType": "none",
+      "severity": "info",
+      "message": "INSERT operation - userId included in data"
+    },
+    {
+      "file": "src/lib/services/subscription-service.ts",
+      "line": 48,
+      "query": "        throw new Error(`Tier ${data.tierName} not found`);\n      }\n\n      // Insert full record (ca",
+      "table": "userSubscriptions",
+      "hasUserFilter": false,
+      "filterType": "none",
+      "severity": "info",
+      "message": "INSERT operation - userId included in data"
+    },
+    {
+      "file": "src/app/api/secrets/[id]/delete-server-share/route.ts",
+      "line": 32,
+      "query": "    }\n\n    const db = await getDatabase();\n    // Verify ownership and update in one go\n    const re",
+      "table": "secrets",
+      "hasUserFilter": true,
+      "filterType": "userId",
+      "severity": "pass",
+      "message": "Properly filtered by userId"
+    },
+    {
+      "file": "src/app/api/secrets/[id]/route.ts",
+      "line": 144,
+      "query": "    // Cascade delete related records inside a transaction\n    // Get database connection for transa",
+      "table": "checkinHistory",
+      "hasUserFilter": true,
+      "filterType": "userId",
+      "severity": "pass",
+      "message": "Properly filtered by userId"
+    },
+    {
+      "file": "src/app/api/secrets/[id]/route.ts",
+      "line": 146,
+      "query": "    const db = await getDatabase();\n\n    await db.transaction(async (tx) => {\n      await tx.delete(",
+      "table": "reminderJobs",
+      "hasUserFilter": true,
+      "filterType": "userId",
+      "severity": "pass",
+      "message": "Properly filtered by userId"
+    },
+    {
+      "file": "src/app/api/secrets/[id]/route.ts",
+      "line": 150,
+      "query": "      await tx.delete(checkInTokens).where(eq(checkInTokens.secretId, id));\n      await tx.delete(re",
+      "table": "secretsTable",
+      "hasUserFilter": true,
+      "filterType": "userId",
+      "severity": "pass",
+      "message": "Properly filtered by userId"
+    },
+    {
+      "file": "src/lib/db/drizzle.ts",
+      "line": 58,
+      "query": "  },\n\n  async update(id: string, userId: string, data: Partial<typeof secrets.$inferInsert>) {\n    c",
+      "table": "secrets",
+      "hasUserFilter": true,
+      "filterType": "userId",
+      "severity": "pass",
+      "message": "Properly filtered by userId"
+    },
+    {
+      "file": "src/lib/db/drizzle.ts",
+      "line": 68,
+      "query": "    return result;\n  },\n\n  async delete(id: string, userId: string) {\n    const database = await get",
+      "table": "secrets",
+      "hasUserFilter": true,
+      "filterType": "userId",
+      "severity": "pass",
+      "message": "Properly filtered by userId"
+    },
+    {
+      "file": "src/lib/db/operations.ts",
+      "line": 66,
+      "query": "    updatedAt: new Date(),\n  };\n\n  const db = await getDatabase();\n  const result = await db\n    .up",
+      "table": "secrets",
+      "hasUserFilter": true,
+      "filterType": "userId",
+      "severity": "pass",
+      "message": "Properly filtered by userId"
+    },
+    {
+      "file": "src/lib/db/operations.ts",
+      "line": 81,
+      "query": "}\n\nexport async function deleteSecret(id: string, userId: string): Promise<void> {\n  const db = awai",
+      "table": "secrets",
+      "hasUserFilter": true,
+      "filterType": "userId",
+      "severity": "pass",
+      "message": "Properly filtered by userId"
+    },
+    {
+      "file": "src/lib/db/operations.ts",
+      "line": 141,
+      "query": "    .limit(1);\n\n  if (existingRecord.length > 0) {\n    // Update existing record\n    const result = ",
+      "table": "userContactMethods",
+      "hasUserFilter": true,
+      "filterType": "userId",
+      "severity": "pass",
+      "message": "Properly filtered by userId"
+    },
+    {
+      "file": "src/lib/db/secrets-service-robust.ts",
+      "line": 84,
+      "query": "      .orderBy(desc(secrets.createdAt));\n  }\n\n  async update(id: string, userId: string, data: Parti",
+      "table": "secrets",
+      "hasUserFilter": true,
+      "filterType": "userId",
+      "severity": "pass",
+      "message": "Properly filtered by userId"
+    },
+    {
+      "file": "src/lib/db/secrets-service-robust.ts",
+      "line": 93,
+      "query": "\n    return result;\n  }\n\n  async delete(id: string, userId: string) {\n    await this.db.delete(secre",
+      "table": "secrets",
+      "hasUserFilter": true,
+      "filterType": "userId",
+      "severity": "pass",
+      "message": "Properly filtered by userId"
+    },
+    {
+      "file": "src/lib/services/subscription-service.ts",
+      "line": 104,
+      "query": "        updateData.tierId = tierId;\n        delete updateData.tierName;\n      }\n\n      const [subscr",
+      "table": "userSubscriptions",
+      "hasUserFilter": true,
+      "filterType": "userId",
+      "severity": "pass",
+      "message": "Properly filtered by userId"
+    }
+  ]
+}

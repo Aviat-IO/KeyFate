@@ -56,7 +56,7 @@ export async function POST(
 
     // Update the secret with new check-in times
     const updatePayload = { lastCheckIn: now, nextCheckIn } as SecretUpdate;
-    const updatedSecret = await secretsService.update(id, updatePayload);
+    const updatedSecret = await secretsService.update(id, session.user.id, updatePayload);
 
     if (!updatedSecret) {
       return NextResponse.json({ error: "Failed to update secret" }, {
