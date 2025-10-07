@@ -22,8 +22,9 @@ const mockDb = {
   limit: vi.fn().mockResolvedValue([]),
 };
 
-vi.mock('@/lib/db', () => ({
-  db: mockDb
+// Mock getDatabase to return mockDb
+vi.mock('@/lib/db/get-database', () => ({
+  getDatabase: vi.fn().mockResolvedValue(mockDb)
 }));
 
 describe('Email Failures Schema', () => {
