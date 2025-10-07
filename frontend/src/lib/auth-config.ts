@@ -264,6 +264,9 @@ const baseAuthConfig = {
         if (!session.user.email && token.email) {
           session.user.email = token.email as string;
         }
+        // Add email verification status to session
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (session.user as any).emailVerified = token.emailVerified || null;
       }
       return session;
     },
@@ -285,6 +288,7 @@ const baseAuthConfig = {
 
             if (dbUser.length > 0) {
               token.id = dbUser[0].id;
+              token.emailVerified = dbUser[0].emailVerified;
             } else {
               console.error(
                 "[Auth] JWT callback: User not found in database for email:",
@@ -298,6 +302,21 @@ const baseAuthConfig = {
       } else if (user) {
         // For credentials provider, use the user ID directly
         token.id = user.id;
+        // Fetch email verification status from database
+        try {
+          const db = await getDatabase();
+          const dbUser = await db
+            .select()
+            .from(users)
+            .where(eq(users.id, user.id))
+            .limit(1);
+
+          if (dbUser.length > 0) {
+            token.emailVerified = dbUser[0].emailVerified;
+          }
+        } catch (error) {
+          console.error("[Auth] Error fetching email verification status:", error);
+        }
       }
 
       if (account) {
