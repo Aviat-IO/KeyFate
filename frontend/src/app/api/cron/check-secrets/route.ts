@@ -164,13 +164,13 @@ async function recordReminderSent(
 
     console.log(`[check-secrets] Calculated scheduledFor: ${scheduledFor.toISOString()} for ${reminderType} reminder (nextCheckIn: ${nextCheckIn.toISOString()})`);
 
-    // BUG FIX #4: Insert reminder job record with status='pending' BEFORE email send
+    // BUG FIX #4: Insert reminder job record BEFORE email send
     // This ensures idempotency - if email send fails, pending record prevents retry duplicates
+    // Status defaults to 'pending' in the schema
     const [inserted] = await db.insert(reminderJobs).values({
       secretId,
       reminderType,
       scheduledFor,
-      status: 'pending',
     }).returning({ id: reminderJobs.id });
 
     if (!inserted?.id) {

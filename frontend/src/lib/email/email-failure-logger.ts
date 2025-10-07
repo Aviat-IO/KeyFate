@@ -7,7 +7,7 @@
 
 import { getDatabase } from '@/lib/db/get-database';
 import { emailFailures, type EmailFailure, type EmailFailureInsert } from '@/lib/db/schema';
-import { eq, and, lte, isNull, lt } from 'drizzle-orm';
+import { eq, and, lte, isNull, lt, sql } from 'drizzle-orm';
 
 /**
  * Log an email failure to the database
@@ -27,19 +27,18 @@ export async function incrementRetryCount(
   failureId: string
 ): Promise<EmailFailure> {
   const db = await getDatabase();
-  const [existing] = await db.select()
-    .from(emailFailures)
-    .where(eq(emailFailures.id, failureId))
-    .limit(1);
-
-  if (!existing) {
-    throw new Error(`Email failure ${failureId} not found`);
-  }
-
+  // Use sql helper for atomic increment
+  // Type assertion needed due to Drizzle type inference issue with .notNull().default() fields
   const [updated] = await db.update(emailFailures)
-    .set({ retryCount: existing.retryCount + 1 })
+    .set({
+      retryCount: sql`retry_count + 1`
+    } as any)
     .where(eq(emailFailures.id, failureId))
     .returning();
+
+  if (!updated) {
+    throw new Error(`Email failure ${failureId} not found`);
+  }
 
   return updated;
 }
@@ -52,7 +51,7 @@ export async function resolveEmailFailure(
 ): Promise<EmailFailure> {
   const db = await getDatabase();
   const [resolved] = await db.update(emailFailures)
-    .set({ resolvedAt: new Date() })
+    .set({ resolvedAt: new Date() } as any)
     .where(eq(emailFailures.id, failureId))
     .returning();
 
@@ -129,7 +128,7 @@ export async function cleanupOldFailures(
   // Drizzle returns { rowCount: number } or similar
   // Check the actual return value structure
   return typeof deleted === 'object' && 'rowCount' in deleted
-    ? deleted.rowCount || 0
+    ? (deleted.rowCount as number) || 0
     : 0;
 }
 
