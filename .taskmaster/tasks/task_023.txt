@@ -1,0 +1,11 @@
+# Task ID: 23
+# Title: Fix Drizzle ORM Cloud SQL Compatibility Issues
+# Status: pending
+# Dependencies: 22
+# Priority: high
+# Description: Resolve Drizzle ORM query failures with Cloud SQL PostgreSQL, specifically fixing .returning() method issues and undefined property errors
+# Details:
+Update Drizzle configuration in src/lib/db/get-database.ts to use proper Cloud SQL PostgreSQL dialect. Fix .returning() method calls in secretsService by ensuring proper Drizzle PostgreSQL driver setup. Update all database queries to use Cloud SQL compatible patterns. Add error handling for undefined properties in query results. Verify connection pooling configuration works with Cloud SQL.
+
+# Test Strategy:
+Create drizzle-cloud-sql.test.ts to verify .returning() works, test all CRUD operations, validate connection pooling, and ensure no undefined property errors. Mock Cloud SQL responses and test error scenarios.

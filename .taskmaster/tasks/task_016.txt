@@ -1,6 +1,6 @@
 # Task ID: 16
 # Title: Implement process-reminders cron job with email functionality
-# Status: pending
+# Status: done
 # Dependencies: 13, 15
 # Priority: high
 # Description: Enhance process-reminders endpoint to decrypt server shares and send disclosure emails to recipients

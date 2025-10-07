@@ -1,0 +1,11 @@
+# Task ID: 24
+# Title: Configure Email Service for Test Environment
+# Status: pending
+# Dependencies: None
+# Priority: medium
+# Description: Set up proper email service configuration for tests, including SendGrid mocking and environment variable management
+# Details:
+Create email service mock in src/lib/email/test-email-service.ts that can be used in test environment. Update vitest.config.mts to include EMAIL_* environment variables for SendGrid. Implement email service factory pattern that returns mock service in test mode and real SendGrid service in production. Add email delivery verification without actual SMTP calls in tests.
+
+# Test Strategy:
+Create email-service-test.test.ts to verify mock email service works, test email template rendering, validate environment variable handling, and ensure no actual emails are sent during tests.
