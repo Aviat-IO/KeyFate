@@ -20,6 +20,7 @@ export default withAuth(
       "/auth/signup",
       "/auth/error",
       "/check-in", // Token-based authentication, not session-based
+      "/api/check-in", // API endpoint also uses token-based auth
     ];
 
     // If user is authenticated and trying to access sign-in page, redirect to dashboard

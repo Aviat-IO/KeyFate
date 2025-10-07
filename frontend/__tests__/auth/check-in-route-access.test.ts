@@ -153,6 +153,48 @@ describe('Check-In Route Access Control', () => {
       // API routes should be allowed through middleware
       expect(result.type).not.toBe('redirect');
     });
+
+    it('should not require email verification for API route (token-based auth)', async () => {
+      // Regression test for bug where POST to /api/check-in was redirected
+      // to /auth/verify-email with 307 status code
+
+      // Create a custom mock for this specific test with an authenticated but unverified user
+      vi.doMock('next-auth/middleware', () => ({
+        withAuth: vi.fn((middleware: Function, config: any) => {
+          return async (request: NextRequest) => {
+            // Simulate authenticated user with unverified email
+            const requestWithAuth = Object.assign(request, {
+              nextauth: {
+                token: {
+                  email: 'user@example.com',
+                  emailVerified: false // User has unverified email
+                }
+              }
+            });
+
+            // Call the middleware function
+            return middleware(requestWithAuth);
+          };
+        })
+      }));
+
+      // Clear the module cache to use the new mock
+      vi.resetModules();
+
+      const url = 'http://localhost:3000/api/check-in?token=valid-token-123';
+      const req = new NextRequest(url, { method: 'POST' });
+
+      const middlewareModule = await import('@/middleware');
+      const middleware = (middlewareModule as any).default;
+      const result = await middleware(req);
+
+      // Should NOT redirect to verify-email page
+      // API uses token-based auth, not session-based auth
+      expect(result).toBeDefined();
+      if (result && typeof result === 'object' && 'type' in result) {
+        expect(result.type).not.toBe('redirect');
+      }
+    });
   });
 
   describe('Token Validation Security', () => {
