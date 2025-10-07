@@ -253,7 +253,7 @@ export function renderReminderTemplate(
     <div style="background-color: ${urgency.bgColor}; color: ${urgency.textColor}; padding: 20px; border-radius: 8px; margin: 20px 0;">
       <h2 style="margin: 0 0 15px 0; color: ${urgency.textColor};">Check-in Reminder</h2>
       <p style="margin: 0 0 10px 0; font-size: 16px; font-weight: bold; color: ${urgency.textColor};">
-        You need to check in for "${data.secretTitle}" in ${timeText}
+        You need to check in for "${data.secretTitle}" within ${timeText}
       </p>
       ${
     data.urgencyLevel === "critical" || data.urgencyLevel === "high"

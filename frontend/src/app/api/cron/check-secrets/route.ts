@@ -68,15 +68,20 @@ function getReminderType(
 
 /**
  * Check if a reminder has already been sent for this secret and reminder type
+ * during the current check-in period
+ *
+ * BUG FIX #1: Filter by lastCheckIn timestamp to prevent old reminder records
+ * from blocking new check-in periods
  */
 async function hasReminderBeenSent(
   secretId: string,
-  reminderType: ReminderType
+  reminderType: ReminderType,
+  lastCheckIn: Date
 ): Promise<boolean> {
   try {
     const db = await getDatabase();
 
-    console.log(`[check-secrets] Checking if reminder already sent: secretId=${secretId}, type=${reminderType}`);
+    console.log(`[check-secrets] Checking if reminder already sent: secretId=${secretId}, type=${reminderType}, lastCheckIn=${lastCheckIn.toISOString()}`);
 
     const existingReminder = await db.select()
       .from(reminderJobs)
@@ -84,13 +89,15 @@ async function hasReminderBeenSent(
         and(
           eq(reminderJobs.secretId, secretId),
           eq(reminderJobs.reminderType, reminderType),
-          eq(reminderJobs.status, 'sent')
+          eq(reminderJobs.status, 'sent'),
+          // BUG FIX #1: Only check reminders sent during current check-in period
+          sql`${reminderJobs.sentAt} >= ${lastCheckIn.toISOString()}`
         )
       )
       .limit(1);
 
     const alreadySent = existingReminder.length > 0;
-    console.log(`[check-secrets] Reminder check result: alreadySent=${alreadySent}, found ${existingReminder.length} records`);
+    console.log(`[check-secrets] Reminder check result: alreadySent=${alreadySent}, found ${existingReminder.length} records in current period`);
 
     return alreadySent;
   } catch (error) {
@@ -104,13 +111,16 @@ async function hasReminderBeenSent(
 /**
  * Record that a reminder was sent
  *
- * Note: We insert with default status ('pending') then update to 'sent' and set sentAt
- * This is a workaround for Drizzle type inference limitations
+ * BUG FIX #2: Now accepts checkInDays parameter to calculate proper scheduledFor
+ * for percentage-based reminders (25%, 50%)
+ *
+ * BUG FIX #4: Insert with status='pending' BEFORE email send to ensure idempotency
  */
 async function recordReminderSent(
   secretId: string,
   reminderType: ReminderType,
-  nextCheckIn: Date
+  nextCheckIn: Date,
+  checkInDays: number
 ): Promise<void> {
   try {
     const db = await getDatabase();
@@ -141,20 +151,26 @@ async function recordReminderSent(
         scheduledFor = new Date(checkInTime - (7 * 24 * 60 * 60 * 1000));
         break;
       case '25_percent':
+        // BUG FIX #2: Calculate based on checkInDays
+        // 25% threshold = 75% of check-in period before nextCheckIn
+        scheduledFor = new Date(checkInTime - (checkInDays * 24 * 60 * 60 * 1000 * 0.75));
+        break;
       case '50_percent':
-        // For percentage-based reminders, use current time as we don't have checkInDays
-        // These are calculated dynamically based on the check-in period
-        scheduledFor = now;
+        // BUG FIX #2: Calculate based on checkInDays
+        // 50% threshold = 50% of check-in period before nextCheckIn
+        scheduledFor = new Date(checkInTime - (checkInDays * 24 * 60 * 60 * 1000 * 0.5));
         break;
     }
 
     console.log(`[check-secrets] Calculated scheduledFor: ${scheduledFor.toISOString()} for ${reminderType} reminder (nextCheckIn: ${nextCheckIn.toISOString()})`);
 
-    // Insert reminder job record (status defaults to 'pending')
+    // BUG FIX #4: Insert reminder job record with status='pending' BEFORE email send
+    // This ensures idempotency - if email send fails, pending record prevents retry duplicates
     const [inserted] = await db.insert(reminderJobs).values({
       secretId,
       reminderType,
       scheduledFor,
+      status: 'pending',
     }).returning({ id: reminderJobs.id });
 
     if (!inserted?.id) {
@@ -162,7 +178,7 @@ async function recordReminderSent(
       return;
     }
 
-    console.log(`[check-secrets] Inserted reminder job with ID: ${inserted.id}`);
+    console.log(`[check-secrets] Inserted reminder job with ID: ${inserted.id} (status: pending)`);
 
     // Update status to 'sent' and set sentAt timestamp
     await db.execute(sql`
@@ -247,18 +263,49 @@ async function generateCheckInToken(
 
 /**
  * Process a single secret for reminder sending
+ *
+ * BUG FIX #4: Restructured to record pending reminder BEFORE email send
+ * BUG FIX #5: Improved type safety for nextCheckIn parameter
  */
 async function processSecret(
   secret: any,
   user: any,
-): Promise<{ sent: boolean; error?: string }> {
+  reminderType: ReminderType,
+): Promise<{ sent: boolean; error?: string; recordedPending?: boolean }> {
   try {
+    // BUG FIX #5: Type-safe check for nextCheckIn
+    if (!secret.nextCheckIn) {
+      console.warn(`[check-secrets] Secret ${secret.id} missing nextCheckIn, skipping`);
+      return { sent: false, error: 'missing_next_check_in' };
+    }
+
+    const nextCheckIn: Date = new Date(secret.nextCheckIn);
+
+    // BUG FIX #4: Record pending reminder BEFORE attempting email send
+    // This ensures idempotency - if send fails, pending record prevents duplicate retry
+    try {
+      await recordReminderSent(
+        secret.id,
+        reminderType,
+        nextCheckIn,
+        secret.checkInDays
+      );
+      console.log(`[check-secrets] Recorded pending reminder for secret ${secret.id}`);
+    } catch (recordError) {
+      console.error(`[check-secrets] Failed to record pending reminder:`, recordError);
+      return {
+        sent: false,
+        error: 'failed_to_record_pending',
+        recordedPending: false,
+      };
+    }
+
     // Calculate urgency
-    const urgency = calculateUrgency(new Date(secret.nextCheckIn));
+    const urgency = calculateUrgency(nextCheckIn);
 
     // Calculate days remaining
     const now = new Date();
-    const msRemaining = new Date(secret.nextCheckIn).getTime() - now.getTime();
+    const msRemaining = nextCheckIn.getTime() - now.getTime();
     const daysRemaining = Math.max(0, msRemaining / (1000 * 60 * 60 * 24));
 
     // Generate check-in token and URL
@@ -314,10 +361,11 @@ async function processSecret(
       return {
         sent: false,
         error: result.error,
+        recordedPending: true,
       };
     }
 
-    return { sent: true };
+    return { sent: true, recordedPending: true };
   } catch (error) {
     const errorMessage = error instanceof Error
       ? error.message
@@ -382,37 +430,46 @@ export async function POST(req: NextRequest) {
 
       console.log(`[check-secrets] Processing secret ${secret.id} (title: ${secret.title})`);
 
+      // BUG FIX #5: Type-safe null check for nextCheckIn
+      if (!secret.nextCheckIn) {
+        console.warn(`[check-secrets] Secret ${secret.id} missing nextCheckIn, skipping`);
+        continue;
+      }
+
+      // BUG FIX #5: Type-safe null check for lastCheckIn
+      if (!secret.lastCheckIn) {
+        console.warn(`[check-secrets] Secret ${secret.id} missing lastCheckIn, skipping`);
+        continue;
+      }
+
       // Determine reminder type based on time remaining
-      const reminderType = getReminderType(new Date(secret.nextCheckIn!), secret.checkInDays);
+      const nextCheckIn: Date = new Date(secret.nextCheckIn);
+      const lastCheckIn: Date = new Date(secret.lastCheckIn);
+      const reminderType = getReminderType(nextCheckIn, secret.checkInDays);
 
       console.log(`[check-secrets] Reminder type for secret ${secret.id}: ${reminderType || 'none'}`);
 
       // Check if we should send a reminder
       if (reminderType) {
-        // Check if this reminder type has already been sent
-        const alreadySent = await hasReminderBeenSent(secret.id, reminderType);
+        // BUG FIX #1: Check if this reminder type has already been sent during current period
+        const alreadySent = await hasReminderBeenSent(
+          secret.id,
+          reminderType,
+          lastCheckIn
+        );
 
         if (alreadySent) {
-          console.log(`[check-secrets] Skipping reminder for secret ${secret.id} - already sent ${reminderType}`);
+          console.log(`[check-secrets] Skipping reminder for secret ${secret.id} - already sent ${reminderType} in current period`);
         } else {
           console.log(`[check-secrets] Sending reminder for secret ${secret.id} - type: ${reminderType}`);
           remindersProcessed++;
 
-          const result = await processSecret(secret, user);
+          // BUG FIX #4: processSecret now handles recording pending reminder BEFORE email send
+          const result = await processSecret(secret, user, reminderType);
 
           if (result.sent) {
-            // Record that we sent this reminder
-            try {
-              await recordReminderSent(secret.id, reminderType, new Date(secret.nextCheckIn!));
-              remindersSent++;
-              console.log(`[check-secrets] Successfully recorded reminder for secret ${secret.id}`);
-            } catch (recordError) {
-              console.error(
-                `[check-secrets] Failed to record reminder for secret ${secret.id}:`,
-                recordError
-              );
-              // Continue processing even if recording fails
-            }
+            remindersSent++;
+            console.log(`[check-secrets] Successfully sent and recorded reminder for secret ${secret.id}`);
           } else {
             remindersFailed++;
             console.error(
