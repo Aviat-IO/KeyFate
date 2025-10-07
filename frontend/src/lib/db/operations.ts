@@ -52,6 +52,7 @@ export async function createSecret(secret: SecretInsert): Promise<Secret> {
 
 export async function updateSecret(
   id: string,
+  userId: string,
   updates: SecretUpdate,
 ): Promise<Secret> {
   // Create update object with updatedAt
@@ -64,7 +65,7 @@ export async function updateSecret(
   const result = await db
     .update(secrets)
     .set(updateData)
-    .where(eq(secrets.id, id))
+    .where(and(eq(secrets.id, id), eq(secrets.userId, userId)))
     .returning();
 
   if (result.length === 0) {
@@ -74,11 +75,11 @@ export async function updateSecret(
   return result[0];
 }
 
-export async function deleteSecret(id: string): Promise<void> {
+export async function deleteSecret(id: string, userId: string): Promise<void> {
   const db = await getDatabase();
   const result = await db
     .delete(secrets)
-    .where(eq(secrets.id, id))
+    .where(and(eq(secrets.id, id), eq(secrets.userId, userId)))
     .returning({ id: secrets.id });
 
   if (result.length === 0) {

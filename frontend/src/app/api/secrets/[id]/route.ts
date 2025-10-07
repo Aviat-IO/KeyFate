@@ -89,7 +89,7 @@ export async function PUT(
       checkInDays: validatedData.check_in_days,
     };
 
-    const secret = await secretsService.update(id, updateData);
+    const secret = await secretsService.update(id, session.user.id, updateData);
 
     if (!secret) {
       return NextResponse.json({ error: "Secret not found" }, { status: 404 });

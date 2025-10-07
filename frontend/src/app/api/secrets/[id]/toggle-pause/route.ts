@@ -34,6 +34,7 @@ export async function POST(
     // Update the secret status
     const updatedSecret = await secretsService.update(
       id,
+      session.user.id,
       { status: newStatus as "active" | "paused" } as any,
     );
 

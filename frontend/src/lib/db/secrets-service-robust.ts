@@ -79,18 +79,18 @@ export class RobustSecretsService {
       .orderBy(desc(secrets.createdAt));
   }
 
-  async update(id: string, data: Partial<typeof secrets.$inferInsert>) {
+  async update(id: string, userId: string, data: Partial<typeof secrets.$inferInsert>) {
     const [result] = await this.db
       .update(secrets)
       .set(data)
-      .where(eq(secrets.id, id))
+      .where(and(eq(secrets.id, id), eq(secrets.userId, userId)))
       .returning();
 
     return result;
   }
 
-  async delete(id: string) {
-    await this.db.delete(secrets).where(eq(secrets.id, id));
+  async delete(id: string, userId: string) {
+    await this.db.delete(secrets).where(and(eq(secrets.id, id), eq(secrets.userId, userId)));
   }
 
   async getOverdue() {
