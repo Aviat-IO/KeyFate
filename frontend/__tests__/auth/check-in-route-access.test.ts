@@ -95,6 +95,48 @@ describe('Check-In Route Access Control', () => {
 
       expect(result.type).not.toBe('redirect');
     });
+
+    it('should not require email verification for check-in page (token-based auth)', async () => {
+      // Regression test for bug where authenticated users with unverified emails
+      // were redirected to /auth/verify-email when accessing check-in links
+
+      // Create a custom mock for this specific test with an authenticated but unverified user
+      vi.doMock('next-auth/middleware', () => ({
+        withAuth: vi.fn((middleware: Function, config: any) => {
+          return async (request: NextRequest) => {
+            // Simulate authenticated user with unverified email
+            const requestWithAuth = Object.assign(request, {
+              nextauth: {
+                token: {
+                  email: 'user@example.com',
+                  emailVerified: false // User has unverified email
+                }
+              }
+            });
+
+            // Call the middleware function
+            return middleware(requestWithAuth);
+          };
+        })
+      }));
+
+      // Clear the module cache to use the new mock
+      vi.resetModules();
+
+      const url = 'http://localhost:3000/check-in?token=valid-token-123';
+      const req = new NextRequest(url);
+
+      const middlewareModule = await import('@/middleware');
+      const middleware = (middlewareModule as any).default;
+      const result = await middleware(req);
+
+      // Should NOT redirect to verify-email page
+      // Check-in uses token-based auth, not session-based auth
+      expect(result).toBeDefined();
+      if (result && typeof result === 'object' && 'type' in result) {
+        expect(result.type).not.toBe('redirect');
+      }
+    });
   });
 
   describe('Check-In API Route (/api/check-in)', () => {

@@ -28,9 +28,16 @@ const publicRoutes = [
   "/check-in", // Allow unauthenticated access for token-based check-ins
   // ... other public routes
 ];
+
+const verificationExemptRoutes = [
+  // ... other routes
+  "/check-in", // Token-based authentication, not session-based
+];
 ```
 
-The `/check-in` page route is added to the public routes array, allowing users to access it without an active session.
+The `/check-in` page route is added to:
+1. **Public routes** - Allows users to access it without an active session
+2. **Verification exempt routes** - Bypasses email verification check since check-in uses token-based auth, not session-based auth
 
 #### API Route Exemption
 ```typescript
