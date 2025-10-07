@@ -2,7 +2,7 @@
   "master": {
     "tasks": [
       {
-        "id": 1,
+        "id": "1",
         "title": "Email Verification System",
         "description": "Implement comprehensive email verification system for user authentication",
         "status": "done",
@@ -15,24 +15,27 @@
             "id": 1,
             "title": "Email verification API routes",
             "description": "Implement /api/auth/verify-email, /api/auth/resend-verification, /api/auth/verification-status",
-            "status": "done"
+            "status": "done",
+            "parentId": "undefined"
           },
           {
             "id": 2,
             "title": "Email verification middleware",
             "description": "Middleware to protect routes and redirect unverified users",
-            "status": "done"
+            "status": "done",
+            "parentId": "undefined"
           },
           {
             "id": 3,
             "title": "Frontend verification components",
             "description": "UI components for email verification flow",
-            "status": "done"
+            "status": "done",
+            "parentId": "undefined"
           }
         ]
       },
       {
-        "id": 2,
+        "id": "2",
         "title": "Set up Cloud SQL instance",
         "description": "Configure Cloud SQL PostgreSQL instance and establish secure database connection",
         "status": "done",
@@ -45,30 +48,33 @@
             "id": 1,
             "title": "Create Cloud SQL PostgreSQL instance",
             "description": "Set up the database instance with appropriate configuration",
-            "status": "done"
+            "status": "done",
+            "parentId": "undefined"
           },
           {
             "id": 2,
             "title": "Configure database authentication and security",
             "description": "Set up SSL certificates, firewall rules, and user authentication",
-            "status": "done"
+            "status": "done",
+            "parentId": "undefined"
           },
           {
             "id": 3,
             "title": "Set up connection pooling",
             "description": "Configure connection pooling for optimal performance",
-            "status": "done"
+            "status": "done",
+            "parentId": "undefined"
           }
         ]
       },
       {
-        "id": 3,
+        "id": "3",
         "title": "Create database migration scripts",
         "description": "Develop scripts to migrate schema and data from Supabase to Cloud SQL",
         "status": "done",
         "priority": "high",
         "dependencies": [
-          2
+          "2"
         ],
         "details": "Create scripts for schema migration, data export/import, and validation of data integrity",
         "testStrategy": "Migration validation tests, data integrity checks, rollback procedures",
@@ -77,31 +83,34 @@
             "id": 1,
             "title": "Export Supabase schema and data",
             "description": "Create scripts to export current database structure and data",
-            "status": "done"
+            "status": "done",
+            "parentId": "undefined"
           },
           {
             "id": 2,
             "title": "Create Cloud SQL schema migration",
             "description": "Adapt exported schema for Cloud SQL PostgreSQL",
-            "status": "done"
+            "status": "done",
+            "parentId": "undefined"
           },
           {
             "id": 3,
             "title": "Develop data migration scripts",
             "description": "Scripts to safely migrate user and application data",
-            "status": "done"
+            "status": "done",
+            "parentId": "undefined"
           }
         ]
       },
       {
-        "id": 4,
+        "id": "4",
         "title": "Update application database configuration",
         "description": "Modify application code to use Cloud SQL instead of Supabase",
-        "status": "pending",
+        "status": "done",
         "priority": "high",
         "dependencies": [
-          2,
-          3
+          "2",
+          "3"
         ],
         "details": "Update database connection strings, authentication methods, and API integration",
         "testStrategy": "Integration tests, API endpoint tests, performance validation",
@@ -110,27 +119,38 @@
             "id": 1,
             "title": "Update database connection configuration",
             "description": "Replace Supabase client with Cloud SQL connection",
-            "status": "pending"
+            "status": "done",
+            "parentId": "undefined",
+            "updatedAt": "2025-10-07T02:24:22.282Z"
           },
           {
             "id": 2,
             "title": "Migrate API routes to use Cloud SQL",
             "description": "Update all API routes to use new database connection",
-            "status": "pending"
+            "status": "done",
+            "parentId": "undefined",
+            "updatedAt": "2025-10-07T02:24:22.776Z"
           },
           {
             "id": 3,
             "title": "Update authentication integration",
             "description": "Modify auth flows to work with Cloud SQL backend",
-            "status": "pending"
+            "status": "done",
+            "parentId": "undefined",
+            "updatedAt": "2025-10-07T02:24:23.253Z"
           }
-        ]
+        ],
+        "updatedAt": "2025-10-07T02:24:23.253Z"
       }
     ],
     "metadata": {
-      "created": "2025-09-16T16:04:31.397Z",
-      "updated": "2025-09-16T17:18:38.748Z",
-      "description": "Tasks for master context"
+      "version": "1.0.0",
+      "lastModified": "2025-10-07T02:24:23.254Z",
+      "taskCount": 4,
+      "completedCount": 4,
+      "tags": [
+        "master"
+      ]
     }
   }
 }
