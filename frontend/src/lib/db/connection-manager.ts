@@ -232,6 +232,15 @@ class ConnectionManager {
       circuitBreakerResetTime: this.circuitBreakerResetTime
     };
   }
+
+  // Reset for testing purposes only
+  reset() {
+    this.connection = null;
+    this.connectionAttempts = 0;
+    this.lastSuccessfulConnection = null;
+    this.circuitBreakerOpen = false;
+    this.circuitBreakerResetTime = null;
+  }
 }
 
 export const connectionManager = ConnectionManager.getInstance();
