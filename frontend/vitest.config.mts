@@ -46,6 +46,10 @@ export default defineConfig({
       DATABASE_URL:
         "postgresql://postgres:test_password@localhost:5432/test_db",
       ENCRYPTION_KEY: "test_encryption_key_32_bytes_long_for_testing",
+      // Email service configuration for tests
+      EMAIL_PROVIDER: "mock",
+      SENDGRID_API_KEY: "test-sendgrid-api-key",
+      SENDGRID_ADMIN_EMAIL: "admin-test@keyfate.com",
     },
     include: [
       "src/**/*.{test,spec}.{js,ts,jsx,tsx}",
