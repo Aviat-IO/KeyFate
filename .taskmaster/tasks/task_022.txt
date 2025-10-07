@@ -1,0 +1,11 @@
+# Task ID: 22
+# Title: Implement Application-Level Authorization Middleware
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Create a comprehensive authorization layer to replace removed Supabase RLS policies, ensuring proper user and tenant isolation for all database operations
+# Details:
+Create middleware functions that validate user ownership for all database operations. Implement in src/lib/auth/authorization.ts with functions: validateSecretOwnership(secretId, userId), validateUserAccess(resourceId, userId), and withAuthorization() HOF. Add authorization checks to all API routes before database operations. Ensure secrets, check_in_tokens, and email_failures tables are properly filtered by userId/ownership. Use NextAuth session data for user context validation.
+
+# Test Strategy:
+Create authorization.test.ts with test cases for: unauthorized access attempts, cross-user data access prevention, admin role validation, and integration tests for all protected endpoints. Verify no data leakage between users.

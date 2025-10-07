@@ -1,0 +1,11 @@
+# Task ID: 25
+# Title: Validate NextAuth Session Management with Cloud SQL
+# Status: pending
+# Dependencies: 23
+# Priority: medium
+# Description: Ensure NextAuth is properly configured with Cloud SQL database adapter and verify session persistence
+# Details:
+Verify NextAuth configuration in src/app/api/auth/[...nextauth]/route.ts uses proper DrizzleAdapter with Cloud SQL connection. Ensure session, user, and account tables exist in Cloud SQL schema. Add session validation middleware for API routes. Test session persistence across requests and verify token validation works correctly.
+
+# Test Strategy:
+Create nextauth-session.test.ts to test session creation, persistence, token validation, and database adapter functionality. Mock NextAuth functions and verify session data integrity.

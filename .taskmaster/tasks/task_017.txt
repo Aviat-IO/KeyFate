@@ -1,6 +1,6 @@
 # Task ID: 17
 # Title: Implement check-secrets cron job with reminder functionality
-# Status: pending
+# Status: done
 # Dependencies: 13, 15
 # Priority: high
 # Description: Enhance check-secrets endpoint to calculate urgency and send reminder emails with check-in URLs

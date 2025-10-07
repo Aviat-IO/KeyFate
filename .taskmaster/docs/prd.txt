@@ -99,19 +99,19 @@ KeyFate is a security-focused dead man's switch platform that enables users to s
 - **Styling**: Tailwind CSS with Shadcn UI components
 - **State Management**: React hooks and server state
 - **Encryption**: Client-side Shamir's Secret Sharing library
-- **Authentication**: Supabase Auth integration
+- **Authentication**: NextAuth with Google OAuth
 
 ### Backend Architecture
-- **Database**: Supabase PostgreSQL with Row Level Security
-- **Authentication**: Supabase Auth with Google OAuth
-- **API**: Next.js API routes + Supabase Edge Functions
+- **Database**: Google Cloud SQL PostgreSQL (migrated from Supabase)
+- **Authentication**: NextAuth with database session adapter
+- **API**: Next.js API routes with application-level authorization
 - **Payments**: Stripe and BTCPay Server integration
-- **Email**: Supabase email templates and SMTP
-- **Scheduling**: Supabase cron jobs for reminders and cleanup
+- **Email**: SendGrid for transactional emails
+- **Scheduling**: Google Cloud Scheduler for cron jobs
 
 ### Infrastructure & Deployment
 - **Hosting**: Google Cloud Run (via Terraform/Terragrunt)
-- **Database**: Supabase managed PostgreSQL
+- **Database**: Google Cloud SQL PostgreSQL with connection pooling
 - **CDN**: Automatic through Cloud Run
 - **SSL**: Automatic through Google Load Balancer
 - **Monitoring**: Cloud Run metrics and logging
@@ -123,12 +123,13 @@ KeyFate is a security-focused dead man's switch platform that enables users to s
   - AES-GCM encryption for server-side share storage
   - Secure random token generation
 - **Data Protection**:
-  - Row Level Security on all database tables
+  - Application-level authorization middleware (replaces RLS)
+  - User/tenant isolation enforced in application layer
   - Input validation and sanitization
   - SQL injection prevention
   - XSS protection
 - **Authentication Security**:
-  - JWT-based session management
+  - NextAuth JWT-based session management
   - Secure token expiration policies
   - Rate limiting on authentication endpoints
 
@@ -339,23 +340,42 @@ recipient_access_tokens (
 - ✅ Comprehensive unit testing framework
 - ✅ Terms of Service and Privacy Policy
 
-### Phase 2: Payment & Subscription System (In Progress)
+### Phase 2: Payment & Subscription System (Completed)
 - ✅ Multi-provider payment interface design
 - ✅ Stripe integration with comprehensive provider abstraction
 - ✅ BTCPay Server integration for Bitcoin payments
 - ✅ Database schema for subscription management
 - ✅ Tier-based feature restrictions
-- [ ] Complete webhook handling and subscription lifecycle
-- [ ] Frontend integration for payment flows
-- [ ] Billing portal integration
+- ✅ Webhook handling and subscription lifecycle
+- ✅ Frontend integration for payment flows
+- ✅ Billing portal integration
 
-### Phase 3: Production Readiness
+### Phase 2.5: Infrastructure Migration (Completed)
+- ✅ Migration from Supabase to Google Cloud SQL
+- ✅ NextAuth implementation replacing Supabase Auth
+- ✅ SendGrid email service integration
+- ✅ Google Cloud Scheduler for cron jobs
+- ✅ Production deployment to Google Cloud Run
+- ✅ Critical bug fixes in check-in reminder system
+
+### Phase 3: Post-Migration Stabilization (In Progress)
+**Business Priority**: Ensure platform security and reliability after infrastructure migration
+
+- [ ] Application-level authorization layer (replaces database RLS)
+- [ ] Fix ORM compatibility issues with Cloud SQL
+- [ ] Restore test suite to 100% passing (currently 555 failures)
+- [ ] Email service configuration for test environment
+- [ ] NextAuth session management validation
+- [ ] Database connection health monitoring
+- [ ] Security audit of authorization implementation
+
+### Phase 4: Production Readiness
 - [ ] Email verification system completion
-- [ ] Production deployment to Google Cloud Run
-- [ ] SMTP configuration for reliable email delivery
 - [ ] Monitoring and alerting setup
 - [ ] Performance optimization and caching
-- [ ] Security audit and penetration testing
+- [ ] Third-party security audit and penetration testing
+- [ ] Load testing for 10,000+ concurrent users
+- [ ] Disaster recovery procedures
 
 ### Phase 4: Enhanced Features (v2)
 - [ ] SMS reminders and recipient verification
@@ -388,26 +408,29 @@ recipient_access_tokens (
 
 ### Technical Risks
 - **Cryptographic Implementation**: Mitigation through third-party security audit
-- **Email Delivery Issues**: Multiple SMTP providers and fallback systems
-- **Database Failures**: Automated backups and disaster recovery procedures
-- **Scaling Challenges**: Load testing and performance monitoring
+- **Email Delivery Issues**: SendGrid primary provider with monitoring and fallbacks
+- **Database Failures**: Cloud SQL automated backups and disaster recovery
+- **Scaling Challenges**: Load testing and Cloud Run auto-scaling
+- **Authorization Security**: Application-level authorization replacing database RLS
 
 ### Business Risks
 - **Regulatory Changes**: GDPR compliance and data retention policies
 - **Competition**: Focus on security and user experience differentiation
 - **Market Adoption**: Educational content and security-first marketing
+- **Infrastructure Migration**: Post-migration stabilization prioritized for reliability
 
 ### Security Risks
-- **Key Management**: Secure encryption key storage and rotation
+- **Key Management**: Google Secret Manager for encryption keys
 - **Social Engineering**: User education and verification procedures
 - **System Compromise**: Defense in depth and incident response plan
+- **Authorization Bypass**: Comprehensive security testing of new authorization layer
 
 ## Compliance & Legal
 
 ### Data Protection
 - **GDPR Compliance**: User data deletion, consent management, privacy by design
 - **Data Retention**: Automatic secret deletion after triggering (configurable periods)
-- **Cross-Border Data**: Supabase EU region for European users
+- **Cross-Border Data**: Google Cloud SQL with regional deployment options for European users
 
 ### Terms of Service
 - **Liability Limitations**: Clear disclaimers about service availability
@@ -417,6 +440,21 @@ recipient_access_tokens (
 ### Intellectual Property
 - **Open Source Dependencies**: License compliance verification
 - **Proprietary Code**: Copyright protection and trade secret management
-- **Third-Party Services**: Terms compliance for Supabase, Stripe, BTCPay
+- **Third-Party Services**: Terms compliance for Google Cloud, NextAuth, SendGrid, Stripe, BTCPay
 
-This PRD serves as the comprehensive foundation for KeyFate's continued development, ensuring all stakeholders understand the project's goals, requirements, and implementation strategy. The focus on security, user privacy, and reliability reflects the critical nature of the dead man's switch use case while maintaining a clear path to business success.
+## Current Status & Next Steps
+
+### Recent Achievements
+- ✅ Successfully migrated infrastructure from Supabase to Google Cloud
+- ✅ Implemented NextAuth for flexible authentication
+- ✅ Integrated SendGrid for reliable email delivery
+- ✅ Fixed 5 critical bugs in check-in reminder system
+- ✅ Deployed to Google Cloud Run with Cloud SQL
+
+### Immediate Priorities (Phase 3)
+1. **Security**: Implement application-level authorization to replace database RLS
+2. **Stability**: Fix test suite failures (87 suites, 555 tests)
+3. **Reliability**: Ensure robust session management and database connections
+4. **Quality**: Comprehensive security audit of new authorization layer
+
+This PRD serves as the comprehensive foundation for KeyFate's continued development, ensuring all stakeholders understand the project's goals, requirements, and implementation strategy. The focus on security, user privacy, and reliability reflects the critical nature of the dead man's switch use case while maintaining a clear path to business success through careful infrastructure modernization and rigorous quality assurance.
