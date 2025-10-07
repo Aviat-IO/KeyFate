@@ -599,31 +599,32 @@
         "updatedAt": "2025-10-04T23:10:00.000Z"
       },
       {
-        "id": 22,
+        "id": "22",
         "title": "Implement Application-Level Authorization Middleware",
         "description": "Create a comprehensive authorization layer to replace removed Supabase RLS policies, ensuring proper user and tenant isolation for all database operations",
         "details": "Create middleware functions that validate user ownership for all database operations. Implement in src/lib/auth/authorization.ts with functions: validateSecretOwnership(secretId, userId), validateUserAccess(resourceId, userId), and withAuthorization() HOF. Add authorization checks to all API routes before database operations. Ensure secrets, check_in_tokens, and email_failures tables are properly filtered by userId/ownership. Use NextAuth session data for user context validation.",
         "testStrategy": "Create authorization.test.ts with test cases for: unauthorized access attempts, cross-user data access prevention, admin role validation, and integration tests for all protected endpoints. Verify no data leakage between users.",
         "priority": "high",
         "dependencies": [],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2025-10-07T01:04:30.752Z"
       },
       {
-        "id": 23,
+        "id": "23",
         "title": "Fix Drizzle ORM Cloud SQL Compatibility Issues",
         "description": "Resolve Drizzle ORM query failures with Cloud SQL PostgreSQL, specifically fixing .returning() method issues and undefined property errors",
         "details": "Update Drizzle configuration in src/lib/db/get-database.ts to use proper Cloud SQL PostgreSQL dialect. Fix .returning() method calls in secretsService by ensuring proper Drizzle PostgreSQL driver setup. Update all database queries to use Cloud SQL compatible patterns. Add error handling for undefined properties in query results. Verify connection pooling configuration works with Cloud SQL.",
         "testStrategy": "Create drizzle-cloud-sql.test.ts to verify .returning() works, test all CRUD operations, validate connection pooling, and ensure no undefined property errors. Mock Cloud SQL responses and test error scenarios.",
         "priority": "high",
         "dependencies": [
-          22
+          "22"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 24,
+        "id": "24",
         "title": "Configure Email Service for Test Environment",
         "description": "Set up proper email service configuration for tests, including SendGrid mocking and environment variable management",
         "details": "Create email service mock in src/lib/email/test-email-service.ts that can be used in test environment. Update vitest.config.mts to include EMAIL_* environment variables for SendGrid. Implement email service factory pattern that returns mock service in test mode and real SendGrid service in production. Add email delivery verification without actual SMTP calls in tests.",
@@ -634,108 +635,112 @@
         "subtasks": []
       },
       {
-        "id": 25,
+        "id": "25",
         "title": "Validate NextAuth Session Management with Cloud SQL",
         "description": "Ensure NextAuth is properly configured with Cloud SQL database adapter and verify session persistence",
         "details": "Verify NextAuth configuration in src/app/api/auth/[...nextauth]/route.ts uses proper DrizzleAdapter with Cloud SQL connection. Ensure session, user, and account tables exist in Cloud SQL schema. Add session validation middleware for API routes. Test session persistence across requests and verify token validation works correctly.",
         "testStrategy": "Create nextauth-session.test.ts to test session creation, persistence, token validation, and database adapter functionality. Mock NextAuth functions and verify session data integrity.",
         "priority": "medium",
         "dependencies": [
-          23
+          "23"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 26,
+        "id": "26",
         "title": "Implement Database Connection Health Checks",
         "description": "Add comprehensive database connection monitoring and health checks for the test environment",
         "details": "Extend connectionManager in src/lib/db/connection-manager.ts with health check capabilities. Add database connection validation before test runs. Implement connection pool monitoring and automatic reconnection logic. Create database health endpoint at /api/health/database for monitoring. Add connection timeout and retry mechanisms for Cloud SQL.",
         "testStrategy": "Create db-health-check.test.ts to test connection health validation, connection pool monitoring, automatic reconnection, and health endpoint functionality. Test with simulated connection failures.",
         "priority": "medium",
         "dependencies": [
-          23
+          "23"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 27,
+        "id": "27",
         "title": "Create Authorization Test Suite",
         "description": "Develop comprehensive tests to validate the authorization layer and ensure no unauthorized access is possible",
         "details": "Create comprehensive test suite in __tests__/auth/authorization-security.test.ts to verify authorization middleware. Test scenarios: cross-user secret access attempts, unauthorized API calls, admin-only endpoint protection, and session hijacking prevention. Use Jest/Vitest to mock different user contexts and verify proper rejection of unauthorized requests.",
         "testStrategy": "Security-focused testing with penetration testing mindset. Test boundary conditions, edge cases, and potential attack vectors. Verify all protected endpoints properly validate user ownership and reject unauthorized access attempts.",
         "priority": "high",
         "dependencies": [
-          22
+          "22"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 28,
+        "id": "28",
         "title": "Update Database Query Patterns for User Filtering",
         "description": "Audit and update all database queries to ensure proper user/tenant filtering replaces the removed RLS policies",
         "details": "Audit all database queries in src/app/api/**/route.ts files to ensure they include proper user filtering. Update secretsService methods to always include userId filters. Add userId validation to check_in_tokens and email_failures queries. Create query helper functions that automatically add user context. Ensure no queries can access data across user boundaries.",
         "testStrategy": "Create database-query-audit.test.ts to verify all queries include proper user filtering. Test with multiple user contexts to ensure data isolation. Use database query logging to verify no unfiltered queries are executed.",
         "priority": "high",
         "dependencies": [
-          22,
-          23
+          "22",
+          "23"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 29,
+        "id": "29",
         "title": "Fix Test Environment Configuration",
         "description": "Resolve test environment configuration issues including DATABASE_URL setup and test database isolation",
         "details": "Ensure vitest.config.mts DATABASE_URL points to proper test Cloud SQL instance. Implement test database schema isolation or separate test database. Add test environment validation script that verifies all required environment variables. Create test data seeding and cleanup utilities for consistent test environments.",
         "testStrategy": "Create test-environment.test.ts to validate test configuration, database connectivity, environment variable presence, and test data isolation. Ensure tests don't interfere with each other or production data.",
         "priority": "medium",
         "dependencies": [
-          24,
-          25
+          "24",
+          "25"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 30,
+        "id": "30",
         "title": "Implement Test Suite Debugging and Monitoring",
         "description": "Add comprehensive logging and monitoring to identify remaining test failures and provide debugging information",
         "details": "Add detailed logging to test runs to identify failure patterns. Implement test result analytics to track failure categories. Create test debugging utilities that provide context for failures. Add performance monitoring for test execution times. Implement automated test failure categorization and reporting.",
         "testStrategy": "Create test-monitoring.test.ts to verify logging functionality, test analytics collection, and debugging utility effectiveness. Monitor test execution performance and identify bottlenecks.",
         "priority": "medium",
         "dependencies": [
-          26,
-          27,
-          28
+          "26",
+          "27",
+          "28"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 31,
+        "id": "31",
         "title": "Validate Production Migration and Create Migration Guide",
         "description": "Ensure all Cloud SQL migration components work correctly and create comprehensive documentation for the migration process",
         "details": "Create migration validation script that verifies all Cloud SQL components work correctly. Document the migration process from Supabase to Cloud SQL including authorization layer implementation. Create rollback procedures and migration troubleshooting guide. Verify all production environment configurations are correct.",
         "testStrategy": "Create migration-validation.test.ts to test migration scripts, validate production configurations, and verify rollback procedures. Test with production-like data volumes and scenarios.",
         "priority": "low",
         "dependencies": [
-          27,
-          28,
-          29,
-          30
+          "27",
+          "28",
+          "29",
+          "30"
         ],
         "status": "pending",
         "subtasks": []
       }
     ],
     "metadata": {
-      "created": "2025-10-07T00:51:13.173Z",
-      "updated": "2025-10-07T00:51:13.173Z",
-      "description": "Tasks for master context"
+      "version": "1.0.0",
+      "lastModified": "2025-10-07T01:04:30.753Z",
+      "taskCount": 31,
+      "completedCount": 12,
+      "tags": [
+        "master"
+      ]
     }
   }
 }
