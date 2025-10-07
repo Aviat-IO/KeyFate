@@ -41,13 +41,24 @@ The `/check-in` page route is added to:
 
 #### API Route Exemption
 ```typescript
+// In authorized callback
 // Check-in endpoint uses token-based authentication, not session auth
 if (pathname === "/api/check-in") {
   return true;
 }
+
+// In verificationExemptRoutes array
+const verificationExemptRoutes = [
+  // ... other routes
+  "/api/check-in", // API endpoint also uses token-based auth
+];
 ```
 
-The `/api/check-in` API route is explicitly exempted from session authentication requirements, similar to cron endpoints.
+The `/api/check-in` API route is:
+1. **Exempted from session authentication** in the `authorized` callback
+2. **Exempted from email verification** in the `verificationExemptRoutes` array
+
+Both exemptions are necessary because check-in uses token-based authentication from the query parameter, not session-based authentication.
 
 ### 2. Token-Based Authentication
 
