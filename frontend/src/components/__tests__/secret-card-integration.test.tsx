@@ -163,9 +163,9 @@ describe('SecretCard Integration - State Management Fix', () => {
 
       await waitFor(() => {
         // Title should remain unchanged
-        expect(screen.getByText('My Important Secret')).toBeInTheDocument()
+        expect(screen.getAllByText('My Important Secret')[0]).toBeInTheDocument()
         // Recipient should remain unchanged
-        expect(screen.getByText(/Jane Smith/i)).toBeInTheDocument()
+        expect(screen.getAllByText(/Jane Smith/i)[0]).toBeInTheDocument()
         // Should not be disabled
         expect(screen.queryByText('Disabled')).not.toBeInTheDocument()
       })
@@ -221,7 +221,7 @@ describe('SecretCard Integration - State Management Fix', () => {
 
       // Should show "Paused" status, NOT "Disabled"
       await waitFor(() => {
-        expect(screen.getByText('Paused')).toBeInTheDocument()
+        expect(screen.getAllByText('Paused')[0]).toBeInTheDocument()
         expect(screen.queryByText('Disabled')).not.toBeInTheDocument()
         expect(screen.queryByText('Server share deleted')).not.toBeInTheDocument()
       })
@@ -281,8 +281,9 @@ describe('SecretCard Integration - State Management Fix', () => {
 
       render(<SecretCard secret={secretWithoutServerShare} />)
 
-      // Should show disabled state
-      expect(screen.getByText('Disabled')).toBeInTheDocument()
+      // Should show disabled state - use getAllByText for multiple matches
+      const disabledElements = screen.getAllByText('Disabled')
+      expect(disabledElements.length).toBeGreaterThan(0)
       expect(screen.getByText('Server share deleted')).toBeInTheDocument()
     })
 
@@ -308,7 +309,7 @@ describe('SecretCard Integration - State Management Fix', () => {
       render(<SecretCard secret={triggeredSecret} />)
 
       // Should show "Sent" status for triggered secrets
-      expect(screen.getByText('Sent')).toBeInTheDocument()
+      expect(screen.getAllByText('Sent')[0]).toBeInTheDocument()
       expect(screen.queryByText('Disabled')).not.toBeInTheDocument()
     })
   })
@@ -331,7 +332,7 @@ describe('SecretCard Integration - State Management Fix', () => {
 
       // Should not crash and should maintain original state
       await waitFor(() => {
-        expect(screen.getByText('My Important Secret')).toBeInTheDocument()
+        expect(screen.getAllByText('My Important Secret')[0]).toBeInTheDocument()
         expect(screen.queryByText('Disabled')).not.toBeInTheDocument()
       })
     })
@@ -353,7 +354,7 @@ describe('SecretCard Integration - State Management Fix', () => {
 
       // Should not crash and should maintain original state
       await waitFor(() => {
-        expect(screen.getByText('My Important Secret')).toBeInTheDocument()
+        expect(screen.getAllByText('My Important Secret')[0]).toBeInTheDocument()
         expect(screen.queryByText('Disabled')).not.toBeInTheDocument()
       })
     })

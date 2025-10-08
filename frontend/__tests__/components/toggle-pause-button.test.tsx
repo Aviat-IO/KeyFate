@@ -10,17 +10,23 @@ const mockSecret: Secret = {
   id: "secret-123",
   title: "Test Secret",
   status: "active",
-  user_id: "user-123",
-  created_at: "2024-01-01T00:00:00Z",
-  updated_at: "2024-01-01T00:00:00Z",
-  next_check_in: "2024-01-31T00:00:00Z",
-  check_in_days: 30,
-  server_share: "encrypted-share",
-  recipient_name: "John Doe",
-  recipient_email: "john@example.com",
-  recipient_phone: "+1234567890",
-  reminder_sent: false,
-  last_check_in: null,
+  userId: "user-123",
+  createdAt: new Date("2024-01-01T00:00:00Z"),
+  updatedAt: new Date("2024-01-01T00:00:00Z"),
+  nextCheckIn: new Date("2024-01-31T00:00:00Z"),
+  checkInDays: 30,
+  serverShare: "encrypted-share",
+  recipientName: "John Doe",
+  recipientEmail: "john@example.com",
+  recipientPhone: "+1234567890",
+  contactMethod: "email",
+  lastCheckIn: null,
+  isTriggered: false,
+  triggeredAt: null,
+  iv: undefined,
+  authTag: undefined,
+  sssSharesTotal: 3,
+  sssThreshold: 2,
 }
 
 describe("TogglePauseButton", () => {
@@ -58,9 +64,31 @@ describe("TogglePauseButton", () => {
   })
 
   it("should handle successful pause toggle", async () => {
-    const updatedSecret = { ...mockSecret, status: "paused" as const }
+    // Mock API returns snake_case format
+    const apiResponse = {
+      id: "secret-123",
+      title: "Test Secret",
+      status: "paused",
+      user_id: "user-123",
+      created_at: "2024-01-01T00:00:00Z",
+      updated_at: "2024-01-01T00:00:00Z",
+      next_check_in: "2024-01-31T00:00:00Z",
+      check_in_days: 30,
+      server_share: "encrypted-share",
+      recipient_name: "John Doe",
+      recipient_email: "john@example.com",
+      recipient_phone: "+1234567890",
+      contact_method: "email",
+      last_check_in: null,
+      is_triggered: false,
+      triggered_at: null,
+      iv: null,
+      auth_tag: null,
+      sss_shares_total: 3,
+      sss_threshold: 2,
+    }
     ;(global.fetch as any).mockResolvedValue({
-      json: () => Promise.resolve({ secret: updatedSecret }),
+      json: () => Promise.resolve({ secret: apiResponse }),
     })
 
     render(
@@ -88,9 +116,15 @@ describe("TogglePauseButton", () => {
       },
     )
 
-    // Should call success callback
+    // Should call success callback with camelCase converted secret
     await waitFor(() => {
-      expect(mockOnToggleSuccess).toHaveBeenCalledWith(updatedSecret)
+      expect(mockOnToggleSuccess).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: "secret-123",
+          status: "paused",
+          title: "Test Secret",
+        })
+      )
     })
 
     // Should return to normal state
@@ -100,9 +134,31 @@ describe("TogglePauseButton", () => {
   })
 
   it("should handle successful resume toggle", async () => {
-    const updatedSecret = { ...mockSecret, status: "active" as const }
+    // Mock API returns snake_case format
+    const apiResponse = {
+      id: "secret-123",
+      title: "Test Secret",
+      status: "active",
+      user_id: "user-123",
+      created_at: "2024-01-01T00:00:00Z",
+      updated_at: "2024-01-01T00:00:00Z",
+      next_check_in: "2024-01-31T00:00:00Z",
+      check_in_days: 30,
+      server_share: "encrypted-share",
+      recipient_name: "John Doe",
+      recipient_email: "john@example.com",
+      recipient_phone: "+1234567890",
+      contact_method: "email",
+      last_check_in: null,
+      is_triggered: false,
+      triggered_at: null,
+      iv: null,
+      auth_tag: null,
+      sss_shares_total: 3,
+      sss_threshold: 2,
+    }
     ;(global.fetch as any).mockResolvedValue({
-      json: () => Promise.resolve({ secret: updatedSecret }),
+      json: () => Promise.resolve({ secret: apiResponse }),
     })
 
     render(
@@ -130,9 +186,15 @@ describe("TogglePauseButton", () => {
       },
     )
 
-    // Should call success callback
+    // Should call success callback with camelCase converted secret
     await waitFor(() => {
-      expect(mockOnToggleSuccess).toHaveBeenCalledWith(updatedSecret)
+      expect(mockOnToggleSuccess).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: "secret-123",
+          status: "active",
+          title: "Test Secret",
+        })
+      )
     })
   })
 

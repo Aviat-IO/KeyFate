@@ -198,7 +198,3 @@ describe("ResendButton Component", () => {
     })
   })
 })
-
-describe.skip("ResendButton (disabled during NextAuth migration)", () => {
-  it("placeholder", () => expect(true).toBe(true))
-})
