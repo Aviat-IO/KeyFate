@@ -15,25 +15,25 @@ describe('Email Time Formatting', () => {
   };
 
   describe('formatTimeRemaining', () => {
-    it('should format fractional days as hours when less than 1 day', () => {
-      // Test case: 0.039493980298572 days = ~0.94 hours
+    it('should format fractional days as minutes when less than 1 hour', () => {
+      // Test case: 0.039493980298572 days = ~0.94 hours = ~56.55 minutes
       const result = renderReminderTemplate({
         ...baseReminderData,
         daysRemaining: 0.039493980298572,
       });
 
-      // Should show "0 hours" (floor of 0.94)
-      expect(result.subject).toContain('0 hours');
+      // Should show "56 minutes" (floor of 56.55)
+      expect(result.subject).toContain('56 minutes');
       expect(result.subject).not.toContain('0.039493980298572');
-      expect(result.html).toContain('0 hours');
-      expect(result.text).toContain('0 hours');
+      expect(result.html).toContain('56 minutes');
+      expect(result.text).toContain('56 minutes');
     });
 
     it('should display 1 hour singular', () => {
-      // 1.5 hours = 0.0625 days
+      // 1 hour exactly = 1/24 days
       const result = renderReminderTemplate({
         ...baseReminderData,
-        daysRemaining: 0.0625,
+        daysRemaining: 1 / 24,
       });
 
       expect(result.subject).toContain('1 hour');
@@ -52,26 +52,49 @@ describe('Email Time Formatting', () => {
       expect(result.html).toContain('12 hours');
     });
 
-    it('should round down hours', () => {
+    it('should floor hours for urgency', () => {
       // 5.9 hours = ~0.246 days
       const result = renderReminderTemplate({
         ...baseReminderData,
         daysRemaining: 0.246,
       });
 
-      // Should floor to 5 hours
+      // Should floor to 5 hours (more urgent)
       expect(result.subject).toContain('5 hours');
       expect(result.html).toContain('5 hours');
     });
 
-    it('should display today when exactly 0 days', () => {
+    it('should display minutes when less than 1 hour', () => {
+      // 55 minutes
+      const result = renderReminderTemplate({
+        ...baseReminderData,
+        daysRemaining: 55 / 1440,
+      });
+
+      expect(result.subject).toContain('55 minutes');
+      expect(result.html).toContain('55 minutes');
+    });
+
+    it('should display 1 minute singular', () => {
+      // 1 minute = 1/1440 days
+      const result = renderReminderTemplate({
+        ...baseReminderData,
+        daysRemaining: 1 / 1440,
+      });
+
+      expect(result.subject).toContain('1 minute');
+      expect(result.subject).not.toContain('1 minutes');
+      expect(result.html).toContain('1 minute');
+    });
+
+    it('should display less than a minute when exactly 0 days', () => {
       const result = renderReminderTemplate({
         ...baseReminderData,
         daysRemaining: 0,
       });
 
-      expect(result.subject).toContain('today');
-      expect(result.html).toContain('today');
+      expect(result.subject).toContain('less than a minute');
+      expect(result.html).toContain('less than a minute');
     });
 
     it('should display 1 day singular when exactly 1 day', () => {
@@ -117,14 +140,14 @@ describe('Email Time Formatting', () => {
     });
 
     it('should handle edge case of very small values', () => {
-      // 0.001 days = 0.024 hours
+      // 0.001 days = 0.024 hours = 1.44 minutes
       const result = renderReminderTemplate({
         ...baseReminderData,
         daysRemaining: 0.001,
       });
 
-      expect(result.subject).toContain('0 hours');
-      expect(result.html).toContain('0 hours');
+      expect(result.subject).toContain('1 minute'); // floor(1.44) = 1
+      expect(result.html).toContain('1 minute');
     });
 
     it('should handle edge case of transition from hours to days', () => {
@@ -133,7 +156,7 @@ describe('Email Time Formatting', () => {
         ...baseReminderData,
         daysRemaining: 23 / 24,
       });
-      expect(result1.subject).toContain('23 hours');
+      expect(result1.subject).toContain('23 hours'); // ceil(23) = 23
 
       // 24 hours = 1 day exactly
       const result2 = renderReminderTemplate({
@@ -155,6 +178,20 @@ describe('Email Time Formatting', () => {
 
       expect(result.subject).toContain('1 hour');
       expect(result.subject).toContain('CRITICAL');
+    });
+
+    it('should show minutes when reminder sent slightly before 1 hour deadline', () => {
+      // Bug fix: When cron runs at ~55 minutes before deadline
+      // it should display "55 minutes" not "0 hours"
+      const result = renderReminderTemplate({
+        ...baseReminderData,
+        daysRemaining: 55 / 1440, // 55 minutes
+        urgencyLevel: 'critical',
+      });
+
+      expect(result.subject).toContain('55 minutes');
+      expect(result.subject).not.toContain('0 hours');
+      expect(result.html).toContain('55 minutes');
     });
 
     it('should handle 12 hour reminder correctly', () => {

@@ -5,6 +5,8 @@
  * with consistent branding and responsive design.
  */
 
+import { formatTimeRemaining } from "@/lib/time-utils";
+
 // Template data interfaces
 interface VerificationTemplateData {
   verificationUrl: string;
@@ -21,25 +23,7 @@ interface ReminderTemplateData {
   urgencyLevel?: "low" | "medium" | "high" | "critical";
 }
 
-/**
- * Format time remaining for display
- * Converts fractional days to hours when less than 1 day
- */
-function formatTimeRemaining(daysRemaining: number): string {
-  if (daysRemaining === 0) {
-    return "today";
-  }
 
-  if (daysRemaining < 1) {
-    // Convert to hours and round down
-    const hours = Math.floor(daysRemaining * 24);
-    return hours === 1 ? "1 hour" : `${hours} hours`;
-  }
-
-  // Round down to whole days
-  const days = Math.floor(daysRemaining);
-  return days === 1 ? "1 day" : `${days} days`;
-}
 
 interface DisclosureTemplateData {
   contactName: string;
