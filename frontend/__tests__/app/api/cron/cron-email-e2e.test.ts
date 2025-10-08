@@ -8,9 +8,9 @@
  * - Bulk email sending scenarios
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
-import { MockAdapter } from "@/lib/email/providers/MockAdapter";
 import type { EmailData } from "@/lib/email/providers/EmailProvider";
+import { MockAdapter } from "@/lib/email/providers/MockAdapter";
+import { beforeEach, describe, expect, it } from "vitest";
 
 describe("Email Provider E2E Workflows", () => {
   let mockAdapter: MockAdapter;
@@ -33,7 +33,8 @@ describe("Email Provider E2E Workflows", () => {
             <p>This is the decrypted secret content.</p>
           </div>
         `,
-        text: "You have received an important message from John Doe. Secret content: This is the decrypted secret content.",
+        text:
+          "You have received an important message from John Doe. Secret content: This is the decrypted secret content.",
         priority: "high",
       };
 
@@ -91,14 +92,15 @@ describe("Email Provider E2E Workflows", () => {
     it("should send reminder email successfully", async () => {
       const reminderEmail: EmailData = {
         to: "user@example.com",
-        subject: "Reminder: Check-in Required in 2 Days",
+        subject: "Reminder: Check-in Required within 2 Days",
         html: `
           <h1>Check-in Reminder</h1>
           <p>Hi Test User,</p>
           <p>This is a reminder that your secret "Important Secret" requires check-in in 2 days.</p>
           <a href="https://example.com/checkin">Check In Now</a>
         `,
-        text: "Check-in reminder: Your secret 'Important Secret' requires check-in in 2 days. Visit: https://example.com/checkin",
+        text:
+          "Check-in reminder: Your secret 'Important Secret' requires check-in in 2 days. Visit: https://example.com/checkin",
         priority: "normal",
       };
 
@@ -156,7 +158,7 @@ describe("Email Provider E2E Workflows", () => {
       ];
 
       const results = await Promise.all(
-        emails.map((email) => mockAdapter.sendEmail(email))
+        emails.map((email) => mockAdapter.sendEmail(email)),
       );
 
       expect(results).toHaveLength(3);
@@ -188,7 +190,7 @@ describe("Email Provider E2E Workflows", () => {
       ];
 
       const results = await Promise.all(
-        emails.map((email) => mockAdapter.sendEmail(email))
+        emails.map((email) => mockAdapter.sendEmail(email)),
       );
 
       expect(results[0].success).toBe(true);
@@ -214,7 +216,8 @@ describe("Email Provider E2E Workflows", () => {
           <p><strong>Error:</strong> SMTP connection timeout</p>
           <p><strong>Retryable:</strong> Yes</p>
         `,
-        text: "CRITICAL: Email delivery failure for disclosure email. Provider: mock, Recipient: recipient@example.com",
+        text:
+          "CRITICAL: Email delivery failure for disclosure email. Provider: mock, Recipient: recipient@example.com",
         priority: "high",
       };
 
@@ -301,7 +304,7 @@ describe("Email Provider E2E Workflows", () => {
       ];
 
       const results = await Promise.all(
-        invalidEmails.map((email) => mockAdapter.sendEmail(email))
+        invalidEmails.map((email) => mockAdapter.sendEmail(email)),
       );
 
       results.forEach((result) => {

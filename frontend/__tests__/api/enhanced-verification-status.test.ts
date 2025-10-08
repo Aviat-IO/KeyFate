@@ -1,14 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
+// Create mock database instance
+const mockDb = {
+  select: vi.fn(),
+  from: vi.fn(),
+  where: vi.fn(),
+  limit: vi.fn()
+}
+
 // Mock dependencies
 vi.mock('@/lib/db/drizzle', () => ({
-  db: {
-    select: vi.fn(),
-    from: vi.fn(),
-    where: vi.fn(),
-    limit: vi.fn()
-  }
+  getDatabase: vi.fn(() => Promise.resolve(mockDb)),
+  db: mockDb, // Keep for backward compatibility
 }));
 
 vi.mock('next-auth', () => ({

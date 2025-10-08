@@ -8,17 +8,21 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { ensureUserExists, verifyUserExists } from '@/lib/auth/user-verification';
 
+// Create mock database instance
+const mockDb = {
+  select: vi.fn(),
+  insert: vi.fn(),
+  from: vi.fn(),
+  where: vi.fn(),
+  limit: vi.fn(),
+  values: vi.fn(),
+  returning: vi.fn()
+}
+
 // Mock the database
 vi.mock('@/lib/db/drizzle', () => ({
-  db: {
-    select: vi.fn(),
-    insert: vi.fn(),
-    from: vi.fn(),
-    where: vi.fn(),
-    limit: vi.fn(),
-    values: vi.fn(),
-    returning: vi.fn()
-  }
+  getDatabase: vi.fn(() => Promise.resolve(mockDb)),
+  db: mockDb, // Keep for backward compatibility
 }));
 
 vi.mock('@/lib/db/schema', () => ({

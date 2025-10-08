@@ -13,14 +13,18 @@ vi.mock('next-auth', () => ({
   getServerSession: vi.fn(),
 }));
 
+// Create mock database instance
+const mockDbInstance = {
+  select: vi.fn(),
+  delete: vi.fn(),
+  insert: vi.fn(),
+  update: vi.fn(),
+}
+
 // Mock database
 vi.mock('@/lib/db/drizzle', () => ({
-  db: {
-    select: vi.fn(),
-    delete: vi.fn(),
-    insert: vi.fn(),
-    update: vi.fn(),
-  },
+  getDatabase: vi.fn(() => Promise.resolve(mockDbInstance)),
+  db: mockDbInstance, // Keep for backward compatibility
 }));
 
 // Mock auth config
@@ -29,7 +33,7 @@ vi.mock('@/lib/auth/config', () => ({
 }));
 
 const mockGetServerSession = vi.mocked(getServerSession);
-const mockDb = vi.mocked(db);
+const mockDb = mockDbInstance as any;
 
 describe('Email Verification NextAuth Migration', () => {
   beforeEach(() => {

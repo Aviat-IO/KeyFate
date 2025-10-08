@@ -4,14 +4,24 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { POST } from '@/app/api/cron/check-secrets/route';
+
+// Create mock DB instance
+const mockSelect = vi.fn();
+const mockInsert = vi.fn();
+const mockExecute = vi.fn();
+const mockFrom = vi.fn();
+const mockInnerJoin = vi.fn();
+const mockWhere = vi.fn();
+
+const mockDb = {
+  select: mockSelect,
+  insert: mockInsert,
+  execute: mockExecute,
+};
 
 // Mock dependencies
 vi.mock('@/lib/db/drizzle', () => ({
-  db: {
-    select: vi.fn(),
-    insert: vi.fn(),
-  },
+  getDatabase: vi.fn(() => Promise.resolve(mockDb)),
 }));
 
 vi.mock('@/lib/email/email-service', () => ({
@@ -22,24 +32,40 @@ vi.mock('@/lib/email/email-failure-logger', () => ({
   logEmailFailure: vi.fn(),
 }));
 
-import { db } from '@/lib/db/drizzle';
+vi.mock('@/lib/email/admin-notification-service', () => ({
+  sendAdminNotification: vi.fn(),
+}));
+
+import { POST } from '@/app/api/cron/check-secrets/route';
 import { sendReminderEmail } from '@/lib/email/email-service';
-import { logEmailFailure } from '@/lib/email/email-failure-logger';
 
 describe('POST /api/cron/check-secrets', () => {
   const validToken = process.env.CRON_SECRET || 'test-cron-secret';
 
   beforeEach(() => {
+    // Clear all mock history and implementations
     vi.clearAllMocks();
+    mockSelect.mockClear();
+    mockInsert.mockClear();
+    mockExecute.mockClear();
+    mockFrom.mockClear();
+    mockInnerJoin.mockClear();
+    mockWhere.mockClear();
 
-    // Default: no secrets
-    vi.mocked(db.select).mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        innerJoin: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([]),
-        }),
-      }),
-    } as any);
+    // Setup mock chain for the main secrets query
+    mockWhere.mockResolvedValue([]);
+    mockInnerJoin.mockReturnValue({ where: mockWhere });
+    mockFrom.mockReturnValue({ innerJoin: mockInnerJoin });
+
+    // Mock the reminder_jobs count query (first select call)
+    // Mock the main secrets query (second select call)
+    mockSelect
+      .mockReturnValueOnce({
+        from: vi.fn().mockResolvedValue([{ count: 0 }]),
+      })
+      .mockReturnValueOnce({
+        from: mockFrom,
+      });
 
     // Default: email succeeds
     vi.mocked(sendReminderEmail).mockResolvedValue({

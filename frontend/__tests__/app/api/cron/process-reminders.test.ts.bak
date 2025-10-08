@@ -149,7 +149,7 @@ describe("POST /api/cron/process-reminders", () => {
       const mockWhere = vi.fn().mockReturnValue({ limit: mockLimit });
       const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
       const mockSelect = vi.fn().mockReturnValue({ from: mockFrom });
-      (mockSelect as any).mockImplementation(mockSelect);
+      (db.select as any).mockImplementation(mockSelect);
 
       const req = new Request("http://localhost:3000/api/cron/process-reminders", {
         method: "POST",
@@ -176,7 +176,7 @@ describe("POST /api/cron/process-reminders", () => {
       const mockUserWhere = vi.fn().mockReturnValue({ limit: mockLimit });
       const mockUserFrom = vi.fn().mockReturnValue({ where: mockUserWhere });
 
-      (mockSelect as any)
+      (db.select as any)
         .mockReturnValueOnce({ from: mockFrom }) // First call for secrets
         .mockReturnValueOnce({ from: mockUserFrom }); // Second call for user
 
@@ -189,7 +189,7 @@ describe("POST /api/cron/process-reminders", () => {
       const mockSet = vi.fn().mockReturnValue({
         where: vi.fn().mockResolvedValue(undefined),
       });
-      (mockUpdate as any).mockReturnValue({ set: mockSet });
+      (db.update as any).mockReturnValue({ set: mockSet });
 
       const req = new Request("http://localhost:3000/api/cron/process-reminders", {
         method: "POST",
@@ -210,7 +210,7 @@ describe("POST /api/cron/process-reminders", () => {
       const mockWhere = vi.fn().mockResolvedValue([]);
       const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
       const mockSelect = vi.fn().mockReturnValue({ from: mockFrom });
-      (mockSelect as any).mockImplementation(mockSelect);
+      (db.select as any).mockImplementation(mockSelect);
 
       const req = new Request("http://localhost:3000/api/cron/process-reminders", {
         method: "POST",
@@ -237,14 +237,14 @@ describe("POST /api/cron/process-reminders", () => {
       const mockUserWhere = vi.fn().mockReturnValue({ limit: mockLimit });
       const mockUserFrom = vi.fn().mockReturnValue({ where: mockUserWhere });
 
-      (mockSelect as any)
+      (db.select as any)
         .mockReturnValueOnce({ from: mockFrom })
         .mockReturnValueOnce({ from: mockUserFrom });
 
       const mockSet = vi.fn().mockReturnValue({
         where: vi.fn().mockResolvedValue(undefined),
       });
-      (mockUpdate as any).mockReturnValue({ set: mockSet });
+      (db.update as any).mockReturnValue({ set: mockSet });
     });
 
     it("should decrypt server share using encryption utilities", async () => {
@@ -306,7 +306,7 @@ describe("POST /api/cron/process-reminders", () => {
       const mockUserWhere = vi.fn().mockReturnValue({ limit: mockLimit });
       const mockUserFrom = vi.fn().mockReturnValue({ where: mockUserWhere });
 
-      (mockSelect as any)
+      (db.select as any)
         .mockReturnValueOnce({ from: mockFrom })
         .mockReturnValueOnce({ from: mockUserFrom });
     });
@@ -319,7 +319,7 @@ describe("POST /api/cron/process-reminders", () => {
 
       const mockWhere = vi.fn().mockResolvedValue(undefined);
       const mockSet = vi.fn().mockReturnValue({ where: mockWhere });
-      (mockUpdate as any).mockReturnValue({ set: mockSet });
+      (db.update as any).mockReturnValue({ set: mockSet });
 
       const req = new Request("http://localhost:3000/api/cron/process-reminders", {
         method: "POST",
@@ -330,7 +330,7 @@ describe("POST /api/cron/process-reminders", () => {
 
       await POST(req as any);
 
-      expect(mockUpdate).toHaveBeenCalled();
+      expect(db.update).toHaveBeenCalled();
       expect(mockSet).toHaveBeenCalledWith(
         expect.objectContaining({
           status: "triggered",
@@ -355,7 +355,7 @@ describe("POST /api/cron/process-reminders", () => {
       await POST(req as any);
 
       // db.update should not be called for status change
-      expect(mockUpdate).not.toHaveBeenCalled();
+      expect(db.update).not.toHaveBeenCalled();
     });
   });
 
@@ -368,7 +368,7 @@ describe("POST /api/cron/process-reminders", () => {
       const mockUserWhere = vi.fn().mockReturnValue({ limit: mockLimit });
       const mockUserFrom = vi.fn().mockReturnValue({ where: mockUserWhere });
 
-      (mockSelect as any)
+      (db.select as any)
         .mockReturnValueOnce({ from: mockFrom })
         .mockReturnValueOnce({ from: mockUserFrom });
     });

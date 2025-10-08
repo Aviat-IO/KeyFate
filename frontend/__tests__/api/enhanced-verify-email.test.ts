@@ -1,13 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
+// Create mock database instance
+const mockDb = {
+  select: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn()
+}
+
 // Mock dependencies
 vi.mock('@/lib/db/drizzle', () => ({
-  db: {
-    select: vi.fn(),
-    update: vi.fn(),
-    delete: vi.fn()
-  }
+  getDatabase: vi.fn(() => Promise.resolve(mockDb)),
+  db: mockDb, // Keep for backward compatibility
 }));
 
 vi.mock('@/lib/auth/rate-limiting', () => ({

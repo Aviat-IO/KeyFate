@@ -1,14 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
+// Create mock database instance
+const mockDb = {
+  select: vi.fn(),
+  insert: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn()
+}
+
 // Mock the database
 vi.mock('@/lib/db/drizzle', () => ({
-  db: {
-    select: vi.fn(),
-    insert: vi.fn(),
-    update: vi.fn(),
-    delete: vi.fn()
-  }
+  getDatabase: vi.fn(() => Promise.resolve(mockDb)),
+  db: mockDb, // Keep for backward compatibility
 }));
 
 // Mock the schema
@@ -30,15 +34,12 @@ vi.mock('@/lib/auth/rate-limiting', () => ({
 }));
 
 describe('Email Verification API Tests', () => {
-  let mockDb: any;
   let mockCheckRateLimit: any;
 
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    const { db } = await import('@/lib/db/drizzle');
     const { checkRateLimit } = await import('@/lib/auth/rate-limiting');
-    mockDb = db as any;
     mockCheckRateLimit = checkRateLimit as any;
 
     // Default rate limit allows requests

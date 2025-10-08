@@ -94,7 +94,7 @@ describe("Email Templates", () => {
     it("should render reminder email with urgency indicators", async () => {
       mockEmailTemplates.renderReminderTemplate.mockReturnValue({
         subject:
-          "⚠️ Reminder: Check-in required in 7 days - Important Document Access",
+          "⚠️ Reminder: Check-in required within 7 days - Important Document Access",
         html: `
           <div style="background: #fff3cd;">
             <h2>⚠️ Check-in Reminder</h2>
@@ -131,7 +131,7 @@ describe("Email Templates", () => {
 
       mockEmailTemplates.renderReminderTemplate.mockReturnValue({
         subject:
-          "🚨 URGENT: Check-in required in 1 day - Important Document Access",
+          "🚨 URGENT: Check-in required within 1 day - Important Document Access",
         html:
           '<div style="background: #f8d7da; border: 2px solid #dc3545;">URGENT content</div>',
         text: "URGENT: Check in required in 1 day",

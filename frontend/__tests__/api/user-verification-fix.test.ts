@@ -9,15 +9,20 @@
 
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 
+// Create mock database instance
+const mockDb = {
+  select: vi.fn(),
+  insert: vi.fn(),
+}
+
+const mockSecretsService = {
+  create: vi.fn()
+}
+
 // Mock the entire module properly
 vi.mock('@/lib/db/drizzle', () => ({
-  db: {
-    select: vi.fn(),
-    insert: vi.fn(),
-  },
-  secretsService: {
-    create: vi.fn()
-  }
+  getDatabase: vi.fn(() => Promise.resolve(mockDb)),
+  secretsService: mockSecretsService
 }));
 
 vi.mock('@/lib/encryption', () => ({

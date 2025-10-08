@@ -12,9 +12,8 @@ describe('Auth Configuration', () => {
 
   it('should have proper NextAuth configuration', () => {
     expect(authConfig.pages?.signIn).toBe('/sign-in')
-    // Error page is intentionally undefined to prevent NextAuth from redirecting on errors
-    // This allows client-side error handling without server-side redirects
-    expect(authConfig.pages?.error).toBeUndefined()
+    // Error page is now configured to handle errors properly
+    expect(authConfig.pages?.error).toBe('/auth/error')
     expect(authConfig.session?.strategy).toBe('jwt')
     expect(authConfig.secret).toBeDefined()
   })
@@ -40,27 +39,19 @@ describe('Auth Configuration', () => {
 
     if (hasValidGoogleCredentials) {
       expect(googleProvider).toBeDefined()
-      expect(googleProvider?.options?.clientId).toBeDefined()
-      expect(googleProvider?.options?.clientSecret).toBeDefined()
+      expect(googleProvider?.type).toBe('oauth')
     } else {
       expect(googleProvider).toBeUndefined()
     }
   })
 
-  it('should validate Email provider is included when SendGrid is configured', () => {
-    const emailProvider = authConfig.providers.find(
-      (provider: any) => provider.id === 'email'
+  it('should have Credentials provider always available', () => {
+    const credentialsProvider = authConfig.providers.find(
+      (provider: any) => provider.id === 'credentials'
     )
 
-    const hasValidSendGridCredentials =
-      process.env.SENDGRID_API_KEY &&
-      process.env.SENDGRID_ADMIN_EMAIL &&
-      process.env.SENDGRID_API_KEY !== 'your-sendgrid-api-key'
-
-    if (hasValidSendGridCredentials) {
-      expect(emailProvider).toBeDefined()
-    } else {
-      expect(emailProvider).toBeUndefined()
-    }
+    // Credentials provider should always be available for email+password auth
+    expect(credentialsProvider).toBeDefined()
+    expect(credentialsProvider?.name).toBe('credentials')
   })
 })

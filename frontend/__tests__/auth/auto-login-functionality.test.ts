@@ -2,12 +2,16 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createUser, authenticateUser } from '@/lib/auth/users';
 import { hashPassword, verifyPassword } from '@/lib/auth/password';
 
+// Create mock database instance
+const mockDb = {
+  select: vi.fn(),
+  insert: vi.fn(),
+}
+
 // Mock database and dependencies
 vi.mock('@/lib/db/drizzle', () => ({
-  db: {
-    select: vi.fn(),
-    insert: vi.fn(),
-  },
+  getDatabase: vi.fn(() => Promise.resolve(mockDb)),
+  db: mockDb, // Keep for backward compatibility with existing tests
 }));
 
 vi.mock('@/lib/db/schema', () => ({
