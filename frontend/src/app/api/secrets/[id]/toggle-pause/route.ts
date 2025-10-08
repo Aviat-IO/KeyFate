@@ -31,11 +31,24 @@ export async function POST(
 
     const newStatus = secret.status === "active" ? "paused" : "active";
 
-    // Update the secret status
+    // When unpausing (changing from paused to active), perform a check-in
+    let updatePayload: any = { status: newStatus };
+
+    if (newStatus === "active") {
+      const now = new Date();
+      const nextCheckIn = new Date(now.getTime() + (secret.checkInDays * 24 * 60 * 60 * 1000));
+      updatePayload = {
+        ...updatePayload,
+        lastCheckIn: now,
+        nextCheckIn: nextCheckIn,
+      };
+    }
+
+    // Update the secret status (and check-in times if unpausing)
     const updatedSecret = await secretsService.update(
       id,
       session.user.id,
-      { status: newStatus as "active" | "paused" } as any,
+      updatePayload,
     );
 
     if (!updatedSecret) {
