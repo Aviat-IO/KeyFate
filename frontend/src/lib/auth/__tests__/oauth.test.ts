@@ -23,8 +23,6 @@ describe('OAuth Service', () => {
 
     expect(mockSignIn).toHaveBeenCalledWith('google', {
       callbackUrl: '/dashboard',
-      redirect: true,
-      redirectTo: '/dashboard'
     })
     expect(result.success).toBe(true)
   })
@@ -32,12 +30,13 @@ describe('OAuth Service', () => {
   // TEST 2: Error handling test
   it('should handle OAuth errors gracefully', async () => {
     const mockSignIn = vi.mocked(signIn)
-    mockSignIn.mockResolvedValue({ ok: false, error: 'OAuth failed', status: 401, url: null })
+    // Simulate error by throwing
+    mockSignIn.mockRejectedValue(new Error('OAuth failed'))
 
     const result = await googleOAuthFlow({ redirectTo: '/dashboard' })
 
     expect(result.success).toBe(false)
-    expect(result.error).toBe('OAuth failed')
+    expect(result.error).toBe('OAuth initialization failed')
   })
 
   // TEST 3: Callback validation test

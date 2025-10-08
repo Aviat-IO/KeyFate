@@ -19,32 +19,35 @@ import { POST as verifyEmailPOST } from '@/app/api/auth/verify-email/route'
 import { POST as resendVerificationPOST } from '@/app/api/auth/resend-verification/route'
 import { middleware } from '@/middleware'
 
-// Mock security dependencies
-vi.mock('@/lib/db/drizzle', () => ({
-  db: {
-    select: vi.fn(() => ({
-      from: vi.fn(() => ({
-        where: vi.fn(() => ({
-          limit: vi.fn(() => Promise.resolve([])),
-        })),
+// Create mock database instance
+const mockDb = {
+  select: vi.fn(() => ({
+    from: vi.fn(() => ({
+      where: vi.fn(() => ({
+        limit: vi.fn(() => Promise.resolve([])),
       })),
     })),
-    update: vi.fn(() => ({
-      set: vi.fn(() => ({
-        where: vi.fn(() => Promise.resolve()),
-      })),
-    })),
-    delete: vi.fn(() => ({
+  })),
+  update: vi.fn(() => ({
+    set: vi.fn(() => ({
       where: vi.fn(() => Promise.resolve()),
     })),
-    insert: vi.fn(() => ({
-      into: vi.fn(() => ({
-        values: vi.fn(() => ({
-          returning: vi.fn(() => Promise.resolve([])),
-        })),
+  })),
+  delete: vi.fn(() => ({
+    where: vi.fn(() => Promise.resolve()),
+  })),
+  insert: vi.fn(() => ({
+    into: vi.fn(() => ({
+      values: vi.fn(() => ({
+        returning: vi.fn(() => Promise.resolve([])),
       })),
     })),
-  },
+  })),
+}
+
+// Mock security dependencies
+vi.mock('@/lib/db/drizzle', () => ({
+  getDatabase: vi.fn(() => Promise.resolve(mockDb)),
 }))
 
 vi.mock('@/lib/auth/rate-limiting', () => ({
@@ -59,7 +62,6 @@ vi.mock('next-auth/jwt', () => ({
   getToken: vi.fn(),
 }))
 
-const mockDb = vi.mocked(require('@/lib/db/drizzle').db)
 const mockCheckRateLimit = vi.mocked(require('@/lib/auth/rate-limiting').checkRateLimit)
 const mockGetUserById = vi.mocked(require('@/lib/auth/users').getUserById)
 const mockGetToken = vi.mocked(require('next-auth/jwt').getToken)

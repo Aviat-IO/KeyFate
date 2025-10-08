@@ -237,7 +237,7 @@ export function renderReminderTemplate(
   const timeText = formatTimeRemaining(data.daysRemaining);
 
   const subject =
-    `${urgency.label}: Check-in required in ${timeText} - ${data.secretTitle}`;
+    `${urgency.label}: Check-in required within ${timeText} - ${data.secretTitle}`;
 
   const content = `
     <div style="background-color: ${urgency.bgColor}; color: ${urgency.textColor}; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -295,7 +295,8 @@ export function renderReminderTemplate(
 export function renderDisclosureTemplate(
   data: DisclosureTemplateData,
 ): EmailTemplate {
-  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@example.com";
+  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ||
+    "support@example.com";
   const lastSeenText = data.senderLastSeen
     ? data.senderLastSeen.toLocaleDateString()
     : "some time ago";
@@ -322,12 +323,16 @@ export function renderDisclosureTemplate(
       <p style="margin: 0;"><strong>From:</strong> ${data.senderName}</p>
     </div>
 
-    ${data.message ? `
+    ${
+    data.message
+      ? `
     <div style="background: #fff3cd; padding: 15px; border-radius: 6px; margin: 20px 0;">
       <p style="margin: 0 0 5px 0; font-weight: bold;">Personal Message:</p>
       <p style="margin: 0; font-style: italic;">"${data.message}"</p>
     </div>
-    ` : ""}
+    `
+      : ""
+  }
 
     <div style="background: white; border: 2px solid #2563eb; padding: 20px; border-radius: 6px; margin: 20px 0;">
       <h3 style="margin: 0 0 15px 0; color: #2563eb;">Your Secret Share</h3>

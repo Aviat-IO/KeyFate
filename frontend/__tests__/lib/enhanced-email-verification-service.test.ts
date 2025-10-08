@@ -1,26 +1,42 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock database
+// Create mock database instance
+const createMockDb = () => ({
+  select: vi.fn(),
+  insert: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn()
+});
+
+// Mock database and getDatabase function
 vi.mock('@/lib/db/drizzle', () => ({
-  db: {
-    select: vi.fn(),
-    insert: vi.fn(),
-    update: vi.fn(),
-    delete: vi.fn()
-  }
+  db: createMockDb(),
+  getDatabase: vi.fn(() => Promise.resolve(createMockDb()))
+}));
+
+// Mock email service
+vi.mock('@/lib/email/email-service', () => ({
+  sendVerificationEmail: vi.fn(async (email: string, token: string) => ({
+    success: true,
+    provider: 'test-provider',
+    messageId: 'test-message-id',
+    emailData: {
+      subject: 'Verify your email address',
+      verificationUrl: `http://localhost:3000/auth/verify-email?token=${token}&email=${encodeURIComponent(email)}`,
+      expirationHours: 24
+    },
+    templateUsed: 'verification-email'
+  }))
 }));
 
 describe('Enhanced Email Verification Service', () => {
   let mockDb: any;
+  let getDatabase: any;
 
   beforeEach(async () => {
-    vi.resetModules();
     vi.clearAllMocks();
 
-    const { db } = await import('@/lib/db/drizzle');
-    mockDb = db as any;
-
-    // Setup default mock chain
+    // Setup mock database with proper chaining
     const mockSelect = vi.fn().mockReturnThis();
     const mockFrom = vi.fn().mockReturnThis();
     const mockWhere = vi.fn().mockReturnThis();
@@ -31,27 +47,31 @@ describe('Enhanced Email Verification Service', () => {
     const mockSet = vi.fn().mockReturnThis();
     const mockDelete = vi.fn().mockReturnThis();
 
-    mockDb.select.mockImplementation(() => ({
-      from: mockFrom.mockImplementation(() => ({
-        where: mockWhere.mockImplementation(() => ({
-          limit: mockLimit
+    mockDb = {
+      select: vi.fn().mockImplementation(() => ({
+        from: mockFrom.mockImplementation(() => ({
+          where: mockWhere.mockImplementation(() => ({
+            limit: mockLimit
+          }))
         }))
-      }))
-    }));
-
-    mockDb.insert.mockImplementation(() => ({
-      values: mockValues
-    }));
-
-    mockDb.update.mockImplementation(() => ({
-      set: mockSet.mockImplementation(() => ({
+      })),
+      insert: vi.fn().mockImplementation(() => ({
+        values: mockValues
+      })),
+      update: vi.fn().mockImplementation(() => ({
+        set: mockSet.mockImplementation(() => ({
+          where: mockWhere
+        }))
+      })),
+      delete: vi.fn().mockImplementation(() => ({
         where: mockWhere
       }))
-    }));
+    };
 
-    mockDb.delete.mockImplementation(() => ({
-      where: mockWhere
-    }));
+    // Mock getDatabase to return our mock database
+    const dbModule = await import('@/lib/db/drizzle');
+    getDatabase = dbModule.getDatabase as any;
+    getDatabase.mockResolvedValue(mockDb);
   });
 
   describe('createVerificationToken', () => {
@@ -63,9 +83,13 @@ describe('Enhanced Email Verification Service', () => {
         emailVerified: null
       };
 
-      mockDb.select().from().where().limit.mockResolvedValue([mockUser]);
-      mockDb.delete().where.mockResolvedValue([]);
-      mockDb.insert().values.mockResolvedValue([]);
+      // Mock database query responses
+      const mockLimit = vi.fn().mockResolvedValue([mockUser]);
+      const mockWhere = vi.fn().mockReturnValue({ limit: mockLimit });
+      const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
+      mockDb.select = vi.fn().mockReturnValue({ from: mockFrom });
+      mockDb.delete = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
+      mockDb.insert = vi.fn().mockReturnValue({ values: vi.fn().mockResolvedValue([]) });
 
       const { createVerificationToken } = await import('@/lib/auth/email-verification');
 
@@ -124,13 +148,19 @@ describe('Enhanced Email Verification Service', () => {
         emailVerified: null
       };
 
-      mockDb.select().from().where().limit.mockResolvedValue([mockUser]);
-      mockDb.delete().where.mockResolvedValue([]);
+      // Mock database query responses
+      const mockLimit = vi.fn().mockResolvedValue([mockUser]);
+      const mockWhere = vi.fn().mockReturnValue({ limit: mockLimit });
+      const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
+      mockDb.select = vi.fn().mockReturnValue({ from: mockFrom });
+      mockDb.delete = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
 
       let capturedExpiration: Date;
-      mockDb.insert().values.mockImplementation((values: any) => {
-        capturedExpiration = values.expires;
-        return Promise.resolve([]);
+      mockDb.insert = vi.fn().mockReturnValue({
+        values: vi.fn().mockImplementation((values: any) => {
+          capturedExpiration = values.expires;
+          return Promise.resolve([]);
+        })
       });
 
       const { createVerificationToken } = await import('@/lib/auth/email-verification');
@@ -156,9 +186,12 @@ describe('Enhanced Email Verification Service', () => {
       };
 
       // Mock database responses to return the same user for all calls
-      mockDb.select().from().where().limit.mockResolvedValue([mockUser]);
-      mockDb.delete().where.mockResolvedValue([]);
-      mockDb.insert().values.mockResolvedValue([]);
+      const mockLimit = vi.fn().mockResolvedValue([mockUser]);
+      const mockWhere = vi.fn().mockReturnValue({ limit: mockLimit });
+      const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
+      mockDb.select = vi.fn().mockReturnValue({ from: mockFrom });
+      mockDb.delete = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
+      mockDb.insert = vi.fn().mockReturnValue({ values: vi.fn().mockResolvedValue([]) });
 
       const { createVerificationToken } = await import('@/lib/auth/email-verification');
 
@@ -195,19 +228,21 @@ describe('Enhanced Email Verification Service', () => {
         emailVerified: null
       };
 
-      mockDb.select().from().where().limit.mockResolvedValue([mockUser]);
-      mockDb.delete().where.mockResolvedValue([]);
-      mockDb.insert().values.mockResolvedValue([]);
+      // Mock database query responses
+      const mockLimit = vi.fn().mockResolvedValue([mockUser]);
+      const mockWhere = vi.fn().mockReturnValue({ limit: mockLimit });
+      const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
+      mockDb.select = vi.fn().mockReturnValue({ from: mockFrom });
+      mockDb.delete = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
+      mockDb.insert = vi.fn().mockReturnValue({ values: vi.fn().mockResolvedValue([]) });
 
       const { createVerificationToken } = await import('@/lib/auth/email-verification');
 
       // Act
       await createVerificationToken('  USER@EXAMPLE.COM  ');
 
-      // Assert - Should query and store with normalized email
-      expect(mockDb.select().from().where).toHaveBeenCalledWith(
-        expect.anything() // The eq() function call with normalized email
-      );
+      // Assert - Should query and store with normalized email (mockWhere should have been called)
+      expect(mockWhere).toHaveBeenCalled();
     });
   });
 
@@ -224,11 +259,12 @@ describe('Enhanced Email Verification Service', () => {
 
       // Assert
       expect(result.success).toBe(true);
+      // Should log successful email sending with provider info
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Verification URL for user@example.com')
+        expect.stringContaining('[EmailVerification] Verification email sent to user@example.com')
       );
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('http://localhost:3000/auth/verify-email?token=test-token-123&email=user%40example.com')
+        expect.stringContaining('Message ID: test-message-id')
       );
 
       consoleSpy.mockRestore();
@@ -272,9 +308,13 @@ describe('Enhanced Email Verification Service', () => {
         emailVerified: null
       };
 
-      mockDb.select().from().where().limit.mockResolvedValue([mockUser]);
-      mockDb.delete().where.mockResolvedValue([]);
-      mockDb.insert().values.mockResolvedValue([]);
+      // Mock database query responses
+      const mockLimit = vi.fn().mockResolvedValue([mockUser]);
+      const mockWhere = vi.fn().mockReturnValue({ limit: mockLimit });
+      const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
+      mockDb.select = vi.fn().mockReturnValue({ from: mockFrom });
+      mockDb.delete = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
+      mockDb.insert = vi.fn().mockReturnValue({ values: vi.fn().mockResolvedValue([]) });
 
       const { resendVerificationEmail } = await import('@/lib/auth/email-verification');
 

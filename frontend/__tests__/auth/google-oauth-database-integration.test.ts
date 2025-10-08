@@ -14,20 +14,24 @@ import { authConfig } from '@/lib/auth-config';
 import { db } from '@/lib/db/drizzle';
 import { users, accounts } from '@/lib/db/schema';
 
+// Create mock database instance
+const mockDb = {
+  select: vi.fn().mockReturnThis(),
+  from: vi.fn().mockReturnThis(),
+  where: vi.fn().mockReturnThis(),
+  limit: vi.fn().mockReturnThis(),
+  insert: vi.fn().mockReturnThis(),
+  values: vi.fn().mockReturnThis(),
+  returning: vi.fn(),
+  update: vi.fn().mockReturnThis(),
+  set: vi.fn().mockReturnThis(),
+  transaction: vi.fn(),
+}
+
 // Mock the database
 vi.mock('@/lib/db/drizzle', () => ({
-  db: {
-    select: vi.fn().mockReturnThis(),
-    from: vi.fn().mockReturnThis(),
-    where: vi.fn().mockReturnThis(),
-    limit: vi.fn().mockReturnThis(),
-    insert: vi.fn().mockReturnThis(),
-    values: vi.fn().mockReturnThis(),
-    returning: vi.fn(),
-    update: vi.fn().mockReturnThis(),
-    set: vi.fn().mockReturnThis(),
-    transaction: vi.fn(),
-  }
+  getDatabase: vi.fn(() => Promise.resolve(mockDb)),
+  db: mockDb, // Keep for backward compatibility
 }));
 
 describe('Google OAuth Database Integration', () => {

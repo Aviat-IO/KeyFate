@@ -18,15 +18,21 @@ vi.mock('@/lib/auth-config', () => ({
   authConfig: {}
 }));
 
+// Create mock instances
+const mockDb = {
+  select: vi.fn(),
+  insert: vi.fn(),
+}
+
+const mockSecretsService = {
+  getById: vi.fn(),
+  update: vi.fn()
+}
+
 vi.mock('@/lib/db/drizzle', () => ({
-  db: {
-    select: vi.fn(),
-    insert: vi.fn(),
-  },
-  secretsService: {
-    getById: vi.fn(),
-    update: vi.fn()
-  }
+  getDatabase: vi.fn(() => Promise.resolve(mockDb)),
+  db: mockDb, // Keep for backward compatibility
+  secretsService: mockSecretsService
 }));
 
 import { getServerSession } from 'next-auth/next';

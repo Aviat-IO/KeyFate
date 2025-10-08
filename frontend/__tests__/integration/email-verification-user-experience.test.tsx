@@ -146,6 +146,13 @@ describe('EmailVerificationPageNextAuth - User Experience Tests', () => {
 
   describe('Performance and Responsiveness', () => {
     it('should handle rapid button clicks gracefully', async () => {
+      // First call: verification status check
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ success: true, isVerified: false })
+      } as Response)
+
       let resolvePromise: (value: any) => void
       mockFetch.mockImplementation(() =>
         new Promise(resolve => {
@@ -156,18 +163,18 @@ describe('EmailVerificationPageNextAuth - User Experience Tests', () => {
       render(<EmailVerificationPageNextAuth />)
 
       await waitFor(() => {
-        expect(screen.getByText('Resend verification email')).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /resend verification email/i })).toBeInTheDocument()
       })
 
-      const resendButton = screen.getByText('Resend verification email')
+      const resendButton = screen.getByRole('button', { name: /resend verification email/i })
 
       // Click multiple times rapidly
       fireEvent.click(resendButton)
       fireEvent.click(resendButton)
       fireEvent.click(resendButton)
 
-      // Should only make one API call
-      expect(mockFetch).toHaveBeenCalledTimes(1)
+      // Should only make one API call (plus the initial status check)
+      expect(mockFetch).toHaveBeenCalledTimes(2)
 
       // Button should be disabled
       expect(resendButton).toHaveAttribute('disabled')
@@ -185,41 +192,58 @@ describe('EmailVerificationPageNextAuth - User Experience Tests', () => {
     })
 
     it('should clear errors when retrying operations', async () => {
-      // First response: error
+      // First call for status check - return not verified
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ success: true, isVerified: false })
+      } as Response)
+
+      // Second response: error from resend
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 400,
-        json: () => Promise.resolve({ success: false, error: 'Network error' })
+        json: () => Promise.resolve({ success: false, error: 'Network error. Please try again.' })
       } as Response)
 
       render(<EmailVerificationPageNextAuth />)
 
       await waitFor(() => {
-        expect(screen.getByText('Resend verification email')).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /resend verification email/i })).toBeInTheDocument()
       })
 
-      const resendButton = screen.getByText('Resend verification email')
+      const resendButton = screen.getByRole('button', { name: /resend verification email/i })
       fireEvent.click(resendButton)
 
       // Should show error
       await waitFor(() => {
-        expect(screen.getByText('Network error')).toBeInTheDocument()
+        expect(screen.getByText(/network error/i)).toBeInTheDocument()
       })
 
-      // Second response: success
+      // Third response: success
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
         json: () => Promise.resolve({ success: true })
       } as Response)
 
+      // Wait for cooldown to complete (or adjust mock date)
+      vi.useFakeTimers()
+      vi.advanceTimersByTime(61000) // Advance past 60s cooldown
+
       // Retry
-      fireEvent.click(resendButton)
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /resend verification email/i })).not.toBeDisabled()
+      })
+
+      fireEvent.click(screen.getByRole('button', { name: /resend verification email/i }))
 
       // Error should be cleared
       await waitFor(() => {
-        expect(screen.queryByText('Network error')).not.toBeInTheDocument()
+        expect(screen.queryByText(/network error/i)).not.toBeInTheDocument()
       })
+
+      vi.useRealTimers()
     })
   })
 
@@ -262,10 +286,11 @@ describe('EmailVerificationPageNextAuth - User Experience Tests', () => {
     it('should handle missing email gracefully', async () => {
       mockSession.data!.user!.email = undefined
 
-      mockFetch.mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve({ success: true, isVerified: false })
+      // First call: verification status check - should handle missing email gracefully
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: () => Promise.resolve({ success: false, error: 'No user session found' })
       } as Response)
 
       render(<EmailVerificationPageNextAuth />)
@@ -278,11 +303,16 @@ describe('EmailVerificationPageNextAuth - User Experience Tests', () => {
       expect(screen.getByText('Verify your email address')).toBeInTheDocument()
 
       // Should show appropriate message when trying to resend without email
-      const resendButton = screen.getByText('Resend verification email')
+      const resendButton = screen.getByRole('button', { name: /resend verification email/i })
+
+      // Button should be disabled because email is undefined
+      expect(resendButton).toBeDisabled()
+
       fireEvent.click(resendButton)
 
       await waitFor(() => {
-        expect(screen.getByText('Email address is required')).toBeInTheDocument()
+        // The error should be visible in the document
+        expect(screen.getByText(/email address is required/i)).toBeInTheDocument()
       })
     })
 

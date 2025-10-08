@@ -3,8 +3,8 @@ import { validatePassword, hashPassword, verifyPassword } from '../password';
 import { createUser, authenticateUser } from '../users';
 
 // Mock the database
-vi.mock('@/lib/db/drizzle', () => ({
-  db: {
+vi.mock('@/lib/db/drizzle', () => {
+  const mockDb = {
     select: vi.fn(),
     insert: vi.fn(),
     from: vi.fn(),
@@ -12,7 +12,18 @@ vi.mock('@/lib/db/drizzle', () => ({
     limit: vi.fn(),
     values: vi.fn(),
     returning: vi.fn(),
-  }
+  };
+
+  return {
+    getDatabase: vi.fn(() => Promise.resolve(mockDb)),
+    db: mockDb
+  };
+});
+
+// Mock email verification functions
+vi.mock('../email-verification', () => ({
+  createVerificationToken: vi.fn(() => Promise.resolve({ success: true, token: 'mock-token' })),
+  sendVerificationEmail: vi.fn(() => Promise.resolve({ success: true }))
 }));
 
 describe('Password Utilities', () => {
@@ -73,31 +84,32 @@ describe('User Management', () => {
 
   describe('createUser', () => {
     it('should validate input parameters', async () => {
-      const mockDb = await import('@/lib/db/drizzle');
+      const { getDatabase } = await import('@/lib/db/drizzle');
+      const mockDb = await getDatabase();
 
-      // Mock existing user check
-      (mockDb.db.select as any).mockReturnValue({
+      // Mock existing user check - return empty array (no existing user)
+      vi.mocked(mockDb.select).mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
             limit: vi.fn().mockResolvedValue([])
           })
         })
-      });
+      } as any);
 
       // Mock user creation
-      (mockDb.db.insert as any).mockReturnValue({
+      vi.mocked(mockDb.insert).mockReturnValue({
         values: vi.fn().mockReturnValue({
           returning: vi.fn().mockResolvedValue([{
             id: 'test-id',
             email: 'test@example.com',
             name: 'Test User',
             password: 'hashed-password',
-            emailVerified: new Date(),
+            emailVerified: null,
             createdAt: new Date(),
             updatedAt: new Date(),
           }])
         })
-      });
+      } as any);
 
       const result = await createUser({
         email: 'test@example.com',
