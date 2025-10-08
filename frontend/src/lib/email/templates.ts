@@ -290,10 +290,12 @@ export function renderReminderTemplate(
 
 /**
  * Secret disclosure email template
+ * Sends the server's secret share to the recipient when triggered
  */
 export function renderDisclosureTemplate(
   data: DisclosureTemplateData,
 ): EmailTemplate {
+  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@example.com";
   const lastSeenText = data.senderLastSeen
     ? data.senderLastSeen.toLocaleDateString()
     : "some time ago";
@@ -306,57 +308,61 @@ export function renderDisclosureTemplate(
     `Confidential Message from ${data.senderName} - ${data.secretTitle}`;
 
   const content = `
-    <div style="border: 3px solid #dc3545; background-color: #fff5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-      <h1 style="margin: 0 0 15px 0; color: #dc3545;">Confidential Message</h1>
-      <p style="margin: 0; font-weight: bold; font-size: 16px;">
-        This email contains sensitive information. Please handle with care.
-      </p>
+    <div style="background-color: #fff5f5; border-left: 4px solid #dc3545; padding: 20px; margin: 20px 0;">
+      <h2 style="margin: 0 0 10px 0; color: #dc3545;">Confidential Information</h2>
+      <p style="margin: 0;">This email contains a secret share from ${data.senderName}.</p>
     </div>
 
     <p>Dear ${data.contactName},</p>
 
     <p>${reasonText}</p>
 
-    <div style="background: #f8f9fa; padding: 20px; border-radius: 6px; margin: 20px 0;">
-      <h3 style="margin: 0 0 15px 0;">${data.secretTitle}</h3>
-      <p><strong>From:</strong> ${data.senderName}</p>
-      ${
-    data.senderLastSeen
-      ? `<p><strong>Last seen:</strong> ${lastSeenText}</p>`
-      : ""
-  }
+    <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin: 20px 0;">
+      <p style="margin: 0 0 10px 0;"><strong>Secret:</strong> ${data.secretTitle}</p>
+      <p style="margin: 0;"><strong>From:</strong> ${data.senderName}</p>
     </div>
 
+    ${data.message ? `
     <div style="background: #fff3cd; padding: 15px; border-radius: 6px; margin: 20px 0;">
-      <h4 style="margin: 0 0 10px 0;">Personal Message:</h4>
+      <p style="margin: 0 0 5px 0; font-weight: bold;">Personal Message:</p>
       <p style="margin: 0; font-style: italic;">"${data.message}"</p>
     </div>
+    ` : ""}
 
-    <div style="background: #f8f9fa; padding: 20px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #2563eb;">
-      <h4 style="margin: 0 0 15px 0;">Confidential Content:</h4>
-      <div style="background: white; padding: 15px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; word-break: break-word;">
+    <div style="background: white; border: 2px solid #2563eb; padding: 20px; border-radius: 6px; margin: 20px 0;">
+      <h3 style="margin: 0 0 15px 0; color: #2563eb;">Your Secret Share</h3>
+      <p style="margin: 0 0 15px 0;">This is the <strong>second share</strong> you need to reconstruct the secret.</p>
+      <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; word-break: break-word;">
 ${data.secretContent}
       </div>
     </div>
 
-    <div style="background-color: #dc3545; color: #ffffff; padding: 15px; border-radius: 6px; margin: 15px 0;">
-      <p style="margin: 0; color: #ffffff;"><strong>IMPORTANT SECURITY NOTICE</strong></p>
-      <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #ffffff;">
-        <li>This information is confidential and intended only for you</li>
-        <li>Please store this information securely</li>
-        <li>Do not share this content with unauthorized persons</li>
-        <li>Consider printing a copy and storing it safely offline</li>
+    <div style="background: #e8f4f8; border-left: 4px solid #2563eb; padding: 15px; margin: 20px 0;">
+      <h4 style="margin: 0 0 10px 0; color: #2563eb;">How to Reconstruct the Secret</h4>
+      <ol style="margin: 10px 0; padding-left: 20px;">
+        <li>You should have already received the <strong>first share</strong> from ${data.senderName}</li>
+        <li>Copy the share above (the second share)</li>
+        <li>Combine both shares using our decryption tool or Shamir's Secret Sharing</li>
+        <li>You need 2 shares total to reconstruct the complete secret</li>
+      </ol>
+    </div>
+
+    <div style="background-color: #fff3cd; padding: 15px; border-radius: 6px; margin: 15px 0;">
+      <p style="margin: 0 0 5px 0; font-weight: bold;">Security Reminder</p>
+      <ul style="margin: 5px 0 0 0; padding-left: 20px;">
+        <li>Store both shares securely</li>
+        <li>Do not share with unauthorized persons</li>
+        <li>Consider keeping an offline backup</li>
       </ul>
     </div>
 
-    <p>If you have any questions about this disclosure or need assistance, please contact our support team.</p>
+    <p>If you have questions or need help combining the shares, please contact us at <a href="mailto:${supportEmail}">${supportEmail}</a></p>
   `;
 
   const baseTemplate = renderBaseTemplate({
     title: "Confidential Information Disclosure",
     content,
-    footerText:
-      "This disclosure was automated according to the sender's instructions.",
+    footerText: `Need help? Contact us at ${supportEmail}`,
   });
 
   return {
