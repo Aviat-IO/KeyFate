@@ -6,7 +6,7 @@
  */
 
 import { db } from "@/lib/db/drizzle";
-import { emailFailures, type EmailFailure } from "@/lib/db/schema";
+import { emailFailures, type EmailFailure, type EmailFailureUpdate } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 /**
@@ -243,18 +243,20 @@ export class EmailRetryService {
 
       if (result.success) {
         // Mark as resolved
+        const updateData: EmailFailureUpdate = { resolvedAt: new Date() };
         await db
           .update(emailFailures)
-          .set({ resolvedAt: new Date() })
+          .set(updateData)
           .where(eq(emailFailures.id, failureId))
           .returning();
 
         return { success: true };
       } else {
         // Increment retry count
+        const updateData: EmailFailureUpdate = { retryCount: nextAttempt };
         await db
           .update(emailFailures)
-          .set({ retryCount: nextAttempt })
+          .set(updateData)
           .where(eq(emailFailures.id, failureId))
           .returning();
 
@@ -270,9 +272,10 @@ export class EmailRetryService {
       }
     } catch (error) {
       // Increment retry count
+      const updateData: EmailFailureUpdate = { retryCount: nextAttempt };
       await db
         .update(emailFailures)
-        .set({ retryCount: nextAttempt })
+        .set(updateData)
         .where(eq(emailFailures.id, failureId))
         .returning();
 

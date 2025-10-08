@@ -1,6 +1,6 @@
 import { SubscriptionTier, TierConfig } from "../types/subscription";
 
-export const TIER_CONFIGS: Record<SubscriptionTier, TierConfig> = {
+export const TIER_CONFIGS: Partial<Record<SubscriptionTier, TierConfig>> = {
   free: {
     name: "Free",
     id: "free",
@@ -65,14 +65,14 @@ export const TIER_ORDER: SubscriptionTier[] = ["free", "pro"];
 export const DEFAULT_TIER: SubscriptionTier = "free";
 
 // Helper functions
-export function getTierConfig(tier: SubscriptionTier): TierConfig {
+export function getTierConfig(tier: SubscriptionTier): TierConfig | undefined {
   return TIER_CONFIGS[tier];
 }
 
 export function getTierByPriceId(priceId: string): SubscriptionTier | null {
   for (const [tierName, config] of Object.entries(TIER_CONFIGS)) {
     if (
-      config.priceIds.monthly === priceId || config.priceIds.annual === priceId
+      config?.priceIds.monthly === priceId || config?.priceIds.annual === priceId
     ) {
       return tierName as SubscriptionTier;
     }
@@ -86,7 +86,8 @@ export function getLookupKey(
   period: "monthly" | "annual",
 ): string | null {
   if (tier === "free") return null;
-  return TIER_CONFIGS[tier].priceIds[period];
+  const tierConfig = TIER_CONFIGS[tier];
+  return tierConfig?.priceIds[period] ?? null;
 }
 
 export function formatPrice(price: number): string {
@@ -98,6 +99,7 @@ export function formatPrice(price: number): string {
 
 export function getAnnualSavings(tier: SubscriptionTier): number {
   const config = getTierConfig(tier);
+  if (!config) return 0;
   const monthlyTotal = config.price.monthly * 12;
   const annualPrice = config.price.annual;
   return monthlyTotal - annualPrice;
@@ -105,6 +107,7 @@ export function getAnnualSavings(tier: SubscriptionTier): number {
 
 export function getAnnualSavingsPercentage(tier: SubscriptionTier): number {
   const config = getTierConfig(tier);
+  if (!config) return 0;
   const monthlyTotal = config.price.monthly * 12;
   const savings = getAnnualSavings(tier);
   return Math.round((savings / monthlyTotal) * 100);

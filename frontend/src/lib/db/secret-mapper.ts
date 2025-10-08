@@ -1,3 +1,5 @@
+import type { Secret } from "@/types";
+
 export type ApiSecret = {
   id: string;
   user_id: string;
@@ -21,18 +23,20 @@ export type ApiSecret = {
   updated_at: string;
 };
 
-function toIsoString(value: unknown): string | null {
+type DateLike = Date | string | number | null | undefined;
+
+function toIsoString(value: DateLike): string | null {
   if (!value) return null;
   if (typeof value === "string") return value;
   if (value instanceof Date) return value.toISOString();
   try {
-    return new Date(value as any).toISOString();
+    return new Date(value).toISOString();
   } catch {
     return null;
   }
 }
 
-export function mapDrizzleSecretToApiShape(row: any): ApiSecret {
+export function mapDrizzleSecretToApiShape(row: Secret): ApiSecret {
   return {
     id: row.id,
     user_id: row.userId,
@@ -57,7 +61,7 @@ export function mapDrizzleSecretToApiShape(row: any): ApiSecret {
   };
 }
 
-export function mapApiSecretToDrizzleShape(apiSecret: ApiSecret): any {
+export function mapApiSecretToDrizzleShape(apiSecret: ApiSecret): Secret {
   return {
     id: apiSecret.id,
     userId: apiSecret.user_id,

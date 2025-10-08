@@ -6,7 +6,7 @@
  */
 
 import { db } from "@/lib/db/drizzle";
-import { emailFailures, type EmailFailure } from "@/lib/db/schema";
+import { emailFailures, type EmailFailure, type EmailFailureUpdate } from "@/lib/db/schema";
 import { eq, and, isNull, lt, desc } from "drizzle-orm";
 import { EmailRetryService, type EmailFailureContext } from "./email-retry-service";
 
@@ -241,9 +241,10 @@ export class DeadLetterQueue {
    * @returns Updated failure record
    */
   async markResolved(failureId: string): Promise<EmailFailure> {
+    const updateData: EmailFailureUpdate = { resolvedAt: new Date() };
     const [resolved] = await db
       .update(emailFailures)
-      .set({ resolvedAt: new Date() })
+      .set(updateData)
       .where(eq(emailFailures.id, failureId))
       .returning();
 
@@ -277,8 +278,8 @@ export class DeadLetterQueue {
       );
 
     // Return count of deleted records
-    return typeof result === "object" && "rowCount" in result
-      ? result.rowCount || 0
+    return typeof result === "object" && result !== null && "rowCount" in result
+      ? (result.rowCount as number) || 0
       : 0;
   }
 

@@ -2,6 +2,8 @@ import { and, desc, eq, lt } from "drizzle-orm";
 import { secrets, users } from "./schema";
 import { connectionManager } from "./connection-manager";
 import { getDatabase } from "./get-database";
+import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
+import type * as schema from "./schema";
 
 // Re-export the standardized database getter
 export { getDatabase, getDatabase as getDb };
@@ -9,8 +11,11 @@ export { getDatabase, getDatabase as getDb };
 // DEPRECATED: This proxy-based db export is kept for backward compatibility
 // but should not be used in new code. Use getDatabase() instead.
 // This proxy will throw an error if the database is not initialized.
-let dbInstance: any = null;
-export const db = new Proxy({} as any, {
+let dbInstance: PostgresJsDatabase<typeof schema> | null = null;
+
+type DatabaseProxy = PostgresJsDatabase<typeof schema>;
+
+export const db = new Proxy({} as DatabaseProxy, {
   get(target, prop, receiver) {
     if (!dbInstance) {
       throw new Error('Database not initialized. Please use getDatabase() instead of direct db access.');
