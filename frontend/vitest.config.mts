@@ -50,6 +50,8 @@ export default defineConfig({
       EMAIL_PROVIDER: "mock",
       SENDGRID_API_KEY: "test-sendgrid-api-key",
       SENDGRID_ADMIN_EMAIL: "admin-test@keyfate.com",
+      // Cron job authentication for tests
+      CRON_SECRET: "test-cron-secret-for-testing-only",
     },
     include: [
       "src/**/*.{test,spec}.{js,ts,jsx,tsx}",

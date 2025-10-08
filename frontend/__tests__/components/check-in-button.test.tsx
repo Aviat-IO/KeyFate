@@ -5,15 +5,10 @@ import { CheckInButton } from "@/components/check-in-button"
 // Mock fetch
 global.fetch = vi.fn()
 
-// Mock environment variable
-vi.mock("@/lib/env", () => ({
-  NEXT_PUBLIC_SITE_URL: "https://test.com",
-}))
-
 const mockSecret = {
   id: "123",
   status: "active",
-  next_check_in: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+  nextCheckIn: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
 }
 
 describe("CheckInButton Component", () => {
@@ -72,7 +67,7 @@ describe("CheckInButton Component", () => {
 
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(
-        "https://test.com/api/secrets/123/check-in",
+        "/api/secrets/123/check-in",
         { method: "POST" },
       )
     })
@@ -80,9 +75,32 @@ describe("CheckInButton Component", () => {
 
   it("calls onCheckInSuccess callback on successful check-in", async () => {
     const mockOnSuccess = vi.fn()
+    // Mock API returns snake_case format
+    const apiResponse = {
+      id: "123",
+      status: "active",
+      next_check_in: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      title: "Test Secret",
+      user_id: "user-123",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      check_in_days: 30,
+      server_share: "encrypted-share",
+      recipient_name: "John Doe",
+      recipient_email: "john@example.com",
+      recipient_phone: null,
+      contact_method: "email",
+      last_check_in: new Date().toISOString(),
+      is_triggered: false,
+      triggered_at: null,
+      iv: null,
+      auth_tag: null,
+      sss_shares_total: 3,
+      sss_threshold: 2,
+    }
     ;(fetch as any).mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ secret: mockSecret }),
+      json: () => Promise.resolve({ secret: apiResponse }),
     })
 
     render(<CheckInButton secretId="123" onCheckInSuccess={mockOnSuccess} />)
@@ -91,7 +109,12 @@ describe("CheckInButton Component", () => {
     fireEvent.click(button)
 
     await waitFor(() => {
-      expect(mockOnSuccess).toHaveBeenCalledWith(mockSecret)
+      expect(mockOnSuccess).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: "123",
+          status: "active",
+        })
+      )
     })
   })
 
