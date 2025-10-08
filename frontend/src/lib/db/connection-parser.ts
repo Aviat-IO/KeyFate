@@ -1,7 +1,18 @@
 // Shared utility for parsing Cloud SQL Unix socket connections
-import postgres from "postgres";
+import postgres, { Options as PostgresOptions } from "postgres";
 
-export function createPostgresConnection(connectionString: string, options: any = {}) {
+interface UnixSocketConnectionOptions {
+  host: string;
+  database: string;
+  username: string;
+  password: string | (() => string | Promise<string>);
+  ssl: boolean | object | "require" | "allow" | "prefer" | "verify-full";
+}
+
+export function createPostgresConnection(
+  connectionString: string, 
+  options: Partial<PostgresOptions<{}>> = {}
+) {
   // Skip during build phase to prevent database connection attempts
   const isBuildTime = process.env.NODE_ENV === undefined ||
                      process.env.NEXT_PHASE === 'phase-production-build';
@@ -16,7 +27,7 @@ export function createPostgresConnection(connectionString: string, options: any 
   }
 
   // Parse connection string for Cloud SQL Unix socket support
-  let connectionOptions: any = {};
+  let connectionOptions: string | (UnixSocketConnectionOptions & Partial<PostgresOptions<{}>>);
 
   // Check if this is a Unix socket connection (for Cloud SQL)
   if (connectionString.includes("/cloudsql/")) {

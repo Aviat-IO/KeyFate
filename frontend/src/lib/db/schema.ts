@@ -14,7 +14,7 @@ import {
 // Enums
 export const contactMethodEnum = pgEnum("contact_method", ["email", "phone", "both"]);
 export const secretStatusEnum = pgEnum("secret_status", ["active", "paused", "triggered"]);
-export const subscriptionTierEnum = pgEnum("subscription_tier", ["free", "basic", "premium", "enterprise"]);
+export const subscriptionTierEnum = pgEnum("subscription_tier", ["free", "basic", "pro", "premium", "enterprise"]);
 export const subscriptionStatusEnum = pgEnum("subscription_status", ["active", "inactive", "cancelled", "trial", "past_due"]);
 export const reminderStatusEnum = pgEnum("reminder_status", ["pending", "sent", "failed", "cancelled"]);
 export const reminderTypeEnum = pgEnum("reminder_type", ["25_percent", "50_percent", "7_days", "3_days", "24_hours", "12_hours", "1_hour"]);
@@ -250,6 +250,7 @@ export type WebhookEvent = typeof webhookEvents.$inferSelect;
 export type PaymentHistory = typeof paymentHistory.$inferSelect;
 export type EmailFailure = typeof emailFailures.$inferSelect;
 export type EmailFailureInsert = typeof emailFailures.$inferInsert;
+export type EmailFailureUpdate = Partial<Omit<EmailFailure, 'id' | 'createdAt'>>;
 
 // NextAuth.js types
 export type User = typeof users.$inferSelect;
