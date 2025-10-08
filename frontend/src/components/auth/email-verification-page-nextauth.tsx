@@ -57,10 +57,16 @@ export function EmailVerificationPageNextAuth() {
       handleTokenVerification(token, email)
     } else if (status === "authenticated" && (session?.user as any)?.id) {
       checkVerificationStatus()
+    } else if (status === "unauthenticated") {
+      setChecking(false)
+    } else if (status === "loading") {
+      // Still loading session, keep checking state
+      return
     } else {
       setChecking(false)
     }
-  }, [token, email, status, (session?.user as any)?.id])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, email, status])
 
   // Update countdown timer
   useEffect(() => {
