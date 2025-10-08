@@ -6,10 +6,32 @@ import { NextRequest, NextResponse } from "next/server";
 // Prevent static analysis during build
 export const dynamic = "force-dynamic";
 
+// Add a GET handler for debugging purposes
+export async function GET(req: NextRequest) {
+  const url = new URL(req.url);
+  const token = url.searchParams.get("token");
+
+  return NextResponse.json({
+    message: "Check-in endpoint is active. Use POST method to check in.",
+    hasToken: !!token,
+    method: "GET",
+    timestamp: new Date().toISOString()
+  }, { status: 200 });
+}
+
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
 
   try {
+    // Validate environment
+    if (!process.env.DATABASE_URL) {
+      console.error('[CHECK-IN] DATABASE_URL not configured');
+      return NextResponse.json(
+        { error: "Database configuration error" },
+        { status: 500 }
+      );
+    }
+
     const db = await getDatabase();
     const url = new URL(req.url);
     const token = url.searchParams.get("token");
@@ -18,12 +40,20 @@ export async function POST(req: NextRequest) {
     console.log('[CHECK-IN] Attempt received', {
       timestamp: new Date().toISOString(),
       hasToken: !!token,
-      ip: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+      ip: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
+      method: req.method,
+      url: req.url
     });
 
     if (!token) {
       console.warn('[CHECK-IN] Missing token parameter');
-      return NextResponse.json({ error: "Missing token" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing token" },
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     const [tokenRow] = await db
@@ -44,9 +74,13 @@ export async function POST(req: NextRequest) {
         tokenPrefix: token.substring(0, 8) + '...'
       });
 
-      return NextResponse.json({ error: "Invalid or expired token" }, {
-        status: 400,
-      });
+      return NextResponse.json(
+        { error: "Invalid or expired token" },
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     if (tokenRow.usedAt) {
@@ -57,9 +91,13 @@ export async function POST(req: NextRequest) {
         originalUse: tokenRow.usedAt.toISOString()
       });
 
-      return NextResponse.json({ error: "Token has already been used" }, {
-        status: 400,
-      });
+      return NextResponse.json(
+        { error: "Token has already been used" },
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     if (new Date(tokenRow.expiresAt) < new Date()) {
@@ -70,7 +108,13 @@ export async function POST(req: NextRequest) {
         expiresAt: tokenRow.expiresAt.toISOString()
       });
 
-      return NextResponse.json({ error: "Token has expired" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Token has expired" },
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     const [secret] = await db
@@ -84,7 +128,13 @@ export async function POST(req: NextRequest) {
       .limit(1);
 
     if (!secret) {
-      return NextResponse.json({ error: "Secret not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Secret not found" },
+        {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     // Calculate next check-in using milliseconds to avoid DST issues
@@ -111,16 +161,37 @@ export async function POST(req: NextRequest) {
       processingTime: Date.now() - startTime + 'ms'
     });
 
-    return NextResponse.json({
-      success: true,
-      secretTitle: secret.title,
-      nextCheckIn: nextCheckIn.toISOString(),
-      message: `Your secret "${secret.title}" timer has been reset.`,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        secretTitle: secret.title,
+        nextCheckIn: nextCheckIn.toISOString(),
+        message: `Your secret "${secret.title}" timer has been reset.`,
+      },
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
   } catch (error) {
-    console.error("/api/check-in error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, {
-      status: 500,
+    console.error("[CHECK-IN] Error:", {
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
     });
+
+    return NextResponse.json(
+      {
+        error: "Internal Server Error",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
   }
 }

@@ -39,6 +39,24 @@ function CheckInContent() {
         },
       )
 
+      // Log response details for debugging
+      console.log("Check-in response:", {
+        status: response.status,
+        contentType: response.headers.get("content-type"),
+        url: response.url,
+      })
+
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get("content-type")
+      if (!contentType?.includes("application/json")) {
+        // If not JSON, get the text to see what was returned
+        const text = await response.text()
+        console.error("Non-JSON response received:", text.substring(0, 500))
+        throw new Error(
+          "Server returned an error. Please try again or contact support.",
+        )
+      }
+
       const data = await response.json()
 
       if (response.ok) {
