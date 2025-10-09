@@ -164,6 +164,11 @@ export class StripeProvider implements PaymentProvider {
           quantity: 1,
         },
       ];
+      if (config.metadata) {
+        sessionParams.subscription_data = {
+          metadata: config.metadata,
+        };
+      }
     } else if (config.mode === "payment") {
       if (!config.amount || !config.currency) {
         throw new Error("amount and currency are required for payment mode");

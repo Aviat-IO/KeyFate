@@ -395,6 +395,9 @@ describe("StripeProvider", () => {
             quantity: 1,
           },
         ],
+        subscription_data: {
+          metadata: { user_id: "123" },
+        },
         customer: "cus_123",
         billing_address_collection: "auto",
         metadata: { user_id: "123" },
