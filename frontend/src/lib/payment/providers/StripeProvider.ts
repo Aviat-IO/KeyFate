@@ -200,6 +200,10 @@ export class StripeProvider implements PaymentProvider {
       sessionParams.automatic_tax = config.automaticTax;
     }
 
+    if (config.locale) {
+      sessionParams.locale = config.locale as Stripe.Checkout.SessionCreateParams.Locale;
+    }
+
     if (config.metadata) {
       sessionParams.metadata = config.metadata;
     }

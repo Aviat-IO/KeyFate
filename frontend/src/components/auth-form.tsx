@@ -91,7 +91,6 @@ export function AuthForm({
           </Card>
         </div>
       </div>
-
       <Footer />
     </div>
   )

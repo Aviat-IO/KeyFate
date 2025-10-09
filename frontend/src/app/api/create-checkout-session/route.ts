@@ -95,6 +95,7 @@ async function createCheckoutSession(lookupKey: string) {
       cancelUrl: `${NEXT_PUBLIC_SITE_URL}/pricing?canceled=true`,
       billingAddressCollection: "auto" as const,
       automaticTax: { enabled: false },
+      locale: "en" as const,
       // customerUpdate: {
       //   address: "auto",
       // },
