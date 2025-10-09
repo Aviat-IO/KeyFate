@@ -126,6 +126,7 @@ export interface CheckoutConfig {
   mode: "subscription" | "payment";
   billingAddressCollection?: "auto" | "required";
   automaticTax?: { enabled: boolean };
+  locale?: string;
   expiresInMinutes?: number; // For crypto payments
   metadata?: Record<string, string>;
 }
