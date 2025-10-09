@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { useSearchParams } from "next/navigation"
-import { Suspense, useState } from "react"
+import { Suspense, useRef, useState } from "react"
 import confetti from "canvas-confetti"
 
 function CheckInContent() {
@@ -11,6 +11,7 @@ function CheckInContent() {
   const [isSuccessful, setIsSuccessful] = useState(false)
   const searchParams = useSearchParams()
   const { toast } = useToast()
+  const buttonRef = useRef<HTMLButtonElement>(null)
 
   const token = searchParams.get("token")
 
@@ -62,13 +63,20 @@ function CheckInContent() {
 
       if (response.ok) {
         setIsSuccessful(true)
-        // Trigger confetti animation on successful check-in
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: ['#10b981', '#34d399', '#6ee7b7', '#a7f3d0']
-        })
+        
+        if (buttonRef.current) {
+          const rect = buttonRef.current.getBoundingClientRect()
+          const x = (rect.left + rect.width / 2) / window.innerWidth
+          const y = (rect.top + rect.height / 2) / window.innerHeight
+          
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { x, y },
+            colors: ['#10b981', '#34d399', '#6ee7b7', '#a7f3d0']
+          })
+        }
+        
         toast({
           title: "Check-in successful!",
           description: data.message ?? `Next check-in: ${data.nextCheckIn}`,
@@ -104,6 +112,7 @@ function CheckInContent() {
         </p>
 
         <Button
+          ref={buttonRef}
           onClick={handleCheckIn}
           disabled={isLoading || isSuccessful}
           size="lg"
