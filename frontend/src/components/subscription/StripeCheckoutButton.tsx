@@ -10,6 +10,11 @@ interface StripeCheckoutButtonProps {
   disabled?: boolean
 }
 
+const PAYMENT_LINKS: Record<string, string> = {
+  pro_monthly: "https://buy.stripe.com/test_9B66oH3lU3f27R27MD14402",
+  pro_yearly: "https://buy.stripe.com/test_7sY28r4pY16U0oAc2T14403",
+}
+
 export function StripeCheckoutButton({
   lookupKey,
   children,
@@ -23,43 +28,26 @@ export function StripeCheckoutButton({
     setLoading(true)
 
     try {
-      // If user is not authenticated, redirect to login with return URL
       if (!session?.user) {
-        const returnUrl = `${window.location.origin}/api/create-checkout-session?lookup_key=${lookupKey}&redirect_after_auth=true`
-        const loginUrl = `/auth/signin?callbackUrl=${encodeURIComponent(returnUrl)}`
+        const paymentLink = PAYMENT_LINKS[lookupKey]
+        const loginUrl = `/auth/signin?callbackUrl=${encodeURIComponent(paymentLink)}`
         window.location.href = loginUrl
         return
       }
 
-      const response = await fetch("/api/create-checkout-session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ lookup_key: lookupKey }),
-      })
-
-      if (response.redirected) {
-        window.location.href = response.url
-      } else if (response.status === 401) {
-        // User session expired, redirect to login
-        const returnUrl = `${window.location.origin}/api/create-checkout-session?lookup_key=${lookupKey}&redirect_after_auth=true`
-        const loginUrl = `/auth/signin?callbackUrl=${encodeURIComponent(returnUrl)}`
-        window.location.href = loginUrl
+      const paymentLink = PAYMENT_LINKS[lookupKey]
+      if (paymentLink) {
+        window.location.href = paymentLink
       } else {
-        const res = await response.json()
-        console.error("Checkout failed", res)
-        // You could show a toast notification here
+        console.error("No payment link found for lookup key:", lookupKey)
       }
     } catch (error) {
       console.error("Error:", error)
-      // You could show a toast notification here
     } finally {
       setLoading(false)
     }
   }
 
-  // Show loading while checking authentication
   if (checkingAuth) {
     return (
       <Button disabled className="w-full">
