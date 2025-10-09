@@ -66,11 +66,11 @@ resource "null_resource" "build_and_push_frontend" {
       REPO_ROOT=$(dirname ${local.frontend_app_dir})
 
       # Use Cloud Build to build and push the image
-      # Only pass BUILD_ENV since all configuration now comes from .env files
+      # Pass NEXT_PUBLIC_ variables as build args so they're baked into the image
       gcloud builds submit $REPO_ROOT \
         --project=${module.project.id} \
         --config=${local.frontend_app_dir}/cloudbuild.yaml \
-        --substitutions="_IMAGE_URL=$BUILD_TAG,_BUILD_ENV=${var.env == "prod" ? "production" : "staging"},_NEXTAUTH_URL=${var.next_public_site_url},_NEXT_PUBLIC_SITE_URL=${var.next_public_site_url}"
+        --substitutions="_IMAGE_URL=$BUILD_TAG,_BUILD_ENV=${var.env == "prod" ? "production" : "staging"},_NEXTAUTH_URL=${var.next_public_site_url},_NEXT_PUBLIC_SITE_URL=${var.next_public_site_url},_NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${var.next_public_stripe_publishable_key}"
 
       echo "Cloud Build completed successfully!"
 
