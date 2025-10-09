@@ -122,6 +122,8 @@ export async function POST(req: NextRequest) {
         id: secrets.id,
         title: secrets.title,
         checkInDays: secrets.checkInDays,
+        triggeredAt: secrets.triggeredAt,
+        isTriggered: secrets.isTriggered,
       })
       .from(secrets)
       .where(eq(secrets.id, tokenRow.secretId))
@@ -132,6 +134,24 @@ export async function POST(req: NextRequest) {
         { error: "Secret not found" },
         {
           status: 404,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    if (secret.isTriggered || secret.triggeredAt) {
+      console.warn('[CHECK-IN] Attempt to check in on triggered secret', {
+        timestamp: new Date().toISOString(),
+        tokenId: tokenRow.id,
+        secretId: secret.id,
+        secretTitle: secret.title,
+        triggeredAt: secret.triggeredAt?.toISOString()
+      });
+
+      return NextResponse.json(
+        { error: "This secret has already been triggered and can no longer be checked in. The secret was disclosed to the recipient." },
+        {
+          status: 400,
           headers: { 'Content-Type': 'application/json' }
         }
       );
