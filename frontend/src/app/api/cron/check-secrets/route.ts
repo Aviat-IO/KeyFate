@@ -402,7 +402,7 @@ export async function POST(req: NextRequest) {
       .from(reminderJobs);
     console.log(`[check-secrets] Existing reminder_jobs count: ${existingReminderCount[0]?.count || 0}`);
 
-    // Query all active secrets with server shares
+    // Query all active secrets with server shares (excluding triggered)
     const allActiveSecrets = await db
       .select({
         secret: secrets,
@@ -413,6 +413,7 @@ export async function POST(req: NextRequest) {
       .where(
         and(
           eq(secrets.status, "active"),
+          eq(secrets.isTriggered, false),
           isNotNull(secrets.serverShare),
           isNotNull(secrets.nextCheckIn),
         ),
