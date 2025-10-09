@@ -281,6 +281,8 @@ export function renderDisclosureTemplate(
 ): EmailTemplate {
   const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ||
     "support@example.com";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://keyfate.com";
+  const decryptUrl = `${siteUrl}/decrypt`;
   const lastSeenText = data.senderLastSeen
     ? data.senderLastSeen.toLocaleDateString()
     : "some time ago";
@@ -307,17 +309,6 @@ export function renderDisclosureTemplate(
       <p style="margin: 0;"><strong>From:</strong> ${data.senderName}</p>
     </div>
 
-    ${
-    data.message
-      ? `
-    <div style="background: #fff3cd; padding: 15px; border-radius: 6px; margin: 20px 0;">
-      <p style="margin: 0 0 5px 0; font-weight: bold;">Personal Message:</p>
-      <p style="margin: 0; font-style: italic;">"${data.message}"</p>
-    </div>
-    `
-      : ""
-  }
-
     <div style="background: white; border: 2px solid #2563eb; padding: 20px; border-radius: 6px; margin: 20px 0;">
       <h3 style="margin: 0 0 15px 0; color: #2563eb;">Your Secret Share</h3>
       <p style="margin: 0 0 15px 0;">This is the <strong>second share</strong> you need to reconstruct the secret.</p>
@@ -331,7 +322,7 @@ ${data.secretContent}
       <ol style="margin: 10px 0; padding-left: 20px;">
         <li>You should have already received the <strong>first share</strong> from ${data.senderName}</li>
         <li>Copy the share above (the second share)</li>
-        <li>Combine both shares using our decryption tool or Shamir's Secret Sharing</li>
+        <li>Visit <a href="${decryptUrl}" style="color: #2563eb;">${decryptUrl}</a> and combine both shares using our decryption tool</li>
         <li>You need 2 shares total to reconstruct the complete secret</li>
       </ol>
     </div>
@@ -344,8 +335,6 @@ ${data.secretContent}
         <li>Consider keeping an offline backup</li>
       </ul>
     </div>
-
-    <p>If you have questions or need help combining the shares, please contact us at <a href="mailto:${supportEmail}">${supportEmail}</a></p>
   `;
 
   const baseTemplate = renderBaseTemplate({
