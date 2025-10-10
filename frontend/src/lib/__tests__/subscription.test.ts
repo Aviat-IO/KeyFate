@@ -21,6 +21,7 @@ import {
   getAvailableIntervals
 } from '../subscription';
 import { getDatabase } from '../db/drizzle';
+import * as subscriptionModule from '../subscription';
 
 const createMockDb = () => ({
   select: vi.fn().mockReturnThis(),
@@ -28,6 +29,7 @@ const createMockDb = () => ({
   leftJoin: vi.fn().mockReturnThis(),
   where: vi.fn().mockReturnThis(),
   limit: vi.fn().mockReturnThis(),
+  sql: vi.fn(),
 });
 
 describe('Subscription Tier Management', () => {
@@ -35,25 +37,23 @@ describe('Subscription Tier Management', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.restoreAllMocks();
     mockDb = createMockDb();
     vi.mocked(getDatabase).mockResolvedValue(mockDb as any);
   });
 
   describe('getUserTierInfo', () => {
     it('should return free tier info for users without subscription', async () => {
-      mockDb.limit.mockResolvedValue([]);
-      
-      let callCount = 0;
-      mockDb.select.mockImplementation(() => {
-        callCount++;
-        return {
-          from: vi.fn().mockReturnValue({
-            where: vi.fn().mockResolvedValue(
-              callCount === 1 ? [{ secrets_count: 0 }] : []
-            )
-          })
-        };
+      vi.spyOn(subscriptionModule, 'calculateUserUsage').mockResolvedValue({
+        secrets_count: 0,
+        total_recipients: 0,
       });
+
+      mockDb.select.mockReturnValue(mockDb);
+      mockDb.from.mockReturnValue(mockDb);
+      mockDb.leftJoin.mockReturnValue(mockDb);
+      mockDb.where.mockReturnValue(mockDb);
+      mockDb.limit.mockResolvedValue([]);
 
       const result = await getUserTierInfo('user-123');
 
@@ -81,38 +81,16 @@ describe('Subscription Tier Management', () => {
         status: 'active',
       };
 
-      mockDb.limit.mockResolvedValue([mockSubscription]);
-      
-      let callCount = 0;
-      mockDb.select.mockImplementation(() => {
-        callCount++;
-        if (callCount === 1) {
-          return {
-            from: vi.fn().mockReturnValue({
-              where: vi.fn().mockResolvedValue([{ secrets_count: 3 }])
-            })
-          };
-        } else if (callCount === 2) {
-          return {
-            from: vi.fn().mockReturnValue({
-              where: vi.fn().mockResolvedValue([
-                { id: 'secret-1' },
-                { id: 'secret-2' },
-                { id: 'secret-3' }
-              ])
-            })
-          };
-        } else {
-          return {
-            from: vi.fn().mockReturnValue({
-              where: vi.fn().mockResolvedValue([
-                { email: 'user1@test.com' },
-                { email: 'user2@test.com' },
-              ])
-            })
-          };
-        }
+      vi.spyOn(subscriptionModule, 'calculateUserUsage').mockResolvedValue({
+        secrets_count: 3,
+        total_recipients: 2,
       });
+
+      mockDb.select.mockReturnValue(mockDb);
+      mockDb.from.mockReturnValue(mockDb);
+      mockDb.leftJoin.mockReturnValue(mockDb);
+      mockDb.where.mockReturnValue(mockDb);
+      mockDb.limit.mockResolvedValue([mockSubscription]);
 
       const result = await getUserTierInfo('user-123');
 
@@ -126,31 +104,16 @@ describe('Subscription Tier Management', () => {
     });
 
     it('should calculate canCreate flag correctly', async () => {
-      mockDb.limit.mockResolvedValue([]);
-      
-      let callCount = 0;
-      mockDb.select.mockImplementation(() => {
-        callCount++;
-        if (callCount === 1) {
-          return {
-            from: vi.fn().mockReturnValue({
-              where: vi.fn().mockResolvedValue([{ secrets_count: 1 }])
-            })
-          };
-        } else if (callCount === 2) {
-          return {
-            from: vi.fn().mockReturnValue({
-              where: vi.fn().mockResolvedValue([{ id: 'secret-1' }])
-            })
-          };
-        } else {
-          return {
-            from: vi.fn().mockReturnValue({
-              where: vi.fn().mockResolvedValue([{ email: 'user1@test.com' }])
-            })
-          };
-        }
+      vi.spyOn(subscriptionModule, 'calculateUserUsage').mockResolvedValue({
+        secrets_count: 1,
+        total_recipients: 1,
       });
+
+      mockDb.select.mockReturnValue(mockDb);
+      mockDb.from.mockReturnValue(mockDb);
+      mockDb.leftJoin.mockReturnValue(mockDb);
+      mockDb.where.mockReturnValue(mockDb);
+      mockDb.limit.mockResolvedValue([]);
 
       const result = await getUserTierInfo('user-123');
 
@@ -170,19 +133,16 @@ describe('Subscription Tier Management', () => {
 
   describe('canUserCreateSecret', () => {
     it('should return true when user can create secrets', async () => {
-      mockDb.limit.mockResolvedValue([]);
-      
-      let callCount = 0;
-      mockDb.select.mockImplementation(() => {
-        callCount++;
-        return {
-          from: vi.fn().mockReturnValue({
-            where: vi.fn().mockResolvedValue(
-              callCount === 1 ? [{ secrets_count: 0 }] : []
-            )
-          })
-        };
+      vi.spyOn(subscriptionModule, 'calculateUserUsage').mockResolvedValue({
+        secrets_count: 0,
+        total_recipients: 0,
       });
+
+      mockDb.select.mockReturnValue(mockDb);
+      mockDb.from.mockReturnValue(mockDb);
+      mockDb.leftJoin.mockReturnValue(mockDb);
+      mockDb.where.mockReturnValue(mockDb);
+      mockDb.limit.mockResolvedValue([]);
 
       const result = await canUserCreateSecret('user-123');
 
@@ -216,39 +176,23 @@ describe('Subscription Tier Management', () => {
 
   describe('calculateUserUsage', () => {
     it('should count active secrets correctly', async () => {
-      let callCount = 0;
-      mockDb.select.mockImplementation(() => {
-        callCount++;
-        if (callCount === 1) {
-          return {
-            from: vi.fn().mockReturnValue({
-              where: vi.fn().mockResolvedValue([{ secrets_count: 5 }])
-            })
-          };
-        } else if (callCount === 2) {
-          return {
-            from: vi.fn().mockReturnValue({
-              where: vi.fn().mockResolvedValue([
-                { id: 'secret-1' },
-                { id: 'secret-2' },
-                { id: 'secret-3' },
-                { id: 'secret-4' },
-                { id: 'secret-5' }
-              ])
-            })
-          };
-        } else {
-          return {
-            from: vi.fn().mockReturnValue({
-              where: vi.fn().mockResolvedValue([
-                { email: 'user1@test.com' },
-                { email: 'user2@test.com' },
-                { email: 'user3@test.com' },
-              ])
-            })
-          };
-        }
-      });
+      const mockQueries = [
+        [{ secrets_count: 5 }],
+        [{ id: 'secret-1' }, { id: 'secret-2' }, { id: 'secret-3' }, { id: 'secret-4' }, { id: 'secret-5' }],
+        [{ email: 'user1@test.com' }, { email: 'user2@test.com' }, { email: 'user3@test.com' }]
+      ];
+      let queryIndex = 0;
+
+      mockDb.sql = vi.fn();
+      mockDb.select.mockImplementation(() => ({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockImplementation(async () => {
+            const result = mockQueries[queryIndex];
+            queryIndex++;
+            return result;
+          })
+        })
+      }));
 
       const result = await calculateUserUsage('user-123');
 
@@ -257,37 +201,23 @@ describe('Subscription Tier Management', () => {
     });
 
     it('should count unique recipients only', async () => {
-      let callCount = 0;
-      mockDb.select.mockImplementation(() => {
-        callCount++;
-        if (callCount === 1) {
-          return {
-            from: vi.fn().mockReturnValue({
-              where: vi.fn().mockResolvedValue([{ secrets_count: 3 }])
-            })
-          };
-        } else if (callCount === 2) {
-          return {
-            from: vi.fn().mockReturnValue({
-              where: vi.fn().mockResolvedValue([
-                { id: 'secret-1' },
-                { id: 'secret-2' },
-                { id: 'secret-3' }
-              ])
-            })
-          };
-        } else {
-          return {
-            from: vi.fn().mockReturnValue({
-              where: vi.fn().mockResolvedValue([
-                { email: 'user1@test.com' },
-                { email: 'user1@test.com' },
-                { email: 'user2@test.com' },
-              ])
-            })
-          };
-        }
-      });
+      const mockQueries = [
+        [{ secrets_count: 3 }],
+        [{ id: 'secret-1' }, { id: 'secret-2' }, { id: 'secret-3' }],
+        [{ email: 'user1@test.com' }, { email: 'user1@test.com' }, { email: 'user2@test.com' }]
+      ];
+      let queryIndex = 0;
+
+      mockDb.sql = vi.fn();
+      mockDb.select.mockImplementation(() => ({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockImplementation(async () => {
+            const result = mockQueries[queryIndex];
+            queryIndex++;
+            return result;
+          })
+        })
+      }));
 
       const result = await calculateUserUsage('user-123');
 
@@ -295,35 +225,23 @@ describe('Subscription Tier Management', () => {
     });
 
     it('should ignore null recipient emails', async () => {
-      let callCount = 0;
-      mockDb.select.mockImplementation(() => {
-        callCount++;
-        if (callCount === 1) {
-          return {
-            from: vi.fn().mockReturnValue({
-              where: vi.fn().mockResolvedValue([{ secrets_count: 2 }])
-            })
-          };
-        } else if (callCount === 2) {
-          return {
-            from: vi.fn().mockReturnValue({
-              where: vi.fn().mockResolvedValue([
-                { id: 'secret-1' },
-                { id: 'secret-2' }
-              ])
-            })
-          };
-        } else {
-          return {
-            from: vi.fn().mockReturnValue({
-              where: vi.fn().mockResolvedValue([
-                { email: 'user1@test.com' },
-                { email: null },
-              ])
-            })
-          };
-        }
-      });
+      const mockQueries = [
+        [{ secrets_count: 2 }],
+        [{ id: 'secret-1' }, { id: 'secret-2' }],
+        [{ email: 'user1@test.com' }, { email: null }]
+      ];
+      let queryIndex = 0;
+
+      mockDb.sql = vi.fn();
+      mockDb.select.mockImplementation(() => ({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockImplementation(async () => {
+            const result = mockQueries[queryIndex];
+            queryIndex++;
+            return result;
+          })
+        })
+      }));
 
       const result = await calculateUserUsage('user-123');
 

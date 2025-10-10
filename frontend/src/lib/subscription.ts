@@ -184,7 +184,7 @@ export async function calculateUserUsage(userId: string) {
       );
 
     const uniqueRecipients = new Set(
-      recipients.map(r => r.email)
+      recipients.map(r => r.email).filter((email): email is string => email !== null)
     );
 
     return {
