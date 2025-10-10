@@ -6,7 +6,7 @@ import {
   UserTierInfo,
 } from "../types/subscription";
 import { getDatabase } from "./db/drizzle";
-import { userSubscriptions, subscriptionTiers, secrets } from "./db/schema";
+import { userSubscriptions, subscriptionTiers, secrets, secretRecipients } from "./db/schema";
 
 export async function getUserTierInfo(
   userId: string,
@@ -153,10 +153,8 @@ export async function calculateUserUsage(userId: string) {
 
     const activeSecretsCount = result?.secrets_count ?? 0;
 
-    const activeSecrets = await db
-      .select({
-        recipientEmail: secrets.recipientEmail,
-      })
+    const activeSecretIds = await db
+      .select({ id: secrets.id })
       .from(secrets)
       .where(
         and(
@@ -165,10 +163,28 @@ export async function calculateUserUsage(userId: string) {
         )
       );
 
+    if (activeSecretIds.length === 0) {
+      return {
+        secrets_count: 0,
+        total_recipients: 0,
+      };
+    }
+
+    const secretIdList = activeSecretIds.map(s => s.id);
+    
+    const recipients = await db
+      .select({
+        email: secretRecipients.email,
+      })
+      .from(secretRecipients)
+      .where(
+        secretIdList.length > 0 
+          ? (db as any).sql`${secretRecipients.secretId} = ANY(${secretIdList})`
+          : (db as any).sql`false`
+      );
+
     const uniqueRecipients = new Set(
-      activeSecrets
-        .map(s => s.recipientEmail)
-        .filter((email): email is string => email !== null)
+      recipients.map(r => r.email)
     );
 
     return {

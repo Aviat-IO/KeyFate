@@ -29,11 +29,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { secretFormSchema, type SecretFormValues } from "@/lib/schemas/secret"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Buffer } from "buffer"
-import { AlertCircle, Info, LockIcon } from "lucide-react"
+import { AlertCircle, Info, LockIcon, Plus, Trash2, Crown } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useFieldArray } from "react-hook-form"
 import sss from "shamirs-secret-sharing"
+import { UpgradeModal } from "@/components/upgrade-modal"
 
 interface NewSecretFormProps {
   isPaid?: boolean
@@ -42,6 +43,7 @@ interface NewSecretFormProps {
 export function NewSecretForm({ isPaid = false }: NewSecretFormProps) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
 
   const form = useForm<SecretFormValues>({
     resolver: zodResolver(secretFormSchema),
@@ -49,10 +51,7 @@ export function NewSecretForm({ isPaid = false }: NewSecretFormProps) {
     defaultValues: {
       title: "",
       secretMessageContent: "",
-      recipient_name: "",
-      recipient_email: "",
-      recipient_phone: "",
-      contact_method: "email",
+      recipients: [{ name: "", email: "", isPrimary: true }],
       check_in_days: "30",
       sss_shares_total: 3,
       sss_threshold: 2,
@@ -60,6 +59,14 @@ export function NewSecretForm({ isPaid = false }: NewSecretFormProps) {
   })
 
   const { isSubmitting } = form.formState
+  
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "recipients",
+  })
+  
+  const maxRecipients = isPaid ? 5 : 1
+  const canAddMore = fields.length < maxRecipients
 
   async function onSubmit(data: SecretFormValues) {
     setError(null)
@@ -88,11 +95,8 @@ export function NewSecretForm({ isPaid = false }: NewSecretFormProps) {
 
       const payload = {
         title: data.title,
-        server_share: serverSharePlainHex, // Send plain share for server-side encryption
-        recipient_name: data.recipient_name,
-        recipient_email: data.recipient_email,
-        recipient_phone: data.recipient_phone,
-        contact_method: data.contact_method,
+        server_share: serverSharePlainHex,
+        recipients: data.recipients,
         check_in_days: parseInt(data.check_in_days, 10),
         sss_shares_total: data.sss_shares_total,
         sss_threshold: data.sss_threshold,
@@ -126,12 +130,13 @@ export function NewSecretForm({ isPaid = false }: NewSecretFormProps) {
       )
 
       // Redirect to the new share instructions page (no shares in URL)
+      const primaryRecipient = data.recipients.find(r => r.isPrimary) || data.recipients[0];
       const queryParams = new URLSearchParams({
         secretId: result.secretId,
         sss_shares_total: data.sss_shares_total.toString(),
         sss_threshold: data.sss_threshold.toString(),
-        recipient_name: data.recipient_name,
-        recipient_email: data.recipient_email || "",
+        recipient_name: primaryRecipient.name,
+        recipient_email: primaryRecipient.email,
       })
       router.push(
         `/secrets/${result.secretId}/share-instructions?${queryParams.toString()}`,
@@ -208,47 +213,101 @@ export function NewSecretForm({ isPaid = false }: NewSecretFormProps) {
 
           {/* Recipient Information Section */}
           <div className="rounded-lg border p-6">
-            <h2 className="text-lg font-semibold mb-4">Recipient Information</h2>
-            <div className="space-y-6">
-              <FormField
-                control={form.control}
-                name="recipient_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Recipient's Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Jane Doe"
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Recipients</h2>
+              {!isPaid && fields.length >= 1 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowUpgradeModal(true)}
+                  className="gap-2"
+                >
+                  <Crown className="h-3 w-3" />
+                  Add More (Pro)
+                </Button>
+              )}
+            </div>
+            <div className="space-y-4">
+              {fields.map((field, index) => (
+                <div key={field.id} className="rounded-lg border p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-medium">
+                      Recipient {index + 1}
+                      {field.isPrimary && (
+                        <span className="ml-2 text-xs text-muted-foreground">(Primary)</span>
+                      )}
+                    </div>
+                    {fields.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => remove(index)}
                         disabled={isSubmitting}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
 
-              <FormField
-                control={form.control}
-                name="recipient_email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Recipient's Email</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        {...field}
-                        placeholder="recipient@example.com"
-                        disabled={isSubmitting}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      The email address where the recipient will receive secret disclosure notifications.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={form.control}
+                    name={`recipients.${index}.name`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="Jane Doe"
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`recipients.${index}.email`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            {...field}
+                            placeholder="recipient@example.com"
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              ))}
+
+              {isPaid && canAddMore && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => append({ name: "", email: "", isPrimary: false })}
+                  disabled={isSubmitting}
+                  className="w-full"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Recipient ({fields.length} / {maxRecipients})
+                </Button>
+              )}
+
+              {isPaid && !canAddMore && (
+                <div className="text-sm text-muted-foreground text-center py-2">
+                  Maximum {maxRecipients} recipients reached
+                </div>
+              )}
             </div>
           </div>
 
@@ -425,6 +484,14 @@ export function NewSecretForm({ isPaid = false }: NewSecretFormProps) {
           </Button>
         </form>
       </Form>
+      
+      <UpgradeModal
+        open={showUpgradeModal}
+        onOpenChange={setShowUpgradeModal}
+        feature="multiple recipients per secret"
+        currentLimit="1 recipient"
+        proLimit="Up to 5 recipients"
+      />
     </>
   )
 }
