@@ -1,3 +1,4 @@
+import { eq, count, and } from "drizzle-orm";
 import { getTierConfig } from "../constants/tiers";
 import {
   SubscriptionTier,
@@ -5,46 +6,114 @@ import {
   UserTierInfo,
 } from "../types/subscription";
 import { getDatabase } from "./db/drizzle";
-import { userSubscriptions } from "./db/schema";
+import { userSubscriptions, subscriptionTiers, secrets } from "./db/schema";
 
-// Get current user's tier information with usage and limits
 export async function getUserTierInfo(
   userId: string,
 ): Promise<UserTierInfo | null> {
   try {
     const db = await getDatabase();
-    // Drizzle-based minimal stub until full tier system is migrated
+
     const [subscription] = await db
-      .select()
+      .select({
+        id: userSubscriptions.id,
+        userId: userSubscriptions.userId,
+        tierId: userSubscriptions.tierId,
+        provider: userSubscriptions.provider,
+        providerCustomerId: userSubscriptions.providerCustomerId,
+        providerSubscriptionId: userSubscriptions.providerSubscriptionId,
+        status: userSubscriptions.status,
+        currentPeriodStart: userSubscriptions.currentPeriodStart,
+        currentPeriodEnd: userSubscriptions.currentPeriodEnd,
+        cancelAtPeriodEnd: userSubscriptions.cancelAtPeriodEnd,
+        tier: {
+          id: subscriptionTiers.id,
+          name: subscriptionTiers.name,
+          displayName: subscriptionTiers.displayName,
+          maxSecrets: subscriptionTiers.maxSecrets,
+          maxRecipientsPerSecret: subscriptionTiers.maxRecipientsPerSecret,
+          customIntervals: subscriptionTiers.customIntervals,
+          priceMonthly: subscriptionTiers.priceMonthly,
+          priceYearly: subscriptionTiers.priceYearly,
+        },
+      })
       .from(userSubscriptions)
-      .where(
-        (userSubscriptions as any).userId
-          ? (db as any).drizzle.sql`${
-            (userSubscriptions as any).user_id
-          } = ${userId}`
-          : undefined as any,
-      )
+      .leftJoin(subscriptionTiers, eq(userSubscriptions.tierId, subscriptionTiers.id))
+      .where(eq(userSubscriptions.userId, userId))
       .limit(1);
 
-    const defaultLimits: TierLimits = {
-      maxSecrets: 3,
-      maxRecipientsPerSecret: 1,
-      customIntervals: false,
-    };
+    if (!subscription) {
+      const freeTierConfig = getTierConfig("free");
+      if (!freeTierConfig) {
+        throw new Error("Free tier configuration not found");
+      }
+
+      const usage = await calculateUserUsage(userId);
+      const canCreate = usage.secrets_count < freeTierConfig.maxSecrets;
+
+      return {
+        tier: {
+          tiers: {
+            id: "free",
+            name: "free" as SubscriptionTier,
+            display_name: "Free",
+            max_secrets: freeTierConfig.maxSecrets,
+            max_recipients_per_secret: freeTierConfig.maxRecipientsPerSecret,
+            custom_intervals: freeTierConfig.customIntervals,
+            price_monthly: null,
+            price_yearly: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        } as any,
+        subscription: undefined,
+        usage,
+        limits: {
+          secrets: {
+            current: usage.secrets_count,
+            max: freeTierConfig.maxSecrets,
+            canCreate,
+          },
+          recipients: {
+            current: usage.total_recipients,
+            max: freeTierConfig.maxRecipientsPerSecret,
+          },
+        },
+      };
+    }
+
+    const usage = await calculateUserUsage(userId);
+    const maxSecrets = subscription.tier?.maxSecrets ?? 1;
+    const maxRecipients = subscription.tier?.maxRecipientsPerSecret ?? 1;
+    const canCreate = usage.secrets_count < maxSecrets;
 
     return {
       tier: {
         tiers: {
-          max_secrets: defaultLimits.maxSecrets,
-          max_recipients_per_secret: defaultLimits.maxRecipientsPerSecret,
-          custom_intervals: defaultLimits.customIntervals,
+          id: subscription.tier?.id ?? "free",
+          name: (subscription.tier?.name ?? "free") as SubscriptionTier,
+          display_name: subscription.tier?.displayName ?? "Free",
+          max_secrets: maxSecrets,
+          max_recipients_per_secret: maxRecipients,
+          custom_intervals: subscription.tier?.customIntervals ?? false,
+          price_monthly: subscription.tier?.priceMonthly ? parseFloat(subscription.tier.priceMonthly) : null,
+          price_yearly: subscription.tier?.priceYearly ? parseFloat(subscription.tier.priceYearly) : null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         },
       } as any,
       subscription: subscription as any,
-      usage: { secrets_count: 0, total_recipients: 0 } as any,
+      usage,
       limits: {
-        secrets: { current: 0, max: defaultLimits.maxSecrets, canCreate: true },
-        recipients: { current: 0, max: defaultLimits.maxRecipientsPerSecret },
+        secrets: {
+          current: usage.secrets_count,
+          max: maxSecrets,
+          canCreate,
+        },
+        recipients: {
+          current: usage.total_recipients,
+          max: maxRecipients,
+        },
       },
     };
   } catch (error) {
@@ -53,15 +122,63 @@ export async function getUserTierInfo(
   }
 }
 
-// Check if user can create a new secret
-export async function canUserCreateSecret(_userId: string): Promise<boolean> {
-  // Allow for now; enforce limits in future implementation
-  return true;
+export async function canUserCreateSecret(userId: string): Promise<boolean> {
+  try {
+    const tierInfo = await getUserTierInfo(userId);
+    if (!tierInfo) {
+      return false;
+    }
+    return tierInfo.limits.secrets.canCreate;
+  } catch (error) {
+    console.error("Error in canUserCreateSecret:", error);
+    return false;
+  }
 }
 
-// Calculate and update user usage
-export async function calculateUserUsage(_userId: string) {
-  return { secrets_count: 0, total_recipients: 0 } as any;
+export async function calculateUserUsage(userId: string) {
+  try {
+    const db = await getDatabase();
+
+    const [result] = await db
+      .select({
+        secrets_count: count(secrets.id),
+      })
+      .from(secrets)
+      .where(
+        and(
+          eq(secrets.userId, userId),
+          eq(secrets.isTriggered, false)
+        )
+      );
+
+    const activeSecretsCount = result?.secrets_count ?? 0;
+
+    const activeSecrets = await db
+      .select({
+        recipientEmail: secrets.recipientEmail,
+      })
+      .from(secrets)
+      .where(
+        and(
+          eq(secrets.userId, userId),
+          eq(secrets.isTriggered, false)
+        )
+      );
+
+    const uniqueRecipients = new Set(
+      activeSecrets
+        .map(s => s.recipientEmail)
+        .filter((email): email is string => email !== null)
+    );
+
+    return {
+      secrets_count: activeSecretsCount,
+      total_recipients: uniqueRecipients.size,
+    };
+  } catch (error) {
+    console.error("Error in calculateUserUsage:", error);
+    return { secrets_count: 0, total_recipients: 0 };
+  }
 }
 
 // Get tier limits for enforcement

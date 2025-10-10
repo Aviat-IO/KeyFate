@@ -98,10 +98,13 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 - **AES-256-GCM:** Industry-standard encryption for stored shares
 
 ### Business Model
-- **Free Tier:** 1 secret, 1 recipient, limited check-in intervals (week/month/year)
-- **Pro Tier:** 10 secrets, 5 recipients per secret, flexible intervals, message templates
-- **Subscription Management:** Paddle Billing integration
-- **Future Plans:** SMS notifications, B2B features, Nostr integration
+- **Free Tier:** 1 secret, 1 recipient (email only), limited check-in intervals (1 week, 1 month, 1 year only)
+- **Pro Tier:** 10 secrets, 5 recipients per secret (email only), flexible custom intervals (1 day to 3 years)
+- **Downgrade Policy:** Users who downgrade keep existing secrets but cannot create new ones if over limit (grandfathering)
+- **Subscription Management:** Stripe and BTCPay Server integration
+- **Contact Methods:** Email only (SMS/phone deferred to future)
+- **Message Templates:** Feature deferred pending clarification of requirements
+- **Future Plans:** SMS notifications, message templates (once defined), B2B features, Nostr integration
 
 ### Check-In System
 - Users must periodically check in to prevent secret disclosure
@@ -131,25 +134,29 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 - Database migrations via Drizzle ORM only
 
 ### Business Constraints
-- Free tier limits: 1 secret, 1 recipient
-- Pro tier limits: 10 secrets, 5 recipients per secret
-- Subscription tiers enforced at API level
-- Usage tracking for tier enforcement
-- Payment processing through Paddle (merchant of record)
+- **Free tier limits:** 1 secret, 1 recipient (email only), 3 check-in intervals (7d, 30d, 365d)
+- **Pro tier limits:** 10 secrets, 5 recipients per secret (email only), 9 custom intervals (1d to 3y)
+- **Tier enforcement:** Must be validated server-side in all API endpoints (not just UI)
+- **Downgrade handling:** Grandfather existing secrets, prevent new secret creation if over new limit
+- **Usage tracking:** Calculate on-demand from database for accuracy
+- **Payment processing:** Stripe and BTCPay Server
+- **Contact methods:** Email only until SMS feature is implemented
+- **UI Components:** ShadCN UI with theme defined in `frontend/src/app/globals.css`
 
 ## External Dependencies
 
 ### Required Services
 - **Google OAuth:** User authentication provider
 - **SendGrid/Resend:** Email delivery service
-- **Paddle Billing:** Subscription and payment management
+- **Stripe:** Credit card payment processing and subscription management
+- **BTCPay Server:** Bitcoin payment processing (self-hosted)
 - **Google Cloud SQL:** Managed PostgreSQL database
 - **Google Cloud Run:** Container hosting
 - **Google Secret Manager:** Secure key storage
 
 ### Optional Services
 - **Redis:** Session caching (optional)
-- **SMS Provider:** Future feature for notifications
+- **SMS Provider:** Future feature for notifications (not currently implemented)
 - **Nostr Network:** Future integration for censorship-resistant disclosure
 
 ### Development Tools

@@ -53,14 +53,13 @@ export function NewSecretForm({ isPaid = false }: NewSecretFormProps) {
       recipient_email: "",
       recipient_phone: "",
       contact_method: "email",
-      check_in_days: "90",
+      check_in_days: "30",
       sss_shares_total: 3,
       sss_threshold: 2,
     },
   })
 
   const { isSubmitting } = form.formState
-  const contactMethod = form.watch("contact_method")
 
   async function onSubmit(data: SecretFormValues) {
     setError(null)
@@ -231,83 +230,25 @@ export function NewSecretForm({ isPaid = false }: NewSecretFormProps) {
 
               <FormField
                 control={form.control}
-                name="contact_method"
+                name="recipient_email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Recipient's Primary Contact Method</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      disabled={isSubmitting}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select contact method" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="email">Email</SelectItem>
-                        <SelectItem value="phone">
-                          Phone (Not yet supported for notifications)
-                        </SelectItem>
-                        <SelectItem value="both">
-                          Both (Email preferred for now)
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Recipient's Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        {...field}
+                        placeholder="recipient@example.com"
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
                     <FormDescription>
-                      How the recipient will be primarily contacted. Email is used
-                      for share notifications.
+                      The email address where the recipient will receive secret disclosure notifications.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
-              {(contactMethod === "email" || contactMethod === "both") && (
-                <FormField
-                  control={form.control}
-                  name="recipient_email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Recipient's Email</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="email"
-                          {...field}
-                          placeholder="recipient@example.com"
-                          disabled={isSubmitting}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-
-              {(contactMethod === "phone" || contactMethod === "both") && (
-                <FormField
-                  control={form.control}
-                  name="recipient_phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Recipient's Phone Number</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="tel"
-                          {...field}
-                          placeholder="+1234567890"
-                          disabled={isSubmitting}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Include country code if applicable.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
             </div>
           </div>
 
@@ -342,13 +283,9 @@ export function NewSecretForm({ isPaid = false }: NewSecretFormProps) {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="2">Daily</SelectItem>
-                            <SelectItem value="7">Weekly</SelectItem>
-                            <SelectItem value="14">Every 2 weeks</SelectItem>
-                            <SelectItem value="30">Monthly</SelectItem>
-                            <SelectItem value="90">Every 3 months</SelectItem>
-                            <SelectItem value="180">Every 6 months</SelectItem>
-                            <SelectItem value="365">Yearly</SelectItem>
+                            <SelectItem value="7">1 week</SelectItem>
+                            <SelectItem value="30">1 month</SelectItem>
+                            <SelectItem value="365">1 year</SelectItem>
                           </SelectContent>
                         </Select>
                       )}
