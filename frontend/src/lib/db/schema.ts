@@ -111,7 +111,7 @@ export const adminNotifications = pgTable("admin_notifications", {
 
 export const checkInTokens = pgTable("check_in_tokens", {
   id: uuid("id").primaryKey().defaultRandom(),
-  secretId: uuid("secret_id").notNull().references(() => secrets.id),
+  secretId: uuid("secret_id").notNull().references(() => secrets.id, { onDelete: "cascade" }),
   token: text("token").notNull().unique(),
   expiresAt: timestamp("expires_at").notNull(),
   usedAt: timestamp("used_at"),
@@ -120,7 +120,7 @@ export const checkInTokens = pgTable("check_in_tokens", {
 
 export const checkinHistory = pgTable("checkin_history", {
   id: uuid("id").primaryKey().defaultRandom(),
-  secretId: uuid("secret_id").notNull().references(() => secrets.id),
+  secretId: uuid("secret_id").notNull().references(() => secrets.id, { onDelete: "cascade" }),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   checkedInAt: timestamp("checked_in_at").notNull(),
   nextCheckIn: timestamp("next_check_in").notNull(),
@@ -138,7 +138,7 @@ export const cronConfig = pgTable("cron_config", {
 export const emailNotifications = pgTable("email_notifications", {
   id: uuid("id").primaryKey().defaultRandom(),
   recipientEmail: text("recipient_email").notNull(),
-  secretId: uuid("secret_id").notNull().references(() => secrets.id),
+  secretId: uuid("secret_id").notNull().references(() => secrets.id, { onDelete: "cascade" }),
   subject: text("subject").notNull(),
   body: text("body").notNull(),
   sentAt: timestamp("sent_at"),
@@ -149,7 +149,7 @@ export const emailNotifications = pgTable("email_notifications", {
 
 export const reminderJobs = pgTable("reminder_jobs", {
   id: uuid("id").primaryKey().defaultRandom(),
-  secretId: uuid("secret_id").notNull().references(() => secrets.id),
+  secretId: uuid("secret_id").notNull().references(() => secrets.id, { onDelete: "cascade" }),
   reminderType: reminderTypeEnum("reminder_type").notNull(),
   scheduledFor: timestamp("scheduled_for").notNull(),
   status: reminderStatusEnum("status").notNull().default("pending"),

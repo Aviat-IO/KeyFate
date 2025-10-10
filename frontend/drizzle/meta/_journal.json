@@ -50,6 +50,13 @@
       "when": 1760129729678,
       "tag": "0006_tense_bishop",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1760134028548,
+      "tag": "0007_worthless_talkback",
+      "breakpoints": true
     }
   ]
 }
