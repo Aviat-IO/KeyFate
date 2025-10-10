@@ -47,6 +47,36 @@ vi.mock('@/lib/encryption', () => ({
     authTag: 'test-tag'
   })
 }));
+vi.mock('@/lib/subscription', () => ({
+  canUserCreateSecret: vi.fn().mockResolvedValue(true),
+  getUserTierInfo: vi.fn().mockResolvedValue({
+    tier: {
+      tiers: {
+        name: 'free',
+        max_secrets: 1,
+        max_recipients_per_secret: 1,
+        custom_intervals: false
+      }
+    },
+    limits: {
+      secrets: { canCreate: true, current: 0, max: 1 },
+      recipients: { current: 0, max: 1 }
+    },
+    usage: { secrets_count: 0, total_recipients: 0 }
+  }),
+  isIntervalAllowed: vi.fn().mockReturnValue(true),
+  calculateUserUsage: vi.fn().mockResolvedValue({ secrets_count: 0, total_recipients: 0 }),
+  getTierLimits: vi.fn().mockReturnValue({
+    maxSecrets: 1,
+    maxRecipientsPerSecret: 1,
+    customIntervals: false
+  }),
+  getAvailableIntervals: vi.fn().mockReturnValue([
+    { days: 7, label: "1 week" },
+    { days: 30, label: "1 month" },
+    { days: 365, label: "1 year" }
+  ])
+}));
 
 // Import after mocks
 import { secretsService } from '@/lib/db/drizzle';

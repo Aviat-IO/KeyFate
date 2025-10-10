@@ -4,6 +4,7 @@ import { secretsService } from "@/lib/db/drizzle";
 import { RobustSecretsService } from "@/lib/db/secrets-service-robust";
 import { encryptMessage } from "@/lib/encryption";
 import { secretSchema } from "@/lib/schemas/secret";
+import { canUserCreateSecret, getUserTierInfo, isIntervalAllowed } from "@/lib/subscription";
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
@@ -49,11 +50,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Note: Using direct database connection via Drizzle instead of Supabase client
+    const canCreate = await canUserCreateSecret(session.user.id);
+    if (!canCreate) {
+      const tierInfo = await getUserTierInfo(session.user.id);
+      const tierName = tierInfo?.tier?.tiers?.name ?? "free";
+      const maxSecrets = tierInfo?.tier?.tiers?.max_secrets ?? 1;
+      return NextResponse.json(
+        {
+          error: `Secret limit reached. Your ${tierName} tier allows ${maxSecrets} secret${maxSecrets === 1 ? "" : "s"}. Upgrade to Pro for more.`,
+          code: "TIER_LIMIT_EXCEEDED",
+        },
+        { status: 403 },
+      );
+    }
 
     const body = await request.json();
 
-    // Validate the request body
     let validatedData;
     try {
       validatedData = secretSchema.parse(body);
@@ -68,6 +80,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Invalid request data" },
         { status: 400 },
+      );
+    }
+
+    const tierInfo = await getUserTierInfo(session.user.id);
+    const userTier = (tierInfo?.tier?.tiers?.name ?? "free") as "free" | "pro";
+
+    if (!isIntervalAllowed(userTier, validatedData.check_in_days)) {
+      return NextResponse.json(
+        {
+          error: `Check-in interval of ${validatedData.check_in_days} days is not allowed for your tier. Upgrade to Pro for custom intervals.`,
+          code: "INTERVAL_NOT_ALLOWED",
+        },
+        { status: 403 },
       );
     }
 

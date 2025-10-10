@@ -137,9 +137,9 @@ describe("NewSecretForm", () => {
     // Click to open dropdown and check options
     fireEvent.click(selectTrigger)
     
-    expect(screen.getByRole("option", { name: "Daily" })).toBeInTheDocument()
-    expect(screen.getByRole("option", { name: "Weekly" })).toBeInTheDocument()
-    expect(screen.getByRole("option", { name: "Monthly" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1 week" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1 month" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1 year" })).toBeInTheDocument()
     
     // Should show upgrade message
     expect(screen.getByText(/upgrade to set custom intervals/i)).toBeInTheDocument()
