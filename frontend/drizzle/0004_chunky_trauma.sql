@@ -1,4 +1,8 @@
-ALTER TYPE "public"."subscription_tier" ADD VALUE 'pro' BEFORE 'premium';--> statement-breakpoint
+DO $$ BEGIN
+ IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'pro' AND enumtypid = 'public.subscription_tier'::regtype) THEN
+  ALTER TYPE "public"."subscription_tier" ADD VALUE 'pro' BEFORE 'premium';
+ END IF;
+END $$;--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "secret_recipients" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"secret_id" uuid NOT NULL,

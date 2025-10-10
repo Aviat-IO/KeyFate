@@ -1,9 +1,33 @@
-CREATE TYPE "public"."contact_method" AS ENUM('email', 'phone', 'both');--> statement-breakpoint
-CREATE TYPE "public"."reminder_status" AS ENUM('pending', 'sent', 'failed', 'cancelled');--> statement-breakpoint
-CREATE TYPE "public"."reminder_type" AS ENUM('25_percent', '50_percent', '7_days', '3_days', '24_hours', '12_hours', '1_hour');--> statement-breakpoint
-CREATE TYPE "public"."secret_status" AS ENUM('active', 'paused', 'triggered');--> statement-breakpoint
-CREATE TYPE "public"."subscription_status" AS ENUM('active', 'inactive', 'cancelled', 'trial', 'past_due');--> statement-breakpoint
-CREATE TYPE "public"."subscription_tier" AS ENUM('free', 'basic', 'premium', 'enterprise');--> statement-breakpoint
+DO $$ BEGIN
+ CREATE TYPE "public"."contact_method" AS ENUM('email', 'phone', 'both');
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+ CREATE TYPE "public"."reminder_status" AS ENUM('pending', 'sent', 'failed', 'cancelled');
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+ CREATE TYPE "public"."reminder_type" AS ENUM('25_percent', '50_percent', '7_days', '3_days', '24_hours', '12_hours', '1_hour');
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+ CREATE TYPE "public"."secret_status" AS ENUM('active', 'paused', 'triggered');
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+ CREATE TYPE "public"."subscription_status" AS ENUM('active', 'inactive', 'cancelled', 'trial', 'past_due');
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+ CREATE TYPE "public"."subscription_tier" AS ENUM('free', 'basic', 'premium', 'enterprise');
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "accounts" (
 	"id" text NOT NULL,
 	"user_id" text NOT NULL,
