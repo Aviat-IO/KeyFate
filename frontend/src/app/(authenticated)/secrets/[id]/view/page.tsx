@@ -57,19 +57,10 @@ export default async function ViewSecretPage({ params }: ViewSecretPageProps) {
     //   .eq("user_id", user.id)
     //   .order("checked_in_at", { ascending: false })
 
-    // Get contact information based on contact method
-    const getContactInfo = () => {
-      switch (secret.contactMethod) {
-        case "email":
-          return secret.recipientEmail
-        case "phone":
-          return secret.recipientPhone
-        case "both":
-          return `${secret.recipientEmail} / ${secret.recipientPhone}`
-        default:
-          return "Not specified"
-      }
-    }
+    // TODO: Update to use multi-recipient schema
+    // const getContactInfo = () => {
+    //   return "See recipients table"
+    // }
 
     // Get status icon and color
     const getStatusInfo = () => {
@@ -148,32 +139,19 @@ export default async function ViewSecretPage({ params }: ViewSecretPageProps) {
                 <div className="flex items-start gap-3">
                   <User className="text-muted-foreground mt-0.5 h-4 w-4" />
                   <div>
-                    <p className="text-sm font-medium">Recipient</p>
+                    <p className="text-sm font-medium">Recipients</p>
                     <p className="text-muted-foreground text-sm">
-                      {secret.recipientName}
+                      See recipients table (multi-recipient support)
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 flex items-center gap-2">
-                    {secret.contactMethod === "email" && (
-                      <Mail className="text-muted-foreground h-4 w-4" />
-                    )}
-                    {secret.contactMethod === "phone" && (
-                      <Phone className="text-muted-foreground h-4 w-4" />
-                    )}
-                    {secret.contactMethod === "both" && (
-                      <>
-                        <Mail className="text-muted-foreground h-4 w-4" />
-                        <Phone className="text-muted-foreground h-4 w-4" />
-                      </>
-                    )}
-                  </div>
+                  <Mail className="text-muted-foreground mt-0.5 h-4 w-4" />
                   <div>
-                    <p className="text-sm font-medium">Contact Details</p>
+                    <p className="text-sm font-medium">Contact Method</p>
                     <p className="text-muted-foreground text-sm">
-                      {getContactInfo()}
+                      Email
                     </p>
                   </div>
                 </div>
