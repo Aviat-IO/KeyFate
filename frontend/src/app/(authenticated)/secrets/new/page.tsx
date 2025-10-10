@@ -1,10 +1,12 @@
 import { NewSecretForm } from "@/components/forms/newSecretForm"
 import { getUserTierInfo } from "@/lib/subscription"
-import { auth } from "@/lib/auth"
+import { authConfig } from "@/lib/auth-config"
+import { getServerSession } from "next-auth/next"
 import { redirect } from "next/navigation"
+import type { Session } from "next-auth"
 
 export default async function NewSecretPage() {
-  const session = await auth()
+  const session = await getServerSession(authConfig as any) as Session | null
   
   if (!session?.user?.id) {
     redirect("/sign-in")
