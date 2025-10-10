@@ -1,9 +1,11 @@
 import { SecretCard } from "@/components/secret-card"
+import { TierUsageCard } from "@/components/tier-usage-card"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LoadingIndicator } from "@/components/ui/loading-indicator"
 import { DashboardService, DashboardTimeoutError } from "@/lib/dashboard/dashboard-service"
 import { mapApiSecretToDrizzleShape } from "@/lib/db/secret-mapper"
+import { getUserTierInfo } from "@/lib/subscription"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { Suspense } from "react"
@@ -43,35 +45,64 @@ async function SecretsLoader() {
     console.log("[Dashboard] User authenticated:", user.id)
     console.log("[Dashboard] Secrets loaded:", secrets?.length || 0, "secrets found")
 
+    const tierInfo = await getUserTierInfo(user.id)
+    
     if (!secrets || secrets.length === 0) {
       console.log("[Dashboard] No secrets found, showing empty state")
       return (
-        <div className="mx-auto max-w-2xl">
-          <Card>
-            <CardHeader>
-              <CardTitle>No Secrets Yet</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4">
-                You haven't created any secrets yet. Get started by creating
-                your first dead man's switch.
-              </p>
-              <Button asChild>
-                <Link href="/secrets/new">Create Your First Secret</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+        <>
+          {tierInfo && (
+            <div className="mb-6">
+              <TierUsageCard
+                tier={tierInfo.tier.tiers.name as "free" | "pro"}
+                secretsUsed={tierInfo.limits.secrets.current}
+                secretsLimit={tierInfo.limits.secrets.max}
+                canCreateMore={tierInfo.limits.secrets.canCreate}
+              />
+            </div>
+          )}
+          
+          <div className="mx-auto max-w-2xl">
+            <Card>
+              <CardHeader>
+                <CardTitle>No Secrets Yet</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground mb-4">
+                  You haven't created any secrets yet. Get started by creating
+                  your first dead man's switch.
+                </p>
+                <Button asChild>
+                  <Link href="/secrets/new">Create Your First Secret</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </>
       )
     }
 
     console.log("[Dashboard] Rendering secrets grid with", secrets.length, "secrets")
+    
     return (
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6 xl:grid-cols-3">
-        {secrets.map((secret) => (
-          <SecretCard key={secret.id} secret={mapApiSecretToDrizzleShape(secret)} />
-        ))}
-      </div>
+      <>
+        {tierInfo && (
+          <div className="mb-6">
+            <TierUsageCard
+              tier={tierInfo.tier.tiers.name as "free" | "pro"}
+              secretsUsed={tierInfo.limits.secrets.current}
+              secretsLimit={tierInfo.limits.secrets.max}
+              canCreateMore={tierInfo.limits.secrets.canCreate}
+            />
+          </div>
+        )}
+        
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6 xl:grid-cols-3">
+          {secrets.map((secret) => (
+            <SecretCard key={secret.id} secret={mapApiSecretToDrizzleShape(secret)} />
+          ))}
+        </div>
+      </>
     )
   } catch (error) {
     console.error("[Dashboard] Unexpected error in SecretsLoader:", error)

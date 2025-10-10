@@ -8,7 +8,8 @@ vi.mock('../db/drizzle', () => ({
 vi.mock('../db/schema', () => ({
   userSubscriptions: {},
   subscriptionTiers: {},
-  secrets: {}
+  secrets: {},
+  secretRecipients: {}
 }));
 
 import { 
@@ -41,13 +42,17 @@ describe('Subscription Tier Management', () => {
   describe('getUserTierInfo', () => {
     it('should return free tier info for users without subscription', async () => {
       mockDb.limit.mockResolvedValue([]);
-      mockDb.select.mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([{ secrets_count: 0 }])
-        })
-      });
-      mockDb.from = vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([])
+      
+      let callCount = 0;
+      mockDb.select.mockImplementation(() => {
+        callCount++;
+        return {
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue(
+              callCount === 1 ? [{ secrets_count: 0 }] : []
+            )
+          })
+        };
       });
 
       const result = await getUserTierInfo('user-123');
@@ -77,16 +82,36 @@ describe('Subscription Tier Management', () => {
       };
 
       mockDb.limit.mockResolvedValue([mockSubscription]);
-      mockDb.select.mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([{ secrets_count: 3 }])
-        })
-      });
-      mockDb.from = vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([
-          { recipientEmail: 'user1@test.com' },
-          { recipientEmail: 'user2@test.com' },
-        ])
+      
+      let callCount = 0;
+      mockDb.select.mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          return {
+            from: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue([{ secrets_count: 3 }])
+            })
+          };
+        } else if (callCount === 2) {
+          return {
+            from: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue([
+                { id: 'secret-1' },
+                { id: 'secret-2' },
+                { id: 'secret-3' }
+              ])
+            })
+          };
+        } else {
+          return {
+            from: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue([
+                { email: 'user1@test.com' },
+                { email: 'user2@test.com' },
+              ])
+            })
+          };
+        }
       });
 
       const result = await getUserTierInfo('user-123');
@@ -102,13 +127,29 @@ describe('Subscription Tier Management', () => {
 
     it('should calculate canCreate flag correctly', async () => {
       mockDb.limit.mockResolvedValue([]);
-      mockDb.select.mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([{ secrets_count: 1 }])
-        })
-      });
-      mockDb.from = vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([{ recipientEmail: 'user1@test.com' }])
+      
+      let callCount = 0;
+      mockDb.select.mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          return {
+            from: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue([{ secrets_count: 1 }])
+            })
+          };
+        } else if (callCount === 2) {
+          return {
+            from: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue([{ id: 'secret-1' }])
+            })
+          };
+        } else {
+          return {
+            from: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue([{ email: 'user1@test.com' }])
+            })
+          };
+        }
       });
 
       const result = await getUserTierInfo('user-123');
@@ -130,13 +171,17 @@ describe('Subscription Tier Management', () => {
   describe('canUserCreateSecret', () => {
     it('should return true when user can create secrets', async () => {
       mockDb.limit.mockResolvedValue([]);
-      mockDb.select.mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([{ secrets_count: 0 }])
-        })
-      });
-      mockDb.from = vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([])
+      
+      let callCount = 0;
+      mockDb.select.mockImplementation(() => {
+        callCount++;
+        return {
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue(
+              callCount === 1 ? [{ secrets_count: 0 }] : []
+            )
+          })
+        };
       });
 
       const result = await canUserCreateSecret('user-123');
@@ -180,16 +225,29 @@ describe('Subscription Tier Management', () => {
               where: vi.fn().mockResolvedValue([{ secrets_count: 5 }])
             })
           };
+        } else if (callCount === 2) {
+          return {
+            from: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue([
+                { id: 'secret-1' },
+                { id: 'secret-2' },
+                { id: 'secret-3' },
+                { id: 'secret-4' },
+                { id: 'secret-5' }
+              ])
+            })
+          };
         } else {
-          return mockDb;
+          return {
+            from: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue([
+                { email: 'user1@test.com' },
+                { email: 'user2@test.com' },
+                { email: 'user3@test.com' },
+              ])
+            })
+          };
         }
-      });
-      mockDb.from = vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([
-          { recipientEmail: 'user1@test.com' },
-          { recipientEmail: 'user2@test.com' },
-          { recipientEmail: 'user3@test.com' },
-        ])
       });
 
       const result = await calculateUserUsage('user-123');
@@ -208,16 +266,27 @@ describe('Subscription Tier Management', () => {
               where: vi.fn().mockResolvedValue([{ secrets_count: 3 }])
             })
           };
+        } else if (callCount === 2) {
+          return {
+            from: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue([
+                { id: 'secret-1' },
+                { id: 'secret-2' },
+                { id: 'secret-3' }
+              ])
+            })
+          };
         } else {
-          return mockDb;
+          return {
+            from: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue([
+                { email: 'user1@test.com' },
+                { email: 'user1@test.com' },
+                { email: 'user2@test.com' },
+              ])
+            })
+          };
         }
-      });
-      mockDb.from = vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([
-          { recipientEmail: 'user1@test.com' },
-          { recipientEmail: 'user1@test.com' },
-          { recipientEmail: 'user2@test.com' },
-        ])
       });
 
       const result = await calculateUserUsage('user-123');
@@ -235,15 +304,25 @@ describe('Subscription Tier Management', () => {
               where: vi.fn().mockResolvedValue([{ secrets_count: 2 }])
             })
           };
+        } else if (callCount === 2) {
+          return {
+            from: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue([
+                { id: 'secret-1' },
+                { id: 'secret-2' }
+              ])
+            })
+          };
         } else {
-          return mockDb;
+          return {
+            from: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue([
+                { email: 'user1@test.com' },
+                { email: null },
+              ])
+            })
+          };
         }
-      });
-      mockDb.from = vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([
-          { recipientEmail: 'user1@test.com' },
-          { recipientEmail: null },
-        ])
       });
 
       const result = await calculateUserUsage('user-123');

@@ -111,10 +111,10 @@ describe("NewSecretForm", () => {
     // Fill in all required fields
     fireEvent.change(screen.getByLabelText(/secret title/i), { target: { value: "Test Secret" } })
     fireEvent.change(screen.getByLabelText(/secret message/i), { target: { value: "Test message" } })
-    fireEvent.change(screen.getByLabelText(/recipient's name/i), { target: { value: "John Doe" } })
+    fireEvent.change(screen.getByLabelText(/^name$/i), { target: { value: "John Doe" } })
     
     // Fill in email since contact_method defaults to "email"
-    fireEvent.change(screen.getByLabelText(/recipient's email/i), { target: { value: "test@example.com" } })
+    fireEvent.change(screen.getByLabelText(/^email$/i), { target: { value: "test@example.com" } })
 
     // Submit the form
     const submitButton = screen.getByText(/create secret/i)

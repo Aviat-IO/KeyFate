@@ -175,9 +175,7 @@ describe('Authorization Security - API Integration Tests', () => {
 
       const requestBody = {
         title: 'New Secret',
-        recipient_name: 'John Doe',
-        recipient_email: 'john@example.com',
-        contact_method: 'email',
+        recipients: [{ name: 'John Doe', email: 'john@example.com', isPrimary: true }],
         check_in_days: 30,
         server_share: 'encrypted-share',
         sss_shares_total: 3,
@@ -217,9 +215,7 @@ describe('Authorization Security - API Integration Tests', () => {
 
       const requestBody = {
         title: 'New Secret',
-        recipient_name: 'John Doe',
-        recipient_email: 'john@example.com',
-        contact_method: 'email',
+        recipients: [{ name: 'John Doe', email: 'john@example.com', isPrimary: true }],
         check_in_days: 30,
         server_share: 'plain-text-share',
         sss_shares_total: 3,

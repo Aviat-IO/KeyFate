@@ -201,9 +201,7 @@ describe('Authorization Security - Comprehensive Penetration Testing', () => {
 
         const updatePayload = {
           title: 'Hijacked Title',
-          recipient_name: 'Attacker',
-          recipient_email: 'attacker@evil.com',
-          contact_method: 'email',
+          recipients: [{ name: 'Attacker', email: 'attacker@evil.com', isPrimary: true }],
           check_in_days: 1
         };
 
@@ -288,9 +286,11 @@ describe('Authorization Security - Comprehensive Penetration Testing', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: 'Test',
-          recipient_name: 'Test',
-          contact_method: 'email',
-          check_in_days: 30
+          recipients: [{ name: 'Test', email: 'test@example.com', isPrimary: true }],
+          check_in_days: 30,
+          server_share: 'test-share',
+          sss_shares_total: 3,
+          sss_threshold: 2
         })
       });
       const putParams = Promise.resolve({ id: 'secret-123' });
@@ -349,9 +349,7 @@ describe('Authorization Security - Comprehensive Penetration Testing', () => {
       for (const xssPayload of xssPayloads) {
         const requestBody = {
           title: xssPayload,
-          recipient_name: 'Test User',
-          recipient_email: 'test@example.com',
-          contact_method: 'email',
+          recipients: [{ name: 'Test User', email: 'test@example.com', isPrimary: true }],
           check_in_days: 30,
           server_share: 'test-share',
           sss_shares_total: 3,
@@ -390,9 +388,7 @@ describe('Authorization Security - Comprehensive Penetration Testing', () => {
       const requestBody = {
         userId: 'victim-456', // This should be ignored
         title: 'Malicious Secret',
-        recipient_name: 'Test User',
-        recipient_email: 'test@example.com',
-        contact_method: 'email',
+        recipients: [{ name: 'Test User', email: 'test@example.com', isPrimary: true }],
         check_in_days: 30,
         server_share: 'test-share',
         sss_shares_total: 3,
@@ -432,9 +428,7 @@ describe('Authorization Security - Comprehensive Penetration Testing', () => {
       const requestBody = {
         userId: 'attacker-456', // This should be ignored
         title: 'Updated Secret',
-        recipient_name: 'Test User',
-        recipient_email: 'test@example.com',
-        contact_method: 'email',
+        recipients: [{ name: 'Test User', email: 'test@example.com', isPrimary: true }],
         check_in_days: 30
       };
 
@@ -596,13 +590,12 @@ describe('Authorization Security - Comprehensive Penetration Testing', () => {
         title: 'Test Secret'
       });
 
-      // Duplicate parameters in request
+      // Duplicate parameters in request (intentionally testing parameter pollution)
+      // @ts-expect-error - intentional duplicate key for security testing
       const requestBody = {
         title: 'Original Title',
         title: 'Polluted Title', // Duplicate parameter
-        recipient_name: 'Test User',
-        recipient_email: 'test@example.com',
-        contact_method: 'email',
+        recipients: [{ name: 'Test User', email: 'test@example.com', isPrimary: true }],
         check_in_days: 30,
         server_share: 'test-share',
         sss_shares_total: 3,
@@ -629,9 +622,7 @@ describe('Authorization Security - Comprehensive Penetration Testing', () => {
 
       const requestBody = {
         title: 'Test Secret',
-        recipient_name: 'Test User',
-        recipient_email: 'test@example.com',
-        contact_method: 'email',
+        recipients: [{ name: 'Test User', email: 'test@example.com', isPrimary: true }],
         check_in_days: 30,
         server_share: 'test-share',
         sss_shares_total: 3,

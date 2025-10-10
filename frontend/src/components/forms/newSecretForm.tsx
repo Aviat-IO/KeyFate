@@ -29,7 +29,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { secretFormSchema, type SecretFormValues } from "@/lib/schemas/secret"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Buffer } from "buffer"
-import { AlertCircle, Info, LockIcon, Plus, Trash2, Crown } from "lucide-react"
+import { AlertCircle, Info, LockIcon, Plus, Trash2, Crown, AlertTriangle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useForm, useFieldArray } from "react-hook-form"
@@ -38,9 +38,15 @@ import { UpgradeModal } from "@/components/upgrade-modal"
 
 interface NewSecretFormProps {
   isPaid?: boolean
+  tierInfo?: {
+    secretsUsed: number
+    secretsLimit: number
+    canCreate: boolean
+    recipientsLimit: number
+  }
 }
 
-export function NewSecretForm({ isPaid = false }: NewSecretFormProps) {
+export function NewSecretForm({ isPaid = false, tierInfo }: NewSecretFormProps) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
@@ -151,6 +157,13 @@ export function NewSecretForm({ isPaid = false }: NewSecretFormProps) {
     }
   }
 
+  const percentageUsed = tierInfo 
+    ? (tierInfo.secretsUsed / tierInfo.secretsLimit) * 100 
+    : 0
+  
+  const showWarning = tierInfo && percentageUsed >= 75 && tierInfo.canCreate
+  const isAtLimit = tierInfo && !tierInfo.canCreate
+  
   return (
     <>
       {error && (
@@ -160,6 +173,31 @@ export function NewSecretForm({ isPaid = false }: NewSecretFormProps) {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
+      
+      {isAtLimit && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Secret Limit Reached</AlertTitle>
+          <AlertDescription>
+            You've used all {tierInfo.secretsLimit} of your {isPaid ? "Pro" : "Free"} tier secrets.
+            {!isPaid && " Upgrade to Pro to create up to 10 secrets."}
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {showWarning && (
+        <Alert className="mb-6 border-yellow-500 bg-yellow-50 dark:bg-yellow-950">
+          <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
+          <AlertTitle className="text-yellow-800 dark:text-yellow-300">
+            Approaching Limit
+          </AlertTitle>
+          <AlertDescription className="text-yellow-700 dark:text-yellow-400">
+            You're using {tierInfo.secretsUsed} of {tierInfo.secretsLimit} secrets ({Math.round(percentageUsed)}%).
+            {!isPaid && " Consider upgrading to Pro for 10 secrets."}
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           {/* Secret Details Section */}
@@ -228,6 +266,19 @@ export function NewSecretForm({ isPaid = false }: NewSecretFormProps) {
                 </Button>
               )}
             </div>
+            
+            {isPaid && maxRecipients > 0 && fields.length >= Math.floor(maxRecipients * 0.75) && (
+              <Alert className="mb-4 border-yellow-500 bg-yellow-50 dark:bg-yellow-950">
+                <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
+                <AlertDescription className="text-yellow-700 dark:text-yellow-400">
+                  {fields.length >= maxRecipients 
+                    ? `Maximum ${maxRecipients} recipients reached.`
+                    : `Using ${fields.length} of ${maxRecipients} recipients.`
+                  }
+                </AlertDescription>
+              </Alert>
+            )}
+            
             <div className="space-y-4">
               {fields.map((field, index) => (
                 <div key={field.id} className="rounded-lg border p-4 space-y-4">
