@@ -15,13 +15,16 @@ describe('Secret Mapper - API Format Conversion', () => {
     id: 'test-id-123',
     user_id: 'user-456',
     title: 'Test Secret',
-    recipient_name: 'John Doe',
-    recipient_email: 'john@example.com',
-    recipient_phone: '+1234567890',
-    contact_method: 'both',
+    recipients: [{
+      id: 'recipient-1',
+      name: 'John Doe',
+      email: 'john@example.com',
+      phone: '+1234567890',
+      isPrimary: true
+    }],
     check_in_days: 30,
     status: 'active',
-    server_share: 'encrypted-server-share-data', // snake_case
+    server_share: 'encrypted-server-share-data',
     iv: 'initialization-vector',
     auth_tag: 'auth-tag-value',
     sss_shares_total: 3,
@@ -54,13 +57,13 @@ describe('Secret Mapper - API Format Conversion', () => {
       expect(drizzleSecret).not.toHaveProperty('user_id')
     })
 
-    it('should convert recipient_name to recipientName', () => {
+    it('should convert recipients array', () => {
       const apiSecret = createApiSecret()
       const drizzleSecret = mapApiSecretToDrizzleShape(apiSecret)
 
-      expect(drizzleSecret.recipientName).toBe('John Doe')
-      expect(drizzleSecret).toHaveProperty('recipientName')
-      expect(drizzleSecret).not.toHaveProperty('recipient_name')
+      expect(drizzleSecret.recipients).toHaveLength(1)
+      expect(drizzleSecret.recipients[0].name).toBe('John Doe')
+      expect(drizzleSecret).toHaveProperty('recipients')
     })
 
     it('should convert check_in_days to checkInDays', () => {
@@ -173,21 +176,17 @@ describe('Secret Mapper - API Format Conversion', () => {
       expect(converted).toHaveProperty('id')
       expect(converted).toHaveProperty('userId')
       expect(converted).toHaveProperty('title')
-      expect(converted).toHaveProperty('recipientName')
-      expect(converted).toHaveProperty('recipientEmail')
-      expect(converted).toHaveProperty('recipientPhone')
-      expect(converted).toHaveProperty('contactMethod')
+      expect(converted).toHaveProperty('recipients')
       expect(converted).toHaveProperty('checkInDays')
       expect(converted).toHaveProperty('status')
-      expect(converted).toHaveProperty('serverShare') // CRITICAL
+      expect(converted).toHaveProperty('serverShare')
       expect(converted).toHaveProperty('iv')
       expect(converted).toHaveProperty('authTag')
       expect(converted).toHaveProperty('sssSharesTotal')
       expect(converted).toHaveProperty('sssThreshold')
-      expect(converted).toHaveProperty('isTriggered')
+      expect(converted).toHaveProperty('triggeredAt')
       expect(converted).toHaveProperty('lastCheckIn')
       expect(converted).toHaveProperty('nextCheckIn')
-      expect(converted).toHaveProperty('triggeredAt')
       expect(converted).toHaveProperty('createdAt')
       expect(converted).toHaveProperty('updatedAt')
     })
@@ -198,16 +197,11 @@ describe('Secret Mapper - API Format Conversion', () => {
 
       // Verify no snake_case fields remain
       expect(converted).not.toHaveProperty('user_id')
-      expect(converted).not.toHaveProperty('recipient_name')
-      expect(converted).not.toHaveProperty('recipient_email')
-      expect(converted).not.toHaveProperty('recipient_phone')
-      expect(converted).not.toHaveProperty('contact_method')
       expect(converted).not.toHaveProperty('check_in_days')
-      expect(converted).not.toHaveProperty('server_share') // CRITICAL
+      expect(converted).not.toHaveProperty('server_share')
       expect(converted).not.toHaveProperty('auth_tag')
       expect(converted).not.toHaveProperty('sss_shares_total')
       expect(converted).not.toHaveProperty('sss_threshold')
-      expect(converted).not.toHaveProperty('is_triggered')
       expect(converted).not.toHaveProperty('last_check_in')
       expect(converted).not.toHaveProperty('next_check_in')
       expect(converted).not.toHaveProperty('triggered_at')
@@ -225,18 +219,15 @@ describe('Secret Mapper - API Format Conversion', () => {
       expect(converted.id).toBe(apiSecret.id)
       expect(converted.userId).toBe(apiSecret.user_id)
       expect(converted.title).toBe(apiSecret.title)
-      expect(converted.recipientName).toBe(apiSecret.recipient_name)
-      expect(converted.recipientEmail).toBe(apiSecret.recipient_email)
-      expect(converted.recipientPhone).toBe(apiSecret.recipient_phone)
-      expect(converted.contactMethod).toBe(apiSecret.contact_method)
+      expect(converted.recipients).toHaveLength(1)
+      expect(converted.recipients[0].name).toBe('John Doe')
       expect(converted.checkInDays).toBe(apiSecret.check_in_days)
       expect(converted.status).toBe(apiSecret.status)
-      expect(converted.serverShare).toBe(apiSecret.server_share) // CRITICAL
+      expect(converted.serverShare).toBe(apiSecret.server_share)
       expect(converted.iv).toBe(apiSecret.iv)
       expect(converted.authTag).toBe(apiSecret.auth_tag)
       expect(converted.sssSharesTotal).toBe(apiSecret.sss_shares_total)
       expect(converted.sssThreshold).toBe(apiSecret.sss_threshold)
-      expect(converted.isTriggered).toBe(apiSecret.is_triggered)
     })
   })
 })

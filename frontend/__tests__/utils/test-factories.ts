@@ -38,7 +38,7 @@ export function createMockSecret(overrides: Partial<{
   lastCheckIn: Date | null;
   nextCheckIn: Date | null;
   status: "active" | "paused" | "triggered";
-  isTriggered: boolean;
+  triggeredAt: Date | null;
   serverShare: string | null;
   sssSharesTotal: number;
   sssThreshold: number;
@@ -55,13 +55,12 @@ export function createMockSecret(overrides: Partial<{
     lastCheckIn: new Date(),
     nextCheckIn: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     status: "active" as const,
-    isTriggered: false,
+    triggeredAt: null,
     serverShare: "mock-server-share-data",
     sssSharesTotal: 3,
     sssThreshold: 2,
     iv: null,
     authTag: null,
-    triggeredAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,

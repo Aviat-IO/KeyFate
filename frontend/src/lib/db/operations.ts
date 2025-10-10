@@ -8,32 +8,23 @@ import {
   type UserContactMethod,
   userContactMethods,
 } from "./schema";
+import { getSecretWithRecipients as getSecretWithRecipientsQuery, getAllSecretsWithRecipients } from "./queries/secrets";
+import type { SecretWithRecipients } from "../types/secret-types";
 
 // Secrets operations - compatible with existing API
-export async function getAllSecrets(userId: string): Promise<Secret[]> {
-  const db = await getDatabase();
-  const result = await db
-    .select()
-    .from(secrets)
-    .where(eq(secrets.userId, userId))
-    .orderBy(desc(secrets.createdAt));
-
+export async function getAllSecrets(userId: string): Promise<SecretWithRecipients[]> {
+  const result = await getAllSecretsWithRecipients(userId);
   return result;
 }
 
-export async function getSecret(id: string, userId: string): Promise<Secret> {
-  const db = await getDatabase();
-  const result = await db
-    .select()
-    .from(secrets)
-    .where(and(eq(secrets.id, id), eq(secrets.userId, userId)))
-    .limit(1);
-
-  if (result.length === 0) {
+export async function getSecret(id: string, userId: string): Promise<SecretWithRecipients> {
+  const result = await getSecretWithRecipientsQuery(id, userId);
+  
+  if (!result) {
     throw new Error("Secret not found");
   }
 
-  return result[0];
+  return result;
 }
 
 export async function createSecret(secret: SecretInsert): Promise<Secret> {

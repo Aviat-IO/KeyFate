@@ -57,6 +57,7 @@ vi.mock("@/components/theme-toggle", () => ({
 vi.mock("lucide-react", () => ({
   Menu: () => <span data-testid="menu-icon">Menu</span>,
   X: () => <span data-testid="x-icon">X</span>,
+  Crown: () => <span data-testid="crown-icon">Crown</span>,
 }))
 
 const mockSession = {

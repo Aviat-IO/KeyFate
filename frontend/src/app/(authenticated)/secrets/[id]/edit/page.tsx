@@ -1,7 +1,7 @@
 import { EditSecretForm } from "@/components/forms/editSecretForm"
 import { authConfig } from "@/lib/auth-config"
 import { getSecret } from "@/lib/db/operations"
-import { mapDrizzleSecretToApiShape } from "@/lib/db/secret-mapper"
+import { getPrimaryRecipient } from "@/lib/types/secret-types"
 import type { Session } from "next-auth"
 import { getServerSession } from "next-auth/next"
 import { notFound, redirect } from "next/navigation"
@@ -25,21 +25,21 @@ export default async function EditSecretPage({ params }: EditSecretPageProps) {
       notFound()
     }
 
-    const mapped = mapDrizzleSecretToApiShape(secret)
+    const primaryRecipient = getPrimaryRecipient(secret.recipients)
 
     const initialData = {
-      title: mapped.title,
-      recipient_name: mapped.recipient_name,
-      recipient_email: mapped.recipient_email || "",
-      recipient_phone: mapped.recipient_phone || "",
-      contact_method: mapped.contact_method,
-      check_in_days: mapped.check_in_days,
+      title: secret.title,
+      recipient_name: primaryRecipient?.name || "",
+      recipient_email: primaryRecipient?.email || "",
+      recipient_phone: primaryRecipient?.phone || "",
+      contact_method: (primaryRecipient?.email && primaryRecipient?.phone ? "both" : primaryRecipient?.email ? "email" : "phone") as "email" | "phone" | "both",
+      check_in_days: secret.checkInDays,
     }
 
     return (
       <div className="mx-auto max-w-3xl py-8 sm:px-4">
         <h1 className="mb-6 text-3xl font-bold">Edit Secret</h1>
-        <EditSecretForm initialData={initialData} secretId={mapped.id} />
+        <EditSecretForm initialData={initialData} secretId={secret.id} />
       </div>
     )
   } catch (error) {

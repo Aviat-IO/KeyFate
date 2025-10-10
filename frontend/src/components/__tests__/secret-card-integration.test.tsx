@@ -52,7 +52,7 @@ describe('SecretCard Integration - State Management Fix', () => {
     authTag: 'auth-tag-data',
     sssSharesTotal: 3,
     sssThreshold: 2,
-    isTriggered: false,
+    triggeredAt: null,
     lastCheckIn: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000), // 20 days ago
     nextCheckIn: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), // 10 days from now
     triggeredAt: null,
@@ -85,7 +85,7 @@ describe('SecretCard Integration - State Management Fix', () => {
             auth_tag: 'auth-tag-data',
             sss_shares_total: 3,
             sss_threshold: 2,
-            is_triggered: false,
+            triggered_at: null,
             last_check_in: new Date().toISOString(), // Updated timestamp
             next_check_in: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
             triggered_at: null,
@@ -146,7 +146,7 @@ describe('SecretCard Integration - State Management Fix', () => {
             auth_tag: 'auth-tag-data',
             sss_shares_total: 3,
             sss_threshold: 2,
-            is_triggered: false,
+            triggered_at: null,
             last_check_in: new Date().toISOString(),
             next_check_in: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
             triggered_at: null,
@@ -196,7 +196,7 @@ describe('SecretCard Integration - State Management Fix', () => {
             auth_tag: 'auth-tag-data',
             sss_shares_total: 3,
             sss_threshold: 2,
-            is_triggered: false,
+            triggered_at: null,
             last_check_in: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
             next_check_in: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
             triggered_at: null,
@@ -250,7 +250,7 @@ describe('SecretCard Integration - State Management Fix', () => {
             auth_tag: 'auth-tag-data',
             sss_shares_total: 3,
             sss_threshold: 2,
-            is_triggered: false,
+            triggered_at: null,
             last_check_in: new Date().toISOString(), // Resume applies check-in
             next_check_in: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
             triggered_at: null,
@@ -301,7 +301,7 @@ describe('SecretCard Integration - State Management Fix', () => {
 
     it('should correctly identify triggered secrets', () => {
       const triggeredSecret = createMockSecret({
-        isTriggered: true,
+        triggeredAt: new Date(),
         triggeredAt: new Date(),
         status: 'triggered',
       })

@@ -41,7 +41,7 @@ const createTestSecret = (overrides?: Partial<Secret>): Secret => ({
   authTag: 'test-auth-tag',
   sssSharesTotal: 3,
   sssThreshold: 2,
-  isTriggered: false,
+  triggeredAt: null,
   lastCheckIn: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000) as any, // 40 days ago (old check-in)
   nextCheckIn: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000) as any, // 10 days ago (expired)
   triggeredAt: null,
@@ -65,7 +65,7 @@ const createApiResponse = (overrides?: Partial<ApiSecret>): ApiSecret => ({
   auth_tag: 'test-auth-tag',
   sss_shares_total: 3,
   sss_threshold: 2,
-  is_triggered: false,
+  triggered_at: null,
   last_check_in: new Date().toISOString(), // NEW check-in time (now)
   next_check_in: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
   triggered_at: null,

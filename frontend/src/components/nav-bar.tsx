@@ -1,6 +1,7 @@
 "use client"
 
 import { ThemeToggle } from "@/components/theme-toggle"
+import { DevTierToggle } from "@/components/dev-tier-toggle"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -15,20 +16,42 @@ import { Menu } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 export function NavBar() {
   const pathname = usePathname()
   const { data: session, status } = useSession()
   const { config } = useConfig()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [userTier, setUserTier] = useState<"free" | "pro">("free")
+  const [checkingSubscription, setCheckingSubscription] = useState(false)
 
   const user = session?.user as { id?: string; name?: string; email?: string; image?: string } | undefined
   const loading = status === "loading"
 
-  // For now, assume all users are free tier until we implement proper subscription checking
-  const isProUser = false
-  const checkingSubscription = false
+  // Fetch user tier on mount and when session changes
+  useEffect(() => {
+    async function fetchUserTier() {
+      if (!user?.id) return
+      
+      setCheckingSubscription(true)
+      try {
+        const response = await fetch("/api/user/subscription")
+        if (response.ok) {
+          const data = await response.json()
+          setUserTier(data.tier?.name === "pro" ? "pro" : "free")
+        }
+      } catch (error) {
+        console.error("Failed to fetch user tier:", error)
+      } finally {
+        setCheckingSubscription(false)
+      }
+    }
+
+    fetchUserTier()
+  }, [user?.id])
+
+  const isProUser = userTier === "pro"
 
   const handleSignOut = async () => {
     await signOut({ callbackUrl: "/sign-in" })
@@ -75,8 +98,9 @@ export function NavBar() {
               // Show nothing while loading to avoid flash
               <div className="h-9 w-20" />
             ) : user ? (
-              // User is logged in - show upgrade button if not pro, and sign out
+              // User is logged in - show dev toggle, upgrade button if not pro, and sign out
               <>
+                <DevTierToggle currentTier={userTier} />
                 {!checkingSubscription && !isProUser && (
                   <Button asChild>
                     <Link href="/pricing">Upgrade to Pro</Link>
@@ -182,9 +206,12 @@ export function NavBar() {
                     // Show nothing while loading to avoid flash
                     <div className="h-9" />
                   ) : user ? (
-                    // User is logged in - show upgrade button if not pro, and sign out
+                    // User is logged in - show dev toggle, upgrade button if not pro, and sign out
                     <>
                       <Separator className="my-1" />
+                      <div className="px-3 py-2">
+                        <DevTierToggle currentTier={userTier} />
+                      </div>
                       {!checkingSubscription && !isProUser && (
                         <Button
                           asChild

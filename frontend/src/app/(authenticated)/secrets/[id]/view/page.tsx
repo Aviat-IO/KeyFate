@@ -57,15 +57,12 @@ export default async function ViewSecretPage({ params }: ViewSecretPageProps) {
     //   .eq("user_id", user.id)
     //   .order("checked_in_at", { ascending: false })
 
-    // TODO: Update to use multi-recipient schema
-    // const getContactInfo = () => {
-    //   return "See recipients table"
-    // }
+    const primaryRecipient = secret.recipients.find(r => r.isPrimary) || secret.recipients[0]
 
     // Get status icon and color
     const getStatusInfo = () => {
-      // If is_triggered is true, show triggered status regardless of status field
-      if (secret.isTriggered) {
+      // If triggered (has triggeredAt or status is triggered), show triggered status
+      if (secret.triggeredAt || secret.status === "triggered") {
         return {
           icon: AlertCircle,
           color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
@@ -87,12 +84,6 @@ export default async function ViewSecretPage({ params }: ViewSecretPageProps) {
             color:
               "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
             label: "paused",
-          }
-        case "triggered":
-          return {
-            icon: AlertCircle,
-            color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-            label: "sent",
           }
         default:
           return {
@@ -135,24 +126,34 @@ export default async function ViewSecretPage({ params }: ViewSecretPageProps) {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <User className="text-muted-foreground mt-0.5 h-4 w-4" />
-                  <div>
-                    <p className="text-sm font-medium">Recipients</p>
-                    <p className="text-muted-foreground text-sm">
-                      See recipients table (multi-recipient support)
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <Mail className="text-muted-foreground mt-0.5 h-4 w-4" />
-                  <div>
-                    <p className="text-sm font-medium">Contact Method</p>
-                    <p className="text-muted-foreground text-sm">
-                      Email
-                    </p>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium mb-2">Recipients ({secret.recipients.length})</p>
+                    <div className="space-y-2">
+                      {secret.recipients.map((recipient) => (
+                        <div key={recipient.id} className="flex items-center gap-2 text-sm">
+                          {recipient.isPrimary && (
+                            <Badge variant="secondary" className="text-xs">Primary</Badge>
+                          )}
+                          <span className="font-medium">{recipient.name}</span>
+                          <span className="text-muted-foreground">•</span>
+                          {recipient.email && (
+                            <span className="text-muted-foreground flex items-center gap-1">
+                              <Mail className="h-3 w-3" />
+                              {recipient.email}
+                            </span>
+                          )}
+                          {recipient.phone && (
+                            <span className="text-muted-foreground flex items-center gap-1">
+                              <Phone className="h-3 w-3" />
+                              {recipient.phone}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>

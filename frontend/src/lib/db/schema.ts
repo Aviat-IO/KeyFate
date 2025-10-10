@@ -79,7 +79,6 @@ export const secrets = pgTable("secrets", {
   authTag: text("auth_tag"),
   sssSharesTotal: integer("sss_shares_total").notNull().default(3),
   sssThreshold: integer("sss_threshold").notNull().default(2),
-  isTriggered: boolean("is_triggered").default(false),
   lastCheckIn: timestamp("last_check_in"),
   nextCheckIn: timestamp("next_check_in"),
   triggeredAt: timestamp("triggered_at"),

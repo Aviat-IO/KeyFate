@@ -1,6 +1,7 @@
 import { authConfig } from "@/lib/auth-config";
 import { secretsService } from "@/lib/db/drizzle";
 import { mapDrizzleSecretToApiShape } from "@/lib/db/secret-mapper";
+import { getSecretWithRecipients } from "@/lib/db/queries/secrets";
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
@@ -57,7 +58,13 @@ export async function POST(
       });
     }
 
-    const mapped = mapDrizzleSecretToApiShape(updatedSecret);
+    // Get the updated secret with recipients
+    const updatedSecretWithRecipients = await getSecretWithRecipients(id, session.user.id);
+    if (!updatedSecretWithRecipients) {
+      return NextResponse.json({ error: "Secret not found after update" }, { status: 404 });
+    }
+
+    const mapped = mapDrizzleSecretToApiShape(updatedSecretWithRecipients);
     return NextResponse.json({
       success: true,
       secret: mapped,

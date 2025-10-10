@@ -147,7 +147,7 @@ export async function calculateUserUsage(userId: string) {
       .where(
         and(
           eq(secrets.userId, userId),
-          eq(secrets.isTriggered, false)
+          eq(secrets.status, "active")
         )
       );
 
@@ -159,7 +159,7 @@ export async function calculateUserUsage(userId: string) {
       .where(
         and(
           eq(secrets.userId, userId),
-          eq(secrets.isTriggered, false)
+          eq(secrets.status, "active")
         )
       );
 
