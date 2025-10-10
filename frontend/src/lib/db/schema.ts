@@ -72,10 +72,6 @@ export const secrets = pgTable("secrets", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
-  recipientName: text("recipient_name").notNull(),
-  recipientEmail: text("recipient_email"),
-  recipientPhone: text("recipient_phone"),
-  contactMethod: contactMethodEnum("contact_method").notNull(),
   checkInDays: integer("check_in_days").notNull().default(30),
   status: secretStatusEnum("status").notNull().default("active"),
   serverShare: text("server_share"),
@@ -87,6 +83,16 @@ export const secrets = pgTable("secrets", {
   lastCheckIn: timestamp("last_check_in"),
   nextCheckIn: timestamp("next_check_in"),
   triggeredAt: timestamp("triggered_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const secretRecipients = pgTable("secret_recipients", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  secretId: uuid("secret_id").notNull().references(() => secrets.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  isPrimary: boolean("is_primary").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

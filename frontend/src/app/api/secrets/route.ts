@@ -85,12 +85,23 @@ export async function POST(request: NextRequest) {
 
     const tierInfo = await getUserTierInfo(session.user.id);
     const userTier = (tierInfo?.tier?.tiers?.name ?? "free") as "free" | "pro";
+    const maxRecipients = tierInfo?.tier?.tiers?.max_recipients_per_secret ?? 1;
 
     if (!isIntervalAllowed(userTier, validatedData.check_in_days)) {
       return NextResponse.json(
         {
           error: `Check-in interval of ${validatedData.check_in_days} days is not allowed for your tier. Upgrade to Pro for custom intervals.`,
           code: "INTERVAL_NOT_ALLOWED",
+        },
+        { status: 403 },
+      );
+    }
+
+    if (validatedData.recipients.length > maxRecipients) {
+      return NextResponse.json(
+        {
+          error: `Recipient limit exceeded. Your ${userTier} tier allows ${maxRecipients} recipient${maxRecipients === 1 ? "" : "s"} per secret. Upgrade to Pro for more.`,
+          code: "RECIPIENT_LIMIT_EXCEEDED",
         },
         { status: 403 },
       );
@@ -114,15 +125,9 @@ export async function POST(request: NextRequest) {
       authTag = encrypted.authTag;
     }
 
-    // Handle contact method logic
+    // Create secret without recipients (they'll be added separately)
     insertData = {
       title: validatedData.title,
-      recipientName: validatedData.recipient_name,
-      recipientEmail: validatedData.contact_method === "phone"
-        ? null
-        : validatedData.recipient_email,
-      recipientPhone: validatedData.recipient_phone || null,
-      contactMethod: validatedData.contact_method,
       checkInDays: validatedData.check_in_days,
       serverShare: encryptedServerShare,
       iv: iv,
@@ -136,15 +141,14 @@ export async function POST(request: NextRequest) {
       ),
     };
 
-    // Add logging to debug the insert data structure
     console.log("Insert data structure:", JSON.stringify(insertData, null, 2));
 
-    // Try the standard service first, fall back to robust service if needed
+    // Create the secret
     let data;
     try {
       data = await secretsService.create(insertData as any);
     } catch (error) {
-      if (error instanceof Error && error.message.includes("recipient_name")) {
+      if (error instanceof Error && error.message.includes("recipient")) {
         console.log("Using robust service due to schema issue");
         const robustService = new RobustSecretsService(
           process.env.DATABASE_URL!,
@@ -154,6 +158,19 @@ export async function POST(request: NextRequest) {
         throw error;
       }
     }
+
+    // Now insert the recipients
+    const db = await import("@/lib/db/drizzle").then(m => m.getDatabase());
+    const { secretRecipients } = await import("@/lib/db/schema");
+    
+    await db.insert(secretRecipients).values(
+      validatedData.recipients.map((recipient, index) => ({
+        secretId: data.id,
+        name: recipient.name,
+        email: recipient.email,
+        isPrimary: recipient.isPrimary || index === 0,
+      }))
+    );
 
     // Note: Reminder scheduling would be handled by a separate service
     // For now, we'll skip this to get the basic functionality working

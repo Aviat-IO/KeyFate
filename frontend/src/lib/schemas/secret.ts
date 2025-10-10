@@ -1,12 +1,15 @@
 import * as z from "zod";
 
+const recipientSchema = z.object({
+  name: z.string().min(1, "Recipient name is required"),
+  email: z.string().email("Valid email is required"),
+  isPrimary: z.boolean().default(false),
+});
+
 export const secretFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   secretMessageContent: z.string().min(1, "Secret message is required"),
-  recipient_name: z.string().min(1, "Recipient name is required"),
-  recipient_email: z.string().email().optional(),
-  recipient_phone: z.string().optional(),
-  contact_method: z.enum(["email", "phone", "both"]),
+  recipients: z.array(recipientSchema).min(1, "At least one recipient is required").max(5, "Maximum 5 recipients allowed"),
   check_in_days: z.string().refine((val) => parseInt(val, 10) >= 2, {
     message: "Trigger deadline must be at least 2 days.",
   }),
@@ -67,10 +70,11 @@ export const secretSchema = z.object({
   }).min(1, "Missing server share."),
   iv: z.string().optional(),
   auth_tag: z.string().optional(),
-  recipient_name: z.string().min(1, "Recipient name is required"),
-  recipient_email: z.string().email().nullable().optional(),
-  recipient_phone: z.string().nullable().optional(),
-  contact_method: z.enum(["email", "phone", "both"]),
+  recipients: z.array(z.object({
+    name: z.string().min(1, "Recipient name is required"),
+    email: z.string().email("Valid email is required"),
+    isPrimary: z.boolean().default(false),
+  })).min(1, "At least one recipient is required").max(5, "Maximum 5 recipients allowed"),
   check_in_days: z.union([z.string(), z.number()]).transform((val) => {
     if (typeof val === "string") {
       const num = parseInt(val, 10);
