@@ -64,7 +64,7 @@ async function testSchemaIntegration() {
       'id', 'user_id', 'title', 'recipient_name', 'recipient_email',
       'recipient_phone', 'contact_method', 'check_in_days', 'status',
       'server_share', 'iv', 'auth_tag', 'sss_shares_total', 'sss_threshold',
-      'is_triggered', 'last_check_in', 'next_check_in', 'triggered_at',
+       'last_check_in', 'next_check_in', 'triggered_at',
       'created_at', 'updated_at'
     ];
 

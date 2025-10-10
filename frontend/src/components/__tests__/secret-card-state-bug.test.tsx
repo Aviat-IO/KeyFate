@@ -28,7 +28,7 @@ describe('Secret State Bug - API Format Mismatch', () => {
     authTag: 'test-auth-tag',
     sssSharesTotal: 3,
     sssThreshold: 2,
-    isTriggered: false,
+    triggeredAt: null,
     lastCheckIn: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
     nextCheckIn: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
     triggeredAt: null,
@@ -52,7 +52,7 @@ describe('Secret State Bug - API Format Mismatch', () => {
     auth_tag: 'test-auth-tag',
     sss_shares_total: 3,
     sss_threshold: 2,
-    is_triggered: false,
+    triggered_at: null,
     last_check_in: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
     next_check_in: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
     triggered_at: null,
@@ -192,7 +192,7 @@ describe('Secret State Bug - API Format Mismatch', () => {
       const unchangedFields = [
         'id', 'userId', 'title', 'recipientName', 'recipientEmail',
         'contactMethod', 'checkInDays', 'status', 'serverShare',
-        'iv', 'authTag', 'sssSharesTotal', 'sssThreshold', 'isTriggered'
+        'iv', 'authTag', 'sssSharesTotal', 'sssThreshold', 'triggeredAt'
       ]
 
       expect(expectedChanges).toContain('lastCheckIn')

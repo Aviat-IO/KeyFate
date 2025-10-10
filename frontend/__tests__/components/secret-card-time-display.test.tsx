@@ -24,7 +24,7 @@ const createMockSecret = (overrides?: Partial<Secret>): Secret => {
     status: "active",
     nextCheckIn: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     lastCheckIn: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    isTriggered: false,
+    triggeredAt: null,
     serverShare: "encrypted-share-data",
     userId: "user-123",
     createdAt: new Date().toISOString(),
@@ -214,7 +214,7 @@ describe("SecretCard Time Display", () => {
 
     it("displays 'Sent' with timeago format for triggered secrets", () => {
       const secret = createMockSecret({
-        isTriggered: true,
+        triggeredAt: new Date(),
         triggeredAt: new Date(
           Date.now() - 2 * 60 * 60 * 1000,
         ).toISOString(), // 2 hours ago

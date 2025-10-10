@@ -64,7 +64,7 @@ describe('SecretCard - State Preservation Bug', () => {
     authTag: 'auth-tag-data',
     sssSharesTotal: 3,
     sssThreshold: 2,
-    isTriggered: false,
+    triggeredAt: null,
     lastCheckIn: new Date('2024-01-01T12:00:00Z'),
     nextCheckIn: new Date('2024-02-01T12:00:00Z'),
     triggeredAt: null,

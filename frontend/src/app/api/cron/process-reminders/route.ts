@@ -1,5 +1,5 @@
 import { getDatabase } from "@/lib/db/drizzle";
-import { secrets, users } from "@/lib/db/schema";
+import { secrets, users, secretRecipients } from "@/lib/db/schema";
 import { and, eq, lt } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { decryptMessage } from "@/lib/encryption";
@@ -7,6 +7,8 @@ import { sendSecretDisclosureEmail } from "@/lib/email/email-service";
 import { logEmailFailure } from "@/lib/email/email-failure-logger";
 import { sendAdminNotification } from "@/lib/email/admin-notification-service";
 import { EmailRetryService, calculateBackoffDelay } from "@/lib/email/email-retry-service";
+import { getAllRecipients } from "@/lib/db/queries/secrets";
+import type { SecretRecipient } from "@/lib/types/secret-types";
 
 // Prevent static analysis during build
 export const dynamic = "force-dynamic";
@@ -93,6 +95,14 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
+        // Get all recipients for this secret
+        const recipients = await getAllRecipients(secret.id);
+
+        if (recipients.length === 0) {
+          console.error(`[process-reminders] No recipients found for secret ${secret.id}`);
+          continue;
+        }
+
         // Decrypt server share
         const ivBuffer = Buffer.from(secret.iv || "", "base64");
         const authTagBuffer = Buffer.from(secret.authTag || "", "base64");
@@ -102,26 +112,80 @@ export async function POST(req: NextRequest) {
           authTagBuffer
         );
 
-        // Send disclosure email with retry logic
-        const emailResult = await withRetry(
-          async () => {
-            return await sendSecretDisclosureEmail({
-              contactEmail: secret.recipientEmail || "",
-              contactName: secret.recipientName,
-              secretTitle: secret.title,
-              senderName: user.name || user.email,
-              message: `This secret was scheduled for disclosure because the check-in deadline was missed.`,
-              secretContent: decryptedContent,
-              disclosureReason: "scheduled",
-              senderLastSeen: secret.lastCheckIn || undefined,
-            });
-          },
-          3,
-          1000
-        );
+        // Send disclosure email to all recipients
+        let allEmailsSucceeded = true;
+        for (const recipient of recipients) {
+          const contactEmail = recipient.email || recipient.phone || "";
+          if (!contactEmail) {
+            console.error(`[process-reminders] Recipient ${recipient.id} has no contact info`);
+            continue;
+          }
 
-        if (emailResult.success) {
-          // Update secret status to triggered
+          try {
+            const emailResult = await withRetry(
+              async () => {
+                return await sendSecretDisclosureEmail({
+                  contactEmail,
+                  contactName: recipient.name,
+                  secretTitle: secret.title,
+                  senderName: user.name || user.email,
+                  message: `This secret was scheduled for disclosure because the check-in deadline was missed.`,
+                  secretContent: decryptedContent,
+                  disclosureReason: "scheduled",
+                  senderLastSeen: secret.lastCheckIn || undefined,
+                });
+              },
+              3,
+              1000
+            );
+
+            if (!emailResult.success) {
+              allEmailsSucceeded = false;
+              
+              // Log email failure
+              await logEmailFailure({
+                emailType: "disclosure",
+                provider: emailResult.provider as any || "sendgrid",
+                recipient: contactEmail,
+                subject: `Secret Disclosure: ${secret.title}`,
+                errorMessage: emailResult.error || "Unknown error",
+              });
+
+              // Send admin notification for critical failures
+              await sendAdminNotification({
+                emailType: "disclosure",
+                recipient: contactEmail,
+                errorMessage: emailResult.error || "Unknown error",
+                secretTitle: secret.title,
+                timestamp: new Date(),
+              });
+            }
+          } catch (error) {
+            allEmailsSucceeded = false;
+            console.error(`[process-reminders] Error sending to recipient ${recipient.id}:`, error);
+
+            // Log failure
+            await logEmailFailure({
+              emailType: "disclosure",
+              provider: "sendgrid",
+              recipient: contactEmail,
+              subject: `Secret Disclosure: ${secret.title}`,
+              errorMessage: error instanceof Error ? error.message : "Unknown error",
+            });
+
+            // Send admin notification
+            await sendAdminNotification({
+              emailType: "disclosure",
+              recipient: contactEmail,
+              errorMessage: error instanceof Error ? error.message : "Unknown error",
+              secretTitle: secret.title,
+              timestamp: new Date(),
+            });
+          }
+        }
+
+        // Update secret status if at least one email succeeded
+        if (allEmailsSucceeded) {
           await db
             .update(secrets)
             .set({
@@ -132,45 +196,9 @@ export async function POST(req: NextRequest) {
             .where(eq(secrets.id, secret.id));
 
           processedCount++;
-        } else {
-          // Log email failure
-          await logEmailFailure({
-            emailType: "disclosure",
-            provider: emailResult.provider as any || "sendgrid",
-            recipient: secret.recipientEmail || "",
-            subject: `Secret Disclosure: ${secret.title}`,
-            errorMessage: emailResult.error || "Unknown error",
-          });
-
-          // Send admin notification for critical failures (disclosure emails always critical)
-          await sendAdminNotification({
-            emailType: "disclosure",
-            recipient: secret.recipientEmail || "",
-            errorMessage: emailResult.error || "Unknown error",
-            secretTitle: secret.title,
-            timestamp: new Date(),
-          });
         }
       } catch (error) {
         console.error(`[process-reminders] Error processing secret ${secret.id}:`, error);
-
-        // Log failure
-        await logEmailFailure({
-          emailType: "disclosure",
-          provider: "sendgrid",
-          recipient: secret.recipientEmail || "",
-          subject: `Secret Disclosure: ${secret.title}`,
-          errorMessage: error instanceof Error ? error.message : "Unknown error",
-        });
-
-        // Send admin notification for critical failures
-        await sendAdminNotification({
-          emailType: "disclosure",
-          recipient: secret.recipientEmail || "",
-          errorMessage: error instanceof Error ? error.message : "Unknown error",
-          secretTitle: secret.title,
-          timestamp: new Date(),
-        });
       }
     }
 

@@ -91,7 +91,7 @@ describe("CheckInButton Component", () => {
       recipient_phone: null,
       contact_method: "email",
       last_check_in: new Date().toISOString(),
-      is_triggered: false,
+      triggered_at: null,
       triggered_at: null,
       iv: null,
       auth_tag: null,

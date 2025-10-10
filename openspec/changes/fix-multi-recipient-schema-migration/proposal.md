@@ -138,11 +138,101 @@ interface PrimaryRecipient {
 3. Remove `contactMethod` enum (no longer used)
 4. Update documentation
 
+## Database Performance & Indexing Strategy
+
+### Query Patterns Requiring Indexes
+
+The multi-recipient schema introduces several new query patterns that require proper indexing to maintain performance:
+
+#### 1. **Fetching Secrets with Recipients (Most Common)**
+```sql
+SELECT s.*, json_agg(sr.*) as recipients
+FROM secrets s
+LEFT JOIN secret_recipients sr ON sr.secret_id = s.id
+WHERE s.user_id = ? AND s.id = ?
+GROUP BY s.id
+```
+**Required Indexes:**
+- `idx_secrets_user_id` - Filter by user
+- `idx_secret_recipients_secret_id` - JOIN performance
+
+#### 2. **Finding Primary Recipient**
+```sql
+SELECT * FROM secret_recipients
+WHERE secret_id = ? AND is_primary = true
+```
+**Required Index:**
+- `idx_secret_recipients_primary` (partial index WHERE is_primary = true)
+
+#### 3. **Cron Job Processing**
+```sql
+SELECT s.* FROM secrets s
+WHERE s.next_check_in <= NOW() AND s.is_triggered = false
+```
+**Required Index:**
+- `idx_secrets_next_check_in` (partial index WHERE is_triggered = false)
+
+#### 4. **Email Audit Trail Queries**
+```sql
+SELECT * FROM email_notifications
+WHERE recipient_id = ? ORDER BY created_at DESC
+```
+**Required Index:**
+- `idx_email_notifications_recipient_id`
+
+#### 5. **Dashboard Secret List**
+```sql
+SELECT s.*, json_agg(sr.*) as recipients
+FROM secrets s
+LEFT JOIN secret_recipients sr ON sr.secret_id = s.id
+WHERE s.user_id = ?
+GROUP BY s.id
+ORDER BY s.created_at DESC
+```
+**Required Indexes:**
+- `idx_secrets_user_status` (composite for filtered views)
+- `idx_secret_recipients_secret_id`
+
+### Performance Impact Analysis
+
+**Without Proper Indexes:**
+- Dashboard with 100 secrets: ~500ms (full table scan)
+- Secret view with 5 recipients: ~100ms (sequential scan)
+- Cron processing 1000 reminders: ~2000ms (full table scan)
+- **Total queries per request:** Multiple N+1 queries possible
+
+**With Proper Indexes:**
+- Dashboard with 100 secrets: ~10ms (index scan + single JOIN)
+- Secret view with 5 recipients: ~5ms (index seek + single JOIN)
+- Cron processing 1000 reminders: ~50ms (partial index scan)
+- **Total queries per request:** Single query with JOIN
+
+**Expected Improvement:** 10-40x performance boost on common queries
+
+### Index Implementation Strategy
+
+**Migration 0008: Critical Indexes**
+- Priority 1 indexes for core functionality
+- Foreign key indexes for JOIN performance
+- Composite indexes for filtered queries
+
+**Migration 0009: Data Integrity Constraints**
+- UNIQUE constraint on primary recipient (one per secret)
+- CHECK constraints for data validation
+- Prevent invalid data at database level
+
+**Migration 0010: Optimization Indexes**
+- Partial indexes for specific query patterns
+- Indexes for monitoring and analytics queries
+- Performance tuning based on query patterns
+
+See `schema-analysis.md` for complete index specifications and performance analysis.
+
 ## Design Decisions
 
 ### 1. Query Strategy
 **Decision:** Always fetch recipients with secrets using LEFT JOIN
-**Rationale:** Prevents N+1 queries, simplifies type system, ensures data consistency
+**Rationale:** Prevents N+1 queries, simplifies type system, ensures data consistency, leverages proper indexing
 
 ### 2. Primary Recipient Handling
 **Decision:** Use `isPrimary` flag to designate one recipient as primary

@@ -6,8 +6,7 @@
  */
 
 import { authConfig } from "@/lib/auth-config";
-import { secretsService } from "@/lib/db/drizzle";
-import { mapDrizzleSecretToApiShape } from "@/lib/db/secret-mapper";
+import { getAllSecretsWithRecipients } from "@/lib/db/queries/secrets";
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth/next";
 
@@ -120,18 +119,17 @@ export class DashboardService {
 
     try {
       const secrets = await withTimeout(
-        secretsService.getAllByUser(userId),
+        getAllSecretsWithRecipients(userId),
         5000, // 5 second timeout
-        "secretsService.getAllByUser",
+        "getAllSecretsWithRecipients",
       );
 
-      const mapped = (secrets || []).map(mapDrizzleSecretToApiShape);
       console.log(
         "[DashboardService] Successfully fetched",
-        mapped.length,
+        secrets.length,
         "secrets",
       );
-      return mapped;
+      return secrets;
     } catch (error) {
       console.error("[DashboardService] Secrets fetch failed:", error);
 

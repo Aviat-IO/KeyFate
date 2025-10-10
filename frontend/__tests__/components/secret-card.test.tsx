@@ -48,7 +48,7 @@ const mockSecret: Secret = {
   status: "active",
   nextCheckIn: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
   lastCheckIn: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
-  isTriggered: false,
+  triggeredAt: null,
   serverShare: "encrypted-share-data",
   userId: "user-123",
   createdAt: new Date(),
@@ -131,7 +131,7 @@ describe("SecretCard Component", () => {
   it("shows sent status for triggered secrets", () => {
     const triggeredSecret = {
       ...mockSecret,
-      isTriggered: true,
+      triggeredAt: new Date(),
     }
 
     render(<SecretCard secret={triggeredSecret} />)

@@ -413,7 +413,7 @@ export async function POST(req: NextRequest) {
       .where(
         and(
           eq(secrets.status, "active"),
-          eq(secrets.isTriggered, false),
+          eq(secrets.status, "active"),
           isNotNull(secrets.serverShare),
           isNotNull(secrets.nextCheckIn),
         ),

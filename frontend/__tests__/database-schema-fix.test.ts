@@ -89,7 +89,7 @@ describe('Database Schema Fix - TDD Approach', () => {
         'auth_tag',
         'sss_shares_total',
         'sss_threshold',
-        'is_triggered',
+        
         'last_check_in',
         'next_check_in',
         'triggered_at',

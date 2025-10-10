@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
         title: secrets.title,
         checkInDays: secrets.checkInDays,
         triggeredAt: secrets.triggeredAt,
-        isTriggered: secrets.isTriggered,
+        status: secrets.status,
       })
       .from(secrets)
       .where(eq(secrets.id, tokenRow.secretId))
@@ -139,7 +139,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (secret.isTriggered || secret.triggeredAt) {
+    if (secret.triggeredAt || secret.status === "triggered") {
       console.warn('[CHECK-IN] Attempt to check in on triggered secret', {
         timestamp: new Date().toISOString(),
         tokenId: tokenRow.id,

@@ -15,14 +15,15 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import { formatGranularTime } from "@/lib/time-utils"
-import { Secret } from "@/types"
+import type { SecretWithRecipients } from "@/lib/types/secret-types"
+import { getPrimaryRecipient, getRecipientContactInfo } from "@/lib/types/secret-types"
 import { Clock, Pencil, User } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { format } from "timeago.js"
 
 interface SecretCardProps {
-  secret: Secret
+  secret: SecretWithRecipients
 }
 
 interface StatusBadge {
@@ -31,12 +32,12 @@ interface StatusBadge {
 }
 
 function getStatusBadge(
-  status: Secret["status"],
+  status: SecretWithRecipients["status"],
   nextCheckIn: Date | null,
-  isTriggered: boolean,
+  triggeredAt: Date | null,
   serverShareDeleted: boolean,
 ): StatusBadge {
-  if (isTriggered) {
+  if (triggeredAt || status === "triggered") {
     return {
       label: "Sent",
       variant: "destructive",
@@ -84,36 +85,39 @@ function getStatusBadge(
 }
 
 export function SecretCard({ secret }: SecretCardProps) {
-  const [secretState, setSecretState] = useState<Secret>(secret)
+  const [secretState, setSecretState] = useState<SecretWithRecipients>(secret)
   const serverShareDeleted = !secretState.serverShare
   const [statusBadge, setStatusBadge] = useState<StatusBadge>(
     getStatusBadge(
       secret.status,
       secret.nextCheckIn,
-      secret.isTriggered,
+      secret.triggeredAt,
       !secret.serverShare,
     ),
   )
+
+  const primaryRecipient = getPrimaryRecipient(secretState.recipients)
+  const isTriggered = secretState.triggeredAt !== null || secretState.status === "triggered"
 
   useEffect(() => {
     setStatusBadge(
       getStatusBadge(
         secretState.status,
         secretState.nextCheckIn,
-        secretState.isTriggered,
+        secretState.triggeredAt,
         serverShareDeleted,
       ),
     )
   }, [
     secretState.status,
     secretState.nextCheckIn,
-    secretState.isTriggered,
+    secretState.triggeredAt,
     serverShareDeleted,
   ])
 
   const { toast } = useToast()
 
-  const handleCheckInSuccess = (updatedSecret: Secret) => {
+  const handleCheckInSuccess = (updatedSecret: SecretWithRecipients) => {
     // Merge updated fields with existing state to preserve all metadata
     setSecretState(prevState => ({
       ...prevState,
@@ -126,7 +130,7 @@ export function SecretCard({ secret }: SecretCardProps) {
     })
   }
 
-  const handleToggleSuccess = (updatedSecret: Secret) => {
+  const handleToggleSuccess = (updatedSecret: SecretWithRecipients) => {
     // Merge updated fields with existing state to preserve all metadata
     setSecretState(prevState => ({
       ...prevState,
@@ -144,12 +148,14 @@ export function SecretCard({ secret }: SecretCardProps) {
 
   const getContactDetails = () => {
     const details = []
-    if (secretState.recipientEmail) {
-      details.push(`Email: ${secretState.recipientEmail}`)
-    }
-    if (secretState.recipientPhone) {
-      details.push(`Phone: ${secretState.recipientPhone}`)
-    }
+    secretState.recipients.forEach(recipient => {
+      if (recipient.email) {
+        details.push(`${recipient.name} - Email: ${recipient.email}`)
+      }
+      if (recipient.phone) {
+        details.push(`${recipient.name} - Phone: ${recipient.phone}`)
+      }
+    })
     return details.join("\n")
   }
 
@@ -162,7 +168,7 @@ export function SecretCard({ secret }: SecretCardProps) {
   }, [secretState.lastCheckIn])
 
   const getTimingText = () => {
-    if (secretState.isTriggered) {
+    if (isTriggered) {
       return `Sent ${format(secretState.triggeredAt!)}`
     }
     if (serverShareDeleted) {
@@ -172,7 +178,7 @@ export function SecretCard({ secret }: SecretCardProps) {
   }
 
   const getTriggerTimeTooltip = () => {
-    if (secretState.isTriggered || serverShareDeleted) {
+    if (isTriggered || serverShareDeleted) {
       return null
     }
     
@@ -191,7 +197,7 @@ export function SecretCard({ secret }: SecretCardProps) {
   const getLastCheckInText = () => {
     if (
       !secretState.lastCheckIn ||
-      secretState.isTriggered ||
+      isTriggered ||
       serverShareDeleted
     ) {
       return null
@@ -203,7 +209,7 @@ export function SecretCard({ secret }: SecretCardProps) {
     <Card
       className={cn(
         "transition-all duration-200 hover:shadow-md",
-        secretState.isTriggered && "border-destructive/50 bg-destructive/5",
+        isTriggered && "border-destructive/50 bg-destructive/5",
         secretState.status === "paused" && "border-accent bg-accent/10",
         serverShareDeleted &&
           "border-muted-foreground/30 bg-muted/50 opacity-90",
@@ -226,7 +232,10 @@ export function SecretCard({ secret }: SecretCardProps) {
               <TooltipTrigger asChild>
                 <div className="text-muted-foreground flex items-center gap-2 text-xs cursor-help">
                   <User className="h-3 w-3" />
-                  <span className="truncate">{secretState.recipientName}</span>
+                  <span className="truncate">
+                    {primaryRecipient?.name || "No recipient"}
+                    {secretState.recipients.length > 1 && ` +${secretState.recipients.length - 1}`}
+                  </span>
                 </div>
               </TooltipTrigger>
               <TooltipContent>
@@ -270,7 +279,10 @@ export function SecretCard({ secret }: SecretCardProps) {
                   <TooltipTrigger asChild>
                     <div className="text-muted-foreground flex items-center gap-2 text-sm cursor-help">
                       <User className="h-4 w-4" />
-                      <span>Recipient: {secretState.recipientName}</span>
+                      <span>
+                        Recipients: {primaryRecipient?.name || "No recipient"}
+                        {secretState.recipients.length > 1 && ` +${secretState.recipients.length - 1} more`}
+                      </span>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -338,7 +350,7 @@ export function SecretCard({ secret }: SecretCardProps) {
 
         {/* Action Buttons - Responsive layout */}
         <div className="flex items-center justify-end gap-2">
-          {!secretState.isTriggered ? (
+          {!isTriggered ? (
             <>
               {/* Check-in button - only on larger screens or when urgent */}
               {!serverShareDeleted &&

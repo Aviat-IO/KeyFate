@@ -6,12 +6,14 @@ import {
   emailNotifications,
   reminderJobs,
   secrets as secretsTable,
+  secretRecipients,
 } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { getSecretWithRecipients, updateSecretRecipients } from "@/lib/db/queries/secrets";
 
 // Prevent static analysis during build
 export const dynamic = "force-dynamic";
@@ -33,7 +35,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const secret = await secretsService.getById(id, session.user.id);
+    const secret = await getSecretWithRecipients(id, session.user.id);
 
     if (!secret) {
       return NextResponse.json({ error: "Secret not found" }, { status: 404 });
@@ -50,12 +52,16 @@ export async function GET(
 }
 
 // Schema for updating secret metadata
+const recipientSchema = z.object({
+  name: z.string().min(1, "Recipient name is required"),
+  email: z.string().email().nullable().optional(),
+  phone: z.string().nullable().optional(),
+  isPrimary: z.boolean().default(false),
+});
+
 const updateSecretSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  recipient_name: z.string().min(1, "Recipient name is required"),
-  recipient_email: z.string().email().optional().or(z.literal("")),
-  recipient_phone: z.string().optional().or(z.literal("")),
-  contact_method: z.enum(["email", "phone", "both"]),
+  recipients: z.array(recipientSchema).min(1, "At least one recipient is required"),
   check_in_days: z.number().min(1).max(365),
 });
 
@@ -79,13 +85,29 @@ export async function PUT(
     const body = await request.json();
     const validatedData = updateSecretSchema.parse(body);
 
-    // Map the validated data to the database schema
+    // Validate that at least one recipient is marked as primary
+    const hasPrimary = validatedData.recipients.some(r => r.isPrimary);
+    if (!hasPrimary) {
+      return NextResponse.json(
+        { error: "At least one recipient must be marked as primary" },
+        { status: 400 },
+      );
+    }
+
+    // Validate that each recipient has either email or phone
+    const invalidRecipients = validatedData.recipients.filter(
+      r => !r.email && !r.phone
+    );
+    if (invalidRecipients.length > 0) {
+      return NextResponse.json(
+        { error: "Each recipient must have either an email or phone number" },
+        { status: 400 },
+      );
+    }
+
+    // Update secret metadata
     const updateData = {
       title: validatedData.title,
-      recipientName: validatedData.recipient_name,
-      recipientEmail: validatedData.recipient_email || null,
-      recipientPhone: validatedData.recipient_phone || null,
-      contactMethod: validatedData.contact_method,
       checkInDays: validatedData.check_in_days,
     };
 
@@ -95,7 +117,17 @@ export async function PUT(
       return NextResponse.json({ error: "Secret not found" }, { status: 404 });
     }
 
-    return NextResponse.json(secret);
+    // Update recipients - cast to RecipientInput since validation ensures correct shape
+    await updateSecretRecipients(id, validatedData.recipients as Array<{
+      name: string;
+      email?: string | null;
+      phone?: string | null;
+      isPrimary: boolean;
+    }>);
+
+    // Return updated secret with recipients
+    const updatedSecret = await getSecretWithRecipients(id, session.user.id);
+    return NextResponse.json(updatedSecret);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -147,6 +179,7 @@ export async function DELETE(
       await tx.delete(emailNotifications).where(
         eq(emailNotifications.secretId, id),
       );
+      await tx.delete(secretRecipients).where(eq(secretRecipients.secretId, id));
       await tx.delete(secretsTable).where(
         and(eq(secretsTable.id, id), eq(secretsTable.userId, session.user.id)),
       );
