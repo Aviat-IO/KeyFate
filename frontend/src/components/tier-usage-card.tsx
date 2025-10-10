@@ -23,6 +23,13 @@ export function TierUsageCard({
 }: TierUsageCardProps) {
   const percentageUsed = (secretsUsed / secretsLimit) * 100
   const isAtLimit = secretsUsed >= secretsLimit
+  
+  const getProgressColor = () => {
+    if (percentageUsed >= 100) return "bg-red-500 dark:bg-red-600"
+    if (percentageUsed >= 90) return "bg-red-400 dark:bg-red-500"
+    if (percentageUsed >= 75) return "bg-yellow-500 dark:bg-yellow-600"
+    return ""
+  }
 
   return (
     <Card>
@@ -43,7 +50,11 @@ export function TierUsageCard({
               {secretsUsed} of {secretsLimit}
             </span>
           </div>
-          <Progress value={percentageUsed} className="h-2" />
+          <Progress 
+            value={percentageUsed} 
+            className="h-2"
+            indicatorClassName={getProgressColor()}
+          />
         </div>
 
         {isAtLimit && (
