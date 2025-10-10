@@ -2,8 +2,14 @@ import * as z from "zod";
 
 const recipientSchema = z.object({
   name: z.string().min(1, "Recipient name is required"),
-  email: z.string().email("Valid email is required"),
+  email: z.string().email("Valid email is required").optional().or(z.literal("")),
+  phone: z.string().optional(),
   isPrimary: z.boolean().default(false),
+}).refine((data) => {
+  return (data.email && data.email.length > 0) || (data.phone && data.phone.length > 0);
+}, {
+  message: "At least email or phone is required",
+  path: ["email"],
 });
 
 export const secretFormSchema = z.object({
@@ -72,7 +78,8 @@ export const secretSchema = z.object({
   auth_tag: z.string().optional(),
   recipients: z.array(z.object({
     name: z.string().min(1, "Recipient name is required"),
-    email: z.string().email("Valid email is required"),
+    email: z.string().email("Valid email is required").optional().or(z.literal("")),
+    phone: z.string().optional(),
     isPrimary: z.boolean().default(false),
   })).min(1, "At least one recipient is required").max(5, "Maximum 5 recipients allowed"),
   check_in_days: z.union([z.string(), z.number()]).transform((val) => {
