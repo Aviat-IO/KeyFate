@@ -1,6 +1,7 @@
 "use client"
 
 import { useConfig } from "@/contexts/ConfigContext"
+import { NEXT_PUBLIC_SUPPORT_EMAIL } from "@/lib/env"
 import Link from "next/link"
 
 export function Footer() {
@@ -34,7 +35,7 @@ export function Footer() {
               Terms of Service
             </Link>
             <a
-              href={`mailto:${config?.supportEmail || "support@keyfate.com"}`}
+              href={`mailto:${NEXT_PUBLIC_SUPPORT_EMAIL}`}
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
               Contact

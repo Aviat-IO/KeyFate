@@ -1,12 +1,13 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { NavBar } from "@/components/nav-bar"
 import { Footer } from "@/components/footer"
+import { NavBar } from "@/components/nav-bar"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { NEXT_PUBLIC_SUPPORT_EMAIL } from "@/lib/env"
 import {
+  AlertTriangle,
   CheckCircle,
   Clock,
   RefreshCw,
   Shield,
-  AlertTriangle,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -149,12 +150,11 @@ export default function RefundsPage() {
                   <span className="font-medium">Contact Support:</span> Email us
                   at{" "}
                   <a
-                    href="mailto:support@keyfate.com"
+                    href={`mailto:${NEXT_PUBLIC_SUPPORT_EMAIL}`}
                     className="text-primary hover:text-primary/90 hover:underline"
                   >
-                    support@keyfate.com
+                    {NEXT_PUBLIC_SUPPORT_EMAIL}
                   </a>{" "}
-                  or use the in-app support chat
                 </li>
                 <li className="text-sm">
                   <span className="font-medium">Provide Details:</span> Include
@@ -277,10 +277,10 @@ export default function RefundsPage() {
                 <div className="flex items-center space-x-2">
                   <span className="text-sm font-medium">Email:</span>
                   <a
-                    href="mailto:support@keyfate.com"
+                    href={`mailto:${NEXT_PUBLIC_SUPPORT_EMAIL}`}
                     className="text-primary hover:text-primary/90 text-sm hover:underline"
                   >
-                    support@keyfate.com
+                    {NEXT_PUBLIC_SUPPORT_EMAIL}
                   </a>
                 </div>
 

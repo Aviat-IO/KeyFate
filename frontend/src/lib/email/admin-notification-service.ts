@@ -217,7 +217,7 @@ export async function sendAdminNotification(
     const { subject, html, text } = formatNotificationContent(data, severity);
 
     // Get admin email from environment or use default
-    const adminEmail = process.env.ADMIN_ALERT_EMAIL || "support@aviat.io";
+    const adminEmail = process.env.ADMIN_ALERT_EMAIL || process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@aviat.io";
 
     // Send notification using existing email service
     const result = await sendEmail({
@@ -229,10 +229,10 @@ export async function sendAdminNotification(
       headers:
         severity === "critical"
           ? {
-              "X-Priority": "1",
-              "X-MSMail-Priority": "High",
-              "Importance": "high",
-            }
+            "X-Priority": "1",
+            "X-MSMail-Priority": "High",
+            "Importance": "high",
+          }
           : undefined,
     });
 

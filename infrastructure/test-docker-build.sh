@@ -10,8 +10,8 @@ echo "Testing Docker build with frontend directory: $FRONTEND_DIR"
 
 # Test that the Dockerfile exists
 if [ ! -f "$FRONTEND_DIR/Dockerfile" ]; then
-    echo "ERROR: Dockerfile not found at $FRONTEND_DIR/Dockerfile"
-    exit 1
+  echo "ERROR: Dockerfile not found at $FRONTEND_DIR/Dockerfile"
+  exit 1
 fi
 
 echo "✓ Dockerfile found"
@@ -24,7 +24,7 @@ docker build \
   --build-arg NEXT_PUBLIC_SITE_URL="https://staging.keyfate.com" \
   --build-arg NEXT_PUBLIC_COMPANY="KeyFate" \
   --build-arg NEXT_PUBLIC_PARENT_COMPANY="KeyFate Inc" \
-  --build-arg NEXT_PUBLIC_SUPPORT_EMAIL="support@keyfate.com" \
+  --build-arg NEXT_PUBLIC_SUPPORT_EMAIL="support@aviat.io" \
   --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="" \
   --build-arg NEXT_PUBLIC_AUTH_PROVIDER="google" \
   --build-arg NEXT_PUBLIC_DATABASE_PROVIDER="cloudsql" \
@@ -40,3 +40,4 @@ echo "The key changes made:"
 echo "1. Added 'frontend_dir' variable to variables.tf"
 echo "2. Updated frontend.tf to use the variable if provided"
 echo "3. Updated terragrunt.hcl files to pass the absolute path to frontend directory"
+
