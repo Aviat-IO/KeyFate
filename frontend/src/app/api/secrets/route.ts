@@ -6,6 +6,7 @@ import { encryptMessage } from "@/lib/encryption";
 import { secretSchema } from "@/lib/schemas/secret";
 import { canUserCreateSecret, getUserTierInfo, isIntervalAllowed } from "@/lib/subscription";
 import { isValidThreshold } from "@/lib/tier-validation";
+import { logSecretCreated } from "@/lib/services/audit-logger";
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
@@ -173,6 +174,12 @@ export async function POST(request: NextRequest) {
       );
       
       return newSecret;
+    });
+
+    await logSecretCreated(session.user.id, data.id, {
+      title: validatedData.title,
+      recipientCount: validatedData.recipients.length,
+      checkInDays: validatedData.check_in_days,
     });
 
     // Note: Reminder scheduling would be handled by a separate service
