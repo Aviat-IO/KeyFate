@@ -38,21 +38,18 @@ describe("NewSecretForm", () => {
     vi.clearAllMocks()
   })
 
-  it("should show validation error for check_in_days on blur when value is less than 2", async () => {
-    render(<NewSecretForm isPaid={true} />)
+  it("should have valid check-in intervals in dropdown", async () => {
+    render(<NewSecretForm />)
 
-    const checkInDaysInput = screen.getByLabelText(/trigger deadline/i)
+    const selectTrigger = screen.getByRole("combobox", { name: /trigger deadline/i })
+    fireEvent.click(selectTrigger)
 
-    // Enter a value less than 2
-    fireEvent.change(checkInDaysInput, { target: { value: "1" } })
-
-    // Trigger blur event
-    fireEvent.blur(checkInDaysInput)
-
-    // Wait for validation error to appear
     await waitFor(() => {
-      expect(screen.getByText("Trigger deadline must be at least 2 days.")).toBeInTheDocument()
+      expect(screen.getByRole("option", { name: "1 week" })).toBeInTheDocument()
+      expect(screen.getByRole("option", { name: "1 month" })).toBeInTheDocument()
+      expect(screen.getByRole("option", { name: "1 year" })).toBeInTheDocument()
     })
+  })
   })
 
   it("should show validation error for SSS threshold when it exceeds total shares", async () => {
@@ -130,31 +127,29 @@ describe("NewSecretForm", () => {
   it("should show select dropdown for free users", () => {
     render(<NewSecretForm isPaid={false} />)
 
-    // Should show select dropdown with default value
     const selectTrigger = screen.getByRole("combobox", { name: /trigger deadline/i })
     expect(selectTrigger).toBeInTheDocument()
     
-    // Click to open dropdown and check options
     fireEvent.click(selectTrigger)
     
     expect(screen.getByRole("option", { name: "1 week" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1 month" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1 year" })).toBeInTheDocument()
     
-    // Should show upgrade message
-    expect(screen.getByText(/upgrade to set custom intervals/i)).toBeInTheDocument()
+    expect(screen.getByText(/upgrade to pro for more interval options/i)).toBeInTheDocument()
   })
 
-  it("should show number input for paid users", () => {
+  it("should show select dropdown for paid users with more options", () => {
     render(<NewSecretForm isPaid={true} />)
 
-    // Should show number input
-    const numberInput = screen.getByPlaceholderText("Enter custom days")
-    expect(numberInput).toBeInTheDocument()
-    expect(numberInput).toHaveAttribute("type", "number")
-    expect(numberInput).toHaveAttribute("min", "2")
+    const selectTrigger = screen.getByRole("combobox", { name: /trigger deadline/i })
+    expect(selectTrigger).toBeInTheDocument()
     
-    // Should show custom message
-    expect(screen.getByText(/minimum 2 days/i)).toBeInTheDocument()
+    fireEvent.click(selectTrigger)
+    
+    expect(screen.getByRole("option", { name: "1 day" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "3 days" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1 week" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "3 years" })).toBeInTheDocument()
   })
 }) 

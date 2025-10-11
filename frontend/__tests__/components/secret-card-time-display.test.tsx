@@ -21,21 +21,32 @@ const createMockSecret = (overrides?: Partial<Secret>): Secret => {
     recipientName: "John Doe",
     recipientEmail: "john@example.com",
     recipientPhone: "+1234567890",
+    recipients: [
+      {
+        id: "recipient-1",
+        secretId: "123",
+        name: "John Doe",
+        email: "john@example.com",
+        phone: "+1234567890",
+        isPrimary: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+    ],
     status: "active",
-    nextCheckIn: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    lastCheckIn: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    nextCheckIn: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    lastCheckIn: new Date(Date.now() - 24 * 60 * 60 * 1000),
     triggeredAt: null,
     serverShare: "encrypted-share-data",
     userId: "user-123",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
     checkInDays: 7,
     contactMethod: "email",
     authTag: "auth-tag-data",
     iv: "iv-data",
     sssSharesTotal: 3,
     sssThreshold: 2,
-    triggeredAt: null,
   }
   return { ...baseSecret, ...overrides }
 }

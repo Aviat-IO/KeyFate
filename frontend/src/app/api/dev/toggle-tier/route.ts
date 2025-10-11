@@ -83,7 +83,7 @@ export async function POST() {
       const [newProTier] = await db.insert(subscriptionTiers).values({
         name: "pro",
         displayName: "Pro",
-        maxSecrets: 100,
+        maxSecrets: 10,
         maxRecipientsPerSecret: 5,
         customIntervals: true,
         priceMonthly: "9.99",
