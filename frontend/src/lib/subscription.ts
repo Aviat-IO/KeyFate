@@ -1,4 +1,4 @@
-import { eq, count, and } from "drizzle-orm";
+import { eq, count, and, inArray } from "drizzle-orm";
 import { getTierConfig } from "../constants/tiers";
 import {
   SubscriptionTier,
@@ -147,48 +147,51 @@ export async function calculateUserUsage(userId: string) {
       .where(
         and(
           eq(secrets.userId, userId),
-          eq(secrets.status, "active")
+          inArray(secrets.status, ["active", "paused"])
         )
       );
 
-    const activeSecretsCount = result?.secrets_count ?? 0;
+    const countableSecretsCount = result?.secrets_count ?? 0;
 
-    const activeSecretIds = await db
+    const countableSecretIds = await db
       .select({ id: secrets.id })
       .from(secrets)
       .where(
         and(
           eq(secrets.userId, userId),
-          eq(secrets.status, "active")
+          inArray(secrets.status, ["active", "paused"])
         )
       );
 
-    if (activeSecretIds.length === 0) {
+    if (countableSecretIds.length === 0) {
       return {
         secrets_count: 0,
         total_recipients: 0,
       };
     }
 
-    const secretIdList = activeSecretIds.map(s => s.id);
+    const secretIdList = countableSecretIds.map(s => s.id);
+    
+    if (secretIdList.length === 0) {
+      return {
+        secrets_count: 0,
+        total_recipients: 0,
+      };
+    }
     
     const recipients = await db
       .select({
         email: secretRecipients.email,
       })
       .from(secretRecipients)
-      .where(
-        secretIdList.length > 0 
-          ? (db as any).sql`${secretRecipients.secretId} = ANY(${secretIdList})`
-          : (db as any).sql`false`
-      );
+      .where(inArray(secretRecipients.secretId, secretIdList));
 
     const uniqueRecipients = new Set(
       recipients.map(r => r.email).filter((email): email is string => email !== null)
     );
 
     return {
-      secrets_count: activeSecretsCount,
+      secrets_count: countableSecretsCount,
       total_recipients: uniqueRecipients.size,
     };
   } catch (error) {

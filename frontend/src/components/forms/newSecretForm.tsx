@@ -533,9 +533,11 @@ export function NewSecretForm({ isPaid = false, tierInfo }: NewSecretFormProps) 
             </Accordion>
           </div>
 
-          <Button type="submit" disabled={isSubmitting} className="w-full">
+          <Button type="submit" disabled={isSubmitting || isAtLimit} className="w-full">
             {isSubmitting
               ? "Processing & Encrypting..."
+              : isAtLimit
+              ? "Secret Limit Reached - Upgrade Required"
               : "Create Secret & Proceed to Share Management"}
           </Button>
         </form>

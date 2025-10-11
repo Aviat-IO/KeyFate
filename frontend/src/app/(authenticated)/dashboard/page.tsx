@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LoadingIndicator } from "@/components/ui/loading-indicator"
 import { DashboardService, DashboardTimeoutError } from "@/lib/dashboard/dashboard-service"
+import { getUserTierInfo } from "@/lib/subscription"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { Suspense } from "react"
@@ -42,6 +43,9 @@ async function SecretsLoader() {
     console.log("[Dashboard] User authenticated:", user.id)
     console.log("[Dashboard] Secrets loaded:", secrets?.length || 0, "secrets found")
     
+    const tierInfo = await getUserTierInfo(user.id)
+    const canCreateSecret = tierInfo?.limits.secrets.canCreate ?? false
+    
     if (!secrets || secrets.length === 0) {
       console.log("[Dashboard] No secrets found, showing empty state")
       return (
@@ -55,9 +59,14 @@ async function SecretsLoader() {
                 You haven't created any secrets yet. Get started by creating
                 your first dead man's switch.
               </p>
-              <Button asChild>
+              <Button asChild disabled={!canCreateSecret}>
                 <Link href="/secrets/new">Create Your First Secret</Link>
               </Button>
+              {!canCreateSecret && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  You've reached your secret limit. Upgrade to Pro to create more secrets.
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -175,15 +184,47 @@ function LoadingSkeleton() {
   )
 }
 
-export default async function DashboardPage() {
-  return (
-    <div className="mx-auto py-8 sm:px-4">
+async function DashboardHeader() {
+  const result = await DashboardService.loadDashboardData()
+  
+  if (!result.success || !result.data) {
+    return (
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-bold">Your Secrets</h1>
         <Button asChild variant="outline">
           <Link href="/secrets/new">Create New Secret</Link>
         </Button>
       </div>
+    )
+  }
+
+  const { user } = result.data
+  const tierInfo = await getUserTierInfo(user.id)
+  const canCreateSecret = tierInfo?.limits.secrets.canCreate ?? false
+
+  return (
+    <div className="mb-6 flex items-center justify-between">
+      <h1 className="text-3xl font-bold">Your Secrets</h1>
+      <Button asChild variant="outline" disabled={!canCreateSecret}>
+        <Link href={canCreateSecret ? "/secrets/new" : "#"}>
+          {canCreateSecret ? "Create New Secret" : "Secret Limit Reached"}
+        </Link>
+      </Button>
+    </div>
+  )
+}
+
+export default async function DashboardPage() {
+  return (
+    <div className="mx-auto py-8 sm:px-4">
+      <Suspense fallback={
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Your Secrets</h1>
+          <Button variant="outline" disabled>Loading...</Button>
+        </div>
+      }>
+        <DashboardHeader />
+      </Suspense>
 
       <Suspense fallback={<LoadingSkeleton />}>
         <SecretsLoader />
