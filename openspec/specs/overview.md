@@ -23,9 +23,10 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 
 ## High-Level Architecture
 
-- **Frontend:** Next.js App Router, React, TailwindCSS, Shadcn/UI. Modular components, server components preferred, minimal client-side state.
-- **Backend:** Supabase (Postgres DB, Auth, Edge Functions, migrations). Edge Functions handle reminders, check-ins, secret processing.
-- **API:** Serverless routes for check-in, secret management, and recipient notification.
+- **Frontend:** Next.js 15 App Router, React, TypeScript, TailwindCSS, Shadcn/UI. Modular components, server components preferred, minimal client-side state.
+- **Backend:** PostgreSQL 16 (Cloud SQL), Drizzle ORM, NextAuth.js v4 for authentication
+- **Infrastructure:** Google Cloud Platform (Cloud Run, Cloud SQL), Docker, Terraform/Terragrunt
+- **API:** Next.js API routes for check-in, secret management, and recipient notification.
 
 ## Security Positioning
 
@@ -43,15 +44,17 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 
 ## Directory Structure (Key Folders)
 
-- `frontend/`: Next.js app, components, pages, API routes, styles.
-- `supabase/`: Edge Functions, migrations, database schema.
-- `db/`: Database utilities or scripts.
-- `docs/`: Documentation.
-- `scripts/`: Automation and dev scripts.
+- `frontend/`: Next.js app, components, pages, API routes, styles, tests
+- `infrastructure/`: Terraform/Terragrunt IaC for GCP deployment
+- `database/`: Database initialization and migration scripts
+- `btcpayserver/`: BTCPay Server integration for Bitcoin payments
+- `scripts/`: Automation and dev scripts
+- `openspec/`: OpenSpec change proposals and project documentation
+- `memory-bank/`: Alternative documentation storage (not read by OpenSpec)
 
 ## Future Work
 
-- Terms of Service and Privacy Policy.
+- Terms of Service and Privacy Policy (legal review pending).
 - SMS reminders and recipient verification.
 - 3rd-party security audit.
 - Enhanced B2B features and integrations.
