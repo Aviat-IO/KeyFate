@@ -59,14 +59,9 @@ async function SecretsLoader() {
                 You haven't created any secrets yet. Get started by creating
                 your first dead man's switch.
               </p>
-              <Button asChild disabled={!canCreateSecret}>
+              <Button asChild>
                 <Link href="/secrets/new">Create Your First Secret</Link>
               </Button>
-              {!canCreateSecret && (
-                <p className="text-sm text-muted-foreground mt-2">
-                  You've reached your secret limit. Upgrade to Pro to create more secrets.
-                </p>
-              )}
             </CardContent>
           </Card>
         </div>
@@ -205,10 +200,8 @@ async function DashboardHeader() {
   return (
     <div className="mb-6 flex items-center justify-between">
       <h1 className="text-3xl font-bold">Your Secrets</h1>
-      <Button asChild variant="outline" disabled={!canCreateSecret}>
-        <Link href={canCreateSecret ? "/secrets/new" : "#"}>
-          {canCreateSecret ? "Create New Secret" : "Secret Limit Reached"}
-        </Link>
+      <Button asChild variant="outline">
+        <Link href="/secrets/new">Create New Secret</Link>
       </Button>
     </div>
   )
