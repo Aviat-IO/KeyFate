@@ -33,7 +33,7 @@ export function NavBar() {
   useEffect(() => {
     async function fetchUserTier() {
       if (!user?.id) return
-      
+
       setCheckingSubscription(true)
       try {
         const response = await fetch("/api/user/subscription")
@@ -102,7 +102,7 @@ export function NavBar() {
               <>
                 <DevTierToggle currentTier={userTier} />
                 {!checkingSubscription && !isProUser && (
-                  <Button asChild>
+                  <Button variant="outline" asChild className="border-primary hover:bg-primary hover:text-primary-foreground">
                     <Link href="/pricing">Upgrade to Pro</Link>
                   </Button>
                 )}
@@ -214,8 +214,9 @@ export function NavBar() {
                       </div>
                       {!checkingSubscription && !isProUser && (
                         <Button
+                          variant="outline"
                           asChild
-                          className="h-12 justify-start"
+                          className="h-12 justify-start border-primary hover:bg-primary hover:text-primary-foreground"
                           onClick={handleMobileMenuItemClick}
                         >
                           <Link href="/pricing">Upgrade to Pro</Link>
