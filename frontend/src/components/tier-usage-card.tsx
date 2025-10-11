@@ -23,11 +23,11 @@ export function TierUsageCard({
 }: TierUsageCardProps) {
   const percentageUsed = (secretsUsed / secretsLimit) * 100
   const isAtLimit = secretsUsed >= secretsLimit
-  
+
   const getProgressColor = () => {
-    if (percentageUsed >= 100) return "bg-red-500 dark:bg-red-600"
-    if (percentageUsed >= 90) return "bg-red-400 dark:bg-red-500"
-    if (percentageUsed >= 75) return "bg-yellow-500 dark:bg-yellow-600"
+    if (percentageUsed >= 100) return "bg-destructive"
+    if (percentageUsed >= 90) return "bg-destructive/80"
+    if (percentageUsed >= 75) return "bg-muted-foreground"
     return ""
   }
 
@@ -36,7 +36,10 @@ export function TierUsageCard({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Your Plan</CardTitle>
-          <Badge variant={tier === "pro" ? "default" : "outline"} className="gap-1">
+          <Badge
+            variant={tier === "pro" ? "default" : "outline"}
+            className="gap-1"
+          >
             {tier === "pro" && <Crown className="h-3 w-3" />}
             {tier === "free" ? "Free" : "Pro"}
           </Badge>
@@ -44,14 +47,14 @@ export function TierUsageCard({
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <div className="flex items-center justify-between text-sm mb-2">
+          <div className="mb-2 flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Secrets Used</span>
             <span className="font-medium">
               {secretsUsed} of {secretsLimit}
             </span>
           </div>
-          <Progress 
-            value={percentageUsed} 
+          <Progress
+            value={percentageUsed}
             className="h-2"
             indicatorClassName={getProgressColor()}
           />
@@ -61,7 +64,8 @@ export function TierUsageCard({
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              You've reached your {tier === "free" ? "free tier" : "plan"} limit.
+              You've reached your {tier === "free" ? "free tier" : "plan"}{" "}
+              limit.
               {tier === "free" && " Upgrade to Pro to create more secrets."}
             </AlertDescription>
           </Alert>
@@ -69,16 +73,16 @@ export function TierUsageCard({
 
         {tier === "free" && (
           <div className="space-y-2">
-            <div className="text-sm text-muted-foreground">
+            <div className="text-muted-foreground text-sm">
               Upgrade to Pro for:
             </div>
-            <ul className="text-sm space-y-1 ml-4">
+            <ul className="ml-4 space-y-1 text-sm">
               <li>• 10 secrets (vs 1)</li>
               <li>• 5 recipients per secret</li>
               <li>• Custom check-in intervals</li>
               <li>• Message templates</li>
             </ul>
-            <Button asChild className="w-full mt-4">
+            <Button asChild className="mt-4 w-full">
               <Link href="/pricing">
                 <Crown className="mr-2 h-4 w-4" />
                 Upgrade to Pro
@@ -88,7 +92,7 @@ export function TierUsageCard({
         )}
 
         {tier === "pro" && canCreateMore && (
-          <div className="text-sm text-muted-foreground text-center pt-2">
+          <div className="text-muted-foreground pt-2 text-center text-sm">
             You can create {secretsLimit - secretsUsed} more secret
             {secretsLimit - secretsUsed === 1 ? "" : "s"}
           </div>

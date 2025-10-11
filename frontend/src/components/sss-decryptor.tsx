@@ -160,10 +160,10 @@ export function SssDecryptor({ initialShares = [] }: SssDecryptorProps) {
         <div>
           <h2 className="mb-2 text-xl font-semibold">Enter Your Shares</h2>
           <p className="text-muted-foreground text-sm">
-            Enter your {config?.company || "KeyFate"} shares below. You need a minimum
-            number of correct shares (as per the threshold set during creation)
-            to recover the original secret (shares are typically hexadecimal
-            strings).
+            Enter your {config?.company || "KeyFate"} shares below. You need a
+            minimum number of correct shares (as per the threshold set during
+            creation) to recover the original secret (shares are typically
+            hexadecimal strings).
           </p>
         </div>
 
@@ -230,16 +230,13 @@ export function SssDecryptor({ initialShares = [] }: SssDecryptorProps) {
         )}
 
         {recoveredSecret && (
-          <Alert
-            variant="default"
-            className="border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-900/30"
-          >
-            <ShieldCheck className="h-4 w-4 text-green-600 dark:text-green-400" />
-            <AlertTitle className="text-green-700 dark:text-green-300">
+          <Alert variant="default" className="border-accent bg-accent/50">
+            <ShieldCheck className="text-accent-foreground h-4 w-4" />
+            <AlertTitle className="text-accent-foreground">
               Secret Recovered Successfully!
             </AlertTitle>
             <AlertDescription className="space-y-2">
-              <p className="text-green-800 dark:text-green-200">
+              <p className="text-accent-foreground/90">
                 Your original secret is:
               </p>
               <Textarea
@@ -252,11 +249,7 @@ export function SssDecryptor({ initialShares = [] }: SssDecryptorProps) {
                 type="button"
                 variant={isCopied ? "default" : "outline"}
                 size="sm"
-                className={`mt-2 transition-all duration-200 ${
-                  isCopied
-                    ? "border-green-600 bg-green-600 text-white hover:bg-green-700"
-                    : ""
-                }`}
+                className="mt-2 transition-all duration-200"
                 onClick={handleCopySecret}
                 disabled={isCopied}
               >

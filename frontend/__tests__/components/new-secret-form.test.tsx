@@ -50,7 +50,6 @@ describe("NewSecretForm", () => {
       expect(screen.getByRole("option", { name: "1 year" })).toBeInTheDocument()
     })
   })
-  })
 
   it("should show validation error for SSS threshold when it exceeds total shares", async () => {
     render(<NewSecretForm />)
@@ -152,4 +151,4 @@ describe("NewSecretForm", () => {
     expect(screen.getByRole("option", { name: "1 week" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "3 years" })).toBeInTheDocument()
   })
-}) 
+})

@@ -63,13 +63,15 @@ function ShareDisplay({
           aria-label={`Copy ${shareName}`}
         >
           {copied ? (
-            <CheckCircle className="h-4 w-4 text-green-500" />
+            <CheckCircle className="text-accent-foreground h-4 w-4" />
           ) : (
             <Copy className="h-4 w-4" />
           )}
         </Button>
       </div>
-      {copied && <p className="text-xs text-green-600">Copied to clipboard!</p>}
+      {copied && (
+        <p className="text-accent-foreground text-xs">Copied to clipboard!</p>
+      )}
       <p className="text-muted-foreground text-xs">
         This is {shareName}. Store it securely. You will need it along with
         other shares to recover the secret.
@@ -83,7 +85,9 @@ function ShareInstructionsContent() {
   const searchParams = useSearchParams()
 
   const [userManagedShares, setUserManagedShares] = useState<string[]>([])
-  const [recipients, setRecipients] = useState<Array<{name: string, email?: string | null}>>([])
+  const [recipients, setRecipients] = useState<
+    Array<{ name: string; email?: string | null }>
+  >([])
   const [sssSharesTotal, setSssSharesTotal] = useState<number>(0)
   const [sssThreshold, setSssThreshold] = useState<number>(0)
   const [secretId, setSecretId] = useState<string | null>(null)
@@ -104,7 +108,7 @@ function ShareInstructionsContent() {
       return
     }
 
-    let parsedRecipients: Array<{name: string, email?: string | null}> = []
+    let parsedRecipients: Array<{ name: string; email?: string | null }> = []
     if (recipientsParam) {
       try {
         parsedRecipients = JSON.parse(decodeURIComponent(recipientsParam))
@@ -161,27 +165,29 @@ function ShareInstructionsContent() {
   }
 
   const isMinimalShares = sssSharesTotal === 2
-  const primaryRecipient = recipients.find(r => r) || null
-  
+
   const getRecipientShareInfo = () => {
     if (isMinimalShares) {
       return recipients.map((recipient, idx) => ({
         recipient,
         share: userManagedShares[idx] || null,
-        shareNumber: idx + 2
+        shareNumber: idx + 2,
       }))
     } else {
       return recipients.map((recipient, idx) => ({
         recipient,
         share: userManagedShares[idx + 1] || null,
-        shareNumber: idx + 3
+        shareNumber: idx + 3,
       }))
     }
   }
 
   const recipientSharesInfo = getRecipientShareInfo()
-  
-  const createMailto = (recipient: {name: string, email?: string | null}, share: string) => {
+
+  const createMailto = (
+    recipient: { name: string; email?: string | null },
+    share: string,
+  ) => {
     if (!recipient.email || !share) return null
     const subject = encodeURIComponent("Your KeyFate Secret Share")
     const bodyParts = [
@@ -244,41 +250,36 @@ function ShareInstructionsContent() {
             <AlertDescription>
               <ul className="mt-2 list-disc space-y-1 pl-5">
                 <li>
-                  <strong>
-                    KeyFate's Share (Share 1 of {sssSharesTotal}):
-                  </strong>{" "}
-                  We securely store one share. This share alone cannot reveal
-                  your secret. It will be sent to your recipients if you miss your
+                  <strong>KeyFate's Share (Share 0):</strong> We securely store
+                  one share. This share alone cannot reveal your secret. It will
+                  be automatically sent to ALL recipients if you miss your
                   check-ins.
                 </li>
                 {isMinimalShares ? (
                   <li>
-                    <strong>
-                      Recipient Shares (Shares 2-{sssSharesTotal} of {sssSharesTotal}):
-                    </strong>{" "}
-                    Displayed below. Each recipient gets one share. You MUST send
-                    these to them. With only {sssSharesTotal} shares total, both KeyFate's share
-                    and the recipient shares are required to recover the secret.
+                    <strong>Recipient Share (Share 1):</strong> Displayed below.
+                    ALL recipients receive the SAME share. You MUST distribute
+                    this share to each recipient separately via your own secure
+                    channel. With only {sssSharesTotal} shares total, both
+                    KeyFate's share and the recipient share are required to
+                    recover the secret.
                   </li>
                 ) : (
                   <>
                     <li>
+                      <strong>Recipient Share (Share 1):</strong> ALL recipients
+                      receive the SAME share. You MUST distribute this share to
+                      each recipient separately via your own secure channel.{" "}
                       <strong>
-                        Your Personal Share (Share 2 of {sssSharesTotal}):
-                      </strong>{" "}
-                      Displayed below as the first share in the list.
-                      Keep this share extremely safe and private.{" "}
-                      <strong>
-                        If you lose this, and other required shares are lost,
-                        the secret may be unrecoverable.
+                        This share never touches KeyFate servers after creation.
                       </strong>
                     </li>
                     <li>
                       <strong>
-                        Recipient Shares (Shares 3-{sssSharesTotal} of {sssSharesTotal}):
+                        Backup Shares (Shares 2-{sssSharesTotal - 1}):
                       </strong>{" "}
-                      Displayed below. Each recipient gets one share. You MUST
-                      send these to them securely.
+                      Additional shares for redundancy. Store these securely
+                      offline (paper wallet, password manager, etc.).
                     </li>
                   </>
                 )}
@@ -288,89 +289,148 @@ function ShareInstructionsContent() {
 
           <Separator />
 
-          {!isMinimalShares && userManagedShares[0] && (
-            <>
-              <ShareDisplay
-                shareHex={userManagedShares[0]}
-                shareNumber={2}
-                shareName="Your Personal Share"
-              />
-              <Separator />
-            </>
-          )}
+          <Alert variant="default" className="bg-muted/50">
+            <Info className="h-4 w-4" />
+            <AlertTitle>Equal Share Distribution</AlertTitle>
+            <AlertDescription>
+              <p className="mb-2">
+                All {recipients.length} recipient
+                {recipients.length > 1 ? "s" : ""} receive the{" "}
+                <strong>SAME</strong> share (Share 1). This prevents recipients
+                from reconstructing the secret before KeyFate sends Share 0.
+              </p>
+              <p>
+                You must distribute Share 1 to each recipient separately using
+                your own secure channels (encrypted messaging, in person, etc.).
+                This share never touches KeyFate servers after creation.
+              </p>
+            </AlertDescription>
+          </Alert>
 
-          {recipientSharesInfo.map((info, index) => (
-            <div key={`recipient-${index}`} className="space-y-6">
-              {index > 0 && <Separator />}
-              <div className="space-y-2">
-                <ShareDisplay
-                  shareHex={info.share}
-                  shareNumber={info.shareNumber}
-                  shareName={`${info.recipient.name}'s Share`}
-                />
-                {info.recipient.email && info.share && (
-                  <Button 
-                    asChild 
-                    variant="outline" 
-                    className="w-full"
-                  >
+          <Separator />
+
+          <div className="space-y-2">
+            <ShareDisplay
+              shareHex={userManagedShares[0]}
+              shareNumber={1}
+              shareName={`For ALL Recipients (${recipients.map((r) => r.name).join(", ")})`}
+            />
+            <Alert variant="default" className="mt-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Critical:</strong> You must send this exact share to
+                each recipient individually. When your secret triggers, KeyFate
+                will automatically send Share 0 to all recipients. Recipients
+                combine Share 0 (from KeyFate) + Share 1 (from you) to
+                reconstruct the secret.
+              </AlertDescription>
+            </Alert>
+          </div>
+
+          <Separator />
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Distribution Checklist</h3>
+            {recipients.map((recipient, index) => (
+              <div
+                key={`checklist-${index}`}
+                className="flex items-start gap-3 rounded-lg border p-3"
+              >
+                <div className="flex-1">
+                  <p className="font-medium">{recipient.name}</p>
+                  <p className="text-muted-foreground text-sm">
+                    {recipient.email || "No email provided"}
+                  </p>
+                </div>
+                {recipient.email && (
+                  <Button asChild variant="outline" size="sm">
                     <a
-                      href={createMailto(info.recipient, info.share) || "#"}
+                      href={
+                        createMailto(recipient, userManagedShares[0]) || "#"
+                      }
                       target="_blank"
                       rel="noopener noreferrer"
                     >
                       <Send className="mr-2 h-4 w-4" />
-                      Email to {info.recipient.name}
+                      Email Share
                     </a>
                   </Button>
                 )}
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+
+          {!isMinimalShares && userManagedShares.length > 1 && (
+            <>
+              <Separator />
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">
+                  Backup Shares (Optional Redundancy)
+                </h3>
+                <p className="text-muted-foreground text-sm">
+                  These additional shares provide redundancy. Store them
+                  securely offline.
+                </p>
+                {userManagedShares.slice(1).map((share, index) => (
+                  <ShareDisplay
+                    key={`backup-${index}`}
+                    shareHex={share}
+                    shareNumber={index + 2}
+                    shareName={`Backup Share ${index + 1}`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
 
           <Separator />
 
           <Alert variant="destructive" className="mt-6">
             <AlertTriangle className="mt-0.5 h-5 w-5" />
             <AlertTitle className="text-lg">
-              CRITICAL: Securely Distribute Shares!
+              CRITICAL: YOU Must Distribute Share 1!
             </AlertTitle>
             <AlertDescription className="text-foreground space-y-3">
               <p>
-                For this system to work, you <strong>MUST</strong> take the
-                following actions:
+                For this dead man's switch to work, you <strong>MUST</strong>{" "}
+                distribute Share 1 to each recipient via your own secure
+                channel:
               </p>
               <ul className="list-disc space-y-1 pl-6">
-                {!isMinimalShares && (
-                  <li>
-                    <strong>Your Personal Share:</strong> Keep this share
-                    extremely safe and private.
-                  </li>
-                )}
-                {recipientSharesInfo.map((info, idx) => (
-                  <li key={`instruction-${idx}`}>
-                    <strong>{info.recipient.name}'s Share:</strong> Securely send this to{" "}
-                    {info.recipient.name} ({info.recipient.email || "their contact"}).
+                {recipients.map((recipient, idx) => (
+                  <li key={`critical-${idx}`}>
+                    <strong>{recipient.name}:</strong> Send Share 1 to{" "}
+                    {recipient.email || "their secure contact"} using encrypted
+                    messaging, password manager sharing, or in person
                   </li>
                 ))}
               </ul>
               <p>
-                Without the necessary shares, recipients will NOT be able to
-                recover the secret even if KeyFate sends its share.
-              </p>
-              <p>
-                <strong>How to send shares securely:</strong>
+                <strong>What happens when triggered:</strong>
               </p>
               <ul className="list-disc space-y-1 pl-6">
-                <li>Use a secure messaging app with end-to-end encryption.</li>
+                <li>KeyFate automatically sends Share 0 to all recipients</li>
                 <li>
-                  Encrypt them in a file and share the file + password
-                  separately.
+                  Recipients combine Share 0 (from KeyFate) + Share 1 (from you)
+                  = reconstructed secret
                 </li>
-                <li>Provide them in person.</li>
                 <li>
-                  If you use the email buttons above, ensure the recipients' 
-                  email accounts are secure.
+                  If recipients don't have Share 1, they CANNOT recover the
+                  secret
+                </li>
+              </ul>
+              <p>
+                <strong>Secure distribution methods:</strong>
+              </p>
+              <ul className="list-disc space-y-1 pl-6">
+                <li>
+                  Signal, Telegram, or other end-to-end encrypted messaging apps
+                </li>
+                <li>Password manager secure sharing (1Password, Bitwarden)</li>
+                <li>Encrypted file (PGP, age) sent separately from password</li>
+                <li>In-person handoff (paper, QR code, USB drive)</li>
+                <li>
+                  Email (use buttons above) - ensure recipient email is secure
                 </li>
               </ul>
             </AlertDescription>
@@ -389,7 +449,8 @@ function ShareInstructionsContent() {
               htmlFor="confirm-sent"
               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
-              I have securely distributed all necessary shares as instructed and understand their importance.
+              I have securely distributed all necessary shares as instructed and
+              understand their importance.
             </Label>
           </div>
         </CardContent>

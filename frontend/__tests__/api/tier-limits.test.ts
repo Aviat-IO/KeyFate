@@ -70,7 +70,7 @@ describe('Tier Limits - Free Tier Secret Limit', () => {
 
       const requestBody = {
         title: 'First Secret',
-        recipients: [{ name: 'John Doe', email: 'john@example.com', isPrimary: true }],
+        recipients: [{ name: 'John Doe', email: 'john@example.com' }],
         check_in_days: 7,
         server_share: 'test-share',
         sss_shares_total: 3,
@@ -113,7 +113,7 @@ describe('Tier Limits - Free Tier Secret Limit', () => {
 
       const requestBody = {
         title: 'Second Secret',
-        recipients: [{ name: 'Jane Doe', email: 'jane@example.com', isPrimary: true }],
+        recipients: [{ name: 'Jane Doe', email: 'jane@example.com' }],
         check_in_days: 7,
         server_share: 'test-share',
         sss_shares_total: 3,
@@ -174,7 +174,7 @@ describe('Tier Limits - Free Tier Secret Limit', () => {
 
       const requestBody = {
         title: 'New Active Secret',
-        recipients: [{ name: 'John Doe', email: 'john@example.com', isPrimary: true }],
+        recipients: [{ name: 'John Doe', email: 'john@example.com' }],
         check_in_days: 7,
         server_share: 'test-share',
         sss_shares_total: 3,

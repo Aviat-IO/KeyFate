@@ -237,12 +237,12 @@ export function EmailVerificationPageNextAuth() {
           <CardContent className="pt-6">
             <div className="space-y-4 text-center">
               <CheckCircle2
-                className="mx-auto h-16 w-16 text-green-600"
+                className="text-accent-foreground mx-auto h-16 w-16"
                 aria-label="Success checkmark"
                 role="img"
               />
               <div>
-                <h1 className="text-lg font-semibold text-green-600">
+                <h1 className="text-accent-foreground text-lg font-semibold">
                   Email Verified!
                 </h1>
                 <p className="text-muted-foreground text-sm">
@@ -260,12 +260,12 @@ export function EmailVerificationPageNextAuth() {
   return (
     <div
       data-testid="verification-container"
-      className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-16"
+      className="flex min-h-screen items-center justify-center bg-secondary px-4 py-16"
     >
       <Card className="w-full max-w-md" data-testid="verification-card">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-            <Mail className="h-6 w-6 text-blue-600" />
+          <div className="bg-muted mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+            <Mail className="text-muted-foreground h-6 w-6" />
           </div>
           <h1 className="text-card-foreground text-2xl font-bold">
             Verify your email address
@@ -290,7 +290,7 @@ export function EmailVerificationPageNextAuth() {
           </Alert>
 
           <div className="space-y-4 text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Please check your email at{" "}
               <span className="font-medium">{email}</span> and click the
               verification link.
@@ -343,7 +343,7 @@ export function EmailVerificationPageNextAuth() {
             <Button
               onClick={() => router.push("/sign-in")}
               variant="ghost"
-              className="w-full text-gray-600"
+              className="w-full text-muted-foreground"
               tabIndex={0}
             >
               Back to sign in

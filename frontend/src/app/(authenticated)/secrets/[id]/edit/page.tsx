@@ -30,14 +30,12 @@ export default async function EditSecretPage({ params }: EditSecretPageProps) {
         ? secret.recipients.map(r => ({
             name: r.name,
             email: r.email || "",
-            phone: r.phone || "",
-            isPrimary: r.isPrimary,
+            phone: r.phone || ""
           }))
         : [{
             name: "",
             email: "",
-            phone: "",
-            isPrimary: true,
+            phone: ""
           }],
       check_in_days: secret.checkInDays,
     }

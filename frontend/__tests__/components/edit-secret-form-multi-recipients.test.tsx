@@ -45,8 +45,8 @@ describe("EditSecretForm - Multiple Recipients", () => {
     const initialData = {
       title: "Test Secret",
       recipients: [
-        { name: "John Doe", email: "john@example.com", phone: "", isPrimary: true },
-        { name: "Jane Smith", email: "jane@example.com", phone: "", isPrimary: false },
+        { name: "John Doe", email: "john@example.com", phone: "" },
+        { name: "Jane Smith", email: "jane@example.com", phone: "" },
       ],
       check_in_days: 30,
     }
@@ -63,7 +63,7 @@ describe("EditSecretForm - Multiple Recipients", () => {
     const initialData = {
       title: "Test Secret",
       recipients: [
-        { name: "John Doe", email: "john@example.com", phone: "", isPrimary: true },
+        { name: "John Doe", email: "john@example.com", phone: "" },
       ],
       check_in_days: 30,
     }
@@ -82,8 +82,8 @@ describe("EditSecretForm - Multiple Recipients", () => {
     const initialData = {
       title: "Test Secret",
       recipients: [
-        { name: "John Doe", email: "john@example.com", phone: "", isPrimary: true },
-        { name: "Jane Smith", email: "jane@example.com", phone: "", isPrimary: false },
+        { name: "John Doe", email: "john@example.com", phone: "" },
+        { name: "Jane Smith", email: "jane@example.com", phone: "" },
       ],
       check_in_days: 30,
     }
@@ -108,8 +108,8 @@ describe("EditSecretForm - Multiple Recipients", () => {
     const initialData = {
       title: "Test Secret",
       recipients: [
-        { name: "John Doe", email: "john@example.com", phone: "", isPrimary: true },
-        { name: "Jane Smith", email: "jane@example.com", phone: "", isPrimary: false },
+        { name: "John Doe", email: "john@example.com", phone: "" },
+        { name: "Jane Smith", email: "jane@example.com", phone: "" },
       ],
       check_in_days: 30,
     }
@@ -130,7 +130,7 @@ describe("EditSecretForm - Multiple Recipients", () => {
     const initialData = {
       title: "Test Secret",
       recipients: [
-        { name: "John Doe", email: "john@example.com", phone: "", isPrimary: false },
+        { name: "John Doe", email: "john@example.com", phone: "" },
       ],
       check_in_days: 30,
     }
@@ -157,8 +157,8 @@ describe("EditSecretForm - Multiple Recipients", () => {
     const initialData = {
       title: "Test Secret",
       recipients: [
-        { name: "John Doe", email: "john@example.com", phone: "", isPrimary: true },
-        { name: "Jane Smith", email: "jane@example.com", phone: "+1234567890", isPrimary: false },
+        { name: "John Doe", email: "john@example.com", phone: "" },
+        { name: "Jane Smith", email: "jane@example.com", phone: "+1234567890" },
       ],
       check_in_days: 30,
     }
@@ -181,8 +181,6 @@ describe("EditSecretForm - Multiple Recipients", () => {
     const requestBody = JSON.parse(mockFetch.mock.calls[0][1].body)
     expect(requestBody.recipients).toHaveLength(2)
     expect(requestBody.recipients[0].name).toBe("John Doe")
-    expect(requestBody.recipients[0].isPrimary).toBe(true)
     expect(requestBody.recipients[1].name).toBe("Jane Smith")
-    expect(requestBody.recipients[1].isPrimary).toBe(false)
   })
 })

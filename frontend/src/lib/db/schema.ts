@@ -92,7 +92,6 @@ export const secretRecipients = pgTable("secret_recipients", {
   name: text("name").notNull(),
   email: text("email"),
   phone: text("phone"),
-  isPrimary: boolean("is_primary").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

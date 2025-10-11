@@ -57,7 +57,7 @@ export default async function ViewSecretPage({ params }: ViewSecretPageProps) {
     //   .eq("user_id", user.id)
     //   .order("checked_in_at", { ascending: false })
 
-    const primaryRecipient = secret.recipients.find(r => r.isPrimary) || secret.recipients[0]
+    const firstRecipient = secret.recipients[0]
 
     // Get status icon and color
     const getStatusInfo = () => {
@@ -65,7 +65,7 @@ export default async function ViewSecretPage({ params }: ViewSecretPageProps) {
       if (secret.triggeredAt || secret.status === "triggered") {
         return {
           icon: AlertCircle,
-          color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+          color: "bg-destructive/10 text-destructive",
           label: "sent",
         }
       }
@@ -74,22 +74,19 @@ export default async function ViewSecretPage({ params }: ViewSecretPageProps) {
         case "active":
           return {
             icon: CheckCircle,
-            color:
-              "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+            color: "bg-accent text-accent-foreground",
             label: "active",
           }
         case "paused":
           return {
             icon: Pause,
-            color:
-              "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
+            color: "bg-muted text-muted-foreground",
             label: "paused",
           }
         default:
           return {
             icon: AlertCircle,
-            color:
-              "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
+            color: "bg-muted text-muted-foreground",
             label: "unknown",
           }
       }
@@ -130,13 +127,15 @@ export default async function ViewSecretPage({ params }: ViewSecretPageProps) {
                 <div className="flex items-start gap-3">
                   <User className="text-muted-foreground mt-0.5 h-4 w-4" />
                   <div className="flex-1">
-                    <p className="text-sm font-medium mb-2">Recipients ({secret.recipients.length})</p>
+                    <p className="mb-2 text-sm font-medium">
+                      Recipients ({secret.recipients.length})
+                    </p>
                     <div className="space-y-2">
                       {secret.recipients.map((recipient) => (
-                        <div key={recipient.id} className="flex items-center gap-2 text-sm">
-                          {recipient.isPrimary && (
-                            <Badge variant="secondary" className="text-xs">Primary</Badge>
-                          )}
+                        <div
+                          key={recipient.id}
+                          className="flex items-center gap-2 text-sm"
+                        >
                           <span className="font-medium">{recipient.name}</span>
                           <span className="text-muted-foreground">•</span>
                           {recipient.email && (
@@ -215,7 +214,7 @@ export default async function ViewSecretPage({ params }: ViewSecretPageProps) {
                       <TableRow key={index}>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            <CheckCircle className="text-accent-foreground h-4 w-4" />
                             {new Date(
                               checkIn.checked_in_at,
                             ).toLocaleDateString()}{" "}

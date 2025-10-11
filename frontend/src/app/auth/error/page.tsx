@@ -39,13 +39,13 @@ export default function AuthErrorPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-indigo-100 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary px-4">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
         <div className="text-center">
           {/* Error Icon */}
-          <div className="mx-auto h-24 w-24 bg-red-100 rounded-full flex items-center justify-center mb-4">
+          <div className="mx-auto h-24 w-24 bg-destructive/10 rounded-full flex items-center justify-center mb-4">
             <svg
-              className="h-12 w-12 text-red-600"
+              className="h-12 w-12 text-destructive"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -59,16 +59,16 @@ export default function AuthErrorPage() {
             </svg>
           </div>
 
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+          <h1 className="text-3xl font-bold text-foreground mb-4">
             Authentication Error
           </h1>
 
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <p className="text-red-800 text-sm">
+          <div className="bg-destructive/10 border border-destructive rounded-lg p-4 mb-6">
+            <p className="text-destructive-foreground text-sm">
               {getErrorMessage()}
             </p>
             {error && (
-              <p className="text-red-600 text-xs mt-2">
+              <p className="text-destructive text-xs mt-2">
                 Error code: {error}
               </p>
             )}
@@ -77,24 +77,24 @@ export default function AuthErrorPage() {
           <div className="space-y-3">
             <Link
               href="/sign-in"
-              className="block w-full py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="block w-full py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-primary to-primary hover:from-primary hover:to-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
             >
               Try signing in again
             </Link>
 
             <Link
               href="/"
-              className="block w-full py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="block w-full py-2 px-4 border border-input rounded-lg shadow-sm text-sm font-medium text-foreground bg-white hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
             >
               Return to home
             </Link>
           </div>
 
-          <p className="mt-6 text-xs text-gray-500">
+          <p className="mt-6 text-xs text-muted-foreground">
             If this error persists, please{" "}
             <Link
               href="/support"
-              className="text-indigo-600 hover:text-indigo-500"
+              className="text-primary hover:text-primary"
             >
               contact support
             </Link>

@@ -36,7 +36,6 @@ interface SecretRecipient {
   name: string
   email: string | null
   phone: string | null
-  isPrimary: boolean
 }
 
 interface Secret {
@@ -210,16 +209,9 @@ export function SecretDetailsForm({ secret }: SecretDetailsFormProps) {
                   key={recipient.id} 
                   className="rounded-lg border p-3 text-sm"
                 >
-                  <div className="mb-2 flex items-center justify-between">
-                    <div className="flex items-center">
-                      <User className="text-muted-foreground mr-2 h-4 w-4" />
-                      <span className="font-medium">{recipient.name}</span>
-                    </div>
-                    {recipient.isPrimary && (
-                      <Badge variant="default" className="text-xs">
-                        Primary
-                      </Badge>
-                    )}
+                  <div className="mb-2 flex items-center">
+                    <User className="text-muted-foreground mr-2 h-4 w-4" />
+                    <span className="font-medium">{recipient.name}</span>
                   </div>
                   <div className="space-y-1 pl-6">
                     {recipient.email && (

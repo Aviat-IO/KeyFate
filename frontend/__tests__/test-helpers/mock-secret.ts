@@ -14,7 +14,6 @@ export function createMockSecret(overrides?: Partial<Secret>): Secret {
         name: "John Doe",
         email: "john@example.com",
         phone: "+1234567890",
-        isPrimary: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       }
@@ -51,7 +50,6 @@ export function createMockApiSecret(overrides?: Record<string, any>): Record<str
         name: "John Doe",
         email: "john@example.com",
         phone: "+1234567890",
-        is_primary: true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }

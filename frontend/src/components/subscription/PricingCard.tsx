@@ -42,7 +42,7 @@ export function PricingCard({
           {isPopular && <Crown className="text-primary h-6 w-6" />}
           <CardTitle className="text-2xl">{title}</CardTitle>
           {isPopular && (
-            <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+            <Badge className="bg-accent/50 text-accent-foreground dark:bg-accent dark:text-accent-foreground">
               Most Popular
             </Badge>
           )}

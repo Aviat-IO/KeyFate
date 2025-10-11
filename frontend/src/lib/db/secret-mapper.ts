@@ -1,5 +1,4 @@
 import type { SecretWithRecipients } from "@/lib/types/secret-types";
-import { getPrimaryRecipient } from "@/lib/types/secret-types";
 
 export type ApiSecret = {
   id: string;
@@ -10,7 +9,6 @@ export type ApiSecret = {
     name: string;
     email: string | null;
     phone: string | null;
-    isPrimary: boolean;
   }>;
   check_in_days: number;
   status: "active" | "paused" | "triggered";
@@ -49,8 +47,7 @@ export function mapDrizzleSecretToApiShape(row: SecretWithRecipients): ApiSecret
       id: r.id,
       name: r.name,
       email: r.email ?? null,
-      phone: r.phone ?? null,
-      isPrimary: r.isPrimary
+      phone: r.phone ?? null
     })),
     check_in_days: row.checkInDays,
     status: row.status,
@@ -79,7 +76,6 @@ export function mapApiSecretToDrizzleShape(apiSecret: ApiSecret): SecretWithReci
       name: r.name,
       email: r.email,
       phone: r.phone,
-      isPrimary: r.isPrimary,
       createdAt: new Date(),
       updatedAt: new Date()
     })),
