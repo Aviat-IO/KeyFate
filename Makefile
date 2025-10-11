@@ -109,7 +109,7 @@ test:
 # Run database migrations
 migrate:
 	@echo "📊 Running database migrations..."
-	@cd frontend && npm run migrate
+	@cd frontend && npm run db:migrate
 	@echo "✅ Migrations complete"
 
 # Seed database with development data

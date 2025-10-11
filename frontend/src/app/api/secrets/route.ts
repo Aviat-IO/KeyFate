@@ -143,34 +143,26 @@ export async function POST(request: NextRequest) {
 
     console.log("Insert data structure:", JSON.stringify(insertData, null, 2));
 
-    // Create the secret
-    let data;
-    try {
-      data = await secretsService.create(insertData as any);
-    } catch (error) {
-      if (error instanceof Error && error.message.includes("recipient")) {
-        console.log("Using robust service due to schema issue");
-        const robustService = new RobustSecretsService(
-          process.env.DATABASE_URL!,
-        );
-        data = await robustService.create(insertData as any);
-      } else {
-        throw error;
-      }
-    }
-
-    // Now insert the recipients
+    // Create the secret and recipients in a transaction to ensure atomicity
     const db = await import("@/lib/db/drizzle").then(m => m.getDatabase());
-    const { secretRecipients } = await import("@/lib/db/schema");
+    const { secrets: secretsTable, secretRecipients } = await import("@/lib/db/schema");
     
-    await db.insert(secretRecipients).values(
-      validatedData.recipients.map((recipient, index) => ({
-        secretId: data.id,
-        name: recipient.name,
-        email: recipient.email,
-        isPrimary: recipient.isPrimary || index === 0,
-      }))
-    );
+    const data = await db.transaction(async (tx) => {
+      // Insert the secret
+      const [newSecret] = await tx.insert(secretsTable).values(insertData as any).returning();
+      
+      // Insert recipients - this MUST succeed or the entire transaction rolls back
+      await tx.insert(secretRecipients).values(
+        validatedData.recipients.map((recipient, index) => ({
+          secretId: newSecret.id,
+          name: recipient.name,
+          email: recipient.email,
+          isPrimary: recipient.isPrimary || index === 0,
+        }))
+      );
+      
+      return newSecret;
+    });
 
     // Note: Reminder scheduling would be handled by a separate service
     // For now, we'll skip this to get the basic functionality working

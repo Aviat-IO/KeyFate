@@ -7,6 +7,7 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 ## Tech Stack
 
 ### Frontend
+
 - **Framework:** Next.js 15 (App Router)
 - **Language:** TypeScript 5.7
 - **Styling:** Tailwind CSS, Shadcn UI
@@ -16,6 +17,7 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 - **State Management:** React hooks, nuqs for URL search parameters
 
 ### Backend & Infrastructure
+
 - **Database:** PostgreSQL 16
 - **ORM:** Drizzle ORM
 - **Authentication:** NextAuth.js v4 with Google OAuth
@@ -24,6 +26,7 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 - **Payment Processing:** Stripe and BTCPay Server
 
 ### Development & Testing
+
 - **Testing Framework:** Vitest with React Testing Library
 - **Test Environment:** jsdom
 - **Package Manager:** pnpm
@@ -33,6 +36,7 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 - **Formatting:** Prettier with Tailwind plugin
 
 ### Deployment
+
 - **Cloud Platform:** Google Cloud Platform
 - **Compute:** Cloud Run
 - **Database:** Cloud SQL (PostgreSQL with private IP)
@@ -42,6 +46,7 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 ## Project Conventions
 
 ### Code Style
+
 - Use TypeScript strictly with no implicit any
 - Prefer functional components with TypeScript interfaces
 - Use named exports over default exports
@@ -52,6 +57,7 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 - Follow Next.js App Router conventions
 
 ### Naming Conventions
+
 - Components: PascalCase (e.g., `SecretForm.tsx`)
 - Functions/variables: camelCase
 - Constants: UPPER_SNAKE_CASE
@@ -60,6 +66,7 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 - Environment variables: UPPER_SNAKE_CASE with prefix patterns
 
 ### Architecture Patterns
+
 - **Modular Components:** Reusable UI components in `components/ui/`
 - **Server-First:** Prefer server components, minimize client-side JavaScript
 - **API Routes:** RESTful patterns in `app/api/`
@@ -69,6 +76,7 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 - **Environment Separation:** Development, staging, production with dedicated databases
 
 ### Testing Strategy
+
 - All code should be testable and have unit tests
 - Use Vitest for unit and integration tests
 - React Testing Library for component tests
@@ -79,6 +87,7 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 - Test database connections before migrations
 
 ### Git Workflow
+
 - Never mention "Claude" as an author in commits
 - Commit messages should be clear and concise (1-2 sentences)
 - Focus commit messages on "why" rather than "what"
@@ -90,6 +99,7 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 ## Domain Context
 
 ### Security Model
+
 - **Zero-Knowledge Architecture:** Original secrets never leave user's device
 - **Shamir's Secret Sharing:** Secrets split into 3 shares (2-of-3 threshold)
 - **Server Storage:** Only one encrypted share stored (insufficient to reconstruct)
@@ -98,6 +108,7 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 - **AES-256-GCM:** Industry-standard encryption for stored shares
 
 ### Business Model
+
 - **Free Tier:** 1 secret, 1 recipient (email only), limited check-in intervals (1 week, 1 month, 1 year only)
 - **Pro Tier:** 10 secrets, 5 recipients per secret (email only), flexible custom intervals (1 day to 3 years)
 - **Downgrade Policy:** Users who downgrade keep existing secrets but cannot create new ones if over limit (grandfathering)
@@ -107,6 +118,7 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 - **Future Plans:** SMS notifications, message templates (once defined), B2B features, Nostr integration
 
 ### Check-In System
+
 - Users must periodically check in to prevent secret disclosure
 - Automated reminders sent before deadline (email/SMS planned)
 - Graduated reminder schedule (25%, 50%, 7 days, 3 days, 24h, 12h, 1h)
@@ -116,6 +128,7 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 ## Important Constraints
 
 ### Security Constraints
+
 - Never store plaintext secrets in database
 - Never store sufficient shares to reconstruct secrets
 - Always use client-side encryption for secret processing
@@ -125,6 +138,7 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 - Implement proper authentication for all cron jobs and webhooks
 
 ### Technical Constraints
+
 - PostgreSQL 16 required for database features
 - Private IP for Cloud SQL in production
 - Node.js 18+ required
@@ -134,9 +148,11 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 - Database migrations via Drizzle ORM only
 
 ### Business Constraints
-- **Free tier limits:** 1 secret, 1 recipient (email only), 3 check-in intervals (7d, 30d, 365d)
-- **Pro tier limits:** 10 secrets, 5 recipients per secret (email only), 9 custom intervals (1d to 3y)
+
+- **Free tier limits:** 1 secret (active or paused), 1 recipient (email only), 3 check-in intervals (7d, 30d, 365d)
+- **Pro tier limits:** 10 secrets (active or paused), 5 recipients per secret (email only), 9 custom intervals (1d to 3y)
 - **Tier enforcement:** Must be validated server-side in all API endpoints (not just UI)
+- **Secret limit counting:** Count secrets with `status = 'active'` OR `status = 'paused'` (only exclude `triggered` and deleted secrets)
 - **Downgrade handling:** Grandfather existing secrets, prevent new secret creation if over new limit
 - **Usage tracking:** Calculate on-demand from database for accuracy
 - **Payment processing:** Stripe and BTCPay Server
@@ -146,6 +162,7 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 ## External Dependencies
 
 ### Required Services
+
 - **Google OAuth:** User authentication provider
 - **SendGrid/Resend:** Email delivery service
 - **Stripe:** Credit card payment processing and subscription management
@@ -155,11 +172,13 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 - **Google Secret Manager:** Secure key storage
 
 ### Optional Services
+
 - **Redis:** Session caching (optional)
 - **SMS Provider:** Future feature for notifications (not currently implemented)
 - **Nostr Network:** Future integration for censorship-resistant disclosure
 
 ### Development Tools
+
 - **Docker:** Local service orchestration
 - **Cloud SQL Proxy:** Local database access
 - **Terraform/Terragrunt:** Infrastructure provisioning
