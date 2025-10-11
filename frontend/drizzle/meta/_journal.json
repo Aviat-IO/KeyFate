@@ -57,6 +57,13 @@
       "when": 1760134028548,
       "tag": "0007_worthless_talkback",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1760223769416,
+      "tag": "0008_ordinary_quasimodo",
+      "breakpoints": true
     }
   ]
 }
