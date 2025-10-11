@@ -8,7 +8,8 @@ import {
   boolean,
   jsonb,
   numeric,
-  primaryKey
+  primaryKey,
+  index
 } from "drizzle-orm/pg-core";
 
 // Enums
@@ -22,6 +23,25 @@ export const webhookStatusEnum = pgEnum("webhook_status", ["received", "processi
 export const paymentStatusEnum = pgEnum("payment_status", ["pending", "processing", "succeeded", "failed", "cancelled", "refunded"]);
 export const emailFailureTypeEnum = pgEnum("email_failure_type", ["reminder", "disclosure", "admin_notification", "verification"]);
 export const emailFailureProviderEnum = pgEnum("email_failure_provider", ["sendgrid", "console-dev", "resend"]);
+export const auditEventTypeEnum = pgEnum("audit_event_type", [
+  "secret_created",
+  "secret_edited", 
+  "secret_deleted",
+  "check_in",
+  "secret_triggered",
+  "recipient_added",
+  "recipient_removed",
+  "settings_changed",
+  "login",
+  "subscription_changed"
+]);
+export const auditEventCategoryEnum = pgEnum("audit_event_category", [
+  "secrets",
+  "authentication", 
+  "subscriptions",
+  "settings",
+  "recipients"
+]);
 
 // NextAuth.js Tables
 export const users = pgTable("users", {
@@ -238,6 +258,23 @@ export const emailFailures = pgTable("email_failures", {
   resolvedAt: timestamp("resolved_at"),
 });
 
+export const auditLogs = pgTable("audit_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  eventType: auditEventTypeEnum("event_type").notNull(),
+  eventCategory: auditEventCategoryEnum("event_category").notNull(),
+  resourceType: text("resource_type"),
+  resourceId: text("resource_id"),
+  details: jsonb("details"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("audit_logs_user_id_idx").on(table.userId),
+  eventTypeIdx: index("audit_logs_event_type_idx").on(table.eventType),
+  createdAtIdx: index("audit_logs_created_at_idx").on(table.createdAt),
+}));
+
 // Export types for use in application
 export type Secret = typeof secrets.$inferSelect;
 export type SecretInsert = typeof secrets.$inferInsert;
@@ -256,6 +293,9 @@ export type PaymentHistory = typeof paymentHistory.$inferSelect;
 export type EmailFailure = typeof emailFailures.$inferSelect;
 export type EmailFailureInsert = typeof emailFailures.$inferInsert;
 export type EmailFailureUpdate = Partial<Omit<EmailFailure, 'id' | 'createdAt'>>;
+
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type AuditLogInsert = typeof auditLogs.$inferInsert;
 
 // NextAuth.js types
 export type User = typeof users.$inferSelect;
