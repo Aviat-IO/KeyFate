@@ -1,3 +1,4 @@
+import { NEXT_PUBLIC_SUPPORT_EMAIL } from "@/lib/env";
 import { SubscriptionTier, TierConfig } from "../types/subscription";
 
 export const TIER_CONFIGS: Partial<Record<SubscriptionTier, TierConfig>> = {
@@ -13,7 +14,7 @@ export const TIER_CONFIGS: Partial<Record<SubscriptionTier, TierConfig>> = {
       "1 secret",
       "1 recipient per secret",
       "Available intervals: 1 week, 1 month, 1 year",
-      "No message templates",
+      "Standard 2-of-3 security (fixed)",
       "Community support",
     ],
     price: {
@@ -21,7 +22,7 @@ export const TIER_CONFIGS: Partial<Record<SubscriptionTier, TierConfig>> = {
       annual: 0,
     },
     priceIds: {
-      monthly: "free", // Free tier doesn't need Stripe price IDs
+      monthly: "free",
       annual: "free",
     },
     featured: false,
@@ -38,17 +39,19 @@ export const TIER_CONFIGS: Partial<Record<SubscriptionTier, TierConfig>> = {
     features: [
       "Up to 10 secrets",
       "Up to 5 recipients per secret",
-      "Very flexible check-in intervals: 1 day, 3 days, 7 days, 2 weeks, 1 month, 3 months, 6 months, 12 months, 3 years",
-      "Message templates",
-      "Email support",
+      "Very flexible check-in intervals: 1 day to 3 years",
+      "Configurable security (2-of-N up to 7 shares)",
+      "7 message templates for common scenarios",
+      "Comprehensive audit logs",
+      `Priority email support (${NEXT_PUBLIC_SUPPORT_EMAIL})`
     ],
     price: {
       monthly: 9.00,
       annual: 90.00,
     },
     priceIds: {
-      monthly: "pro_monthly", // Stripe lookup key
-      annual: "pro_yearly", // Stripe lookup key
+      monthly: "pro_monthly",
+      annual: "pro_yearly",
     },
     featured: true,
   },
