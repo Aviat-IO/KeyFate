@@ -9,6 +9,7 @@
  * - Security best practices validation
  */
 
+import { NEXT_PUBLIC_SUPPORT_EMAIL } from "../env";
 import type { EmailProviderType } from "./email-factory";
 
 /**
@@ -54,7 +55,7 @@ export interface ValidationResult {
  */
 export const EMAIL_ENV_DEFAULTS = {
   SENDGRID_SENDER_NAME: "Dead Man's Switch",
-  ADMIN_ALERT_EMAIL: "support@aviat.io",
+  ADMIN_ALERT_EMAIL: NEXT_PUBLIC_SUPPORT_EMAIL,
   EMAIL_PROVIDER: "mock", // Development default
 } as const;
 
@@ -161,8 +162,8 @@ export function validateEmailEnvironment(): EmailEnvironmentValidation {
   const environment = (nodeEnv === "production"
     ? "production"
     : nodeEnv === "test"
-    ? "test"
-    : "development") as "production" | "development" | "test";
+      ? "test"
+      : "development") as "production" | "development" | "test";
 
   // Determine provider
   const envProvider = process.env.EMAIL_PROVIDER?.toLowerCase() as

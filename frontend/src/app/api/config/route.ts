@@ -13,7 +13,7 @@ export async function GET() {
     parentCompany: process.env.NEXT_PUBLIC_PARENT_COMPANY || "Aviat, LLC",
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://keyfate.com",
     stripePublishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "",
-    supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@keyfate.com",
+    supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@aviat.io",
     authProvider: process.env.NEXT_PUBLIC_AUTH_PROVIDER || "google",
     databaseProvider: process.env.NEXT_PUBLIC_DATABASE_PROVIDER || "cloudsql",
     btcPayServerUrl: process.env.NEXT_PUBLIC_BTCPAY_SERVER_URL || "",

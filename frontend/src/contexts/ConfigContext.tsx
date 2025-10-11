@@ -1,5 +1,6 @@
 "use client";
 
+import { NEXT_PUBLIC_SUPPORT_EMAIL } from "@/lib/env";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 interface PublicConfig {
@@ -60,7 +61,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
           parentCompany: "Aviat, LLC",
           siteUrl: "http://localhost:3000",
           stripePublishableKey: "",
-          supportEmail: "support@keyfate.com",
+          supportEmail: NEXT_PUBLIC_SUPPORT_EMAIL,
           authProvider: "google",
           databaseProvider: "cloudsql",
           btcPayServerUrl: "",
