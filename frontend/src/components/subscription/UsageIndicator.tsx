@@ -54,7 +54,7 @@ export function UsageIndicator() {
         </div>
 
         {usagePercentage >= 80 && (
-          <div className="text-sm text-orange-600 dark:text-orange-400">
+          <div className="text-sm text-muted-foreground dark:text-muted-foreground">
             {usagePercentage >= 100
               ? "You've reached your limit. Upgrade to create more secrets."
               : "You're approaching your limit. Consider upgrading soon."}

@@ -56,7 +56,6 @@ describe("EditSecretForm", () => {
         name: "John Doe",
         email: "test@example.com",
         phone: "",
-        isPrimary: true,
       },
     ],
     check_in_days: 90,

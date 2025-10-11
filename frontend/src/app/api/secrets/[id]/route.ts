@@ -56,7 +56,6 @@ const recipientSchema = z.object({
   name: z.string().min(1, "Recipient name is required"),
   email: z.string().email().nullable().optional(),
   phone: z.string().nullable().optional(),
-  isPrimary: z.boolean().default(false),
 });
 
 const updateSecretSchema = z.object({
@@ -84,15 +83,6 @@ export async function PUT(
 
     const body = await request.json();
     const validatedData = updateSecretSchema.parse(body);
-
-    // Validate that at least one recipient is marked as primary
-    const hasPrimary = validatedData.recipients.some(r => r.isPrimary);
-    if (!hasPrimary) {
-      return NextResponse.json(
-        { error: "At least one recipient must be marked as primary" },
-        { status: 400 },
-      );
-    }
 
     // Validate that each recipient has either email or phone
     const invalidRecipients = validatedData.recipients.filter(
@@ -122,7 +112,6 @@ export async function PUT(
       name: string;
       email?: string | null;
       phone?: string | null;
-      isPrimary: boolean;
     }>);
 
     // Return updated secret with recipients

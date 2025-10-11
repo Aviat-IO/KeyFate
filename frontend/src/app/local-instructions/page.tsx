@@ -35,10 +35,10 @@ function CodeBlock({
     return code
       .replace(
         /(import|from|const|let|var|function|return|console\.log)/g,
-        '<span class="text-blue-400">$1</span>',
+        '<span class="text-primary-foreground">$1</span>',
       )
-      .replace(/('.*?'|`.*?`)/g, '<span class="text-green-400">$1</span>')
-      .replace(/(\/\/.*$)/gm, '<span class="text-gray-500">$1</span>')
+      .replace(/('.*?'|`.*?`)/g, '<span class="text-accent-foreground">$1</span>')
+      .replace(/(\/\/.*$)/gm, '<span class="text-muted-foreground">$1</span>')
   }
 
   return (
@@ -61,7 +61,7 @@ function CodeBlock({
           onClick={handleCopy}
         >
           {copied ? (
-            <Check className="h-4 w-4 text-green-600" />
+            <Check className="h-4 w-4 text-accent-foreground" />
           ) : (
             <Copy className="h-4 w-4" />
           )}

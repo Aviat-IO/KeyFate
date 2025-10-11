@@ -20,7 +20,6 @@ describe('Secret Mapper - API Format Conversion', () => {
       name: 'John Doe',
       email: 'john@example.com',
       phone: '+1234567890',
-      isPrimary: true
     }],
     check_in_days: 30,
     status: 'active',

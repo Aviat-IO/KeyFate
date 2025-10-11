@@ -10,22 +10,13 @@ export interface SecretWithRecipients extends Secret {
   recipients: SecretRecipient[];
 }
 
-export interface SecretWithPrimaryRecipient extends Secret {
-  primaryRecipient: SecretRecipient | null;
-}
-
 export type RecipientInput = {
   name: string;
   email?: string | null;
   phone?: string | null;
-  isPrimary: boolean;
 };
 
 export type RecipientUpdateInput = Omit<SecretRecipientInsert, 'secretId' | 'id' | 'createdAt' | 'updatedAt'>;
-
-export function getPrimaryRecipient(recipients: SecretRecipient[]): SecretRecipient | null {
-  return recipients.find(r => r.isPrimary) || recipients[0] || null;
-}
 
 export function getRecipientContactInfo(recipient: SecretRecipient): string {
   return recipient.email || recipient.phone || "";

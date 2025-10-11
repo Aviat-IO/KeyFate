@@ -26,7 +26,6 @@ const mockSecret: Secret = {
       name: "John Doe",
       email: "john@example.com",
       phone: "+1234567890",
-      isPrimary: true,
       createdAt: new Date("2024-01-01T00:00:00Z"),
       updatedAt: new Date("2024-01-01T00:00:00Z"),
     }

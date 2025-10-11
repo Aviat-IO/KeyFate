@@ -20,11 +20,10 @@ export async function getSecretWithRecipients(
               'name', ${secretRecipients.name},
               'email', ${secretRecipients.email},
               'phone', ${secretRecipients.phone},
-              'isPrimary', ${secretRecipients.isPrimary},
               'createdAt', ${secretRecipients.createdAt},
               'updatedAt', ${secretRecipients.updatedAt}
             )
-            ORDER BY ${secretRecipients.isPrimary} DESC, ${secretRecipients.createdAt} ASC
+            ORDER BY ${secretRecipients.createdAt} ASC
           ) FILTER (WHERE ${secretRecipients.id} IS NOT NULL),
           '[]'::json
         )
@@ -62,11 +61,10 @@ export async function getAllSecretsWithRecipients(
               'name', ${secretRecipients.name},
               'email', ${secretRecipients.email},
               'phone', ${secretRecipients.phone},
-              'isPrimary', ${secretRecipients.isPrimary},
               'createdAt', ${secretRecipients.createdAt},
               'updatedAt', ${secretRecipients.updatedAt}
             )
-            ORDER BY ${secretRecipients.isPrimary} DESC, ${secretRecipients.createdAt} ASC
+            ORDER BY ${secretRecipients.createdAt} ASC
           ) FILTER (WHERE ${secretRecipients.id} IS NOT NULL),
           '[]'::json
         )
@@ -83,19 +81,6 @@ export async function getAllSecretsWithRecipients(
   }));
 }
 
-export async function getPrimaryRecipient(
-  secretId: string
-): Promise<SecretRecipient | null> {
-  const db = await getDatabase();
-  const recipients = await db
-    .select()
-    .from(secretRecipients)
-    .where(eq(secretRecipients.secretId, secretId))
-    .orderBy(sql`${secretRecipients.isPrimary} DESC, ${secretRecipients.createdAt} ASC`);
-
-  return recipients[0] || null;
-}
-
 export async function getAllRecipients(
   secretId: string
 ): Promise<SecretRecipient[]> {
@@ -104,7 +89,7 @@ export async function getAllRecipients(
     .select()
     .from(secretRecipients)
     .where(eq(secretRecipients.secretId, secretId))
-    .orderBy(sql`${secretRecipients.isPrimary} DESC, ${secretRecipients.createdAt} ASC`);
+    .orderBy(secretRecipients.createdAt);
 }
 
 export async function updateSecretRecipients(
@@ -115,13 +100,11 @@ export async function updateSecretRecipients(
   await db.transaction(async (tx) => {
     await tx.delete(secretRecipients).where(eq(secretRecipients.secretId, secretId));
 
-    const hasPrimary = recipientsData.some(r => r.isPrimary);
-    const recipientsToInsert = recipientsData.map((r, idx) => ({
+    const recipientsToInsert = recipientsData.map((r) => ({
       name: r.name,
       email: r.email ?? null,
       phone: r.phone ?? null,
       secretId,
-      isPrimary: hasPrimary ? r.isPrimary : idx === 0
     }));
 
     if (recipientsToInsert.length > 0) {

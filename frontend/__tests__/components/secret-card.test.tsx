@@ -52,7 +52,6 @@ const mockSecret: Secret = {
       name: "John Doe",
       email: "john@example.com",
       phone: "+1234567890",
-      isPrimary: true,
       createdAt: new Date(),
       updatedAt: new Date(),
     }
@@ -86,7 +85,13 @@ describe("SecretCard Component", () => {
     expect(titleElements.length).toBeGreaterThan(0)
     expect(titleElements[0]).toBeInTheDocument()
 
-    expect(screen.getByText("Recipient: John Doe")).toBeInTheDocument()
+    const recipientHeaders = screen.getAllByText("1 Recipient")
+    expect(recipientHeaders.length).toBeGreaterThan(0)
+    expect(recipientHeaders[0]).toBeInTheDocument()
+
+    const recipientElements = screen.getAllByText(/• John Doe \(john@example\.com\)/)
+    expect(recipientElements.length).toBeGreaterThan(0)
+    expect(recipientElements[0]).toBeInTheDocument()
   })
 
   it("shows correct status badge for active secret", () => {
@@ -181,7 +186,13 @@ describe("SecretCard Component", () => {
   it("shows recipient information", () => {
     render(<SecretCard secret={mockSecret} />)
 
-    expect(screen.getByText("Recipient: John Doe")).toBeInTheDocument()
+    const recipientHeaders = screen.getAllByText("1 Recipient")
+    expect(recipientHeaders.length).toBeGreaterThan(0)
+    expect(recipientHeaders[0]).toBeInTheDocument()
+
+    const recipientElements = screen.getAllByText(/• John Doe \(john@example\.com\)/)
+    expect(recipientElements.length).toBeGreaterThan(0)
+    expect(recipientElements[0]).toBeInTheDocument()
   })
 
   it("shows edit link", () => {
@@ -189,5 +200,45 @@ describe("SecretCard Component", () => {
 
     const editLink = screen.getByRole("link", { name: /edit/i })
     expect(editLink).toHaveAttribute("href", "/secrets/123/edit")
+  })
+
+  it("shows multiple recipients correctly", () => {
+    const multiRecipientSecret = {
+      ...mockSecret,
+      recipients: [
+        {
+          id: "recipient-1",
+          secretId: "123",
+          name: "John Doe",
+          email: "john@example.com",
+          phone: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: "recipient-2",
+          secretId: "123",
+          name: "Jane Smith",
+          email: null,
+          phone: "+9876543210",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }
+      ]
+    }
+
+    render(<SecretCard secret={multiRecipientSecret} />)
+
+    const recipientHeaders = screen.getAllByText("2 Recipients")
+    expect(recipientHeaders.length).toBeGreaterThan(0)
+    expect(recipientHeaders[0]).toBeInTheDocument()
+
+    const johnElements = screen.getAllByText(/• John Doe \(john@example\.com\)/)
+    expect(johnElements.length).toBeGreaterThan(0)
+    expect(johnElements[0]).toBeInTheDocument()
+
+    const janeElements = screen.getAllByText(/• Jane Smith \(\+9876543210\)/)
+    expect(janeElements.length).toBeGreaterThan(0)
+    expect(janeElements[0]).toBeInTheDocument()
   })
 })

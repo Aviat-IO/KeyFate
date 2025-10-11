@@ -1,8 +1,8 @@
 "use client"
 
-import { AlertCircle, CheckCircle2, Clock, Mail } from 'lucide-react'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Badge } from '@/components/ui/badge'
+import { AlertCircle, CheckCircle2, Clock, Mail } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 
 interface VerificationStatusProps {
   email: string
@@ -17,11 +17,15 @@ export function VerificationStatus({
   isVerified = false,
   isPending = false,
   error = null,
-  className
+  className,
 }: VerificationStatusProps) {
   if (error) {
     return (
-      <Alert variant="destructive" className={className} data-testid="verification-error">
+      <Alert
+        variant="destructive"
+        className={className}
+        data-testid="verification-error"
+      >
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>{error}</AlertDescription>
       </Alert>
@@ -30,10 +34,14 @@ export function VerificationStatus({
 
   if (isVerified) {
     return (
-      <Alert className={`border-green-200 bg-green-50 ${className}`} data-testid="verification-success">
-        <CheckCircle2 className="h-4 w-4 text-green-600" />
-        <AlertDescription className="text-green-800">
-          Your email address <strong>{email}</strong> has been verified successfully.
+      <Alert
+        className={`border-accent bg-accent/50 ${className}`}
+        data-testid="verification-success"
+      >
+        <CheckCircle2 className="text-accent-foreground h-4 w-4" />
+        <AlertDescription className="text-accent-foreground">
+          Your email address <strong>{email}</strong> has been verified
+          successfully.
         </AlertDescription>
       </Alert>
     )
@@ -41,9 +49,12 @@ export function VerificationStatus({
 
   if (isPending) {
     return (
-      <Alert className={`border-yellow-200 bg-yellow-50 ${className}`} data-testid="verification-pending">
-        <Clock className="h-4 w-4 text-yellow-600" />
-        <AlertDescription className="text-yellow-800">
+      <Alert
+        className={`border-muted bg-muted/50 ${className}`}
+        data-testid="verification-pending"
+      >
+        <Clock className="text-muted-foreground h-4 w-4" />
+        <AlertDescription className="text-muted-foreground">
           Verification in progress for <strong>{email}</strong>...
         </AlertDescription>
       </Alert>
@@ -53,8 +64,8 @@ export function VerificationStatus({
   return (
     <div className={`space-y-3 ${className}`} data-testid="verification-info">
       <div className="flex items-center gap-2">
-        <Mail className="h-4 w-4 text-blue-600" />
-        <span className="text-sm text-gray-700">
+        <Mail className="text-muted-foreground h-4 w-4" />
+        <span className="text-foreground text-sm">
           Verification email sent to <strong>{email}</strong>
         </span>
         <Badge variant="outline" className="text-xs">
@@ -62,9 +73,10 @@ export function VerificationStatus({
         </Badge>
       </div>
 
-      <Alert className="border-blue-200 bg-blue-50">
-        <AlertDescription className="text-blue-800">
-          Please check your email inbox and click the verification link to complete the process.
+      <Alert className="border-muted bg-muted/50">
+        <AlertDescription className="text-muted-foreground">
+          Please check your email inbox and click the verification link to
+          complete the process.
         </AlertDescription>
       </Alert>
     </div>

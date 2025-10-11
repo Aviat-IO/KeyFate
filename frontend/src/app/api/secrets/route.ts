@@ -153,11 +153,10 @@ export async function POST(request: NextRequest) {
       
       // Insert recipients - this MUST succeed or the entire transaction rolls back
       await tx.insert(secretRecipients).values(
-        validatedData.recipients.map((recipient, index) => ({
+        validatedData.recipients.map((recipient) => ({
           secretId: newSecret.id,
           name: recipient.name,
           email: recipient.email,
-          isPrimary: recipient.isPrimary || index === 0,
         }))
       );
       

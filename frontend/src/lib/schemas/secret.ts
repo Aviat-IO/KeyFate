@@ -9,7 +9,6 @@ const recipientSchema = z
       .optional()
       .or(z.literal("")),
     phone: z.string().optional(),
-    isPrimary: z.boolean().default(false),
   })
   .refine(
     (data) => {
@@ -52,7 +51,7 @@ export const secretFormSchema = z
             invalid_type_error: "Total shares must be a number.",
           })
           .min(2, "Total shares must be at least 2.")
-          .max(10, "Total shares cannot exceed 10."),
+          .max(5, "Total shares cannot exceed 5."),
       ),
     sss_threshold: z
       .union([z.string(), z.number()])
@@ -70,8 +69,8 @@ export const secretFormSchema = z
             required_error: "Threshold is required.",
             invalid_type_error: "Threshold must be a number.",
           })
-          .min(2, "Threshold must be at least 2.")
-          .max(10, "Threshold cannot exceed 10."),
+           .min(2, "Threshold must be at least 2.")
+          .max(5, "Threshold cannot exceed 5."),
       ),
   })
   .refine(
@@ -113,7 +112,6 @@ export const secretSchema = z
             .optional()
             .or(z.literal("")),
           phone: z.string().optional(),
-          isPrimary: z.boolean().default(false),
         }),
       )
       .min(1, "At least one recipient is required")
@@ -140,11 +138,11 @@ export const secretSchema = z
     sss_shares_total: z
       .number()
       .min(2, "Invalid SSS shares total or threshold parameters.")
-      .max(10),
+      .max(5),
     sss_threshold: z
       .number()
       .min(2, "Invalid SSS shares total or threshold parameters.")
-      .max(10),
+      .max(5),
   })
   .refine(
     (data) => {

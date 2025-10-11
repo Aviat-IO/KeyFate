@@ -29,7 +29,15 @@ import { Textarea } from "@/components/ui/textarea"
 import { secretFormSchema, type SecretFormValues } from "@/lib/schemas/secret"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Buffer } from "buffer"
-import { AlertCircle, Info, LockIcon, Plus, Trash2, Crown, AlertTriangle } from "lucide-react"
+import {
+  AlertCircle,
+  Info,
+  LockIcon,
+  Plus,
+  Trash2,
+  Crown,
+  AlertTriangle,
+} from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useForm, useFieldArray } from "react-hook-form"
@@ -46,7 +54,10 @@ interface NewSecretFormProps {
   }
 }
 
-export function NewSecretForm({ isPaid = false, tierInfo }: NewSecretFormProps) {
+export function NewSecretForm({
+  isPaid = false,
+  tierInfo,
+}: NewSecretFormProps) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
@@ -57,7 +68,7 @@ export function NewSecretForm({ isPaid = false, tierInfo }: NewSecretFormProps) 
     defaultValues: {
       title: "",
       secretMessageContent: "",
-      recipients: [{ name: "", email: "", isPrimary: true }],
+      recipients: [{ name: "", email: "" }],
       check_in_days: "7",
       sss_shares_total: 3,
       sss_threshold: 2,
@@ -65,12 +76,12 @@ export function NewSecretForm({ isPaid = false, tierInfo }: NewSecretFormProps) 
   })
 
   const { isSubmitting } = form.formState
-  
+
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "recipients",
   })
-  
+
   const maxRecipients = isPaid ? 5 : 1
   const canAddMore = fields.length < maxRecipients
 
@@ -139,9 +150,11 @@ export function NewSecretForm({ isPaid = false, tierInfo }: NewSecretFormProps) 
         secretId: result.secretId,
         sss_shares_total: data.sss_shares_total.toString(),
         sss_threshold: data.sss_threshold.toString(),
-        recipients: encodeURIComponent(JSON.stringify(
-          data.recipients.map(r => ({ name: r.name, email: r.email }))
-        )),
+        recipients: encodeURIComponent(
+          JSON.stringify(
+            data.recipients.map((r) => ({ name: r.name, email: r.email })),
+          ),
+        ),
       })
       router.push(
         `/secrets/${result.secretId}/share-instructions?${queryParams.toString()}`,
@@ -156,13 +169,13 @@ export function NewSecretForm({ isPaid = false, tierInfo }: NewSecretFormProps) 
     }
   }
 
-  const percentageUsed = tierInfo 
-    ? (tierInfo.secretsUsed / tierInfo.secretsLimit) * 100 
+  const percentageUsed = tierInfo
+    ? (tierInfo.secretsUsed / tierInfo.secretsLimit) * 100
     : 0
-  
+
   const showWarning = tierInfo && percentageUsed >= 75 && tierInfo.canCreate
   const isAtLimit = tierInfo && !tierInfo.canCreate
-  
+
   return (
     <>
       {error && (
@@ -172,36 +185,36 @@ export function NewSecretForm({ isPaid = false, tierInfo }: NewSecretFormProps) 
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-      
+
       {isAtLimit && (
         <Alert variant="destructive" className="mb-6">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Secret Limit Reached</AlertTitle>
           <AlertDescription>
-            You've used all {tierInfo.secretsLimit} of your {isPaid ? "Pro" : "Free"} tier secrets.
+            You've used all {tierInfo.secretsLimit} of your{" "}
+            {isPaid ? "Pro" : "Free"} tier secrets.
             {!isPaid && " Upgrade to Pro to create up to 10 secrets."}
           </AlertDescription>
         </Alert>
       )}
-      
+
       {showWarning && (
-        <Alert className="mb-6 border-yellow-500 bg-yellow-50 dark:bg-yellow-950">
-          <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
-          <AlertTitle className="text-yellow-800 dark:text-yellow-300">
-            Approaching Limit
-          </AlertTitle>
-          <AlertDescription className="text-yellow-700 dark:text-yellow-400">
-            You're using {tierInfo.secretsUsed} of {tierInfo.secretsLimit} secrets ({Math.round(percentageUsed)}%).
+        <Alert className="border-muted bg-muted/50 mb-6">
+          <AlertTriangle className="text-muted-foreground h-4 w-4" />
+          <AlertTitle className="text-foreground">Approaching Limit</AlertTitle>
+          <AlertDescription className="text-muted-foreground">
+            You're using {tierInfo.secretsUsed} of {tierInfo.secretsLimit}{" "}
+            secrets ({Math.round(percentageUsed)}%).
             {!isPaid && " Consider upgrading to Pro for 10 secrets."}
           </AlertDescription>
         </Alert>
       )}
-      
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           {/* Secret Details Section */}
           <div className="rounded-lg border p-6">
-            <h2 className="text-lg font-semibold mb-4">Secret Details</h2>
+            <h2 className="mb-4 text-lg font-semibold">Secret Details</h2>
             <div className="space-y-6">
               <FormField
                 control={form.control}
@@ -227,7 +240,8 @@ export function NewSecretForm({ isPaid = false, tierInfo }: NewSecretFormProps) 
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Secret Message <LockIcon className="ml-1 inline h-4 w-4" />
+                      Secret Message{" "}
+                      <LockIcon className="ml-1 inline h-4 w-4" />
                     </FormLabel>
                     <FormControl>
                       <Textarea
@@ -250,7 +264,7 @@ export function NewSecretForm({ isPaid = false, tierInfo }: NewSecretFormProps) 
 
           {/* Recipient Information Section */}
           <div className="rounded-lg border p-6">
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold">Recipients</h2>
               {!isPaid && fields.length >= 1 && (
                 <Button
@@ -265,28 +279,26 @@ export function NewSecretForm({ isPaid = false, tierInfo }: NewSecretFormProps) 
                 </Button>
               )}
             </div>
-            
-            {isPaid && maxRecipients > 0 && fields.length >= Math.floor(maxRecipients * 0.75) && (
-              <Alert className="mb-4 border-yellow-500 bg-yellow-50 dark:bg-yellow-950">
-                <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
-                <AlertDescription className="text-yellow-700 dark:text-yellow-400">
-                  {fields.length >= maxRecipients 
-                    ? `Maximum ${maxRecipients} recipients reached.`
-                    : `Using ${fields.length} of ${maxRecipients} recipients.`
-                  }
-                </AlertDescription>
-              </Alert>
-            )}
-            
+
+            {isPaid &&
+              maxRecipients > 0 &&
+              fields.length >= Math.floor(maxRecipients * 0.75) && (
+                <Alert className="border-muted bg-muted/50 mb-4">
+                  <AlertTriangle className="text-muted-foreground h-4 w-4" />
+                  <AlertDescription className="text-muted-foreground">
+                    {fields.length >= maxRecipients
+                      ? `Maximum ${maxRecipients} recipients reached.`
+                      : `Using ${fields.length} of ${maxRecipients} recipients.`}
+                  </AlertDescription>
+                </Alert>
+              )}
+
             <div className="space-y-4">
               {fields.map((field, index) => (
-                <div key={field.id} className="rounded-lg border p-4 space-y-4">
+                <div key={field.id} className="space-y-4 rounded-lg border p-4">
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-medium">
                       Recipient {index + 1}
-                      {field.isPrimary && (
-                        <span className="ml-2 text-xs text-muted-foreground">(Primary)</span>
-                      )}
                     </div>
                     {fields.length > 1 && (
                       <Button
@@ -344,7 +356,7 @@ export function NewSecretForm({ isPaid = false, tierInfo }: NewSecretFormProps) 
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => append({ name: "", email: "", isPrimary: false })}
+                  onClick={() => append({ name: "", email: "" })}
                   disabled={isSubmitting}
                   className="w-full"
                 >
@@ -354,7 +366,7 @@ export function NewSecretForm({ isPaid = false, tierInfo }: NewSecretFormProps) 
               )}
 
               {isPaid && !canAddMore && (
-                <div className="text-sm text-muted-foreground text-center py-2">
+                <div className="text-muted-foreground py-2 text-center text-sm">
                   Maximum {maxRecipients} recipients reached
                 </div>
               )}
@@ -363,7 +375,7 @@ export function NewSecretForm({ isPaid = false, tierInfo }: NewSecretFormProps) 
 
           {/* Check-in Settings Section */}
           <div className="rounded-lg border p-6">
-            <h2 className="text-lg font-semibold mb-4">Check-in Settings</h2>
+            <h2 className="mb-4 text-lg font-semibold">Check-in Settings</h2>
             <div className="space-y-6">
               <FormField
                 control={form.control}
@@ -406,10 +418,9 @@ export function NewSecretForm({ isPaid = false, tierInfo }: NewSecretFormProps) 
                       </Select>
                     </FormControl>
                     <FormDescription>
-                      {isPaid 
+                      {isPaid
                         ? "How often you need to check in to keep the secret active."
-                        : "How often you need to check in to keep the secret active. Upgrade to Pro for more interval options."
-                      }
+                        : "How often you need to check in to keep the secret active. Upgrade to Pro for more interval options."}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -420,18 +431,35 @@ export function NewSecretForm({ isPaid = false, tierInfo }: NewSecretFormProps) 
 
           {/* Advanced Settings Section */}
           <div className="rounded-lg border p-6">
-            <h2 className="text-lg font-semibold mb-4">
+            <h2 className="mb-4 text-lg font-semibold">
               Advanced Settings
-              <span className="ml-2 text-sm font-normal text-muted-foreground">
+              <span className="text-muted-foreground ml-2 text-sm font-normal">
                 (optional)
               </span>
             </h2>
-            <Accordion type="single" collapsible className="w-full">
+            <Accordion
+              type="single"
+              collapsible
+              className="w-full"
+              defaultValue={fields.length > 1 ? "sss-config" : undefined}
+            >
               <AccordionItem value="sss-config" className="border-0">
                 <AccordionTrigger>
                   Secret Sharing Configuration
                 </AccordionTrigger>
                 <AccordionContent className="space-y-4 p-1">
+                  {fields.length > 1 && (
+                    <Alert>
+                      <Info className="h-4 w-4" />
+                      <AlertTitle>Multiple Recipients</AlertTitle>
+                      <AlertDescription>
+                        All recipients will receive the SAME share. You must
+                        distribute this share to each recipient separately via
+                        your own secure channels. With multiple recipients,
+                        consider your threshold carefully.
+                      </AlertDescription>
+                    </Alert>
+                  )}
                   <Alert>
                     <Info className="h-4 w-4" />
                     <AlertTitle>Secret Sharing Details</AlertTitle>
@@ -442,8 +470,8 @@ export function NewSecretForm({ isPaid = false, tierInfo }: NewSecretFormProps) 
                           cryptographic "shares".
                         </li>
                         <li>
-                          A minimum number of shares (threshold) will be required
-                          to reconstruct the original message.
+                          A minimum number of shares (threshold) will be
+                          required to reconstruct the original message.
                         </li>
                         <li>
                           KeyFate will securely store one share (encrypted again
@@ -483,7 +511,7 @@ export function NewSecretForm({ isPaid = false, tierInfo }: NewSecretFormProps) 
                             />
                           </FormControl>
                           <FormDescription>
-                            Total shares to split the secret into. Min 2, Max 10.
+                            Total shares to split the secret into. Min 2, Max 5.
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -501,7 +529,7 @@ export function NewSecretForm({ isPaid = false, tierInfo }: NewSecretFormProps) 
                             <Input
                               type="number"
                               min="2"
-                              max="10"
+                              max="5"
                               disabled={isSubmitting}
                               {...field}
                               onChange={(e) => {
@@ -520,7 +548,7 @@ export function NewSecretForm({ isPaid = false, tierInfo }: NewSecretFormProps) 
                             />
                           </FormControl>
                           <FormDescription>
-                            Minimum shares to reconstruct. Min 2, Max 10. Must be
+                            Minimum shares to reconstruct. Min 2, Max 5. Must be
                             &lt;= total shares.
                           </FormDescription>
                           <FormMessage />
@@ -533,16 +561,20 @@ export function NewSecretForm({ isPaid = false, tierInfo }: NewSecretFormProps) 
             </Accordion>
           </div>
 
-          <Button type="submit" disabled={isSubmitting || isAtLimit} className="w-full">
+          <Button
+            type="submit"
+            disabled={isSubmitting || isAtLimit}
+            className="w-full"
+          >
             {isSubmitting
               ? "Processing & Encrypting..."
               : isAtLimit
-              ? "Secret Limit Reached - Upgrade Required"
-              : "Create Secret & Proceed to Share Management"}
+                ? "Secret Limit Reached - Upgrade Required"
+                : "Create Secret & Proceed to Share Management"}
           </Button>
         </form>
       </Form>
-      
+
       <UpgradeModal
         open={showUpgradeModal}
         onOpenChange={setShowUpgradeModal}

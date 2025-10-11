@@ -84,19 +84,19 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-50 to-indigo-100 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-secondary px-4">
       <div className="w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-lg">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-foreground">
             Sign in to KeyFate
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-muted-foreground">
             Secure your digital legacy
           </p>
         </div>
 
         {getErrorMessage(urlError, errorMessage) && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="rounded-lg border border-destructive bg-destructive/10 px-4 py-3 text-sm text-destructive">
             {getErrorMessage(urlError, errorMessage)}
           </div>
         )}
@@ -107,7 +107,7 @@ export default function SignInPage() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-foreground"
               >
                 Email address
               </label>
@@ -119,7 +119,7 @@ export default function SignInPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="relative mt-1 block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                className="relative mt-1 block w-full appearance-none rounded-lg border border-input px-3 py-2 text-foreground placeholder-muted-foreground focus:z-10 focus:border-primary focus:outline-none focus:ring-primary sm:text-sm"
                 placeholder="you@example.com"
                 disabled={isLoading}
               />
@@ -128,7 +128,7 @@ export default function SignInPage() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-foreground"
               >
                 Password
               </label>
@@ -140,7 +140,7 @@ export default function SignInPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="relative mt-1 block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                className="relative mt-1 block w-full appearance-none rounded-lg border border-input px-3 py-2 text-foreground placeholder-muted-foreground focus:z-10 focus:border-primary focus:outline-none focus:ring-primary sm:text-sm"
                 placeholder="Password"
                 disabled={isLoading}
               />
@@ -149,7 +149,7 @@ export default function SignInPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative flex w-full justify-center rounded-lg border border-transparent bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 text-sm font-medium text-white hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="group relative flex w-full justify-center rounded-lg border border-transparent bg-gradient-to-r from-primary to-primary px-4 py-2 text-sm font-medium text-white hover:from-primary hover:to-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? "Signing in..." : "Sign in"}
             </button>
@@ -157,10 +157,10 @@ export default function SignInPage() {
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
+              <div className="w-full border-t border-input" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="bg-white px-2 text-gray-500">
+              <span className="bg-white px-2 text-muted-foreground">
                 Or continue with
               </span>
             </div>
@@ -170,7 +170,7 @@ export default function SignInPage() {
           <button
             onClick={handleGoogleSignIn}
             disabled={isLoading}
-            className="flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex w-full items-center justify-center rounded-lg border border-input bg-white px-4 py-2 text-sm font-medium text-foreground shadow-sm hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <svg
               className="mr-2 h-5 w-5"
@@ -200,26 +200,26 @@ export default function SignInPage() {
         </div>
 
         <div className="text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             Don't have an account?{" "}
             <Link
               href={`/auth/signup${callbackUrl !== "/dashboard" ? `?next=${encodeURIComponent(callbackUrl)}` : ""}`}
-              className="font-medium text-indigo-600 hover:text-indigo-500"
+              className="font-medium text-primary hover:text-primary"
             >
               Sign up
             </Link>
           </p>
         </div>
 
-        <p className="mt-4 text-center text-xs text-gray-500">
+        <p className="mt-4 text-center text-xs text-muted-foreground">
           By signing in, you agree to our{" "}
-          <Link href="/terms" className="text-indigo-600 hover:text-indigo-500">
+          <Link href="/terms" className="text-primary hover:text-primary">
             Terms of Service
           </Link>{" "}
           and{" "}
           <Link
             href="/privacy"
-            className="text-indigo-600 hover:text-indigo-500"
+            className="text-primary hover:text-primary"
           >
             Privacy Policy
           </Link>

@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
+
 import { zodResolver } from "@hookform/resolvers/zod"
 import { AlertCircle, Plus, Trash2 } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -32,7 +32,6 @@ const recipientSchema = z.object({
   name: z.string().min(1, "Recipient name is required"),
   email: z.string().email().nullable().optional().or(z.literal("")),
   phone: z.string().nullable().optional().or(z.literal("")),
-  isPrimary: z.boolean().default(false),
 }).refine(
   (data) => data.email || data.phone,
   {
@@ -73,7 +72,6 @@ interface EditSecretFormProps {
       name: string
       email?: string | null
       phone?: string | null
-      isPrimary: boolean
     }>
     check_in_days: number
   }
@@ -106,13 +104,6 @@ export function EditSecretForm({
   async function onSubmit(values: FormData) {
     setLoading(true)
     setError(null)
-
-    const hasPrimary = values.recipients.some(r => r.isPrimary)
-    if (!hasPrimary) {
-      setError("At least one recipient must be marked as primary")
-      setLoading(false)
-      return
-    }
 
     try {
       const response = await fetch(`/api/secrets/${secretId}`, {
@@ -209,7 +200,7 @@ export function EditSecretForm({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => append({ name: "", email: "", phone: "", isPrimary: false })}
+                onClick={() => append({ name: "", email: "", phone: "" })}
                 disabled={loading}
               >
                 <Plus className="mr-2 h-4 w-4" />
@@ -221,45 +212,17 @@ export function EditSecretForm({
                 <div key={field.id} className="space-y-4 rounded-lg border p-4">
                   <div className="flex items-center justify-between">
                     <h3 className="font-medium">Recipient {index + 1}</h3>
-                    <div className="flex items-center gap-2">
-                      <FormField
-                        control={form.control}
-                        name={`recipients.${index}.isPrimary`}
-                        render={({ field }) => (
-                          <FormItem className="flex items-center space-x-2">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    form.getValues("recipients").forEach((_, i) => {
-                                      if (i !== index) {
-                                        form.setValue(`recipients.${i}.isPrimary`, false)
-                                      }
-                                    })
-                                  }
-                                  field.onChange(checked)
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel className="!mt-0 text-sm font-normal">
-                              Primary
-                            </FormLabel>
-                          </FormItem>
-                        )}
-                      />
-                      {fields.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => remove(index)}
-                          disabled={loading}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
+                    {fields.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => remove(index)}
+                        disabled={loading}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
 
                   <FormField

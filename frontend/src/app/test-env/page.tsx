@@ -13,7 +13,7 @@ export default async function TestEnvPage() {
       <div className="space-y-4">
         <div className="rounded border p-4">
           <h2 className="font-semibold">User Authentication</h2>
-          <pre className="mt-2 rounded bg-gray-100 p-2 text-sm">
+          <pre className="mt-2 rounded bg-muted p-2 text-sm">
             {JSON.stringify(
               {
                 user: user?.id,
@@ -31,7 +31,7 @@ export default async function TestEnvPage() {
           <>
             <div className="rounded border p-4">
               <h2 className="font-semibold">User's Secrets Query</h2>
-              <pre className="mt-2 rounded bg-gray-100 p-2 text-sm">
+              <pre className="mt-2 rounded bg-muted p-2 text-sm">
                 {JSON.stringify(
                   {
                     secretsCount: 0,
@@ -49,7 +49,7 @@ export default async function TestEnvPage() {
               <h2 className="font-semibold">
                 All Secrets (Last 5) - Debug Only
               </h2>
-              <pre className="mt-2 rounded bg-gray-100 p-2 text-sm">
+              <pre className="mt-2 rounded bg-muted p-2 text-sm">
                 {JSON.stringify(
                   {
                     allSecretsCount: 0,
@@ -66,7 +66,7 @@ export default async function TestEnvPage() {
 
         <div className="rounded border p-4">
           <h2 className="font-semibold">Environment Variables</h2>
-          <pre className="mt-2 rounded bg-gray-100 p-2 text-sm">
+          <pre className="mt-2 rounded bg-muted p-2 text-sm">
             {JSON.stringify(
               {
                 NEXT_PUBLIC_ENV: process.env.NEXT_PUBLIC_ENV,

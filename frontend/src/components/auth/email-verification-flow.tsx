@@ -64,9 +64,9 @@ export function EmailVerificationFlow({
         <Card className="mx-auto w-full max-w-md">
           <CardContent className="pt-6">
             <div className="space-y-4 text-center">
-              <CheckCircle2 className="mx-auto h-16 w-16 text-green-600" />
+              <CheckCircle2 className="mx-auto h-16 w-16 text-accent-foreground" />
               <div>
-                <h3 className="text-lg font-semibold text-green-600">
+                <h3 className="text-lg font-semibold text-accent-foreground">
                   Welcome!
                 </h3>
                 <p className="text-muted-foreground text-sm">
