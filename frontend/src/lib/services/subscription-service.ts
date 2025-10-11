@@ -321,6 +321,9 @@ class SubscriptionService {
   async handleStripeWebhook(event: any, userId: string) {
     try {
       switch (event.type) {
+        case "checkout.session.completed":
+          return await this.handleCheckoutSessionCompleted(event, userId);
+
         case "customer.subscription.created":
         case "customer.subscription.updated":
           return await this.handleSubscriptionUpdate(event, userId);
@@ -367,6 +370,62 @@ class SubscriptionService {
     }
   }
 
+  private async handleCheckoutSessionCompleted(event: any, userId: string) {
+    const session = event.data.object;
+    
+    if (session.mode === "subscription" && session.subscription) {
+      console.log(`[Subscription] Checkout completed for user ${userId}, subscription: ${session.subscription}`);
+      
+      const subscriptionId = typeof session.subscription === 'string' 
+        ? session.subscription 
+        : session.subscription.id;
+      
+      await this.createOrUpdateSubscriptionFromCheckout(
+        userId,
+        session.customer,
+        subscriptionId,
+        session
+      );
+    }
+  }
+
+  private async createOrUpdateSubscriptionFromCheckout(
+    userId: string,
+    customerId: string,
+    subscriptionId: string,
+    session: any
+  ) {
+    try {
+      const existingSubscription = await this.getUserSubscription(userId);
+      
+      if (existingSubscription) {
+        console.log(`[Subscription] Updating existing subscription for user ${userId}`);
+        return await this.updateSubscription(userId, {
+          status: "active",
+        });
+      } else {
+        console.log(`[Subscription] Creating new subscription for user ${userId}`);
+        
+        const subscriptionData: CreateSubscriptionData = {
+          userId,
+          provider: "stripe",
+          providerCustomerId: customerId,
+          providerSubscriptionId: subscriptionId,
+          tierName: "premium",
+          status: "active",
+          currentPeriodStart: new Date(),
+          currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          cancelAtPeriodEnd: false,
+        };
+        
+        return await this.createSubscription(subscriptionData);
+      }
+    } catch (error) {
+      console.error("Failed to create/update subscription from checkout:", error);
+      throw error;
+    }
+  }
+
   private async handleSubscriptionUpdate(event: any, userId: string) {
     const subscription = event.data.object;
     const tier = this.getTierFromStripePrice(
@@ -385,7 +444,6 @@ class SubscriptionService {
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
     };
 
-    // Try to update existing subscription, create if not exists
     const existingSubscription = await this.getUserSubscription(userId);
     if (existingSubscription) {
       return await this.updateSubscription(userId, {
@@ -462,10 +520,11 @@ class SubscriptionService {
   }
 
   private getTierFromStripePrice(priceId: string): SubscriptionTier {
-    // Map Stripe price IDs to tier names
     const priceToTierMap: Record<string, SubscriptionTier> = {
       price_pro_monthly: "premium",
       price_pro_yearly: "premium",
+      pro_monthly: "premium",
+      pro_yearly: "premium",
       price_basic_monthly: "basic",
       price_basic_yearly: "basic",
     };
