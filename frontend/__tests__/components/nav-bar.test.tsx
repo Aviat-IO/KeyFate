@@ -53,6 +53,15 @@ vi.mock("@/components/theme-toggle", () => ({
   ThemeToggle: () => <button data-testid="theme-toggle">Theme Toggle</button>,
 }))
 
+// Mock DevTierToggle component
+vi.mock("@/components/dev-tier-toggle", () => ({
+  DevTierToggle: ({ currentTier }: { currentTier?: "free" | "pro" }) => (
+    <button data-testid="dev-tier-toggle">
+      {currentTier === "pro" ? "Pro [DEV]" : "Free [DEV]"}
+    </button>
+  ),
+}))
+
 // Mock Lucide React icons
 vi.mock("lucide-react", () => ({
   Menu: () => <span data-testid="menu-icon">Menu</span>,
@@ -548,6 +557,136 @@ describe("NavBar", () => {
 
       // Should handle multiple clicks gracefully - may be called multiple times
       expect(signOutSpy).toHaveBeenCalledWith({ callbackUrl: "/sign-in" })
+    })
+  })
+
+  describe("tier and upgrade functionality", () => {
+    beforeEach(() => {
+      global.fetch = vi.fn()
+    })
+
+    it("should show Upgrade to Pro button for free tier users", async () => {
+      // Mock subscription API to return free tier
+      ;(global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ tier: { name: "free" } }),
+      })
+
+      mockUseSession.mockReturnValue({
+        data: mockSession,
+        status: "authenticated"
+      })
+
+      render(<NavBar />)
+
+      await waitFor(() => {
+        const upgradeButtons = screen.queryAllByText("Upgrade to Pro")
+        expect(upgradeButtons.length).toBeGreaterThan(0)
+      })
+    })
+
+    it("should not show Upgrade to Pro button for pro tier users", async () => {
+      // Mock subscription API to return pro tier
+      ;(global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ tier: { name: "pro" } }),
+      })
+
+      mockUseSession.mockReturnValue({
+        data: mockSession,
+        status: "authenticated"
+      })
+
+      render(<NavBar />)
+
+      await waitFor(() => {
+        expect(screen.queryByText("Upgrade to Pro")).not.toBeInTheDocument()
+      })
+    })
+
+    it("should show DevTierToggle for authenticated users", async () => {
+      ;(global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ tier: { name: "free" } }),
+      })
+
+      mockUseSession.mockReturnValue({
+        data: mockSession,
+        status: "authenticated"
+      })
+
+      render(<NavBar />)
+
+      await waitFor(() => {
+        const devToggle = screen.queryByTestId("dev-tier-toggle")
+        expect(devToggle).toBeInTheDocument()
+      })
+    })
+
+    it("should not show tier toggle while checking subscription", async () => {
+      // Don't resolve the promise immediately to simulate loading state
+      ;(global.fetch as any).mockImplementationOnce(() => new Promise(() => {}))
+
+      mockUseSession.mockReturnValue({
+        data: mockSession,
+        status: "authenticated"
+      })
+
+      render(<NavBar />)
+
+      // During loading, upgrade button should not be visible
+      expect(screen.queryByText("Upgrade to Pro")).not.toBeInTheDocument()
+    })
+
+    it("should show Upgrade to Pro button in mobile menu for free tier users", async () => {
+      ;(global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ tier: { name: "free" } }),
+      })
+
+      mockUseSession.mockReturnValue({
+        data: mockSession,
+        status: "authenticated"
+      })
+
+      render(<NavBar />)
+
+      await waitFor(() => {
+        expect(screen.queryAllByText("Upgrade to Pro").length).toBeGreaterThan(0)
+      })
+
+      const mobileMenuTrigger = screen.getByTestId("mobile-menu-trigger")
+      fireEvent.click(mobileMenuTrigger)
+
+      await waitFor(() => {
+        const upgradeButtons = screen.getAllByText("Upgrade to Pro")
+        expect(upgradeButtons.length).toBeGreaterThan(0)
+      })
+    })
+
+    it("should not show Upgrade to Pro button in mobile menu for pro tier users", async () => {
+      ;(global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ tier: { name: "pro" } }),
+      })
+
+      mockUseSession.mockReturnValue({
+        data: mockSession,
+        status: "authenticated"
+      })
+
+      render(<NavBar />)
+
+      await waitFor(() => {
+        expect(screen.queryByText("Upgrade to Pro")).not.toBeInTheDocument()
+      })
+
+      const mobileMenuTrigger = screen.getByTestId("mobile-menu-trigger")
+      fireEvent.click(mobileMenuTrigger)
+
+      await waitFor(() => {
+        expect(screen.queryByText("Upgrade to Pro")).not.toBeInTheDocument()
+      })
     })
   })
 
