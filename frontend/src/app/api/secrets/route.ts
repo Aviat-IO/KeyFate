@@ -5,6 +5,7 @@ import { RobustSecretsService } from "@/lib/db/secrets-service-robust";
 import { encryptMessage } from "@/lib/encryption";
 import { secretSchema } from "@/lib/schemas/secret";
 import { canUserCreateSecret, getUserTierInfo, isIntervalAllowed } from "@/lib/subscription";
+import { isValidThreshold } from "@/lib/tier-validation";
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
@@ -102,6 +103,17 @@ export async function POST(request: NextRequest) {
         {
           error: `Recipient limit exceeded. Your ${userTier} tier allows ${maxRecipients} recipient${maxRecipients === 1 ? "" : "s"} per secret. Upgrade to Pro for more.`,
           code: "RECIPIENT_LIMIT_EXCEEDED",
+        },
+        { status: 403 },
+      );
+    }
+
+    if (!isValidThreshold(userTier, validatedData.sss_threshold, validatedData.sss_shares_total)) {
+      const maxShares = userTier === "pro" ? 7 : 3;
+      return NextResponse.json(
+        {
+          error: `Invalid threshold configuration. ${userTier === "free" ? "Free tier is limited to 2-of-3 shares. Upgrade to Pro for configurable thresholds up to 7 shares." : `Pro tier allows 2-of-N up to ${maxShares} shares.`}`,
+          code: "THRESHOLD_NOT_ALLOWED",
         },
         { status: 403 },
       );

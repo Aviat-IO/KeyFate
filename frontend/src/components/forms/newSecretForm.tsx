@@ -43,6 +43,7 @@ import { useState } from "react"
 import { useForm, useFieldArray } from "react-hook-form"
 import sss from "shamirs-secret-sharing"
 import { UpgradeModal } from "@/components/upgrade-modal"
+import { ThresholdSelector } from "./ThresholdSelector"
 
 interface NewSecretFormProps {
   isPaid?: boolean
@@ -481,81 +482,12 @@ export function NewSecretForm({
                       </ul>
                     </AlertDescription>
                   </Alert>
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
-                    <FormField
-                      control={form.control}
-                      name="sss_shares_total"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Total Shares to Create</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              min="2"
-                              max="10"
-                              disabled={isSubmitting}
-                              {...field}
-                              onChange={(e) => {
-                                const val = e.target.value
-                                if (val === "") {
-                                  field.onChange("")
-                                } else {
-                                  const numValue = parseInt(val, 10)
-                                  if (!isNaN(numValue)) {
-                                    field.onChange(numValue)
-                                  } else {
-                                    field.onChange(val)
-                                  }
-                                }
-                              }}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            Total shares to split the secret into. Min 2, Max 5.
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="sss_threshold"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            Shares Needed for Recovery (Threshold)
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              min="2"
-                              max="5"
-                              disabled={isSubmitting}
-                              {...field}
-                              onChange={(e) => {
-                                const val = e.target.value
-                                if (val === "") {
-                                  field.onChange("")
-                                } else {
-                                  const numValue = parseInt(val, 10)
-                                  if (!isNaN(numValue)) {
-                                    field.onChange(numValue)
-                                  } else {
-                                    field.onChange(val)
-                                  }
-                                }
-                              }}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            Minimum shares to reconstruct. Min 2, Max 5. Must be
-                            &lt;= total shares.
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <ThresholdSelector
+                    control={form.control}
+                    isPro={isPaid}
+                    isSubmitting={isSubmitting}
+                    onUpgradeClick={() => setShowUpgradeModal(true)}
+                  />
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
