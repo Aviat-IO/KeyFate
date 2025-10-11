@@ -85,11 +85,16 @@ export function NavBar() {
             )}
           </div>
 
-          {/* Desktop Menu */}
+            {/* Desktop Menu */}
           <div className="hidden items-center space-x-4 md:flex">
             {!user && (
               <Button variant="ghost" asChild>
                 <Link href="/pricing">Pricing</Link>
+              </Button>
+            )}
+            {user && isProUser && (
+              <Button variant="ghost" asChild>
+                <Link href="/audit-logs">Audit Logs</Link>
               </Button>
             )}
             <Button variant="ghost" asChild>
@@ -202,6 +207,18 @@ export function NavBar() {
                       </Button>
                       <Separator className="my-1" />
                     </>
+                  )}
+
+                  {user && isProUser && (
+                    <Button
+                      variant="ghost"
+                      asChild
+                      className="h-12 justify-start"
+                    >
+                      <Link href="/audit-logs" onClick={handleMobileMenuItemClick}>
+                        Audit Logs
+                      </Link>
+                    </Button>
                   )}
 
                   <Button

@@ -5,6 +5,7 @@ import {
   subscriptionTiers,
   userSubscriptions,
 } from "@/lib/db/schema";
+import { logSubscriptionChanged } from "@/lib/services/audit-logger";
 import { and, eq } from "drizzle-orm";
 import { emailService } from "./email-service";
 
@@ -61,6 +62,13 @@ class SubscriptionService {
         } as any)
         .returning();
 
+      await logSubscriptionChanged(data.userId, {
+        action: "created",
+        tier: data.tierName,
+        provider: data.provider,
+        status: data.status,
+      });
+
       // Send confirmation email (don't await to avoid blocking)
       this.sendSubscriptionConfirmationEmail(data.userId, {
         provider: data.provider,
@@ -105,6 +113,11 @@ class SubscriptionService {
         .set(updateData)
         .where(eq(userSubscriptions.userId, userId))
         .returning();
+
+      await logSubscriptionChanged(userId, {
+        action: "updated",
+        ...data,
+      });
 
       return subscription;
     } catch (error) {

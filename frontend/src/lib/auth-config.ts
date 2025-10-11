@@ -1,5 +1,6 @@
 import { getDatabase } from "@/lib/db/drizzle";
 import { users } from "@/lib/db/schema";
+import { logLogin } from "@/lib/services/audit-logger";
 import { eq } from "drizzle-orm";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
@@ -236,6 +237,18 @@ const baseAuthConfig = {
             };
 
             await db.insert(users).values(userData);
+            
+            await logLogin(userData.id, {
+              provider: "google",
+              email: normalizedEmail,
+              newUser: true,
+            });
+          } else {
+            await logLogin(existingUser[0].id, {
+              provider: "google",
+              email: normalizedEmail,
+              newUser: false,
+            });
           }
 
           return true;
@@ -249,7 +262,11 @@ const baseAuthConfig = {
       }
 
       // Allow credentials provider (we handle authentication in authorize function)
-      if (account?.provider === "credentials") {
+      if (account?.provider === "credentials" && user?.id) {
+        await logLogin(user.id, {
+          provider: "credentials",
+          email: user.email || undefined,
+        });
         return true;
       }
 

@@ -14,36 +14,36 @@
 
 ## 3. Backend Integration
 
-- [ ] 3.1 Add audit logging to secret creation endpoint
-- [ ] 3.2 Add audit logging to secret update endpoint
-- [ ] 3.3 Add audit logging to secret deletion endpoint
-- [ ] 3.4 Add audit logging to check-in endpoint
+- [x] 3.1 Add audit logging to secret creation endpoint
+- [x] 3.2 Add audit logging to secret update endpoint
+- [x] 3.3 Add audit logging to secret deletion endpoint
+- [x] 3.4 Add audit logging to check-in endpoint
 - [ ] 3.5 Add audit logging to recipient management endpoints
 - [ ] 3.6 Add audit logging to settings update endpoints
-- [ ] 3.7 Add audit logging to NextAuth callbacks (login events)
-- [ ] 3.8 Add audit logging to subscription webhook handlers
+- [x] 3.7 Add audit logging to NextAuth callbacks (login events)
+- [x] 3.8 Add audit logging to subscription webhook handlers
 
 ## 4. API Endpoints
 
-- [ ] 4.1 Create GET /api/audit-logs with pagination, filtering, and Pro tier validation
-- [ ] 4.2 Create GET /api/audit-logs/export for CSV/JSON export (Pro only)
-- [ ] 4.3 Add tier validation middleware for audit log endpoints
-- [ ] 4.4 Implement query filters: event_type, date_range, resource_id
+- [x] 4.1 Create GET /api/audit-logs with pagination, filtering, and Pro tier validation
+- [x] 4.2 Create GET /api/audit-logs/export for CSV/JSON export (Pro only)
+- [x] 4.3 Add tier validation middleware for audit log endpoints
+- [x] 4.4 Implement query filters: event_type, date_range, resource_id
 
 ## 5. Frontend UI
 
-- [ ] 5.1 Create `AuditLogsPage.tsx` component with table view
-- [ ] 5.2 Add pagination controls to audit log table
-- [ ] 5.3 Add filters: event type, date range, search
-- [ ] 5.4 Add export button (CSV/JSON download)
-- [ ] 5.5 Add audit logs link to user dashboard/settings (Pro users only)
-- [ ] 5.6 Show upgrade prompt for Free users attempting to access audit logs
+- [x] 5.1 Create `AuditLogsPage.tsx` component with table view
+- [x] 5.2 Add pagination controls to audit log table
+- [x] 5.3 Add filters: event type, date range, search
+- [x] 5.4 Add export button (CSV/JSON download)
+- [x] 5.5 Add audit logs link to user dashboard/settings (Pro users only)
+- [x] 5.6 Show upgrade prompt for Free users attempting to access audit logs
 
 ## 6. Constants & Features
 
-- [ ] 6.1 Add audit logs to PRO_FEATURES constant
-- [ ] 6.2 Create audit event type constants for consistency
-- [ ] 6.3 Update tiers.ts to include "Comprehensive audit logs" in Pro features
+- [x] 6.1 Add audit logs to PRO_FEATURES constant
+- [x] 6.2 Create audit event type constants for consistency
+- [x] 6.3 Update tiers.ts to include "Comprehensive audit logs" in Pro features
 
 ## 7. Testing
 

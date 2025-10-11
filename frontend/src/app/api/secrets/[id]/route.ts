@@ -8,6 +8,7 @@ import {
   secrets as secretsTable,
   secretRecipients,
 } from "@/lib/db/schema";
+import { logSecretDeleted, logSecretEdited } from "@/lib/services/audit-logger";
 import { and, eq } from "drizzle-orm";
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth/next";
@@ -114,6 +115,12 @@ export async function PUT(
       phone?: string | null;
     }>);
 
+    await logSecretEdited(session.user.id, id, {
+      title: validatedData.title,
+      recipientCount: validatedData.recipients.length,
+      checkInDays: validatedData.check_in_days,
+    });
+
     // Return updated secret with recipients
     const updatedSecret = await getSecretWithRecipients(id, session.user.id);
     return NextResponse.json(updatedSecret);
@@ -172,6 +179,10 @@ export async function DELETE(
       await tx.delete(secretsTable).where(
         and(eq(secretsTable.id, id), eq(secretsTable.userId, session.user.id)),
       );
+    });
+
+    await logSecretDeleted(session.user.id, id, {
+      title: secret.title,
     });
 
     return NextResponse.json({ success: true });
