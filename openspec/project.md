@@ -101,21 +101,24 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 ### Security Model
 
 - **Zero-Knowledge Architecture:** Original secrets never leave user's device
-- **Shamir's Secret Sharing:** Secrets split into 3 shares (2-of-3 threshold)
+- **Shamir's Secret Sharing:** Secrets split using configurable threshold schemes
+  - Free tier: Fixed 2-of-3 (2 shares required from 3 total)
+  - Pro tier: Configurable 2-of-N up to 7 shares (e.g., 3-of-5, 4-of-7)
 - **Server Storage:** Only one encrypted share stored (insufficient to reconstruct)
 - **Mathematical Guarantee:** Impossible to reconstruct secrets from server alone
 - **Client-Side Encryption:** All secret processing happens in browser
 - **AES-256-GCM:** Industry-standard encryption for stored shares
+- **Audit Logging:** Pro users have comprehensive activity logs stored indefinitely
 
 ### Business Model
 
-- **Free Tier:** 1 secret, 1 recipient (email only), limited check-in intervals (1 week, 1 month, 1 year only)
-- **Pro Tier:** 10 secrets, 5 recipients per secret (email only), flexible custom intervals (1 day to 3 years)
+- **Free Tier:** 1 secret, 1 recipient (email only), limited check-in intervals (1 week, 1 month, 1 year only), 2-of-3 Shamir threshold (fixed), no message templates, no audit logs, community support
+- **Pro Tier:** 10 secrets, 5 recipients per secret (email only), flexible custom intervals (1 day to 3 years), configurable Shamir threshold (2-of-N up to 7 shares), 7 message templates, comprehensive audit logs, priority email support (support@aviat.io)
 - **Downgrade Policy:** Users who downgrade keep existing secrets but cannot create new ones if over limit (grandfathering)
 - **Subscription Management:** Stripe and BTCPay Server integration
 - **Contact Methods:** Email only (SMS/phone deferred to future)
-- **Message Templates:** Feature deferred pending clarification of requirements
-- **Future Plans:** SMS notifications, message templates (once defined), B2B features, Nostr integration
+- **Pro Features Constant:** All Pro features defined in `frontend/src/constants/pro-features.ts` with title, description, and optional features list
+- **Future Plans:** SMS notifications, B2B features, Nostr integration
 
 ### Check-In System
 
@@ -149,8 +152,16 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 
 ### Business Constraints
 
-- **Free tier limits:** 1 secret (active or paused), 1 recipient (email only), 3 check-in intervals (7d, 30d, 365d)
-- **Pro tier limits:** 10 secrets (active or paused), 5 recipients per secret (email only), 9 custom intervals (1d to 3y)
+- **Free tier limits:** 
+  - 1 secret (active or paused), 1 recipient (email only), 3 check-in intervals (7d, 30d, 365d)
+  - Fixed 2-of-3 Shamir threshold (no configuration)
+  - No message templates, no audit logs, community support only
+- **Pro tier limits:** 
+  - 10 secrets (active or paused), 5 recipients per secret (email only), 9 custom intervals (1d to 3y)
+  - Configurable Shamir threshold: 2-of-N up to 7 shares
+  - 7 message templates (Bitcoin Wallet, Password Manager, Estate Documents, Safe Deposit Box, Cryptocurrency Exchange, Cloud Storage, Social Media)
+  - Comprehensive audit logs (stored indefinitely)
+  - Priority email support: support@aviat.io
 - **Tier enforcement:** Must be validated server-side in all API endpoints (not just UI)
 - **Secret limit counting:** Count secrets with `status = 'active'` OR `status = 'paused'` (only exclude `triggered` and deleted secrets)
 - **Downgrade handling:** Grandfather existing secrets, prevent new secret creation if over new limit
@@ -158,6 +169,7 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 - **Payment processing:** Stripe and BTCPay Server
 - **Contact methods:** Email only until SMS feature is implemented
 - **UI Components:** ShadCN UI with theme defined in `frontend/src/app/globals.css`
+- **Pro Features Reference:** All Pro features centralized in `frontend/src/constants/pro-features.ts`
 
 ## External Dependencies
 
