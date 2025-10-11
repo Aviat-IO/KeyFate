@@ -50,8 +50,8 @@ export const secretFormSchema = z
             required_error: "Total shares is required.",
             invalid_type_error: "Total shares must be a number.",
           })
-          .min(2, "Total shares must be at least 2.")
-          .max(5, "Total shares cannot exceed 5."),
+          .min(3, "Total shares must be at least 3.")
+          .max(7, "Total shares cannot exceed 7."),
       ),
     sss_threshold: z
       .union([z.string(), z.number()])
@@ -70,7 +70,7 @@ export const secretFormSchema = z
             invalid_type_error: "Threshold must be a number.",
           })
            .min(2, "Threshold must be at least 2.")
-          .max(5, "Threshold cannot exceed 5."),
+          .max(7, "Threshold cannot exceed 7."),
       ),
   })
   .refine(
@@ -137,12 +137,12 @@ export const secretSchema = z
     status: z.enum(["active", "paused", "triggered"]).default("active"),
     sss_shares_total: z
       .number()
-      .min(2, "Invalid SSS shares total or threshold parameters.")
-      .max(5),
+      .min(3, "Invalid SSS shares total or threshold parameters.")
+      .max(7),
     sss_threshold: z
       .number()
       .min(2, "Invalid SSS shares total or threshold parameters.")
-      .max(5),
+      .max(7),
   })
   .refine(
     (data) => {
