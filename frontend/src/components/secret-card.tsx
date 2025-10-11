@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import { formatGranularTime } from "@/lib/time-utils"
 import type { SecretWithRecipients } from "@/lib/types/secret-types"
-import { getPrimaryRecipient, getRecipientContactInfo } from "@/lib/types/secret-types"
+import { getRecipientContactInfo } from "@/lib/types/secret-types"
 import { Clock, Pencil, User } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
@@ -96,7 +96,7 @@ export function SecretCard({ secret }: SecretCardProps) {
     ),
   )
 
-  const primaryRecipient = getPrimaryRecipient(secretState.recipients)
+  const firstRecipient = secretState.recipients[0]
   const isTriggered = secretState.triggeredAt !== null || secretState.status === "triggered"
 
   useEffect(() => {
@@ -174,6 +174,9 @@ export function SecretCard({ secret }: SecretCardProps) {
     if (serverShareDeleted) {
       return "Disabled"
     }
+    if (secretState.status === "paused") {
+      return "Paused"
+    }
     return `Triggers in ${formatGranularTime(secretState.nextCheckIn || new Date())}`
   }
 
@@ -208,18 +211,18 @@ export function SecretCard({ secret }: SecretCardProps) {
   return (
     <Card
       className={cn(
-        "transition-all duration-200 hover:shadow-md",
+        "flex flex-col transition-all duration-200",
         isTriggered && "border-destructive/50 bg-destructive/5",
         secretState.status === "paused" && "border-accent bg-accent/10",
         serverShareDeleted &&
           "border-muted-foreground/30 bg-muted/50 opacity-90",
       )}
     >
-      <CardHeader className="pb-3">
+      <CardHeader className="flex-1 pb-4">
         {/* Mobile Layout: Stack everything vertically */}
-        <div className="flex flex-col gap-2 md:hidden">
+        <div className="flex flex-col gap-3 md:hidden">
           <div className="flex items-start justify-between">
-            <h3 className="flex-1 truncate pr-2 text-sm font-semibold">
+            <h3 className="flex-1 truncate pr-2 text-base font-semibold">
               {secretState.title}
             </h3>
             <Badge variant={statusBadge.variant} className="text-xs">
@@ -227,118 +230,128 @@ export function SecretCard({ secret }: SecretCardProps) {
             </Badge>
           </div>
 
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="text-muted-foreground flex items-center gap-2 text-xs cursor-help">
-                  <User className="h-3 w-3" />
-                  <span className="truncate">
-                    {primaryRecipient?.name || "No recipient"}
-                    {secretState.recipients.length > 1 && ` +${secretState.recipients.length - 1}`}
-                  </span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="whitespace-pre-line">{getContactDetails()}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="text-muted-foreground flex items-center gap-2 text-xs cursor-help">
-                  <Clock className="h-3 w-3" />
-                  <span>{getTimingText()}</span>
-                </div>
-              </TooltipTrigger>
-              {getTriggerTimeTooltip() && (
-                <TooltipContent>
-                  <p>Will trigger on {getTriggerTimeTooltip()}</p>
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
-
-          {getLastCheckInText() && (
-            <div className="text-muted-foreground text-xs">
-              {getLastCheckInText()}
-            </div>
-          )}
-        </div>
-
-        {/* Desktop Layout: More spacious with better information hierarchy */}
-        <div className="hidden md:block">
-          <div className="mb-2 flex items-start justify-between">
-            <div className="flex-1">
-              <h3 className="mb-3 text-base font-semibold">
-                {secretState.title}
-              </h3>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="text-muted-foreground flex items-center gap-2 text-sm cursor-help">
-                      <User className="h-4 w-4" />
-                      <span>
-                        Recipients: {primaryRecipient?.name || "No recipient"}
-                        {secretState.recipients.length > 1 && ` +${secretState.recipients.length - 1} more`}
-                      </span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="whitespace-pre-line">{getContactDetails()}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+          <div className="space-y-3">
+            <div>
+              <div className="mb-1.5 text-sm font-medium text-foreground">
+                {secretState.recipients.length} {secretState.recipients.length === 1 ? "Recipient" : "Recipients"}
+              </div>
+              <ul className="ml-1 space-y-0.5 text-xs text-muted-foreground">
+                {secretState.recipients.map((recipient) => (
+                  <li key={recipient.id}>
+                    • {recipient.name} {recipient.email ? `(${recipient.email})` : recipient.phone ? `(${recipient.phone})` : ""}
+                  </li>
+                ))}
+              </ul>
             </div>
 
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge variant={statusBadge.variant}>
-                    {statusBadge.label}
-                  </Badge>
-                </TooltipTrigger>
-                {statusBadge.label === "Paused" && (
-                  <TooltipContent>
-                    <p>Will not trigger even if past the due date</p>
-                  </TooltipContent>
-                )}
-                {statusBadge.label === "Disabled" && (
-                  <TooltipContent>
-                    <p>Server share deleted - secret is disabled</p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="text-muted-foreground flex items-center gap-2 text-sm cursor-help">
-                    <Clock className="h-4 w-4" />
-                    <span>{getTimingText()}</span>
+            {!isTriggered && !serverShareDeleted && (
+              <div>
+                <div className="mb-1.5 text-sm font-medium text-foreground">
+                  {getTimingText()}
+                </div>
+                {secretState.status === "paused" ? (
+                  <div className="ml-1 text-xs text-muted-foreground">
+                    Will not trigger until resumed
                   </div>
-                </TooltipTrigger>
-                {getTriggerTimeTooltip() && (
-                  <TooltipContent>
-                    <p>Will trigger on {getTriggerTimeTooltip()}</p>
-                  </TooltipContent>
+                ) : (
+                  <div className="ml-1 text-xs text-muted-foreground">
+                    {getTriggerTimeTooltip()}
+                  </div>
                 )}
-              </Tooltip>
-            </TooltipProvider>
+              </div>
+            )}
 
-            {getLastCheckInText() && (
-              <div className="text-muted-foreground ml-6 text-xs">
-                {getLastCheckInText()}
+            {isTriggered && (
+              <div>
+                <div className="mb-1.5 text-sm font-medium text-foreground">
+                  {getTimingText()}
+                </div>
               </div>
             )}
 
             {serverShareDeleted && (
-              <div className="text-muted-foreground ml-6 text-xs">
-                Server share deleted
+              <div>
+                <div className="mb-1.5 text-sm font-medium text-foreground">
+                  Disabled
+                </div>
+                <div className="ml-1 text-xs text-muted-foreground">
+                  Server share deleted
+                </div>
+              </div>
+            )}
+
+            {getLastCheckInText() && (
+              <div className="ml-1 text-xs text-muted-foreground">
+                {getLastCheckInText()}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Desktop Layout: More spacious with better information hierarchy */}
+        <div className="hidden md:block">
+          <div className="mb-4 flex items-start justify-between">
+            <h3 className="text-xl font-semibold">
+              {secretState.title}
+            </h3>
+            <Badge variant={statusBadge.variant} className="text-sm">
+              {statusBadge.label}
+            </Badge>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <div className="mb-2 text-base font-medium text-foreground">
+                {secretState.recipients.length} {secretState.recipients.length === 1 ? "Recipient" : "Recipients"}
+              </div>
+              <ul className="ml-1 space-y-1 text-sm text-muted-foreground">
+                {secretState.recipients.map((recipient) => (
+                  <li key={recipient.id}>
+                    • {recipient.name} {recipient.email ? `(${recipient.email})` : recipient.phone ? `(${recipient.phone})` : ""}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {!isTriggered && !serverShareDeleted && (
+              <div>
+                <div className="mb-2 text-base font-medium text-foreground">
+                  {getTimingText()}
+                </div>
+                {secretState.status === "paused" ? (
+                  <div className="ml-1 text-sm text-muted-foreground">
+                    Will not trigger until resumed
+                  </div>
+                ) : (
+                  <div className="ml-1 text-sm text-muted-foreground">
+                    {getTriggerTimeTooltip()}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {isTriggered && (
+              <div>
+                <div className="mb-2 text-base font-medium text-foreground">
+                  {getTimingText()}
+                </div>
+              </div>
+            )}
+
+            {serverShareDeleted && (
+              <div>
+                <div className="mb-2 text-base font-medium text-foreground">
+                  Disabled
+                </div>
+                <div className="ml-1 text-sm text-muted-foreground">
+                  Server share deleted
+                </div>
+              </div>
+            )}
+
+            {getLastCheckInText() && (
+              <div className="ml-1 text-sm text-muted-foreground">
+                {getLastCheckInText()}
               </div>
             )}
           </div>
