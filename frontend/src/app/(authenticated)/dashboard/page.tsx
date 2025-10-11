@@ -2,6 +2,7 @@ import { SecretCard } from "@/components/secret-card"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LoadingIndicator } from "@/components/ui/loading-indicator"
+import { UpgradeSuccessDialog } from "@/components/subscription/UpgradeSuccessDialog"
 import { DashboardService, DashboardTimeoutError } from "@/lib/dashboard/dashboard-service"
 import { getUserTierInfo } from "@/lib/subscription"
 import Link from "next/link"
@@ -210,6 +211,8 @@ async function DashboardHeader() {
 export default async function DashboardPage() {
   return (
     <div className="mx-auto py-8 sm:px-4">
+      <UpgradeSuccessDialog />
+      
       <Suspense fallback={
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-3xl font-bold">Your Secrets</h1>

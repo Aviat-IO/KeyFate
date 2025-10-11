@@ -5,14 +5,48 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { STRIPE_LOOKUP_KEYS } from "@/constants/tiers"
 import { useSession } from "next-auth/react"
+import { useEffect, useState } from "react"
 import { BillingPortalButton } from "./BillingPortalButton"
 import { StripeCheckoutButton } from "./StripeCheckoutButton"
 
+interface UserTierInfo {
+  tier: string
+  displayName: string
+  subscription?: {
+    status: string
+  } | null
+}
+
 export function UserPricingActions() {
   const { data: session, status } = useSession()
-  const loading = status === "loading"
+  const [tierInfo, setTierInfo] = useState<UserTierInfo | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  if (loading) {
+  useEffect(() => {
+    async function fetchTierInfo() {
+      if (session?.user && (session.user as any).id) {
+        try {
+          const response = await fetch('/api/user/tier')
+          if (response.ok) {
+            const data = await response.json()
+            setTierInfo(data)
+          }
+        } catch (error) {
+          console.error("Failed to fetch tier info:", error)
+        } finally {
+          setLoading(false)
+        }
+      } else {
+        setLoading(false)
+      }
+    }
+
+    if (status !== "loading") {
+      fetchTierInfo()
+    }
+  }, [session, status])
+
+  if (status === "loading" || loading) {
     return (
       <Card>
         <CardContent className="p-6">
@@ -43,36 +77,48 @@ export function UserPricingActions() {
     )
   }
 
-  // For now, show upgrade options for all authenticated users
-  // TODO: Check actual subscription status once Stripe columns are available
+  const isProUser = tierInfo?.tier === "premium" || tierInfo?.tier === "pro"
+  const displayName = tierInfo?.displayName || "Free"
+  const subscriptionStatus = tierInfo?.subscription?.status
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           Your Account
-          <Badge variant="secondary">Free Plan</Badge>
+          <Badge variant={isProUser ? "default" : "secondary"}>
+            {displayName} Plan
+          </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
           <p className="text-muted-foreground text-sm">Email: {session.user.email}</p>
+          {subscriptionStatus && (
+            <p className="text-muted-foreground text-sm mt-1">
+              Status: <span className="capitalize">{subscriptionStatus}</span>
+            </p>
+          )}
         </div>
 
-        <div className="space-y-3">
-          <p className="text-sm font-medium">
-            Upgrade to Pro for more features:
-          </p>
-          <div className="space-y-2">
-            <StripeCheckoutButton lookupKey={STRIPE_LOOKUP_KEYS.PRO_YEARLY}>
-              Upgrade to Pro - Annual ($90/year)
-            </StripeCheckoutButton>
-            <StripeCheckoutButton lookupKey={STRIPE_LOOKUP_KEYS.PRO_MONTHLY}>
-              Upgrade to Pro - Monthly ($9/month)
-            </StripeCheckoutButton>
+        {!isProUser && (
+          <div className="space-y-3">
+            <p className="text-sm font-medium">
+              Upgrade to Pro for more features:
+            </p>
+            <div className="space-y-2">
+              <StripeCheckoutButton lookupKey={STRIPE_LOOKUP_KEYS.PRO_YEARLY}>
+                Upgrade to Pro - Annual ($90/year)
+              </StripeCheckoutButton>
+              <StripeCheckoutButton lookupKey={STRIPE_LOOKUP_KEYS.PRO_MONTHLY}>
+                Upgrade to Pro - Monthly ($9/month)
+              </StripeCheckoutButton>
+            </div>
           </div>
-          <div className="pt-2">
-            <BillingPortalButton />
-          </div>
+        )}
+        
+        <div className="pt-2">
+          <BillingPortalButton />
         </div>
       </CardContent>
     </Card>
