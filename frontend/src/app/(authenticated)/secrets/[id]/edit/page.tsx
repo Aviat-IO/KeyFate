@@ -1,7 +1,6 @@
 import { EditSecretForm } from "@/components/forms/editSecretForm"
 import { authConfig } from "@/lib/auth-config"
 import { getSecret } from "@/lib/db/operations"
-import { getPrimaryRecipient } from "@/lib/types/secret-types"
 import type { Session } from "next-auth"
 import { getServerSession } from "next-auth/next"
 import { notFound, redirect } from "next/navigation"
@@ -25,14 +24,21 @@ export default async function EditSecretPage({ params }: EditSecretPageProps) {
       notFound()
     }
 
-    const primaryRecipient = getPrimaryRecipient(secret.recipients)
-
     const initialData = {
       title: secret.title,
-      recipient_name: primaryRecipient?.name || "",
-      recipient_email: primaryRecipient?.email || "",
-      recipient_phone: primaryRecipient?.phone || "",
-      contact_method: (primaryRecipient?.email && primaryRecipient?.phone ? "both" : primaryRecipient?.email ? "email" : "phone") as "email" | "phone" | "both",
+      recipients: secret.recipients.length > 0 
+        ? secret.recipients.map(r => ({
+            name: r.name,
+            email: r.email || "",
+            phone: r.phone || "",
+            isPrimary: r.isPrimary,
+          }))
+        : [{
+            name: "",
+            email: "",
+            phone: "",
+            isPrimary: true,
+          }],
       check_in_days: secret.checkInDays,
     }
 

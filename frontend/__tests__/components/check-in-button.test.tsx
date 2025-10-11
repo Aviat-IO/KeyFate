@@ -89,9 +89,20 @@ describe("CheckInButton Component", () => {
       recipient_name: "John Doe",
       recipient_email: "john@example.com",
       recipient_phone: null,
+      recipients: [
+        {
+          id: "recipient-1",
+          secret_id: "123",
+          name: "John Doe",
+          email: "john@example.com",
+          phone: null,
+          is_primary: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+      ],
       contact_method: "email",
       last_check_in: new Date().toISOString(),
-      triggered_at: null,
       triggered_at: null,
       iv: null,
       auth_tag: null,

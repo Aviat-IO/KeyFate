@@ -58,7 +58,7 @@ export function NewSecretForm({ isPaid = false, tierInfo }: NewSecretFormProps) 
       title: "",
       secretMessageContent: "",
       recipients: [{ name: "", email: "", isPrimary: true }],
-      check_in_days: "30",
+      check_in_days: "7",
       sss_shares_total: 3,
       sss_threshold: 2,
     },
@@ -135,14 +135,13 @@ export function NewSecretForm({ isPaid = false, tierInfo }: NewSecretFormProps) 
         JSON.stringify({ shares: userManagedShares, expiresAt }),
       )
 
-      // Redirect to the new share instructions page (no shares in URL)
-      const primaryRecipient = data.recipients.find(r => r.isPrimary) || data.recipients[0];
       const queryParams = new URLSearchParams({
         secretId: result.secretId,
         sss_shares_total: data.sss_shares_total.toString(),
         sss_threshold: data.sss_threshold.toString(),
-        recipient_name: primaryRecipient.name,
-        recipient_email: primaryRecipient.email,
+        recipients: encodeURIComponent(JSON.stringify(
+          data.recipients.map(r => ({ name: r.name, email: r.email }))
+        )),
       })
       router.push(
         `/secrets/${result.secretId}/share-instructions?${queryParams.toString()}`,
@@ -373,37 +372,43 @@ export function NewSecretForm({ isPaid = false, tierInfo }: NewSecretFormProps) 
                   <FormItem>
                     <FormLabel>Trigger Deadline</FormLabel>
                     <FormControl>
-                      {isPaid ? (
-                        <Input
-                          type="number"
-                          {...field}
-                          min="2"
-                          disabled={isSubmitting}
-                          placeholder="Enter custom days"
-                        />
-                      ) : (
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          disabled={isSubmitting}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select frequency" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="7">1 week</SelectItem>
-                            <SelectItem value="30">1 month</SelectItem>
-                            <SelectItem value="365">1 year</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        disabled={isSubmitting}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select frequency" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {isPaid ? (
+                            <>
+                              <SelectItem value="1">1 day</SelectItem>
+                              <SelectItem value="3">3 days</SelectItem>
+                              <SelectItem value="7">1 week</SelectItem>
+                              <SelectItem value="14">2 weeks</SelectItem>
+                              <SelectItem value="30">1 month</SelectItem>
+                              <SelectItem value="90">3 months</SelectItem>
+                              <SelectItem value="180">6 months</SelectItem>
+                              <SelectItem value="365">1 year</SelectItem>
+                              <SelectItem value="1095">3 years</SelectItem>
+                            </>
+                          ) : (
+                            <>
+                              <SelectItem value="7">1 week</SelectItem>
+                              <SelectItem value="30">1 month</SelectItem>
+                              <SelectItem value="365">1 year</SelectItem>
+                            </>
+                          )}
+                        </SelectContent>
+                      </Select>
                     </FormControl>
                     <FormDescription>
                       {isPaid 
-                        ? "How often you need to check in to keep the secret active. Minimum 2 days."
-                        : "How often you need to check in to keep the secret active. Upgrade to set custom intervals."
+                        ? "How often you need to check in to keep the secret active."
+                        : "How often you need to check in to keep the secret active. Upgrade to Pro for more interval options."
                       }
                     </FormDescription>
                     <FormMessage />

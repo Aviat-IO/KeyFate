@@ -20,19 +20,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, Plus, Trash2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useFieldArray } from "react-hook-form"
 import { z } from "zod"
+
+const recipientSchema = z.object({
+  name: z.string().min(1, "Recipient name is required"),
+  email: z.string().email().nullable().optional().or(z.literal("")),
+  phone: z.string().nullable().optional().or(z.literal("")),
+  isPrimary: z.boolean().default(false),
+}).refine(
+  (data) => data.email || data.phone,
+  {
+    message: "Each recipient must have either an email or phone number",
+    path: ["email"],
+  }
+)
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  recipient_name: z.string().min(1, "Recipient name is required"),
-  recipient_email: z.string().email().optional().or(z.literal("")),
-  recipient_phone: z.string().optional().or(z.literal("")),
-  contact_method: z.enum(["email", "phone", "both"]),
+  recipients: z.array(recipientSchema).min(1, "At least one recipient is required"),
   check_in_days: z
     .union([z.string(), z.number()])
     .transform((val) => {
@@ -56,12 +67,16 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>
 
 interface EditSecretFormProps {
-  initialData: FormData
-  secretId: string
-}
-
-interface EditSecretFormProps {
-  initialData: FormData
+  initialData: {
+    title: string
+    recipients: Array<{
+      name: string
+      email?: string | null
+      phone?: string | null
+      isPrimary: boolean
+    }>
+    check_in_days: number
+  }
   secretId: string
   isPaid?: boolean
 }
@@ -83,9 +98,21 @@ export function EditSecretForm({
     defaultValues: initialData,
   })
 
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "recipients",
+  })
+
   async function onSubmit(values: FormData) {
     setLoading(true)
     setError(null)
+
+    const hasPrimary = values.recipients.some(r => r.isPrimary)
+    if (!hasPrimary) {
+      setError("At least one recipient must be marked as primary")
+      setLoading(false)
+      return
+    }
 
     try {
       const response = await fetch(`/api/secrets/${secretId}`, {
@@ -174,100 +201,126 @@ export function EditSecretForm({
             </div>
           </div>
 
-          {/* Recipient Information Section */}
+          {/* Recipients Section */}
           <div className="rounded-lg border p-6">
-            <h2 className="mb-4 text-lg font-semibold">
-              Recipient Information
-            </h2>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Recipients</h2>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => append({ name: "", email: "", phone: "", isPrimary: false })}
+                disabled={loading}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add Recipient
+              </Button>
+            </div>
             <div className="space-y-6">
-              <FormField
-                control={form.control}
-                name="recipient_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Recipient's Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Who should receive this secret?"
-                        {...field}
+              {fields.map((field, index) => (
+                <div key={field.id} className="space-y-4 rounded-lg border p-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium">Recipient {index + 1}</h3>
+                    <div className="flex items-center gap-2">
+                      <FormField
+                        control={form.control}
+                        name={`recipients.${index}.isPrimary`}
+                        render={({ field }) => (
+                          <FormItem className="flex items-center space-x-2">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    form.getValues("recipients").forEach((_, i) => {
+                                      if (i !== index) {
+                                        form.setValue(`recipients.${i}.isPrimary`, false)
+                                      }
+                                    })
+                                  }
+                                  field.onChange(checked)
+                                }}
+                              />
+                            </FormControl>
+                            <FormLabel className="!mt-0 text-sm font-normal">
+                              Primary
+                            </FormLabel>
+                          </FormItem>
+                        )}
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      {fields.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => remove(index)}
+                          disabled={loading}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
 
-              <FormField
-                control={form.control}
-                name="contact_method"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contact Method</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="How should we contact them?" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="email">Email</SelectItem>
-                        <SelectItem value="phone">Phone</SelectItem>
-                        <SelectItem value="both">
-                          Both Email and Phone
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="space-y-6">
-                {(form.watch("contact_method") === "email" ||
-                  form.watch("contact_method") === "both") && (
                   <FormField
                     control={form.control}
-                    name="recipient_email"
+                    name={`recipients.${index}.name`}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Recipient's Email</FormLabel>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Recipient's name"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`recipients.${index}.email`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
                         <FormControl>
                           <Input
                             type="email"
-                            placeholder="Their email address"
+                            placeholder="recipient@example.com"
                             {...field}
+                            value={field.value || ""}
                           />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                )}
 
-                {(form.watch("contact_method") === "phone" ||
-                  form.watch("contact_method") === "both") && (
                   <FormField
                     control={form.control}
-                    name="recipient_phone"
+                    name={`recipients.${index}.phone`}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Recipient's Phone</FormLabel>
+                        <FormLabel>Phone (optional)</FormLabel>
                         <FormControl>
                           <Input
                             type="tel"
-                            placeholder="Their phone number"
+                            placeholder="+1234567890"
                             {...field}
+                            value={field.value || ""}
                           />
                         </FormControl>
+                        <FormDescription>
+                          Phone notifications are not yet supported
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                )}
-              </div>
+                </div>
+              ))}
             </div>
           </div>
 

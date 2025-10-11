@@ -51,10 +51,14 @@ vi.mock("@/components/delete-confirm", () => ({
 describe("EditSecretForm", () => {
   const mockInitialData = {
     title: "Test Secret",
-    recipient_name: "John Doe",
-    recipient_email: "test@example.com",
-    recipient_phone: "",
-    contact_method: "email" as const,
+    recipients: [
+      {
+        name: "John Doe",
+        email: "test@example.com",
+        phone: "",
+        isPrimary: true,
+      },
+    ],
     check_in_days: 90,
   }
 

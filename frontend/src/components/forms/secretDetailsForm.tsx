@@ -31,13 +31,18 @@ import {
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 
+interface SecretRecipient {
+  id: string
+  name: string
+  email: string | null
+  phone: string | null
+  isPrimary: boolean
+}
+
 interface Secret {
   id: string
   title: string
-  recipient_name: string
-  recipient_email: string | null
-  recipient_phone: string | null
-  contact_method: "email" | "phone" | "both"
+  recipients: SecretRecipient[]
   check_in_days: number
   last_check_in: string | null
   next_check_in: string | null
@@ -197,25 +202,41 @@ export function SecretDetailsForm({ secret }: SecretDetailsFormProps) {
           <div>
             <h3 className="mb-3 flex items-center font-medium">
               <User className="mr-2 h-4 w-4" />
-              Recipient Information
+              Recipients ({secret.recipients.length})
             </h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center">
-                <User className="text-muted-foreground mr-2 h-4 w-4" />
-                <span>{secret.recipient_name}</span>
-              </div>
-              {secret.recipient_email && (
-                <div className="flex items-center">
-                  <Mail className="text-muted-foreground mr-2 h-4 w-4" />
-                  <span>{secret.recipient_email}</span>
+            <div className="space-y-4">
+              {secret.recipients.map((recipient, index) => (
+                <div 
+                  key={recipient.id} 
+                  className="rounded-lg border p-3 text-sm"
+                >
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="flex items-center">
+                      <User className="text-muted-foreground mr-2 h-4 w-4" />
+                      <span className="font-medium">{recipient.name}</span>
+                    </div>
+                    {recipient.isPrimary && (
+                      <Badge variant="default" className="text-xs">
+                        Primary
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="space-y-1 pl-6">
+                    {recipient.email && (
+                      <div className="flex items-center">
+                        <Mail className="text-muted-foreground mr-2 h-3 w-3" />
+                        <span className="text-xs">{recipient.email}</span>
+                      </div>
+                    )}
+                    {recipient.phone && (
+                      <div className="flex items-center">
+                        <Phone className="text-muted-foreground mr-2 h-3 w-3" />
+                        <span className="text-xs">{recipient.phone}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              )}
-              {secret.recipient_phone && (
-                <div className="flex items-center">
-                  <Phone className="text-muted-foreground mr-2 h-4 w-4" />
-                  <span>{secret.recipient_phone}</span>
-                </div>
-              )}
+              ))}
             </div>
           </div>
 
