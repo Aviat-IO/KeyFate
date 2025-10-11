@@ -2,6 +2,7 @@
 
 import { ThemeToggle } from "@/components/theme-toggle"
 import { DevTierToggle } from "@/components/dev-tier-toggle"
+import { WelcomeToProModal } from "@/components/subscription/WelcomeToProModal"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -10,9 +11,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { useConfig } from "@/contexts/ConfigContext"
-import { Menu } from "lucide-react"
+import { Menu, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
@@ -25,6 +27,7 @@ export function NavBar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userTier, setUserTier] = useState<"free" | "pro">("free")
   const [checkingSubscription, setCheckingSubscription] = useState(false)
+  const [proModalOpen, setProModalOpen] = useState(false)
 
   const user = session?.user as { id?: string; name?: string; email?: string; image?: string } | undefined
   const loading = status === "loading"
@@ -98,9 +101,19 @@ export function NavBar() {
               // Show nothing while loading to avoid flash
               <div className="h-9 w-20" />
             ) : user ? (
-              // User is logged in - show dev toggle, upgrade button if not pro, and sign out
+              // User is logged in - show dev toggle, pro badge/upgrade button, and sign out
               <>
                 <DevTierToggle currentTier={userTier} />
+                {!checkingSubscription && isProUser && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setProModalOpen(true)}
+                    className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                  >
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Pro
+                  </Button>
+                )}
                 {!checkingSubscription && !isProUser && (
                   <Button variant="outline" asChild className="border-primary hover:bg-primary hover:text-primary-foreground">
                     <Link href="/pricing">Upgrade to Pro</Link>
@@ -206,12 +219,25 @@ export function NavBar() {
                     // Show nothing while loading to avoid flash
                     <div className="h-9" />
                   ) : user ? (
-                    // User is logged in - show dev toggle, upgrade button if not pro, and sign out
+                    // User is logged in - show dev toggle, pro badge/upgrade button, and sign out
                     <>
                       <Separator className="my-1" />
                       <div className="px-3 py-2">
                         <DevTierToggle currentTier={userTier} />
                       </div>
+                      {!checkingSubscription && isProUser && (
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setProModalOpen(true)
+                            handleMobileMenuItemClick()
+                          }}
+                          className="h-12 justify-start border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                        >
+                          <Sparkles className="mr-2 h-4 w-4" />
+                          View Pro Features
+                        </Button>
+                      )}
                       {!checkingSubscription && !isProUser && (
                         <Button
                           variant="outline"
@@ -254,6 +280,7 @@ export function NavBar() {
           </div>
         </div>
       </div>
+      <WelcomeToProModal open={proModalOpen} onOpenChange={setProModalOpen} />
     </nav>
   )
 }
