@@ -612,7 +612,15 @@ KeyFate - Admin Alerts
       return "<li>All features included</li>";
     }
     
-    return tierConfig.features.map((feature: string) => `<li>${feature}</li>`).join("");
+    // Replace support email in features with current env var value
+    const supportEmail = this.getSupportEmail();
+    return tierConfig.features
+      .map((feature: string) => {
+        // Replace any support@keyfate.com references with current support email
+        return feature.replace(/support@keyfate\.com/g, supportEmail);
+      })
+      .map((feature: string) => `<li>${feature}</li>`)
+      .join("");
   }
 
   private getTierFeatures(tierName: string): string {
@@ -666,6 +674,10 @@ KeyFate - Admin Alerts
 
   private getCompanyName(): string {
     return process.env.NEXT_PUBLIC_COMPANY || "KeyFate";
+  }
+
+  private getSupportEmail(): string {
+    return process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@keyfate.com";
   }
 }
 
