@@ -26,6 +26,7 @@ export async function getUserTierInfo(
         currentPeriodStart: userSubscriptions.currentPeriodStart,
         currentPeriodEnd: userSubscriptions.currentPeriodEnd,
         cancelAtPeriodEnd: userSubscriptions.cancelAtPeriodEnd,
+        scheduledDowngradeAt: userSubscriptions.scheduledDowngradeAt,
         tier: {
           id: subscriptionTiers.id,
           name: subscriptionTiers.name,

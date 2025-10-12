@@ -71,6 +71,13 @@
       "when": 1760223769417,
       "tag": "0009_seed_subscription_tiers",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1760307279032,
+      "tag": "0010_windy_wendell_rand",
+      "breakpoints": true
     }
   ]
 }

@@ -727,6 +727,134 @@ class SubscriptionService {
         return now;
     }
   }
+
+  async scheduleDowngrade(userId: string) {
+    const db = await getDatabase();
+    try {
+      const subscription = await this.getUserSubscription(userId);
+      
+      if (!subscription) {
+        throw new Error('No active subscription found');
+      }
+
+      if (subscription.status === 'cancelled') {
+        throw new Error('Cannot schedule downgrade for cancelled subscription');
+      }
+
+      if (subscription.scheduledDowngradeAt) {
+        return subscription;
+      }
+
+      if (!subscription.currentPeriodEnd) {
+        throw new Error('Cannot schedule downgrade: currentPeriodEnd is missing');
+      }
+
+      const scheduledDowngradeAt = new Date(subscription.currentPeriodEnd);
+
+      const [updatedSubscription] = await db
+        .update(userSubscriptions)
+        .set({
+          scheduledDowngradeAt,
+          updatedAt: new Date(),
+        } as any)
+        .where(eq(userSubscriptions.userId, userId))
+        .returning();
+
+      if (subscription.provider === 'stripe' && subscription.providerSubscriptionId) {
+        const { getFiatPaymentProvider } = await import('@/lib/payment');
+        const stripeProvider = getFiatPaymentProvider();
+        await stripeProvider.updateSubscription!(subscription.providerSubscriptionId, {
+          cancelAtPeriodEnd: true,
+        });
+      }
+
+      await logSubscriptionChanged(userId, {
+        action: 'downgrade_scheduled',
+        scheduledFor: scheduledDowngradeAt,
+      });
+
+      return updatedSubscription;
+    } catch (error) {
+      console.error('Failed to schedule downgrade:', error);
+      throw error;
+    }
+  }
+
+  async cancelScheduledDowngrade(userId: string) {
+    const db = await getDatabase();
+    try {
+      const subscription = await this.getUserSubscription(userId);
+      
+      if (!subscription) {
+        throw new Error('No subscription found');
+      }
+
+      if (!subscription.scheduledDowngradeAt) {
+        throw new Error('No scheduled downgrade found');
+      }
+
+      const [updatedSubscription] = await db
+        .update(userSubscriptions)
+        .set({
+          scheduledDowngradeAt: null,
+          updatedAt: new Date(),
+        } as any)
+        .where(eq(userSubscriptions.userId, userId))
+        .returning();
+
+      if (subscription.provider === 'stripe' && subscription.providerSubscriptionId) {
+        const { getFiatPaymentProvider } = await import('@/lib/payment');
+        const stripeProvider = getFiatPaymentProvider();
+        await stripeProvider.updateSubscription!(subscription.providerSubscriptionId, {
+          cancelAtPeriodEnd: false,
+        });
+      }
+
+      await logSubscriptionChanged(userId, {
+        action: 'downgrade_cancelled',
+      });
+
+      return updatedSubscription;
+    } catch (error) {
+      console.error('Failed to cancel scheduled downgrade:', error);
+      throw error;
+    }
+  }
+
+  async executeScheduledDowngrade(userId: string) {
+    const db = await getDatabase();
+    try {
+      const freeTier = await this.getTierByName('free');
+      if (!freeTier) {
+        throw new Error('Free tier not found');
+      }
+
+      const subscription = await this.getUserSubscription(userId);
+      const oldTierName = subscription?.tierId || 'unknown';
+
+      const [updatedSubscription] = await db
+        .update(userSubscriptions)
+        .set({
+          tierId: freeTier.id,
+          status: 'cancelled',
+          scheduledDowngradeAt: null,
+          updatedAt: new Date(),
+        } as any)
+        .where(eq(userSubscriptions.userId, userId))
+        .returning();
+
+      await logSubscriptionChanged(userId, {
+        action: 'downgrade_executed',
+        from: oldTierName,
+        to: 'free',
+      });
+
+      return updatedSubscription;
+    } catch (error) {
+      console.error('Failed to execute scheduled downgrade:', error);
+      throw error;
+    }
+  }
 }
 
 export const subscriptionService = new SubscriptionService();
