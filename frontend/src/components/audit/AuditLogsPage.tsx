@@ -122,12 +122,12 @@ export function AuditLogsPage({ initialLogs = [] }: AuditLogsPageProps) {
       <CardContent>
         <div className="space-y-4">
           <div className="flex flex-wrap gap-4">
-            <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
+            <Select value={eventTypeFilter || "all"} onValueChange={(value) => setEventTypeFilter(value === "all" ? "" : value)}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Event Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Events</SelectItem>
+                <SelectItem value="all">All Events</SelectItem>
                 <SelectItem value="secret_created">Secret Created</SelectItem>
                 <SelectItem value="secret_edited">Secret Edited</SelectItem>
                 <SelectItem value="secret_deleted">Secret Deleted</SelectItem>
@@ -141,12 +141,12 @@ export function AuditLogsPage({ initialLogs = [] }: AuditLogsPageProps) {
               </SelectContent>
             </Select>
 
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <Select value={categoryFilter || "all"} onValueChange={(value) => setCategoryFilter(value === "all" ? "" : value)}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="secrets">Secrets</SelectItem>
                 <SelectItem value="authentication">Authentication</SelectItem>
                 <SelectItem value="subscriptions">Subscriptions</SelectItem>
