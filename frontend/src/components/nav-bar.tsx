@@ -14,7 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { useConfig } from "@/contexts/ConfigContext"
-import { Menu, Crown } from "lucide-react"
+import { Menu, Crown, Settings } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
@@ -116,9 +116,12 @@ export function NavBar() {
                   </>
                 )}
 
-                {user && isProUser && (
+                {user && (
                   <DropdownMenuItem asChild className="cursor-pointer">
-                    <Link href="/audit-logs" className="w-full">Audit Logs</Link>
+                    <Link href="/settings" className="w-full flex items-center gap-2">
+                      <Settings className="h-4 w-4" />
+                      Settings
+                    </Link>
                   </DropdownMenuItem>
                 )}
 

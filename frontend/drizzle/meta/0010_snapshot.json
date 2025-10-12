@@ -1,6 +1,6 @@
 {
-  "id": "5e6d7de3-65a5-431c-914a-566d7ed06328",
-  "prevId": "4bbaf14b-60fe-4745-9454-4141f5e3c5ec",
+  "id": "45b8a616-fa31-459d-8b93-84bc237456ea",
+  "prevId": "5e6d7de3-65a5-431c-914a-566d7ed06328",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -249,7 +249,53 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "audit_logs_user_id_idx": {
+          "name": "audit_logs_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_logs_event_type_idx": {
+          "name": "audit_logs_event_type_idx",
+          "columns": [
+            {
+              "expression": "event_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_logs_created_at_idx": {
+          "name": "audit_logs_created_at_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "audit_logs_user_id_users_id_fk": {
           "name": "audit_logs_user_id_users_id_fk",
@@ -1316,6 +1362,12 @@
           "primaryKey": false,
           "notNull": false,
           "default": false
+        },
+        "scheduled_downgrade_at": {
+          "name": "scheduled_downgrade_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
