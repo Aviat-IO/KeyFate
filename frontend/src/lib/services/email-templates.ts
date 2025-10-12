@@ -56,9 +56,10 @@ class EmailTemplates {
     const formattedAmount = this.formatCurrency(params.amount);
     const formattedDate = params.nextBillingDate.toLocaleDateString();
     const providerName = params.provider === "stripe" ? "Credit Card" : "Bitcoin";
+    const companyName = this.getCompanyName();
     const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@keyfate.com";
 
-    const subject = "Subscription Confirmed - KeyFate";
+    const subject = `Subscription Confirmed - ${companyName}`;
 
     const html = `
       <!DOCTYPE html>
@@ -92,7 +93,7 @@ class EmailTemplates {
             </div>
             <div class="content">
               <h2>Hello ${params.userName}!</h2>
-              <p>Thank you for subscribing to <strong>KeyFate ${this.capitalizeFirst(params.tierName)}</strong>. Your subscription has been successfully activated.</p>
+              <p>Thank you for subscribing to <strong>${companyName} ${this.capitalizeFirst(params.tierName)}</strong>. Your subscription has been successfully activated.</p>
 
               <div class="details">
                 <h3>Subscription Details</h3>
@@ -118,7 +119,7 @@ class EmailTemplates {
               <p>If you have any questions, please contact our support team at <a href="mailto:${supportEmail}">${supportEmail}</a>.</p>
             </div>
             <div class="footer">
-              <p>KeyFate - Secure Secret Management</p>
+              <p>${companyName} - Secure Secret Management</p>
               <p>© ${new Date().getFullYear()} All rights reserved.</p>
             </div>
           </div>
@@ -127,11 +128,11 @@ class EmailTemplates {
     `;
 
     const text = `
-Subscription Confirmed - KeyFate
+Subscription Confirmed - ${companyName}
 
 Hello ${params.userName}!
 
-Thank you for subscribing to KeyFate ${this.capitalizeFirst(params.tierName)}. Your subscription has been successfully activated.
+Thank you for subscribing to ${companyName} ${this.capitalizeFirst(params.tierName)}. Your subscription has been successfully activated.
 
 Subscription Details:
 - Plan: ${this.capitalizeFirst(params.tierName)}
@@ -145,7 +146,7 @@ Access your dashboard: ${process.env.NEXT_PUBLIC_SITE_URL}/dashboard
 
 If you have any questions, please contact our support team at ${supportEmail}.
 
-KeyFate - Secure Secret Management
+${companyName} - Secure Secret Management
 © ${new Date().getFullYear()} All rights reserved.
     `;
 
@@ -661,6 +662,10 @@ KeyFate - Admin Alerts
     };
 
     return colors[severity as keyof typeof colors] || colors.medium;
+  }
+
+  private getCompanyName(): string {
+    return process.env.NEXT_PUBLIC_COMPANY || "KeyFate";
   }
 }
 
