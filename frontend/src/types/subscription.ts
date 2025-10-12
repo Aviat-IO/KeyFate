@@ -37,6 +37,10 @@ export interface TierConfig {
     monthly: number;
     annual: number;
   };
+  priceInCents?: {
+    monthly: number;
+    annual: number;
+  };
   priceIds: {
     monthly: string;
     annual: string;
