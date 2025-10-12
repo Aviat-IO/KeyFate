@@ -36,9 +36,9 @@ export function PricingCard({
   className = "",
 }: PricingCardProps) {
   return (
-    <Card className={`${isPopular ? "border-primary" : ""} ${className}`}>
+    <Card className={`${isPopular ? "border-primary" : ""} ${className} flex flex-col`}>
       <CardHeader className="pb-8 text-center">
-        <div className="flex items-center justify-center space-x-2">
+        <div className="flex items-center justify-center space-x-2 min-h-[40px]">
           {isPopular && <Crown className="text-primary h-6 w-6" />}
           <CardTitle className="text-2xl">{title}</CardTitle>
           {isPopular && (
@@ -47,7 +47,7 @@ export function PricingCard({
             </Badge>
           )}
         </div>
-        <div className="space-y-2">
+        <div className="space-y-2 min-h-[200px]">
           <div className="text-foreground text-4xl font-bold">{price}</div>
           {subtext && (
             <p className="text-muted-foreground text-sm">{subtext}</p>
@@ -55,12 +55,12 @@ export function PricingCard({
           {savingsText && (
             <p className="text-success text-sm font-medium">{savingsText}</p>
           )}
-          <p className="text-muted-foreground">{description}</p>
+          {description && <p className="text-muted-foreground">{description}</p>}
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-6">
-        <ul className="space-y-3">
+      <CardContent className="space-y-6 flex-1 flex flex-col">
+        <ul className="space-y-3 flex-1">
           {features.map((feature, index) => (
             <li key={index} className="flex items-start space-x-3">
               <Check className="text-success mt-0.5 h-5 w-5 flex-shrink-0" />

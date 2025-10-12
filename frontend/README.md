@@ -40,7 +40,7 @@ Create `.env.local` for development:
 # App Configuration
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_COMPANY=KeyFate
-NEXT_PUBLIC_SUPPORT_EMAIL=support@aviat.io
+NEXT_PUBLIC_SUPPORT_EMAIL=support@keyfate.com
 
 # Google OAuth (optional for local dev)
 GOOGLE_CLIENT_ID=your-google-client-id

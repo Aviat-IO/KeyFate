@@ -24,7 +24,7 @@ docker build \
   --build-arg NEXT_PUBLIC_SITE_URL="https://staging.keyfate.com" \
   --build-arg NEXT_PUBLIC_COMPANY="KeyFate" \
   --build-arg NEXT_PUBLIC_PARENT_COMPANY="KeyFate Inc" \
-  --build-arg NEXT_PUBLIC_SUPPORT_EMAIL="support@aviat.io" \
+  --build-arg NEXT_PUBLIC_SUPPORT_EMAIL="support@keyfate.com" \
   --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="" \
   --build-arg NEXT_PUBLIC_AUTH_PROVIDER="google" \
   --build-arg NEXT_PUBLIC_DATABASE_PROVIDER="cloudsql" \

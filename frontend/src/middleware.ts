@@ -79,6 +79,11 @@ export default withAuth(
           return true;
         }
 
+        // Webhook endpoints use signature verification, not session auth
+        if (pathname.startsWith("/api/webhooks/")) {
+          return true;
+        }
+
         // Check-in endpoint uses token-based authentication, not session auth
         if (pathname === "/api/check-in") {
           return true;

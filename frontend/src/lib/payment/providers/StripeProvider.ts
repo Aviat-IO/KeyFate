@@ -158,12 +158,20 @@ export class StripeProvider implements PaymentProvider {
       if (!config.priceId) {
         throw new Error("priceId is required for subscription mode");
       }
+
       sessionParams.line_items = [
         {
           price: config.priceId,
           quantity: 1,
         },
       ];
+
+      // Pass metadata to subscription so it's available on all subscription events
+      if (config.metadata) {
+        sessionParams.subscription_data = {
+          metadata: config.metadata,
+        };
+      }
       if (config.metadata) {
         sessionParams.subscription_data = {
           metadata: config.metadata,
@@ -207,6 +215,13 @@ export class StripeProvider implements PaymentProvider {
     if (config.metadata) {
       sessionParams.metadata = config.metadata;
     }
+
+    console.log("🛒 Creating Stripe checkout session with params:", {
+      mode: sessionParams.mode,
+      customer: sessionParams.customer,
+      metadata: sessionParams.metadata,
+      subscription_data: sessionParams.subscription_data,
+    });
 
     const session = await this.stripe.checkout.sessions.create(sessionParams);
 

@@ -18,14 +18,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${NEXT_PUBLIC_SITE_URL}/pricing`);
   }
 
-  // This is a post-authentication redirect, create checkout session
-  return createCheckoutSession(lookupKey);
+  // This is a post-authentication redirect, create checkout session and redirect
+  return createCheckoutSession(lookupKey, true); // true = redirect instead of JSON
 }
 
 export async function POST(request: NextRequest) {
   try {
     const { lookup_key } = await request.json();
-    return createCheckoutSession(lookup_key);
+    return createCheckoutSession(lookup_key, false); // false = return JSON
   } catch (error) {
     console.error("Error parsing request body:", error);
     return NextResponse.json({ error: "Invalid request body" }, {
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function createCheckoutSession(lookupKey: string) {
+async function createCheckoutSession(lookupKey: string, shouldRedirect = false) {
   try {
     console.log(`🔍 Creating checkout session for lookup key: ${lookupKey}`);
 
@@ -111,9 +111,18 @@ async function createCheckoutSession(lookupKey: string) {
     );
 
     console.log(`✅ Checkout session created: ${checkoutSession.id}`);
-    console.log(`🔗 Redirecting to: ${checkoutSession.url}`);
+    console.log(`🔗 Checkout URL: ${checkoutSession.url}`);
 
-    return NextResponse.redirect(checkoutSession.url, 303);
+    // For GET requests (post-auth), redirect directly to Stripe
+    // For POST requests (AJAX), return JSON
+    if (shouldRedirect) {
+      return NextResponse.redirect(checkoutSession.url, 303);
+    }
+
+    return NextResponse.json({ 
+      url: checkoutSession.url,
+      sessionId: checkoutSession.id,
+    });
   } catch (error) {
     console.error("❌ Error creating checkout session:", error);
 

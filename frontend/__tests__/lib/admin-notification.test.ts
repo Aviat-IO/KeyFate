@@ -1,7 +1,7 @@
 /**
  * Admin Notification Service Tests
  *
- * TDD tests for admin notification system that alerts support@aviat.io
+ * TDD tests for admin notification system that alerts support@keyfate.com
  * when email operations fail with proper severity classification and batching.
  */
 
@@ -99,7 +99,7 @@ describe("Admin Notification Service - TDD", () => {
       expect(mockSendEmail).toHaveBeenCalledTimes(1);
 
       const callArgs = mockSendEmail.mock.calls[0][0];
-      expect(callArgs.to).toBe("support@aviat.io");
+      expect(callArgs.to).toBe("support@keyfate.com");
       expect(callArgs.priority).toBe("high");
       expect(callArgs.subject).toContain("CRITICAL");
       expect(callArgs.subject).toContain("Test Secret");

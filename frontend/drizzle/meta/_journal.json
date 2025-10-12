@@ -64,6 +64,13 @@
       "when": 1760223769416,
       "tag": "0008_ordinary_quasimodo",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1760223769417,
+      "tag": "0009_seed_subscription_tiers",
+      "breakpoints": true
     }
   ]
 }

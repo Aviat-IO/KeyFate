@@ -89,12 +89,14 @@ project/
 ### Local Development
 
 1. Copy environment template:
+
    ```bash
    cp .env.local.example .env.local
    cp frontend/.env.local.example frontend/.env.local
    ```
 
 2. Configure your settings in `.env.local`:
+
    ```bash
    # Database Configuration
    POSTGRES_DB=keyfate_dev
@@ -159,6 +161,7 @@ make reset-db
 ```
 
 Development users created by seeding:
+
 - `dev@localhost` / `password123` (Free tier)
 - `test@localhost` / `password123` (Pro tier)
 
@@ -180,11 +183,12 @@ Development users created by seeding:
 
 ### PgAdmin (Optional)
 
-- **URL**: http://localhost:5050
-- **Email**: admin@local.dev
+- **URL**: <http://localhost:5050>
+- **Email**: <admin@local.dev>
 - **Password**: admin
 
 To enable PgAdmin:
+
 ```bash
 # Add to .env.local
 ENABLE_PGADMIN=true
@@ -295,6 +299,7 @@ This infrastructure replaces Supabase with local PostgreSQL while maintaining:
 - ✅ Deployment automation
 
 Key differences from Supabase:
+
 - Local PostgreSQL instead of hosted Supabase
 - Drizzle ORM instead of Supabase client
 - Local authentication instead of Supabase Auth
@@ -332,3 +337,4 @@ Key differences from Supabase:
 - Connection pooling enabled
 - Caching strategies implemented
 - Asset optimization and CDN integration
+

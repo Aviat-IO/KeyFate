@@ -33,7 +33,7 @@ export default defineConfig({
     },
     env: {
       NODE_ENV: "development",
-      NEXT_PUBLIC_SUPPORT_EMAIL: "support@aviat.io",
+      NEXT_PUBLIC_SUPPORT_EMAIL: "support@keyfate.com",
       NEXT_PUBLIC_SITE_URL: "https://keyfate.com",
       NEXT_PUBLIC_COMPANY: "KeyFate",
       NEXT_PUBLIC_PARENT_COMPANY: "Aviat, LLC",

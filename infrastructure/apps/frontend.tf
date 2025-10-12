@@ -70,7 +70,7 @@ resource "null_resource" "build_and_push_frontend" {
       gcloud builds submit $REPO_ROOT \
         --project=${module.project.id} \
         --config=${local.frontend_app_dir}/cloudbuild.yaml \
-        --substitutions="_IMAGE_URL=$BUILD_TAG,_BUILD_ENV=${var.env == "prod" ? "production" : "staging"},_NEXTAUTH_URL=${var.next_public_site_url},_NEXT_PUBLIC_SITE_URL=${var.next_public_site_url},_NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${var.next_public_stripe_publishable_key}"
+        --substitutions="_IMAGE_URL=$BUILD_TAG,_BUILD_ENV=${var.env == "prod" ? "production" : "staging"},_NEXTAUTH_URL=${var.next_public_site_url},_NEXT_PUBLIC_SITE_URL=${var.next_public_site_url},_NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${var.next_public_stripe_publishable_key},_NEXT_PUBLIC_SUPPORT_EMAIL=${var.next_public_support_email}"
 
       echo "Cloud Build completed successfully!"
 
@@ -197,6 +197,10 @@ module "cloud_run" {
         }
         STRIPE_SECRET_KEY = {
           secret  = "projects/${module.project.number}/secrets/stripe-secret-key"
+          version = "latest"
+        }
+        STRIPE_WEBHOOK_SECRET = {
+          secret  = "projects/${module.project.number}/secrets/stripe-webhook-secret"
           version = "latest"
         }
         BTCPAY_API_KEY = {

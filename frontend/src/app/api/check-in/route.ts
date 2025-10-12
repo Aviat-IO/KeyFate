@@ -1,5 +1,5 @@
 import { getDatabase } from "@/lib/db/drizzle";
-import { checkInTokens, secrets } from "@/lib/db/schema";
+import { checkInTokens, secrets, checkinHistory } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -120,6 +120,7 @@ export async function POST(req: NextRequest) {
     const [secret] = await db
       .select({
         id: secrets.id,
+        userId: secrets.userId,
         title: secrets.title,
         checkInDays: secrets.checkInDays,
         triggeredAt: secrets.triggeredAt,
@@ -170,6 +171,15 @@ export async function POST(req: NextRequest) {
       .update(secrets)
       .set({ lastCheckIn: now, nextCheckIn } as any)
       .where(eq(secrets.id, tokenRow.secretId));
+
+    await db
+      .insert(checkinHistory)
+      .values({
+        secretId: tokenRow.secretId,
+        userId: secret.userId,
+        checkedInAt: now,
+        nextCheckIn: nextCheckIn,
+      });
 
     // Log successful check-in for security monitoring
     console.log('[CHECK-IN] Success', {

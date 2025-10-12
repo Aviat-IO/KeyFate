@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
         // Send disclosure email to all recipients
         let allEmailsSucceeded = true;
         for (const recipient of recipients) {
-          const contactEmail = recipient.email || recipient.phone || "";
+          const contactEmail = recipient.email || "";
           if (!contactEmail) {
             console.error(`[process-reminders] Recipient ${recipient.id} has no contact info`);
             continue;
@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
 
             if (!emailResult.success) {
               allEmailsSucceeded = false;
-              
+
               // Log email failure
               await logEmailFailure({
                 emailType: "disclosure",

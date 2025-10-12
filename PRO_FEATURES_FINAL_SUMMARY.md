@@ -9,7 +9,7 @@
 - Created `PRO_FEATURES` constant (`frontend/src/constants/pro-features.ts`)
 - Built `WelcomeToProModal` component with all Pro features
 - Added Pro badge to navbar (desktop + mobile) that opens modal
-- Support email `support@aviat.io` displayed prominently
+- Support email `support@keyfate.com` displayed prominently
 - Updated tier configs to include support in Pro features
 
 **Tests:** 31 passing

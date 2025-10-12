@@ -4,6 +4,7 @@ import {
   subscriptionTierEnum,
   subscriptionTiers,
   userSubscriptions,
+  paymentHistory,
 } from "@/lib/db/schema";
 import { logSubscriptionChanged } from "@/lib/services/audit-logger";
 import { and, eq } from "drizzle-orm";
@@ -207,15 +208,73 @@ class SubscriptionService {
   async getTierByName(tierName: SubscriptionTier) {
     const db = await getDatabase();
     try {
-      const [tier] = await db
+      let [tier] = await db
         .select()
         .from(subscriptionTiers)
         .where(eq(subscriptionTiers.name, tierName))
         .limit(1);
 
+      if (!tier) {
+        console.warn(`Tier ${tierName} not found, attempting to create it`);
+        tier = await this.ensureTierExists(tierName);
+      }
+
       return tier || null;
     } catch (error) {
       console.error("Failed to get tier by name:", error);
+      throw error;
+    }
+  }
+
+  private async ensureTierExists(tierName: SubscriptionTier) {
+    const db = await getDatabase();
+    
+    const tierConfig = {
+      free: {
+        name: "free" as SubscriptionTier,
+        displayName: "Free",
+        maxSecrets: 1,
+        maxRecipientsPerSecret: 1,
+        customIntervals: false,
+        priceMonthly: null,
+        priceYearly: null,
+      },
+      pro: {
+        name: "pro" as SubscriptionTier,
+        displayName: "Pro",
+        maxSecrets: 10,
+        maxRecipientsPerSecret: 5,
+        customIntervals: true,
+        priceMonthly: "9.00",
+        priceYearly: "90.00",
+      },
+    };
+
+    const config = tierConfig[tierName];
+    if (!config) {
+      throw new Error(`Unknown tier: ${tierName}`);
+    }
+
+    try {
+      const [tier] = await db
+        .insert(subscriptionTiers)
+        .values(config as any)
+        .onConflictDoNothing()
+        .returning();
+
+      if (!tier) {
+        const [existingTier] = await db
+          .select()
+          .from(subscriptionTiers)
+          .where(eq(subscriptionTiers.name, tierName))
+          .limit(1);
+        return existingTier;
+      }
+
+      console.log(`Created tier: ${tierName}`);
+      return tier;
+    } catch (error) {
+      console.error(`Failed to create tier ${tierName}:`, error);
       throw error;
     }
   }
@@ -424,7 +483,7 @@ class SubscriptionService {
           provider: "stripe",
           providerCustomerId: customerId,
           providerSubscriptionId: subscriptionId,
-          tierName: "premium",
+          tierName: "pro",
           status: "active",
           currentPeriodStart: new Date(),
           currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
@@ -476,16 +535,55 @@ class SubscriptionService {
   }
 
   private async handlePaymentSuccess(event: any, userId: string) {
-    // Reactivate subscription if it was past_due
+    const invoice = event.data.object;
+    
     const subscription = await this.getUserSubscription(userId);
-    if (subscription && subscription.status === "past_due") {
-      await this.updateSubscriptionStatus(userId, "active");
+    
+    if (subscription) {
+      await this.createPaymentRecord({
+        userId,
+        subscriptionId: subscription.id,
+        provider: "stripe",
+        providerPaymentId: invoice.payment_intent || invoice.id,
+        amount: invoice.amount_paid / 100,
+        currency: invoice.currency?.toUpperCase() || "USD",
+        status: "succeeded",
+        metadata: {
+          invoiceId: invoice.id,
+          subscriptionId: invoice.subscription,
+        },
+      });
+
+      if (subscription.status === "past_due") {
+        await this.updateSubscriptionStatus(userId, "active");
+      }
     }
   }
 
   private async handlePaymentFailed(event: any, userId: string) {
     const invoice = event.data.object;
     const attemptCount = invoice.attempt_count || 1;
+    
+    const subscription = await this.getUserSubscription(userId);
+    
+    if (subscription) {
+      await this.createPaymentRecord({
+        userId,
+        subscriptionId: subscription.id,
+        provider: "stripe",
+        providerPaymentId: invoice.payment_intent || invoice.id,
+        amount: invoice.amount_due / 100,
+        currency: invoice.currency?.toUpperCase() || "USD",
+        status: "failed",
+        failureReason: invoice.last_payment_error?.message || "Payment failed",
+        metadata: {
+          invoiceId: invoice.id,
+          subscriptionId: invoice.subscription,
+          attemptCount,
+        },
+      });
+    }
+    
     return await this.handlePaymentFailure(userId, attemptCount);
   }
 
@@ -510,7 +608,7 @@ class SubscriptionService {
         provider: "btcpay",
         providerCustomerId: null,
         providerSubscriptionId: invoice.id,
-        tierName: (metadata.tierName as SubscriptionTier) || "basic", // fallback
+        tierName: (metadata.tierName as SubscriptionTier) || "pro",
         status: "active",
         currentPeriodStart: new Date(),
         currentPeriodEnd: this.calculateNextBillingDate(
@@ -518,7 +616,23 @@ class SubscriptionService {
         ),
       };
 
-      return await this.createSubscription(subscriptionData);
+      const subscription = await this.createSubscription(subscriptionData);
+
+      await this.createPaymentRecord({
+        userId,
+        subscriptionId: subscription.id,
+        provider: "btcpay",
+        providerPaymentId: invoice.id,
+        amount: invoice.amount || 0,
+        currency: invoice.currency || "BTC",
+        status: "succeeded",
+        metadata: {
+          invoiceId: invoice.id,
+          btcpayInvoiceId: invoice.id,
+        },
+      });
+
+      return subscription;
     }
   }
 
@@ -534,15 +648,58 @@ class SubscriptionService {
 
   private getTierFromStripePrice(priceId: string): SubscriptionTier {
     const priceToTierMap: Record<string, SubscriptionTier> = {
-      price_pro_monthly: "premium",
-      price_pro_yearly: "premium",
-      pro_monthly: "premium",
-      pro_yearly: "premium",
-      price_basic_monthly: "basic",
-      price_basic_yearly: "basic",
+      price_pro_monthly: "pro",
+      price_pro_yearly: "pro",
+      pro_monthly: "pro",
+      pro_yearly: "pro",
     };
 
     return priceToTierMap[priceId] || "free";
+  }
+
+  async createPaymentRecord(data: {
+    userId: string;
+    subscriptionId?: string;
+    provider: SubscriptionProvider;
+    providerPaymentId: string;
+    amount: number;
+    currency?: string;
+    status: "succeeded" | "failed" | "pending" | "refunded";
+    failureReason?: string;
+    metadata?: Record<string, any>;
+  }) {
+    const db = await getDatabase();
+    try {
+      const [payment] = await db
+        .insert(paymentHistory)
+        .values({
+          userId: data.userId,
+          subscriptionId: data.subscriptionId || null,
+          provider: data.provider,
+          providerPaymentId: data.providerPaymentId,
+          amount: data.amount.toString(),
+          currency: data.currency || "USD",
+          status: data.status,
+          failureReason: data.failureReason || null,
+          metadata: data.metadata || null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        } as any)
+        .returning();
+
+      await logSubscriptionChanged(data.userId, {
+        action: "payment_processed",
+        provider: data.provider,
+        amount: data.amount,
+        status: data.status,
+        paymentId: data.providerPaymentId,
+      });
+
+      return payment;
+    } catch (error) {
+      console.error("Failed to create payment record:", error);
+      throw error;
+    }
   }
 
   private calculateNextBillingDate(interval: string): Date {

@@ -1,4 +1,3 @@
-import { NEXT_PUBLIC_SUPPORT_EMAIL } from "@/lib/env";
 import { SubscriptionTier, TierConfig } from "../types/subscription";
 
 export const TIER_CONFIGS: Partial<Record<SubscriptionTier, TierConfig>> = {
@@ -39,11 +38,11 @@ export const TIER_CONFIGS: Partial<Record<SubscriptionTier, TierConfig>> = {
     features: [
       "Up to 10 secrets",
       "Up to 5 recipients per secret",
-      "Very flexible check-in intervals: 1 day to 3 years",
+      "Flexible check-in intervals: 1 day to 3 years",
       "Configurable security (2-of-N up to 7 shares)",
-      "7 message templates for common scenarios",
+      "Message templates for common scenarios",
       "Comprehensive audit logs",
-      `Priority email support (${NEXT_PUBLIC_SUPPORT_EMAIL})`
+      `Priority email support (${process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@keyfate.com'})`
     ],
     price: {
       monthly: 9.00,

@@ -2,11 +2,11 @@
 
 ### Requirement: Priority Support Contact Display
 
-The system SHALL display the support email address (support@aviat.io) to Pro tier users in the pricing page and Pro welcome modal.
+The system SHALL display the support email address (support@keyfate.com) to Pro tier users in the pricing page and Pro welcome modal.
 
 #### Scenario: Pro user views pricing page
 - **WHEN** a Pro user views the pricing page
-- **THEN** the Pro tier card displays "Priority email support (support@aviat.io)" as a feature
+- **THEN** the Pro tier card displays "Priority email support (support@keyfate.com)" as a feature
 
 #### Scenario: User upgrades to Pro
 - **WHEN** a user completes Pro subscription payment
