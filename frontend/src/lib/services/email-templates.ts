@@ -1,3 +1,5 @@
+import { getTierConfig } from "../../constants/tiers";
+
 export interface EmailTemplate {
   subject: string;
   html: string;
@@ -54,8 +56,9 @@ class EmailTemplates {
     const formattedAmount = this.formatCurrency(params.amount);
     const formattedDate = params.nextBillingDate.toLocaleDateString();
     const providerName = params.provider === "stripe" ? "Credit Card" : "Bitcoin";
+    const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@keyfate.com";
 
-    const subject = "Subscription Confirmed - Dead Man's Switch";
+    const subject = "Subscription Confirmed - KeyFate";
 
     const html = `
       <!DOCTYPE html>
@@ -67,13 +70,13 @@ class EmailTemplates {
           <style>
             body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #2563eb; color: white; padding: 20px; text-align: center; }
+            .header { background: hsl(13.2143 73.0435% 54.9020%); color: white; padding: 20px; text-align: center; }
             .content { padding: 20px; background: #f9fafb; }
             .footer { padding: 20px; text-align: center; color: #666; font-size: 14px; }
             .button {
               display: inline-block;
-              background: #2563eb;
-              color: white;
+              background: hsl(13.2143 73.0435% 54.9020%);
+              color: white !important;
               padding: 12px 24px;
               text-decoration: none;
               border-radius: 6px;
@@ -89,7 +92,7 @@ class EmailTemplates {
             </div>
             <div class="content">
               <h2>Hello ${params.userName}!</h2>
-              <p>Thank you for subscribing to our <strong>${this.capitalizeFirst(params.tierName)}</strong> plan. Your subscription has been successfully activated.</p>
+              <p>Thank you for subscribing to <strong>KeyFate ${this.capitalizeFirst(params.tierName)}</strong>. Your subscription has been successfully activated.</p>
 
               <div class="details">
                 <h3>Subscription Details</h3>
@@ -103,19 +106,19 @@ class EmailTemplates {
 
               <p>You now have access to all ${this.capitalizeFirst(params.tierName)} features, including:</p>
               <ul>
-                ${this.getTierFeatures(params.tierName)}
+                ${this.getTierFeaturesFromConfig(params.tierName)}
               </ul>
 
-              <p>
-                <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard" class="button">
+              <p style="text-align: center;">
+                <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard" class="button" style="color: white;">
                   Access Your Dashboard
                 </a>
               </p>
 
-              <p>If you have any questions, please don't hesitate to contact our support team.</p>
+              <p>If you have any questions, please contact our support team at <a href="mailto:${supportEmail}">${supportEmail}</a>.</p>
             </div>
             <div class="footer">
-              <p>Dead Man's Switch - Secure Secret Management</p>
+              <p>KeyFate - Secure Secret Management</p>
               <p>© ${new Date().getFullYear()} All rights reserved.</p>
             </div>
           </div>
@@ -124,11 +127,11 @@ class EmailTemplates {
     `;
 
     const text = `
-Subscription Confirmed - Dead Man's Switch
+Subscription Confirmed - KeyFate
 
 Hello ${params.userName}!
 
-Thank you for subscribing to our ${this.capitalizeFirst(params.tierName)} plan. Your subscription has been successfully activated.
+Thank you for subscribing to KeyFate ${this.capitalizeFirst(params.tierName)}. Your subscription has been successfully activated.
 
 Subscription Details:
 - Plan: ${this.capitalizeFirst(params.tierName)}
@@ -140,9 +143,9 @@ You now have access to all ${this.capitalizeFirst(params.tierName)} features.
 
 Access your dashboard: ${process.env.NEXT_PUBLIC_SITE_URL}/dashboard
 
-If you have any questions, please don't hesitate to contact our support team.
+If you have any questions, please contact our support team at ${supportEmail}.
 
-Dead Man's Switch - Secure Secret Management
+KeyFate - Secure Secret Management
 © ${new Date().getFullYear()} All rights reserved.
     `;
 
@@ -215,7 +218,7 @@ Dead Man's Switch - Secure Secret Management
               <p>If you continue to experience issues, please contact our support team.</p>
             </div>
             <div class="footer">
-              <p>Dead Man's Switch - Secure Secret Management</p>
+              <p>KeyFate - Secure Secret Management</p>
               <p>© ${new Date().getFullYear()} All rights reserved.</p>
             </div>
           </div>
@@ -247,7 +250,7 @@ Update your payment method: ${process.env.NEXT_PUBLIC_SITE_URL}/account/billing
 
 If you continue to experience issues, please contact our support team.
 
-Dead Man's Switch - Secure Secret Management
+KeyFate - Secure Secret Management
 © ${new Date().getFullYear()} All rights reserved.
     `;
 
@@ -308,7 +311,7 @@ Dead Man's Switch - Secure Secret Management
               <p>We'd love to hear your feedback about how we can improve our service.</p>
             </div>
             <div class="footer">
-              <p>Dead Man's Switch - Secure Secret Management</p>
+              <p>KeyFate - Secure Secret Management</p>
               <p>© ${new Date().getFullYear()} All rights reserved.</p>
             </div>
           </div>
@@ -334,7 +337,7 @@ Reactivate your subscription: ${process.env.NEXT_PUBLIC_SITE_URL}/pricing
 
 We'd love to hear your feedback about how we can improve our service.
 
-Dead Man's Switch - Secure Secret Management
+KeyFate - Secure Secret Management
 © ${new Date().getFullYear()} All rights reserved.
     `;
 
@@ -401,7 +404,7 @@ Dead Man's Switch - Secure Secret Management
               <p>Questions? Our support team is here to help!</p>
             </div>
             <div class="footer">
-              <p>Dead Man's Switch - Secure Secret Management</p>
+              <p>KeyFate - Secure Secret Management</p>
               <p>© ${new Date().getFullYear()} All rights reserved.</p>
             </div>
           </div>
@@ -428,7 +431,7 @@ Choose your plan: ${process.env.NEXT_PUBLIC_SITE_URL}/pricing
 
 Questions? Our support team is here to help!
 
-Dead Man's Switch - Secure Secret Management
+KeyFate - Secure Secret Management
 © ${new Date().getFullYear()} All rights reserved.
     `;
 
@@ -493,7 +496,7 @@ Dead Man's Switch - Secure Secret Management
               <p>If you have any questions about your Bitcoin payment or subscription, please contact our support team.</p>
             </div>
             <div class="footer">
-              <p>Dead Man's Switch - Secure Secret Management</p>
+              <p>KeyFate - Secure Secret Management</p>
               <p>© ${new Date().getFullYear()} All rights reserved.</p>
             </div>
           </div>
@@ -520,7 +523,7 @@ Access your dashboard: ${process.env.NEXT_PUBLIC_SITE_URL}/dashboard
 
 If you have any questions about your Bitcoin payment or subscription, please contact our support team.
 
-Dead Man's Switch - Secure Secret Management
+KeyFate - Secure Secret Management
 © ${new Date().getFullYear()} All rights reserved.
     `;
 
@@ -566,7 +569,7 @@ Dead Man's Switch - Secure Secret Management
               <p>Please investigate this alert and take appropriate action.</p>
             </div>
             <div class="footer">
-              <p>Dead Man's Switch - Admin Alerts</p>
+              <p>KeyFate - Admin Alerts</p>
             </div>
           </div>
         </body>
@@ -585,7 +588,7 @@ ${JSON.stringify(params.details, null, 2)}
 
 Please investigate this alert and take appropriate action.
 
-Dead Man's Switch - Admin Alerts
+KeyFate - Admin Alerts
     `;
 
     return { subject, html, text };
@@ -602,7 +605,18 @@ Dead Man's Switch - Admin Alerts
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
 
+  private getTierFeaturesFromConfig(tierName: string): string {
+    const tierConfig = getTierConfig(tierName as "free" | "pro");
+    if (!tierConfig || !tierConfig.features) {
+      return "<li>All features included</li>";
+    }
+    
+    return tierConfig.features.map((feature: string) => `<li>${feature}</li>`).join("");
+  }
+
   private getTierFeatures(tierName: string): string {
+    // Deprecated: Use getTierFeaturesFromConfig instead
+    // Keeping for backwards compatibility with other email templates
     const features = {
       free: [
         "<li>Up to 3 secrets</li>",
