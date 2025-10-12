@@ -36,12 +36,12 @@ function ShareDisplay({
   }
 
   const handleCopy = () => {
-    if (shareHex) {
-      navigator.clipboard.writeText(shareHex)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      if (shareHex) {
+        navigator.clipboard.writeText(shareHex)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      }
     }
-  }
 
   return (
     <div className="space-y-2">
@@ -70,12 +70,8 @@ function ShareDisplay({
         </Button>
       </div>
       {copied && (
-        <p className="text-accent-foreground text-xs">Copied to clipboard!</p>
+        <p className="text-accent-foreground text-xs">Copied!</p>
       )}
-      <p className="text-muted-foreground text-xs">
-        This is {shareName}. Store it securely. You will need it along with
-        other shares to recover the secret.
-      </p>
     </div>
   )
 }
@@ -246,64 +242,24 @@ function ShareInstructionsContent() {
         <CardContent className="space-y-8">
           <Alert variant="default">
             <Info className="h-4 w-4" />
-            <AlertTitle>Understanding Your Shares</AlertTitle>
-            <AlertDescription>
-              <ul className="mt-2 list-disc space-y-1 pl-5">
-                <li>
-                  <strong>KeyFate's Share (Share 0):</strong> We securely store
-                  one share. This share alone cannot reveal your secret. It will
-                  be automatically sent to ALL recipients if you miss your
-                  check-ins.
-                </li>
-                {isMinimalShares ? (
-                  <li>
-                    <strong>Recipient Share (Share 1):</strong> Displayed below.
-                    ALL recipients receive the SAME share. You MUST distribute
-                    this share to each recipient separately via your own secure
-                    channel. With only {sssSharesTotal} shares total, both
-                    KeyFate's share and the recipient share are required to
-                    recover the secret.
-                  </li>
-                ) : (
-                  <>
-                    <li>
-                      <strong>Recipient Share (Share 1):</strong> ALL recipients
-                      receive the SAME share. You MUST distribute this share to
-                      each recipient separately via your own secure channel.{" "}
-                      <strong>
-                        This share never touches KeyFate servers after creation.
-                      </strong>
-                    </li>
-                    <li>
-                      <strong>
-                        Backup Shares (Shares 2-{sssSharesTotal - 1}):
-                      </strong>{" "}
-                      Additional shares for redundancy. Store these securely
-                      offline (paper wallet, password manager, etc.).
-                    </li>
-                  </>
-                )}
-              </ul>
-            </AlertDescription>
-          </Alert>
-
-          <Separator />
-
-          <Alert variant="default" className="bg-muted/50">
-            <Info className="h-4 w-4" />
-            <AlertTitle>Equal Share Distribution</AlertTitle>
+            <AlertTitle>How Recovery Works</AlertTitle>
             <AlertDescription>
               <p className="mb-2">
-                All {recipients.length} recipient
-                {recipients.length > 1 ? "s" : ""} receive the{" "}
-                <strong>SAME</strong> share (Share 1). This prevents recipients
-                from reconstructing the secret before KeyFate sends Share 0.
+                Your secret requires <strong>{sssThreshold} of {sssSharesTotal}</strong> shares to recover.
               </p>
-              <p>
-                You must distribute Share 1 to each recipient separately using
-                your own secure channels (encrypted messaging, in person, etc.).
-                This share never touches KeyFate servers after creation.
-              </p>
+              <ul className="mt-2 list-disc space-y-1 pl-5">
+                <li>
+                  <strong>Share 0 (KeyFate):</strong> Automatically sent to recipients when triggered.
+                </li>
+                <li>
+                  <strong>Share 1 (Recipients):</strong> You must distribute this to each recipient via your own secure channel.
+                </li>
+                {!isMinimalShares && (
+                  <li>
+                    <strong>Shares 2-{sssSharesTotal - 1} (Backup):</strong> Store these securely offline for redundancy.
+                  </li>
+                )}
+              </ul>
             </AlertDescription>
           </Alert>
 
@@ -315,16 +271,21 @@ function ShareInstructionsContent() {
               shareNumber={1}
               shareName={`For ALL Recipients (${recipients.map((r) => r.name).join(", ")})`}
             />
-            <Alert variant="default" className="mt-4">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                <strong>Critical:</strong> You must send this exact share to
-                each recipient individually. When your secret triggers, KeyFate
-                will automatically send Share 0 to all recipients. Recipients
-                combine Share 0 (from KeyFate) + Share 1 (from you) to
-                reconstruct the secret.
-              </AlertDescription>
-            </Alert>
+            {sssThreshold === sssSharesTotal ? (
+              <Alert variant="destructive" className="mt-4">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Critical ({sssThreshold}-of-{sssSharesTotal}):</strong> ALL shares must be distributed. If Share 1 is not sent to recipients, the secret is <strong>unrecoverable</strong>. Recipients need Share 0 (from KeyFate) + Share 1 (from you) to reconstruct.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <Alert variant="default" className="mt-4">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Important ({sssThreshold}-of-{sssSharesTotal}):</strong> Send this share to each recipient individually. When triggered, KeyFate sends Share 0 to all recipients. They combine it with Share 1 to reconstruct the secret.
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
 
           <Separator />
@@ -364,12 +325,11 @@ function ShareInstructionsContent() {
             <>
               <Separator />
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">
-                  Backup Shares (Optional Redundancy)
-                </h3>
+                <h3 className="text-lg font-semibold">Backup Shares</h3>
                 <p className="text-muted-foreground text-sm">
-                  These additional shares provide redundancy. Store them
-                  securely offline.
+                  {sssThreshold === sssSharesTotal 
+                    ? "These shares are REQUIRED for recovery. Store them securely offline."
+                    : "Optional redundancy shares. Store securely offline."}
                 </p>
                 {userManagedShares.slice(1).map((share, index) => (
                   <ShareDisplay
@@ -388,51 +348,38 @@ function ShareInstructionsContent() {
           <Alert variant="destructive" className="mt-6">
             <AlertTriangle className="mt-0.5 h-5 w-5" />
             <AlertTitle className="text-lg">
-              CRITICAL: YOU Must Distribute Share 1!
+              {sssThreshold === sssSharesTotal 
+                ? "CRITICAL: All Shares Must Be Distributed" 
+                : "Action Required: Distribute Share 1"}
             </AlertTitle>
             <AlertDescription className="text-foreground space-y-3">
+              {sssThreshold === sssSharesTotal ? (
+                <>
+                  <p>
+                    Your configuration requires <strong>ALL {sssSharesTotal} shares</strong> for recovery. 
+                    If you fail to distribute Share 1, your secret will be <strong>permanently unrecoverable</strong>.
+                  </p>
+                  <p><strong>Send Share 1 to:</strong></p>
+                  <ul className="list-disc space-y-1 pl-6">
+                    {recipients.map((recipient, idx) => (
+                      <li key={`critical-${idx}`}>
+                        {recipient.name} ({recipient.email || "secure contact"})
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <>
+                  <p>
+                    Distribute Share 1 to each recipient using secure channels. 
+                    Without it, recipients cannot recover your secret when triggered.
+                  </p>
+                  <p><strong>Recipients:</strong> {recipients.map((r) => r.name).join(", ")}</p>
+                </>
+              )}
               <p>
-                For this dead man's switch to work, you <strong>MUST</strong>{" "}
-                distribute Share 1 to each recipient via your own secure
-                channel:
+                <strong>Secure methods:</strong> Signal, password manager sharing, encrypted file, in-person, or email (buttons above).
               </p>
-              <ul className="list-disc space-y-1 pl-6">
-                {recipients.map((recipient, idx) => (
-                  <li key={`critical-${idx}`}>
-                    <strong>{recipient.name}:</strong> Send Share 1 to{" "}
-                    {recipient.email || "their secure contact"} using encrypted
-                    messaging, password manager sharing, or in person
-                  </li>
-                ))}
-              </ul>
-              <p>
-                <strong>What happens when triggered:</strong>
-              </p>
-              <ul className="list-disc space-y-1 pl-6">
-                <li>KeyFate automatically sends Share 0 to all recipients</li>
-                <li>
-                  Recipients combine Share 0 (from KeyFate) + Share 1 (from you)
-                  = reconstructed secret
-                </li>
-                <li>
-                  If recipients don't have Share 1, they CANNOT recover the
-                  secret
-                </li>
-              </ul>
-              <p>
-                <strong>Secure distribution methods:</strong>
-              </p>
-              <ul className="list-disc space-y-1 pl-6">
-                <li>
-                  Signal, Telegram, or other end-to-end encrypted messaging apps
-                </li>
-                <li>Password manager secure sharing (1Password, Bitwarden)</li>
-                <li>Encrypted file (PGP, age) sent separately from password</li>
-                <li>In-person handoff (paper, QR code, USB drive)</li>
-                <li>
-                  Email (use buttons above) - ensure recipient email is secure
-                </li>
-              </ul>
             </AlertDescription>
           </Alert>
 
@@ -449,8 +396,7 @@ function ShareInstructionsContent() {
               htmlFor="confirm-sent"
               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
-              I have securely distributed all necessary shares as instructed and
-              understand their importance.
+              I have distributed {sssThreshold === sssSharesTotal ? "all required shares" : "Share 1"} and understand that recipients cannot recover the secret without them.
             </Label>
           </div>
         </CardContent>
