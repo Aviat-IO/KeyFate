@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { CheckCircle2 } from "lucide-react"
+import { TIER_CONFIGS } from "@/constants/tiers"
 
 export function UpgradeSuccessDialog() {
   const searchParams = useSearchParams()
@@ -52,18 +53,12 @@ export function UpgradeSuccessDialog() {
           <div className="space-y-3">
             <h4 className="text-sm font-semibold">Your Pro Benefits:</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600 dark:text-green-400" />
-                <span><strong>10 secrets</strong> — Create up to 10 dead man's switches</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600 dark:text-green-400" />
-                <span><strong>5 recipients per secret</strong> — Share with multiple trusted contacts</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600 dark:text-green-400" />
-                <span><strong>Custom check-in intervals</strong> — Set any interval from 1 day to 3 years</span>
-              </li>
+              {TIER_CONFIGS.pro?.features.map((feature, index) => (
+                <li key={index} className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600 dark:text-green-400" />
+                  <span>{feature}</span>
+                </li>
+              ))}
             </ul>
           </div>
         </div>

@@ -143,7 +143,7 @@ describe("Priority Support Feature", () => {
     expect(supportFeature).toBeDefined();
     expect(supportFeature?.features).toBeDefined();
     const emailFeature = supportFeature?.features?.find((f) =>
-      f.includes("support@aviat.io"),
+      f.includes("support@keyfate.com"),
     );
     expect(emailFeature).toBeDefined();
   });

@@ -42,8 +42,9 @@ class SMTPService {
       const transporter = await this.getTransporter();
 
       const mailOptions = {
-        from: options.from || process.env.SMTP_FROM_EMAIL ||
-          "noreply@deadmansswitch.com",
+        from: options.from || 
+          process.env.SENDGRID_ADMIN_EMAIL ||
+          "alerts@keyfate.com",
         to: options.to,
         subject: options.subject,
         html: options.html,

@@ -160,6 +160,12 @@ variable "stripe_secret_key" {
   sensitive   = true
 }
 
+variable "stripe_webhook_secret" {
+  description = "Stripe webhook signing secret for verifying webhook events"
+  type        = string
+  sensitive   = true
+}
+
 variable "next_public_stripe_publishable_key" {
   description = "Stripe publishable key (public)"
   type        = string

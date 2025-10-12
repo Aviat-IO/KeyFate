@@ -113,7 +113,7 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 ### Business Model
 
 - **Free Tier:** 1 secret, 1 recipient (email only), limited check-in intervals (1 week, 1 month, 1 year only), 2-of-3 Shamir threshold (fixed), no message templates, no audit logs, community support
-- **Pro Tier:** 10 secrets, 5 recipients per secret (email only), flexible custom intervals (1 day to 3 years), configurable Shamir threshold (2-of-N up to 7 shares), 7 message templates, comprehensive audit logs, priority email support (support@aviat.io)
+- **Pro Tier:** 10 secrets, 5 recipients per secret (email only), flexible custom intervals (1 day to 3 years), configurable Shamir threshold (2-of-N up to 7 shares), 7 message templates, comprehensive audit logs, priority email support (support@keyfate.com)
 - **Downgrade Policy:** Users who downgrade keep existing secrets but cannot create new ones if over limit (grandfathering)
 - **Subscription Management:** Stripe and BTCPay Server integration
 - **Contact Methods:** Email only (SMS/phone deferred to future)
@@ -161,7 +161,7 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
   - Configurable Shamir threshold: 2-of-N up to 7 shares
   - 7 message templates (Bitcoin Wallet, Password Manager, Estate Documents, Safe Deposit Box, Cryptocurrency Exchange, Cloud Storage, Social Media)
   - Comprehensive audit logs (stored indefinitely)
-  - Priority email support: support@aviat.io
+  - Priority email support: support@keyfate.com
 - **Tier enforcement:** Must be validated server-side in all API endpoints (not just UI)
 - **Secret limit counting:** Count secrets with `status = 'active'` OR `status = 'paused'` (only exclude `triggered` and deleted secrets)
 - **Downgrade handling:** Grandfather existing secrets, prevent new secret creation if over new limit

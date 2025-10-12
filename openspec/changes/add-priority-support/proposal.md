@@ -4,7 +4,7 @@ Pro users need a clear way to access support when issues arise. Displaying a ded
 
 ## What Changes
 
-- Add support email (support@aviat.io) to Pro tier features list
+- Add support email (support@keyfate.com) to Pro tier features list
 - Display support email in PricingPage component for Pro tier
 - Show support contact in "Welcome to Pro!" modal
 - Update tier constants to include priority support as a feature

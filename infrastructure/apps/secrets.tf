@@ -48,6 +48,15 @@ module "frontend_secrets" {
         "roles/secretmanager.secretAccessor" = ["serviceAccount:${module.frontend_service_account.email}"]
       }
     }
+    stripe-webhook-secret = {
+      # Remove regional location to use global automatic replication
+      versions = {
+        current = { enabled = true, data = var.stripe_webhook_secret }
+      }
+      iam = {
+        "roles/secretmanager.secretAccessor" = ["serviceAccount:${module.frontend_service_account.email}"]
+      }
+    }
     btcpay-api-key = {
       # Remove regional location to use global automatic replication
       versions = {

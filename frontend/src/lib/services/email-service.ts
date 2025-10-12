@@ -177,7 +177,7 @@ class EmailService {
 
   async sendAdminAlert(data: AdminAlertData) {
     try {
-      const adminEmail = process.env.ADMIN_EMAIL || "admin@deadmansswitch.com";
+      const adminEmail = process.env.SENDGRID_ADMIN_EMAIL || "support@aviat.io";
 
       const template = emailTemplates.adminAlert({
         type: data.type,
@@ -249,15 +249,9 @@ class EmailService {
 
   private async logEmailSuccess(recipientEmail: string, subject: string) {
     try {
-      const db = await getDatabase();
-      await db.insert(emailNotifications).values({
-        recipientEmail,
-        secretId: "00000000-0000-0000-0000-000000000000", // Placeholder for system emails
-        subject,
-        body: "Email sent successfully",
-        // For tests that assert timestamps
-        sentAt: new Date(),
-      } as any);
+      // Skip logging for system emails (admin alerts, etc.) since they don't have a secretId
+      // TODO: Make secretId nullable in schema or create separate system_email_logs table
+      console.log(`Email sent successfully to ${recipientEmail}: ${subject}`);
     } catch (error) {
       console.error("Failed to log email success:", error);
     }
@@ -265,17 +259,9 @@ class EmailService {
 
   private async logEmailFailure(userId: string, emailType: string, error: any) {
     try {
-      const user = await this.getUserById(userId);
-      const recipientEmail = user?.email || "unknown@example.com";
-
-      const db = await getDatabase();
-      await db.insert(emailNotifications).values({
-        recipientEmail,
-        secretId: "00000000-0000-0000-0000-000000000000", // Placeholder for system emails
-        subject: `Failed to send ${emailType} email`,
-        body: `Error: ${error.message}`,
-        failedAt: new Date(),
-      } as any);
+      // Skip logging for system emails since they don't have a secretId
+      // TODO: Make secretId nullable in schema or create separate system_email_logs table
+      console.error(`Failed to send ${emailType} email to user ${userId}:`, error.message);
     } catch (logError) {
       console.error("Failed to log email failure:", logError);
     }

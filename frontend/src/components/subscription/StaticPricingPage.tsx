@@ -70,7 +70,7 @@ export function StaticPricingPage({ className = "" }: StaticPricingPageProps) {
 
         <PricingCard
           title="Pro"
-          description="For power users"
+          description=""
           price={proData.price}
           subtext={proData.subtext}
           savingsText={proData.savingsText}

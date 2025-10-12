@@ -89,7 +89,7 @@ CRON_SECRET="your_secure_random_32_char_string"
 #### `ADMIN_ALERT_EMAIL`
 
 - **Required:** No
-- **Default:** `"support@aviat.io"`
+- **Default:** `"support@keyfate.com"`
 - **Purpose:** Recipient for system alerts and admin notifications
 - **Format:** Valid email address
 - **Example:** `"alerts@yourdomain.com"`

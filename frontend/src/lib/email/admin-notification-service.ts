@@ -1,7 +1,7 @@
 /**
  * Admin Notification Service
  *
- * Sends critical alerts to support@aviat.io when email operations fail.
+ * Sends critical alerts to support@keyfate.com when email operations fail.
  * Implements severity classification and batching to prevent alert spam.
  */
 
@@ -217,7 +217,7 @@ export async function sendAdminNotification(
     const { subject, html, text } = formatNotificationContent(data, severity);
 
     // Get admin email from environment or use default
-    const adminEmail = process.env.ADMIN_ALERT_EMAIL || process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@aviat.io";
+    const adminEmail = process.env.ADMIN_ALERT_EMAIL || process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@keyfate.com";
 
     // Send notification using existing email service
     const result = await sendEmail({

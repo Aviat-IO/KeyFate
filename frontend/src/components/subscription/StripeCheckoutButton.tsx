@@ -10,11 +10,6 @@ interface StripeCheckoutButtonProps {
   disabled?: boolean
 }
 
-const PAYMENT_LINKS: Record<string, string> = {
-  pro_monthly: "https://buy.stripe.com/test_9B66oH3lU3f27R27MD14402",
-  pro_yearly: "https://buy.stripe.com/test_7sY28r4pY16U0oAc2T14403",
-}
-
 export function StripeCheckoutButton({
   lookupKey,
   children,
@@ -29,20 +24,36 @@ export function StripeCheckoutButton({
 
     try {
       if (!session?.user) {
-        const paymentLink = PAYMENT_LINKS[lookupKey]
-        const loginUrl = `/auth/signin?callbackUrl=${encodeURIComponent(paymentLink)}`
+        const checkoutUrl = `/api/create-checkout-session?lookup_key=${lookupKey}&redirect_after_auth=true`
+        const loginUrl = `/auth/signin?callbackUrl=${encodeURIComponent(checkoutUrl)}`
         window.location.href = loginUrl
         return
       }
 
-      const paymentLink = PAYMENT_LINKS[lookupKey]
-      if (paymentLink) {
-        window.location.href = paymentLink
+      // Call our API to create a checkout session with user_id in metadata
+      const response = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lookup_key: lookupKey }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.error("Checkout session error:", error)
+        throw new Error(error.error || "Failed to create checkout session")
+      }
+
+      // Get the checkout URL from JSON response
+      const data = await response.json()
+      if (data.url) {
+        console.log("Redirecting to Stripe Checkout:", data.url)
+        window.location.href = data.url
       } else {
-        console.error("No payment link found for lookup key:", lookupKey)
+        throw new Error("No checkout URL returned from API")
       }
     } catch (error) {
-      console.error("Error:", error)
+      console.error("Error creating checkout:", error)
+      alert("Failed to start checkout. Please try again.")
     } finally {
       setLoading(false)
     }
