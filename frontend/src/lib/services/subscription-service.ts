@@ -9,6 +9,7 @@ import {
 import { logSubscriptionChanged } from "@/lib/services/audit-logger";
 import { and, eq } from "drizzle-orm";
 import { emailService } from "./email-service";
+import { getPriceInCents } from "@/constants/tiers";
 
 export type SubscriptionProvider = "stripe" | "btcpay";
 export type SubscriptionStatus =
@@ -335,11 +336,18 @@ class SubscriptionService {
         await this.updateSubscriptionStatus(userId, "past_due");
       }
 
+      // Get tier to determine price
+      const tier = await this.getTierByName(subscription.tierId as any);
+      const tierName = tier?.name as SubscriptionTier || "pro";
+      
+      // Default to monthly price in cents for notification
+      const amountInCents = getPriceInCents(tierName, "monthly");
+
       // Send payment failure notification
       emailService.sendPaymentFailedNotification(userId, {
         provider: subscription.provider as SubscriptionProvider,
         subscriptionId: subscription.providerSubscriptionId,
-        amount: 1999, // This should come from the subscription tier
+        amount: amountInCents,
         attemptCount,
         nextRetry: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
       }).catch((error) => {
@@ -368,11 +376,14 @@ class SubscriptionService {
     },
   ) {
     try {
+      // Default to monthly price in cents for confirmation email
+      const amountInCents = getPriceInCents(subscriptionData.tierName, "monthly");
+      
       await emailService.sendSubscriptionConfirmation(userId, {
         provider: subscriptionData.provider,
         tierName: subscriptionData.tierName,
-        amount: 1999, // This should come from the tier pricing
-        interval: "month", // This should be determined from the subscription
+        amount: amountInCents,
+        interval: "month", // TODO: Determine from subscription data when available
       });
     } catch (error) {
       console.error("Failed to send subscription confirmation email:", error);

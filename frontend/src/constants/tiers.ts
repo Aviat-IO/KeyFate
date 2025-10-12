@@ -48,6 +48,10 @@ export const TIER_CONFIGS: Partial<Record<SubscriptionTier, TierConfig>> = {
       monthly: 9.00,
       annual: 90.00,
     },
+    priceInCents: {
+      monthly: 900,
+      annual: 9000,
+    },
     priceIds: {
       monthly: "pro_monthly",
       annual: "pro_yearly",
@@ -113,4 +117,14 @@ export function getAnnualSavingsPercentage(tier: SubscriptionTier): number {
   const monthlyTotal = config.price.monthly * 12;
   const savings = getAnnualSavings(tier);
   return Math.round((savings / monthlyTotal) * 100);
+}
+
+// Helper to get price in cents for payment processing
+export function getPriceInCents(
+  tier: SubscriptionTier,
+  period: "monthly" | "annual",
+): number {
+  const config = getTierConfig(tier);
+  if (!config || !config.priceInCents) return 0;
+  return config.priceInCents[period];
 }
