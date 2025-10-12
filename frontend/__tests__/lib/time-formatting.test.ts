@@ -46,7 +46,7 @@ describe("formatGranularTime", () => {
     })
 
     it("formats 23 hours 59 minutes as 23 hours (not 1 day)", () => {
-      const future = new Date(Date.now() + (23 * 60 * 60 * 1000) + (59 * 60 * 1000)) // 23h 59m
+      const future = new Date(Date.now() + 23 * 60 * 60 * 1000 + 59 * 60 * 1000) // 23h 59m
       expect(formatGranularTime(future)).toBe("23 hours")
     })
 
@@ -113,13 +113,15 @@ describe("formatGranularTime", () => {
   describe("DST edge cases - regression tests", () => {
     it("correctly handles dates created with millisecond arithmetic (24 hours exactly)", () => {
       const now = new Date()
-      const future = new Date(now.getTime() + (1 * 24 * 60 * 60 * 1000))
+      const future = new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000)
       expect(formatGranularTime(future)).toBe("1 day")
     })
 
     it("correctly handles dates very close to 24 hours (23h 59m)", () => {
       const now = new Date()
-      const future = new Date(now.getTime() + (23 * 60 * 60 * 1000) + (59 * 60 * 1000))
+      const future = new Date(
+        now.getTime() + 23 * 60 * 60 * 1000 + 59 * 60 * 1000,
+      )
       expect(formatGranularTime(future)).toBe("23 hours")
     })
 
@@ -134,7 +136,7 @@ describe("formatGranularTime", () => {
       ]
 
       testCases.forEach(({ hours, expected }) => {
-        const future = new Date(Date.now() + (hours * 60 * 60 * 1000))
+        const future = new Date(Date.now() + hours * 60 * 60 * 1000)
         expect(formatGranularTime(future)).toBe(expected)
       })
     })

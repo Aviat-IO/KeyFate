@@ -51,14 +51,16 @@ describe("Sign-Up Error Handling", () => {
     it("should show error when passwords do not match", async () => {
       await act(async () => {
         await act(async () => {
-        render(<SignUpPage />)
-      })
+          render(<SignUpPage />)
+        })
       })
 
       const emailInput = screen.getByLabelText("Email address")
       const passwordInput = screen.getByLabelText("Password")
       const confirmPasswordInput = screen.getByLabelText("Confirm Password")
-      const submitButton = screen.getByRole("button", { name: /create account/i })
+      const submitButton = screen.getByRole("button", {
+        name: /create account/i,
+      })
 
       await user.type(emailInput, "test@example.com")
       await user.type(passwordInput, "password123")
@@ -76,14 +78,16 @@ describe("Sign-Up Error Handling", () => {
     it("should show error when password is too short", async () => {
       await act(async () => {
         await act(async () => {
-        render(<SignUpPage />)
-      })
+          render(<SignUpPage />)
+        })
       })
 
       const emailInput = screen.getByLabelText("Email address")
       const passwordInput = screen.getByLabelText("Password")
       const confirmPasswordInput = screen.getByLabelText("Confirm Password")
-      const submitButton = screen.getByRole("button", { name: /create account/i })
+      const submitButton = screen.getByRole("button", {
+        name: /create account/i,
+      })
 
       await user.type(emailInput, "test@example.com")
       await user.type(passwordInput, "short")
@@ -94,7 +98,9 @@ describe("Sign-Up Error Handling", () => {
 
       await waitFor(() => {
         expect(screen.getByRole("alert")).toBeInTheDocument()
-        expect(screen.getByText("Password must be at least 8 characters long")).toBeInTheDocument()
+        expect(
+          screen.getByText("Password must be at least 8 characters long"),
+        ).toBeInTheDocument()
       })
     })
 
@@ -106,7 +112,9 @@ describe("Sign-Up Error Handling", () => {
       const emailInput = screen.getByLabelText("Email address")
       const passwordInput = screen.getByLabelText("Password")
       const confirmPasswordInput = screen.getByLabelText("Confirm Password")
-      const submitButton = screen.getByRole("button", { name: /create account/i })
+      const submitButton = screen.getByRole("button", {
+        name: /create account/i,
+      })
 
       // Use an email that passes HTML5 validation but fails our custom validation
       await user.type(emailInput, "test@example")
@@ -118,7 +126,9 @@ describe("Sign-Up Error Handling", () => {
 
       await waitFor(() => {
         expect(screen.getByRole("alert")).toBeInTheDocument()
-        expect(screen.getByText("Please enter a valid email address")).toBeInTheDocument()
+        expect(
+          screen.getByText("Please enter a valid email address"),
+        ).toBeInTheDocument()
       })
     })
   })
@@ -129,7 +139,7 @@ describe("Sign-Up Error Handling", () => {
         ok: false,
         status: 400,
         json: async () => ({
-          error: "User with this email already exists"
+          error: "User with this email already exists",
         }),
       })
 
@@ -140,7 +150,9 @@ describe("Sign-Up Error Handling", () => {
       const emailInput = screen.getByLabelText("Email address")
       const passwordInput = screen.getByLabelText("Password")
       const confirmPasswordInput = screen.getByLabelText("Confirm Password")
-      const submitButton = screen.getByRole("button", { name: /create account/i })
+      const submitButton = screen.getByRole("button", {
+        name: /create account/i,
+      })
 
       await user.type(emailInput, "existing@example.com")
       await user.type(passwordInput, "password123")
@@ -151,7 +163,11 @@ describe("Sign-Up Error Handling", () => {
 
       await waitFor(() => {
         expect(screen.getByRole("alert")).toBeInTheDocument()
-        expect(screen.getByText("An account with this email already exists. Please sign in instead.")).toBeInTheDocument()
+        expect(
+          screen.getByText(
+            "An account with this email already exists. Please sign in instead.",
+          ),
+        ).toBeInTheDocument()
       })
     })
 
@@ -160,7 +176,7 @@ describe("Sign-Up Error Handling", () => {
         ok: false,
         status: 409,
         json: async () => ({
-          error: "Conflict error"
+          error: "Conflict error",
         }),
       })
 
@@ -171,7 +187,9 @@ describe("Sign-Up Error Handling", () => {
       const emailInput = screen.getByLabelText("Email address")
       const passwordInput = screen.getByLabelText("Password")
       const confirmPasswordInput = screen.getByLabelText("Confirm Password")
-      const submitButton = screen.getByRole("button", { name: /create account/i })
+      const submitButton = screen.getByRole("button", {
+        name: /create account/i,
+      })
 
       await user.type(emailInput, "test@example.com")
       await user.type(passwordInput, "password123")
@@ -182,7 +200,11 @@ describe("Sign-Up Error Handling", () => {
 
       await waitFor(() => {
         expect(screen.getByRole("alert")).toBeInTheDocument()
-        expect(screen.getByText("An account with this email already exists. Please sign in instead.")).toBeInTheDocument()
+        expect(
+          screen.getByText(
+            "An account with this email already exists. Please sign in instead.",
+          ),
+        ).toBeInTheDocument()
       })
     })
 
@@ -191,7 +213,7 @@ describe("Sign-Up Error Handling", () => {
         ok: false,
         status: 422,
         json: async () => ({
-          error: "Password does not meet requirements"
+          error: "Password does not meet requirements",
         }),
       })
 
@@ -202,7 +224,9 @@ describe("Sign-Up Error Handling", () => {
       const emailInput = screen.getByLabelText("Email address")
       const passwordInput = screen.getByLabelText("Password")
       const confirmPasswordInput = screen.getByLabelText("Confirm Password")
-      const submitButton = screen.getByRole("button", { name: /create account/i })
+      const submitButton = screen.getByRole("button", {
+        name: /create account/i,
+      })
 
       await user.type(emailInput, "test@example.com")
       await user.type(passwordInput, "password123")
@@ -213,7 +237,9 @@ describe("Sign-Up Error Handling", () => {
 
       await waitFor(() => {
         expect(screen.getByRole("alert")).toBeInTheDocument()
-        expect(screen.getByText("Password does not meet requirements")).toBeInTheDocument()
+        expect(
+          screen.getByText("Password does not meet requirements"),
+        ).toBeInTheDocument()
       })
     })
 
@@ -222,7 +248,7 @@ describe("Sign-Up Error Handling", () => {
         ok: false,
         status: 500,
         json: async () => ({
-          error: "Internal server error"
+          error: "Internal server error",
         }),
       })
 
@@ -233,7 +259,9 @@ describe("Sign-Up Error Handling", () => {
       const emailInput = screen.getByLabelText("Email address")
       const passwordInput = screen.getByLabelText("Password")
       const confirmPasswordInput = screen.getByLabelText("Confirm Password")
-      const submitButton = screen.getByRole("button", { name: /create account/i })
+      const submitButton = screen.getByRole("button", {
+        name: /create account/i,
+      })
 
       await user.type(emailInput, "test@example.com")
       await user.type(passwordInput, "password123")
@@ -244,7 +272,9 @@ describe("Sign-Up Error Handling", () => {
 
       await waitFor(() => {
         expect(screen.getByRole("alert")).toBeInTheDocument()
-        expect(screen.getByText("Server error occurred. Please try again later.")).toBeInTheDocument()
+        expect(
+          screen.getByText("Server error occurred. Please try again later."),
+        ).toBeInTheDocument()
       })
     })
   })
@@ -260,7 +290,9 @@ describe("Sign-Up Error Handling", () => {
       const emailInput = screen.getByLabelText("Email address")
       const passwordInput = screen.getByLabelText("Password")
       const confirmPasswordInput = screen.getByLabelText("Confirm Password")
-      const submitButton = screen.getByRole("button", { name: /create account/i })
+      const submitButton = screen.getByRole("button", {
+        name: /create account/i,
+      })
 
       await user.type(emailInput, "test@example.com")
       await user.type(passwordInput, "password123")
@@ -271,7 +303,11 @@ describe("Sign-Up Error Handling", () => {
 
       await waitFor(() => {
         expect(screen.getByRole("alert")).toBeInTheDocument()
-        expect(screen.getByText("Network error. Please check your connection and try again.")).toBeInTheDocument()
+        expect(
+          screen.getByText(
+            "Network error. Please check your connection and try again.",
+          ),
+        ).toBeInTheDocument()
       })
     })
 
@@ -285,7 +321,9 @@ describe("Sign-Up Error Handling", () => {
       const emailInput = screen.getByLabelText("Email address")
       const passwordInput = screen.getByLabelText("Password")
       const confirmPasswordInput = screen.getByLabelText("Confirm Password")
-      const submitButton = screen.getByRole("button", { name: /create account/i })
+      const submitButton = screen.getByRole("button", {
+        name: /create account/i,
+      })
 
       await user.type(emailInput, "test@example.com")
       await user.type(passwordInput, "password123")
@@ -296,7 +334,9 @@ describe("Sign-Up Error Handling", () => {
 
       await waitFor(() => {
         expect(screen.getByRole("alert")).toBeInTheDocument()
-        expect(screen.getByText("Registration failed: Something went wrong")).toBeInTheDocument()
+        expect(
+          screen.getByText("Registration failed: Something went wrong"),
+        ).toBeInTheDocument()
       })
     })
   })
@@ -316,7 +356,7 @@ describe("Sign-Up Error Handling", () => {
 
       vi.mocked(signIn).mockResolvedValue({
         error: "CredentialsSignin",
-        ok: false
+        ok: false,
       })
 
       await act(async () => {
@@ -326,7 +366,9 @@ describe("Sign-Up Error Handling", () => {
       const emailInput = screen.getByLabelText("Email address")
       const passwordInput = screen.getByLabelText("Password")
       const confirmPasswordInput = screen.getByLabelText("Confirm Password")
-      const submitButton = screen.getByRole("button", { name: /create account/i })
+      const submitButton = screen.getByRole("button", {
+        name: /create account/i,
+      })
 
       await user.type(emailInput, "test@example.com")
       await user.type(passwordInput, "password123")
@@ -337,7 +379,11 @@ describe("Sign-Up Error Handling", () => {
 
       await waitFor(() => {
         expect(screen.getByRole("alert")).toBeInTheDocument()
-        expect(screen.getByText("Account created successfully, but automatic sign-in failed. Please sign in manually.")).toBeInTheDocument()
+        expect(
+          screen.getByText(
+            "Account created successfully, but automatic sign-in failed. Please sign in manually.",
+          ),
+        ).toBeInTheDocument()
       })
     })
 
@@ -361,7 +407,9 @@ describe("Sign-Up Error Handling", () => {
       const emailInput = screen.getByLabelText("Email address")
       const passwordInput = screen.getByLabelText("Password")
       const confirmPasswordInput = screen.getByLabelText("Confirm Password")
-      const submitButton = screen.getByRole("button", { name: /create account/i })
+      const submitButton = screen.getByRole("button", {
+        name: /create account/i,
+      })
 
       await user.type(emailInput, "test@example.com")
       await user.type(passwordInput, "password123")
@@ -372,18 +420,34 @@ describe("Sign-Up Error Handling", () => {
 
       await waitFor(() => {
         expect(screen.getByRole("alert")).toBeInTheDocument()
-        expect(screen.getByText("Account created successfully, but sign-in failed. Please try signing in manually.")).toBeInTheDocument()
+        expect(
+          screen.getByText(
+            "Account created successfully, but sign-in failed. Please try signing in manually.",
+          ),
+        ).toBeInTheDocument()
       })
     })
   })
 
   describe("Loading State Management", () => {
     it("should show loading state during registration", async () => {
-      global.fetch.mockImplementation(() => new Promise(resolve => setTimeout(() => resolve({
-        ok: true,
-        status: 201,
-        json: async () => ({ success: true, user: { id: "user-123" } }),
-      }), 100)))
+      global.fetch.mockImplementation(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(
+              () =>
+                resolve({
+                  ok: true,
+                  status: 201,
+                  json: async () => ({
+                    success: true,
+                    user: { id: "user-123" },
+                  }),
+                }),
+              100,
+            ),
+          ),
+      )
 
       await act(async () => {
         render(<SignUpPage />)
@@ -392,7 +456,9 @@ describe("Sign-Up Error Handling", () => {
       const emailInput = screen.getByLabelText("Email address")
       const passwordInput = screen.getByLabelText("Password")
       const confirmPasswordInput = screen.getByLabelText("Confirm Password")
-      const submitButton = screen.getByRole("button", { name: /create account/i })
+      const submitButton = screen.getByRole("button", {
+        name: /create account/i,
+      })
 
       await user.type(emailInput, "test@example.com")
       await user.type(passwordInput, "password123")
@@ -409,9 +475,12 @@ describe("Sign-Up Error Handling", () => {
       expect(submitButton).toBeDisabled()
       expect(submitButton).toHaveTextContent("Creating account...")
 
-      await waitFor(() => {
-        expect(submitButton).not.toBeDisabled()
-      }, { timeout: 200 })
+      await waitFor(
+        () => {
+          expect(submitButton).not.toBeDisabled()
+        },
+        { timeout: 200 },
+      )
     })
 
     it("should clear loading state when error occurs", async () => {
@@ -424,7 +493,9 @@ describe("Sign-Up Error Handling", () => {
       const emailInput = screen.getByLabelText("Email address")
       const passwordInput = screen.getByLabelText("Password")
       const confirmPasswordInput = screen.getByLabelText("Confirm Password")
-      const submitButton = screen.getByRole("button", { name: /create account/i })
+      const submitButton = screen.getByRole("button", {
+        name: /create account/i,
+      })
 
       await user.type(emailInput, "test@example.com")
       await user.type(passwordInput, "password123")
@@ -451,7 +522,9 @@ describe("Sign-Up Error Handling", () => {
       const emailInput = screen.getByLabelText("Email address")
       const passwordInput = screen.getByLabelText("Password")
       const confirmPasswordInput = screen.getByLabelText("Confirm Password")
-      const submitButton = screen.getByRole("button", { name: /create account/i })
+      const submitButton = screen.getByRole("button", {
+        name: /create account/i,
+      })
 
       await user.type(emailInput, "test@example")
       await user.type(passwordInput, "password123")

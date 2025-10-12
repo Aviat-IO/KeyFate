@@ -1,14 +1,19 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { subscriptionService } from "@/lib/services/subscription-service";
-import { getDatabase } from "@/lib/db/drizzle";
-import { userSubscriptions, paymentHistory, auditLogs, users } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest"
+import { subscriptionService } from "@/lib/services/subscription-service"
+import { getDatabase } from "@/lib/db/drizzle"
+import {
+  userSubscriptions,
+  paymentHistory,
+  auditLogs,
+  users,
+} from "@/lib/db/schema"
+import { eq } from "drizzle-orm"
 
 vi.mock("@/lib/server-env", () => ({
   serverEnv: {
     DATABASE_URL: process.env.DATABASE_URL || "postgresql://test",
   },
-}));
+}))
 
 vi.mock("@/lib/services/email-service", () => ({
   emailService: {
@@ -17,14 +22,14 @@ vi.mock("@/lib/services/email-service", () => ({
     sendSubscriptionCancelledNotification: vi.fn().mockResolvedValue(undefined),
     sendTrialWillEndNotification: vi.fn().mockResolvedValue(undefined),
   },
-}));
+}))
 
 describe("Payment and Subscription Integration Tests", () => {
-  const testUserId = "test-user-" + Date.now();
+  const testUserId = "test-user-" + Date.now()
 
   beforeEach(async () => {
-    const db = await getDatabase();
-    
+    const db = await getDatabase()
+
     await db.insert(users).values({
       id: testUserId,
       email: `test-${testUserId}@example.com`,
@@ -33,21 +38,25 @@ describe("Payment and Subscription Integration Tests", () => {
       image: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-    } as any);
-  });
+    } as any)
+  })
 
   afterEach(async () => {
-    const db = await getDatabase();
-    
+    const db = await getDatabase()
+
     try {
-      await db.delete(auditLogs).where(eq(auditLogs.userId, testUserId));
-      await db.delete(paymentHistory).where(eq(paymentHistory.userId, testUserId));
-      await db.delete(userSubscriptions).where(eq(userSubscriptions.userId, testUserId));
-      await db.delete(users).where(eq(users.id, testUserId));
+      await db.delete(auditLogs).where(eq(auditLogs.userId, testUserId))
+      await db
+        .delete(paymentHistory)
+        .where(eq(paymentHistory.userId, testUserId))
+      await db
+        .delete(userSubscriptions)
+        .where(eq(userSubscriptions.userId, testUserId))
+      await db.delete(users).where(eq(users.id, testUserId))
     } catch (error) {
-      console.error("Cleanup error:", error);
+      console.error("Cleanup error:", error)
     }
-  });
+  })
 
   describe("Stripe Payment Flow", () => {
     it("should create subscription, payment_history, and audit_logs on checkout.session.completed", async () => {
@@ -63,32 +72,32 @@ describe("Payment and Subscription Integration Tests", () => {
             metadata: { user_id: testUserId },
           },
         },
-      };
+      }
 
-      await subscriptionService.handleStripeWebhook(checkoutEvent, testUserId);
+      await subscriptionService.handleStripeWebhook(checkoutEvent, testUserId)
 
-      const db = await getDatabase();
+      const db = await getDatabase()
 
       const subscription = await db
         .select()
         .from(userSubscriptions)
         .where(eq(userSubscriptions.userId, testUserId))
-        .limit(1);
+        .limit(1)
 
-      expect(subscription).toHaveLength(1);
-      expect(subscription[0].userId).toBe(testUserId);
-      expect(subscription[0].provider).toBe("stripe");
-      expect(subscription[0].status).toBe("active");
+      expect(subscription).toHaveLength(1)
+      expect(subscription[0].userId).toBe(testUserId)
+      expect(subscription[0].provider).toBe("stripe")
+      expect(subscription[0].status).toBe("active")
 
       const auditLog = await db
         .select()
         .from(auditLogs)
         .where(eq(auditLogs.userId, testUserId))
-        .limit(1);
+        .limit(1)
 
-      expect(auditLog).toHaveLength(1);
-      expect(auditLog[0].eventType).toBe("subscription_changed");
-    });
+      expect(auditLog).toHaveLength(1)
+      expect(auditLog[0].eventType).toBe("subscription_changed")
+    })
 
     it("should create payment_history record on invoice.payment_succeeded", async () => {
       await subscriptionService.createSubscription({
@@ -100,7 +109,7 @@ describe("Payment and Subscription Integration Tests", () => {
         status: "active",
         currentPeriodStart: new Date(),
         currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      });
+      })
 
       const paymentEvent = {
         type: "invoice.payment_succeeded",
@@ -115,36 +124,37 @@ describe("Payment and Subscription Integration Tests", () => {
             metadata: { user_id: testUserId },
           },
         },
-      };
+      }
 
-      await subscriptionService.handleStripeWebhook(paymentEvent, testUserId);
+      await subscriptionService.handleStripeWebhook(paymentEvent, testUserId)
 
-      const db = await getDatabase();
+      const db = await getDatabase()
 
       const payments = await db
         .select()
         .from(paymentHistory)
-        .where(eq(paymentHistory.userId, testUserId));
+        .where(eq(paymentHistory.userId, testUserId))
 
-      expect(payments).toHaveLength(1);
-      expect(payments[0].userId).toBe(testUserId);
-      expect(payments[0].provider).toBe("stripe");
-      expect(payments[0].status).toBe("succeeded");
-      expect(payments[0].amount).toBe("9");
-      expect(payments[0].currency).toBe("USD");
-      expect(payments[0].providerPaymentId).toBe("pi_test_123");
+      expect(payments).toHaveLength(1)
+      expect(payments[0].userId).toBe(testUserId)
+      expect(payments[0].provider).toBe("stripe")
+      expect(payments[0].status).toBe("succeeded")
+      expect(payments[0].amount).toBe("9")
+      expect(payments[0].currency).toBe("USD")
+      expect(payments[0].providerPaymentId).toBe("pi_test_123")
 
       const auditLogs2 = await db
         .select()
         .from(auditLogs)
-        .where(eq(auditLogs.userId, testUserId));
+        .where(eq(auditLogs.userId, testUserId))
 
-      expect(auditLogs2.length).toBeGreaterThanOrEqual(2);
+      expect(auditLogs2.length).toBeGreaterThanOrEqual(2)
       const paymentLog = auditLogs2.find(
-        (log) => log.details && (log.details as any).action === "payment_processed"
-      );
-      expect(paymentLog).toBeDefined();
-    });
+        (log) =>
+          log.details && (log.details as any).action === "payment_processed",
+      )
+      expect(paymentLog).toBeDefined()
+    })
 
     it("should create failed payment_history record on invoice.payment_failed", async () => {
       await subscriptionService.createSubscription({
@@ -156,7 +166,7 @@ describe("Payment and Subscription Integration Tests", () => {
         status: "active",
         currentPeriodStart: new Date(),
         currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      });
+      })
 
       const failedPaymentEvent = {
         type: "invoice.payment_failed",
@@ -175,30 +185,33 @@ describe("Payment and Subscription Integration Tests", () => {
             metadata: { user_id: testUserId },
           },
         },
-      };
+      }
 
-      await subscriptionService.handleStripeWebhook(failedPaymentEvent, testUserId);
+      await subscriptionService.handleStripeWebhook(
+        failedPaymentEvent,
+        testUserId,
+      )
 
-      const db = await getDatabase();
+      const db = await getDatabase()
 
       const payments = await db
         .select()
         .from(paymentHistory)
-        .where(eq(paymentHistory.userId, testUserId));
+        .where(eq(paymentHistory.userId, testUserId))
 
-      expect(payments).toHaveLength(1);
-      expect(payments[0].status).toBe("failed");
-      expect(payments[0].failureReason).toBe("Card declined");
-      expect(payments[0].amount).toBe("9");
+      expect(payments).toHaveLength(1)
+      expect(payments[0].status).toBe("failed")
+      expect(payments[0].failureReason).toBe("Card declined")
+      expect(payments[0].amount).toBe("9")
 
       const subscription = await db
         .select()
         .from(userSubscriptions)
         .where(eq(userSubscriptions.userId, testUserId))
-        .limit(1);
+        .limit(1)
 
-      expect(subscription[0].status).toBe("past_due");
-    });
+      expect(subscription[0].status).toBe("past_due")
+    })
 
     it("should update subscription status on customer.subscription.deleted", async () => {
       await subscriptionService.createSubscription({
@@ -210,7 +223,7 @@ describe("Payment and Subscription Integration Tests", () => {
         status: "active",
         currentPeriodStart: new Date(),
         currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      });
+      })
 
       const cancelEvent = {
         type: "customer.subscription.deleted",
@@ -221,21 +234,21 @@ describe("Payment and Subscription Integration Tests", () => {
             metadata: { user_id: testUserId },
           },
         },
-      };
+      }
 
-      await subscriptionService.handleStripeWebhook(cancelEvent, testUserId);
+      await subscriptionService.handleStripeWebhook(cancelEvent, testUserId)
 
-      const db = await getDatabase();
+      const db = await getDatabase()
 
       const subscription = await db
         .select()
         .from(userSubscriptions)
         .where(eq(userSubscriptions.userId, testUserId))
-        .limit(1);
+        .limit(1)
 
-      expect(subscription[0].status).toBe("cancelled");
-    });
-  });
+      expect(subscription[0].status).toBe("cancelled")
+    })
+  })
 
   describe("BTCPay Payment Flow", () => {
     it("should create subscription and payment_history on InvoiceSettled", async () => {
@@ -255,41 +268,41 @@ describe("Payment and Subscription Integration Tests", () => {
             },
           },
         },
-      };
+      }
 
-      await subscriptionService.handleBTCPayWebhook(btcpayEvent, testUserId);
+      await subscriptionService.handleBTCPayWebhook(btcpayEvent, testUserId)
 
-      const db = await getDatabase();
+      const db = await getDatabase()
 
       const subscription = await db
         .select()
         .from(userSubscriptions)
         .where(eq(userSubscriptions.userId, testUserId))
-        .limit(1);
+        .limit(1)
 
-      expect(subscription).toHaveLength(1);
-      expect(subscription[0].userId).toBe(testUserId);
-      expect(subscription[0].provider).toBe("btcpay");
-      expect(subscription[0].status).toBe("active");
+      expect(subscription).toHaveLength(1)
+      expect(subscription[0].userId).toBe(testUserId)
+      expect(subscription[0].provider).toBe("btcpay")
+      expect(subscription[0].status).toBe("active")
 
       const payments = await db
         .select()
         .from(paymentHistory)
-        .where(eq(paymentHistory.userId, testUserId));
+        .where(eq(paymentHistory.userId, testUserId))
 
-      expect(payments).toHaveLength(1);
-      expect(payments[0].provider).toBe("btcpay");
-      expect(payments[0].status).toBe("succeeded");
-      expect(payments[0].currency).toBe("BTC");
+      expect(payments).toHaveLength(1)
+      expect(payments[0].provider).toBe("btcpay")
+      expect(payments[0].status).toBe("succeeded")
+      expect(payments[0].currency).toBe("BTC")
 
       const auditLog = await db
         .select()
         .from(auditLogs)
-        .where(eq(auditLogs.userId, testUserId));
+        .where(eq(auditLogs.userId, testUserId))
 
-      expect(auditLog.length).toBeGreaterThanOrEqual(2);
-    });
-  });
+      expect(auditLog.length).toBeGreaterThanOrEqual(2)
+    })
+  })
 
   describe("Subscription Lifecycle", () => {
     it("should maintain consistent state across subscription updates", async () => {
@@ -302,33 +315,33 @@ describe("Payment and Subscription Integration Tests", () => {
         status: "active",
         currentPeriodStart: new Date(),
         currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      });
+      })
 
-      expect(subscription).toBeDefined();
-      expect(subscription.userId).toBe(testUserId);
+      expect(subscription).toBeDefined()
+      expect(subscription.userId).toBe(testUserId)
 
       await subscriptionService.updateSubscription(testUserId, {
         status: "past_due",
-      });
+      })
 
-      const db = await getDatabase();
+      const db = await getDatabase()
       const updated = await db
         .select()
         .from(userSubscriptions)
         .where(eq(userSubscriptions.userId, testUserId))
-        .limit(1);
+        .limit(1)
 
-      expect(updated[0].status).toBe("past_due");
+      expect(updated[0].status).toBe("past_due")
 
-      await subscriptionService.cancelSubscription(testUserId, true);
+      await subscriptionService.cancelSubscription(testUserId, true)
 
       const cancelled = await db
         .select()
         .from(userSubscriptions)
         .where(eq(userSubscriptions.userId, testUserId))
-        .limit(1);
+        .limit(1)
 
-      expect(cancelled[0].status).toBe("cancelled");
-    });
-  });
-});
+      expect(cancelled[0].status).toBe("cancelled")
+    })
+  })
+})

@@ -172,9 +172,9 @@ export function EmailVerificationPage() {
         <Card data-testid="verification-card">
           <CardContent className="pt-6">
             <div className="space-y-4 text-center">
-              <CheckCircle2 className="mx-auto h-16 w-16 text-accent-foreground" />
+              <CheckCircle2 className="text-accent-foreground mx-auto h-16 w-16" />
               <div>
-                <h3 className="text-lg font-semibold text-accent-foreground">
+                <h3 className="text-accent-foreground text-lg font-semibold">
                   Email Already Verified
                 </h3>
                 <p className="text-muted-foreground text-sm">
@@ -194,9 +194,9 @@ export function EmailVerificationPage() {
         <Card data-testid="verification-card">
           <CardContent className="pt-6">
             <div className="space-y-4 text-center">
-              <CheckCircle2 className="mx-auto h-16 w-16 text-accent-foreground" />
+              <CheckCircle2 className="text-accent-foreground mx-auto h-16 w-16" />
               <div>
-                <h3 className="text-lg font-semibold text-accent-foreground">
+                <h3 className="text-accent-foreground text-lg font-semibold">
                   Email Verified!
                 </h3>
                 <p className="text-muted-foreground text-sm">
@@ -213,12 +213,12 @@ export function EmailVerificationPage() {
   return (
     <div
       data-testid="verification-container"
-      className="flex min-h-screen items-center justify-center bg-secondary px-4 py-16"
+      className="bg-secondary flex min-h-screen items-center justify-center px-4 py-16"
     >
       <Card className="w-full max-w-md" data-testid="verification-card">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-            <Mail className="h-6 w-6 text-muted-foreground" />
+          <div className="bg-muted mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+            <Mail className="text-muted-foreground h-6 w-6" />
           </div>
           <CardTitle className="text-2xl font-bold">
             Verify your email address
@@ -262,7 +262,7 @@ export function EmailVerificationPage() {
           )}
 
           <div className="space-y-4 text-center">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Enter the 6-digit code sent to{" "}
               <span className="font-medium">{email}</span>
             </p>
@@ -311,7 +311,7 @@ export function EmailVerificationPage() {
             <Button
               onClick={() => router.push("/sign-in")}
               variant="ghost"
-              className="w-full text-muted-foreground"
+              className="text-muted-foreground w-full"
             >
               Back to sign in
             </Button>

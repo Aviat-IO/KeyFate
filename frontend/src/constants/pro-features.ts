@@ -1,10 +1,10 @@
-import { NEXT_PUBLIC_SUPPORT_EMAIL } from "@/lib/env";
+import { NEXT_PUBLIC_SUPPORT_EMAIL } from "@/lib/env"
 
 export interface ProFeature {
-  id: string;
-  title: string;
-  description: string;
-  features?: string[];
+  id: string
+  title: string
+  description: string
+  features?: string[]
 }
 
 export const PRO_FEATURES: ProFeature[] = [
@@ -61,20 +61,23 @@ export const PRO_FEATURES: ProFeature[] = [
     id: "priority-support",
     title: "Priority Email Support",
     description: "Direct access to our support team for faster assistance",
-    features: [`Email: ${NEXT_PUBLIC_SUPPORT_EMAIL}`, "Response within 72 hours"],
+    features: [
+      `Email: ${NEXT_PUBLIC_SUPPORT_EMAIL}`,
+      "Response within 72 hours",
+    ],
   },
-];
+]
 
 export function getProFeatureById(id: string): ProFeature | undefined {
-  return PRO_FEATURES.find((feature) => feature.id === id);
+  return PRO_FEATURES.find((feature) => feature.id === id)
 }
 
 export function getProFeatureTitles(): string[] {
-  return PRO_FEATURES.map((feature) => feature.title);
+  return PRO_FEATURES.map((feature) => feature.title)
 }
 
 export function getProFeatureDescriptions(): string[] {
-  return PRO_FEATURES.map((feature) => feature.description);
+  return PRO_FEATURES.map((feature) => feature.description)
 }
 
 export const PRO_FEATURE_IDS = {
@@ -83,4 +86,4 @@ export const PRO_FEATURE_IDS = {
   CONFIGURABLE_THRESHOLD: "configurable-threshold",
   AUDIT_LOGS: "audit-logs",
   PRIORITY_SUPPORT: "priority-support",
-} as const;
+} as const

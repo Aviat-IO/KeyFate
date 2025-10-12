@@ -260,7 +260,7 @@ export function EmailVerificationPageNextAuth() {
   return (
     <div
       data-testid="verification-container"
-      className="flex min-h-screen items-center justify-center bg-secondary px-4 py-16"
+      className="bg-secondary flex min-h-screen items-center justify-center px-4 py-16"
     >
       <Card className="w-full max-w-md" data-testid="verification-card">
         <CardHeader className="text-center">
@@ -290,7 +290,7 @@ export function EmailVerificationPageNextAuth() {
           </Alert>
 
           <div className="space-y-4 text-center">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Please check your email at{" "}
               <span className="font-medium">{email}</span> and click the
               verification link.
@@ -343,7 +343,7 @@ export function EmailVerificationPageNextAuth() {
             <Button
               onClick={() => router.push("/sign-in")}
               variant="ghost"
-              className="w-full text-muted-foreground"
+              className="text-muted-foreground w-full"
               tabIndex={0}
             >
               Back to sign in

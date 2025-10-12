@@ -16,7 +16,7 @@ export function createMockSecret(overrides?: Partial<Secret>): Secret {
         phone: "+1234567890",
         createdAt: new Date(),
         updatedAt: new Date(),
-      }
+      },
     ],
     status: "active",
     nextCheckIn: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
@@ -36,7 +36,9 @@ export function createMockSecret(overrides?: Partial<Secret>): Secret {
   return { ...baseSecret, ...overrides }
 }
 
-export function createMockApiSecret(overrides?: Record<string, any>): Record<string, any> {
+export function createMockApiSecret(
+  overrides?: Record<string, any>,
+): Record<string, any> {
   return {
     id: "test-secret-123",
     title: "Test Secret",
@@ -52,7 +54,7 @@ export function createMockApiSecret(overrides?: Record<string, any>): Record<str
         phone: "+1234567890",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      }
+      },
     ],
     status: "active",
     next_check_in: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -68,6 +70,6 @@ export function createMockApiSecret(overrides?: Record<string, any>): Record<str
     iv: "iv-data",
     sss_shares_total: 3,
     sss_threshold: 2,
-    ...overrides
+    ...overrides,
   }
 }

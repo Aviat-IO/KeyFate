@@ -112,7 +112,7 @@ describe("CodeBlock Component", () => {
     expect(codeElement?.innerHTML).toContain("const")
   })
 
-    it("should copy code to clipboard when button clicked", async () => {
+  it("should copy code to clipboard when button clicked", async () => {
     const testCode = "git clone repo.git"
     render(<CodeBlock code={testCode} />)
 

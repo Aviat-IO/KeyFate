@@ -9,7 +9,9 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     // This feature is deprecated - redirect to sign-in
-    router.replace("/sign-in?message=Please contact support for password reset assistance.")
+    router.replace(
+      "/sign-in?message=Please contact support for password reset assistance.",
+    )
   }, [router])
 
   return (

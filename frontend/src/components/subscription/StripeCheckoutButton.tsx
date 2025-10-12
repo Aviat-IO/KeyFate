@@ -38,7 +38,9 @@ export function StripeCheckoutButton({
       })
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Unknown error' }))
+        const error = await response
+          .json()
+          .catch(() => ({ error: "Unknown error" }))
         console.error("Checkout session error:", error)
         throw new Error(error.error || "Failed to create checkout session")
       }

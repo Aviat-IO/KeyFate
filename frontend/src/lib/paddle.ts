@@ -1,37 +1,37 @@
-import { initializePaddle, Paddle } from "@paddle/paddle-js";
-import { SubscriptionTier } from "../types/subscription";
+import { initializePaddle, Paddle } from "@paddle/paddle-js"
+import { SubscriptionTier } from "../types/subscription"
 
 // Paddle configuration
 const PADDLE_ENV = process.env.NEXT_PUBLIC_PADDLE_ENV as
   | "sandbox"
-  | "production";
-const PADDLE_CLIENT_TOKEN = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
+  | "production"
+const PADDLE_CLIENT_TOKEN = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN
 
 if (!PADDLE_CLIENT_TOKEN) {
   throw new Error(
     "Missing NEXT_PUBLIC_PADDLE_CLIENT_TOKEN environment variable",
-  );
+  )
 }
 
 // Paddle instance (initialized lazily)
-let paddleInstance: Paddle | null = null;
+let paddleInstance: Paddle | null = null
 
 // Initialize Paddle.js
 export async function initPaddle(): Promise<Paddle> {
   if (paddleInstance) {
-    return paddleInstance;
+    return paddleInstance
   }
 
   try {
     paddleInstance = await initializePaddle({
       environment: PADDLE_ENV,
       token: PADDLE_CLIENT_TOKEN,
-    });
+    })
 
-    return paddleInstance;
+    return paddleInstance
   } catch (error) {
-    console.error("Failed to initialize Paddle:", error);
-    throw error;
+    console.error("Failed to initialize Paddle:", error)
+    throw error
   }
 }
 
@@ -40,29 +40,28 @@ export async function initPaddle(): Promise<Paddle> {
 const PRICE_IDS = {
   pro_monthly: process.env.NEXT_PUBLIC_PADDLE_PRO_MONTHLY_PRICE_ID,
   pro_yearly: process.env.NEXT_PUBLIC_PADDLE_PRO_YEARLY_PRICE_ID,
-} as const;
+} as const
 
 // Subscription checkout for upgrade
 export async function openSubscriptionCheckout(
   tier: SubscriptionTier,
   billingPeriod: "monthly" | "yearly",
   customerData: {
-    email: string;
-    userId: string;
+    email: string
+    userId: string
   },
 ) {
-  const paddle = await initPaddle();
+  const paddle = await initPaddle()
 
   if (tier === "free") {
-    throw new Error("Cannot create checkout for free tier");
+    throw new Error("Cannot create checkout for free tier")
   }
 
-  const priceId = billingPeriod === "monthly"
-    ? PRICE_IDS.pro_monthly
-    : PRICE_IDS.pro_yearly;
+  const priceId =
+    billingPeriod === "monthly" ? PRICE_IDS.pro_monthly : PRICE_IDS.pro_yearly
 
   if (!priceId) {
-    throw new Error(`Missing price ID for ${tier}_${billingPeriod}`);
+    throw new Error(`Missing price ID for ${tier}_${billingPeriod}`)
   }
 
   try {
@@ -86,12 +85,12 @@ export async function openSubscriptionCheckout(
         theme: "dark",
         locale: "en",
       },
-    });
+    })
 
-    return checkout;
+    return checkout
   } catch (error) {
-    console.error("Failed to open Paddle checkout:", error);
-    throw error;
+    console.error("Failed to open Paddle checkout:", error)
+    throw error
   }
 }
 
@@ -105,20 +104,20 @@ export async function getSubscriptionManagementUrl(
     PADDLE_ENV === "sandbox"
       ? "https://sandbox-vendors.paddle.com"
       : "https://vendors.paddle.com"
-  }/customer-portal/${customerId}`;
+  }/customer-portal/${customerId}`
 }
 
 // Pricing display helpers
 export const PRICING = {
   pro: {
     monthly: {
-      amount: 9.00,
+      amount: 9.0,
       currency: "USD",
       interval: "month",
       displayPrice: "$9/month",
     },
     yearly: {
-      amount: 90.00, // 17% discount (originally $108 if paid monthly)
+      amount: 90.0, // 17% discount (originally $108 if paid monthly)
       currency: "USD",
       interval: "year",
       displayPrice: "$90/year",
@@ -126,67 +125,67 @@ export const PRICING = {
       monthlyEquivalent: "$7.50/month",
     },
   },
-} as const;
+} as const
 
 // Calculate savings for yearly plans
 export function calculateYearlySavings(): number {
-  const monthlyTotal = PRICING.pro.monthly.amount * 12; // $108.00
-  const yearlyPrice = PRICING.pro.yearly.amount; // $90.00
-  return monthlyTotal - yearlyPrice; // $18.00
+  const monthlyTotal = PRICING.pro.monthly.amount * 12 // $108.00
+  const yearlyPrice = PRICING.pro.yearly.amount // $90.00
+  return monthlyTotal - yearlyPrice // $18.00
 }
 
 // Paddle event handlers for checkout completion
 export interface PaddleCheckoutCompleteData {
   checkout: {
-    id: string;
-    status: string;
-  };
+    id: string
+    status: string
+  }
   data: {
     customer: {
-      id: string;
-      email: string;
-    };
+      id: string
+      email: string
+    }
     subscription?: {
-      id: string;
-      status: string;
-    };
+      id: string
+      status: string
+    }
     transaction: {
-      id: string;
-      status: string;
-    };
-  };
+      id: string
+      status: string
+    }
+  }
 }
 
 interface PaddleEvent<T = unknown> extends Event {
-  detail: T;
+  detail: T
 }
 
 // Setup Paddle event listeners
 export function setupPaddleEventListeners() {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined") return
 
   // Listen for checkout completion
   window.addEventListener(
     "paddle_checkout_complete",
     (event: PaddleEvent<PaddleCheckoutCompleteData>) => {
-      const data = event.detail as PaddleCheckoutCompleteData;
+      const data = event.detail as PaddleCheckoutCompleteData
 
       // Handle successful subscription creation
       if (data.data.subscription) {
         // Redirect to success page or dashboard
-        window.location.href = "/dashboard?upgrade=success";
+        window.location.href = "/dashboard?upgrade=success"
       }
     },
-  );
+  )
 
   // Listen for checkout failure
   window.addEventListener(
     "paddle_checkout_error",
     (event: PaddleEvent<unknown>) => {
-      console.error("Paddle checkout error:", event.detail);
+      console.error("Paddle checkout error:", event.detail)
       // Handle checkout errors (show user-friendly message)
     },
-  );
+  )
 }
 
 // Update subscription (for plan changes)
@@ -210,13 +209,13 @@ export async function updateSubscription(
       newPriceId,
       prorationBehavior,
     }),
-  });
+  })
 
   if (!response.ok) {
-    throw new Error("Failed to update subscription");
+    throw new Error("Failed to update subscription")
   }
 
-  return response.json();
+  return response.json()
 }
 
 // Cancel subscription
@@ -234,13 +233,13 @@ export async function cancelSubscription(
       subscriptionId,
       effective,
     }),
-  });
+  })
 
   if (!response.ok) {
-    throw new Error("Failed to cancel subscription");
+    throw new Error("Failed to cancel subscription")
   }
 
-  return response.json();
+  return response.json()
 }
 
 // Resume paused subscription
@@ -253,11 +252,11 @@ export async function resumeSubscription(subscriptionId: string) {
     body: JSON.stringify({
       subscriptionId,
     }),
-  });
+  })
 
   if (!response.ok) {
-    throw new Error("Failed to resume subscription");
+    throw new Error("Failed to resume subscription")
   }
 
-  return response.json();
+  return response.json()
 }

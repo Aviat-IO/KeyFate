@@ -66,10 +66,9 @@ describe("CheckInButton Component", () => {
     fireEvent.click(button)
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith(
-        "/api/secrets/123/check-in",
-        { method: "POST" },
-      )
+      expect(fetch).toHaveBeenCalledWith("/api/secrets/123/check-in", {
+        method: "POST",
+      })
     })
   })
 
@@ -79,7 +78,9 @@ describe("CheckInButton Component", () => {
     const apiResponse = {
       id: "123",
       status: "active",
-      next_check_in: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      next_check_in: new Date(
+        Date.now() + 7 * 24 * 60 * 60 * 1000,
+      ).toISOString(),
       title: "Test Secret",
       user_id: "user-123",
       created_at: new Date().toISOString(),
@@ -99,7 +100,7 @@ describe("CheckInButton Component", () => {
           is_primary: true,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-        }
+        },
       ],
       contact_method: "email",
       last_check_in: new Date().toISOString(),
@@ -124,7 +125,7 @@ describe("CheckInButton Component", () => {
         expect.objectContaining({
           id: "123",
           status: "active",
-        })
+        }),
       )
     })
   })

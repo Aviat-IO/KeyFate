@@ -1,36 +1,35 @@
-import { authConfig } from "@/lib/auth-config";
-import { getUserTierInfo } from "@/lib/subscription";
-import type { Session } from "next-auth";
-import { getServerSession } from "next-auth/next";
-import { NextResponse } from "next/server";
+import { authConfig } from "@/lib/auth-config"
+import { getUserTierInfo } from "@/lib/subscription"
+import type { Session } from "next-auth"
+import { getServerSession } from "next-auth/next"
+import { NextResponse } from "next/server"
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"
 
 export async function GET() {
   try {
-    let session: Session | null;
+    let session: Session | null
     try {
-      type GetServerSessionOptions = Parameters<typeof getServerSession>[0];
-      session =
-        (await getServerSession(authConfig as GetServerSessionOptions)) as
-          | Session
-          | null;
+      type GetServerSessionOptions = Parameters<typeof getServerSession>[0]
+      session = (await getServerSession(
+        authConfig as GetServerSessionOptions,
+      )) as Session | null
     } catch (sessionError) {
-      console.error("NextAuth session error:", sessionError);
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      console.error("NextAuth session error:", sessionError)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const tierInfo = await getUserTierInfo(session.user.id);
+    const tierInfo = await getUserTierInfo(session.user.id)
 
     if (!tierInfo) {
       return NextResponse.json(
         { error: "Failed to retrieve tier information" },
         { status: 500 },
-      );
+      )
     }
 
     return NextResponse.json({
@@ -53,12 +52,12 @@ export async function GET() {
             cancelAtPeriodEnd: tierInfo.subscription.cancelAtPeriodEnd,
           }
         : null,
-    });
+    })
   } catch (error) {
-    console.error("Error in GET /api/user/tier:", error);
+    console.error("Error in GET /api/user/tier:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
-    );
+    )
   }
 }

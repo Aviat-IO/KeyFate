@@ -26,7 +26,7 @@ describe("Sign-In No Redirect Integration Tests", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     // Clear all search params manually
-    Array.from(mockSearchParams.keys()).forEach(key => {
+    Array.from(mockSearchParams.keys()).forEach((key) => {
       mockSearchParams.delete(key)
     })
 
@@ -66,7 +66,7 @@ describe("Sign-In No Redirect Integration Tests", () => {
         error: "CredentialsSignin",
         ok: false,
         status: 401,
-        url: null
+        url: null,
       })
 
       await act(async () => {
@@ -85,9 +85,12 @@ describe("Sign-In No Redirect Integration Tests", () => {
       })
 
       // Wait for any potential async operations
-      await waitFor(() => {
-        expect(screen.getByRole("alert")).toBeInTheDocument()
-      }, { timeout: 3000 })
+      await waitFor(
+        () => {
+          expect(screen.getByRole("alert")).toBeInTheDocument()
+        },
+        { timeout: 3000 },
+      )
 
       // Verify that signIn was called with redirect: false
       expect(signIn).toHaveBeenCalledWith("credentials", {
@@ -103,7 +106,11 @@ describe("Sign-In No Redirect Integration Tests", () => {
       expect(window.location.search).toBe("")
 
       // Error should be visible without any redirects
-      expect(screen.getByText("Invalid email or password. Please check your credentials and try again.")).toBeInTheDocument()
+      expect(
+        screen.getByText(
+          "Invalid email or password. Please check your credentials and try again.",
+        ),
+      ).toBeInTheDocument()
     })
 
     it("should handle the specific redirect URL pattern from user's issue", async () => {
@@ -113,7 +120,8 @@ describe("Sign-In No Redirect Integration Tests", () => {
         href: "http://localhost:3000/sign-in?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F",
         pathname: "/sign-in",
         search: "?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F",
-        toString: () => "http://localhost:3000/sign-in?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F",
+        toString: () =>
+          "http://localhost:3000/sign-in?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F",
       }
 
       // Simulate the problematic scenario
@@ -128,7 +136,7 @@ describe("Sign-In No Redirect Integration Tests", () => {
         error: "CredentialsSignin",
         ok: false,
         status: 401,
-        url: null
+        url: null,
       })
 
       await act(async () => {
@@ -164,7 +172,11 @@ describe("Sign-In No Redirect Integration Tests", () => {
       expect(window.location.pathname).toBe("/sign-in")
 
       // Error should be persistent and visible
-      expect(screen.getByText("Invalid email or password. Please check your credentials and try again.")).toBeInTheDocument()
+      expect(
+        screen.getByText(
+          "Invalid email or password. Please check your credentials and try again.",
+        ),
+      ).toBeInTheDocument()
     })
 
     it("should prevent any automatic redirects even if NextAuth tries to redirect", async () => {
@@ -176,7 +188,7 @@ describe("Sign-In No Redirect Integration Tests", () => {
           error: "CredentialsSignin",
           ok: false,
           status: 401,
-          url: "http://localhost:3000/sign-in?error=CredentialsSignin&callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F"
+          url: "http://localhost:3000/sign-in?error=CredentialsSignin&callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F",
         }
       })
 
@@ -185,7 +197,7 @@ describe("Sign-In No Redirect Integration Tests", () => {
 
       Object.defineProperty(window.location, "href", {
         set: locationSetter,
-        get: () => originalHref
+        get: () => originalHref,
       })
 
       await act(async () => {
@@ -211,7 +223,11 @@ describe("Sign-In No Redirect Integration Tests", () => {
       expect(locationSetter).not.toHaveBeenCalled()
 
       // Error should be visible
-      expect(screen.getByText("Invalid email or password. Please check your credentials and try again.")).toBeInTheDocument()
+      expect(
+        screen.getByText(
+          "Invalid email or password. Please check your credentials and try again.",
+        ),
+      ).toBeInTheDocument()
     })
   })
 
@@ -219,7 +235,7 @@ describe("Sign-In No Redirect Integration Tests", () => {
     it("should keep error visible until user submits new credentials", async () => {
       vi.mocked(signIn).mockResolvedValue({
         error: "CredentialsSignin",
-        ok: false
+        ok: false,
       })
 
       await act(async () => {
@@ -273,15 +289,26 @@ describe("Sign-In No Redirect Integration Tests", () => {
 
       // Multiple failed attempts
       const attempts = [
-        { error: "CredentialsSignin", message: "Invalid email or password. Please check your credentials and try again." },
-        { error: "Configuration", message: "There is a problem with the authentication configuration. Please try again later." },
-        { error: "AccessDenied", message: "Access denied. You do not have permission to sign in." }
+        {
+          error: "CredentialsSignin",
+          message:
+            "Invalid email or password. Please check your credentials and try again.",
+        },
+        {
+          error: "Configuration",
+          message:
+            "There is a problem with the authentication configuration. Please try again later.",
+        },
+        {
+          error: "AccessDenied",
+          message: "Access denied. You do not have permission to sign in.",
+        },
       ]
 
       for (const attempt of attempts) {
         vi.mocked(signIn).mockResolvedValue({
           error: attempt.error,
-          ok: false
+          ok: false,
         })
 
         await user.clear(emailInput)

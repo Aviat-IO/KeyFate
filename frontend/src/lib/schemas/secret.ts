@@ -69,7 +69,7 @@ export const secretFormSchema = z
             required_error: "Threshold is required.",
             invalid_type_error: "Threshold must be a number.",
           })
-           .min(2, "Threshold must be at least 2.")
+          .min(2, "Threshold must be at least 2.")
           .max(7, "Threshold cannot exceed 7."),
       ),
   })

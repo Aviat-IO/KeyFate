@@ -1,4 +1,4 @@
-import { SubscriptionTier, TierConfig } from "../types/subscription";
+import { SubscriptionTier, TierConfig } from "../types/subscription"
 
 export const TIER_CONFIGS: Partial<Record<SubscriptionTier, TierConfig>> = {
   free: {
@@ -42,11 +42,11 @@ export const TIER_CONFIGS: Partial<Record<SubscriptionTier, TierConfig>> = {
       "Configurable security (2-of-N up to 7 shares)",
       "Message templates for common scenarios",
       "Comprehensive audit logs",
-      `Priority email support (${process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@keyfate.com'})`
+      `Priority email support (${process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@keyfate.com"})`,
     ],
     price: {
-      monthly: 9.00,
-      annual: 90.00,
+      monthly: 9.0,
+      annual: 90.0,
     },
     priceInCents: {
       monthly: 900,
@@ -58,32 +58,33 @@ export const TIER_CONFIGS: Partial<Record<SubscriptionTier, TierConfig>> = {
     },
     featured: true,
   },
-};
+}
 
 // Stripe lookup keys for easy reference
 export const STRIPE_LOOKUP_KEYS = {
   PRO_MONTHLY: "pro_monthly",
   PRO_YEARLY: "pro_yearly",
-} as const;
+} as const
 
-export const TIER_ORDER: SubscriptionTier[] = ["free", "pro"];
+export const TIER_ORDER: SubscriptionTier[] = ["free", "pro"]
 
-export const DEFAULT_TIER: SubscriptionTier = "free";
+export const DEFAULT_TIER: SubscriptionTier = "free"
 
 // Helper functions
 export function getTierConfig(tier: SubscriptionTier): TierConfig | undefined {
-  return TIER_CONFIGS[tier];
+  return TIER_CONFIGS[tier]
 }
 
 export function getTierByPriceId(priceId: string): SubscriptionTier | null {
   for (const [tierName, config] of Object.entries(TIER_CONFIGS)) {
     if (
-      config?.priceIds.monthly === priceId || config?.priceIds.annual === priceId
+      config?.priceIds.monthly === priceId ||
+      config?.priceIds.annual === priceId
     ) {
-      return tierName as SubscriptionTier;
+      return tierName as SubscriptionTier
     }
   }
-  return null;
+  return null
 }
 
 // New helper to get lookup key by tier and billing period
@@ -91,32 +92,32 @@ export function getLookupKey(
   tier: SubscriptionTier,
   period: "monthly" | "annual",
 ): string | null {
-  if (tier === "free") return null;
-  const tierConfig = TIER_CONFIGS[tier];
-  return tierConfig?.priceIds[period] ?? null;
+  if (tier === "free") return null
+  const tierConfig = TIER_CONFIGS[tier]
+  return tierConfig?.priceIds[period] ?? null
 }
 
 export function formatPrice(price: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-  }).format(price);
+  }).format(price)
 }
 
 export function getAnnualSavings(tier: SubscriptionTier): number {
-  const config = getTierConfig(tier);
-  if (!config) return 0;
-  const monthlyTotal = config.price.monthly * 12;
-  const annualPrice = config.price.annual;
-  return monthlyTotal - annualPrice;
+  const config = getTierConfig(tier)
+  if (!config) return 0
+  const monthlyTotal = config.price.monthly * 12
+  const annualPrice = config.price.annual
+  return monthlyTotal - annualPrice
 }
 
 export function getAnnualSavingsPercentage(tier: SubscriptionTier): number {
-  const config = getTierConfig(tier);
-  if (!config) return 0;
-  const monthlyTotal = config.price.monthly * 12;
-  const savings = getAnnualSavings(tier);
-  return Math.round((savings / monthlyTotal) * 100);
+  const config = getTierConfig(tier)
+  if (!config) return 0
+  const monthlyTotal = config.price.monthly * 12
+  const savings = getAnnualSavings(tier)
+  return Math.round((savings / monthlyTotal) * 100)
 }
 
 // Helper to get price in cents for payment processing
@@ -124,7 +125,7 @@ export function getPriceInCents(
   tier: SubscriptionTier,
   period: "monthly" | "annual",
 ): number {
-  const config = getTierConfig(tier);
-  if (!config || !config.priceInCents) return 0;
-  return config.priceInCents[period];
+  const config = getTierConfig(tier)
+  if (!config || !config.priceInCents) return 0
+  return config.priceInCents[period]
 }

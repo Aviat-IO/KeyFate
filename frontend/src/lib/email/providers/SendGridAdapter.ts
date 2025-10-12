@@ -11,12 +11,8 @@
  * - Error classification (retryable vs non-retryable)
  */
 
-import nodemailer from "nodemailer";
-import type {
-  EmailData,
-  EmailProvider,
-  EmailResult,
-} from "./EmailProvider";
+import nodemailer from "nodemailer"
+import type { EmailData, EmailProvider, EmailResult } from "./EmailProvider"
 
 /**
  * SendGrid email provider implementation
@@ -25,8 +21,8 @@ import type {
  * with the EmailProvider interface for consistent usage.
  */
 export class SendGridAdapter implements EmailProvider {
-  private readonly maxRetries = 3;
-  private readonly baseRetryDelay = 1000; // 1 second
+  private readonly maxRetries = 3
+  private readonly baseRetryDelay = 1000 // 1 second
 
   /**
    * Validate SendGrid configuration
@@ -37,19 +33,19 @@ export class SendGridAdapter implements EmailProvider {
    * - SENDGRID_SENDER_NAME (optional, defaults to "Dead Man's Switch")
    */
   async validateConfig(): Promise<boolean> {
-    const apiKey = process.env.SENDGRID_API_KEY?.trim();
-    const adminEmail = process.env.SENDGRID_ADMIN_EMAIL?.trim();
+    const apiKey = process.env.SENDGRID_API_KEY?.trim()
+    const adminEmail = process.env.SENDGRID_ADMIN_EMAIL?.trim()
 
     // Check for missing or empty values
     if (!apiKey || apiKey === "") {
-      return false;
+      return false
     }
 
     if (!adminEmail || adminEmail === "") {
-      return false;
+      return false
     }
 
-    return true;
+    return true
   }
 
   /**
@@ -60,33 +56,34 @@ export class SendGridAdapter implements EmailProvider {
    */
   async sendEmail(data: EmailData): Promise<EmailResult> {
     // Validate configuration before attempting to send
-    const isValid = await this.validateConfig();
+    const isValid = await this.validateConfig()
     if (!isValid) {
       return {
         success: false,
-        error: "SendGrid configuration invalid: missing SENDGRID_API_KEY or SENDGRID_ADMIN_EMAIL",
+        error:
+          "SendGrid configuration invalid: missing SENDGRID_API_KEY or SENDGRID_ADMIN_EMAIL",
         retryable: false,
-      };
+      }
     }
 
     // Execute with retry logic
-    let attemptCount = 0;
-    let lastError: Error | null = null;
+    let attemptCount = 0
+    let lastError: Error | null = null
 
     for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
-      attemptCount++;
+      attemptCount++
 
       try {
-        const result = await this.sendEmailAttempt(data);
+        const result = await this.sendEmailAttempt(data)
         return {
           ...result,
           attempts: attemptCount,
-        };
+        }
       } catch (error) {
-        lastError = error as Error;
+        lastError = error as Error
 
         // Check if error is retryable
-        const errorClassification = this.classifyError(error as Error);
+        const errorClassification = this.classifyError(error as Error)
 
         // Don't retry on non-retryable errors
         if (!errorClassification.retryable) {
@@ -95,7 +92,7 @@ export class SendGridAdapter implements EmailProvider {
             error: errorClassification.message,
             retryable: false,
             attempts: attemptCount,
-          };
+          }
         }
 
         // Check for rate limiting
@@ -111,7 +108,7 @@ export class SendGridAdapter implements EmailProvider {
               remaining: 0,
               resetTime: Date.now() + 60000,
             },
-          };
+          }
         }
 
         // If this was the last attempt, return error
@@ -121,12 +118,12 @@ export class SendGridAdapter implements EmailProvider {
             error: errorClassification.message,
             retryable: true,
             attempts: attemptCount,
-          };
+          }
         }
 
         // Exponential backoff with jitter before next retry
-        const delay = this.calculateBackoffDelay(attempt);
-        await this.sleep(delay);
+        const delay = this.calculateBackoffDelay(attempt)
+        await this.sleep(delay)
       }
     }
 
@@ -136,24 +133,24 @@ export class SendGridAdapter implements EmailProvider {
       error: lastError?.message || "Unknown error",
       retryable: true,
       attempts: attemptCount,
-    };
+    }
   }
 
   /**
    * Get provider name for logging and debugging
    */
   getProviderName(): string {
-    return "sendgrid";
+    return "sendgrid"
   }
 
   /**
    * Single email sending attempt without retry logic
    */
   private async sendEmailAttempt(data: EmailData): Promise<EmailResult> {
-    const transporter = this.createTransporter();
+    const transporter = this.createTransporter()
 
-    const senderName = process.env.SENDGRID_SENDER_NAME || "Dead Man's Switch";
-    const adminEmail = process.env.SENDGRID_ADMIN_EMAIL!;
+    const senderName = process.env.SENDGRID_SENDER_NAME || "Dead Man's Switch"
+    const adminEmail = process.env.SENDGRID_ADMIN_EMAIL!
 
     const mailOptions = {
       to: data.to,
@@ -164,16 +161,16 @@ export class SendGridAdapter implements EmailProvider {
       replyTo: data.replyTo,
       headers: data.headers,
       priority: data.priority || "normal",
-    };
+    }
 
-    const info = await transporter.sendMail(mailOptions);
+    const info = await transporter.sendMail(mailOptions)
 
     return {
       success: true,
       messageId: info.messageId,
       provider: "sendgrid",
       trackingEnabled: data.trackDelivery || false,
-    };
+    }
   }
 
   /**
@@ -186,18 +183,18 @@ export class SendGridAdapter implements EmailProvider {
         user: "apikey",
         pass: process.env.SENDGRID_API_KEY,
       },
-    });
+    })
   }
 
   /**
    * Classify error to determine if it's retryable
    */
   private classifyError(error: Error): {
-    retryable: boolean;
-    message: string;
-    isRateLimit: boolean;
+    retryable: boolean
+    message: string
+    isRateLimit: boolean
   } {
-    const errorMessage = error.message;
+    const errorMessage = error.message
 
     // Non-retryable errors
     if (
@@ -208,7 +205,7 @@ export class SendGridAdapter implements EmailProvider {
         retryable: false,
         message: errorMessage,
         isRateLimit: false,
-      };
+      }
     }
 
     // Rate limiting errors
@@ -221,7 +218,7 @@ export class SendGridAdapter implements EmailProvider {
         retryable: true,
         message: "Rate limit exceeded",
         isRateLimit: true,
-      };
+      }
     }
 
     // All other errors are retryable (network issues, temporary failures, etc.)
@@ -229,22 +226,22 @@ export class SendGridAdapter implements EmailProvider {
       retryable: true,
       message: errorMessage,
       isRateLimit: false,
-    };
+    }
   }
 
   /**
    * Calculate exponential backoff delay with jitter
    */
   private calculateBackoffDelay(attempt: number): number {
-    const exponentialDelay = this.baseRetryDelay * Math.pow(2, attempt - 1);
-    const jitter = Math.random() * 1000;
-    return exponentialDelay + jitter;
+    const exponentialDelay = this.baseRetryDelay * Math.pow(2, attempt - 1)
+    const jitter = Math.random() * 1000
+    return exponentialDelay + jitter
   }
 
   /**
    * Sleep utility for retry delays
    */
   private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms))
   }
 }

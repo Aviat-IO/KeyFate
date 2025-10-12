@@ -5,7 +5,7 @@
  * Tests exponential backoff, jitter, retry limits, and state persistence
  */
 
-import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, vi, afterEach } from "vitest"
 import {
   EmailRetryService,
   calculateBackoffDelay,
@@ -13,14 +13,14 @@ import {
   getRetryLimitForEmailType,
   type EmailFailureContext,
   type FailureClassification,
-} from "@/lib/email/email-retry-service";
+} from "@/lib/email/email-retry-service"
 import {
   DeadLetterQueue,
   type DeadLetterQueryOptions,
-} from "@/lib/email/dead-letter-queue";
-import { db } from "@/lib/db/drizzle";
-import { emailFailures } from "@/lib/db/schema";
-import { eq, and, isNull } from "drizzle-orm";
+} from "@/lib/email/dead-letter-queue"
+import { db } from "@/lib/db/drizzle"
+import { emailFailures } from "@/lib/db/schema"
+import { eq, and, isNull } from "drizzle-orm"
 
 // Mock database
 vi.mock("@/lib/db/drizzle", () => ({
@@ -30,80 +30,80 @@ vi.mock("@/lib/db/drizzle", () => ({
     update: vi.fn(),
     delete: vi.fn(),
   },
-}));
+}))
 
 describe("Email Retry Service - Exponential Backoff", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-  });
+    vi.clearAllMocks()
+  })
 
   it("should calculate exponential backoff with jitter", () => {
-    const attempt = 1;
-    const baseDelay = 1000;
+    const attempt = 1
+    const baseDelay = 1000
 
     // Run multiple times to test jitter randomization
-    const delays: number[] = [];
+    const delays: number[] = []
     for (let i = 0; i < 100; i++) {
-      const delay = calculateBackoffDelay(attempt, baseDelay);
-      delays.push(delay);
+      const delay = calculateBackoffDelay(attempt, baseDelay)
+      delays.push(delay)
     }
 
     // Base delay for attempt 1: 2^0 * 1000 = 1000ms
     // With jitter: 1000 + random(0-500)
-    const minExpected = baseDelay;
-    const maxExpected = baseDelay + baseDelay * 0.5; // 1500ms
+    const minExpected = baseDelay
+    const maxExpected = baseDelay + baseDelay * 0.5 // 1500ms
 
     // All delays should be within expected range
     delays.forEach((delay) => {
-      expect(delay).toBeGreaterThanOrEqual(minExpected);
-      expect(delay).toBeLessThanOrEqual(maxExpected);
-    });
+      expect(delay).toBeGreaterThanOrEqual(minExpected)
+      expect(delay).toBeLessThanOrEqual(maxExpected)
+    })
 
     // Verify randomization - not all delays should be identical
-    const uniqueDelays = new Set(delays);
-    expect(uniqueDelays.size).toBeGreaterThan(1);
-  });
+    const uniqueDelays = new Set(delays)
+    expect(uniqueDelays.size).toBeGreaterThan(1)
+  })
 
   it("should increase delay exponentially with each attempt", () => {
-    const baseDelay = 1000;
+    const baseDelay = 1000
 
-    const delay1 = calculateBackoffDelay(1, baseDelay);
-    const delay2 = calculateBackoffDelay(2, baseDelay);
-    const delay3 = calculateBackoffDelay(3, baseDelay);
+    const delay1 = calculateBackoffDelay(1, baseDelay)
+    const delay2 = calculateBackoffDelay(2, baseDelay)
+    const delay3 = calculateBackoffDelay(3, baseDelay)
 
     // Delays should increase exponentially
     // Attempt 1: 1000 + jitter
     // Attempt 2: 2000 + jitter
     // Attempt 3: 4000 + jitter
 
-    expect(delay2).toBeGreaterThan(delay1);
-    expect(delay3).toBeGreaterThan(delay2);
+    expect(delay2).toBeGreaterThan(delay1)
+    expect(delay3).toBeGreaterThan(delay2)
 
     // Verify delays are within expected ranges (accounting for jitter)
     // Jitter is 0-50% of base, so ranges are:
     // Attempt 1: 1000-1500
     // Attempt 2: 2000-3000
     // Attempt 3: 4000-6000
-    expect(delay1).toBeGreaterThanOrEqual(1000);
-    expect(delay1).toBeLessThanOrEqual(1500);
+    expect(delay1).toBeGreaterThanOrEqual(1000)
+    expect(delay1).toBeLessThanOrEqual(1500)
 
-    expect(delay2).toBeGreaterThanOrEqual(2000);
-    expect(delay2).toBeLessThanOrEqual(3000);
+    expect(delay2).toBeGreaterThanOrEqual(2000)
+    expect(delay2).toBeLessThanOrEqual(3000)
 
-    expect(delay3).toBeGreaterThanOrEqual(4000);
-    expect(delay3).toBeLessThanOrEqual(6000);
-  });
+    expect(delay3).toBeGreaterThanOrEqual(4000)
+    expect(delay3).toBeLessThanOrEqual(6000)
+  })
 
   it("should cap backoff at maximum delay", () => {
-    const baseDelay = 1000;
-    const maxDelay = 60000; // 1 minute
+    const baseDelay = 1000
+    const maxDelay = 60000 // 1 minute
 
     // Attempt 10 would normally give 2^9 * 1000 = 512000ms
-    const delay = calculateBackoffDelay(10, baseDelay, maxDelay);
+    const delay = calculateBackoffDelay(10, baseDelay, maxDelay)
 
-    expect(delay).toBeLessThanOrEqual(maxDelay + maxDelay * 0.5); // max + jitter
-  });
-});
+    expect(delay).toBeLessThanOrEqual(maxDelay + maxDelay * 0.5) // max + jitter
+  })
+})
 
 describe("Email Retry Service - Failure Classification", () => {
   it("should classify transient failures correctly", () => {
@@ -117,13 +117,13 @@ describe("Email Retry Service - Failure Classification", () => {
       "504 Gateway Timeout",
       "ECONNREFUSED",
       "ETIMEDOUT",
-    ];
+    ]
 
     transientErrors.forEach((error) => {
-      const classification = classifyFailure(error);
-      expect(classification).toBe("transient");
-    });
-  });
+      const classification = classifyFailure(error)
+      expect(classification).toBe("transient")
+    })
+  })
 
   it("should classify permanent failures correctly", () => {
     const permanentErrors = [
@@ -135,37 +135,37 @@ describe("Email Retry Service - Failure Classification", () => {
       "403 Forbidden",
       "Invalid API key",
       "Blocked recipient",
-    ];
+    ]
 
     permanentErrors.forEach((error) => {
-      const classification = classifyFailure(error);
-      expect(classification).toBe("permanent");
-    });
-  });
+      const classification = classifyFailure(error)
+      expect(classification).toBe("permanent")
+    })
+  })
 
   it("should classify unknown errors as transient by default", () => {
-    const unknownError = "Some random unexpected error";
-    const classification = classifyFailure(unknownError);
-    expect(classification).toBe("transient");
-  });
-});
+    const unknownError = "Some random unexpected error"
+    const classification = classifyFailure(unknownError)
+    expect(classification).toBe("transient")
+  })
+})
 
 describe("Email Retry Service - Retry Limits", () => {
   it("should return correct retry limits for each email type", () => {
-    expect(getRetryLimitForEmailType("disclosure")).toBe(5); // Critical
-    expect(getRetryLimitForEmailType("reminder")).toBe(3); // Important
-    expect(getRetryLimitForEmailType("verification")).toBe(2); // Standard
-    expect(getRetryLimitForEmailType("admin_notification")).toBe(1); // Low priority
-  });
-});
+    expect(getRetryLimitForEmailType("disclosure")).toBe(5) // Critical
+    expect(getRetryLimitForEmailType("reminder")).toBe(3) // Important
+    expect(getRetryLimitForEmailType("verification")).toBe(2) // Standard
+    expect(getRetryLimitForEmailType("admin_notification")).toBe(1) // Low priority
+  })
+})
 
 describe("Email Retry Service - Retry Execution", () => {
-  let retryService: EmailRetryService;
+  let retryService: EmailRetryService
 
   beforeEach(() => {
-    retryService = new EmailRetryService();
-    vi.clearAllMocks();
-  });
+    retryService = new EmailRetryService()
+    vi.clearAllMocks()
+  })
 
   it("should successfully retry and resolve transient failures", async () => {
     const failureContext: EmailFailureContext = {
@@ -177,10 +177,10 @@ describe("Email Retry Service - Retry Execution", () => {
       errorMessage: "Connection timeout",
       retryCount: 1,
       createdAt: new Date(),
-    };
+    }
 
     // Mock successful retry operation
-    const retryOperation = vi.fn().mockResolvedValue({ success: true });
+    const retryOperation = vi.fn().mockResolvedValue({ success: true })
 
     // Mock database operations
     const mockSelect = vi.fn().mockReturnValue({
@@ -189,30 +189,30 @@ describe("Email Retry Service - Retry Execution", () => {
           limit: vi.fn().mockResolvedValue([failureContext]),
         }),
       }),
-    });
+    })
 
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([
-            { ...failureContext, resolvedAt: new Date() },
-          ]),
+          returning: vi
+            .fn()
+            .mockResolvedValue([{ ...failureContext, resolvedAt: new Date() }]),
         }),
       }),
-    });
+    })
 
-    (db.select as any) = mockSelect;
-    (db.update as any) = mockUpdate;
+    ;(db.select as any) = mockSelect
+    ;(db.update as any) = mockUpdate
 
     const result = await retryService.retryFailure(
       failureContext.id,
-      retryOperation
-    );
+      retryOperation,
+    )
 
-    expect(result.success).toBe(true);
-    expect(retryOperation).toHaveBeenCalledTimes(1);
-    expect(mockUpdate).toHaveBeenCalled();
-  });
+    expect(result.success).toBe(true)
+    expect(retryOperation).toHaveBeenCalledTimes(1)
+    expect(mockUpdate).toHaveBeenCalled()
+  })
 
   it("should respect retry limits and mark as permanent failure", async () => {
     const failureContext: EmailFailureContext = {
@@ -224,12 +224,10 @@ describe("Email Retry Service - Retry Execution", () => {
       errorMessage: "Connection timeout",
       retryCount: 3, // At limit for reminder type
       createdAt: new Date(),
-    };
+    }
 
     // Mock failed retry operation
-    const retryOperation = vi.fn().mockRejectedValue(
-      new Error("Still failing")
-    );
+    const retryOperation = vi.fn().mockRejectedValue(new Error("Still failing"))
 
     // Mock database operations
     const mockSelect = vi.fn().mockReturnValue({
@@ -238,7 +236,7 @@ describe("Email Retry Service - Retry Execution", () => {
           limit: vi.fn().mockResolvedValue([failureContext]),
         }),
       }),
-    });
+    })
 
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
@@ -246,20 +244,20 @@ describe("Email Retry Service - Retry Execution", () => {
           returning: vi.fn().mockResolvedValue([failureContext]),
         }),
       }),
-    });
+    })
 
-    (db.select as any) = mockSelect;
-    (db.update as any) = mockUpdate;
+    ;(db.select as any) = mockSelect
+    ;(db.update as any) = mockUpdate
 
     const result = await retryService.retryFailure(
       failureContext.id,
-      retryOperation
-    );
+      retryOperation,
+    )
 
-    expect(result.success).toBe(false);
-    expect(result.exhausted).toBe(true);
-    expect(result.error).toContain("Retry limit exceeded");
-  });
+    expect(result.success).toBe(false)
+    expect(result.exhausted).toBe(true)
+    expect(result.error).toContain("Retry limit exceeded")
+  })
 
   it("should not retry permanent failures", async () => {
     const failureContext: EmailFailureContext = {
@@ -271,9 +269,9 @@ describe("Email Retry Service - Retry Execution", () => {
       errorMessage: "Invalid email address",
       retryCount: 0,
       createdAt: new Date(),
-    };
+    }
 
-    const retryOperation = vi.fn();
+    const retryOperation = vi.fn()
 
     // Mock database operations
     const mockSelect = vi.fn().mockReturnValue({
@@ -282,19 +280,19 @@ describe("Email Retry Service - Retry Execution", () => {
           limit: vi.fn().mockResolvedValue([failureContext]),
         }),
       }),
-    });
+    })
 
-    (db.select as any) = mockSelect;
+    ;(db.select as any) = mockSelect
 
     const result = await retryService.retryFailure(
       failureContext.id,
-      retryOperation
-    );
+      retryOperation,
+    )
 
-    expect(result.success).toBe(false);
-    expect(result.permanent).toBe(true);
-    expect(retryOperation).not.toHaveBeenCalled();
-  });
+    expect(result.success).toBe(false)
+    expect(result.permanent).toBe(true)
+    expect(retryOperation).not.toHaveBeenCalled()
+  })
 
   it("should wait for backoff delay before retry", async () => {
     const failureContext: EmailFailureContext = {
@@ -306,9 +304,9 @@ describe("Email Retry Service - Retry Execution", () => {
       errorMessage: "Rate limit exceeded",
       retryCount: 2,
       createdAt: new Date(),
-    };
+    }
 
-    const retryOperation = vi.fn().mockResolvedValue({ success: true });
+    const retryOperation = vi.fn().mockResolvedValue({ success: true })
 
     // Mock database operations
     const mockSelect = vi.fn().mockReturnValue({
@@ -317,42 +315,42 @@ describe("Email Retry Service - Retry Execution", () => {
           limit: vi.fn().mockResolvedValue([failureContext]),
         }),
       }),
-    });
+    })
 
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([
-            { ...failureContext, resolvedAt: new Date() },
-          ]),
+          returning: vi
+            .fn()
+            .mockResolvedValue([{ ...failureContext, resolvedAt: new Date() }]),
         }),
       }),
-    });
+    })
 
-    (db.select as any) = mockSelect;
-    (db.update as any) = mockUpdate;
+    ;(db.select as any) = mockSelect
+    ;(db.update as any) = mockUpdate
 
     // Spy on setTimeout
-    const setTimeoutSpy = vi.spyOn(global, "setTimeout");
+    const setTimeoutSpy = vi.spyOn(global, "setTimeout")
 
-    const startTime = Date.now();
-    await retryService.retryFailure(failureContext.id, retryOperation);
-    const elapsed = Date.now() - startTime;
+    const startTime = Date.now()
+    await retryService.retryFailure(failureContext.id, retryOperation)
+    const elapsed = Date.now() - startTime
 
     // Should have used setTimeout for backoff
-    expect(setTimeoutSpy).toHaveBeenCalled();
+    expect(setTimeoutSpy).toHaveBeenCalled()
 
-    setTimeoutSpy.mockRestore();
-  });
-});
+    setTimeoutSpy.mockRestore()
+  })
+})
 
 describe("Dead Letter Queue - Query Interface", () => {
-  let dlq: DeadLetterQueue;
+  let dlq: DeadLetterQueue
 
   beforeEach(() => {
-    dlq = new DeadLetterQueue();
-    vi.clearAllMocks();
-  });
+    dlq = new DeadLetterQueue()
+    vi.clearAllMocks()
+  })
 
   it("should query failed emails with filters", async () => {
     const mockFailures = [
@@ -378,76 +376,76 @@ describe("Dead Letter Queue - Query Interface", () => {
         createdAt: new Date(),
         resolvedAt: null,
       },
-    ];
+    ]
 
     // Mock database query to return array
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockResolvedValue(mockFailures),
       }),
-    });
+    })
 
-    (db.select as any) = mockSelect;
+    ;(db.select as any) = mockSelect
 
     const options: DeadLetterQueryOptions = {
       emailType: "disclosure",
       limit: 10,
-    };
+    }
 
-    const results = await dlq.queryFailures(options);
+    const results = await dlq.queryFailures(options)
 
-    expect(results).toHaveLength(2);
-    expect(mockSelect).toHaveBeenCalled();
-  });
+    expect(results).toHaveLength(2)
+    expect(mockSelect).toHaveBeenCalled()
+  })
 
   it("should filter by unresolved status", async () => {
     const options: DeadLetterQueryOptions = {
       unresolvedOnly: true,
-    };
+    }
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockResolvedValue([]),
       }),
-    });
+    })
 
-    (db.select as any) = mockSelect;
+    ;(db.select as any) = mockSelect
 
-    await dlq.queryFailures(options);
+    await dlq.queryFailures(options)
 
-    expect(mockSelect).toHaveBeenCalled();
-  });
+    expect(mockSelect).toHaveBeenCalled()
+  })
 
   it("should filter by provider", async () => {
     const options: DeadLetterQueryOptions = {
       provider: "sendgrid",
-    };
+    }
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockResolvedValue([]),
       }),
-    });
+    })
 
-    (db.select as any) = mockSelect;
+    ;(db.select as any) = mockSelect
 
-    await dlq.queryFailures(options);
+    await dlq.queryFailures(options)
 
-    expect(mockSelect).toHaveBeenCalled();
-  });
-});
+    expect(mockSelect).toHaveBeenCalled()
+  })
+})
 
 describe("Dead Letter Queue - Manual Retry", () => {
-  let dlq: DeadLetterQueue;
+  let dlq: DeadLetterQueue
 
   beforeEach(() => {
-    dlq = new DeadLetterQueue();
-    vi.clearAllMocks();
-  });
+    dlq = new DeadLetterQueue()
+    vi.clearAllMocks()
+  })
 
   it("should manually retry a single failed email", async () => {
-    const failureId = "failure-manual-123";
-    const retryOperation = vi.fn().mockResolvedValue({ success: true });
+    const failureId = "failure-manual-123"
+    const retryOperation = vi.fn().mockResolvedValue({ success: true })
 
     const mockFailure = {
       id: failureId,
@@ -459,7 +457,7 @@ describe("Dead Letter Queue - Manual Retry", () => {
       retryCount: 2,
       createdAt: new Date(),
       resolvedAt: null,
-    };
+    }
 
     // Mock database operations
     const mockSelect = vi.fn().mockReturnValue({
@@ -468,30 +466,30 @@ describe("Dead Letter Queue - Manual Retry", () => {
           limit: vi.fn().mockResolvedValue([mockFailure]),
         }),
       }),
-    });
+    })
 
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([
-            { ...mockFailure, resolvedAt: new Date() },
-          ]),
+          returning: vi
+            .fn()
+            .mockResolvedValue([{ ...mockFailure, resolvedAt: new Date() }]),
         }),
       }),
-    });
+    })
 
-    (db.select as any) = mockSelect;
-    (db.update as any) = mockUpdate;
+    ;(db.select as any) = mockSelect
+    ;(db.update as any) = mockUpdate
 
-    const result = await dlq.manualRetry(failureId, retryOperation);
+    const result = await dlq.manualRetry(failureId, retryOperation)
 
-    expect(result.success).toBe(true);
-    expect(retryOperation).toHaveBeenCalledTimes(1);
-  });
+    expect(result.success).toBe(true)
+    expect(retryOperation).toHaveBeenCalledTimes(1)
+  })
 
   it("should batch retry multiple failed emails", async () => {
-    const failureIds = ["fail-1", "fail-2", "fail-3"];
-    const retryOperation = vi.fn().mockResolvedValue({ success: true });
+    const failureIds = ["fail-1", "fail-2", "fail-3"]
+    const retryOperation = vi.fn().mockResolvedValue({ success: true })
 
     const mockFailures = failureIds.map((id) => ({
       id,
@@ -503,7 +501,7 @@ describe("Dead Letter Queue - Manual Retry", () => {
       retryCount: 1,
       createdAt: new Date(),
       resolvedAt: null,
-    }));
+    }))
 
     // Mock database operations
     const mockSelect = vi.fn().mockReturnValue({
@@ -512,39 +510,41 @@ describe("Dead Letter Queue - Manual Retry", () => {
           limit: vi.fn().mockResolvedValue(mockFailures),
         }),
       }),
-    });
+    })
 
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue(
-            mockFailures.map((f) => ({ ...f, resolvedAt: new Date() }))
-          ),
+          returning: vi
+            .fn()
+            .mockResolvedValue(
+              mockFailures.map((f) => ({ ...f, resolvedAt: new Date() })),
+            ),
         }),
       }),
-    });
+    })
 
-    (db.select as any) = mockSelect;
-    (db.update as any) = mockUpdate;
+    ;(db.select as any) = mockSelect
+    ;(db.update as any) = mockUpdate
 
-    const results = await dlq.batchRetry(failureIds, retryOperation);
+    const results = await dlq.batchRetry(failureIds, retryOperation)
 
-    expect(results.successful).toBe(3);
-    expect(results.failed).toBe(0);
-    expect(retryOperation).toHaveBeenCalledTimes(3);
-  });
-});
+    expect(results.successful).toBe(3)
+    expect(results.failed).toBe(0)
+    expect(retryOperation).toHaveBeenCalledTimes(3)
+  })
+})
 
 describe("Dead Letter Queue - Resolution Management", () => {
-  let dlq: DeadLetterQueue;
+  let dlq: DeadLetterQueue
 
   beforeEach(() => {
-    dlq = new DeadLetterQueue();
-    vi.clearAllMocks();
-  });
+    dlq = new DeadLetterQueue()
+    vi.clearAllMocks()
+  })
 
   it("should mark failure as resolved", async () => {
-    const failureId = "resolve-123";
+    const failureId = "resolve-123"
 
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
@@ -557,38 +557,38 @@ describe("Dead Letter Queue - Resolution Management", () => {
           ]),
         }),
       }),
-    });
+    })
 
-    (db.update as any) = mockUpdate;
+    ;(db.update as any) = mockUpdate
 
-    const result = await dlq.markResolved(failureId);
+    const result = await dlq.markResolved(failureId)
 
-    expect(result.resolvedAt).toBeDefined();
-    expect(mockUpdate).toHaveBeenCalled();
-  });
+    expect(result.resolvedAt).toBeDefined()
+    expect(mockUpdate).toHaveBeenCalled()
+  })
 
   it("should cleanup old resolved failures", async () => {
-    const retentionDays = 30;
+    const retentionDays = 30
 
-    const mockDeleteResult = { rowCount: 15 };
+    const mockDeleteResult = { rowCount: 15 }
 
-    (db.delete as any) = vi.fn().mockReturnValue({
+    ;(db.delete as any) = vi.fn().mockReturnValue({
       where: vi.fn().mockResolvedValue(mockDeleteResult),
-    });
+    })
 
-    const deletedCount = await dlq.cleanup(retentionDays);
+    const deletedCount = await dlq.cleanup(retentionDays)
 
-    expect(deletedCount).toBe(15);
-  });
-});
+    expect(deletedCount).toBe(15)
+  })
+})
 
 describe("Email Retry Service - State Persistence", () => {
-  let retryService: EmailRetryService;
+  let retryService: EmailRetryService
 
   beforeEach(() => {
-    retryService = new EmailRetryService();
-    vi.clearAllMocks();
-  });
+    retryService = new EmailRetryService()
+    vi.clearAllMocks()
+  })
 
   it("should persist retry count after each attempt", async () => {
     const failureContext: EmailFailureContext = {
@@ -600,9 +600,9 @@ describe("Email Retry Service - State Persistence", () => {
       errorMessage: "Timeout",
       retryCount: 1,
       createdAt: new Date(),
-    };
+    }
 
-    const retryOperation = vi.fn().mockRejectedValue(new Error("Still failing"));
+    const retryOperation = vi.fn().mockRejectedValue(new Error("Still failing"))
 
     // Mock database operations
     const mockSelect = vi.fn().mockReturnValue({
@@ -611,26 +611,26 @@ describe("Email Retry Service - State Persistence", () => {
           limit: vi.fn().mockResolvedValue([failureContext]),
         }),
       }),
-    });
+    })
 
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([
-            { ...failureContext, retryCount: 2 },
-          ]),
+          returning: vi
+            .fn()
+            .mockResolvedValue([{ ...failureContext, retryCount: 2 }]),
         }),
       }),
-    });
+    })
 
-    (db.select as any) = mockSelect;
-    (db.update as any) = mockUpdate;
+    ;(db.select as any) = mockSelect
+    ;(db.update as any) = mockUpdate
 
-    await retryService.retryFailure(failureContext.id, retryOperation);
+    await retryService.retryFailure(failureContext.id, retryOperation)
 
     // Verify retry count was incremented
-    expect(mockUpdate).toHaveBeenCalled();
-  });
+    expect(mockUpdate).toHaveBeenCalled()
+  })
 
   it("should track last retry timestamp", async () => {
     const failureContext: EmailFailureContext = {
@@ -642,11 +642,11 @@ describe("Email Retry Service - State Persistence", () => {
       errorMessage: "Timeout",
       retryCount: 0,
       createdAt: new Date(),
-    };
+    }
 
-    const retryOperation = vi.fn().mockResolvedValue({ success: true });
+    const retryOperation = vi.fn().mockResolvedValue({ success: true })
 
-    const beforeRetry = new Date();
+    const beforeRetry = new Date()
 
     // Mock database operations
     const mockSelect = vi.fn().mockReturnValue({
@@ -655,30 +655,30 @@ describe("Email Retry Service - State Persistence", () => {
           limit: vi.fn().mockResolvedValue([failureContext]),
         }),
       }),
-    });
+    })
 
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([
-            { ...failureContext, resolvedAt: new Date() },
-          ]),
+          returning: vi
+            .fn()
+            .mockResolvedValue([{ ...failureContext, resolvedAt: new Date() }]),
         }),
       }),
-    });
+    })
 
-    (db.select as any) = mockSelect;
-    (db.update as any) = mockUpdate;
+    ;(db.select as any) = mockSelect
+    ;(db.update as any) = mockUpdate
 
     const result = await retryService.retryFailure(
       failureContext.id,
-      retryOperation
-    );
+      retryOperation,
+    )
 
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(true)
 
     // Verify timestamp is tracked
-    const afterRetry = new Date();
+    const afterRetry = new Date()
     // resolvedAt should be between beforeRetry and afterRetry
-  });
-});
+  })
+})

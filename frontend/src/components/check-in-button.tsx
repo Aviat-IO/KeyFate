@@ -29,9 +29,11 @@ export function CheckInButton({
     try {
       // Use config from context, fallback to relative URL if not available
       const siteUrl = config?.siteUrl || ""
-      const baseUrl = siteUrl ? (
-        siteUrl.startsWith("http") ? siteUrl : `http://${siteUrl}`
-      ) : ""
+      const baseUrl = siteUrl
+        ? siteUrl.startsWith("http")
+          ? siteUrl
+          : `http://${siteUrl}`
+        : ""
 
       const response = await fetch(
         `${baseUrl}/api/secrets/${secretId}/check-in`,

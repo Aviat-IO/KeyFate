@@ -9,7 +9,9 @@ export default function UpdatePasswordPage() {
 
   useEffect(() => {
     // This feature is deprecated - redirect to sign-in
-    router.replace("/sign-in?error=Password reset feature has been updated. Please use the new sign-in flow.")
+    router.replace(
+      "/sign-in?error=Password reset feature has been updated. Please use the new sign-in flow.",
+    )
   }, [router])
 
   return (

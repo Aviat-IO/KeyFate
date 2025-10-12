@@ -81,7 +81,11 @@ describe("NextAuth v4 Error Handling", () => {
       // Should display error without redirect
       await waitFor(() => {
         expect(screen.getByRole("alert")).toBeInTheDocument()
-        expect(screen.getByText("Invalid email or password. Please check your credentials and try again.")).toBeInTheDocument()
+        expect(
+          screen.getByText(
+            "Invalid email or password. Please check your credentials and try again.",
+          ),
+        ).toBeInTheDocument()
       })
 
       // Should remain on sign-in page
@@ -100,13 +104,17 @@ describe("NextAuth v4 Error Handling", () => {
       // Should show error from URL parameter
       await waitFor(() => {
         expect(screen.getByRole("alert")).toBeInTheDocument()
-        expect(screen.getByText("Invalid email or password. Please check your credentials and try again.")).toBeInTheDocument()
+        expect(
+          screen.getByText(
+            "Invalid email or password. Please check your credentials and try again.",
+          ),
+        ).toBeInTheDocument()
       })
 
       // When user attempts sign-in again, should clear URL error and try again
       vi.mocked(signIn).mockResolvedValue({
         error: "CredentialsSignin",
-        ok: false
+        ok: false,
       })
 
       const emailInput = screen.getByLabelText("Email")
@@ -132,7 +140,7 @@ describe("NextAuth v4 Error Handling", () => {
       // First, failed attempt
       vi.mocked(signIn).mockResolvedValueOnce({
         error: "CredentialsSignin",
-        ok: false
+        ok: false,
       })
 
       await act(async () => {
@@ -158,7 +166,7 @@ describe("NextAuth v4 Error Handling", () => {
       // Then, successful attempt
       vi.mocked(signIn).mockResolvedValueOnce({
         ok: true,
-        error: null
+        error: null,
       })
 
       // Mock successful redirect
@@ -203,7 +211,9 @@ describe("NextAuth v4 Error Handling", () => {
       // Should show network error and remain on page
       await waitFor(() => {
         expect(screen.getByRole("alert")).toBeInTheDocument()
-        expect(screen.getByText("An unexpected error occurred. Please try again.")).toBeInTheDocument()
+        expect(
+          screen.getByText("An unexpected error occurred. Please try again."),
+        ).toBeInTheDocument()
       })
 
       expect(window.location.href).toBe("http://localhost:3000/sign-in")

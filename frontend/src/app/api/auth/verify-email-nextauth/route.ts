@@ -1,24 +1,24 @@
-import { getDatabase } from "@/lib/db/drizzle";
-import { users, verificationTokens } from "@/lib/db/schema";
-import { and, eq } from "drizzle-orm";
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { getDatabase } from "@/lib/db/drizzle"
+import { users, verificationTokens } from "@/lib/db/schema"
+import { and, eq } from "drizzle-orm"
+import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
 
 // Prevent static analysis during build
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"
 
 const verifyEmailSchema = z.object({
   token: z.string().min(1, "Token is required"),
   email: z.string().email("Invalid email address"),
-});
+})
 
 export async function POST(request: NextRequest) {
   try {
-    const db = await getDatabase();
-    const body = await request.json();
+    const db = await getDatabase()
+    const body = await request.json()
 
     // Validate request body
-    const validation = verifyEmailSchema.safeParse(body);
+    const validation = verifyEmailSchema.safeParse(body)
     if (!validation.success) {
       return NextResponse.json(
         {
@@ -27,10 +27,10 @@ export async function POST(request: NextRequest) {
           details: validation.error.errors,
         },
         { status: 400 },
-      );
+      )
     }
 
-    const { token, email } = validation.data;
+    const { token, email } = validation.data
 
     // Verify the token exists and hasn't expired
     const verificationResult = await db
@@ -42,9 +42,9 @@ export async function POST(request: NextRequest) {
           eq(verificationTokens.token, token),
         ),
       )
-      .limit(1);
+      .limit(1)
 
-    const verificationRecord = verificationResult[0];
+    const verificationRecord = verificationResult[0]
     if (!verificationRecord) {
       return NextResponse.json(
         {
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
           error: "Invalid or expired verification token",
         },
         { status: 400 },
-      );
+      )
     }
 
     // Check if token has expired
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       // Clean up expired token
       await db
         .delete(verificationTokens)
-        .where(eq(verificationTokens.token, token));
+        .where(eq(verificationTokens.token, token))
 
       return NextResponse.json(
         {
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
           error: "Verification token has expired",
         },
         { status: 400 },
-      );
+      )
     }
 
     // Update user's email verification status
@@ -79,9 +79,9 @@ export async function POST(request: NextRequest) {
         updatedAt: new Date(),
       } as any)
       .where(eq(users.email, email))
-      .returning();
+      .returning()
 
-    const updatedUser = updateResult[0];
+    const updatedUser = updateResult[0]
     if (!updatedUser) {
       return NextResponse.json(
         {
@@ -89,23 +89,23 @@ export async function POST(request: NextRequest) {
           error: "User not found",
         },
         { status: 404 },
-      );
+      )
     }
 
     // Remove the used verification token
     await db
       .delete(verificationTokens)
-      .where(eq(verificationTokens.token, token));
+      .where(eq(verificationTokens.token, token))
 
-    console.log(`[VerifyEmail] Successfully verified email for user: ${email}`);
+    console.log(`[VerifyEmail] Successfully verified email for user: ${email}`)
 
     return NextResponse.json({
       success: true,
       verified: true,
       message: "Email successfully verified",
-    });
+    })
   } catch (error) {
-    console.error("[VerifyEmail] Unexpected error:", error);
+    console.error("[VerifyEmail] Unexpected error:", error)
 
     return NextResponse.json(
       {
@@ -113,6 +113,6 @@ export async function POST(request: NextRequest) {
         error: "An unexpected error occurred during verification",
       },
       { status: 500 },
-    );
+    )
   }
 }

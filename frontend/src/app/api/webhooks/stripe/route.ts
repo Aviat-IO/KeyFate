@@ -1,60 +1,77 @@
-import { getFiatPaymentProvider } from "@/lib/payment";
-import type { WebhookEvent } from "@/lib/payment/interfaces/PaymentProvider";
-import { serverEnv } from "@/lib/server-env";
-import { subscriptionService } from "@/lib/services/subscription-service";
-import { emailService } from "@/lib/services/email-service";
-import { NextRequest, NextResponse } from "next/server";
+import { getFiatPaymentProvider } from "@/lib/payment"
+import type { WebhookEvent } from "@/lib/payment/interfaces/PaymentProvider"
+import { serverEnv } from "@/lib/server-env"
+import { subscriptionService } from "@/lib/services/subscription-service"
+import { emailService } from "@/lib/services/email-service"
+import { NextRequest, NextResponse } from "next/server"
 
 // Prevent static analysis during build
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.text();
-    const signature = request.headers.get("stripe-signature");
+    const body = await request.text()
+    const signature = request.headers.get("stripe-signature")
 
     if (!signature) {
-      return NextResponse.json({ error: "No signature provided" }, {
-        status: 400,
-      });
+      return NextResponse.json(
+        { error: "No signature provided" },
+        {
+          status: 400,
+        },
+      )
     }
 
     // Get payment provider
-    const fiatPaymentProvider = getFiatPaymentProvider();
+    const fiatPaymentProvider = getFiatPaymentProvider()
 
     // Verify webhook signature
     const event = await fiatPaymentProvider.verifyWebhookSignature(
       body,
       signature,
       serverEnv.STRIPE_WEBHOOK_SECRET,
-    );
+    )
 
     console.log("📨 Stripe webhook received:", {
       type: event.type,
       id: event.id,
       created: event.created,
-    });
+    })
 
-    const eventData = event.data.object as Record<string, unknown>;
-    console.log("📦 Event data keys:", Object.keys(eventData));
-    console.log("🔍 Event metadata:", eventData.metadata);
-    console.log("👤 Customer ID:", eventData.customer || "none");
-    console.log("📋 Direct subscription field:", eventData.subscription || "none");
-    
+    const eventData = event.data.object as Record<string, unknown>
+    console.log("📦 Event data keys:", Object.keys(eventData))
+    console.log("🔍 Event metadata:", eventData.metadata)
+    console.log("👤 Customer ID:", eventData.customer || "none")
+    console.log(
+      "📋 Direct subscription field:",
+      eventData.subscription || "none",
+    )
+
     // For invoices, also check parent.subscription_details
     if (event.type.startsWith("invoice.")) {
-      const parent = eventData.parent as Record<string, any> | undefined;
-      const subscriptionDetails = parent?.subscription_details as Record<string, any> | undefined;
-      console.log("📋 Parent subscription ID:", subscriptionDetails?.subscription || "none");
-      console.log("📋 Parent subscription metadata:", subscriptionDetails?.metadata || "none");
+      const parent = eventData.parent as Record<string, any> | undefined
+      const subscriptionDetails = parent?.subscription_details as
+        | Record<string, any>
+        | undefined
+      console.log(
+        "📋 Parent subscription ID:",
+        subscriptionDetails?.subscription || "none",
+      )
+      console.log(
+        "📋 Parent subscription metadata:",
+        subscriptionDetails?.metadata || "none",
+      )
     }
 
     // Extract user ID from event metadata
-    const userId = await extractUserIdFromEvent(event);
+    const userId = await extractUserIdFromEvent(event)
 
     if (!userId) {
-      console.error("❌ No user_id found in webhook event metadata");
-      console.error("Full event data object:", JSON.stringify(eventData, null, 2));
+      console.error("❌ No user_id found in webhook event metadata")
+      console.error(
+        "Full event data object:",
+        JSON.stringify(eventData, null, 2),
+      )
       await emailService.sendAdminAlert({
         type: "webhook_failure",
         severity: "medium",
@@ -65,18 +82,21 @@ export async function POST(request: NextRequest) {
           provider: "stripe",
           metadata: eventData.metadata,
         },
-      });
-      return NextResponse.json({ error: "No user_id in metadata" }, { status: 400 });
+      })
+      return NextResponse.json(
+        { error: "No user_id in metadata" },
+        { status: 400 },
+      )
     }
-    
-    console.log("✅ Extracted user_id:", userId);
+
+    console.log("✅ Extracted user_id:", userId)
 
     // Handle event using subscription service
-    await subscriptionService.handleStripeWebhook(event, userId);
+    await subscriptionService.handleStripeWebhook(event, userId)
 
-    return NextResponse.json({ received: true });
+    return NextResponse.json({ received: true })
   } catch (error) {
-    console.error("Stripe webhook error:", error);
+    console.error("Stripe webhook error:", error)
 
     // Send admin alert for webhook failures
     await emailService.sendAdminAlert({
@@ -89,85 +109,120 @@ export async function POST(request: NextRequest) {
         provider: "stripe",
         timestamp: new Date().toISOString(),
       },
-    });
+    })
 
     // Determine error type for appropriate response
-    if (error instanceof Error && error.message.includes("Invalid webhook signature")) {
-      return NextResponse.json({ error: "Invalid webhook signature" }, { status: 401 });
+    if (
+      error instanceof Error &&
+      error.message.includes("Invalid webhook signature")
+    ) {
+      return NextResponse.json(
+        { error: "Invalid webhook signature" },
+        { status: 401 },
+      )
     }
 
-    return NextResponse.json({ error: "Webhook processing failed" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Webhook processing failed" },
+      { status: 400 },
+    )
   }
 }
 
 // Helper function to extract user ID from webhook event
-async function extractUserIdFromEvent(event: WebhookEvent): Promise<string | null> {
+async function extractUserIdFromEvent(
+  event: WebhookEvent,
+): Promise<string | null> {
   try {
-    const eventData = event.data.object as Record<string, unknown>;
+    const eventData = event.data.object as Record<string, unknown>
 
-    console.log("🔍 Attempting to extract user_id from event type:", event.type);
+    console.log("🔍 Attempting to extract user_id from event type:", event.type)
 
     // Try to get user_id from direct metadata (works for checkout.session.completed)
-    const metadata = eventData.metadata as Record<string, string> | undefined;
-    console.log("  📝 Direct metadata:", metadata);
+    const metadata = eventData.metadata as Record<string, string> | undefined
+    console.log("  📝 Direct metadata:", metadata)
     if (metadata?.user_id) {
-      console.log("  ✅ Found user_id in direct metadata:", metadata.user_id);
-      return metadata.user_id;
+      console.log("  ✅ Found user_id in direct metadata:", metadata.user_id)
+      return metadata.user_id
     }
 
     // For subscription events, check subscription object metadata
     if (event.type.startsWith("customer.subscription.")) {
-      console.log("  📋 This is a subscription event, checking subscription metadata");
-      const subscriptionMetadata = eventData.metadata as Record<string, string> | undefined;
-      console.log("  📝 Subscription metadata:", subscriptionMetadata);
+      console.log(
+        "  📋 This is a subscription event, checking subscription metadata",
+      )
+      const subscriptionMetadata = eventData.metadata as
+        | Record<string, string>
+        | undefined
+      console.log("  📝 Subscription metadata:", subscriptionMetadata)
       if (subscriptionMetadata?.user_id) {
-        console.log("  ✅ Found user_id in subscription metadata:", subscriptionMetadata.user_id);
-        return subscriptionMetadata.user_id;
+        console.log(
+          "  ✅ Found user_id in subscription metadata:",
+          subscriptionMetadata.user_id,
+        )
+        return subscriptionMetadata.user_id
       }
     }
 
     // For invoice events, fetch the subscription to get metadata
     if (event.type.startsWith("invoice.")) {
       // Try direct subscription field first
-      let subscriptionId = eventData.subscription as string;
-      
+      let subscriptionId = eventData.subscription as string
+
       // If not found, check parent.subscription_details.subscription
       if (!subscriptionId) {
-        const parent = eventData.parent as Record<string, any> | undefined;
-        const subscriptionDetails = parent?.subscription_details as Record<string, any> | undefined;
-        subscriptionId = subscriptionDetails?.subscription as string;
+        const parent = eventData.parent as Record<string, any> | undefined
+        const subscriptionDetails = parent?.subscription_details as
+          | Record<string, any>
+          | undefined
+        subscriptionId = subscriptionDetails?.subscription as string
       }
-      
-      console.log(`  📋 Invoice event subscription ID: ${subscriptionId || 'NOT FOUND'}`);
-      
+
+      console.log(
+        `  📋 Invoice event subscription ID: ${subscriptionId || "NOT FOUND"}`,
+      )
+
       if (subscriptionId) {
-        console.log(`  🔄 Fetching subscription ${subscriptionId} from Stripe API...`);
+        console.log(
+          `  🔄 Fetching subscription ${subscriptionId} from Stripe API...`,
+        )
         try {
-          const fiatPaymentProvider = getFiatPaymentProvider();
-          const subscription = await fiatPaymentProvider.getSubscription(subscriptionId);
-          console.log("  📊 Full subscription object:", JSON.stringify(subscription, null, 2));
-          console.log("  📝 Subscription metadata:", subscription.metadata);
+          const fiatPaymentProvider = getFiatPaymentProvider()
+          const subscription =
+            await fiatPaymentProvider.getSubscription(subscriptionId)
+          console.log(
+            "  📊 Full subscription object:",
+            JSON.stringify(subscription, null, 2),
+          )
+          console.log("  📝 Subscription metadata:", subscription.metadata)
           if (subscription.metadata?.user_id) {
-            console.log("  ✅ Found user_id in fetched subscription:", subscription.metadata.user_id);
-            return subscription.metadata.user_id;
+            console.log(
+              "  ✅ Found user_id in fetched subscription:",
+              subscription.metadata.user_id,
+            )
+            return subscription.metadata.user_id
           } else {
-            console.log("  ⚠️  Subscription has NO user_id in metadata (metadata keys:", Object.keys(subscription.metadata || {}), ")");
+            console.log(
+              "  ⚠️  Subscription has NO user_id in metadata (metadata keys:",
+              Object.keys(subscription.metadata || {}),
+              ")",
+            )
           }
         } catch (error) {
-          console.error("  ❌ Failed to fetch subscription:", error);
+          console.error("  ❌ Failed to fetch subscription:", error)
           if (error instanceof Error) {
-            console.error("  ❌ Error details:", error.message);
+            console.error("  ❌ Error details:", error.message)
           }
         }
       } else {
-        console.log("  ⚠️  No subscription ID found in invoice event");
+        console.log("  ⚠️  No subscription ID found in invoice event")
       }
     }
 
-    console.log("  ❌ Could not find user_id in any metadata location");
-    return null;
+    console.log("  ❌ Could not find user_id in any metadata location")
+    return null
   } catch (error) {
-    console.error("❌ Error extracting user ID from event:", error);
-    return null;
+    console.error("❌ Error extracting user ID from event:", error)
+    return null
   }
 }

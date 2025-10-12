@@ -3,25 +3,25 @@
 
 // TODO: Replace with NextAuth types
 interface NextAuthUser {
-  id: string;
-  email?: string;
-  name?: string;
-  image?: string;
-  email_verified?: boolean;
+  id: string
+  email?: string
+  name?: string
+  image?: string
+  email_verified?: boolean
 }
 
 export interface EmailVerificationResult {
-  success: boolean;
-  user?: NextAuthUser;
-  error?: string;
-  alreadyVerified?: boolean;
-  requiresVerification?: boolean;
+  success: boolean
+  user?: NextAuthUser
+  error?: string
+  alreadyVerified?: boolean
+  requiresVerification?: boolean
 }
 
 export interface EmailVerificationStatus {
-  isVerified: boolean;
-  user?: NextAuthUser | null;
-  error?: string | null;
+  isVerified: boolean
+  user?: NextAuthUser | null
+  error?: string | null
 }
 
 /**
@@ -36,17 +36,17 @@ export async function verifyEmailWithOTP(
     // TODO: Replace with NextAuth email verification
     console.warn(
       "[Email Verification] verifyEmailWithOTP is deprecated - use NextAuth instead",
-    );
+    )
 
     return {
       success: false,
       error: "Function deprecated - use NextAuth email verification",
-    };
+    }
   } catch {
     return {
       success: false,
       error: "An unexpected error occurred during verification",
-    };
+    }
   }
 }
 
@@ -61,17 +61,17 @@ export async function sendVerificationOTP(
     // TODO: Replace with NextAuth email provider
     console.warn(
       "[Email Verification] sendVerificationOTP is deprecated - use NextAuth instead",
-    );
+    )
 
     return {
       success: false,
       error: "Function deprecated - use NextAuth email verification",
-    };
+    }
   } catch {
     return {
       success: false,
       error: "An unexpected error occurred during verification",
-    };
+    }
   }
 }
 
@@ -83,7 +83,7 @@ export async function getEmailVerificationStatus(
   email?: string,
 ): Promise<EmailVerificationStatus> {
   // Delegate to the shim that tests mock
-  return checkEmailVerificationStatus(email);
+  return checkEmailVerificationStatus(email)
 }
 
 /**
@@ -95,9 +95,9 @@ export async function checkEmailVerificationStatus(
 ): Promise<EmailVerificationStatus> {
   return {
     isVerified: false,
-    user: email ? { id: "", email } as NextAuthUser : null,
+    user: email ? ({ id: "", email } as NextAuthUser) : null,
     error: null,
-  };
+  }
 }
 
 /**
@@ -110,8 +110,8 @@ export async function checkEmailVerificationRequired(
   // TODO: Replace with NextAuth logic
   console.warn(
     "[Email Verification] checkEmailVerificationRequired is deprecated - use NextAuth instead",
-  );
-  return false;
+  )
+  return false
 }
 
 /**
@@ -123,10 +123,10 @@ export async function markEmailVerified(userId: string): Promise<boolean> {
     // TODO: Replace with NextAuth database update
     console.warn(
       "[Email Verification] markEmailVerified is deprecated - use NextAuth callbacks",
-    );
-    return false;
+    )
+    return false
   } catch {
-    return false;
+    return false
   }
 }
 
@@ -141,16 +141,16 @@ export async function resendVerificationEmail(
     // TODO: Replace with NextAuth email resend
     console.warn(
       "[Email Verification] resendVerificationEmail is deprecated - use NextAuth instead",
-    );
+    )
 
     return {
       success: false,
       error: "Function deprecated - use NextAuth email verification",
-    };
+    }
   } catch {
     return {
       success: false,
       error: "An unexpected error occurred during resend",
-    };
+    }
   }
 }

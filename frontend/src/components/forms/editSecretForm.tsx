@@ -28,21 +28,22 @@ import { useState } from "react"
 import { useForm, useFieldArray } from "react-hook-form"
 import { z } from "zod"
 
-const recipientSchema = z.object({
-  name: z.string().min(1, "Recipient name is required"),
-  email: z.string().email().nullable().optional().or(z.literal("")),
-  phone: z.string().nullable().optional().or(z.literal("")),
-}).refine(
-  (data) => data.email || data.phone,
-  {
+const recipientSchema = z
+  .object({
+    name: z.string().min(1, "Recipient name is required"),
+    email: z.string().email().nullable().optional().or(z.literal("")),
+    phone: z.string().nullable().optional().or(z.literal("")),
+  })
+  .refine((data) => data.email || data.phone, {
     message: "Each recipient must have either an email or phone number",
     path: ["email"],
-  }
-)
+  })
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  recipients: z.array(recipientSchema).min(1, "At least one recipient is required"),
+  recipients: z
+    .array(recipientSchema)
+    .min(1, "At least one recipient is required"),
   check_in_days: z
     .union([z.string(), z.number()])
     .transform((val) => {
@@ -232,10 +233,7 @@ export function EditSecretForm({
                       <FormItem>
                         <FormLabel>Name</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="Recipient's name"
-                            {...field}
-                          />
+                          <Input placeholder="Recipient's name" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

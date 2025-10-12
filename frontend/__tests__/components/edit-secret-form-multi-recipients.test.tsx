@@ -62,9 +62,7 @@ describe("EditSecretForm - Multiple Recipients", () => {
   it("should allow adding a new recipient", async () => {
     const initialData = {
       title: "Test Secret",
-      recipients: [
-        { name: "John Doe", email: "john@example.com", phone: "" },
-      ],
+      recipients: [{ name: "John Doe", email: "john@example.com", phone: "" }],
       check_in_days: 30,
     }
 
@@ -91,8 +89,8 @@ describe("EditSecretForm - Multiple Recipients", () => {
     render(<EditSecretForm initialData={initialData} secretId="test-id" />)
 
     const deleteButtons = screen.getAllByRole("button", { name: "" })
-    const recipientDeleteButton = deleteButtons.find(btn => 
-      btn.querySelector("svg")?.getAttribute("class")?.includes("lucide-trash")
+    const recipientDeleteButton = deleteButtons.find((btn) =>
+      btn.querySelector("svg")?.getAttribute("class")?.includes("lucide-trash"),
     )
 
     if (recipientDeleteButton) {
@@ -117,7 +115,7 @@ describe("EditSecretForm - Multiple Recipients", () => {
     render(<EditSecretForm initialData={initialData} secretId="test-id" />)
 
     const primaryCheckboxes = screen.getAllByRole("checkbox")
-    
+
     fireEvent.click(primaryCheckboxes[1])
 
     await waitFor(() => {
@@ -129,9 +127,7 @@ describe("EditSecretForm - Multiple Recipients", () => {
   it("should validate that at least one recipient is primary on submit", async () => {
     const initialData = {
       title: "Test Secret",
-      recipients: [
-        { name: "John Doe", email: "john@example.com", phone: "" },
-      ],
+      recipients: [{ name: "John Doe", email: "john@example.com", phone: "" }],
       check_in_days: 30,
     }
 
@@ -141,7 +137,9 @@ describe("EditSecretForm - Multiple Recipients", () => {
     fireEvent.click(submitButton)
 
     await waitFor(() => {
-      expect(screen.getByText(/at least one recipient must be marked as primary/i)).toBeInTheDocument()
+      expect(
+        screen.getByText(/at least one recipient must be marked as primary/i),
+      ).toBeInTheDocument()
     })
 
     expect(global.fetch).not.toHaveBeenCalled()
@@ -174,7 +172,7 @@ describe("EditSecretForm - Multiple Recipients", () => {
         expect.objectContaining({
           method: "PUT",
           body: expect.stringContaining("John Doe"),
-        })
+        }),
       )
     })
 

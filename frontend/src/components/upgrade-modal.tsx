@@ -40,71 +40,83 @@ export function UpgradeModal({
 
         <div className="grid gap-6 py-4">
           {currentLimit && proLimit && (
-            <div className="rounded-lg border bg-muted/50 p-4">
-              <div className="text-sm text-muted-foreground mb-2">Your Limit</div>
+            <div className="bg-muted/50 rounded-lg border p-4">
+              <div className="text-muted-foreground mb-2 text-sm">
+                Your Limit
+              </div>
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-semibold">Free Tier</div>
-                  <div className="text-sm text-muted-foreground">{currentLimit}</div>
+                  <div className="text-muted-foreground text-sm">
+                    {currentLimit}
+                  </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-semibold text-primary">Pro Tier</div>
-                  <div className="text-sm text-primary">{proLimit}</div>
+                  <div className="text-primary font-semibold">Pro Tier</div>
+                  <div className="text-primary text-sm">{proLimit}</div>
                 </div>
               </div>
             </div>
           )}
 
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-lg border p-4">
-              <div className="flex items-center gap-2 mb-3">
+              <div className="mb-3 flex items-center gap-2">
                 <Badge variant="outline">Free</Badge>
               </div>
               <div className="space-y-2">
                 <div className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-muted-foreground mt-0.5" />
+                  <Check className="text-muted-foreground mt-0.5 h-4 w-4" />
                   <span className="text-sm">1 secret</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-muted-foreground mt-0.5" />
+                  <Check className="text-muted-foreground mt-0.5 h-4 w-4" />
                   <span className="text-sm">1 recipient per secret</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-muted-foreground mt-0.5" />
+                  <Check className="text-muted-foreground mt-0.5 h-4 w-4" />
                   <span className="text-sm">3 check-in intervals</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <X className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <span className="text-sm text-muted-foreground">No message templates</span>
+                  <X className="text-muted-foreground mt-0.5 h-4 w-4" />
+                  <span className="text-muted-foreground text-sm">
+                    No message templates
+                  </span>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-lg border-2 border-primary p-4 relative">
-              <Badge className="absolute -top-3 left-4 bg-primary">Recommended</Badge>
-              <div className="flex items-center gap-2 mb-3">
+            <div className="border-primary relative rounded-lg border-2 p-4">
+              <Badge className="bg-primary absolute -top-3 left-4">
+                Recommended
+              </Badge>
+              <div className="mb-3 flex items-center gap-2">
                 <Badge>Pro</Badge>
                 <span className="text-xl font-bold">$9/mo</span>
               </div>
               <div className="space-y-2">
                 <div className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-primary mt-0.5" />
+                  <Check className="text-primary mt-0.5 h-4 w-4" />
                   <span className="text-sm font-medium">10 secrets</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-primary mt-0.5" />
-                  <span className="text-sm font-medium">5 recipients per secret</span>
+                  <Check className="text-primary mt-0.5 h-4 w-4" />
+                  <span className="text-sm font-medium">
+                    5 recipients per secret
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-primary mt-0.5" />
-                  <span className="text-sm font-medium">Custom intervals (1 day to 3 years)</span>
+                  <Check className="text-primary mt-0.5 h-4 w-4" />
+                  <span className="text-sm font-medium">
+                    Custom intervals (1 day to 3 years)
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-primary mt-0.5" />
+                  <Check className="text-primary mt-0.5 h-4 w-4" />
                   <span className="text-sm font-medium">Message templates</span>
                 </div>
               </div>
-              <div className="mt-4 text-xs text-muted-foreground">
+              <div className="text-muted-foreground mt-4 text-xs">
                 or $90/year (save 17%)
               </div>
             </div>

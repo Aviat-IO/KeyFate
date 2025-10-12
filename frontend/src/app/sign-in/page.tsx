@@ -24,11 +24,11 @@ function SocialButtonsSeparator() {
   useEffect(() => {
     const checkProviders = async () => {
       try {
-        const response = await fetch('/api/auth/providers')
+        const response = await fetch("/api/auth/providers")
         const data = await response.json()
         setShowSeparator(data.google) // Show separator if Google OAuth is available
       } catch (error) {
-        console.error('Failed to check provider status:', error)
+        console.error("Failed to check provider status:", error)
       }
     }
 
@@ -61,7 +61,9 @@ function SignInContent() {
   const searchParams = useSearchParams()
 
   // Get NextAuth error message from URL parameters
-  const getNextAuthErrorMessage = (errorParam: string | null): string | null => {
+  const getNextAuthErrorMessage = (
+    errorParam: string | null,
+  ): string | null => {
     if (!errorParam) return null
 
     switch (errorParam) {
@@ -94,7 +96,7 @@ function SignInContent() {
 
   // Check for NextAuth errors on component mount and URL changes
   useEffect(() => {
-    const errorParam = searchParams.get('error')
+    const errorParam = searchParams.get("error")
     if (errorParam) {
       const errorMessage = getNextAuthErrorMessage(errorParam)
       setError(errorMessage)
@@ -107,9 +109,9 @@ function SignInContent() {
   // Clear URL errors when component mounts to start fresh
   useEffect(() => {
     const currentUrl = new URL(window.location.href)
-    if (currentUrl.searchParams.has('error')) {
-      currentUrl.searchParams.delete('error')
-      window.history.replaceState({}, '', currentUrl.toString())
+    if (currentUrl.searchParams.has("error")) {
+      currentUrl.searchParams.delete("error")
+      window.history.replaceState({}, "", currentUrl.toString())
     }
   }, [])
 
@@ -123,29 +125,28 @@ function SignInContent() {
         email,
         password,
         redirect: false, // Prevent NextAuth from redirecting
-        callbackUrl: searchParams.get('callbackUrl') || '/',
+        callbackUrl: searchParams.get("callbackUrl") || "/",
       })
 
       if (result?.ok && !result?.error) {
         // Successful login - redirect to callback URL or home
-        const callbackUrl = searchParams.get('callbackUrl') || '/'
+        const callbackUrl = searchParams.get("callbackUrl") || "/"
         window.location.href = callbackUrl
       } else {
         // Authentication failed - show error and stay on page
         const errorMessage = result?.error
-          ? (getNextAuthErrorMessage(result.error) || "Invalid email or password. Please try again.")
+          ? getNextAuthErrorMessage(result.error) ||
+            "Invalid email or password. Please try again."
           : "Invalid email or password. Please try again."
         setError(errorMessage)
       }
     } catch (error) {
-      console.error('Sign-in error:', error)
+      console.error("Sign-in error:", error)
       setError("An unexpected error occurred. Please try again.")
     } finally {
       setLoading(false)
     }
   }
-
-
 
   return (
     <div className="container mx-auto max-w-md px-4 py-8">
@@ -213,7 +214,11 @@ function SignInContent() {
 
 export default function SignInPage() {
   return (
-    <Suspense fallback={<div className="container mx-auto max-w-md px-4 py-8">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="container mx-auto max-w-md px-4 py-8">Loading...</div>
+      }
+    >
       <SignInContent />
     </Suspense>
   )

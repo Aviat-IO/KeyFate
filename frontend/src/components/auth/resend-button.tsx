@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Loader2, RotateCcw } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Loader2, RotateCcw } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 interface ResendButtonProps {
   email: string
@@ -18,7 +18,7 @@ export function ResendButton({
   onResend,
   disabled = false,
   className,
-  cooldownSeconds = 60
+  cooldownSeconds = 60,
 }: ResendButtonProps) {
   const [isResending, setIsResending] = useState(false)
   const [cooldownTime, setCooldownTime] = useState(0)
@@ -29,7 +29,7 @@ export function ResendButton({
 
     if (cooldownTime > 0) {
       interval = setInterval(() => {
-        setCooldownTime(time => {
+        setCooldownTime((time) => {
           if (time <= 1) {
             return 0
           }
@@ -57,10 +57,10 @@ export function ResendButton({
         await onResend()
       } else {
         // Default resend implementation
-        const response = await fetch('/api/auth/resend-verification', {
-          method: 'POST',
+        const response = await fetch("/api/auth/resend-verification", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({ email }),
         })
@@ -69,20 +69,24 @@ export function ResendButton({
 
         if (result.success) {
           toast({
-            title: 'Email sent',
-            description: 'A new verification email has been sent to your email address.',
+            title: "Email sent",
+            description:
+              "A new verification email has been sent to your email address.",
           })
           setCooldownTime(cooldownSeconds)
         } else {
-          throw new Error(result.error || 'Failed to resend verification email')
+          throw new Error(result.error || "Failed to resend verification email")
         }
       }
     } catch (error) {
-      console.error('Resend error:', error)
+      console.error("Resend error:", error)
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to resend verification email. Please try again.',
-        variant: 'destructive',
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to resend verification email. Please try again.",
+        variant: "destructive",
       })
     } finally {
       setIsResending(false)
@@ -101,17 +105,17 @@ export function ResendButton({
     >
       {isResending ? (
         <>
-          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           Sending...
         </>
       ) : cooldownTime > 0 ? (
         <>
-          <RotateCcw className="h-4 w-4 mr-2" />
+          <RotateCcw className="mr-2 h-4 w-4" />
           Resend in {cooldownTime}s
         </>
       ) : (
         <>
-          <RotateCcw className="h-4 w-4 mr-2" />
+          <RotateCcw className="mr-2 h-4 w-4" />
           Resend verification email
         </>
       )}

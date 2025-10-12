@@ -1,4 +1,4 @@
-import Stripe from "stripe";
+import Stripe from "stripe"
 import {
   BillingPortalSession,
   CheckoutConfig,
@@ -13,27 +13,27 @@ import {
   SubscriptionConfig,
   SubscriptionUpdate,
   WebhookEvent,
-} from "../interfaces/PaymentProvider";
+} from "../interfaces/PaymentProvider"
 
 export class StripeProvider implements PaymentProvider {
-  private stripe: Stripe;
+  private stripe: Stripe
 
   constructor(secretKey: string) {
     this.stripe = new Stripe(secretKey, {
       apiVersion: "2025-02-24.acacia",
-    });
+    })
   }
 
   getProviderType(): "fiat" | "crypto" {
-    return "fiat";
+    return "fiat"
   }
 
   getProviderName(): string {
-    return "Stripe";
+    return "Stripe"
   }
 
   getSupportedCurrencies(): string[] {
-    return ["USD", "EUR", "GBP", "CAD", "AUD"]; // Add more as needed
+    return ["USD", "EUR", "GBP", "CAD", "AUD"] // Add more as needed
   }
 
   async createCustomer(
@@ -43,21 +43,21 @@ export class StripeProvider implements PaymentProvider {
     const customer = await this.stripe.customers.create({
       email,
       metadata,
-    });
-    return customer.id;
+    })
+    return customer.id
   }
 
   async getCustomer(customerId: string): Promise<Customer> {
-    const customer = await this.stripe.customers.retrieve(
+    const customer = (await this.stripe.customers.retrieve(
       customerId,
-    ) as Stripe.Customer;
+    )) as Stripe.Customer
     return {
       id: customer.id,
       email: customer.email!,
       name: customer.name || undefined,
       metadata: customer.metadata,
       created: new Date(customer.created * 1000),
-    };
+    }
   }
 
   async updateCustomer(
@@ -68,8 +68,8 @@ export class StripeProvider implements PaymentProvider {
       email: data.email,
       name: data.name,
       metadata: data.metadata,
-    });
-    return this.mapStripeCustomer(updated);
+    })
+    return this.mapStripeCustomer(updated)
   }
 
   async createSubscription(
@@ -77,7 +77,7 @@ export class StripeProvider implements PaymentProvider {
     config: SubscriptionConfig,
   ): Promise<Subscription> {
     if (!config.priceId) {
-      throw new Error("Stripe requires priceId for subscriptions");
+      throw new Error("Stripe requires priceId for subscriptions")
     }
 
     const subscription = await this.stripe.subscriptions.create({
@@ -87,45 +87,44 @@ export class StripeProvider implements PaymentProvider {
       payment_settings: { save_default_payment_method: "on_subscription" },
       expand: ["latest_invoice.payment_intent"],
       metadata: config.metadata,
-    });
-    return this.mapStripeSubscription(subscription);
+    })
+    return this.mapStripeSubscription(subscription)
   }
 
   async getSubscription(subscriptionId: string): Promise<Subscription> {
-    const subscription = await this.stripe.subscriptions.retrieve(
-      subscriptionId,
-    );
-    return this.mapStripeSubscription(subscription);
+    const subscription =
+      await this.stripe.subscriptions.retrieve(subscriptionId)
+    return this.mapStripeSubscription(subscription)
   }
 
   async updateSubscription(
     subscriptionId: string,
     data: SubscriptionUpdate,
   ): Promise<Subscription> {
-    const updateData: Stripe.SubscriptionUpdateParams = {};
+    const updateData: Stripe.SubscriptionUpdateParams = {}
 
     if (data.priceId) {
-      updateData.items = [{ price: data.priceId }];
+      updateData.items = [{ price: data.priceId }]
     }
 
     if (data.cancelAtPeriodEnd !== undefined) {
-      updateData.cancel_at_period_end = data.cancelAtPeriodEnd;
+      updateData.cancel_at_period_end = data.cancelAtPeriodEnd
     }
 
     if (data.metadata) {
-      updateData.metadata = data.metadata;
+      updateData.metadata = data.metadata
     }
 
     const subscription = await this.stripe.subscriptions.update(
       subscriptionId,
       updateData,
-    );
-    return this.mapStripeSubscription(subscription);
+    )
+    return this.mapStripeSubscription(subscription)
   }
 
   async cancelSubscription(subscriptionId: string): Promise<Subscription> {
-    const subscription = await this.stripe.subscriptions.cancel(subscriptionId);
-    return this.mapStripeSubscription(subscription);
+    const subscription = await this.stripe.subscriptions.cancel(subscriptionId)
+    return this.mapStripeSubscription(subscription)
   }
 
   async createPayment(config: PaymentConfig): Promise<Payment> {
@@ -135,14 +134,14 @@ export class StripeProvider implements PaymentProvider {
       customer: config.customerId,
       description: config.description,
       metadata: config.metadata,
-    });
+    })
 
-    return this.mapStripePayment(paymentIntent);
+    return this.mapStripePayment(paymentIntent)
   }
 
   async getPayment(paymentId: string): Promise<Payment> {
-    const paymentIntent = await this.stripe.paymentIntents.retrieve(paymentId);
-    return this.mapStripePayment(paymentIntent);
+    const paymentIntent = await this.stripe.paymentIntents.retrieve(paymentId)
+    return this.mapStripePayment(paymentIntent)
   }
 
   async createCheckoutSession(
@@ -152,11 +151,11 @@ export class StripeProvider implements PaymentProvider {
       mode: config.mode,
       success_url: config.successUrl,
       cancel_url: config.cancelUrl,
-    };
+    }
 
     if (config.mode === "subscription") {
       if (!config.priceId) {
-        throw new Error("priceId is required for subscription mode");
+        throw new Error("priceId is required for subscription mode")
       }
 
       sessionParams.line_items = [
@@ -164,22 +163,22 @@ export class StripeProvider implements PaymentProvider {
           price: config.priceId,
           quantity: 1,
         },
-      ];
+      ]
 
       // Pass metadata to subscription so it's available on all subscription events
       if (config.metadata) {
         sessionParams.subscription_data = {
           metadata: config.metadata,
-        };
+        }
       }
       if (config.metadata) {
         sessionParams.subscription_data = {
           metadata: config.metadata,
-        };
+        }
       }
     } else if (config.mode === "payment") {
       if (!config.amount || !config.currency) {
-        throw new Error("amount and currency are required for payment mode");
+        throw new Error("amount and currency are required for payment mode")
       }
       sessionParams.line_items = [
         {
@@ -192,28 +191,28 @@ export class StripeProvider implements PaymentProvider {
           },
           quantity: 1,
         },
-      ];
+      ]
     }
 
     if (config.customerId) {
-      sessionParams.customer = config.customerId;
+      sessionParams.customer = config.customerId
     }
 
     if (config.billingAddressCollection) {
-      sessionParams.billing_address_collection =
-        config.billingAddressCollection;
+      sessionParams.billing_address_collection = config.billingAddressCollection
     }
 
     if (config.automaticTax) {
-      sessionParams.automatic_tax = config.automaticTax;
+      sessionParams.automatic_tax = config.automaticTax
     }
 
     if (config.locale) {
-      sessionParams.locale = config.locale as Stripe.Checkout.SessionCreateParams.Locale;
+      sessionParams.locale =
+        config.locale as Stripe.Checkout.SessionCreateParams.Locale
     }
 
     if (config.metadata) {
-      sessionParams.metadata = config.metadata;
+      sessionParams.metadata = config.metadata
     }
 
     console.log("🛒 Creating Stripe checkout session with params:", {
@@ -221,15 +220,15 @@ export class StripeProvider implements PaymentProvider {
       customer: sessionParams.customer,
       metadata: sessionParams.metadata,
       subscription_data: sessionParams.subscription_data,
-    });
+    })
 
-    const session = await this.stripe.checkout.sessions.create(sessionParams);
+    const session = await this.stripe.checkout.sessions.create(sessionParams)
 
     return {
       id: session.id,
       url: session.url!,
-      customerId: session.customer as string || undefined,
-    };
+      customerId: (session.customer as string) || undefined,
+    }
   }
 
   async createBillingPortalSession(
@@ -239,12 +238,12 @@ export class StripeProvider implements PaymentProvider {
     const session = await this.stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: returnUrl,
-    });
+    })
 
     return {
       id: session.id,
       url: session.url,
-    };
+    }
   }
 
   async verifyWebhookSignature(
@@ -256,7 +255,7 @@ export class StripeProvider implements PaymentProvider {
       payload,
       signature,
       secret,
-    );
+    )
 
     return {
       id: event.id,
@@ -268,26 +267,26 @@ export class StripeProvider implements PaymentProvider {
           | undefined,
       },
       created: new Date(event.created * 1000),
-    };
+    }
   }
 
   async listProducts(): Promise<Product[]> {
-    const products = await this.stripe.products.list({ active: true });
+    const products = await this.stripe.products.list({ active: true })
     return products.data.map((product) => ({
       id: product.id,
       name: product.name,
       description: product.description || undefined,
       metadata: product.metadata,
-    }));
+    }))
   }
 
   async listPrices(productId?: string): Promise<Price[]> {
-    const params: Stripe.PriceListParams = { active: true };
+    const params: Stripe.PriceListParams = { active: true }
     if (productId) {
-      params.product = productId;
+      params.product = productId
     }
 
-    const prices = await this.stripe.prices.list(params);
+    const prices = await this.stripe.prices.list(params)
     return prices.data.map((price) => ({
       id: price.id,
       productId: price.product as string,
@@ -297,7 +296,7 @@ export class StripeProvider implements PaymentProvider {
       intervalCount: price.recurring?.interval_count,
       lookupKey: price.lookup_key || undefined,
       metadata: price.metadata,
-    }));
+    }))
   }
 
   private mapStripeCustomer(customer: Stripe.Customer): Customer {
@@ -307,13 +306,13 @@ export class StripeProvider implements PaymentProvider {
       name: customer.name || undefined,
       metadata: customer.metadata,
       created: new Date(customer.created * 1000),
-    };
+    }
   }
 
   private mapStripeSubscription(
     subscription: Stripe.Subscription,
   ): Subscription {
-    const price = subscription.items.data[0].price;
+    const price = subscription.items.data[0].price
     return {
       id: subscription.id,
       customerId: subscription.customer as string,
@@ -326,23 +325,24 @@ export class StripeProvider implements PaymentProvider {
       currentPeriodEnd: new Date(subscription.current_period_end * 1000),
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
       metadata: subscription.metadata,
-    };
+    }
   }
 
   private mapStripePayment(paymentIntent: Stripe.PaymentIntent): Payment {
     return {
       id: paymentIntent.id,
-      customerId: paymentIntent.customer as string || undefined,
+      customerId: (paymentIntent.customer as string) || undefined,
       amount: paymentIntent.amount / 100, // Convert from cents
       currency: paymentIntent.currency.toUpperCase(),
       status: this.mapPaymentStatus(paymentIntent.status),
       description: paymentIntent.description || undefined,
       metadata: paymentIntent.metadata,
       createdAt: new Date(paymentIntent.created * 1000),
-      completedAt: paymentIntent.status === "succeeded"
-        ? new Date(paymentIntent.created * 1000)
-        : undefined,
-    };
+      completedAt:
+        paymentIntent.status === "succeeded"
+          ? new Date(paymentIntent.created * 1000)
+          : undefined,
+    }
   }
 
   private mapPaymentStatus(
@@ -350,18 +350,18 @@ export class StripeProvider implements PaymentProvider {
   ): Payment["status"] {
     switch (status) {
       case "succeeded":
-        return "completed";
+        return "completed"
       case "processing":
-        return "processing";
+        return "processing"
       case "requires_action":
       case "requires_capture":
       case "requires_confirmation":
       case "requires_payment_method":
-        return "pending";
+        return "pending"
       case "canceled":
-        return "failed";
+        return "failed"
       default:
-        return "pending";
+        return "pending"
     }
   }
 }

@@ -9,7 +9,7 @@ export default function NotFound() {
       <p className="text-muted-foreground">
         The page you are looking for does not exist.
       </p>
-      <Link href="/" className="mt-4 text-primary hover:underline">
+      <Link href="/" className="text-primary mt-4 hover:underline">
         Go back home
       </Link>
     </div>

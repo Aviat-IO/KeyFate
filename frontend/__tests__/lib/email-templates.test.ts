@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const mockEmailTemplates = vi.hoisted(() => ({
   renderVerificationTemplate: vi.fn(),
@@ -10,14 +10,14 @@ const mockEmailTemplates = vi.hoisted(() => ({
   renderDisclosureTemplate: vi.fn(),
   renderBaseTemplate: vi.fn(),
   validateTemplateData: vi.fn(),
-}));
+}))
 
-vi.mock("@/lib/email/templates", () => mockEmailTemplates);
+vi.mock("@/lib/email/templates", () => mockEmailTemplates)
 
 describe("Email Templates", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-  });
+    vi.clearAllMocks()
+  })
 
   describe("Verification Email Template", () => {
     const verificationData = {
@@ -25,7 +25,7 @@ describe("Email Templates", () => {
       verificationUrl: "https://example.com/verify?token=abc123",
       expirationHours: 24,
       supportEmail: "support@example.com",
-    };
+    }
 
     it("should render verification email with all required elements", async () => {
       mockEmailTemplates.renderVerificationTemplate.mockReturnValue({
@@ -45,42 +45,42 @@ describe("Email Templates", () => {
           This link expires in 24 hours.
           Contact: support@example.com
         `,
-      });
+      })
 
       const { renderVerificationTemplate } = await import(
         "@/lib/email/templates"
-      );
-      const result = renderVerificationTemplate(verificationData);
+      )
+      const result = renderVerificationTemplate(verificationData)
 
-      expect(result.subject).toContain("Verify your email");
-      expect(result.html).toContain(verificationData.userName);
-      expect(result.html).toContain(verificationData.verificationUrl);
-      expect(result.html).toContain("24 hours");
-      expect(result.text).toContain(verificationData.verificationUrl);
-    });
+      expect(result.subject).toContain("Verify your email")
+      expect(result.html).toContain(verificationData.userName)
+      expect(result.html).toContain(verificationData.verificationUrl)
+      expect(result.html).toContain("24 hours")
+      expect(result.text).toContain(verificationData.verificationUrl)
+    })
 
     it("should handle missing optional fields gracefully", async () => {
       const minimalData = {
         verificationUrl: "https://example.com/verify?token=abc123",
         expirationHours: 24,
-      };
+      }
 
       mockEmailTemplates.renderVerificationTemplate.mockReturnValue({
         subject: "Verify your email address",
         html: "<div>Verification content without name</div>",
         text: "Verification content without name",
-      });
+      })
 
       const { renderVerificationTemplate } = await import(
         "@/lib/email/templates"
-      );
-      const result = renderVerificationTemplate(minimalData);
+      )
+      const result = renderVerificationTemplate(minimalData)
 
-      expect(result.subject).toContain("Verify");
-      expect(result.html).toBeDefined();
-      expect(result.text).toBeDefined();
-    });
-  });
+      expect(result.subject).toContain("Verify")
+      expect(result.html).toBeDefined()
+      expect(result.text).toBeDefined()
+    })
+  })
 
   describe("Reminder Email Template", () => {
     const reminderData = {
@@ -89,7 +89,7 @@ describe("Email Templates", () => {
       daysRemaining: 7,
       checkInUrl: "https://example.com/checkin/secret-123",
       urgencyLevel: "medium" as const,
-    };
+    }
 
     it("should render reminder email with urgency indicators", async () => {
       mockEmailTemplates.renderReminderTemplate.mockReturnValue({
@@ -110,40 +110,39 @@ describe("Email Templates", () => {
           You need to check in for "Important Document Access" within 7 days.
           Check in: https://example.com/checkin/secret-123
         `,
-      });
+      })
 
-      const { renderReminderTemplate } = await import("@/lib/email/templates");
-      const result = renderReminderTemplate(reminderData);
+      const { renderReminderTemplate } = await import("@/lib/email/templates")
+      const result = renderReminderTemplate(reminderData)
 
-      expect(result.subject).toContain("7 days");
-      expect(result.subject).toContain("Important Document Access");
-      expect(result.html).toContain("John Doe");
-      expect(result.html).toContain(reminderData.checkInUrl);
-      expect(result.html).toContain("⚠️");
-    });
+      expect(result.subject).toContain("7 days")
+      expect(result.subject).toContain("Important Document Access")
+      expect(result.html).toContain("John Doe")
+      expect(result.html).toContain(reminderData.checkInUrl)
+      expect(result.html).toContain("⚠️")
+    })
 
     it("should show high urgency for critical reminders", async () => {
       const criticalData = {
         ...reminderData,
         daysRemaining: 1,
         urgencyLevel: "high" as const,
-      };
+      }
 
       mockEmailTemplates.renderReminderTemplate.mockReturnValue({
         subject:
           "🚨 URGENT: Check-in required within 1 day - Important Document Access",
-        html:
-          '<div style="background: #f8d7da; border: 2px solid #dc3545;">URGENT content</div>',
+        html: '<div style="background: #f8d7da; border: 2px solid #dc3545;">URGENT content</div>',
         text: "URGENT: Check in required in 1 day",
-      });
+      })
 
-      const { renderReminderTemplate } = await import("@/lib/email/templates");
-      const result = renderReminderTemplate(criticalData);
+      const { renderReminderTemplate } = await import("@/lib/email/templates")
+      const result = renderReminderTemplate(criticalData)
 
-      expect(result.subject).toContain("URGENT");
-      expect(result.subject).toContain("🚨");
-      expect(result.html).toContain("URGENT");
-    });
+      expect(result.subject).toContain("URGENT")
+      expect(result.subject).toContain("🚨")
+      expect(result.html).toContain("URGENT")
+    })
 
     it("should handle different reminder intervals", async () => {
       const intervals = [
@@ -151,7 +150,7 @@ describe("Email Templates", () => {
         { days: 7, urgency: "medium" },
         { days: 1, urgency: "high" },
         { days: 0, urgency: "critical" },
-      ];
+      ]
 
       for (const interval of intervals) {
         const data = {
@@ -162,23 +161,21 @@ describe("Email Templates", () => {
             | "medium"
             | "high"
             | "critical",
-        };
+        }
 
         mockEmailTemplates.renderReminderTemplate.mockReturnValue({
           subject: `Reminder: ${interval.days} days remaining`,
           html: `<div>Content for ${interval.urgency}</div>`,
           text: `Reminder: ${interval.days} days`,
-        });
+        })
 
-        const { renderReminderTemplate } = await import(
-          "@/lib/email/templates"
-        );
-        const result = renderReminderTemplate(data);
+        const { renderReminderTemplate } = await import("@/lib/email/templates")
+        const result = renderReminderTemplate(data)
 
-        expect(result.subject).toContain(interval.days.toString());
+        expect(result.subject).toContain(interval.days.toString())
       }
-    });
-  });
+    })
+  })
 
   describe("Secret Disclosure Email Template", () => {
     const disclosureData = {
@@ -191,7 +188,7 @@ describe("Email Templates", () => {
         "Emergency contacts:\n- Doctor: +1-555-0123\n- Hospital: +1-555-0456",
       disclosureReason: "scheduled" as const,
       senderLastSeen: new Date("2024-01-01"),
-    };
+    }
 
     it("should render disclosure email with sensitive content warnings", async () => {
       mockEmailTemplates.renderDisclosureTemplate.mockReturnValue({
@@ -224,41 +221,37 @@ describe("Email Templates", () => {
 - Hospital: +1-555-0456
           This information is confidential.
         `,
-      });
+      })
 
-      const { renderDisclosureTemplate } = await import(
-        "@/lib/email/templates"
-      );
-      const result = renderDisclosureTemplate(disclosureData);
+      const { renderDisclosureTemplate } = await import("@/lib/email/templates")
+      const result = renderDisclosureTemplate(disclosureData)
 
-      expect(result.subject).toContain("John Doe");
-      expect(result.subject).toContain("Family Emergency Information");
-      expect(result.html).toContain("Jane Smith");
-      expect(result.html).toContain("Confidential");
-      expect(result.html).toContain("Emergency contacts");
-      expect(result.html).toContain("⚠️");
-    });
+      expect(result.subject).toContain("John Doe")
+      expect(result.subject).toContain("Family Emergency Information")
+      expect(result.html).toContain("Jane Smith")
+      expect(result.html).toContain("Confidential")
+      expect(result.html).toContain("Emergency contacts")
+      expect(result.html).toContain("⚠️")
+    })
 
     it("should handle manual disclosure differently", async () => {
       const manualData = {
         ...disclosureData,
         disclosureReason: "manual" as const,
-      };
+      }
 
       mockEmailTemplates.renderDisclosureTemplate.mockReturnValue({
         subject: "Message from John Doe - Family Emergency Information",
         html: "<div>Manual disclosure content</div>",
         text: "Manual disclosure text",
-      });
+      })
 
-      const { renderDisclosureTemplate } = await import(
-        "@/lib/email/templates"
-      );
-      const result = renderDisclosureTemplate(manualData);
+      const { renderDisclosureTemplate } = await import("@/lib/email/templates")
+      const result = renderDisclosureTemplate(manualData)
 
-      expect(result.html).toContain("Manual disclosure");
-    });
-  });
+      expect(result.html).toContain("Manual disclosure")
+    })
+  })
 
   describe("Base Template System", () => {
     it("should apply consistent branding to all emails", async () => {
@@ -266,7 +259,7 @@ describe("Email Templates", () => {
         title: "Test Email",
         content: "<p>Test content</p>",
         footerText: "Custom footer",
-      };
+      }
 
       mockEmailTemplates.renderBaseTemplate.mockReturnValue({
         html: `
@@ -292,74 +285,74 @@ describe("Email Templates", () => {
           Custom footer
           © 2024 Dead Man's Switch
         `,
-      });
+      })
 
-      const { renderBaseTemplate } = await import("@/lib/email/templates");
-      const result = renderBaseTemplate(templateData);
+      const { renderBaseTemplate } = await import("@/lib/email/templates")
+      const result = renderBaseTemplate(templateData)
 
-      expect(result.html).toContain("Dead Man's Switch");
-      expect(result.html).toContain("Test Email");
-      expect(result.html).toContain("font-family");
-      expect(result.text).toContain("© 2024");
-    });
-  });
+      expect(result.html).toContain("Dead Man's Switch")
+      expect(result.html).toContain("Test Email")
+      expect(result.html).toContain("font-family")
+      expect(result.text).toContain("© 2024")
+    })
+  })
 
   describe("Template Data Validation", () => {
     it("should validate required fields for verification template", async () => {
       mockEmailTemplates.validateTemplateData.mockReturnValue({
         valid: false,
         errors: ["verificationUrl is required", "expirationHours is required"],
-      });
+      })
 
       const invalidData = {
         userName: "John Doe",
         // missing required fields
-      };
+      }
 
-      const { validateTemplateData } = await import("@/lib/email/templates");
-      const result = validateTemplateData("verification", invalidData);
+      const { validateTemplateData } = await import("@/lib/email/templates")
+      const result = validateTemplateData("verification", invalidData)
 
-      expect(result.valid).toBe(false);
-      expect(result.errors).toContain("verificationUrl is required");
-    });
+      expect(result.valid).toBe(false)
+      expect(result.errors).toContain("verificationUrl is required")
+    })
 
     it("should validate email addresses in template data", async () => {
       mockEmailTemplates.validateTemplateData.mockReturnValue({
         valid: false,
         errors: ["Invalid email format in supportEmail"],
-      });
+      })
 
       const invalidData = {
         verificationUrl: "https://example.com",
         expirationHours: 24,
         supportEmail: "invalid-email",
-      };
+      }
 
-      const { validateTemplateData } = await import("@/lib/email/templates");
-      const result = validateTemplateData("verification", invalidData);
+      const { validateTemplateData } = await import("@/lib/email/templates")
+      const result = validateTemplateData("verification", invalidData)
 
-      expect(result.valid).toBe(false);
-      expect(result.errors).toContain("Invalid email format in supportEmail");
-    });
+      expect(result.valid).toBe(false)
+      expect(result.errors).toContain("Invalid email format in supportEmail")
+    })
 
     it("should pass validation for complete data", async () => {
       mockEmailTemplates.validateTemplateData.mockReturnValue({
         valid: true,
         errors: [],
-      });
+      })
 
       const validData = {
         verificationUrl: "https://example.com/verify",
         expirationHours: 24,
         userName: "John Doe",
         supportEmail: "support@example.com",
-      };
+      }
 
-      const { validateTemplateData } = await import("@/lib/email/templates");
-      const result = validateTemplateData("verification", validData);
+      const { validateTemplateData } = await import("@/lib/email/templates")
+      const result = validateTemplateData("verification", validData)
 
-      expect(result.valid).toBe(true);
-      expect(result.errors).toEqual([]);
-    });
-  });
-});
+      expect(result.valid).toBe(true)
+      expect(result.errors).toEqual([])
+    })
+  })
+})

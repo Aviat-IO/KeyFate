@@ -1,37 +1,37 @@
-"use server";
+"use server"
 
-import { serverEnv } from "@/lib/server-env";
-import crypto from "crypto";
+import { serverEnv } from "@/lib/server-env"
+import crypto from "crypto"
 
-let ENCRYPTION_KEY: Buffer | null = null;
+let ENCRYPTION_KEY: Buffer | null = null
 
 function getEncryptionKey(): Buffer {
   if (!ENCRYPTION_KEY) {
-    const ENCRYPTION_KEY_BASE64 = serverEnv.ENCRYPTION_KEY;
+    const ENCRYPTION_KEY_BASE64 = serverEnv.ENCRYPTION_KEY
     if (!ENCRYPTION_KEY_BASE64) {
-      throw new Error("Invalid encryption key");
+      throw new Error("Invalid encryption key")
     }
 
-    ENCRYPTION_KEY = Buffer.from(ENCRYPTION_KEY_BASE64, "base64");
+    ENCRYPTION_KEY = Buffer.from(ENCRYPTION_KEY_BASE64, "base64")
 
     // Validate key length for AES-256-GCM (must be exactly 32 bytes)
     if (ENCRYPTION_KEY.length !== 32) {
       throw new Error(
         `Invalid key length: expected 32 bytes, got ${ENCRYPTION_KEY.length} bytes. Please generate a new 256-bit key.`,
-      );
+      )
     }
   }
-  return ENCRYPTION_KEY;
+  return ENCRYPTION_KEY
 }
 
-const DB_ENCODING: BufferEncoding = "base64";
-const MESSAGE_ENCODING: BufferEncoding = "utf8";
+const DB_ENCODING: BufferEncoding = "base64"
+const MESSAGE_ENCODING: BufferEncoding = "utf8"
 
-const ALGORITHM = "aes-256-gcm";
-const IV_LENGTH = 12;
+const ALGORITHM = "aes-256-gcm"
+const IV_LENGTH = 12
 
 async function generateIV(): Promise<Buffer> {
-  return crypto.randomBytes(IV_LENGTH);
+  return crypto.randomBytes(IV_LENGTH)
 }
 
 // Text (string) → UTF-8 → Binary → Encryption → Binary → Base64 (for storage)
@@ -39,19 +39,19 @@ export async function encryptMessage(
   message: string,
   iv?: Buffer,
 ): Promise<{ encrypted: string; iv: string; authTag: string }> {
-  const ivBuffer = iv ?? (await generateIV());
-  const cipher = crypto.createCipheriv(ALGORITHM, getEncryptionKey(), ivBuffer);
+  const ivBuffer = iv ?? (await generateIV())
+  const cipher = crypto.createCipheriv(ALGORITHM, getEncryptionKey(), ivBuffer)
 
   const encrypted = Buffer.concat([
     cipher.update(Buffer.from(message, MESSAGE_ENCODING)),
     cipher.final(),
-  ]).toString(DB_ENCODING);
+  ]).toString(DB_ENCODING)
 
   return {
     encrypted,
     iv: ivBuffer.toString(DB_ENCODING),
     authTag: cipher.getAuthTag().toString(DB_ENCODING),
-  };
+  }
 }
 
 // Base64 → Binary → Decryption → Binary → UTF-8 → Text (string)
@@ -64,18 +64,18 @@ export async function decryptMessage(
     ALGORITHM,
     getEncryptionKey(),
     ivBuffer,
-  );
-  decipher.setAuthTag(authTag);
+  )
+  decipher.setAuthTag(authTag)
 
   const decrypted = Buffer.concat([
     decipher.update(Buffer.from(cipherText, DB_ENCODING)),
     decipher.final(),
-  ]).toString(MESSAGE_ENCODING);
+  ]).toString(MESSAGE_ENCODING)
 
-  return decrypted;
+  return decrypted
 }
 
 // Helper function to generate a new 256-bit encryption key
 export async function generateEncryptionKey(): Promise<string> {
-  return crypto.randomBytes(32).toString("base64");
+  return crypto.randomBytes(32).toString("base64")
 }

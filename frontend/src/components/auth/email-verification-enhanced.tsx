@@ -137,12 +137,12 @@ export function EmailVerificationEnhanced({
 
   return (
     <div
-      className={`flex min-h-screen items-center justify-center bg-secondary px-4 py-16 ${className}`}
+      className={`bg-secondary flex min-h-screen items-center justify-center px-4 py-16 ${className}`}
     >
       <Card className="w-full max-w-md" data-testid="verification-card">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-            <Mail className="h-6 w-6 text-muted-foreground" />
+          <div className="bg-muted mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+            <Mail className="text-muted-foreground h-6 w-6" />
           </div>
           <CardTitle className="text-2xl font-bold">
             Verify your email address
@@ -215,7 +215,7 @@ export function EmailVerificationEnhanced({
             <Button
               onClick={() => router.push("/sign-in")}
               variant="ghost"
-              className="w-full text-muted-foreground"
+              className="text-muted-foreground w-full"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to sign in

@@ -5,22 +5,26 @@
  * Implements severity classification and batching to prevent alert spam.
  */
 
-import { sendEmail, type EmailResult } from "./email-service";
+import { sendEmail, type EmailResult } from "./email-service"
 
 // Notification severity levels
-export type NotificationSeverity = "critical" | "high" | "medium" | "low";
+export type NotificationSeverity = "critical" | "high" | "medium" | "low"
 
 // Email types matching schema
-type EmailType = "reminder" | "disclosure" | "admin_notification" | "verification";
+type EmailType =
+  | "reminder"
+  | "disclosure"
+  | "admin_notification"
+  | "verification"
 
 // Admin notification data structure
 export interface AdminNotificationData {
-  emailType: EmailType;
-  recipient: string;
-  errorMessage: string;
-  secretTitle?: string;
-  timestamp?: Date;
-  retryCount?: number;
+  emailType: EmailType
+  recipient: string
+  errorMessage: string
+  secretTitle?: string
+  timestamp?: Date
+  retryCount?: number
 }
 
 /**
@@ -33,28 +37,28 @@ export interface AdminNotificationData {
  * - Low: Verification/admin_notification emails failing
  */
 export function calculateSeverity(data: {
-  emailType: EmailType;
-  retryCount?: number;
+  emailType: EmailType
+  retryCount?: number
 }): NotificationSeverity {
-  const { emailType, retryCount = 0 } = data;
+  const { emailType, retryCount = 0 } = data
 
   // Critical: Disclosure emails are mission-critical
   if (emailType === "disclosure") {
-    return "critical";
+    return "critical"
   }
 
   // High: Reminder emails with multiple retries
   if (emailType === "reminder" && retryCount > 3) {
-    return "high";
+    return "high"
   }
 
   // Medium: Reminder emails with few retries
   if (emailType === "reminder") {
-    return "medium";
+    return "medium"
   }
 
   // Low: Verification and admin notification failures
-  return "low";
+  return "low"
 }
 
 /**
@@ -62,14 +66,14 @@ export function calculateSeverity(data: {
  */
 function formatNotificationContent(
   data: AdminNotificationData,
-  severity: NotificationSeverity
+  severity: NotificationSeverity,
 ): { subject: string; html: string; text: string } {
-  const timestamp = data.timestamp || new Date();
-  const retryCount = data.retryCount || 0;
+  const timestamp = data.timestamp || new Date()
+  const retryCount = data.retryCount || 0
 
   const subject = data.secretTitle
     ? `[${severity.toUpperCase()}] Email Delivery Failure - ${data.secretTitle}`
-    : `[${severity.toUpperCase()}] Email Delivery Failure - ${data.emailType}`;
+    : `[${severity.toUpperCase()}] Email Delivery Failure - ${data.emailType}`
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -97,7 +101,7 @@ function formatNotificationContent(
         <p>This is an automated alert from the Dead Man's Switch email monitoring system.</p>
       </div>
     </div>
-  `;
+  `
 
   const text = `
 Email Delivery Failure - ${severity.toUpperCase()}
@@ -115,9 +119,9 @@ ${getSeverityGuidanceText(severity)}
 
 ---
 This is an automated alert from the Dead Man's Switch email monitoring system.
-  `.trim();
+  `.trim()
 
-  return { subject, html, text };
+  return { subject, html, text }
 }
 
 /**
@@ -126,13 +130,13 @@ This is an automated alert from the Dead Man's Switch email monitoring system.
 function getSeverityColor(severity: NotificationSeverity): string {
   switch (severity) {
     case "critical":
-      return "#dc3545";
+      return "#dc3545"
     case "high":
-      return "#fd7e14";
+      return "#fd7e14"
     case "medium":
-      return "#ffc107";
+      return "#ffc107"
     case "low":
-      return "#17a2b8";
+      return "#17a2b8"
   }
 }
 
@@ -150,7 +154,7 @@ function getSeverityGuidance(severity: NotificationSeverity): string {
             Immediate investigation and manual intervention may be required.
           </p>
         </div>
-      `;
+      `
     case "high":
       return `
         <div style="background-color: #fd7e14; color: #ffffff; padding: 15px; margin: 20px 0; border-radius: 6px;">
@@ -159,7 +163,7 @@ function getSeverityGuidance(severity: NotificationSeverity): string {
             A reminder email has failed multiple times. Check email service configuration and user contact details.
           </p>
         </div>
-      `;
+      `
     case "medium":
       return `
         <div style="background-color: #17a2b8; color: #ffffff; padding: 15px; margin: 20px 0; border-radius: 6px;">
@@ -168,7 +172,7 @@ function getSeverityGuidance(severity: NotificationSeverity): string {
             A reminder email has failed. Monitor for additional failures. Automatic retries are in progress.
           </p>
         </div>
-      `;
+      `
     case "low":
       return `
         <div style="background-color: #28a745; color: #ffffff; padding: 15px; margin: 20px 0; border-radius: 6px;">
@@ -177,7 +181,7 @@ function getSeverityGuidance(severity: NotificationSeverity): string {
             A verification or admin notification email has failed. No immediate action required.
           </p>
         </div>
-      `;
+      `
   }
 }
 
@@ -187,13 +191,13 @@ function getSeverityGuidance(severity: NotificationSeverity): string {
 function getSeverityGuidanceText(severity: NotificationSeverity): string {
   switch (severity) {
     case "critical":
-      return "CRITICAL ACTION REQUIRED: A disclosure email has failed. The user's secret will not be delivered. Immediate investigation required.";
+      return "CRITICAL ACTION REQUIRED: A disclosure email has failed. The user's secret will not be delivered. Immediate investigation required."
     case "high":
-      return "HIGH PRIORITY: A reminder email has failed multiple times. Check email service configuration.";
+      return "HIGH PRIORITY: A reminder email has failed multiple times. Check email service configuration."
     case "medium":
-      return "MEDIUM PRIORITY: A reminder email has failed. Monitor for additional failures.";
+      return "MEDIUM PRIORITY: A reminder email has failed. Monitor for additional failures."
     case "low":
-      return "LOW PRIORITY: A verification or admin notification email has failed. No immediate action required.";
+      return "LOW PRIORITY: A verification or admin notification email has failed. No immediate action required."
   }
 }
 
@@ -204,20 +208,23 @@ function getSeverityGuidanceText(severity: NotificationSeverity): string {
  * @returns Email result indicating success or failure
  */
 export async function sendAdminNotification(
-  data: AdminNotificationData
+  data: AdminNotificationData,
 ): Promise<EmailResult> {
   try {
     // Calculate severity level
     const severity = calculateSeverity({
       emailType: data.emailType,
       retryCount: data.retryCount,
-    });
+    })
 
     // Format notification content
-    const { subject, html, text } = formatNotificationContent(data, severity);
+    const { subject, html, text } = formatNotificationContent(data, severity)
 
     // Get admin email from environment or use default
-    const adminEmail = process.env.ADMIN_ALERT_EMAIL || process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@keyfate.com";
+    const adminEmail =
+      process.env.ADMIN_ALERT_EMAIL ||
+      process.env.NEXT_PUBLIC_SUPPORT_EMAIL ||
+      "support@keyfate.com"
 
     // Send notification using existing email service
     const result = await sendEmail({
@@ -225,25 +232,29 @@ export async function sendAdminNotification(
       subject,
       html,
       text,
-      priority: severity === "critical" || severity === "high" ? "high" : "normal",
+      priority:
+        severity === "critical" || severity === "high" ? "high" : "normal",
       headers:
         severity === "critical"
           ? {
-            "X-Priority": "1",
-            "X-MSMail-Priority": "High",
-            "Importance": "high",
-          }
+              "X-Priority": "1",
+              "X-MSMail-Priority": "High",
+              Importance: "high",
+            }
           : undefined,
-    });
+    })
 
-    return result;
+    return result
   } catch (error) {
-    console.error("[AdminNotification] Failed to send admin notification:", error);
+    console.error(
+      "[AdminNotification] Failed to send admin notification:",
+      error,
+    )
 
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
       retryable: true,
-    };
+    }
   }
 }

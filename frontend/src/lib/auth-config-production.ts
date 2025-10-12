@@ -3,12 +3,12 @@
  * Ensures proper cookie and callback handling in production environments
  */
 
-import type { AuthOptions } from "next-auth/core/types";
+import type { AuthOptions } from "next-auth/core/types"
 
 // Augment AuthOptions to include trustHost
 declare module "next-auth/core/types" {
   interface AuthOptions {
-    trustHost?: boolean;
+    trustHost?: boolean
   }
 }
 
@@ -18,9 +18,10 @@ declare module "next-auth/core/types" {
 export function getBaseUrl(): string {
   // In production/staging, use NEXTAUTH_URL
   if (
-    process.env.NEXTAUTH_URL && !process.env.NEXTAUTH_URL.includes("0.0.0.0")
+    process.env.NEXTAUTH_URL &&
+    !process.env.NEXTAUTH_URL.includes("0.0.0.0")
   ) {
-    return process.env.NEXTAUTH_URL;
+    return process.env.NEXTAUTH_URL
   }
 
   // Fallback to NEXT_PUBLIC_SITE_URL
@@ -28,24 +29,24 @@ export function getBaseUrl(): string {
     process.env.NEXT_PUBLIC_SITE_URL &&
     !process.env.NEXT_PUBLIC_SITE_URL.includes("0.0.0.0")
   ) {
-    return process.env.NEXT_PUBLIC_SITE_URL;
+    return process.env.NEXT_PUBLIC_SITE_URL
   }
 
   // In development, use localhost
   if (process.env.NODE_ENV === "development") {
-    return "http://localhost:3000";
+    return "http://localhost:3000"
   }
 
   // Fallback for staging
-  return "https://staging.keyfate.com";
+  return "https://staging.keyfate.com"
 }
 
 /**
  * Determine if we should use secure cookies
  */
 export function shouldUseSecureCookies(): boolean {
-  const url = getBaseUrl();
-  return url.startsWith("https://");
+  const url = getBaseUrl()
+  return url.startsWith("https://")
 }
 
 /**
@@ -53,8 +54,8 @@ export function shouldUseSecureCookies(): boolean {
  * This ensures cookies work properly in production with HTTPS
  */
 export function getCookieConfig() {
-  const isSecure = shouldUseSecureCookies();
-  const isProduction = process.env.NODE_ENV === "production";
+  const isSecure = shouldUseSecureCookies()
+  const isProduction = process.env.NODE_ENV === "production"
 
   // In production with HTTPS, we need specific cookie settings
   if (isSecure) {
@@ -88,7 +89,7 @@ export function getCookieConfig() {
           secure: true,
         },
       },
-    };
+    }
   }
 
   // Development configuration
@@ -119,15 +120,15 @@ export function getCookieConfig() {
         secure: false,
       },
     },
-  };
+  }
 }
 
 /**
  * Merge production configuration with base auth config
  */
 export function withProductionConfig(baseConfig: AuthOptions): AuthOptions {
-  const baseUrl = getBaseUrl();
-  const isSecure = shouldUseSecureCookies();
+  const baseUrl = getBaseUrl()
+  const isSecure = shouldUseSecureCookies()
 
   return {
     ...baseConfig,
@@ -136,5 +137,5 @@ export function withProductionConfig(baseConfig: AuthOptions): AuthOptions {
     // Trust host headers when behind proxies (Cloud Run, etc.)
     trustHost: true,
     debug: process.env.NODE_ENV === "development",
-  };
+  }
 }

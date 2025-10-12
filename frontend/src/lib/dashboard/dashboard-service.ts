@@ -5,15 +5,15 @@
  * and error boundaries to prevent hanging issues.
  */
 
-import { authConfig } from "@/lib/auth-config";
-import { getAllSecretsWithRecipients } from "@/lib/db/queries/secrets";
-import type { Session } from "next-auth";
-import { getServerSession } from "next-auth/next";
+import { authConfig } from "@/lib/auth-config"
+import { getAllSecretsWithRecipients } from "@/lib/db/queries/secrets"
+import type { Session } from "next-auth"
+import { getServerSession } from "next-auth/next"
 
 export class DashboardTimeoutError extends Error {
   constructor(operation: string, timeoutMs: number) {
-    super(`Dashboard operation '${operation}' timed out after ${timeoutMs}ms`);
-    this.name = "DashboardTimeoutError";
+    super(`Dashboard operation '${operation}' timed out after ${timeoutMs}ms`)
+    this.name = "DashboardTimeoutError"
   }
 }
 
@@ -31,35 +31,35 @@ export function withTimeout<T>(
       setTimeout(
         () => reject(new DashboardTimeoutError(operation, timeoutMs)),
         timeoutMs,
-      )
+      ),
     ),
-  ]);
+  ])
 }
 
 /**
  * Session cache to prevent multiple getServerSession calls with promise deduplication
  */
 class SessionCache {
-  private cache: { session: Session | null; timestamp: number } | null = null;
-  private readonly TTL = 5000; // 5 seconds cache
-  private pendingPromise: Promise<Session | null> | null = null;
+  private cache: { session: Session | null; timestamp: number } | null = null
+  private readonly TTL = 5000 // 5 seconds cache
+  private pendingPromise: Promise<Session | null> | null = null
 
   async getSession(): Promise<Session | null> {
-    const now = Date.now();
+    const now = Date.now()
 
     // Return cached session if valid
-    if (this.cache && (now - this.cache.timestamp) < this.TTL) {
-      console.log("[DashboardService] Using cached session");
-      return this.cache.session;
+    if (this.cache && now - this.cache.timestamp < this.TTL) {
+      console.log("[DashboardService] Using cached session")
+      return this.cache.session
     }
 
     // If there's already a pending request, return that promise
     if (this.pendingPromise) {
-      console.log("[DashboardService] Reusing pending session request");
-      return this.pendingPromise;
+      console.log("[DashboardService] Reusing pending session request")
+      return this.pendingPromise
     }
 
-    console.log("[DashboardService] Fetching fresh session");
+    console.log("[DashboardService] Fetching fresh session")
 
     try {
       // Create and store the pending promise
@@ -68,37 +68,37 @@ class SessionCache {
         getServerSession(authConfig as any) as Promise<Session | null>,
         3000, // 3 second timeout
         "getServerSession",
-      );
+      )
 
-      const session = await this.pendingPromise;
+      const session = await this.pendingPromise
 
       // Cache the session
-      this.cache = { session, timestamp: now };
-      return session;
+      this.cache = { session, timestamp: now }
+      return session
     } catch (error) {
-      console.error("[DashboardService] Session fetch failed:", error);
+      console.error("[DashboardService] Session fetch failed:", error)
 
       // Clear cache on error
-      this.cache = null;
+      this.cache = null
 
       if (error instanceof DashboardTimeoutError) {
-        throw error;
+        throw error
       }
 
-      throw new Error("Failed to retrieve session");
+      throw new Error("Failed to retrieve session")
     } finally {
       // Clear the pending promise
-      this.pendingPromise = null;
+      this.pendingPromise = null
     }
   }
 
   clearCache(): void {
-    this.cache = null;
-    this.pendingPromise = null;
+    this.cache = null
+    this.pendingPromise = null
   }
 }
 
-const sessionCache = new SessionCache();
+const sessionCache = new SessionCache()
 
 /**
  * Dashboard service with timeout protection and error handling
@@ -108,36 +108,36 @@ export class DashboardService {
    * Get authenticated session with timeout protection
    */
   static async getSession(): Promise<Session | null> {
-    return sessionCache.getSession();
+    return sessionCache.getSession()
   }
 
   /**
    * Get user secrets with timeout protection
    */
   static async getUserSecrets(userId: string) {
-    console.log("[DashboardService] Fetching secrets for user:", userId);
+    console.log("[DashboardService] Fetching secrets for user:", userId)
 
     try {
       const secrets = await withTimeout(
         getAllSecretsWithRecipients(userId),
         5000, // 5 second timeout
         "getAllSecretsWithRecipients",
-      );
+      )
 
       console.log(
         "[DashboardService] Successfully fetched",
         secrets.length,
         "secrets",
-      );
-      return secrets;
+      )
+      return secrets
     } catch (error) {
-      console.error("[DashboardService] Secrets fetch failed:", error);
+      console.error("[DashboardService] Secrets fetch failed:", error)
 
       if (error instanceof DashboardTimeoutError) {
-        throw error;
+        throw error
       }
 
-      throw new Error("Failed to load secrets");
+      throw new Error("Failed to load secrets")
     }
   }
 
@@ -145,53 +145,53 @@ export class DashboardService {
    * Complete dashboard data loading with comprehensive error handling
    */
   static async loadDashboardData() {
-    console.log("[DashboardService] Starting dashboard data load");
+    console.log("[DashboardService] Starting dashboard data load")
 
     try {
       // Get session with timeout
-      const session = await this.getSession();
+      const session = await this.getSession()
 
       if (!session?.user?.id) {
-        console.log("[DashboardService] No valid session found");
+        console.log("[DashboardService] No valid session found")
         return {
           success: false,
           error: "NO_SESSION",
           message: "Please sign in to continue",
-        };
+        }
       }
 
       console.log(
         "[DashboardService] Valid session found for user:",
         session.user.id,
-      );
+      )
 
       // Get secrets with timeout
-      const secrets = await this.getUserSecrets(session.user.id);
+      const secrets = await this.getUserSecrets(session.user.id)
 
-      console.log("[DashboardService] Dashboard data loaded successfully");
+      console.log("[DashboardService] Dashboard data loaded successfully")
       return {
         success: true,
         data: {
           user: session.user,
           secrets: secrets || [],
         },
-      };
+      }
     } catch (error) {
-      console.error("[DashboardService] Dashboard data load failed:", error);
+      console.error("[DashboardService] Dashboard data load failed:", error)
 
       if (error instanceof DashboardTimeoutError) {
         return {
           success: false,
           error: "TIMEOUT",
           message: `Operation timed out: ${error.message}`,
-        };
+        }
       }
 
       return {
         success: false,
         error: "UNKNOWN",
         message: "An unexpected error occurred while loading dashboard data",
-      };
+      }
     }
   }
 
@@ -199,7 +199,7 @@ export class DashboardService {
    * Clear all caches (useful for testing and error recovery)
    */
   static clearCaches(): void {
-    sessionCache.clearCache();
+    sessionCache.clearCache()
   }
 }
 
@@ -207,33 +207,33 @@ export class DashboardService {
  * React Suspense-compatible wrapper that prevents hanging
  */
 export class SuspenseProtectedPromise<T> {
-  private promise: Promise<T>;
-  private status: "pending" | "fulfilled" | "rejected" = "pending";
-  private result: T | undefined;
-  private error: Error | undefined;
+  private promise: Promise<T>
+  private status: "pending" | "fulfilled" | "rejected" = "pending"
+  private result: T | undefined
+  private error: Error | undefined
 
   constructor(promise: Promise<T>, timeoutMs: number = 10000) {
     // Wrap the original promise with timeout
     this.promise = withTimeout(promise, timeoutMs, "SuspenseProtectedPromise")
       .then((result) => {
-        this.status = "fulfilled";
-        this.result = result;
-        return result;
+        this.status = "fulfilled"
+        this.result = result
+        return result
       })
       .catch((error) => {
-        this.status = "rejected";
-        this.error = error;
-        throw error;
-      });
+        this.status = "rejected"
+        this.error = error
+        throw error
+      })
   }
 
   read(): T {
     if (this.status === "pending") {
-      throw this.promise; // Suspense will catch this
+      throw this.promise // Suspense will catch this
     } else if (this.status === "rejected") {
-      throw this.error;
+      throw this.error
     } else {
-      return this.result as T;
+      return this.result as T
     }
   }
 }
@@ -245,7 +245,7 @@ export function createDashboardDataLoader(timeoutMs: number = 8000) {
   return new SuspenseProtectedPromise(
     DashboardService.loadDashboardData(),
     timeoutMs,
-  );
+  )
 }
 
-export default DashboardService;
+export default DashboardService

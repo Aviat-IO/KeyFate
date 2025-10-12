@@ -5,43 +5,50 @@
  * Provides admin tools for email failure management and resolution
  */
 
-import { db } from "@/lib/db/drizzle";
-import { emailFailures, type EmailFailure, type EmailFailureUpdate } from "@/lib/db/schema";
-import { eq, and, isNull, lt, desc } from "drizzle-orm";
-import { EmailRetryService, type EmailFailureContext } from "./email-retry-service";
+import { db } from "@/lib/db/drizzle"
+import {
+  emailFailures,
+  type EmailFailure,
+  type EmailFailureUpdate,
+} from "@/lib/db/schema"
+import { eq, and, isNull, lt, desc } from "drizzle-orm"
+import {
+  EmailRetryService,
+  type EmailFailureContext,
+} from "./email-retry-service"
 
 /**
  * Query options for dead letter queue
  */
 export interface DeadLetterQueryOptions {
-  emailType?: "reminder" | "disclosure" | "admin_notification" | "verification";
-  provider?: "sendgrid" | "console-dev" | "resend";
-  recipient?: string;
-  unresolvedOnly?: boolean;
-  limit?: number;
-  offset?: number;
+  emailType?: "reminder" | "disclosure" | "admin_notification" | "verification"
+  provider?: "sendgrid" | "console-dev" | "resend"
+  recipient?: string
+  unresolvedOnly?: boolean
+  limit?: number
+  offset?: number
 }
 
 /**
  * Dead letter queue statistics
  */
 export interface DeadLetterStats {
-  total: number;
-  unresolved: number;
-  permanent: number;
-  exhausted: number;
-  byType: Record<string, number>;
-  byProvider: Record<string, number>;
+  total: number
+  unresolved: number
+  permanent: number
+  exhausted: number
+  byType: Record<string, number>
+  byProvider: Record<string, number>
 }
 
 /**
  * Batch retry result
  */
 export interface BatchRetryResult {
-  total: number;
-  successful: number;
-  failed: number;
-  errors: Array<{ id: string; error: string }>;
+  total: number
+  successful: number
+  failed: number
+  errors: Array<{ id: string; error: string }>
 }
 
 /**
@@ -50,10 +57,10 @@ export interface BatchRetryResult {
  * Handles permanently failed emails and provides admin management interface
  */
 export class DeadLetterQueue {
-  private retryService: EmailRetryService;
+  private retryService: EmailRetryService
 
   constructor() {
-    this.retryService = new EmailRetryService();
+    this.retryService = new EmailRetryService()
   }
 
   /**
@@ -62,7 +69,9 @@ export class DeadLetterQueue {
    * @param options - Query options
    * @returns List of email failures
    */
-  async queryFailures(options: DeadLetterQueryOptions = {}): Promise<EmailFailure[]> {
+  async queryFailures(
+    options: DeadLetterQueryOptions = {},
+  ): Promise<EmailFailure[]> {
     const {
       emailType,
       provider,
@@ -70,41 +79,41 @@ export class DeadLetterQueue {
       unresolvedOnly = false,
       limit = 100,
       offset = 0,
-    } = options;
+    } = options
 
     // Build WHERE conditions
-    const conditions: any[] = [];
+    const conditions: any[] = []
 
     if (emailType) {
-      conditions.push(eq(emailFailures.emailType, emailType));
+      conditions.push(eq(emailFailures.emailType, emailType))
     }
 
     if (provider) {
-      conditions.push(eq(emailFailures.provider, provider));
+      conditions.push(eq(emailFailures.provider, provider))
     }
 
     if (recipient) {
-      conditions.push(eq(emailFailures.recipient, recipient));
+      conditions.push(eq(emailFailures.recipient, recipient))
     }
 
     if (unresolvedOnly) {
-      conditions.push(isNull(emailFailures.resolvedAt));
+      conditions.push(isNull(emailFailures.resolvedAt))
     }
 
     // Execute query with conditions
-    let allFailures: EmailFailure[];
+    let allFailures: EmailFailure[]
 
     if (conditions.length > 0) {
       allFailures = await db
         .select()
         .from(emailFailures)
-        .where(and(...conditions));
+        .where(and(...conditions))
     } else {
-      allFailures = await db.select().from(emailFailures);
+      allFailures = await db.select().from(emailFailures)
     }
 
     // Manual pagination
-    return allFailures.slice(offset, offset + limit);
+    return allFailures.slice(offset, offset + limit)
   }
 
   /**
@@ -113,34 +122,34 @@ export class DeadLetterQueue {
    * @returns Statistics about failed emails
    */
   async getStats(): Promise<DeadLetterStats> {
-    const allFailures = await db.select().from(emailFailures);
+    const allFailures = await db.select().from(emailFailures)
 
-    const unresolved = allFailures.filter((f) => !f.resolvedAt);
+    const unresolved = allFailures.filter((f) => !f.resolvedAt)
 
     // Count permanent failures (classified by error message)
     const { classifyFailure, getRetryLimitForEmailType } = await import(
       "./email-retry-service"
-    );
+    )
     const permanent = unresolved.filter(
-      (f) => classifyFailure(f.errorMessage) === "permanent"
-    );
+      (f) => classifyFailure(f.errorMessage) === "permanent",
+    )
 
     // Count exhausted failures (retry limit reached)
     const exhausted = unresolved.filter((f) => {
-      const limit = getRetryLimitForEmailType(f.emailType);
-      return f.retryCount >= limit;
-    });
+      const limit = getRetryLimitForEmailType(f.emailType)
+      return f.retryCount >= limit
+    })
 
     // Group by type
-    const byType: Record<string, number> = {};
+    const byType: Record<string, number> = {}
     for (const failure of allFailures) {
-      byType[failure.emailType] = (byType[failure.emailType] || 0) + 1;
+      byType[failure.emailType] = (byType[failure.emailType] || 0) + 1
     }
 
     // Group by provider
-    const byProvider: Record<string, number> = {};
+    const byProvider: Record<string, number> = {}
     for (const failure of allFailures) {
-      byProvider[failure.provider] = (byProvider[failure.provider] || 0) + 1;
+      byProvider[failure.provider] = (byProvider[failure.provider] || 0) + 1
     }
 
     return {
@@ -150,7 +159,7 @@ export class DeadLetterQueue {
       exhausted: exhausted.length,
       byType,
       byProvider,
-    };
+    }
   }
 
   /**
@@ -162,9 +171,9 @@ export class DeadLetterQueue {
    */
   async manualRetry(
     failureId: string,
-    retryOperation: () => Promise<{ success: boolean; error?: string }>
+    retryOperation: () => Promise<{ success: boolean; error?: string }>,
   ) {
-    return await this.retryService.retryFailure(failureId, retryOperation);
+    return await this.retryService.retryFailure(failureId, retryOperation)
   }
 
   /**
@@ -177,12 +186,12 @@ export class DeadLetterQueue {
   async batchRetry(
     failureIds: string[],
     retryOperationFactory: (
-      failure: EmailFailureContext
-    ) => Promise<{ success: boolean; error?: string }>
+      failure: EmailFailureContext,
+    ) => Promise<{ success: boolean; error?: string }>,
   ): Promise<BatchRetryResult> {
-    let successful = 0;
-    let failed = 0;
-    const errors: Array<{ id: string; error: string }> = [];
+    let successful = 0
+    let failed = 0
+    const errors: Array<{ id: string; error: string }> = []
 
     for (const failureId of failureIds) {
       // Fetch failure context
@@ -190,12 +199,12 @@ export class DeadLetterQueue {
         .select()
         .from(emailFailures)
         .where(eq(emailFailures.id, failureId))
-        .limit(1);
+        .limit(1)
 
       if (!failure) {
-        errors.push({ id: failureId, error: "Failure not found" });
-        failed++;
-        continue;
+        errors.push({ id: failureId, error: "Failure not found" })
+        failed++
+        continue
       }
 
       const failureContext: EmailFailureContext = {
@@ -208,19 +217,22 @@ export class DeadLetterQueue {
         retryCount: failure.retryCount,
         createdAt: failure.createdAt,
         resolvedAt: failure.resolvedAt,
-      };
+      }
 
-      const retryOperation = () => retryOperationFactory(failureContext);
-      const result = await this.retryService.retryFailure(failureId, retryOperation);
+      const retryOperation = () => retryOperationFactory(failureContext)
+      const result = await this.retryService.retryFailure(
+        failureId,
+        retryOperation,
+      )
 
       if (result.success) {
-        successful++;
+        successful++
       } else {
-        failed++;
+        failed++
         errors.push({
           id: failureId,
           error: result.error || "Unknown error",
-        });
+        })
       }
     }
 
@@ -229,7 +241,7 @@ export class DeadLetterQueue {
       successful,
       failed,
       errors,
-    };
+    }
   }
 
   /**
@@ -241,18 +253,18 @@ export class DeadLetterQueue {
    * @returns Updated failure record
    */
   async markResolved(failureId: string): Promise<EmailFailure> {
-    const updateData: EmailFailureUpdate = { resolvedAt: new Date() };
+    const updateData: EmailFailureUpdate = { resolvedAt: new Date() }
     const [resolved] = await db
       .update(emailFailures)
       .set(updateData)
       .where(eq(emailFailures.id, failureId))
-      .returning();
+      .returning()
 
     if (!resolved) {
-      throw new Error(`Email failure ${failureId} not found`);
+      throw new Error(`Email failure ${failureId} not found`)
     }
 
-    return resolved;
+    return resolved
   }
 
   /**
@@ -264,23 +276,21 @@ export class DeadLetterQueue {
    * @returns Number of deleted records
    */
   async cleanup(retentionDays: number = 30): Promise<number> {
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+    const cutoffDate = new Date()
+    cutoffDate.setDate(cutoffDate.getDate() - retentionDays)
 
-    const result = await db
-      .delete(emailFailures)
-      .where(
-        and(
-          lt(emailFailures.createdAt, cutoffDate),
-          // Only delete resolved failures
-          eq(emailFailures.resolvedAt, emailFailures.resolvedAt)
-        )
-      );
+    const result = await db.delete(emailFailures).where(
+      and(
+        lt(emailFailures.createdAt, cutoffDate),
+        // Only delete resolved failures
+        eq(emailFailures.resolvedAt, emailFailures.resolvedAt),
+      ),
+    )
 
     // Return count of deleted records
     return typeof result === "object" && result !== null && "rowCount" in result
       ? (result.rowCount as number) || 0
-      : 0;
+      : 0
   }
 
   /**
@@ -294,17 +304,17 @@ export class DeadLetterQueue {
    */
   async getRecipientFailures(
     recipient: string,
-    limit: number = 10
+    limit: number = 10,
   ): Promise<EmailFailure[]> {
     const failures = await db
       .select()
       .from(emailFailures)
-      .where(eq(emailFailures.recipient, recipient));
+      .where(eq(emailFailures.recipient, recipient))
 
     // Sort by created date descending and limit
     return failures
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .slice(0, limit);
+      .slice(0, limit)
   }
 
   /**
@@ -313,31 +323,37 @@ export class DeadLetterQueue {
    * @param emailType - Email type to filter
    * @returns Failures with retry eligibility flag
    */
-  async getFailuresByType(emailType: "reminder" | "disclosure" | "admin_notification" | "verification") {
+  async getFailuresByType(
+    emailType:
+      | "reminder"
+      | "disclosure"
+      | "admin_notification"
+      | "verification",
+  ) {
     const failures = await db
       .select()
       .from(emailFailures)
-      .where(eq(emailFailures.emailType, emailType));
+      .where(eq(emailFailures.emailType, emailType))
 
     const { classifyFailure, getRetryLimitForEmailType } = await import(
       "./email-retry-service"
-    );
+    )
 
     return failures.map((failure) => {
-      const classification = classifyFailure(failure.errorMessage);
-      const retryLimit = getRetryLimitForEmailType(failure.emailType);
+      const classification = classifyFailure(failure.errorMessage)
+      const retryLimit = getRetryLimitForEmailType(failure.emailType)
       const canRetry =
         !failure.resolvedAt &&
         classification === "transient" &&
-        failure.retryCount < retryLimit;
+        failure.retryCount < retryLimit
 
       return {
         ...failure,
         classification,
         retryLimit,
         canRetry,
-      };
-    });
+      }
+    })
   }
 
   /**
@@ -350,8 +366,8 @@ export class DeadLetterQueue {
    * @returns Count of failures eligible for archiving
    */
   async archiveOld(archiveDays: number = 90): Promise<number> {
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - archiveDays);
+    const cutoffDate = new Date()
+    cutoffDate.setDate(cutoffDate.getDate() - archiveDays)
 
     const oldFailures = await db
       .select()
@@ -360,12 +376,12 @@ export class DeadLetterQueue {
         and(
           lt(emailFailures.createdAt, cutoffDate),
           // Only archive resolved failures
-          eq(emailFailures.resolvedAt, emailFailures.resolvedAt)
-        )
-      );
+          eq(emailFailures.resolvedAt, emailFailures.resolvedAt),
+        ),
+      )
 
     // TODO: Implement actual archiving to separate table
     // For now, just return count
-    return oldFailures.length;
+    return oldFailures.length
   }
 }

@@ -28,7 +28,7 @@ const mockSecret: Secret = {
       phone: "+1234567890",
       createdAt: new Date("2024-01-01T00:00:00Z"),
       updatedAt: new Date("2024-01-01T00:00:00Z"),
-    }
+    },
   ],
   contactMethod: "email",
   lastCheckIn: null,
@@ -98,7 +98,7 @@ describe("TogglePauseButton", () => {
           is_primary: true,
           created_at: "2024-01-01T00:00:00Z",
           updated_at: "2024-01-01T00:00:00Z",
-        }
+        },
       ],
       contact_method: "email",
       last_check_in: null,
@@ -144,7 +144,7 @@ describe("TogglePauseButton", () => {
           id: "secret-123",
           status: "paused",
           title: "Test Secret",
-        })
+        }),
       )
     })
 
@@ -179,7 +179,7 @@ describe("TogglePauseButton", () => {
           is_primary: true,
           created_at: "2024-01-01T00:00:00Z",
           updated_at: "2024-01-01T00:00:00Z",
-        }
+        },
       ],
       contact_method: "email",
       last_check_in: null,
@@ -225,7 +225,7 @@ describe("TogglePauseButton", () => {
           id: "secret-123",
           status: "active",
           title: "Test Secret",
-        })
+        }),
       )
     })
   })

@@ -21,21 +21,27 @@ export function LoadingIndicator({
   }
 
   return (
-    <div className={cn("flex flex-col items-center justify-center py-16", className)}>
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center py-16",
+        className,
+      )}
+    >
       <div className="relative">
-        <Loader2 className={cn(
-          sizeClasses[size],
-          "animate-spin text-muted-foreground/60"
-        )} />
-        <div className="absolute inset-0 animate-pulse">
-          <Loader2 className={cn(
+        <Loader2
+          className={cn(
             sizeClasses[size],
-            "animate-spin text-primary/20"
-          )} />
+            "text-muted-foreground/60 animate-spin",
+          )}
+        />
+        <div className="absolute inset-0 animate-pulse">
+          <Loader2
+            className={cn(sizeClasses[size], "text-primary/20 animate-spin")}
+          />
         </div>
       </div>
       {text && (
-        <p className="mt-4 text-sm text-muted-foreground animate-pulse">
+        <p className="text-muted-foreground mt-4 animate-pulse text-sm">
           {text}
         </p>
       )}
@@ -47,7 +53,7 @@ export function LoadingIndicator({
 export function SimpleLoadingIndicator({ className }: { className?: string }) {
   return (
     <div className={cn("flex items-center justify-center p-8", className)}>
-      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
     </div>
   )
 }

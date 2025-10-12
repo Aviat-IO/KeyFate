@@ -1,9 +1,9 @@
 export interface MessageTemplate {
-  id: string;
-  title: string;
-  category: string;
-  description: string;
-  content: string;
+  id: string
+  title: string
+  category: string
+  description: string
+  content: string
 }
 
 export const MESSAGE_TEMPLATES: MessageTemplate[] = [
@@ -11,7 +11,8 @@ export const MESSAGE_TEMPLATES: MessageTemplate[] = [
     id: "bitcoin-wallet",
     title: "Bitcoin Wallet Access",
     category: "Cryptocurrency",
-    description: "Share access to a Bitcoin wallet with seed phrase and instructions",
+    description:
+      "Share access to a Bitcoin wallet with seed phrase and instructions",
     content: `BITCOIN WALLET ACCESS
 
 Wallet Address: [Your wallet address]
@@ -191,7 +192,8 @@ Notes:
     id: "social-media-accounts",
     title: "Social Media Account Access",
     category: "Digital Legacy",
-    description: "Share access to social media accounts for memorialization or closure",
+    description:
+      "Share access to social media accounts for memorialization or closure",
     content: `SOCIAL MEDIA ACCOUNTS
 
 Instructions: [Choose what you want done - memorialize, delete, transfer]
@@ -227,17 +229,17 @@ My Wishes:
 Important Posts/Memories:
 [If you want specific content saved or shared]`,
   },
-];
+]
 
 export function getTemplateById(id: string): MessageTemplate | undefined {
-  return MESSAGE_TEMPLATES.find((template) => template.id === id);
+  return MESSAGE_TEMPLATES.find((template) => template.id === id)
 }
 
 export function getTemplatesByCategory(category: string): MessageTemplate[] {
-  return MESSAGE_TEMPLATES.filter((template) => template.category === category);
+  return MESSAGE_TEMPLATES.filter((template) => template.category === category)
 }
 
 export function getAllCategories(): string[] {
-  const categories = new Set(MESSAGE_TEMPLATES.map((t) => t.category));
-  return Array.from(categories).sort();
+  const categories = new Set(MESSAGE_TEMPLATES.map((t) => t.category))
+  return Array.from(categories).sort()
 }

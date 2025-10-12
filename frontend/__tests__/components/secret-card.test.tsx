@@ -12,9 +12,7 @@ vi.mock("@/components/check-in-button", () => ({
         onCheckInSuccess?.({
           id: secretId,
           status: "active",
-          nextCheckIn: new Date(
-            Date.now() + 7 * 24 * 60 * 60 * 1000,
-          ),
+          nextCheckIn: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         })
       }
     >
@@ -54,7 +52,7 @@ const mockSecret: Secret = {
       phone: "+1234567890",
       createdAt: new Date(),
       updatedAt: new Date(),
-    }
+    },
   ],
   status: "active",
   nextCheckIn: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
@@ -89,7 +87,9 @@ describe("SecretCard Component", () => {
     expect(recipientHeaders.length).toBeGreaterThan(0)
     expect(recipientHeaders[0]).toBeInTheDocument()
 
-    const recipientElements = screen.getAllByText(/• John Doe \(john@example\.com\)/)
+    const recipientElements = screen.getAllByText(
+      /• John Doe \(john@example\.com\)/,
+    )
     expect(recipientElements.length).toBeGreaterThan(0)
     expect(recipientElements[0]).toBeInTheDocument()
   })
@@ -119,9 +119,7 @@ describe("SecretCard Component", () => {
   it("shows upcoming status for secrets due in 3-5 days", () => {
     const upcomingSecret = {
       ...mockSecret,
-      nextCheckIn: new Date(
-        Date.now() + 4 * 24 * 60 * 60 * 1000,
-      ), // 4 days from now
+      nextCheckIn: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000), // 4 days from now
     }
 
     render(<SecretCard secret={upcomingSecret} />)
@@ -190,7 +188,9 @@ describe("SecretCard Component", () => {
     expect(recipientHeaders.length).toBeGreaterThan(0)
     expect(recipientHeaders[0]).toBeInTheDocument()
 
-    const recipientElements = screen.getAllByText(/• John Doe \(john@example\.com\)/)
+    const recipientElements = screen.getAllByText(
+      /• John Doe \(john@example\.com\)/,
+    )
     expect(recipientElements.length).toBeGreaterThan(0)
     expect(recipientElements[0]).toBeInTheDocument()
   })
@@ -223,8 +223,8 @@ describe("SecretCard Component", () => {
           phone: "+9876543210",
           createdAt: new Date(),
           updatedAt: new Date(),
-        }
-      ]
+        },
+      ],
     }
 
     render(<SecretCard secret={multiRecipientSecret} />)

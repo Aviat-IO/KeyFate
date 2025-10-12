@@ -8,37 +8,37 @@
  * 4. Successful authentication still redirects properly
  */
 
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { signIn } from 'next-auth/react'
-import { useSearchParams } from 'next/navigation'
-import SignInPage from '@/app/sign-in/page'
-import { vi } from 'vitest'
+import { render, screen, fireEvent, waitFor } from "@testing-library/react"
+import { signIn } from "next-auth/react"
+import { useSearchParams } from "next/navigation"
+import SignInPage from "@/app/sign-in/page"
+import { vi } from "vitest"
 
 // Mock next-auth
-vi.mock('next-auth/react', () => ({
+vi.mock("next-auth/react", () => ({
   signIn: vi.fn(),
 }))
 
 // Mock next/navigation
-vi.mock('next/navigation', () => ({
+vi.mock("next/navigation", () => ({
   useSearchParams: vi.fn(),
 }))
 
 // Mock window.location
 const mockLocation = {
-  href: 'http://localhost:3000/sign-in',
-  search: '',
-  pathname: '/sign-in',
+  href: "http://localhost:3000/sign-in",
+  search: "",
+  pathname: "/sign-in",
 }
 
-Object.defineProperty(window, 'location', {
+Object.defineProperty(window, "location", {
   value: mockLocation,
   writable: true,
 })
 
 // Mock history.replaceState
 const mockReplaceState = vi.fn()
-Object.defineProperty(window, 'history', {
+Object.defineProperty(window, "history", {
   value: { replaceState: mockReplaceState },
   writable: true,
 })
@@ -46,7 +46,7 @@ Object.defineProperty(window, 'history', {
 const mockSignIn = signIn as any
 const mockUseSearchParams = useSearchParams as any
 
-describe('Sign-in Error Handling', () => {
+describe("Sign-in Error Handling", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockUseSearchParams.mockReturnValue({
@@ -54,11 +54,11 @@ describe('Sign-in Error Handling', () => {
     } as any)
   })
 
-  it('should display error message without redirecting on authentication failure', async () => {
+  it("should display error message without redirecting on authentication failure", async () => {
     // Mock failed authentication
     mockSignIn.mockResolvedValue({
       ok: false,
-      error: 'CredentialsSignin',
+      error: "CredentialsSignin",
       status: 401,
       url: null,
     })
@@ -68,10 +68,10 @@ describe('Sign-in Error Handling', () => {
     // Fill in form
     const emailInput = screen.getByLabelText(/email/i)
     const passwordInput = screen.getByLabelText(/password/i)
-    const submitButton = screen.getByRole('button', { name: /sign in/i })
+    const submitButton = screen.getByRole("button", { name: /sign in/i })
 
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } })
-    fireEvent.change(passwordInput, { target: { value: 'wrongpassword' } })
+    fireEvent.change(emailInput, { target: { value: "test@example.com" } })
+    fireEvent.change(passwordInput, { target: { value: "wrongpassword" } })
 
     // Submit form
     fireEvent.click(submitButton)
@@ -82,24 +82,24 @@ describe('Sign-in Error Handling', () => {
     })
 
     // Verify no redirect occurred (window.location.href should not be set)
-    expect(window.location.href).toBe('http://localhost:3000/sign-in')
+    expect(window.location.href).toBe("http://localhost:3000/sign-in")
 
     // Verify signIn was called with redirect: false
-    expect(mockSignIn).toHaveBeenCalledWith('credentials', {
-      email: 'test@example.com',
-      password: 'wrongpassword',
+    expect(mockSignIn).toHaveBeenCalledWith("credentials", {
+      email: "test@example.com",
+      password: "wrongpassword",
       redirect: false,
-      callbackUrl: '/',
+      callbackUrl: "/",
     })
   })
 
-  it('should redirect only on successful authentication', async () => {
+  it("should redirect only on successful authentication", async () => {
     // Mock successful authentication
     mockSignIn.mockResolvedValue({
       ok: true,
       error: null,
       status: 200,
-      url: 'http://localhost:3000/'
+      url: "http://localhost:3000/",
     })
 
     render(<SignInPage />)
@@ -107,10 +107,10 @@ describe('Sign-in Error Handling', () => {
     // Fill in form
     const emailInput = screen.getByLabelText(/email/i)
     const passwordInput = screen.getByLabelText(/password/i)
-    const submitButton = screen.getByRole('button', { name: /sign in/i })
+    const submitButton = screen.getByRole("button", { name: /sign in/i })
 
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } })
-    fireEvent.change(passwordInput, { target: { value: 'correctpassword' } })
+    fireEvent.change(emailInput, { target: { value: "test@example.com" } })
+    fireEvent.change(passwordInput, { target: { value: "correctpassword" } })
 
     // Submit form
     fireEvent.click(submitButton)
@@ -121,20 +121,22 @@ describe('Sign-in Error Handling', () => {
     })
 
     // Since we can't test actual navigation in jsdom, we verify the signIn call
-    expect(mockSignIn).toHaveBeenCalledWith('credentials', {
-      email: 'test@example.com',
-      password: 'correctpassword',
+    expect(mockSignIn).toHaveBeenCalledWith("credentials", {
+      email: "test@example.com",
+      password: "correctpassword",
       redirect: false,
-      callbackUrl: '/',
+      callbackUrl: "/",
     })
   })
 
-  it('should clear URL error parameters without causing navigation', async () => {
+  it("should clear URL error parameters without causing navigation", async () => {
     // Mock URL with error parameter
     mockUseSearchParams.mockReturnValue({
-      get: vi.fn().mockImplementation((key) =>
-        key === 'error' ? 'CredentialsSignin' : null
-      ),
+      get: vi
+        .fn()
+        .mockImplementation((key) =>
+          key === "error" ? "CredentialsSignin" : null,
+        ),
     } as any)
 
     // Mock URL object
@@ -143,14 +145,14 @@ describe('Sign-in Error Handling', () => {
         has: vi.fn().mockReturnValue(true),
         delete: vi.fn(),
       },
-      toString: vi.fn().mockReturnValue('http://localhost:3000/sign-in')
+      toString: vi.fn().mockReturnValue("http://localhost:3000/sign-in"),
     }
 
     global.URL = vi.fn().mockImplementation(() => mockUrl) as any
 
     mockSignIn.mockResolvedValue({
       ok: false,
-      error: 'CredentialsSignin',
+      error: "CredentialsSignin",
       status: 401,
       url: null,
     })
@@ -160,10 +162,10 @@ describe('Sign-in Error Handling', () => {
     // Fill in form and submit
     const emailInput = screen.getByLabelText(/email/i)
     const passwordInput = screen.getByLabelText(/password/i)
-    const submitButton = screen.getByRole('button', { name: /sign in/i })
+    const submitButton = screen.getByRole("button", { name: /sign in/i })
 
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } })
-    fireEvent.change(passwordInput, { target: { value: 'wrongpassword' } })
+    fireEvent.change(emailInput, { target: { value: "test@example.com" } })
+    fireEvent.change(passwordInput, { target: { value: "wrongpassword" } })
     fireEvent.click(submitButton)
 
     // Wait for form submission
@@ -172,14 +174,18 @@ describe('Sign-in Error Handling', () => {
     })
 
     // Verify URL manipulation was called properly
-    expect(mockUrl.searchParams.delete).toHaveBeenCalledWith('error')
-    expect(mockReplaceState).toHaveBeenCalledWith({}, '', 'http://localhost:3000/sign-in')
+    expect(mockUrl.searchParams.delete).toHaveBeenCalledWith("error")
+    expect(mockReplaceState).toHaveBeenCalledWith(
+      {},
+      "",
+      "http://localhost:3000/sign-in",
+    )
   })
 
-  it('should persist error message until user takes action', async () => {
+  it("should persist error message until user takes action", async () => {
     mockSignIn.mockResolvedValue({
       ok: false,
-      error: 'CredentialsSignin',
+      error: "CredentialsSignin",
       status: 401,
       url: null,
     })
@@ -189,10 +195,10 @@ describe('Sign-in Error Handling', () => {
     // Submit form with invalid credentials
     const emailInput = screen.getByLabelText(/email/i)
     const passwordInput = screen.getByLabelText(/password/i)
-    const submitButton = screen.getByRole('button', { name: /sign in/i })
+    const submitButton = screen.getByRole("button", { name: /sign in/i })
 
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } })
-    fireEvent.change(passwordInput, { target: { value: 'wrongpassword' } })
+    fireEvent.change(emailInput, { target: { value: "test@example.com" } })
+    fireEvent.change(passwordInput, { target: { value: "wrongpassword" } })
     fireEvent.click(submitButton)
 
     // Wait for error message
@@ -201,12 +207,12 @@ describe('Sign-in Error Handling', () => {
     })
 
     // Simulate waiting (error should still be visible)
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise((resolve) => setTimeout(resolve, 100))
 
     expect(screen.getByText(/invalid email or password/i)).toBeInTheDocument()
 
     // Error should persist until user modifies input or submits again
-    fireEvent.change(passwordInput, { target: { value: 'newpassword' } })
+    fireEvent.change(passwordInput, { target: { value: "newpassword" } })
     fireEvent.click(submitButton)
 
     // Error should be cleared when new attempt is made

@@ -30,7 +30,7 @@ const createMockSecret = (overrides?: Partial<Secret>): Secret => {
         phone: "+1234567890",
         createdAt: new Date(),
         updatedAt: new Date(),
-      }
+      },
     ],
     status: "active",
     nextCheckIn: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
@@ -104,9 +104,7 @@ describe("SecretCard Time Display", () => {
   describe("Granular time formatting - Hours", () => {
     it("displays time in hours format when 1-24 hours remaining", () => {
       const secret = createMockSecret({
-        nextCheckIn: new Date(
-          Date.now() + 5 * 60 * 60 * 1000,
-        ).toISOString(),
+        nextCheckIn: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(),
       })
 
       render(<SecretCard secret={secret} />)
@@ -132,9 +130,7 @@ describe("SecretCard Time Display", () => {
 
     it("displays time in hours format when less than 24 hours remaining", () => {
       const secret = createMockSecret({
-        nextCheckIn: new Date(
-          Date.now() + 23 * 60 * 60 * 1000,
-        ).toISOString(),
+        nextCheckIn: new Date(Date.now() + 23 * 60 * 60 * 1000).toISOString(),
       })
 
       render(<SecretCard secret={secret} />)
@@ -225,9 +221,7 @@ describe("SecretCard Time Display", () => {
     it("displays 'Sent' with timeago format for triggered secrets", () => {
       const secret = createMockSecret({
         triggeredAt: new Date(),
-        triggeredAt: new Date(
-          Date.now() - 2 * 60 * 60 * 1000,
-        ).toISOString(), // 2 hours ago
+        triggeredAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
       })
 
       render(<SecretCard secret={secret} />)
@@ -240,9 +234,7 @@ describe("SecretCard Time Display", () => {
   describe("Consistent display across mobile and desktop layouts", () => {
     it("displays granular time consistently in both layouts", () => {
       const secret = createMockSecret({
-        nextCheckIn: new Date(
-          Date.now() + 5 * 60 * 60 * 1000,
-        ).toISOString(),
+        nextCheckIn: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(),
       })
 
       render(<SecretCard secret={secret} />)
