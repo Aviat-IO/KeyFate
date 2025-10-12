@@ -205,8 +205,8 @@ export function SecretDetailsForm({ secret }: SecretDetailsFormProps) {
             </h3>
             <div className="space-y-4">
               {secret.recipients.map((recipient, index) => (
-                <div 
-                  key={recipient.id} 
+                <div
+                  key={recipient.id}
                   className="rounded-lg border p-3 text-sm"
                 >
                   <div className="mb-2 flex items-center">

@@ -21,7 +21,7 @@ const mockSignOut = vi.fn()
 vi.mock("next-auth/react", () => ({
   useSession: () => mockUseSession(),
   SessionProvider: ({ children }: { children: ReactNode }) => children,
-  signOut: vi.fn()
+  signOut: vi.fn(),
 }))
 
 vi.mock("@/utils/supabase/client", () => {
@@ -68,9 +68,9 @@ const mockSession = {
   user: {
     id: "user-123",
     email: "test@example.com",
-    name: "Test User"
+    name: "Test User",
   },
-  expires: "2024-12-31T23:59:59.999Z"
+  expires: "2024-12-31T23:59:59.999Z",
 }
 
 describe("NavBar", () => {
@@ -79,7 +79,7 @@ describe("NavBar", () => {
     mockPathname.mockReturnValue("/")
     mockUseSession.mockReturnValue({
       data: null,
-      status: "unauthenticated"
+      status: "unauthenticated",
     })
   })
 
@@ -94,7 +94,7 @@ describe("NavBar", () => {
   it("should render logo linking to dashboard when authenticated", () => {
     mockUseSession.mockReturnValue({
       data: mockSession,
-      status: "authenticated"
+      status: "authenticated",
     })
 
     render(<NavBar />)
@@ -127,7 +127,7 @@ describe("NavBar", () => {
 
     mockUseSession.mockReturnValue({
       data: mockSession,
-      status: "authenticated"
+      status: "authenticated",
     })
 
     render(<NavBar />)
@@ -146,7 +146,7 @@ describe("NavBar", () => {
 
     mockUseSession.mockReturnValue({
       data: mockSession,
-      status: "authenticated"
+      status: "authenticated",
     })
 
     render(<NavBar />)

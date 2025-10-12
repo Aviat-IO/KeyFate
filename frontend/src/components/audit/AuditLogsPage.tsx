@@ -1,8 +1,14 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -10,106 +16,108 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@/components/ui/table"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Download } from "lucide-react";
+} from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Download } from "lucide-react"
 
 interface AuditLog {
-  id: string;
-  eventType: string;
-  eventCategory: string;
-  resourceType: string | null;
-  resourceId: string | null;
-  ipAddress: string | null;
-  userAgent: string | null;
-  createdAt: string;
-  details: Record<string, any> | null;
+  id: string
+  eventType: string
+  eventCategory: string
+  resourceType: string | null
+  resourceId: string | null
+  ipAddress: string | null
+  userAgent: string | null
+  createdAt: string
+  details: Record<string, any> | null
 }
 
 interface AuditLogsPageProps {
-  initialLogs?: AuditLog[];
+  initialLogs?: AuditLog[]
 }
 
 export function AuditLogsPage({ initialLogs = [] }: AuditLogsPageProps) {
-  const [logs, setLogs] = useState<AuditLog[]>(initialLogs);
-  const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [eventTypeFilter, setEventTypeFilter] = useState<string>("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("");
-  const [startDate, setStartDate] = useState<Date>();
-  const [endDate, setEndDate] = useState<Date>();
-  const [search, setSearch] = useState("");
+  const [logs, setLogs] = useState<AuditLog[]>(initialLogs)
+  const [loading, setLoading] = useState(false)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [eventTypeFilter, setEventTypeFilter] = useState<string>("")
+  const [categoryFilter, setCategoryFilter] = useState<string>("")
+  const [startDate, setStartDate] = useState<Date>()
+  const [endDate, setEndDate] = useState<Date>()
+  const [search, setSearch] = useState("")
 
   const fetchLogs = async () => {
-    setLoading(true);
+    setLoading(true)
     try {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: "50",
-      });
+      })
 
-      if (eventTypeFilter) params.append("event_type", eventTypeFilter);
-      if (categoryFilter) params.append("event_category", categoryFilter);
-      if (startDate) params.append("start_date", startDate.toISOString());
-      if (endDate) params.append("end_date", endDate.toISOString());
-      if (search) params.append("search", search);
+      if (eventTypeFilter) params.append("event_type", eventTypeFilter)
+      if (categoryFilter) params.append("event_category", categoryFilter)
+      if (startDate) params.append("start_date", startDate.toISOString())
+      if (endDate) params.append("end_date", endDate.toISOString())
+      if (search) params.append("search", search)
 
-      const response = await fetch(`/api/audit-logs?${params.toString()}`);
-      if (!response.ok) throw new Error("Failed to fetch audit logs");
+      const response = await fetch(`/api/audit-logs?${params.toString()}`)
+      if (!response.ok) throw new Error("Failed to fetch audit logs")
 
-      const data = await response.json();
-      setLogs(data.logs);
-      setTotalPages(data.pagination.totalPages);
+      const data = await response.json()
+      setLogs(data.logs)
+      setTotalPages(data.pagination.totalPages)
     } catch (error) {
-      console.error("Error fetching audit logs:", error);
+      console.error("Error fetching audit logs:", error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   useEffect(() => {
-    fetchLogs();
-  }, [page, eventTypeFilter, categoryFilter, startDate, endDate]);
+    fetchLogs()
+  }, [page, eventTypeFilter, categoryFilter, startDate, endDate])
 
   const handleExport = async (format: "csv" | "json") => {
     try {
-      const params = new URLSearchParams({ format });
-      if (eventTypeFilter) params.append("event_type", eventTypeFilter);
-      if (categoryFilter) params.append("event_category", categoryFilter);
-      if (startDate) params.append("start_date", startDate.toISOString());
-      if (endDate) params.append("end_date", endDate.toISOString());
+      const params = new URLSearchParams({ format })
+      if (eventTypeFilter) params.append("event_type", eventTypeFilter)
+      if (categoryFilter) params.append("event_category", categoryFilter)
+      if (startDate) params.append("start_date", startDate.toISOString())
+      if (endDate) params.append("end_date", endDate.toISOString())
 
-      const response = await fetch(`/api/audit-logs/export?${params.toString()}`);
-      if (!response.ok) throw new Error("Failed to export audit logs");
+      const response = await fetch(
+        `/api/audit-logs/export?${params.toString()}`,
+      )
+      if (!response.ok) throw new Error("Failed to export audit logs")
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `audit-logs-${new Date().toISOString()}.${format}`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `audit-logs-${new Date().toISOString()}.${format}`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
     } catch (error) {
-      console.error("Error exporting audit logs:", error);
+      console.error("Error exporting audit logs:", error)
     }
-  };
+  }
 
   const formatEventType = (eventType: string) => {
     return eventType
       .split("_")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
-  };
+      .join(" ")
+  }
 
   return (
     <Card>
@@ -122,7 +130,12 @@ export function AuditLogsPage({ initialLogs = [] }: AuditLogsPageProps) {
       <CardContent>
         <div className="space-y-4">
           <div className="flex flex-wrap gap-4">
-            <Select value={eventTypeFilter || "all"} onValueChange={(value) => setEventTypeFilter(value === "all" ? "" : value)}>
+            <Select
+              value={eventTypeFilter || "all"}
+              onValueChange={(value) =>
+                setEventTypeFilter(value === "all" ? "" : value)
+              }
+            >
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Event Type" />
               </SelectTrigger>
@@ -132,16 +145,29 @@ export function AuditLogsPage({ initialLogs = [] }: AuditLogsPageProps) {
                 <SelectItem value="secret_edited">Secret Edited</SelectItem>
                 <SelectItem value="secret_deleted">Secret Deleted</SelectItem>
                 <SelectItem value="check_in">Check In</SelectItem>
-                <SelectItem value="secret_triggered">Secret Triggered</SelectItem>
+                <SelectItem value="secret_triggered">
+                  Secret Triggered
+                </SelectItem>
                 <SelectItem value="recipient_added">Recipient Added</SelectItem>
-                <SelectItem value="recipient_removed">Recipient Removed</SelectItem>
-                <SelectItem value="settings_changed">Settings Changed</SelectItem>
+                <SelectItem value="recipient_removed">
+                  Recipient Removed
+                </SelectItem>
+                <SelectItem value="settings_changed">
+                  Settings Changed
+                </SelectItem>
                 <SelectItem value="login">Login</SelectItem>
-                <SelectItem value="subscription_changed">Subscription Changed</SelectItem>
+                <SelectItem value="subscription_changed">
+                  Subscription Changed
+                </SelectItem>
               </SelectContent>
             </Select>
 
-            <Select value={categoryFilter || "all"} onValueChange={(value) => setCategoryFilter(value === "all" ? "" : value)}>
+            <Select
+              value={categoryFilter || "all"}
+              onValueChange={(value) =>
+                setCategoryFilter(value === "all" ? "" : value)
+              }
+            >
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
@@ -159,7 +185,11 @@ export function AuditLogsPage({ initialLogs = [] }: AuditLogsPageProps) {
               type="date"
               placeholder="Start Date"
               value={startDate ? startDate.toISOString().split("T")[0] : ""}
-              onChange={(e) => setStartDate(e.target.value ? new Date(e.target.value) : undefined)}
+              onChange={(e) =>
+                setStartDate(
+                  e.target.value ? new Date(e.target.value) : undefined,
+                )
+              }
               className="w-[200px]"
             />
 
@@ -167,16 +197,28 @@ export function AuditLogsPage({ initialLogs = [] }: AuditLogsPageProps) {
               type="date"
               placeholder="End Date"
               value={endDate ? endDate.toISOString().split("T")[0] : ""}
-              onChange={(e) => setEndDate(e.target.value ? new Date(e.target.value) : undefined)}
+              onChange={(e) =>
+                setEndDate(
+                  e.target.value ? new Date(e.target.value) : undefined,
+                )
+              }
               className="w-[200px]"
             />
 
-            <div className="flex gap-2 ml-auto">
-              <Button variant="outline" size="sm" onClick={() => handleExport("csv")}>
+            <div className="ml-auto flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleExport("csv")}
+              >
                 <Download className="mr-2 h-4 w-4" />
                 Export CSV
               </Button>
-              <Button variant="outline" size="sm" onClick={() => handleExport("json")}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleExport("json")}
+              >
                 <Download className="mr-2 h-4 w-4" />
                 Export JSON
               </Button>
@@ -211,13 +253,17 @@ export function AuditLogsPage({ initialLogs = [] }: AuditLogsPageProps) {
                   logs.map((log) => (
                     <TableRow key={log.id}>
                       <TableCell>{formatEventType(log.eventType)}</TableCell>
-                      <TableCell className="capitalize">{log.eventCategory}</TableCell>
+                      <TableCell className="capitalize">
+                        {log.eventCategory}
+                      </TableCell>
                       <TableCell>
                         {log.resourceType && log.resourceId
                           ? `${log.resourceType}: ${log.resourceId.slice(0, 8)}...`
                           : "-"}
                       </TableCell>
-                      <TableCell>{new Date(log.createdAt).toLocaleString()}</TableCell>
+                      <TableCell>
+                        {new Date(log.createdAt).toLocaleString()}
+                      </TableCell>
                       <TableCell>{log.ipAddress || "-"}</TableCell>
                     </TableRow>
                   ))
@@ -226,8 +272,8 @@ export function AuditLogsPage({ initialLogs = [] }: AuditLogsPageProps) {
             </Table>
           </div>
 
-          <div className="flex justify-between items-center">
-            <div className="text-sm text-muted-foreground">
+          <div className="flex items-center justify-between">
+            <div className="text-muted-foreground text-sm">
               Page {page} of {totalPages}
             </div>
             <div className="flex gap-2">
@@ -252,5 +298,5 @@ export function AuditLogsPage({ initialLogs = [] }: AuditLogsPageProps) {
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }

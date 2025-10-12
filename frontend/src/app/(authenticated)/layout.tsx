@@ -1,5 +1,8 @@
 import { NavBar } from "@/components/nav-bar"
-import { DashboardService, DashboardTimeoutError } from "@/lib/dashboard/dashboard-service"
+import {
+  DashboardService,
+  DashboardTimeoutError,
+} from "@/lib/dashboard/dashboard-service"
 import { redirect } from "next/navigation"
 import { ReactNode } from "react"
 
@@ -10,7 +13,9 @@ interface AuthenticatedLayoutProps {
 export default async function AuthenticatedLayout({
   children,
 }: AuthenticatedLayoutProps) {
-  console.log("[AuthenticatedLayout] Starting layout check with timeout protection...")
+  console.log(
+    "[AuthenticatedLayout] Starting layout check with timeout protection...",
+  )
 
   try {
     // Use the dashboard service for session management with timeout protection
@@ -47,7 +52,9 @@ export default async function AuthenticatedLayout({
 
     // Handle timeout errors specifically
     if (error instanceof DashboardTimeoutError) {
-      console.error("[AuthenticatedLayout] Session timeout detected, redirecting to sign-in")
+      console.error(
+        "[AuthenticatedLayout] Session timeout detected, redirecting to sign-in",
+      )
     }
 
     redirect("/sign-in")

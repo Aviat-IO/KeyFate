@@ -41,12 +41,16 @@ describe("NewSecretForm", () => {
   it("should have valid check-in intervals in dropdown", async () => {
     render(<NewSecretForm />)
 
-    const selectTrigger = screen.getByRole("combobox", { name: /trigger deadline/i })
+    const selectTrigger = screen.getByRole("combobox", {
+      name: /trigger deadline/i,
+    })
     fireEvent.click(selectTrigger)
 
     await waitFor(() => {
       expect(screen.getByRole("option", { name: "1 week" })).toBeInTheDocument()
-      expect(screen.getByRole("option", { name: "1 month" })).toBeInTheDocument()
+      expect(
+        screen.getByRole("option", { name: "1 month" }),
+      ).toBeInTheDocument()
       expect(screen.getByRole("option", { name: "1 year" })).toBeInTheDocument()
     })
   })
@@ -60,7 +64,9 @@ describe("NewSecretForm", () => {
 
     // Wait for the fields to be visible
     await waitFor(() => {
-      expect(screen.getByLabelText(/total shares to create/i)).toBeInTheDocument()
+      expect(
+        screen.getByLabelText(/total shares to create/i),
+      ).toBeInTheDocument()
     })
 
     const totalSharesInput = screen.getByLabelText(/total shares to create/i)
@@ -76,7 +82,11 @@ describe("NewSecretForm", () => {
 
     // Wait for validation error to appear
     await waitFor(() => {
-      expect(screen.getByText("Threshold must be less than or equal to total shares.")).toBeInTheDocument()
+      expect(
+        screen.getByText(
+          "Threshold must be less than or equal to total shares.",
+        ),
+      ).toBeInTheDocument()
     })
   })
 
@@ -84,7 +94,7 @@ describe("NewSecretForm", () => {
     render(<NewSecretForm />)
 
     const titleInput = screen.getByLabelText(/secret title/i)
-    
+
     // Focus and blur without entering any value
     fireEvent.focus(titleInput)
     fireEvent.blur(titleInput)
@@ -99,18 +109,28 @@ describe("NewSecretForm", () => {
     // Mock fetch to return an error
     ;(global.fetch as any).mockResolvedValueOnce({
       ok: false,
-      json: async () => ({ error: "Failed to create secret: Database connection error" }),
+      json: async () => ({
+        error: "Failed to create secret: Database connection error",
+      }),
     })
 
     render(<NewSecretForm />)
 
     // Fill in all required fields
-    fireEvent.change(screen.getByLabelText(/secret title/i), { target: { value: "Test Secret" } })
-    fireEvent.change(screen.getByLabelText(/secret message/i), { target: { value: "Test message" } })
-    fireEvent.change(screen.getByLabelText(/^name$/i), { target: { value: "John Doe" } })
-    
+    fireEvent.change(screen.getByLabelText(/secret title/i), {
+      target: { value: "Test Secret" },
+    })
+    fireEvent.change(screen.getByLabelText(/secret message/i), {
+      target: { value: "Test message" },
+    })
+    fireEvent.change(screen.getByLabelText(/^name$/i), {
+      target: { value: "John Doe" },
+    })
+
     // Fill in email since contact_method defaults to "email"
-    fireEvent.change(screen.getByLabelText(/^email$/i), { target: { value: "test@example.com" } })
+    fireEvent.change(screen.getByLabelText(/^email$/i), {
+      target: { value: "test@example.com" },
+    })
 
     // Submit the form
     const submitButton = screen.getByText(/create secret/i)
@@ -119,33 +139,41 @@ describe("NewSecretForm", () => {
     // Wait for error to appear
     await waitFor(() => {
       expect(screen.getByText("Error Creating Secret")).toBeInTheDocument()
-      expect(screen.getByText("Failed to create secret: Database connection error")).toBeInTheDocument()
+      expect(
+        screen.getByText("Failed to create secret: Database connection error"),
+      ).toBeInTheDocument()
     })
   })
 
   it("should show select dropdown for free users", () => {
     render(<NewSecretForm isPaid={false} />)
 
-    const selectTrigger = screen.getByRole("combobox", { name: /trigger deadline/i })
+    const selectTrigger = screen.getByRole("combobox", {
+      name: /trigger deadline/i,
+    })
     expect(selectTrigger).toBeInTheDocument()
-    
+
     fireEvent.click(selectTrigger)
-    
+
     expect(screen.getByRole("option", { name: "1 week" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1 month" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1 year" })).toBeInTheDocument()
-    
-    expect(screen.getByText(/upgrade to pro for more interval options/i)).toBeInTheDocument()
+
+    expect(
+      screen.getByText(/upgrade to pro for more interval options/i),
+    ).toBeInTheDocument()
   })
 
   it("should show select dropdown for paid users with more options", () => {
     render(<NewSecretForm isPaid={true} />)
 
-    const selectTrigger = screen.getByRole("combobox", { name: /trigger deadline/i })
+    const selectTrigger = screen.getByRole("combobox", {
+      name: /trigger deadline/i,
+    })
     expect(selectTrigger).toBeInTheDocument()
-    
+
     fireEvent.click(selectTrigger)
-    
+
     expect(screen.getByRole("option", { name: "1 day" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "3 days" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "1 week" })).toBeInTheDocument()

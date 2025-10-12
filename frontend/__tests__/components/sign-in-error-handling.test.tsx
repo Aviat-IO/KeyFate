@@ -63,7 +63,11 @@ describe("Sign-In Error Handling", () => {
 
       await waitFor(() => {
         expect(screen.getByRole("alert")).toBeInTheDocument()
-        expect(screen.getByText("Invalid email or password. Please check your credentials and try again.")).toBeInTheDocument()
+        expect(
+          screen.getByText(
+            "Invalid email or password. Please check your credentials and try again.",
+          ),
+        ).toBeInTheDocument()
       })
     })
 
@@ -71,24 +75,28 @@ describe("Sign-In Error Handling", () => {
       const errorTestCases = [
         {
           errorCode: "CredentialsSignin",
-          expectedMessage: "Invalid email or password. Please check your credentials and try again."
+          expectedMessage:
+            "Invalid email or password. Please check your credentials and try again.",
         },
         {
           errorCode: "Configuration",
-          expectedMessage: "There is a problem with the authentication configuration. Please try again later."
+          expectedMessage:
+            "There is a problem with the authentication configuration. Please try again later.",
         },
         {
           errorCode: "AccessDenied",
-          expectedMessage: "Access denied. You do not have permission to sign in."
+          expectedMessage:
+            "Access denied. You do not have permission to sign in.",
         },
         {
           errorCode: "OAuthSignin",
-          expectedMessage: "Authentication provider error. Please try again."
+          expectedMessage: "Authentication provider error. Please try again.",
         },
         {
           errorCode: "OAuthAccountNotLinked",
-          expectedMessage: "This email is already associated with another account. Please use the original sign-in method."
-        }
+          expectedMessage:
+            "This email is already associated with another account. Please use the original sign-in method.",
+        },
       ]
 
       for (const testCase of errorTestCases) {
@@ -121,7 +129,11 @@ describe("Sign-In Error Handling", () => {
 
       await waitFor(() => {
         expect(screen.getByRole("alert")).toBeInTheDocument()
-        expect(screen.getByText("An authentication error occurred. Please try again.")).toBeInTheDocument()
+        expect(
+          screen.getByText(
+            "An authentication error occurred. Please try again.",
+          ),
+        ).toBeInTheDocument()
       })
     })
 
@@ -157,7 +169,7 @@ describe("Sign-In Error Handling", () => {
       // FAILING TEST: This is probably where the bug is - signIn error not being displayed
       vi.mocked(signIn).mockResolvedValue({
         error: "CredentialsSignin",
-        ok: false
+        ok: false,
       })
 
       await act(async () => {
@@ -177,14 +189,18 @@ describe("Sign-In Error Handling", () => {
 
       await waitFor(() => {
         expect(screen.getByRole("alert")).toBeInTheDocument()
-        expect(screen.getByText("Invalid email or password. Please check your credentials and try again.")).toBeInTheDocument()
+        expect(
+          screen.getByText(
+            "Invalid email or password. Please check your credentials and try again.",
+          ),
+        ).toBeInTheDocument()
       })
     })
 
     it("should handle signIn returning null error with generic message", async () => {
       vi.mocked(signIn).mockResolvedValue({
         error: null,
-        ok: false
+        ok: false,
       })
 
       await act(async () => {
@@ -204,7 +220,9 @@ describe("Sign-In Error Handling", () => {
 
       await waitFor(() => {
         expect(screen.getByRole("alert")).toBeInTheDocument()
-        expect(screen.getByText("Invalid email or password. Please try again.")).toBeInTheDocument()
+        expect(
+          screen.getByText("Invalid email or password. Please try again."),
+        ).toBeInTheDocument()
       })
     })
 
@@ -228,7 +246,9 @@ describe("Sign-In Error Handling", () => {
 
       await waitFor(() => {
         expect(screen.getByRole("alert")).toBeInTheDocument()
-        expect(screen.getByText("An unexpected error occurred. Please try again.")).toBeInTheDocument()
+        expect(
+          screen.getByText("An unexpected error occurred. Please try again."),
+        ).toBeInTheDocument()
       })
     })
 
@@ -241,7 +261,8 @@ describe("Sign-In Error Handling", () => {
       Object.defineProperty(window, "location", {
         value: {
           href: "http://localhost:3000/sign-in?error=CredentialsSignin",
-          toString: () => "http://localhost:3000/sign-in?error=CredentialsSignin",
+          toString: () =>
+            "http://localhost:3000/sign-in?error=CredentialsSignin",
         },
         writable: true,
       })
@@ -317,7 +338,12 @@ describe("Sign-In Error Handling", () => {
 
   describe("Loading State During Sign-In", () => {
     it("should show loading state and disable button during sign-in", async () => {
-      vi.mocked(signIn).mockImplementation(() => new Promise(resolve => setTimeout(() => resolve({ ok: true }), 100)))
+      vi.mocked(signIn).mockImplementation(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(() => resolve({ ok: true }), 100),
+          ),
+      )
 
       await act(async () => {
         render(<SignInPage />)
@@ -354,7 +380,9 @@ describe("Sign-In Error Handling", () => {
       vi.mocked(signIn).mockResolvedValue({ ok: true })
 
       // Mock window.location.href setter
-      const mockLocation = { href: "http://localhost:3000/sign-in?callbackUrl=%2Fdashboard" }
+      const mockLocation = {
+        href: "http://localhost:3000/sign-in?callbackUrl=%2Fdashboard",
+      }
       Object.defineProperty(window, "location", {
         value: mockLocation,
         writable: true,

@@ -33,11 +33,14 @@ export function UpgradeSuccessDialog() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => {
-      if (!isOpen) {
-        handleClose()
-      }
-    }}>
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) {
+          handleClose()
+        }
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
@@ -52,7 +55,7 @@ export function UpgradeSuccessDialog() {
         <div className="space-y-4 py-4">
           <div className="space-y-3">
             <h4 className="text-sm font-semibold">Your Pro Benefits:</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <ul className="text-muted-foreground space-y-2 text-sm">
               {TIER_CONFIGS.pro?.features.map((feature, index) => (
                 <li key={index} className="flex items-start gap-2">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600 dark:text-green-400" />

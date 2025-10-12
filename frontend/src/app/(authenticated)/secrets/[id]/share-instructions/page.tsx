@@ -36,12 +36,12 @@ function ShareDisplay({
   }
 
   const handleCopy = () => {
-      if (shareHex) {
-        navigator.clipboard.writeText(shareHex)
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
-      }
+    if (shareHex) {
+      navigator.clipboard.writeText(shareHex)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
     }
+  }
 
   return (
     <div className="space-y-2">
@@ -69,9 +69,7 @@ function ShareDisplay({
           )}
         </Button>
       </div>
-      {copied && (
-        <p className="text-accent-foreground text-xs">Copied!</p>
-      )}
+      {copied && <p className="text-accent-foreground text-xs">Copied!</p>}
     </div>
   )
 }
@@ -245,18 +243,25 @@ function ShareInstructionsContent() {
             <AlertTitle>How Recovery Works</AlertTitle>
             <AlertDescription>
               <p className="mb-2">
-                Your secret requires <strong>{sssThreshold} of {sssSharesTotal}</strong> shares to recover.
+                Your secret requires{" "}
+                <strong>
+                  {sssThreshold} of {sssSharesTotal}
+                </strong>{" "}
+                shares to recover.
               </p>
               <ul className="mt-2 list-disc space-y-1 pl-5">
                 <li>
-                  <strong>Share 0 (KeyFate):</strong> Automatically sent to recipients when triggered.
+                  <strong>Share 0 (KeyFate):</strong> Automatically sent to
+                  recipients when triggered.
                 </li>
                 <li>
-                  <strong>Share 1 (Recipients):</strong> You must distribute this to each recipient via your own secure channel.
+                  <strong>Share 1 (Recipients):</strong> You must distribute
+                  this to each recipient via your own secure channel.
                 </li>
                 {!isMinimalShares && (
                   <li>
-                    <strong>Shares 2-{sssSharesTotal - 1} (Backup):</strong> Store these securely offline for redundancy.
+                    <strong>Shares 2-{sssSharesTotal - 1} (Backup):</strong>{" "}
+                    Store these securely offline for redundancy.
                   </li>
                 )}
               </ul>
@@ -275,14 +280,25 @@ function ShareInstructionsContent() {
               <Alert variant="destructive" className="mt-4">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Critical ({sssThreshold}-of-{sssSharesTotal}):</strong> ALL shares must be distributed. If Share 1 is not sent to recipients, the secret is <strong>unrecoverable</strong>. Recipients need Share 0 (from KeyFate) + Share 1 (from you) to reconstruct.
+                  <strong>
+                    Critical ({sssThreshold}-of-{sssSharesTotal}):
+                  </strong>{" "}
+                  ALL shares must be distributed. If Share 1 is not sent to
+                  recipients, the secret is <strong>unrecoverable</strong>.
+                  Recipients need Share 0 (from KeyFate) + Share 1 (from you) to
+                  reconstruct.
                 </AlertDescription>
               </Alert>
             ) : (
               <Alert variant="default" className="mt-4">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Important ({sssThreshold}-of-{sssSharesTotal}):</strong> Send this share to each recipient individually. When triggered, KeyFate sends Share 0 to all recipients. They combine it with Share 1 to reconstruct the secret.
+                  <strong>
+                    Important ({sssThreshold}-of-{sssSharesTotal}):
+                  </strong>{" "}
+                  Send this share to each recipient individually. When
+                  triggered, KeyFate sends Share 0 to all recipients. They
+                  combine it with Share 1 to reconstruct the secret.
                 </AlertDescription>
               </Alert>
             )}
@@ -327,7 +343,7 @@ function ShareInstructionsContent() {
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Backup Shares</h3>
                 <p className="text-muted-foreground text-sm">
-                  {sssThreshold === sssSharesTotal 
+                  {sssThreshold === sssSharesTotal
                     ? "These shares are REQUIRED for recovery. Store them securely offline."
                     : "Optional redundancy shares. Store securely offline."}
                 </p>
@@ -348,18 +364,22 @@ function ShareInstructionsContent() {
           <Alert variant="destructive" className="mt-6">
             <AlertTriangle className="mt-0.5 h-5 w-5" />
             <AlertTitle className="text-lg">
-              {sssThreshold === sssSharesTotal 
-                ? "CRITICAL: All Shares Must Be Distributed" 
+              {sssThreshold === sssSharesTotal
+                ? "CRITICAL: All Shares Must Be Distributed"
                 : "Action Required: Distribute Share 1"}
             </AlertTitle>
             <AlertDescription className="text-foreground space-y-3">
               {sssThreshold === sssSharesTotal ? (
                 <>
                   <p>
-                    Your configuration requires <strong>ALL {sssSharesTotal} shares</strong> for recovery. 
-                    If you fail to distribute Share 1, your secret will be <strong>permanently unrecoverable</strong>.
+                    Your configuration requires{" "}
+                    <strong>ALL {sssSharesTotal} shares</strong> for recovery.
+                    If you fail to distribute Share 1, your secret will be{" "}
+                    <strong>permanently unrecoverable</strong>.
                   </p>
-                  <p><strong>Send Share 1 to:</strong></p>
+                  <p>
+                    <strong>Send Share 1 to:</strong>
+                  </p>
                   <ul className="list-disc space-y-1 pl-6">
                     {recipients.map((recipient, idx) => (
                       <li key={`critical-${idx}`}>
@@ -371,14 +391,19 @@ function ShareInstructionsContent() {
               ) : (
                 <>
                   <p>
-                    Distribute Share 1 to each recipient using secure channels. 
-                    Without it, recipients cannot recover your secret when triggered.
+                    Distribute Share 1 to each recipient using secure channels.
+                    Without it, recipients cannot recover your secret when
+                    triggered.
                   </p>
-                  <p><strong>Recipients:</strong> {recipients.map((r) => r.name).join(", ")}</p>
+                  <p>
+                    <strong>Recipients:</strong>{" "}
+                    {recipients.map((r) => r.name).join(", ")}
+                  </p>
                 </>
               )}
               <p>
-                <strong>Secure methods:</strong> Signal, password manager sharing, encrypted file, in-person, or email (buttons above).
+                <strong>Secure methods:</strong> Signal, password manager
+                sharing, encrypted file, in-person, or email (buttons above).
               </p>
             </AlertDescription>
           </Alert>
@@ -396,7 +421,12 @@ function ShareInstructionsContent() {
               htmlFor="confirm-sent"
               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
-              I have distributed {sssThreshold === sssSharesTotal ? "all required shares" : "Share 1"} and understand that recipients cannot recover the secret without them.
+              I have distributed{" "}
+              {sssThreshold === sssSharesTotal
+                ? "all required shares"
+                : "Share 1"}{" "}
+              and understand that recipients cannot recover the secret without
+              them.
             </Label>
           </div>
         </CardContent>

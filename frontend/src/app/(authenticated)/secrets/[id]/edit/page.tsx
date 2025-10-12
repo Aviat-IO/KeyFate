@@ -26,17 +26,20 @@ export default async function EditSecretPage({ params }: EditSecretPageProps) {
 
     const initialData = {
       title: secret.title,
-      recipients: secret.recipients.length > 0 
-        ? secret.recipients.map(r => ({
-            name: r.name,
-            email: r.email || "",
-            phone: r.phone || ""
-          }))
-        : [{
-            name: "",
-            email: "",
-            phone: ""
-          }],
+      recipients:
+        secret.recipients.length > 0
+          ? secret.recipients.map((r) => ({
+              name: r.name,
+              email: r.email || "",
+              phone: r.phone || "",
+            }))
+          : [
+              {
+                name: "",
+                email: "",
+                phone: "",
+              },
+            ],
       check_in_days: secret.checkInDays,
     }
 

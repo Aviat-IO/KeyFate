@@ -1,6 +1,13 @@
 "use client"
 
-import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Crown, Info } from "lucide-react"
@@ -30,18 +37,19 @@ export function ThresholdSelector({
           <AlertDescription>
             <div className="flex items-start justify-between gap-2">
               <div>
-                <strong>Security Configuration:</strong> 2-of-3 shares (standard)
+                <strong>Security Configuration:</strong> 2-of-3 shares
+                (standard)
                 <p className="text-muted-foreground mt-1 text-sm">
                   Your secret will be split into 3 shares, requiring any 2 to
-                  reconstruct. Upgrade to Pro for configurable threshold schemes up
-                  to 7 shares.
+                  reconstruct. Upgrade to Pro for configurable threshold schemes
+                  up to 7 shares.
                 </p>
               </div>
               {onUpgradeClick && (
                 <button
                   type="button"
                   onClick={onUpgradeClick}
-                  className="text-primary hover:underline flex items-center gap-1 whitespace-nowrap text-sm"
+                  className="text-primary flex items-center gap-1 whitespace-nowrap text-sm hover:underline"
                 >
                   <Crown className="h-3 w-3" />
                   Upgrade
@@ -108,9 +116,7 @@ export function ThresholdSelector({
           name="sss_threshold"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>
-                Shares Needed for Recovery (Threshold)
-              </FormLabel>
+              <FormLabel>Shares Needed for Recovery (Threshold)</FormLabel>
               <FormControl>
                 <Input
                   type="number"

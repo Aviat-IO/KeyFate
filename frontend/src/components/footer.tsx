@@ -8,12 +8,12 @@ export function Footer() {
   const { config } = useConfig()
   return (
     <footer className="bg-background border-t">
-      <div className="mx-auto sm:px-4 py-8">
+      <div className="mx-auto py-8 sm:px-4">
         <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
           <div className="flex flex-col items-center gap-2 md:items-start">
             <p className="text-muted-foreground text-sm">
-              © {new Date().getFullYear()} {config?.parentCompany || "Aviat, LLC"}. All
-              rights reserved.
+              © {new Date().getFullYear()}{" "}
+              {config?.parentCompany || "Aviat, LLC"}. All rights reserved.
             </p>
             <p className="text-muted-foreground text-xs">
               Secure dead man's switch platform with 100% client-side Shamir's

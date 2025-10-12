@@ -26,7 +26,7 @@ export function UserPricingActions() {
     async function fetchTierInfo() {
       if (session?.user && (session.user as any).id) {
         try {
-          const response = await fetch('/api/user/tier')
+          const response = await fetch("/api/user/tier")
           if (response.ok) {
             const data = await response.json()
             setTierInfo(data)
@@ -93,9 +93,11 @@ export function UserPricingActions() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <p className="text-muted-foreground text-sm">Email: {session.user.email}</p>
+          <p className="text-muted-foreground text-sm">
+            Email: {session.user.email}
+          </p>
           {subscriptionStatus && (
-            <p className="text-muted-foreground text-sm mt-1">
+            <p className="text-muted-foreground mt-1 text-sm">
               Status: <span className="capitalize">{subscriptionStatus}</span>
             </p>
           )}
@@ -116,7 +118,7 @@ export function UserPricingActions() {
             </div>
           </div>
         )}
-        
+
         <div className="pt-2">
           <BillingPortalButton />
         </div>

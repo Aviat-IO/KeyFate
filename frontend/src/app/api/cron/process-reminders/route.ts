@@ -1,30 +1,29 @@
-import { getDatabase } from "@/lib/db/drizzle";
-import { secrets, users, secretRecipients } from "@/lib/db/schema";
-import { and, eq, lt } from "drizzle-orm";
-import { NextRequest, NextResponse } from "next/server";
-import { decryptMessage } from "@/lib/encryption";
-import { sendSecretDisclosureEmail } from "@/lib/email/email-service";
-import { logEmailFailure } from "@/lib/email/email-failure-logger";
-import { sendAdminNotification } from "@/lib/email/admin-notification-service";
-import { EmailRetryService, calculateBackoffDelay } from "@/lib/email/email-retry-service";
-import { getAllRecipients } from "@/lib/db/queries/secrets";
-import type { SecretRecipient } from "@/lib/types/secret-types";
+import { getDatabase } from "@/lib/db/drizzle"
+import { getAllRecipients } from "@/lib/db/queries/secrets"
+import { secrets, users } from "@/lib/db/schema"
+import { sendAdminNotification } from "@/lib/email/admin-notification-service"
+import { logEmailFailure } from "@/lib/email/email-failure-logger"
+import { calculateBackoffDelay } from "@/lib/email/email-retry-service"
+import { sendSecretDisclosureEmail } from "@/lib/email/email-service"
+import { decryptMessage } from "@/lib/encryption"
+import { and, eq, lt } from "drizzle-orm"
+import { NextRequest, NextResponse } from "next/server"
 
 // Prevent static analysis during build
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"
 
 function authorize(req: NextRequest): boolean {
-  const header = req.headers.get("authorization") ||
-    req.headers.get("Authorization");
+  const header =
+    req.headers.get("authorization") || req.headers.get("Authorization")
 
   if (!header?.startsWith("Bearer ")) {
-    return false;
+    return false
   }
 
-  const token = header.slice(7).trim();
-  const cronSecret = process.env.CRON_SECRET;
+  const token = header.slice(7).trim()
+  const cronSecret = process.env.CRON_SECRET
 
-  return !!cronSecret && token === cronSecret;
+  return !!cronSecret && token === cronSecret
 }
 
 /**
@@ -36,49 +35,43 @@ async function withRetry<T>(
   maxRetries: number = 3,
   baseDelay: number = 1000,
 ): Promise<T> {
-  let lastError: Error;
+  let lastError: Error
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      return await operation();
+      return await operation()
     } catch (error) {
-      lastError = error as Error;
+      lastError = error as Error
 
       if (attempt === maxRetries) {
-        throw lastError;
+        throw lastError
       }
 
       // Use enhanced backoff calculation
-      const delay = calculateBackoffDelay(attempt, baseDelay);
-      await new Promise((resolve) => setTimeout(resolve, delay));
+      const delay = calculateBackoffDelay(attempt, baseDelay)
+      await new Promise((resolve) => setTimeout(resolve, delay))
     }
   }
 
-  throw lastError!;
+  throw lastError!
 }
-
 
 export async function POST(req: NextRequest) {
   if (!authorize(req)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   try {
-    const db = await getDatabase();
+    const db = await getDatabase()
 
     // Get overdue secrets
-    const now = new Date();
+    const now = new Date()
     const overdueSecrets = await db
       .select()
       .from(secrets)
-      .where(
-        and(
-          eq(secrets.status, "active"),
-          lt(secrets.nextCheckIn, now),
-        ),
-      );
+      .where(and(eq(secrets.status, "active"), lt(secrets.nextCheckIn, now)))
 
-    let processedCount = 0;
+    let processedCount = 0
 
     // Process each overdue secret
     for (const secret of overdueSecrets) {
@@ -88,37 +81,43 @@ export async function POST(req: NextRequest) {
           .select()
           .from(users)
           .where(eq(users.id, secret.userId))
-          .limit(1);
+          .limit(1)
 
         if (!user) {
-          console.error(`[process-reminders] User not found for secret ${secret.id}`);
-          continue;
+          console.error(
+            `[process-reminders] User not found for secret ${secret.id}`,
+          )
+          continue
         }
 
         // Get all recipients for this secret
-        const recipients = await getAllRecipients(secret.id);
+        const recipients = await getAllRecipients(secret.id)
 
         if (recipients.length === 0) {
-          console.error(`[process-reminders] No recipients found for secret ${secret.id}`);
-          continue;
+          console.error(
+            `[process-reminders] No recipients found for secret ${secret.id}`,
+          )
+          continue
         }
 
         // Decrypt server share
-        const ivBuffer = Buffer.from(secret.iv || "", "base64");
-        const authTagBuffer = Buffer.from(secret.authTag || "", "base64");
+        const ivBuffer = Buffer.from(secret.iv || "", "base64")
+        const authTagBuffer = Buffer.from(secret.authTag || "", "base64")
         const decryptedContent = await decryptMessage(
           secret.serverShare || "",
           ivBuffer,
-          authTagBuffer
-        );
+          authTagBuffer,
+        )
 
         // Send disclosure email to all recipients
-        let allEmailsSucceeded = true;
+        let allEmailsSucceeded = true
         for (const recipient of recipients) {
-          const contactEmail = recipient.email || "";
+          const contactEmail = recipient.email || ""
           if (!contactEmail) {
-            console.error(`[process-reminders] Recipient ${recipient.id} has no contact info`);
-            continue;
+            console.error(
+              `[process-reminders] Recipient ${recipient.id} has no contact info`,
+            )
+            continue
           }
 
           try {
@@ -133,23 +132,23 @@ export async function POST(req: NextRequest) {
                   secretContent: decryptedContent,
                   disclosureReason: "scheduled",
                   senderLastSeen: secret.lastCheckIn || undefined,
-                });
+                })
               },
               3,
-              1000
-            );
+              1000,
+            )
 
             if (!emailResult.success) {
-              allEmailsSucceeded = false;
+              allEmailsSucceeded = false
 
               // Log email failure
               await logEmailFailure({
                 emailType: "disclosure",
-                provider: emailResult.provider as any || "sendgrid",
+                provider: (emailResult.provider as any) || "sendgrid",
                 recipient: contactEmail,
                 subject: `Secret Disclosure: ${secret.title}`,
                 errorMessage: emailResult.error || "Unknown error",
-              });
+              })
 
               // Send admin notification for critical failures
               await sendAdminNotification({
@@ -158,11 +157,14 @@ export async function POST(req: NextRequest) {
                 errorMessage: emailResult.error || "Unknown error",
                 secretTitle: secret.title,
                 timestamp: new Date(),
-              });
+              })
             }
           } catch (error) {
-            allEmailsSucceeded = false;
-            console.error(`[process-reminders] Error sending to recipient ${recipient.id}:`, error);
+            allEmailsSucceeded = false
+            console.error(
+              `[process-reminders] Error sending to recipient ${recipient.id}:`,
+              error,
+            )
 
             // Log failure
             await logEmailFailure({
@@ -170,17 +172,19 @@ export async function POST(req: NextRequest) {
               provider: "sendgrid",
               recipient: contactEmail,
               subject: `Secret Disclosure: ${secret.title}`,
-              errorMessage: error instanceof Error ? error.message : "Unknown error",
-            });
+              errorMessage:
+                error instanceof Error ? error.message : "Unknown error",
+            })
 
             // Send admin notification
             await sendAdminNotification({
               emailType: "disclosure",
               recipient: contactEmail,
-              errorMessage: error instanceof Error ? error.message : "Unknown error",
+              errorMessage:
+                error instanceof Error ? error.message : "Unknown error",
               secretTitle: secret.title,
               timestamp: new Date(),
-            });
+            })
           }
         }
 
@@ -193,29 +197,32 @@ export async function POST(req: NextRequest) {
               triggeredAt: new Date(),
               updatedAt: new Date(),
             } as any)
-            .where(eq(secrets.id, secret.id));
+            .where(eq(secrets.id, secret.id))
 
-          processedCount++;
+          processedCount++
         }
       } catch (error) {
-        console.error(`[process-reminders] Error processing secret ${secret.id}:`, error);
+        console.error(
+          `[process-reminders] Error processing secret ${secret.id}:`,
+          error,
+        )
       }
     }
 
     return NextResponse.json({
       processed: processedCount,
-      timestamp: new Date().toISOString()
-    });
+      timestamp: new Date().toISOString(),
+    })
   } catch (error) {
-    console.error("[process-reminders] Error:", error);
+    console.error("[process-reminders] Error:", error)
 
     // Provide error information
     const errorDetails = {
       error: "Database operation failed",
       message: error instanceof Error ? error.message : "Unknown error",
       timestamp: new Date().toISOString(),
-    };
+    }
 
-    return NextResponse.json(errorDetails, { status: 500 });
+    return NextResponse.json(errorDetails, { status: 500 })
   }
 }

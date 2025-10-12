@@ -16,7 +16,10 @@ export function getMaxShares(tier: SubscriptionTier): number {
   return tier === "pro" ? 7 : 3
 }
 
-export function getMaxThreshold(tier: SubscriptionTier, totalShares: number): number {
+export function getMaxThreshold(
+  tier: SubscriptionTier,
+  totalShares: number,
+): number {
   return Math.min(totalShares, getMaxShares(tier))
 }
 
@@ -27,7 +30,7 @@ export function getMinThreshold(): number {
 export function isValidThreshold(
   tier: SubscriptionTier,
   threshold: number,
-  totalShares: number
+  totalShares: number,
 ): boolean {
   const maxShares = getMaxShares(tier)
   const minThreshold = getMinThreshold()

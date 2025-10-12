@@ -1,12 +1,14 @@
-import { withAuth } from "next-auth/middleware";
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { withAuth } from "next-auth/middleware"
+import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
 
 // Wrap with NextAuth's withAuth for authentication functionality
 export default withAuth(
-  async function middleware(request: NextRequest & { nextauth: { token: any } }) {
-    const { pathname } = request.nextUrl;
-    const token = request.nextauth.token;
+  async function middleware(
+    request: NextRequest & { nextauth: { token: any } },
+  ) {
+    const { pathname } = request.nextUrl
+    const token = request.nextauth.token
 
     // Routes that don't require email verification
     const verificationExemptRoutes = [
@@ -21,38 +23,38 @@ export default withAuth(
       "/auth/error",
       "/check-in", // Token-based authentication, not session-based
       "/api/check-in", // API endpoint also uses token-based auth
-    ];
+    ]
 
     // If user is authenticated and trying to access sign-in page, redirect to dashboard
     if (token && pathname === "/sign-in") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/dashboard";
-      return NextResponse.redirect(url);
+      const url = request.nextUrl.clone()
+      url.pathname = "/dashboard"
+      return NextResponse.redirect(url)
     }
 
     // Check email verification status for authenticated users
     if (token) {
       const isVerificationExempt = verificationExemptRoutes.some(
-        route => pathname === route || pathname.startsWith(`${route}/`)
-      );
+        (route) => pathname === route || pathname.startsWith(`${route}/`),
+      )
 
       // If email is not verified and not on a verification-exempt route, redirect to verify-email page
       if (!token.emailVerified && !isVerificationExempt) {
-        const url = request.nextUrl.clone();
-        url.pathname = "/auth/verify-email";
-        return NextResponse.redirect(url);
+        const url = request.nextUrl.clone()
+        url.pathname = "/auth/verify-email"
+        return NextResponse.redirect(url)
       }
     }
 
     // Allow the request to continue
-    return NextResponse.next();
+    return NextResponse.next()
   },
   {
     callbacks: {
       // The authorized callback is called BEFORE the middleware function above
       // If this returns false, the user will be redirected to the sign-in page
       authorized: ({ token, req }) => {
-        const { pathname } = req.nextUrl;
+        const { pathname } = req.nextUrl
 
         // Public routes that don't require authentication
         const publicRoutes = [
@@ -64,38 +66,40 @@ export default withAuth(
           "/pricing",
           "/terms-of-service",
           "/privacy-policy",
-        ];
+        ]
 
         // Check if the current path is public
-        const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`));
+        const isPublicRoute = publicRoutes.some(
+          (route) => pathname === route || pathname.startsWith(`${route}/`),
+        )
 
         // API auth routes should always be accessible
         if (pathname.startsWith("/api/auth")) {
-          return true;
+          return true
         }
 
         // Cron endpoints use Bearer token authentication, not session auth
         if (pathname.startsWith("/api/cron/")) {
-          return true;
+          return true
         }
 
         // Webhook endpoints use signature verification, not session auth
         if (pathname.startsWith("/api/webhooks/")) {
-          return true;
+          return true
         }
 
         // Check-in endpoint uses token-based authentication, not session auth
         if (pathname === "/api/check-in") {
-          return true;
+          return true
         }
 
         // Public routes are always authorized
         if (isPublicRoute) {
-          return true;
+          return true
         }
 
         // Protected routes require a token
-        return !!token;
+        return !!token
       },
     },
     pages: {
@@ -103,8 +107,8 @@ export default withAuth(
       error: "/auth/error",
     },
     secret: process.env.NEXTAUTH_SECRET,
-  }
-);
+  },
+)
 
 // Configuration for which routes the middleware should run on
 export const config = {
@@ -118,4 +122,4 @@ export const config = {
      */
     "/((?!_next/static|_next/image|favicon.ico|public).*)",
   ],
-};
+}

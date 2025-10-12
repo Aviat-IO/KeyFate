@@ -37,18 +37,18 @@ export function DeleteConfirm({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
-              <AlertTriangle className="h-6 w-6 text-destructive" />
+            <div className="bg-destructive/10 flex h-12 w-12 items-center justify-center rounded-full">
+              <AlertTriangle className="text-destructive h-6 w-6" />
             </div>
             <div>
               <DialogTitle className="text-left">{title}</DialogTitle>
-              <DialogDescription className="text-left mt-1">
+              <DialogDescription className="mt-1 text-left">
                 {description}
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
-        <DialogFooter className="sm:justify-start gap-2">
+        <DialogFooter className="gap-2 sm:justify-start">
           <Button
             type="button"
             variant="outline"
@@ -69,4 +69,4 @@ export function DeleteConfirm({
       </DialogContent>
     </Dialog>
   )
-} 
+}

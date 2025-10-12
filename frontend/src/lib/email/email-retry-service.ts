@@ -5,39 +5,43 @@
  * Supports configurable retry limits per email type and integration with dead letter queue
  */
 
-import { db } from "@/lib/db/drizzle";
-import { emailFailures, type EmailFailure, type EmailFailureUpdate } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { db } from "@/lib/db/drizzle"
+import {
+  emailFailures,
+  type EmailFailure,
+  type EmailFailureUpdate,
+} from "@/lib/db/schema"
+import { eq } from "drizzle-orm"
 
 /**
  * Email failure context for retry operations
  */
 export interface EmailFailureContext {
-  id: string;
-  emailType: "reminder" | "disclosure" | "admin_notification" | "verification";
-  provider: "sendgrid" | "console-dev" | "resend";
-  recipient: string;
-  subject: string;
-  errorMessage: string;
-  retryCount: number;
-  createdAt: Date;
-  resolvedAt?: Date | null;
+  id: string
+  emailType: "reminder" | "disclosure" | "admin_notification" | "verification"
+  provider: "sendgrid" | "console-dev" | "resend"
+  recipient: string
+  subject: string
+  errorMessage: string
+  retryCount: number
+  createdAt: Date
+  resolvedAt?: Date | null
 }
 
 /**
  * Failure classification types
  */
-export type FailureClassification = "transient" | "permanent";
+export type FailureClassification = "transient" | "permanent"
 
 /**
  * Retry result
  */
 export interface RetryResult {
-  success: boolean;
-  error?: string;
-  exhausted?: boolean; // Retry limit reached
-  permanent?: boolean; // Permanent failure, no retry
-  nextRetryAt?: Date;
+  success: boolean
+  error?: string
+  exhausted?: boolean // Retry limit reached
+  permanent?: boolean // Permanent failure, no retry
+  nextRetryAt?: Date
 }
 
 /**
@@ -52,30 +56,30 @@ const RETRY_LIMITS: Record<string, number> = {
   reminder: 3,
   verification: 2,
   admin_notification: 1,
-};
+}
 
 /**
  * Base delay for exponential backoff (milliseconds)
  */
-const BASE_DELAY_MS = 1000;
+const BASE_DELAY_MS = 1000
 
 /**
  * Maximum delay for exponential backoff (milliseconds)
  */
-const MAX_DELAY_MS = 60000; // 1 minute
+const MAX_DELAY_MS = 60000 // 1 minute
 
 /**
  * Jitter factor (50% of base delay)
  */
-const JITTER_FACTOR = 0.5;
+const JITTER_FACTOR = 0.5
 
 /**
  * Get retry limit for email type
  */
 export function getRetryLimitForEmailType(
-  emailType: "reminder" | "disclosure" | "admin_notification" | "verification"
+  emailType: "reminder" | "disclosure" | "admin_notification" | "verification",
 ): number {
-  return RETRY_LIMITS[emailType] || 1;
+  return RETRY_LIMITS[emailType] || 1
 }
 
 /**
@@ -92,18 +96,18 @@ export function getRetryLimitForEmailType(
 export function calculateBackoffDelay(
   attempt: number,
   baseDelay: number = BASE_DELAY_MS,
-  maxDelay: number = MAX_DELAY_MS
+  maxDelay: number = MAX_DELAY_MS,
 ): number {
   // Exponential backoff: 2^(attempt-1) * baseDelay
-  const exponentialDelay = Math.pow(2, attempt - 1) * baseDelay;
+  const exponentialDelay = Math.pow(2, attempt - 1) * baseDelay
 
   // Cap at maximum delay
-  const cappedDelay = Math.min(exponentialDelay, maxDelay);
+  const cappedDelay = Math.min(exponentialDelay, maxDelay)
 
   // Add jitter: random value between 0 and baseDelay * jitterFactor
-  const jitter = Math.random() * baseDelay * JITTER_FACTOR;
+  const jitter = Math.random() * baseDelay * JITTER_FACTOR
 
-  return cappedDelay + jitter;
+  return cappedDelay + jitter
 }
 
 /**
@@ -125,7 +129,7 @@ export function calculateBackoffDelay(
  * @returns Failure classification
  */
 export function classifyFailure(errorMessage: string): FailureClassification {
-  const lowerError = errorMessage.toLowerCase();
+  const lowerError = errorMessage.toLowerCase()
 
   // Permanent failure patterns
   const permanentPatterns = [
@@ -141,7 +145,7 @@ export function classifyFailure(errorMessage: string): FailureClassification {
     "blocked recipient",
     "mailbox not found",
     "user unknown",
-  ];
+  ]
 
   // Transient failure patterns
   const transientPatterns = [
@@ -157,24 +161,24 @@ export function classifyFailure(errorMessage: string): FailureClassification {
     "etimedout",
     "connection reset",
     "socket hang up",
-  ];
+  ]
 
   // Check for permanent patterns first
   for (const pattern of permanentPatterns) {
     if (lowerError.includes(pattern)) {
-      return "permanent";
+      return "permanent"
     }
   }
 
   // Check for transient patterns
   for (const pattern of transientPatterns) {
     if (lowerError.includes(pattern)) {
-      return "transient";
+      return "transient"
     }
   }
 
   // Default to transient for unknown errors (safer to retry)
-  return "transient";
+  return "transient"
 }
 
 /**
@@ -192,24 +196,24 @@ export class EmailRetryService {
    */
   async retryFailure(
     failureId: string,
-    retryOperation: () => Promise<{ success: boolean; error?: string }>
+    retryOperation: () => Promise<{ success: boolean; error?: string }>,
   ): Promise<RetryResult> {
     // Fetch failure record
     const [failure] = await db
       .select()
       .from(emailFailures)
       .where(eq(emailFailures.id, failureId))
-      .limit(1);
+      .limit(1)
 
     if (!failure) {
       return {
         success: false,
         error: `Failure ${failureId} not found`,
-      };
+      }
     }
 
     // Classify failure
-    const classification = classifyFailure(failure.errorMessage);
+    const classification = classifyFailure(failure.errorMessage)
 
     // Don't retry permanent failures
     if (classification === "permanent") {
@@ -217,79 +221,80 @@ export class EmailRetryService {
         success: false,
         permanent: true,
         error: "Permanent failure - not retrying",
-      };
+      }
     }
 
     // Check retry limit
-    const retryLimit = getRetryLimitForEmailType(failure.emailType);
+    const retryLimit = getRetryLimitForEmailType(failure.emailType)
     if (failure.retryCount >= retryLimit) {
       return {
         success: false,
         exhausted: true,
         error: `Retry limit exceeded (${retryLimit} attempts)`,
-      };
+      }
     }
 
     // Calculate backoff delay
-    const nextAttempt = failure.retryCount + 1;
-    const delay = calculateBackoffDelay(nextAttempt);
+    const nextAttempt = failure.retryCount + 1
+    const delay = calculateBackoffDelay(nextAttempt)
 
     // Wait for backoff delay
-    await new Promise((resolve) => setTimeout(resolve, delay));
+    await new Promise((resolve) => setTimeout(resolve, delay))
 
     try {
       // Attempt retry
-      const result = await retryOperation();
+      const result = await retryOperation()
 
       if (result.success) {
         // Mark as resolved
-        const updateData: EmailFailureUpdate = { resolvedAt: new Date() };
+        const updateData: EmailFailureUpdate = { resolvedAt: new Date() }
         await db
           .update(emailFailures)
           .set(updateData)
           .where(eq(emailFailures.id, failureId))
-          .returning();
+          .returning()
 
-        return { success: true };
+        return { success: true }
       } else {
         // Increment retry count
-        const updateData: EmailFailureUpdate = { retryCount: nextAttempt };
+        const updateData: EmailFailureUpdate = { retryCount: nextAttempt }
         await db
           .update(emailFailures)
           .set(updateData)
           .where(eq(emailFailures.id, failureId))
-          .returning();
+          .returning()
 
         // Calculate next retry time
-        const nextDelay = calculateBackoffDelay(nextAttempt + 1);
-        const nextRetryAt = new Date(Date.now() + nextDelay);
+        const nextDelay = calculateBackoffDelay(nextAttempt + 1)
+        const nextRetryAt = new Date(Date.now() + nextDelay)
 
         return {
           success: false,
           error: result.error || "Retry failed",
           nextRetryAt,
-        };
+        }
       }
     } catch (error) {
       // Increment retry count
-      const updateData: EmailFailureUpdate = { retryCount: nextAttempt };
+      const updateData: EmailFailureUpdate = { retryCount: nextAttempt }
       await db
         .update(emailFailures)
         .set(updateData)
         .where(eq(emailFailures.id, failureId))
-        .returning();
+        .returning()
 
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error"
 
       // Calculate next retry time
-      const nextDelay = calculateBackoffDelay(nextAttempt + 1);
-      const nextRetryAt = new Date(Date.now() + nextDelay);
+      const nextDelay = calculateBackoffDelay(nextAttempt + 1)
+      const nextRetryAt = new Date(Date.now() + nextDelay)
 
       return {
         success: false,
         error: errorMessage,
         nextRetryAt,
-      };
+      }
     }
   }
 
@@ -300,30 +305,34 @@ export class EmailRetryService {
    * @returns List of failures that can be retried
    */
   async getRetryableFailures(
-    emailType?: "reminder" | "disclosure" | "admin_notification" | "verification"
+    emailType?:
+      | "reminder"
+      | "disclosure"
+      | "admin_notification"
+      | "verification",
   ): Promise<EmailFailureContext[]> {
-    const query = db.select().from(emailFailures);
+    const query = db.select().from(emailFailures)
 
-    const failures = await query;
+    const failures = await query
 
     // Filter retryable failures
     return failures
       .filter((failure) => {
         // Skip resolved failures
-        if (failure.resolvedAt) return false;
+        if (failure.resolvedAt) return false
 
         // Filter by email type if specified
-        if (emailType && failure.emailType !== emailType) return false;
+        if (emailType && failure.emailType !== emailType) return false
 
         // Check retry limit
-        const limit = getRetryLimitForEmailType(failure.emailType);
-        if (failure.retryCount >= limit) return false;
+        const limit = getRetryLimitForEmailType(failure.emailType)
+        if (failure.retryCount >= limit) return false
 
         // Check if permanent failure
-        const classification = classifyFailure(failure.errorMessage);
-        if (classification === "permanent") return false;
+        const classification = classifyFailure(failure.errorMessage)
+        if (classification === "permanent") return false
 
-        return true;
+        return true
       })
       .map((f) => ({
         id: f.id,
@@ -335,7 +344,7 @@ export class EmailRetryService {
         retryCount: f.retryCount,
         createdAt: f.createdAt,
         resolvedAt: f.resolvedAt,
-      }));
+      }))
   }
 
   /**
@@ -346,34 +355,34 @@ export class EmailRetryService {
    */
   async retryAll(
     retryOperationFactory: (
-      failure: EmailFailureContext
-    ) => Promise<{ success: boolean; error?: string }>
+      failure: EmailFailureContext,
+    ) => Promise<{ success: boolean; error?: string }>,
   ): Promise<{
-    total: number;
-    successful: number;
-    failed: number;
-    permanent: number;
-    exhausted: number;
+    total: number
+    successful: number
+    failed: number
+    permanent: number
+    exhausted: number
   }> {
-    const failures = await this.getRetryableFailures();
+    const failures = await this.getRetryableFailures()
 
-    let successful = 0;
-    let failed = 0;
-    let permanent = 0;
-    let exhausted = 0;
+    let successful = 0
+    let failed = 0
+    let permanent = 0
+    let exhausted = 0
 
     for (const failure of failures) {
-      const retryOperation = () => retryOperationFactory(failure);
-      const result = await this.retryFailure(failure.id, retryOperation);
+      const retryOperation = () => retryOperationFactory(failure)
+      const result = await this.retryFailure(failure.id, retryOperation)
 
       if (result.success) {
-        successful++;
+        successful++
       } else if (result.permanent) {
-        permanent++;
+        permanent++
       } else if (result.exhausted) {
-        exhausted++;
+        exhausted++
       } else {
-        failed++;
+        failed++
       }
     }
 
@@ -383,6 +392,6 @@ export class EmailRetryService {
       failed,
       permanent,
       exhausted,
-    };
+    }
   }
 }

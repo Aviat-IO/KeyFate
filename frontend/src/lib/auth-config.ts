@@ -1,31 +1,31 @@
-import { getDatabase } from "@/lib/db/drizzle";
-import { users } from "@/lib/db/schema";
-import { logLogin } from "@/lib/services/audit-logger";
-import { eq } from "drizzle-orm";
-import CredentialsProvider from "next-auth/providers/credentials";
-import GoogleProvider from "next-auth/providers/google";
-import { getBaseUrl, withProductionConfig } from "./auth-config-production";
-import { assertValidOAuthConfig } from "./auth/oauth-config-validator";
-import { validatePassword } from "./auth/password";
-import { authenticateUser } from "./auth/users";
-import { validateAuthEnvironment } from "./auth/validate-env";
+import { getDatabase } from "@/lib/db/drizzle"
+import { users } from "@/lib/db/schema"
+import { logLogin } from "@/lib/services/audit-logger"
+import { eq } from "drizzle-orm"
+import CredentialsProvider from "next-auth/providers/credentials"
+import GoogleProvider from "next-auth/providers/google"
+import { getBaseUrl, withProductionConfig } from "./auth-config-production"
+import { assertValidOAuthConfig } from "./auth/oauth-config-validator"
+import { validatePassword } from "./auth/password"
+import { authenticateUser } from "./auth/users"
+import { validateAuthEnvironment } from "./auth/validate-env"
 
 // Validate auth environment and OAuth configuration at startup (skip in test environment)
 if (process.env.NODE_ENV !== "test") {
   // First validate environment variables
-  const envValidation = validateAuthEnvironment();
+  const envValidation = validateAuthEnvironment()
   if (!envValidation.isValid) {
     console.error(
       "[Auth Config] Missing environment variables:",
       envValidation.missing,
-    );
+    )
   }
 
   // Then validate OAuth configuration
   try {
-    assertValidOAuthConfig();
+    assertValidOAuthConfig()
   } catch (error) {
-    console.error("[Auth Config] OAuth configuration error:", error);
+    console.error("[Auth Config] OAuth configuration error:", error)
     // In development, provide helpful guidance
     if (process.env.NODE_ENV === "development") {
       console.info(
@@ -34,13 +34,13 @@ if (process.env.NODE_ENV !== "test") {
           "GOOGLE_CLIENT_SECRET=your-google-client-secret\n" +
           "NEXTAUTH_SECRET=your-secure-secret-here\n" +
           "NEXTAUTH_URL=http://localhost:3000",
-      );
+      )
     }
   }
 }
 
 // Build providers array conditionally
-const providers = [];
+const providers = []
 
 // Only add Google provider if credentials are properly configured
 if (
@@ -52,7 +52,7 @@ if (
   process.env.GOOGLE_CLIENT_ID.endsWith(".apps.googleusercontent.com")
 ) {
   // Get the correct base URL for OAuth redirects
-  const baseUrl = getBaseUrl();
+  const baseUrl = getBaseUrl()
 
   providers.push(
     GoogleProvider({
@@ -67,14 +67,14 @@ if (
         },
       },
     }),
-  );
+  )
 } else if (process.env.NODE_ENV === "development") {
   console.warn(
     "[Auth Config] Google OAuth not configured - Google authentication disabled",
-  );
+  )
   console.info(
     "[Auth Config] To enable Google OAuth, set valid GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env.local",
-  );
+  )
 }
 
 // Email provider removed - using only Google OAuth and credentials authentication
@@ -96,20 +96,20 @@ providers.push(
     },
     async authorize(credentials) {
       if (!credentials?.email || !credentials?.password) {
-        return null;
+        return null
       }
 
       // Validate password format
-      const passwordValidation = validatePassword(credentials.password);
+      const passwordValidation = validatePassword(credentials.password)
       if (!passwordValidation.isValid) {
-        return null;
+        return null
       }
 
       try {
         const result = await authenticateUser({
           email: credentials.email,
           password: credentials.password,
-        });
+        })
 
         if (result.success && result.user) {
           return {
@@ -117,17 +117,17 @@ providers.push(
             email: result.user.email,
             name: result.user.name,
             image: result.user.image,
-          };
+          }
         }
 
-        return null;
+        return null
       } catch (error) {
-        console.error("Credentials authentication error:", error);
-        return null;
+        console.error("Credentials authentication error:", error)
+        return null
       }
     },
   }),
-);
+)
 
 const baseAuthConfig = {
   providers,
@@ -140,15 +140,15 @@ const baseAuthConfig = {
      * Ensure OAuth redirects use the correct base URL
      */
     async redirect({ url, baseUrl }) {
-      const correctBaseUrl = getBaseUrl();
+      const correctBaseUrl = getBaseUrl()
 
-      if (url.startsWith("/")) return `${correctBaseUrl}${url}`;
+      if (url.startsWith("/")) return `${correctBaseUrl}${url}`
       if (url.includes("0.0.0.0")) {
-        return url.replace(/https?:\/\/0\.0\.0\.0(:\d+)?/, correctBaseUrl);
+        return url.replace(/https?:\/\/0\.0\.0\.0(:\d+)?/, correctBaseUrl)
       }
-      if (url.startsWith(correctBaseUrl)) return url;
+      if (url.startsWith(correctBaseUrl)) return url
 
-      return correctBaseUrl;
+      return correctBaseUrl
     },
     /**
      * TASK 1.2: Google OAuth Email Verification Enforcement
@@ -170,29 +170,29 @@ const baseAuthConfig = {
       if (account?.provider === "google") {
         // Validate profile structure first
         if (!profile || typeof profile !== "object") {
-          console.warn("[Auth] Invalid Google OAuth profile structure");
-          return false;
+          console.warn("[Auth] Invalid Google OAuth profile structure")
+          return false
         }
 
         // Check for email field presence
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const googleProfile = profile as any;
+        const googleProfile = profile as any
         if (!googleProfile.email) {
-          console.warn("[Auth] Google OAuth profile missing email field");
-          return false;
+          console.warn("[Auth] Google OAuth profile missing email field")
+          return false
         }
 
         // Google provides email_verified in the profile
         // Handle both boolean and string values that Google might send
-        const emailVerified = googleProfile.email_verified;
-        let isEmailVerified = false;
+        const emailVerified = googleProfile.email_verified
+        let isEmailVerified = false
 
         // Convert string values to boolean
         if (typeof emailVerified === "string") {
-          isEmailVerified = emailVerified.toLowerCase() === "true";
+          isEmailVerified = emailVerified.toLowerCase() === "true"
         } else if (typeof emailVerified === "boolean") {
           // Handle boolean values
-          isEmailVerified = emailVerified;
+          isEmailVerified = emailVerified
         } else {
           // If email_verified field is missing or not recognized type, treat as unverified
           console.warn(
@@ -202,28 +202,28 @@ const baseAuthConfig = {
               emailVerified: emailVerified,
               type: typeof emailVerified,
             },
-          );
-          return false;
+          )
+          return false
         }
 
         // Only proceed if email is verified
         if (!isEmailVerified) {
-          return false;
+          return false
         }
 
         // Create user in database if they don't exist
         try {
-          const normalizedEmail = googleProfile.email.toLowerCase().trim();
+          const normalizedEmail = googleProfile.email.toLowerCase().trim()
 
           // Get database connection
-          const db = await getDatabase();
+          const db = await getDatabase()
 
           // Check if user already exists
           const existingUser = await db
             .select()
             .from(users)
             .where(eq(users.email, normalizedEmail))
-            .limit(1);
+            .limit(1)
 
           if (existingUser.length === 0) {
             // Create new user for Google OAuth
@@ -234,30 +234,30 @@ const baseAuthConfig = {
               image: googleProfile.picture || null,
               emailVerified: new Date(), // Google email is verified
               password: null, // No password for OAuth users
-            };
+            }
 
-            await db.insert(users).values(userData);
-            
+            await db.insert(users).values(userData)
+
             await logLogin(userData.id, {
               provider: "google",
               email: normalizedEmail,
               newUser: true,
-            });
+            })
           } else {
             await logLogin(existingUser[0].id, {
               provider: "google",
               email: normalizedEmail,
               newUser: false,
-            });
+            })
           }
 
-          return true;
+          return true
         } catch (error) {
           console.error(
             "[Auth] Error creating/checking user for Google OAuth:",
             error,
-          );
-          return false;
+          )
+          return false
         }
       }
 
@@ -266,81 +266,84 @@ const baseAuthConfig = {
         await logLogin(user.id, {
           provider: "credentials",
           email: user.email || undefined,
-        });
-        return true;
+        })
+        return true
       }
 
-      return false; // Deny access by default
+      return false // Deny access by default
     },
     async session({ session, token }) {
       if (session?.user) {
         // Always set the user ID from the token
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (session.user as any).id = token.id || token.sub;
+        ;(session.user as any).id = token.id || token.sub
         // Also ensure email is set
         if (!session.user.email && token.email) {
-          session.user.email = token.email as string;
+          session.user.email = token.email as string
         }
         // Add email verification status to session
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (session.user as any).emailVerified = token.emailVerified || null;
+        ;(session.user as any).emailVerified = token.emailVerified || null
       }
-      return session;
+      return session
     },
     async jwt({ token, user, account, profile }) {
       // For Google OAuth, always look up the user in the database by email
       if (account?.provider === "google" && profile) {
         try {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const googleProfile = profile as any;
-          const normalizedEmail = googleProfile.email?.toLowerCase().trim();
+          const googleProfile = profile as any
+          const normalizedEmail = googleProfile.email?.toLowerCase().trim()
 
           if (normalizedEmail) {
-            const db = await getDatabase();
+            const db = await getDatabase()
             const dbUser = await db
               .select()
               .from(users)
               .where(eq(users.email, normalizedEmail))
-              .limit(1);
+              .limit(1)
 
             if (dbUser.length > 0) {
-              token.id = dbUser[0].id;
-              token.emailVerified = dbUser[0].emailVerified;
+              token.id = dbUser[0].id
+              token.emailVerified = dbUser[0].emailVerified
             } else {
               console.error(
                 "[Auth] JWT callback: User not found in database for email:",
                 normalizedEmail,
-              );
+              )
             }
           }
         } catch (error) {
-          console.error("[Auth] Error looking up user in JWT callback:", error);
+          console.error("[Auth] Error looking up user in JWT callback:", error)
         }
       } else if (user) {
         // For credentials provider, use the user ID directly
-        token.id = user.id;
+        token.id = user.id
         // Fetch email verification status from database
         try {
-          const db = await getDatabase();
+          const db = await getDatabase()
           const dbUser = await db
             .select()
             .from(users)
             .where(eq(users.id, user.id))
-            .limit(1);
+            .limit(1)
 
           if (dbUser.length > 0) {
-            token.emailVerified = dbUser[0].emailVerified;
+            token.emailVerified = dbUser[0].emailVerified
           }
         } catch (error) {
-          console.error("[Auth] Error fetching email verification status:", error);
+          console.error(
+            "[Auth] Error fetching email verification status:",
+            error,
+          )
         }
       }
 
       if (account) {
-        token.accessToken = account.access_token;
+        token.accessToken = account.access_token
       }
 
-      return token;
+      return token
     },
   },
   session: {
@@ -351,7 +354,7 @@ const baseAuthConfig = {
     secret: process.env.NEXTAUTH_SECRET,
   },
   secret: process.env.NEXTAUTH_SECRET,
-};
+}
 
 // Export the config with production-specific settings applied
-export const authConfig = withProductionConfig(baseAuthConfig);
+export const authConfig = withProductionConfig(baseAuthConfig)

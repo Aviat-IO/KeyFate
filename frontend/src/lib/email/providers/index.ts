@@ -4,11 +4,7 @@
  * Centralized exports for email provider infrastructure.
  */
 
-export type {
-  EmailProvider,
-  EmailData,
-  EmailResult,
-} from "./EmailProvider";
+export type { EmailProvider, EmailData, EmailResult } from "./EmailProvider"
 
-export { SendGridAdapter } from "./SendGridAdapter";
-export { MockAdapter } from "./MockAdapter";
+export { SendGridAdapter } from "./SendGridAdapter"
+export { MockAdapter } from "./MockAdapter"

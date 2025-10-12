@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from "next/server"
 // import { updateSession } from '@/utils/supabase/middleware'
 // import type { User } from '@supabase/supabase-js'
 
@@ -21,14 +21,14 @@ const NON_VERIFICATION_REQUIRED_ROUTES = [
   /^\/auth\/callback$/,
   /^\/auth\/signout$/,
   /^\/$/,
-  /^\/api\/auth\/.*$/
+  /^\/api\/auth\/.*$/,
 ]
 
 /**
  * Check if a route requires email verification
  */
 function requiresEmailVerification(pathname: string): boolean {
-  return !NON_VERIFICATION_REQUIRED_ROUTES.some(regex => regex.test(pathname))
+  return !NON_VERIFICATION_REQUIRED_ROUTES.some((regex) => regex.test(pathname))
 }
 
 /**
@@ -37,8 +37,10 @@ function requiresEmailVerification(pathname: string): boolean {
  */
 function userNeedsVerification(user: NextAuthUser): boolean {
   // TODO: Replace with NextAuth logic
-  console.warn("[Email Verification] userNeedsVerification is deprecated - use NextAuth middleware");
-  return false;
+  console.warn(
+    "[Email Verification] userNeedsVerification is deprecated - use NextAuth middleware",
+  )
+  return false
 }
 
 /**
@@ -49,7 +51,9 @@ function userNeedsVerification(user: NextAuthUser): boolean {
 export async function checkEmailVerificationMiddleware(request: NextRequest) {
   try {
     // TODO: Replace with NextAuth middleware logic
-    console.warn("[Email Verification] checkEmailVerificationMiddleware is deprecated - use NextAuth middleware");
+    console.warn(
+      "[Email Verification] checkEmailVerificationMiddleware is deprecated - use NextAuth middleware",
+    )
 
     const pathname = request.nextUrl.pathname
 
@@ -61,7 +65,7 @@ export async function checkEmailVerificationMiddleware(request: NextRequest) {
     // For now, allow all requests through since we're migrating to NextAuth
     return NextResponse.next()
   } catch (error) {
-    console.error('[EmailVerification] Middleware error:', error)
+    console.error("[EmailVerification] Middleware error:", error)
     // On error, allow through to avoid breaking the app
     return NextResponse.next()
   }

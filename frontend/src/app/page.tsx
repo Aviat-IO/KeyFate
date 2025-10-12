@@ -104,15 +104,15 @@ export default function Home() {
           {/* Trust Indicators */}
           <div className="text-muted-foreground animate-in fade-in slide-in-from-bottom-12 delay-800 flex flex-wrap items-center justify-center gap-8 text-sm duration-700">
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-accent-foreground" />
+              <CheckCircle className="text-accent-foreground h-4 w-4" />
               <span>Client-side encryption</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-accent-foreground" />
+              <CheckCircle className="text-accent-foreground h-4 w-4" />
               <span>Zero-knowledge architecture</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-accent-foreground" />
+              <CheckCircle className="text-accent-foreground h-4 w-4" />
               <span>Open source cryptography</span>
             </div>
           </div>
@@ -147,15 +147,15 @@ export default function Home() {
               </p>
               <div className="space-y-2">
                 <div className="text-muted-foreground flex items-center text-xs">
-                  <CheckCircle className="mr-2 h-3 w-3 text-accent-foreground" />
+                  <CheckCircle className="text-accent-foreground mr-2 h-3 w-3" />
                   Hardware wallet recovery phrases
                 </div>
                 <div className="text-muted-foreground flex items-center text-xs">
-                  <CheckCircle className="mr-2 h-3 w-3 text-accent-foreground" />
+                  <CheckCircle className="text-accent-foreground mr-2 h-3 w-3" />
                   Exchange account details
                 </div>
                 <div className="text-muted-foreground flex items-center text-xs">
-                  <CheckCircle className="mr-2 h-3 w-3 text-accent-foreground" />
+                  <CheckCircle className="text-accent-foreground mr-2 h-3 w-3" />
                   Cold storage instructions
                 </div>
               </div>
@@ -178,15 +178,15 @@ export default function Home() {
               </p>
               <div className="space-y-2">
                 <div className="text-muted-foreground flex items-center text-xs">
-                  <CheckCircle className="mr-2 h-3 w-3 text-accent-foreground" />
+                  <CheckCircle className="text-accent-foreground mr-2 h-3 w-3" />
                   Source contact information
                 </div>
                 <div className="text-muted-foreground flex items-center text-xs">
-                  <CheckCircle className="mr-2 h-3 w-3 text-accent-foreground" />
+                  <CheckCircle className="text-accent-foreground mr-2 h-3 w-3" />
                   Encrypted document locations
                 </div>
                 <div className="text-muted-foreground flex items-center text-xs">
-                  <CheckCircle className="mr-2 h-3 w-3 text-accent-foreground" />
+                  <CheckCircle className="text-accent-foreground mr-2 h-3 w-3" />
                   Investigation handoff protocols
                 </div>
               </div>
@@ -202,19 +202,20 @@ export default function Home() {
             <CardContent>
               <p className="text-muted-foreground mb-4 text-sm">
                 Ensure your digital assets and important accounts can be
-                accessed by your loved ones, even during difficult or overwhelming times when immediate access is crucial.
+                accessed by your loved ones, even during difficult or
+                overwhelming times when immediate access is crucial.
               </p>
               <div className="space-y-2">
                 <div className="text-muted-foreground flex items-center text-xs">
-                  <CheckCircle className="mr-2 h-3 w-3 text-accent-foreground" />
+                  <CheckCircle className="text-accent-foreground mr-2 h-3 w-3" />
                   Financial account access
                 </div>
                 <div className="text-muted-foreground flex items-center text-xs">
-                  <CheckCircle className="mr-2 h-3 w-3 text-accent-foreground" />
+                  <CheckCircle className="text-accent-foreground mr-2 h-3 w-3" />
                   Digital asset inventories
                 </div>
                 <div className="text-muted-foreground flex items-center text-xs">
-                  <CheckCircle className="mr-2 h-3 w-3 text-accent-foreground" />
+                  <CheckCircle className="text-accent-foreground mr-2 h-3 w-3" />
                   Important document locations
                 </div>
               </div>
@@ -444,15 +445,15 @@ export default function Home() {
             {/* Final Trust Indicators */}
             <div className="text-muted-foreground flex flex-wrap items-center justify-center gap-8 text-sm">
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-accent-foreground" />
+                <CheckCircle className="text-accent-foreground h-4 w-4" />
                 <span>Free to start</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-accent-foreground" />
+                <CheckCircle className="text-accent-foreground h-4 w-4" />
                 <span>No credit card required</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-accent-foreground" />
+                <CheckCircle className="text-accent-foreground h-4 w-4" />
                 <span>30-day money-back guarantee</span>
               </div>
             </div>

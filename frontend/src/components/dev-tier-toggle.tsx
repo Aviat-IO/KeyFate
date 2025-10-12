@@ -10,7 +10,10 @@ interface DevTierToggleProps {
   onTierChange?: () => void
 }
 
-export function DevTierToggle({ currentTier = "free", onTierChange }: DevTierToggleProps) {
+export function DevTierToggle({
+  currentTier = "free",
+  onTierChange,
+}: DevTierToggleProps) {
   const [isToggling, setIsToggling] = useState(false)
   const [shouldShow, setShouldShow] = useState(false)
   const { toast } = useToast()
@@ -18,25 +21,28 @@ export function DevTierToggle({ currentTier = "free", onTierChange }: DevTierTog
   useEffect(() => {
     // Check environment on client side
     const isDevelopment = process.env.NODE_ENV === "development"
-    const isLocalhost = typeof window !== "undefined" && 
-      (window.location.hostname === "localhost" || 
-       window.location.hostname === "127.0.0.1" ||
-       window.location.hostname.includes("local"))
-    const isStaging = typeof window !== "undefined" && 
+    const isLocalhost =
+      typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1" ||
+        window.location.hostname.includes("local"))
+    const isStaging =
+      typeof window !== "undefined" &&
       (window.location.hostname.includes("staging") ||
-       window.location.hostname.includes("vercel.app"))
-    
+        window.location.hostname.includes("vercel.app"))
+
     const show = isDevelopment || isLocalhost || isStaging
-    console.log("[DevTierToggle] Environment check:", { 
-      isDevelopment, 
-      isLocalhost, 
-      isStaging, 
-      hostname: typeof window !== "undefined" ? window.location.hostname : "server",
-      shouldShow: show 
+    console.log("[DevTierToggle] Environment check:", {
+      isDevelopment,
+      isLocalhost,
+      isStaging,
+      hostname:
+        typeof window !== "undefined" ? window.location.hostname : "server",
+      shouldShow: show,
     })
     setShouldShow(show)
   }, [])
-  
+
   if (!shouldShow) {
     return null
   }
@@ -56,7 +62,7 @@ export function DevTierToggle({ currentTier = "free", onTierChange }: DevTierTog
       if (!response.ok) {
         throw new Error(data.error || data.details || "Failed to toggle tier")
       }
-      
+
       toast({
         title: "Tier Changed",
         description: data.message,
@@ -67,12 +73,13 @@ export function DevTierToggle({ currentTier = "free", onTierChange }: DevTierTog
       if (onTierChange) {
         onTierChange()
       }
-      
+
       // Reload to update tier info everywhere
       window.location.reload()
     } catch (error) {
       console.error("[DevTierToggle] Error:", error)
-      const errorMessage = error instanceof Error ? error.message : "Failed to toggle tier"
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to toggle tier"
       toast({
         title: "Error",
         description: errorMessage,
@@ -94,9 +101,7 @@ export function DevTierToggle({ currentTier = "free", onTierChange }: DevTierTog
       title={`Currently: ${currentTier.toUpperCase()} - Click to toggle`}
     >
       <Crown className={`h-4 w-4 ${isPro ? "fill-current" : ""}`} />
-      <span className="hidden sm:inline">
-        {isPro ? "Pro" : "Free"}
-      </span>
+      <span className="hidden sm:inline">{isPro ? "Pro" : "Free"}</span>
       <span className="text-xs opacity-70">[DEV]</span>
     </Button>
   )

@@ -12,20 +12,20 @@
  * - Security event logging
  */
 
-import { getServerSession } from 'next-auth/next';
-import { authConfig } from '@/lib/auth-config';
-import { getDatabase } from '@/lib/db/drizzle';
-import { secrets, checkInTokens } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
-import type { Session } from 'next-auth';
-import { NextResponse } from 'next/server';
+import { getServerSession } from "next-auth/next"
+import { authConfig } from "@/lib/auth-config"
+import { getDatabase } from "@/lib/db/drizzle"
+import { secrets, checkInTokens } from "@/lib/db/schema"
+import { eq, and } from "drizzle-orm"
+import type { Session } from "next-auth"
+import { NextResponse } from "next/server"
 
 /**
  * User information extracted from session
  */
 export interface AuthUser {
-  id: string;
-  email: string;
+  id: string
+  email: string
 }
 
 /**
@@ -35,20 +35,22 @@ export interface AuthUser {
  */
 export async function getUserFromSession(): Promise<AuthUser | null> {
   try {
-    type GetServerSessionOptions = Parameters<typeof getServerSession>[0];
-    const session = await getServerSession(authConfig as GetServerSessionOptions) as Session | null;
+    type GetServerSessionOptions = Parameters<typeof getServerSession>[0]
+    const session = (await getServerSession(
+      authConfig as GetServerSessionOptions,
+    )) as Session | null
 
     if (!session?.user?.id || !session?.user?.email) {
-      return null;
+      return null
     }
 
     return {
       id: session.user.id,
-      email: session.user.email
-    };
+      email: session.user.email,
+    }
   } catch (error) {
-    console.error('[Authorization] Error getting session:', error);
-    return null;
+    console.error("[Authorization] Error getting session:", error)
+    return null
   }
 }
 
@@ -61,25 +63,20 @@ export async function getUserFromSession(): Promise<AuthUser | null> {
  */
 export async function validateSecretOwnership(
   secretId: string,
-  userId: string
+  userId: string,
 ): Promise<boolean> {
   try {
-    const db = await getDatabase();
+    const db = await getDatabase()
 
     const result = await db
       .select()
       .from(secrets)
-      .where(
-        and(
-          eq(secrets.id, secretId),
-          eq(secrets.userId, userId)
-        )
-      );
+      .where(and(eq(secrets.id, secretId), eq(secrets.userId, userId)))
 
-    return result.length > 0;
+    return result.length > 0
   } catch (error) {
-    console.error('[Authorization] Error validating secret ownership:', error);
-    return false;
+    console.error("[Authorization] Error validating secret ownership:", error)
+    return false
   }
 }
 
@@ -93,27 +90,22 @@ export async function validateSecretOwnership(
  */
 export async function validateUserAccess(
   resourceId: string,
-  userId: string
+  userId: string,
 ): Promise<boolean> {
   try {
-    const db = await getDatabase();
+    const db = await getDatabase()
 
     // Validate check-in token access by joining with secrets table
     const result = await db
       .select()
       .from(checkInTokens)
       .innerJoin(secrets, eq(checkInTokens.secretId, secrets.id))
-      .where(
-        and(
-          eq(checkInTokens.id, resourceId),
-          eq(secrets.userId, userId)
-        )
-      );
+      .where(and(eq(checkInTokens.id, resourceId), eq(secrets.userId, userId)))
 
-    return result.length > 0;
+    return result.length > 0
   } catch (error) {
-    console.error('[Authorization] Error validating user access:', error);
-    return false;
+    console.error("[Authorization] Error validating user access:", error)
+    return false
   }
 }
 
@@ -124,17 +116,17 @@ export interface AuthorizationOptions {
   /**
    * Whether to validate resource ownership
    */
-  validateOwnership?: boolean;
+  validateOwnership?: boolean
 
   /**
    * The parameter name containing the resource ID
    */
-  resourceIdParam?: string;
+  resourceIdParam?: string
 
   /**
    * Whether to require admin role
    */
-  requireAdmin?: boolean;
+  requireAdmin?: boolean
 }
 
 /**
@@ -162,68 +154,71 @@ export function withAuthorization<TParams = any, TResult = any>(
   handler: (
     request: Request,
     params: TParams,
-    user: AuthUser
+    user: AuthUser,
   ) => Promise<TResult>,
-  options: AuthorizationOptions = {}
+  options: AuthorizationOptions = {},
 ): (request: Request, params: TParams) => Promise<TResult | NextResponse> {
-  return async (request: Request, params: TParams): Promise<TResult | NextResponse> => {
+  return async (
+    request: Request,
+    params: TParams,
+  ): Promise<TResult | NextResponse> => {
     // Step 1: Check authentication
-    const user = await getUserFromSession();
+    const user = await getUserFromSession()
 
     if (!user) {
-      console.warn('[Authorization] Unauthenticated access attempt', {
+      console.warn("[Authorization] Unauthenticated access attempt", {
         path: request.url,
-        timestamp: new Date().toISOString()
-      });
+        timestamp: new Date().toISOString(),
+      })
 
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      ) as any;
+        { error: "Unauthorized" },
+        { status: 401 },
+      ) as any
     }
 
     // Step 2: Check resource ownership if required
     if (options.validateOwnership && options.resourceIdParam) {
-      const resourceId = (params as any)[options.resourceIdParam];
+      const resourceId = (params as any)[options.resourceIdParam]
 
       if (!resourceId) {
-        console.error('[Authorization] Missing resource ID parameter', {
+        console.error("[Authorization] Missing resource ID parameter", {
           param: options.resourceIdParam,
-          params
-        });
+          params,
+        })
 
         return NextResponse.json(
-          { error: 'Bad Request: Missing resource ID' },
-          { status: 400 }
-        ) as any;
+          { error: "Bad Request: Missing resource ID" },
+          { status: 400 },
+        ) as any
       }
 
-      const isOwner = await validateSecretOwnership(resourceId, user.id);
+      const isOwner = await validateSecretOwnership(resourceId, user.id)
 
       if (!isOwner) {
-        console.warn('[Authorization] Unauthorized access attempt', {
+        console.warn("[Authorization] Unauthorized access attempt", {
           userId: user.id,
           email: user.email,
           resourceId,
           path: request.url,
-          timestamp: new Date().toISOString()
-        });
+          timestamp: new Date().toISOString(),
+        })
 
         return NextResponse.json(
-          { error: 'Forbidden: Access denied' },
-          { status: 403 }
-        ) as any;
+          { error: "Forbidden: Access denied" },
+          { status: 403 },
+        ) as any
       }
     }
 
     // Step 3: Execute the handler with authenticated user
     try {
-      return await handler(request, params, user);
+      return await handler(request, params, user)
     } catch (error) {
-      console.error('[Authorization] Handler execution error:', error);
-      throw error;
+      console.error("[Authorization] Handler execution error:", error)
+      throw error
     }
-  };
+  }
 }
 
 /**
@@ -238,8 +233,8 @@ export function withAuthorization<TParams = any, TResult = any>(
 export async function validateAdminRole(userId: string): Promise<boolean> {
   // TODO: Implement admin role validation once admin system is in place
   // This would check a is_super_admin or role column in the users table
-  console.warn('[Authorization] Admin role validation not yet implemented');
-  return false;
+  console.warn("[Authorization] Admin role validation not yet implemented")
+  return false
 }
 
 /**
@@ -249,13 +244,13 @@ export async function validateAdminRole(userId: string): Promise<boolean> {
  * @param details - Event details
  */
 export function logSecurityEvent(
-  event: 'unauthorized_access' | 'forbidden_access' | 'admin_access',
-  details: Record<string, any>
+  event: "unauthorized_access" | "forbidden_access" | "admin_access",
+  details: Record<string, any>,
 ): void {
   console.warn(`[Security Event] ${event}`, {
     ...details,
-    timestamp: new Date().toISOString()
-  });
+    timestamp: new Date().toISOString(),
+  })
 
   // TODO: Send to monitoring service (e.g., Sentry, DataDog)
   // TODO: Store in audit log table for compliance

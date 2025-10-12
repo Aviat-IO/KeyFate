@@ -1,12 +1,12 @@
 import {
   type RequestCookies,
   type ResponseCookies,
-} from "next/dist/server/web/spec-extension/cookies";
+} from "next/dist/server/web/spec-extension/cookies"
 
 interface ClearAuthCookiesParams {
-  requestCookies: RequestCookies;
-  responseCookies: ResponseCookies;
-  domain: string;
+  requestCookies: RequestCookies
+  responseCookies: ResponseCookies
+  domain: string
 }
 
 export function clearAuthCookies({
@@ -15,7 +15,7 @@ export function clearAuthCookies({
   domain,
 }: ClearAuthCookiesParams) {
   // Get all cookies
-  const cookies = requestCookies.getAll();
+  const cookies = requestCookies.getAll()
 
   // Clear legacy auth and external service cookies
   cookies.forEach((cookie) => {
@@ -25,12 +25,12 @@ export function clearAuthCookies({
       cookie.name === "__stripe_mid" ||
       cookie.name === "__stripe_sid"
     ) {
-      responseCookies.delete(cookie.name);
+      responseCookies.delete(cookie.name)
       responseCookies.set(cookie.name, "", {
         expires: new Date(0),
         path: "/",
         domain,
-      });
+      })
     }
-  });
+  })
 }

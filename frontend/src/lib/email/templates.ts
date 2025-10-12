@@ -5,51 +5,49 @@
  * with consistent branding and responsive design.
  */
 
-import { formatTimeRemaining } from "@/lib/time-utils";
+import { formatTimeRemaining } from "@/lib/time-utils"
 
 // Template data interfaces
 interface VerificationTemplateData {
-  verificationUrl: string;
-  expirationHours: number;
-  userName?: string;
-  supportEmail?: string;
+  verificationUrl: string
+  expirationHours: number
+  userName?: string
+  supportEmail?: string
 }
 
 interface ReminderTemplateData {
-  userName: string;
-  secretTitle: string;
-  daysRemaining: number;
-  checkInUrl: string;
-  urgencyLevel?: "low" | "medium" | "high" | "critical";
+  userName: string
+  secretTitle: string
+  daysRemaining: number
+  checkInUrl: string
+  urgencyLevel?: "low" | "medium" | "high" | "critical"
 }
 
-
-
 interface DisclosureTemplateData {
-  contactName: string;
-  secretTitle: string;
-  senderName: string;
-  message: string;
-  secretContent: string;
-  disclosureReason?: "scheduled" | "manual";
-  senderLastSeen?: Date;
+  contactName: string
+  secretTitle: string
+  senderName: string
+  message: string
+  secretContent: string
+  disclosureReason?: "scheduled" | "manual"
+  senderLastSeen?: Date
 }
 
 interface BaseTemplateData {
-  title: string;
-  content: string;
-  footerText?: string;
+  title: string
+  content: string
+  footerText?: string
 }
 
 interface EmailTemplate {
-  subject: string;
-  html: string;
-  text: string;
+  subject: string
+  html: string
+  text: string
 }
 
 interface ValidationResult {
-  valid: boolean;
-  errors: string[];
+  valid: boolean
+  errors: string[]
 }
 
 /**
@@ -57,8 +55,8 @@ interface ValidationResult {
  * Uses table-based layout for maximum email client compatibility
  */
 export function renderBaseTemplate(data: BaseTemplateData): EmailTemplate {
-  const companyName = process.env.NEXT_PUBLIC_COMPANY || "Dead Man's Switch";
-  const currentYear = new Date().getFullYear();
+  const companyName = process.env.NEXT_PUBLIC_COMPANY || "Dead Man's Switch"
+  const currentYear = new Date().getFullYear()
 
   const html = `
 <!DOCTYPE html>
@@ -138,24 +136,27 @@ export function renderBaseTemplate(data: BaseTemplateData): EmailTemplate {
     </tr>
   </table>
 </body>
-</html>`;
+</html>`
 
   const text = `
 ${data.title}
 
-${data.content.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim()}
+${data.content
+  .replace(/<[^>]*>/g, "")
+  .replace(/\s+/g, " ")
+  .trim()}
 
 ${data.footerText || ""}
 
 © ${currentYear} ${companyName}. All rights reserved.
 This is an automated message. Please do not reply to this email.
-  `.trim();
+  `.trim()
 
   return {
     subject: data.title,
     html,
     text,
-  };
+  }
 }
 
 /**
@@ -164,9 +165,9 @@ This is an automated message. Please do not reply to this email.
 export function renderVerificationTemplate(
   data: VerificationTemplateData,
 ): EmailTemplate {
-  const companyName = process.env.NEXT_PUBLIC_COMPANY || "Dead Man's Switch";
-  const userName = data.userName || "there";
-  const supportEmail = data.supportEmail || "support@example.com";
+  const companyName = process.env.NEXT_PUBLIC_COMPANY || "Dead Man's Switch"
+  const userName = data.userName || "there"
+  const supportEmail = data.supportEmail || "support@example.com"
 
   const content = `
     <p>Welcome ${userName}!</p>
@@ -188,20 +189,19 @@ export function renderVerificationTemplate(
     <p>If you didn't create an account with ${companyName}, you can safely ignore this email.</p>
 
     <p>Need help? Contact us at <a href="mailto:${supportEmail}">${supportEmail}</a></p>
-  `;
+  `
 
   const baseTemplate = renderBaseTemplate({
     title: `Verify your email address - ${companyName}`,
     content,
-    footerText:
-      `If you have any questions, please contact us at ${supportEmail}`,
-  });
+    footerText: `If you have any questions, please contact us at ${supportEmail}`,
+  })
 
   return {
     subject: `Verify your email address - ${companyName}`,
     html: baseTemplate.html,
     text: baseTemplate.text,
-  };
+  }
 }
 
 /**
@@ -215,13 +215,12 @@ export function renderReminderTemplate(
     medium: { bgColor: "#2563eb", textColor: "#ffffff", label: "Important" },
     high: { bgColor: "#dc3545", textColor: "#ffffff", label: "URGENT" },
     critical: { bgColor: "#dc3545", textColor: "#ffffff", label: "CRITICAL" },
-  };
+  }
 
-  const urgency = urgencyConfig[data.urgencyLevel || "medium"];
-  const timeText = formatTimeRemaining(data.daysRemaining);
+  const urgency = urgencyConfig[data.urgencyLevel || "medium"]
+  const timeText = formatTimeRemaining(data.daysRemaining)
 
-  const subject =
-    `${urgency.label}: Check-in required within ${timeText} - ${data.secretTitle}`;
+  const subject = `${urgency.label}: Check-in required within ${timeText} - ${data.secretTitle}`
 
   const content = `
     <div style="background-color: ${urgency.bgColor}; color: ${urgency.textColor}; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -230,13 +229,13 @@ export function renderReminderTemplate(
         You need to check in for "${data.secretTitle}" within ${timeText}
       </p>
       ${
-    data.urgencyLevel === "critical" || data.urgencyLevel === "high"
-      ? `
+        data.urgencyLevel === "critical" || data.urgencyLevel === "high"
+          ? `
       <p style="margin: 10px 0 0 0; font-size: 15px; color: ${urgency.textColor};"><strong>Time is running out!</strong></p>
       <p style="margin: 5px 0 0 0; color: ${urgency.textColor};">Please check in immediately to prevent automatic disclosure.</p>
       `
-      : ""
-  }
+          : ""
+      }
     </div>
 
     <p>Hi ${data.userName},</p>
@@ -258,18 +257,18 @@ export function renderReminderTemplate(
     <p style="word-break: break-all; background: #f5f5f5; padding: 10px; border-radius: 4px;">
       ${data.checkInUrl}
     </p>
-  `;
+  `
 
   const baseTemplate = renderBaseTemplate({
     title: "Check-in Reminder",
     content,
-  });
+  })
 
   return {
     subject,
     html: baseTemplate.html,
     text: baseTemplate.text,
-  };
+  }
 }
 
 /**
@@ -279,20 +278,20 @@ export function renderReminderTemplate(
 export function renderDisclosureTemplate(
   data: DisclosureTemplateData,
 ): EmailTemplate {
-  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ||
-    "support@example.com";
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://keyfate.com";
-  const decryptUrl = `${siteUrl}/decrypt`;
+  const supportEmail =
+    process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@example.com"
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://keyfate.com"
+  const decryptUrl = `${siteUrl}/decrypt`
   const lastSeenText = data.senderLastSeen
     ? data.senderLastSeen.toLocaleDateString()
-    : "some time ago";
+    : "some time ago"
 
-  const reasonText = data.disclosureReason === "manual"
-    ? `${data.senderName} has manually shared this information with you.`
-    : `${data.senderName} has not checked in as scheduled (last seen: ${lastSeenText}).`;
+  const reasonText =
+    data.disclosureReason === "manual"
+      ? `${data.senderName} has manually shared this information with you.`
+      : `${data.senderName} has not checked in as scheduled (last seen: ${lastSeenText}).`
 
-  const subject =
-    `Confidential Message from ${data.senderName} - ${data.secretTitle}`;
+  const subject = `Confidential Message from ${data.senderName} - ${data.secretTitle}`
 
   const content = `
     <div style="background-color: #fff5f5; border-left: 4px solid #dc3545; padding: 20px; margin: 20px 0;">
@@ -335,19 +334,19 @@ ${data.secretContent}
         <li>Consider keeping an offline backup</li>
       </ul>
     </div>
-  `;
+  `
 
   const baseTemplate = renderBaseTemplate({
     title: "Confidential Information Disclosure",
     content,
     footerText: `Need help? Contact us at ${supportEmail}`,
-  });
+  })
 
   return {
     subject,
     html: baseTemplate.html,
     text: baseTemplate.text,
-  };
+  }
 }
 
 /**
@@ -357,63 +356,63 @@ export function validateTemplateData(
   templateType: "verification" | "reminder" | "disclosure",
   data: any,
 ): ValidationResult {
-  const errors: string[] = [];
+  const errors: string[] = []
 
   // Email format validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
   switch (templateType) {
     case "verification":
       if (!data.verificationUrl) {
-        errors.push("verificationUrl is required");
+        errors.push("verificationUrl is required")
       }
       if (!data.expirationHours || typeof data.expirationHours !== "number") {
-        errors.push("expirationHours is required and must be a number");
+        errors.push("expirationHours is required and must be a number")
       }
       if (data.supportEmail && !emailRegex.test(data.supportEmail)) {
-        errors.push("Invalid email format in supportEmail");
+        errors.push("Invalid email format in supportEmail")
       }
-      break;
+      break
 
     case "reminder":
       if (!data.userName) {
-        errors.push("userName is required");
+        errors.push("userName is required")
       }
       if (!data.secretTitle) {
-        errors.push("secretTitle is required");
+        errors.push("secretTitle is required")
       }
       if (typeof data.daysRemaining !== "number") {
-        errors.push("daysRemaining is required and must be a number");
+        errors.push("daysRemaining is required and must be a number")
       }
       if (!data.checkInUrl) {
-        errors.push("checkInUrl is required");
+        errors.push("checkInUrl is required")
       }
-      break;
+      break
 
     case "disclosure":
       if (!data.contactName) {
-        errors.push("contactName is required");
+        errors.push("contactName is required")
       }
       if (!data.secretTitle) {
-        errors.push("secretTitle is required");
+        errors.push("secretTitle is required")
       }
       if (!data.senderName) {
-        errors.push("senderName is required");
+        errors.push("senderName is required")
       }
       if (!data.message) {
-        errors.push("message is required");
+        errors.push("message is required")
       }
       if (!data.secretContent) {
-        errors.push("secretContent is required");
+        errors.push("secretContent is required")
       }
-      break;
+      break
 
     default:
-      errors.push(`Unknown template type: ${templateType}`);
+      errors.push(`Unknown template type: ${templateType}`)
   }
 
   return {
     valid: errors.length === 0,
     errors,
-  };
+  }
 }

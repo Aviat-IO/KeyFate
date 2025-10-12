@@ -28,7 +28,9 @@ export function NavBar() {
   const [checkingSubscription, setCheckingSubscription] = useState(false)
   const [proModalOpen, setProModalOpen] = useState(false)
 
-  const user = session?.user as { id?: string; name?: string; email?: string; image?: string } | undefined
+  const user = session?.user as
+    | { id?: string; name?: string; email?: string; image?: string }
+    | undefined
   const loading = status === "loading"
 
   // Fetch user tier on mount and when session changes
@@ -106,11 +108,17 @@ export function NavBar() {
                   <span className="sr-only">Open menu</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56" data-testid="dropdown-content">
+              <DropdownMenuContent
+                align="end"
+                className="w-56"
+                data-testid="dropdown-content"
+              >
                 {!user && (
                   <>
                     <DropdownMenuItem asChild className="cursor-pointer">
-                      <Link href="/pricing" className="w-full">Pricing</Link>
+                      <Link href="/pricing" className="w-full">
+                        Pricing
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                   </>
@@ -118,15 +126,24 @@ export function NavBar() {
 
                 {user && (
                   <DropdownMenuItem asChild className="cursor-pointer">
-                    <Link href="/settings" className="w-full flex items-center gap-2">
+                    <Link
+                      href="/settings"
+                      className="flex w-full items-center gap-2"
+                    >
                       <Settings className="h-4 w-4" />
                       Settings
                     </Link>
                   </DropdownMenuItem>
                 )}
 
-                <DropdownMenuItem asChild data-testid="mobile-recover-secret" className="cursor-pointer">
-                  <Link href="/decrypt" className="w-full">Recover Secret</Link>
+                <DropdownMenuItem
+                  asChild
+                  data-testid="mobile-recover-secret"
+                  className="cursor-pointer"
+                >
+                  <Link href="/decrypt" className="w-full">
+                    Recover Secret
+                  </Link>
                 </DropdownMenuItem>
 
                 {!loading && (
@@ -136,10 +153,15 @@ export function NavBar() {
                         <DropdownMenuSeparator />
                         {!checkingSubscription && !isProUser && (
                           <DropdownMenuItem asChild className="cursor-pointer">
-                            <Link href="/pricing" className="w-full">Upgrade to Pro</Link>
+                            <Link href="/pricing" className="w-full">
+                              Upgrade to Pro
+                            </Link>
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
+                        <DropdownMenuItem
+                          onClick={handleSignOut}
+                          className="cursor-pointer"
+                        >
                           Sign Out
                         </DropdownMenuItem>
                       </>
@@ -147,10 +169,14 @@ export function NavBar() {
                       <>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild className="cursor-pointer">
-                          <Link href="/sign-in" className="w-full">Sign In</Link>
+                          <Link href="/sign-in" className="w-full">
+                            Sign In
+                          </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild className="cursor-pointer">
-                          <Link href="/sign-in" className="w-full">Sign Up</Link>
+                          <Link href="/sign-in" className="w-full">
+                            Sign Up
+                          </Link>
                         </DropdownMenuItem>
                       </>
                     )}

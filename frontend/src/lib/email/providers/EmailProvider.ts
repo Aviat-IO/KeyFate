@@ -9,34 +9,34 @@
  * Email data structure for sending emails
  */
 export interface EmailData {
-  to: string;
-  subject: string;
-  html: string;
-  text?: string;
-  from?: string;
-  replyTo?: string;
-  priority?: "high" | "normal" | "low";
-  headers?: Record<string, string>;
-  trackDelivery?: boolean;
+  to: string
+  subject: string
+  html: string
+  text?: string
+  from?: string
+  replyTo?: string
+  priority?: "high" | "normal" | "low"
+  headers?: Record<string, string>
+  trackDelivery?: boolean
 }
 
 /**
  * Result of email sending operation
  */
 export interface EmailResult {
-  success: boolean;
-  messageId?: string;
-  provider?: string;
-  error?: string;
-  retryable?: boolean;
-  retryAfter?: number;
-  attempts?: number;
-  trackingEnabled?: boolean;
+  success: boolean
+  messageId?: string
+  provider?: string
+  error?: string
+  retryable?: boolean
+  retryAfter?: number
+  attempts?: number
+  trackingEnabled?: boolean
   rateLimitInfo?: {
-    limit: number;
-    remaining: number;
-    resetTime: number;
-  };
+    limit: number
+    remaining: number
+    resetTime: number
+  }
 }
 
 /**
@@ -52,7 +52,7 @@ export interface EmailProvider {
    * @param data - Email data including recipient, subject, and content
    * @returns Promise resolving to email sending result
    */
-  sendEmail(data: EmailData): Promise<EmailResult>;
+  sendEmail(data: EmailData): Promise<EmailResult>
 
   /**
    * Validate provider configuration
@@ -62,7 +62,7 @@ export interface EmailProvider {
    *
    * @returns Promise resolving to boolean indicating valid configuration
    */
-  validateConfig(): Promise<boolean>;
+  validateConfig(): Promise<boolean>
 
   /**
    * Get the provider name
@@ -71,5 +71,5 @@ export interface EmailProvider {
    *
    * @returns Provider name (e.g., "sendgrid", "mock")
    */
-  getProviderName(): string;
+  getProviderName(): string
 }

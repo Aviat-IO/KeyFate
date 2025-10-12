@@ -1,87 +1,109 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Crown, AlertTriangle } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { TIER_CONFIGS } from "@/constants/tiers";
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Crown, AlertTriangle } from "lucide-react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { TIER_CONFIGS } from "@/constants/tiers"
 
 interface SubscriptionManagementProps {
-  tierInfo: any;
+  tierInfo: any
 }
 
-export function SubscriptionManagement({ tierInfo }: SubscriptionManagementProps) {
-  const router = useRouter();
-  const [showDowngradeDialog, setShowDowngradeDialog] = useState(false);
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export function SubscriptionManagement({
+  tierInfo,
+}: SubscriptionManagementProps) {
+  const router = useRouter()
+  const [showDowngradeDialog, setShowDowngradeDialog] = useState(false)
+  const [showCancelDialog, setShowCancelDialog] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const isProUser = tierInfo.tier?.tiers?.name === "pro";
-  const subscription = tierInfo.subscription;
-  const scheduledDowngradeAt = subscription?.scheduledDowngradeAt;
-  const currentPeriodEnd = subscription?.currentPeriodEnd;
+  const isProUser = tierInfo.tier?.tiers?.name === "pro"
+  const subscription = tierInfo.subscription
+  const scheduledDowngradeAt = subscription?.scheduledDowngradeAt
+  const currentPeriodEnd = subscription?.currentPeriodEnd
 
   const handleScheduleDowngrade = async () => {
-    setIsLoading(true);
-    setError(null);
+    setIsLoading(true)
+    setError(null)
 
     try {
-      const response = await fetch("/api/user/subscription/schedule-downgrade", {
-        method: "POST",
-      });
+      const response = await fetch(
+        "/api/user/subscription/schedule-downgrade",
+        {
+          method: "POST",
+        },
+      )
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to schedule downgrade");
+        throw new Error(data.error || "Failed to schedule downgrade")
       }
 
-      setShowDowngradeDialog(false);
-      router.refresh();
+      setShowDowngradeDialog(false)
+      router.refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to schedule downgrade");
+      setError(
+        err instanceof Error ? err.message : "Failed to schedule downgrade",
+      )
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const handleCancelDowngrade = async () => {
-    setIsLoading(true);
-    setError(null);
+    setIsLoading(true)
+    setError(null)
 
     try {
       const response = await fetch("/api/user/subscription/cancel-downgrade", {
         method: "POST",
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to cancel downgrade");
+        throw new Error(data.error || "Failed to cancel downgrade")
       }
 
-      setShowCancelDialog(false);
-      router.refresh();
+      setShowCancelDialog(false)
+      router.refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to cancel downgrade");
+      setError(
+        err instanceof Error ? err.message : "Failed to cancel downgrade",
+      )
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const formatDate = (date: Date | string | undefined) => {
-    if (!date) return "N/A";
+    if (!date) return "N/A"
     return new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
-    });
-  };
+    })
+  }
 
   return (
     <>
@@ -91,7 +113,9 @@ export function SubscriptionManagement({ tierInfo }: SubscriptionManagementProps
             <div>
               <CardTitle className="flex items-center gap-2">
                 Current Plan
-                {isProUser && !scheduledDowngradeAt && <Crown className="h-5 w-5 text-primary" />}
+                {isProUser && !scheduledDowngradeAt && (
+                  <Crown className="text-primary h-5 w-5" />
+                )}
               </CardTitle>
               <CardDescription>Your subscription details</CardDescription>
             </div>
@@ -100,7 +124,10 @@ export function SubscriptionManagement({ tierInfo }: SubscriptionManagementProps
                 {isProUser ? "Pro" : "Free"}
               </Badge>
               {scheduledDowngradeAt && (
-                <Badge variant="destructive" className="flex items-center gap-1">
+                <Badge
+                  variant="destructive"
+                  className="flex items-center gap-1"
+                >
                   <AlertTriangle className="h-3 w-3" />
                   Ending Soon
                 </Badge>
@@ -112,12 +139,14 @@ export function SubscriptionManagement({ tierInfo }: SubscriptionManagementProps
           {isProUser && subscription && (
             <>
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Status</label>
+                <label className="text-muted-foreground text-sm font-medium">
+                  Status
+                </label>
                 <p className="text-lg capitalize">{subscription.status}</p>
               </div>
               {currentPeriodEnd && (
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">
+                  <label className="text-muted-foreground text-sm font-medium">
                     Current Period Ends
                   </label>
                   <p className="text-lg">{formatDate(currentPeriodEnd)}</p>
@@ -128,8 +157,10 @@ export function SubscriptionManagement({ tierInfo }: SubscriptionManagementProps
 
           {!isProUser && (
             <div>
-              <label className="text-sm font-medium text-muted-foreground">Limits</label>
-              <ul className="text-lg space-y-1 mt-2">
+              <label className="text-muted-foreground text-sm font-medium">
+                Limits
+              </label>
+              <ul className="mt-2 space-y-1 text-lg">
                 <li>• 1 secret</li>
                 <li>• 1 recipient per secret</li>
                 <li>• Limited check-in intervals</li>
@@ -138,14 +169,17 @@ export function SubscriptionManagement({ tierInfo }: SubscriptionManagementProps
           )}
 
           {scheduledDowngradeAt && (
-            <div className="rounded-lg border border-destructive bg-destructive/10 p-4">
+            <div className="border-destructive bg-destructive/10 rounded-lg border p-4">
               <div className="flex gap-2">
-                <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+                <AlertTriangle className="text-destructive mt-0.5 h-5 w-5 flex-shrink-0" />
                 <div className="flex-1">
-                  <p className="font-medium text-destructive">Downgrade Scheduled</p>
-                  <p className="text-sm text-muted-foreground">
-                    Your subscription will end on {formatDate(scheduledDowngradeAt)}.
-                    You'll be downgraded to the Free plan at that time.
+                  <p className="text-destructive font-medium">
+                    Downgrade Scheduled
+                  </p>
+                  <p className="text-muted-foreground text-sm">
+                    Your subscription will end on{" "}
+                    {formatDate(scheduledDowngradeAt)}. You'll be downgraded to
+                    the Free plan at that time.
                   </p>
                 </div>
               </div>
@@ -153,8 +187,8 @@ export function SubscriptionManagement({ tierInfo }: SubscriptionManagementProps
           )}
 
           {error && (
-            <div className="rounded-lg border border-destructive bg-destructive/10 p-4">
-              <p className="text-sm text-destructive">{error}</p>
+            <div className="border-destructive bg-destructive/10 rounded-lg border p-4">
+              <p className="text-destructive text-sm">{error}</p>
             </div>
           )}
         </CardContent>
@@ -196,38 +230,48 @@ export function SubscriptionManagement({ tierInfo }: SubscriptionManagementProps
         </CardContent>
       </Card>
 
-      <Dialog open={showDowngradeDialog} onOpenChange={(open) => {
-        setShowDowngradeDialog(open);
-        if (!open) setError(null);
-      }}>
+      <Dialog
+        open={showDowngradeDialog}
+        onOpenChange={(open) => {
+          setShowDowngradeDialog(open)
+          if (!open) setError(null)
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Downgrade to Free Plan?</DialogTitle>
             <DialogDescription asChild>
               <div>
-                <p className="text-sm text-muted-foreground">
-                  Your Pro subscription will remain active until {formatDate(currentPeriodEnd)}.
-                  After that date, you'll be downgraded to the Free plan.
+                <p className="text-muted-foreground text-sm">
+                  Your Pro subscription will remain active until{" "}
+                  {formatDate(currentPeriodEnd)}. After that date, you'll be
+                  downgraded to the Free plan.
                 </p>
-                <p className="text-sm text-muted-foreground mt-4">You'll be limited to Free tier features:</p>
-                <ul className="list-disc list-inside mt-2 space-y-1 text-sm text-muted-foreground">
+                <p className="text-muted-foreground mt-4 text-sm">
+                  You'll be limited to Free tier features:
+                </p>
+                <ul className="text-muted-foreground mt-2 list-inside list-disc space-y-1 text-sm">
                   {TIER_CONFIGS.free?.features.map((feature, index) => (
                     <li key={index}>{feature}</li>
                   ))}
                 </ul>
-                <p className="text-sm text-muted-foreground mt-4">
+                <p className="text-muted-foreground mt-4 text-sm">
                   Your existing secrets will be preserved (grandfathered).
                 </p>
               </div>
             </DialogDescription>
           </DialogHeader>
           {error && (
-            <div className="rounded-lg border border-destructive bg-destructive/10 p-3">
-              <p className="text-sm text-destructive">{error}</p>
+            <div className="border-destructive bg-destructive/10 rounded-lg border p-3">
+              <p className="text-destructive text-sm">{error}</p>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDowngradeDialog(false)} disabled={isLoading}>
+            <Button
+              variant="outline"
+              onClick={() => setShowDowngradeDialog(false)}
+              disabled={isLoading}
+            >
               Cancel
             </Button>
             <Button
@@ -241,36 +285,41 @@ export function SubscriptionManagement({ tierInfo }: SubscriptionManagementProps
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showCancelDialog} onOpenChange={(open) => {
-        setShowCancelDialog(open);
-        if (!open) setError(null);
-      }}>
+      <Dialog
+        open={showCancelDialog}
+        onOpenChange={(open) => {
+          setShowCancelDialog(open)
+          if (!open) setError(null)
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Cancel Scheduled Downgrade?</DialogTitle>
             <DialogDescription>
-              This will cancel your scheduled downgrade. Your Pro subscription will continue
-              as normal and renew at the end of the current period.
+              This will cancel your scheduled downgrade. Your Pro subscription
+              will continue as normal and renew at the end of the current
+              period.
             </DialogDescription>
           </DialogHeader>
           {error && (
-            <div className="rounded-lg border border-destructive bg-destructive/10 p-3">
-              <p className="text-sm text-destructive">{error}</p>
+            <div className="border-destructive bg-destructive/10 rounded-lg border p-3">
+              <p className="text-destructive text-sm">{error}</p>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCancelDialog(false)} disabled={isLoading}>
-              No, Keep Downgrade
-            </Button>
             <Button
-              onClick={handleCancelDowngrade}
+              variant="outline"
+              onClick={() => setShowCancelDialog(false)}
               disabled={isLoading}
             >
+              No, Keep Downgrade
+            </Button>
+            <Button onClick={handleCancelDowngrade} disabled={isLoading}>
               {isLoading ? "Processing..." : "Yes, Cancel Downgrade"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
-  );
+  )
 }

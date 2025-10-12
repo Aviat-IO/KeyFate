@@ -9,7 +9,11 @@ interface SpinnerProps {
   color?: "primary" | "secondary" | "muted" | "foreground"
 }
 
-export function Spinner({ className, size = 24, color = "muted" }: SpinnerProps) {
+export function Spinner({
+  className,
+  size = 24,
+  color = "muted",
+}: SpinnerProps) {
   const colorClasses = {
     primary: "text-primary",
     secondary: "text-secondary",
@@ -36,10 +40,17 @@ export function CenteredSpinner({
   text?: string
 }) {
   return (
-    <div className={cn("flex flex-col items-center justify-center py-12", className)}>
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center py-12",
+        className,
+      )}
+    >
       <Spinner size={size} />
       {text && (
-        <p className="mt-3 text-sm text-muted-foreground animate-pulse">{text}</p>
+        <p className="text-muted-foreground mt-3 animate-pulse text-sm">
+          {text}
+        </p>
       )}
     </div>
   )

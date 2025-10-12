@@ -39,12 +39,24 @@ export default function TermsOfServicePage() {
             <strong>Payment Processing:</strong> For paid subscriptions, our
             payment processing is handled by Paddle. By using our paid services,
             you also agree to comply with{" "}
-            <a href="https://www.paddle.com/legal/terms"
-            className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
-            Paddle's Terms of Service</a> and{" "}
-            <a href="https://www.paddle.com/help/start/intro-to-paddle/what-am-i-not-allowed-to-sell-on-paddle"
-            className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
-            Acceptable Use Policy</a>.
+            <a
+              href="https://www.paddle.com/legal/terms"
+              className="text-primary hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Paddle's Terms of Service
+            </a>{" "}
+            and{" "}
+            <a
+              href="https://www.paddle.com/help/start/intro-to-paddle/what-am-i-not-allowed-to-sell-on-paddle"
+              className="text-primary hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Acceptable Use Policy
+            </a>
+            .
           </p>
         </section>
 
@@ -155,30 +167,37 @@ export default function TermsOfServicePage() {
               Store content that violates export control laws or regulations
             </li>
             <li>
-              Store or transmit content that violates Paddle's Acceptable Use Policy,
-              including but not limited to: adult content, gambling, illegal drugs,
-              weapons, counterfeit goods, or any content that promotes violence,
-              discrimination, or illegal activities
+              Store or transmit content that violates Paddle's Acceptable Use
+              Policy, including but not limited to: adult content, gambling,
+              illegal drugs, weapons, counterfeit goods, or any content that
+              promotes violence, discrimination, or illegal activities
             </li>
             <li>
-              Use the Service for money laundering, terrorist financing, or other
-              financial crimes
+              Use the Service for money laundering, terrorist financing, or
+              other financial crimes
             </li>
             <li>
-              Store content that could be used to harm minors or vulnerable individuals
+              Store content that could be used to harm minors or vulnerable
+              individuals
             </li>
             <li>
               Use the Service to facilitate any activity that violates payment
               processor terms of service or financial regulations
             </li>
           </ul>
-          <p className="mt-4 text-sm text-muted-foreground">
-            <strong>Important:</strong> This Service must comply with Paddle's Acceptable Use Policy
-            available at <a href="https://www.paddle.com/help/start/intro-to-paddle/what-am-i-not-allowed-to-sell-on-paddle"
-            className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
-            paddle.com/help/start/intro-to-paddle/what-am-i-not-allowed-to-sell-on-paddle</a>.
-            Violation of these policies may result in immediate account termination and
-            reporting to relevant authorities.
+          <p className="text-muted-foreground mt-4 text-sm">
+            <strong>Important:</strong> This Service must comply with Paddle's
+            Acceptable Use Policy available at{" "}
+            <a
+              href="https://www.paddle.com/help/start/intro-to-paddle/what-am-i-not-allowed-to-sell-on-paddle"
+              className="text-primary hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              paddle.com/help/start/intro-to-paddle/what-am-i-not-allowed-to-sell-on-paddle
+            </a>
+            . Violation of these policies may result in immediate account
+            termination and reporting to relevant authorities.
           </p>
         </section>
 
@@ -237,7 +256,9 @@ export default function TermsOfServicePage() {
         </section>
 
         <section>
-          <h2 className="mb-4 text-2xl font-semibold">6.1 Payment Processor Compliance</h2>
+          <h2 className="mb-4 text-2xl font-semibold">
+            6.1 Payment Processor Compliance
+          </h2>
           <p>
             Our payment processing is handled by Paddle, a third-party payment
             processor. By using our paid services, you acknowledge and agree to:
@@ -263,12 +284,18 @@ export default function TermsOfServicePage() {
               for compliance and fraud prevention purposes
             </li>
           </ul>
-          <p className="mt-4 text-sm text-muted-foreground">
-            <strong>Paddle's Acceptable Use Policy:</strong> You can review Paddle's
-            complete Acceptable Use Policy at{" "}
-            <a href="https://www.paddle.com/help/start/intro-to-paddle/what-am-i-not-allowed-to-sell-on-paddle"
-            className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
-            paddle.com/help/start/intro-to-paddle/what-am-i-not-allowed-to-sell-on-paddle</a>.
+          <p className="text-muted-foreground mt-4 text-sm">
+            <strong>Paddle's Acceptable Use Policy:</strong> You can review
+            Paddle's complete Acceptable Use Policy at{" "}
+            <a
+              href="https://www.paddle.com/help/start/intro-to-paddle/what-am-i-not-allowed-to-sell-on-paddle"
+              className="text-primary hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              paddle.com/help/start/intro-to-paddle/what-am-i-not-allowed-to-sell-on-paddle
+            </a>
+            .
           </p>
         </section>
 

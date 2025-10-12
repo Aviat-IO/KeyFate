@@ -11,17 +11,20 @@ interface ProviderStatus {
 
 export function SocialButtons() {
   const [loading, setLoading] = useState(false)
-  const [providers, setProviders] = useState<ProviderStatus>({ google: false, email: false })
+  const [providers, setProviders] = useState<ProviderStatus>({
+    google: false,
+    email: false,
+  })
   const [providersLoaded, setProvidersLoaded] = useState(false)
 
   useEffect(() => {
     const checkProviders = async () => {
       try {
-        const response = await fetch('/api/auth/providers')
+        const response = await fetch("/api/auth/providers")
         const data = await response.json()
         setProviders(data)
       } catch (error) {
-        console.error('Failed to check provider status:', error)
+        console.error("Failed to check provider status:", error)
       } finally {
         setProvidersLoaded(true)
       }

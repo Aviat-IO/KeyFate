@@ -183,7 +183,8 @@ export default function PrivacyPolicyPage() {
             </li>
             <li>
               <strong>Server-Side Encryption:</strong> The single share we
-              receive is immediately encrypted with military-grade encryption before storage.
+              receive is immediately encrypted with military-grade encryption
+              before storage.
             </li>
             <li>
               <strong>Zero-Knowledge Architecture:</strong> We never have access

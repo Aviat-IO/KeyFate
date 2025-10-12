@@ -1,5 +1,5 @@
-import { serverEnv } from "../server-env";
-import { PaymentProviderFactory } from "./PaymentProviderFactory";
+import { serverEnv } from "../server-env"
+import { PaymentProviderFactory } from "./PaymentProviderFactory"
 
 // Lazy initialization to avoid build-time environment validation
 export function getFiatPaymentProvider() {
@@ -8,7 +8,7 @@ export function getFiatPaymentProvider() {
     config: {
       secretKey: serverEnv.STRIPE_SECRET_KEY,
     },
-  });
+  })
 }
 
 export function getCryptoPaymentProvider() {
@@ -19,8 +19,8 @@ export function getCryptoPaymentProvider() {
       apiKey: serverEnv.BTCPAY_API_KEY,
       storeId: serverEnv.BTCPAY_STORE_ID,
     },
-  });
+  })
 }
 
-export * from "./interfaces/PaymentProvider";
-export * from "./PaymentProviderFactory";
+export * from "./interfaces/PaymentProvider"
+export * from "./PaymentProviderFactory"

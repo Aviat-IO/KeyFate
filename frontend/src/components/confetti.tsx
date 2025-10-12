@@ -14,7 +14,7 @@ export function Confetti({ trigger = false }: { trigger?: boolean }) {
         return Math.random() * (max - min) + min
       }
 
-      const interval: any = setInterval(function() {
+      const interval: any = setInterval(function () {
         const timeLeft = animationEnd - Date.now()
 
         if (timeLeft <= 0) {
@@ -22,29 +22,29 @@ export function Confetti({ trigger = false }: { trigger?: boolean }) {
         }
 
         const particleCount = 50 * (timeLeft / duration)
-        
+
         // Center burst
         confetti(
           Object.assign({}, defaults, {
             particleCount,
             origin: { x: randomInRange(0.1, 0.9), y: Math.random() - 0.2 },
-          })
+          }),
         )
-        
+
         // Left burst
         confetti(
           Object.assign({}, defaults, {
             particleCount,
             origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
-          })
+          }),
         )
-        
+
         // Right burst
         confetti(
           Object.assign({}, defaults, {
             particleCount,
             origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
-          })
+          }),
         )
       }, 250)
 

@@ -63,20 +63,20 @@ function CheckInContent() {
 
       if (response.ok) {
         setIsSuccessful(true)
-        
+
         if (buttonRef.current) {
           const rect = buttonRef.current.getBoundingClientRect()
           const x = (rect.left + rect.width / 2) / window.innerWidth
           const y = (rect.top + rect.height / 2) / window.innerHeight
-          
+
           confetti({
             particleCount: 100,
             spread: 70,
             origin: { x, y },
-            colors: ['#10b981', '#34d399', '#6ee7b7', '#a7f3d0']
+            colors: ["#10b981", "#34d399", "#6ee7b7", "#a7f3d0"],
           })
         }
-        
+
         toast({
           title: "Check-in successful!",
           description: data.message ?? `Next check-in: ${data.nextCheckIn}`,

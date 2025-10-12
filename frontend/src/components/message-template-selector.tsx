@@ -12,7 +12,11 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { FileText, Crown } from "lucide-react"
-import { MESSAGE_TEMPLATES, MessageTemplate, getAllCategories } from "@/constants/message-templates"
+import {
+  MESSAGE_TEMPLATES,
+  MessageTemplate,
+  getAllCategories,
+} from "@/constants/message-templates"
 import { useState } from "react"
 
 interface MessageTemplateSelectorProps {
@@ -28,10 +32,10 @@ export function MessageTemplateSelector({
 }: MessageTemplateSelectorProps) {
   const [open, setOpen] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  
+
   const categories = getAllCategories()
   const filteredTemplates = selectedCategory
-    ? MESSAGE_TEMPLATES.filter(t => t.category === selectedCategory)
+    ? MESSAGE_TEMPLATES.filter((t) => t.category === selectedCategory)
     : MESSAGE_TEMPLATES
 
   const handleSelectTemplate = (template: MessageTemplate) => {
@@ -61,7 +65,7 @@ export function MessageTemplateSelector({
           Use Message Template
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[700px] max-h-[80vh]">
+      <DialogContent className="max-h-[80vh] sm:max-w-[700px]">
         <DialogHeader>
           <DialogTitle>Message Templates</DialogTitle>
           <DialogDescription>
@@ -70,7 +74,7 @@ export function MessageTemplateSelector({
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex flex-wrap gap-2">
             <Button
               type="button"
               variant={selectedCategory === null ? "default" : "outline"}
@@ -99,15 +103,15 @@ export function MessageTemplateSelector({
                   key={template.id}
                   type="button"
                   onClick={() => handleSelectTemplate(template)}
-                  className="w-full text-left p-4 rounded-lg border hover:border-primary hover:bg-accent transition-colors"
+                  className="hover:border-primary hover:bg-accent w-full rounded-lg border p-4 text-left transition-colors"
                 >
-                  <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="mb-2 flex items-start justify-between gap-2">
                     <h3 className="font-semibold">{template.title}</h3>
                     <Badge variant="secondary" className="text-xs">
                       {template.category}
                     </Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     {template.description}
                   </p>
                 </button>

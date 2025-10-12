@@ -1,5 +1,5 @@
-import { and, desc, eq, lt } from "drizzle-orm";
-import { getDatabase } from "./get-database";
+import { and, desc, eq, lt } from "drizzle-orm"
+import { getDatabase } from "./get-database"
 import {
   type Secret,
   type SecretInsert,
@@ -7,38 +7,43 @@ import {
   type SecretUpdate,
   type UserContactMethod,
   userContactMethods,
-} from "./schema";
-import { getSecretWithRecipients as getSecretWithRecipientsQuery, getAllSecretsWithRecipients } from "./queries/secrets";
-import type { SecretWithRecipients } from "../types/secret-types";
+} from "./schema"
+import {
+  getSecretWithRecipients as getSecretWithRecipientsQuery,
+  getAllSecretsWithRecipients,
+} from "./queries/secrets"
+import type { SecretWithRecipients } from "../types/secret-types"
 
 // Secrets operations - compatible with existing API
-export async function getAllSecrets(userId: string): Promise<SecretWithRecipients[]> {
-  const result = await getAllSecretsWithRecipients(userId);
-  return result;
+export async function getAllSecrets(
+  userId: string,
+): Promise<SecretWithRecipients[]> {
+  const result = await getAllSecretsWithRecipients(userId)
+  return result
 }
 
-export async function getSecret(id: string, userId: string): Promise<SecretWithRecipients> {
-  const result = await getSecretWithRecipientsQuery(id, userId);
-  
+export async function getSecret(
+  id: string,
+  userId: string,
+): Promise<SecretWithRecipients> {
+  const result = await getSecretWithRecipientsQuery(id, userId)
+
   if (!result) {
-    throw new Error("Secret not found");
+    throw new Error("Secret not found")
   }
 
-  return result;
+  return result
 }
 
 export async function createSecret(secret: SecretInsert): Promise<Secret> {
-  const db = await getDatabase();
-  const result = await db
-    .insert(secrets)
-    .values(secret)
-    .returning();
+  const db = await getDatabase()
+  const result = await db.insert(secrets).values(secret).returning()
 
   if (result.length === 0) {
-    throw new Error("Failed to create secret");
+    throw new Error("Failed to create secret")
   }
 
-  return result[0];
+  return result[0]
 }
 
 export async function updateSecret(
@@ -50,46 +55,43 @@ export async function updateSecret(
   const updateData: Record<string, unknown> = {
     ...updates,
     updatedAt: new Date(),
-  };
+  }
 
-  const db = await getDatabase();
+  const db = await getDatabase()
   const result = await db
     .update(secrets)
     .set(updateData)
     .where(and(eq(secrets.id, id), eq(secrets.userId, userId)))
-    .returning();
+    .returning()
 
   if (result.length === 0) {
-    throw new Error("Secret not found or update failed");
+    throw new Error("Secret not found or update failed")
   }
 
-  return result[0];
+  return result[0]
 }
 
 export async function deleteSecret(id: string, userId: string): Promise<void> {
-  const db = await getDatabase();
+  const db = await getDatabase()
   const result = await db
     .delete(secrets)
     .where(and(eq(secrets.id, id), eq(secrets.userId, userId)))
-    .returning({ id: secrets.id });
+    .returning({ id: secrets.id })
 
   if (result.length === 0) {
-    throw new Error("Secret not found");
+    throw new Error("Secret not found")
   }
 }
 
 export async function getOverdueSecrets(): Promise<Secret[]> {
-  const now = new Date();
-  const db = await getDatabase();
+  const now = new Date()
+  const db = await getDatabase()
   const result = await db
     .select()
     .from(secrets)
-    .where(and(
-      eq(secrets.status, "active"),
-      lt(secrets.nextCheckIn, now),
-    ));
+    .where(and(eq(secrets.status, "active"), lt(secrets.nextCheckIn, now)))
 
-  return result;
+  return result
 }
 
 export async function getSecretWithOwnership(
@@ -97,34 +99,37 @@ export async function getSecretWithOwnership(
   userId: string,
 ): Promise<Secret> {
   // This is the same as getSecret - keeping for API compatibility
-  return getSecret(id, userId);
+  return getSecret(id, userId)
 }
 
 // User Contact Methods operations
 export async function getUserContactMethods(
   userId: string,
 ): Promise<UserContactMethod[]> {
-  const db = await getDatabase();
+  const db = await getDatabase()
   const result = await db
     .select()
     .from(userContactMethods)
-    .where(eq(userContactMethods.userId, userId));
+    .where(eq(userContactMethods.userId, userId))
 
-  return result;
+  return result
 }
 
-export async function upsertUserContactMethods(userId: string, data: {
-  email?: string;
-  phone?: string;
-  preferredMethod?: "email" | "phone" | "both";
-}): Promise<UserContactMethod> {
-  const db = await getDatabase();
+export async function upsertUserContactMethods(
+  userId: string,
+  data: {
+    email?: string
+    phone?: string
+    preferredMethod?: "email" | "phone" | "both"
+  },
+): Promise<UserContactMethod> {
+  const db = await getDatabase()
   // First try to update existing record
   const existingRecord = await db
     .select()
     .from(userContactMethods)
     .where(eq(userContactMethods.userId, userId))
-    .limit(1);
+    .limit(1)
 
   if (existingRecord.length > 0) {
     // Update existing record
@@ -135,13 +140,13 @@ export async function upsertUserContactMethods(userId: string, data: {
         updatedAt: new Date(),
       } as any)
       .where(eq(userContactMethods.userId, userId))
-      .returning();
+      .returning()
 
     if (result.length === 0) {
-      throw new Error("Failed to update contact methods");
+      throw new Error("Failed to update contact methods")
     }
 
-    return result[0];
+    return result[0]
   } else {
     // Insert new record
     const result = await db
@@ -150,24 +155,24 @@ export async function upsertUserContactMethods(userId: string, data: {
         userId,
         ...data,
       })
-      .returning();
+      .returning()
 
     if (result.length === 0) {
-      throw new Error("Failed to create contact methods");
+      throw new Error("Failed to create contact methods")
     }
 
-    return result[0];
+    return result[0]
   }
 }
 
 // Database health check
 export async function testDatabaseConnection(): Promise<boolean> {
   try {
-    const db = await getDatabase();
-    await db.select({ count: secrets.id }).from(secrets).limit(1);
-    return true;
+    const db = await getDatabase()
+    await db.select({ count: secrets.id }).from(secrets).limit(1)
+    return true
   } catch (error) {
-    console.error("Database connection test failed:", error);
-    return false;
+    console.error("Database connection test failed:", error)
+    return false
   }
 }

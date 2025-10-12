@@ -1,65 +1,69 @@
-import { getTierConfig } from "../../constants/tiers";
+import { getTierConfig } from "../../constants/tiers"
 
 export interface EmailTemplate {
-  subject: string;
-  html: string;
-  text: string;
+  subject: string
+  html: string
+  text: string
 }
 
 interface SubscriptionConfirmationParams {
-  userName: string;
-  tierName: string;
-  provider: "stripe" | "btcpay";
-  amount: number;
-  interval: string;
-  nextBillingDate: Date;
+  userName: string
+  tierName: string
+  provider: "stripe" | "btcpay"
+  amount: number
+  interval: string
+  nextBillingDate: Date
 }
 
 interface PaymentFailedParams {
-  userName: string;
-  amount: number;
-  provider: "stripe" | "btcpay";
-  attemptCount: number;
-  maxAttempts: number;
-  nextRetry: Date;
+  userName: string
+  amount: number
+  provider: "stripe" | "btcpay"
+  attemptCount: number
+  maxAttempts: number
+  nextRetry: Date
 }
 
 interface SubscriptionCancelledParams {
-  userName: string;
+  userName: string
 }
 
 interface TrialWillEndParams {
-  userName: string;
-  daysRemaining: number;
-  trialEndDate: Date;
+  userName: string
+  daysRemaining: number
+  trialEndDate: Date
 }
 
 interface BitcoinPaymentConfirmationParams {
-  userName: string;
-  amount: number;
-  currency: string;
-  tierName: string;
-  confirmations: number;
-  transactionId?: string;
+  userName: string
+  amount: number
+  currency: string
+  tierName: string
+  confirmations: number
+  transactionId?: string
 }
 
 interface AdminAlertParams {
-  type: string;
-  severity: "low" | "medium" | "high" | "critical";
-  message: string;
-  details: Record<string, any>;
-  timestamp: Date;
+  type: string
+  severity: "low" | "medium" | "high" | "critical"
+  message: string
+  details: Record<string, any>
+  timestamp: Date
 }
 
 class EmailTemplates {
-  subscriptionConfirmation(params: SubscriptionConfirmationParams): EmailTemplate {
-    const formattedAmount = this.formatCurrency(params.amount);
-    const formattedDate = params.nextBillingDate.toLocaleDateString();
-    const providerName = params.provider === "stripe" ? "Credit Card" : "Bitcoin";
-    const companyName = this.getCompanyName();
-    const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@keyfate.com";
+  subscriptionConfirmation(
+    params: SubscriptionConfirmationParams,
+  ): EmailTemplate {
+    const formattedAmount = this.formatCurrency(params.amount)
+    const formattedDate = params.nextBillingDate.toLocaleDateString()
+    const providerName =
+      params.provider === "stripe" ? "Credit Card" : "Bitcoin"
+    const companyName = this.getCompanyName()
+    const supportEmail =
+      process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@keyfate.com"
 
-    const subject = `Subscription Confirmed - ${companyName}`;
+    const subject = `Subscription Confirmed - ${companyName}`
 
     const html = `
       <!DOCTYPE html>
@@ -125,7 +129,7 @@ class EmailTemplates {
           </div>
         </body>
       </html>
-    `;
+    `
 
     const text = `
 Subscription Confirmed - ${companyName}
@@ -148,17 +152,18 @@ If you have any questions, please contact our support team at ${supportEmail}.
 
 ${companyName} - Secure Secret Management
 © ${new Date().getFullYear()} All rights reserved.
-    `;
+    `
 
-    return { subject, html, text };
+    return { subject, html, text }
   }
 
   paymentFailed(params: PaymentFailedParams): EmailTemplate {
-    const formattedAmount = this.formatCurrency(params.amount);
-    const formattedRetry = params.nextRetry.toLocaleString();
-    const providerName = params.provider === "stripe" ? "Credit Card" : "Bitcoin";
+    const formattedAmount = this.formatCurrency(params.amount)
+    const formattedRetry = params.nextRetry.toLocaleString()
+    const providerName =
+      params.provider === "stripe" ? "Credit Card" : "Bitcoin"
 
-    const subject = "Payment Failed - Action Required";
+    const subject = "Payment Failed - Action Required"
 
     const html = `
       <!DOCTYPE html>
@@ -197,9 +202,10 @@ ${companyName} - Secure Secret Management
               <div class="warning">
                 <h3>Payment Attempt ${params.attemptCount} of ${params.maxAttempts}</h3>
                 <p>We will automatically retry your payment on <strong>${formattedRetry}</strong>.</p>
-                ${params.attemptCount >= params.maxAttempts ?
-                  "<p><strong>This was our final attempt. Your subscription will be cancelled if payment is not resolved.</strong></p>" :
-                  ""
+                ${
+                  params.attemptCount >= params.maxAttempts
+                    ? "<p><strong>This was our final attempt. Your subscription will be cancelled if payment is not resolved.</strong></p>"
+                    : ""
                 }
               </div>
 
@@ -225,7 +231,7 @@ ${companyName} - Secure Secret Management
           </div>
         </body>
       </html>
-    `;
+    `
 
     const text = `
 Payment Failed - Action Required
@@ -237,9 +243,10 @@ We were unable to process your payment of ${formattedAmount} using your ${provid
 Payment Attempt ${params.attemptCount} of ${params.maxAttempts}
 We will automatically retry your payment on ${formattedRetry}.
 
-${params.attemptCount >= params.maxAttempts ?
-  "This was our final attempt. Your subscription will be cancelled if payment is not resolved." :
-  ""
+${
+  params.attemptCount >= params.maxAttempts
+    ? "This was our final attempt. Your subscription will be cancelled if payment is not resolved."
+    : ""
 }
 
 To resolve this issue:
@@ -253,13 +260,13 @@ If you continue to experience issues, please contact our support team.
 
 KeyFate - Secure Secret Management
 © ${new Date().getFullYear()} All rights reserved.
-    `;
+    `
 
-    return { subject, html, text };
+    return { subject, html, text }
   }
 
   subscriptionCancelled(params: SubscriptionCancelledParams): EmailTemplate {
-    const subject = "Subscription Cancelled";
+    const subject = "Subscription Cancelled"
 
     const html = `
       <!DOCTYPE html>
@@ -318,7 +325,7 @@ KeyFate - Secure Secret Management
           </div>
         </body>
       </html>
-    `;
+    `
 
     const text = `
 Subscription Cancelled
@@ -340,14 +347,14 @@ We'd love to hear your feedback about how we can improve our service.
 
 KeyFate - Secure Secret Management
 © ${new Date().getFullYear()} All rights reserved.
-    `;
+    `
 
-    return { subject, html, text };
+    return { subject, html, text }
   }
 
   trialWillEnd(params: TrialWillEndParams): EmailTemplate {
-    const formattedDate = params.trialEndDate.toLocaleDateString();
-    const subject = `Trial Ending in ${params.daysRemaining} Days`;
+    const formattedDate = params.trialEndDate.toLocaleDateString()
+    const subject = `Trial Ending in ${params.daysRemaining} Days`
 
     const html = `
       <!DOCTYPE html>
@@ -411,7 +418,7 @@ KeyFate - Secure Secret Management
           </div>
         </body>
       </html>
-    `;
+    `
 
     const text = `
 Trial Ending Soon
@@ -434,13 +441,15 @@ Questions? Our support team is here to help!
 
 KeyFate - Secure Secret Management
 © ${new Date().getFullYear()} All rights reserved.
-    `;
+    `
 
-    return { subject, html, text };
+    return { subject, html, text }
   }
 
-  bitcoinPaymentConfirmation(params: BitcoinPaymentConfirmationParams): EmailTemplate {
-    const subject = "Bitcoin Payment Confirmed";
+  bitcoinPaymentConfirmation(
+    params: BitcoinPaymentConfirmationParams,
+  ): EmailTemplate {
+    const subject = "Bitcoin Payment Confirmed"
 
     const html = `
       <!DOCTYPE html>
@@ -503,7 +512,7 @@ KeyFate - Secure Secret Management
           </div>
         </body>
       </html>
-    `;
+    `
 
     const text = `
 Bitcoin Payment Confirmed
@@ -526,14 +535,14 @@ If you have any questions about your Bitcoin payment or subscription, please con
 
 KeyFate - Secure Secret Management
 © ${new Date().getFullYear()} All rights reserved.
-    `;
+    `
 
-    return { subject, html, text };
+    return { subject, html, text }
   }
 
   adminAlert(params: AdminAlertParams): EmailTemplate {
-    const subject = `Admin Alert: ${params.type} (${params.severity.toUpperCase()})`;
-    const severityColor = this.getSeverityColor(params.severity);
+    const subject = `Admin Alert: ${params.type} (${params.severity.toUpperCase()})`
+    const severityColor = this.getSeverityColor(params.severity)
 
     const html = `
       <!DOCTYPE html>
@@ -575,7 +584,7 @@ KeyFate - Secure Secret Management
           </div>
         </body>
       </html>
-    `;
+    `
 
     const text = `
 Admin Alert: ${params.type} (${params.severity.toUpperCase()})
@@ -590,37 +599,37 @@ ${JSON.stringify(params.details, null, 2)}
 Please investigate this alert and take appropriate action.
 
 KeyFate - Admin Alerts
-    `;
+    `
 
-    return { subject, html, text };
+    return { subject, html, text }
   }
 
   private formatCurrency(cents: number): string {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
-    }).format(cents / 100);
+    }).format(cents / 100)
   }
 
   private capitalizeFirst(str: string): string {
-    return str.charAt(0).toUpperCase() + str.slice(1);
+    return str.charAt(0).toUpperCase() + str.slice(1)
   }
 
   private getTierFeaturesFromConfig(tierName: string): string {
-    const tierConfig = getTierConfig(tierName as "free" | "pro");
+    const tierConfig = getTierConfig(tierName as "free" | "pro")
     if (!tierConfig || !tierConfig.features) {
-      return "<li>All features included</li>";
+      return "<li>All features included</li>"
     }
-    
+
     // Replace support email in features with current env var value
-    const supportEmail = this.getSupportEmail();
+    const supportEmail = this.getSupportEmail()
     return tierConfig.features
       .map((feature: string) => {
         // Replace any support@keyfate.com references with current support email
-        return feature.replace(/support@keyfate\.com/g, supportEmail);
+        return feature.replace(/support@keyfate\.com/g, supportEmail)
       })
       .map((feature: string) => `<li>${feature}</li>`)
-      .join("");
+      .join("")
   }
 
   private getTierFeatures(tierName: string): string {
@@ -656,29 +665,31 @@ KeyFate - Admin Alerts
         "<li>Team management</li>",
         "<li>Audit logs</li>",
       ],
-    };
+    }
 
-    return (features[tierName as keyof typeof features] || features.free).join("");
+    return (features[tierName as keyof typeof features] || features.free).join(
+      "",
+    )
   }
 
   private getSeverityColor(severity: string): string {
     const colors = {
-      low: "#10b981",      // green
-      medium: "#f59e0b",   // yellow
-      high: "#f97316",     // orange
+      low: "#10b981", // green
+      medium: "#f59e0b", // yellow
+      high: "#f97316", // orange
       critical: "#dc2626", // red
-    };
+    }
 
-    return colors[severity as keyof typeof colors] || colors.medium;
+    return colors[severity as keyof typeof colors] || colors.medium
   }
 
   private getCompanyName(): string {
-    return process.env.NEXT_PUBLIC_COMPANY || "KeyFate";
+    return process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
   }
 
   private getSupportEmail(): string {
-    return process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@keyfate.com";
+    return process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@keyfate.com"
   }
 }
 
-export const emailTemplates = new EmailTemplates();
+export const emailTemplates = new EmailTemplates()

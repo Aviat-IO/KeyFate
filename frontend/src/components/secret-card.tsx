@@ -97,7 +97,8 @@ export function SecretCard({ secret }: SecretCardProps) {
   )
 
   const firstRecipient = secretState.recipients[0]
-  const isTriggered = secretState.triggeredAt !== null || secretState.status === "triggered"
+  const isTriggered =
+    secretState.triggeredAt !== null || secretState.status === "triggered"
 
   useEffect(() => {
     setStatusBadge(
@@ -119,7 +120,7 @@ export function SecretCard({ secret }: SecretCardProps) {
 
   const handleCheckInSuccess = (updatedSecret: SecretWithRecipients) => {
     // Merge updated fields with existing state to preserve all metadata
-    setSecretState(prevState => ({
+    setSecretState((prevState) => ({
       ...prevState,
       ...updatedSecret,
     }))
@@ -132,7 +133,7 @@ export function SecretCard({ secret }: SecretCardProps) {
 
   const handleToggleSuccess = (updatedSecret: SecretWithRecipients) => {
     // Merge updated fields with existing state to preserve all metadata
-    setSecretState(prevState => ({
+    setSecretState((prevState) => ({
       ...prevState,
       ...updatedSecret,
     }))
@@ -140,7 +141,9 @@ export function SecretCard({ secret }: SecretCardProps) {
       title:
         updatedSecret.status === "active" ? "Secret resumed" : "Secret paused",
       description: `"${secret.title}" has been ${
-        updatedSecret.status === "active" ? "resumed and a check-in has been applied" : "paused"
+        updatedSecret.status === "active"
+          ? "resumed and a check-in has been applied"
+          : "paused"
       }.`,
       duration: 6000,
     })
@@ -148,7 +151,7 @@ export function SecretCard({ secret }: SecretCardProps) {
 
   const getContactDetails = () => {
     const details = []
-    secretState.recipients.forEach(recipient => {
+    secretState.recipients.forEach((recipient) => {
       if (recipient.email) {
         details.push(`${recipient.name} - Email: ${recipient.email}`)
       }
@@ -184,25 +187,23 @@ export function SecretCard({ secret }: SecretCardProps) {
     if (isTriggered || serverShareDeleted) {
       return null
     }
-    
-    const triggerDate = secretState.nextCheckIn ? new Date(secretState.nextCheckIn) : new Date()
+
+    const triggerDate = secretState.nextCheckIn
+      ? new Date(secretState.nextCheckIn)
+      : new Date()
     return triggerDate.toLocaleString(undefined, {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZoneName: 'short'
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZoneName: "short",
     })
   }
 
   const getLastCheckInText = () => {
-    if (
-      !secretState.lastCheckIn ||
-      isTriggered ||
-      serverShareDeleted
-    ) {
+    if (!secretState.lastCheckIn || isTriggered || serverShareDeleted) {
       return null
     }
     return `Last checkin: ${format(secretState.lastCheckIn)}`
@@ -232,13 +233,21 @@ export function SecretCard({ secret }: SecretCardProps) {
 
           <div className="space-y-3">
             <div>
-              <div className="mb-1.5 text-sm font-medium text-foreground">
-                {secretState.recipients.length} {secretState.recipients.length === 1 ? "Recipient" : "Recipients"}
+              <div className="text-foreground mb-1.5 text-sm font-medium">
+                {secretState.recipients.length}{" "}
+                {secretState.recipients.length === 1
+                  ? "Recipient"
+                  : "Recipients"}
               </div>
-              <ul className="ml-1 space-y-0.5 text-xs text-muted-foreground">
+              <ul className="text-muted-foreground ml-1 space-y-0.5 text-xs">
                 {secretState.recipients.map((recipient) => (
                   <li key={recipient.id}>
-                    • {recipient.name} {recipient.email ? `(${recipient.email})` : recipient.phone ? `(${recipient.phone})` : ""}
+                    • {recipient.name}{" "}
+                    {recipient.email
+                      ? `(${recipient.email})`
+                      : recipient.phone
+                        ? `(${recipient.phone})`
+                        : ""}
                   </li>
                 ))}
               </ul>
@@ -246,15 +255,15 @@ export function SecretCard({ secret }: SecretCardProps) {
 
             {!isTriggered && !serverShareDeleted && (
               <div>
-                <div className="mb-1.5 text-sm font-medium text-foreground">
+                <div className="text-foreground mb-1.5 text-sm font-medium">
                   {getTimingText()}
                 </div>
                 {secretState.status === "paused" ? (
-                  <div className="ml-1 text-xs text-muted-foreground">
+                  <div className="text-muted-foreground ml-1 text-xs">
                     Will not trigger until resumed
                   </div>
                 ) : (
-                  <div className="ml-1 text-xs text-muted-foreground">
+                  <div className="text-muted-foreground ml-1 text-xs">
                     {getTriggerTimeTooltip()}
                   </div>
                 )}
@@ -263,7 +272,7 @@ export function SecretCard({ secret }: SecretCardProps) {
 
             {isTriggered && (
               <div>
-                <div className="mb-1.5 text-sm font-medium text-foreground">
+                <div className="text-foreground mb-1.5 text-sm font-medium">
                   {getTimingText()}
                 </div>
               </div>
@@ -271,17 +280,17 @@ export function SecretCard({ secret }: SecretCardProps) {
 
             {serverShareDeleted && (
               <div>
-                <div className="mb-1.5 text-sm font-medium text-foreground">
+                <div className="text-foreground mb-1.5 text-sm font-medium">
                   Disabled
                 </div>
-                <div className="ml-1 text-xs text-muted-foreground">
+                <div className="text-muted-foreground ml-1 text-xs">
                   Server share deleted
                 </div>
               </div>
             )}
 
             {getLastCheckInText() && (
-              <div className="ml-1 text-xs text-muted-foreground">
+              <div className="text-muted-foreground ml-1 text-xs">
                 {getLastCheckInText()}
               </div>
             )}
@@ -291,9 +300,7 @@ export function SecretCard({ secret }: SecretCardProps) {
         {/* Desktop Layout: More spacious with better information hierarchy */}
         <div className="hidden md:block">
           <div className="mb-4 flex items-start justify-between">
-            <h3 className="text-xl font-semibold">
-              {secretState.title}
-            </h3>
+            <h3 className="text-xl font-semibold">{secretState.title}</h3>
             <Badge variant={statusBadge.variant} className="text-sm">
               {statusBadge.label}
             </Badge>
@@ -301,13 +308,21 @@ export function SecretCard({ secret }: SecretCardProps) {
 
           <div className="space-y-4">
             <div>
-              <div className="mb-2 text-base font-medium text-foreground">
-                {secretState.recipients.length} {secretState.recipients.length === 1 ? "Recipient" : "Recipients"}
+              <div className="text-foreground mb-2 text-base font-medium">
+                {secretState.recipients.length}{" "}
+                {secretState.recipients.length === 1
+                  ? "Recipient"
+                  : "Recipients"}
               </div>
-              <ul className="ml-1 space-y-1 text-sm text-muted-foreground">
+              <ul className="text-muted-foreground ml-1 space-y-1 text-sm">
                 {secretState.recipients.map((recipient) => (
                   <li key={recipient.id}>
-                    • {recipient.name} {recipient.email ? `(${recipient.email})` : recipient.phone ? `(${recipient.phone})` : ""}
+                    • {recipient.name}{" "}
+                    {recipient.email
+                      ? `(${recipient.email})`
+                      : recipient.phone
+                        ? `(${recipient.phone})`
+                        : ""}
                   </li>
                 ))}
               </ul>
@@ -315,15 +330,15 @@ export function SecretCard({ secret }: SecretCardProps) {
 
             {!isTriggered && !serverShareDeleted && (
               <div>
-                <div className="mb-2 text-base font-medium text-foreground">
+                <div className="text-foreground mb-2 text-base font-medium">
                   {getTimingText()}
                 </div>
                 {secretState.status === "paused" ? (
-                  <div className="ml-1 text-sm text-muted-foreground">
+                  <div className="text-muted-foreground ml-1 text-sm">
                     Will not trigger until resumed
                   </div>
                 ) : (
-                  <div className="ml-1 text-sm text-muted-foreground">
+                  <div className="text-muted-foreground ml-1 text-sm">
                     {getTriggerTimeTooltip()}
                   </div>
                 )}
@@ -332,7 +347,7 @@ export function SecretCard({ secret }: SecretCardProps) {
 
             {isTriggered && (
               <div>
-                <div className="mb-2 text-base font-medium text-foreground">
+                <div className="text-foreground mb-2 text-base font-medium">
                   {getTimingText()}
                 </div>
               </div>
@@ -340,17 +355,17 @@ export function SecretCard({ secret }: SecretCardProps) {
 
             {serverShareDeleted && (
               <div>
-                <div className="mb-2 text-base font-medium text-foreground">
+                <div className="text-foreground mb-2 text-base font-medium">
                   Disabled
                 </div>
-                <div className="ml-1 text-sm text-muted-foreground">
+                <div className="text-muted-foreground ml-1 text-sm">
                   Server share deleted
                 </div>
               </div>
             )}
 
             {getLastCheckInText() && (
-              <div className="ml-1 text-sm text-muted-foreground">
+              <div className="text-muted-foreground ml-1 text-sm">
                 {getLastCheckInText()}
               </div>
             )}

@@ -1,12 +1,12 @@
 // import { createClient } from "@/utils/supabase/client";
 
 export interface AuthTokens {
-  access_token: string;
-  refresh_token: string;
-  expires_at?: string;
-  expires_in?: string;
-  token_type?: string;
-  type?: string;
+  access_token: string
+  refresh_token: string
+  expires_at?: string
+  expires_in?: string
+  token_type?: string
+  type?: string
 }
 
 /**
@@ -16,21 +16,21 @@ export interface AuthTokens {
  */
 export function parseTokensFromHash(hash: string): AuthTokens | null {
   if (!hash || !hash.includes("access_token=")) {
-    return null;
+    return null
   }
 
   try {
     // Remove the leading # and parse as URLSearchParams
-    const params = new URLSearchParams(hash.substring(1));
-    const accessToken = params.get("access_token");
-    const refreshToken = params.get("refresh_token");
-    const expiresAt = params.get("expires_at");
-    const expiresIn = params.get("expires_in");
-    const tokenType = params.get("token_type");
-    const type = params.get("type");
+    const params = new URLSearchParams(hash.substring(1))
+    const accessToken = params.get("access_token")
+    const refreshToken = params.get("refresh_token")
+    const expiresAt = params.get("expires_at")
+    const expiresIn = params.get("expires_in")
+    const tokenType = params.get("token_type")
+    const type = params.get("type")
 
     if (!accessToken || !refreshToken) {
-      return null;
+      return null
     }
 
     return {
@@ -40,10 +40,10 @@ export function parseTokensFromHash(hash: string): AuthTokens | null {
       expires_in: expiresIn || undefined,
       token_type: tokenType || undefined,
       type: type || undefined,
-    };
+    }
   } catch (error) {
-    console.error("[Auth] Error parsing tokens from hash:", error);
-    return null;
+    console.error("[Auth] Error parsing tokens from hash:", error)
+    return null
   }
 }
 
@@ -65,11 +65,13 @@ export async function establishSessionFromTokens(
     // });
 
     // Temporary implementation - this function needs to be updated for NextAuth
-    console.warn("[Auth] establishSessionFromTokens is deprecated - use NextAuth instead");
-    return { data: null, error: "Function deprecated - use NextAuth" };
+    console.warn(
+      "[Auth] establishSessionFromTokens is deprecated - use NextAuth instead",
+    )
+    return { data: null, error: "Function deprecated - use NextAuth" }
   } catch (error) {
-    console.error("[Auth] Exception setting session:", error);
-    return { data: null, error };
+    console.error("[Auth] Exception setting session:", error)
+    return { data: null, error }
   }
 }
 
@@ -79,7 +81,7 @@ export async function establishSessionFromTokens(
  */
 export function clearTokensFromUrl(): void {
   if (typeof window !== "undefined") {
-    window.history.replaceState(null, "", window.location.pathname);
+    window.history.replaceState(null, "", window.location.pathname)
   }
 }
 
@@ -89,35 +91,35 @@ export function clearTokensFromUrl(): void {
  * @returns Promise that resolves to success status and session data
  */
 export async function completeAuthFlow(hash: string): Promise<{
-  success: boolean;
-  data?: unknown;
-  error?: unknown;
+  success: boolean
+  data?: unknown
+  error?: unknown
 }> {
-  const tokens = parseTokensFromHash(hash);
+  const tokens = parseTokensFromHash(hash)
 
   if (!tokens) {
     return {
       success: false,
       error: "Invalid authentication link",
-    };
+    }
   }
 
-  const { data, error } = await establishSessionFromTokens(tokens);
+  const { data, error } = await establishSessionFromTokens(tokens)
 
   if (error) {
     return {
       success: false,
       error: "Failed to establish session",
-    };
+    }
   }
 
   // Clear tokens from URL for security
-  clearTokensFromUrl();
+  clearTokensFromUrl()
 
   return {
     success: true,
     data,
-  };
+  }
 }
 
 /**
@@ -126,8 +128,8 @@ export async function completeAuthFlow(hash: string): Promise<{
  */
 export function hasAuthTokensInUrl(): boolean {
   if (typeof window === "undefined") {
-    return false;
+    return false
   }
 
-  return window.location.hash.includes("access_token=");
+  return window.location.hash.includes("access_token=")
 }

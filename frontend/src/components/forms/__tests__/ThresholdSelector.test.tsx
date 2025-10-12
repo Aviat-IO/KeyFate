@@ -4,7 +4,13 @@ import userEvent from "@testing-library/user-event"
 import { ThresholdSelector } from "../ThresholdSelector"
 import { useForm, FormProvider } from "react-hook-form"
 
-function TestWrapper({ isPro, onUpgradeClick }: { isPro: boolean; onUpgradeClick?: () => void }) {
+function TestWrapper({
+  isPro,
+  onUpgradeClick,
+}: {
+  isPro: boolean
+  onUpgradeClick?: () => void
+}) {
   const methods = useForm({
     defaultValues: {
       sss_shares_total: 3,
@@ -29,9 +35,11 @@ describe("ThresholdSelector", () => {
     it("should show fixed 2-of-3 message for free users", () => {
       render(<TestWrapper isPro={false} />)
 
-      expect(screen.getByText(/2-of-3 shares \(standard\)/i)).toBeInTheDocument()
       expect(
-        screen.getByText(/upgrade to Pro for configurable threshold schemes/i)
+        screen.getByText(/2-of-3 shares \(standard\)/i),
+      ).toBeInTheDocument()
+      expect(
+        screen.getByText(/upgrade to Pro for configurable threshold schemes/i),
       ).toBeInTheDocument()
     })
 
@@ -39,10 +47,10 @@ describe("ThresholdSelector", () => {
       render(<TestWrapper isPro={false} />)
 
       expect(
-        screen.queryByLabelText(/total shares to create/i)
+        screen.queryByLabelText(/total shares to create/i),
       ).not.toBeInTheDocument()
       expect(
-        screen.queryByLabelText(/shares needed for recovery/i)
+        screen.queryByLabelText(/shares needed for recovery/i),
       ).not.toBeInTheDocument()
     })
 
@@ -73,7 +81,7 @@ describe("ThresholdSelector", () => {
 
       expect(screen.getByText(/pro feature/i)).toBeInTheDocument()
       expect(
-        screen.getByText(/configure your security threshold/i)
+        screen.getByText(/configure your security threshold/i),
       ).toBeInTheDocument()
     })
 
@@ -81,10 +89,10 @@ describe("ThresholdSelector", () => {
       render(<TestWrapper isPro={true} />)
 
       expect(
-        screen.getByLabelText(/total shares to create/i)
+        screen.getByLabelText(/total shares to create/i),
       ).toBeInTheDocument()
       expect(
-        screen.getByLabelText(/shares needed for recovery \(threshold\)/i)
+        screen.getByLabelText(/shares needed for recovery \(threshold\)/i),
       ).toBeInTheDocument()
     })
 
@@ -106,7 +114,7 @@ describe("ThresholdSelector", () => {
       render(<TestWrapper isPro={true} />)
 
       const thresholdInput = screen.getByLabelText(
-        /shares needed for recovery \(threshold\)/i
+        /shares needed for recovery \(threshold\)/i,
       )
       expect(thresholdInput).toHaveAttribute("min", "2")
     })
@@ -115,7 +123,7 @@ describe("ThresholdSelector", () => {
       render(<TestWrapper isPro={true} />)
 
       const thresholdInput = screen.getByLabelText(
-        /shares needed for recovery \(threshold\)/i
+        /shares needed for recovery \(threshold\)/i,
       )
       expect(thresholdInput).toHaveAttribute("max", "7")
     })

@@ -1,51 +1,51 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 
 export default function AuthErrorPage() {
-  const searchParams = useSearchParams();
-  const error = searchParams.get("error");
+  const searchParams = useSearchParams()
+  const error = searchParams.get("error")
 
   const getErrorMessage = () => {
     switch (error) {
       case "Configuration":
-        return "There is a problem with the server configuration.";
+        return "There is a problem with the server configuration."
       case "AccessDenied":
-        return "You do not have permission to sign in.";
+        return "You do not have permission to sign in."
       case "Verification":
-        return "The verification token has expired or has already been used.";
+        return "The verification token has expired or has already been used."
       case "OAuthSignin":
-        return "Error connecting to the authentication provider.";
+        return "Error connecting to the authentication provider."
       case "OAuthCallback":
-        return "Error during the authentication process.";
+        return "Error during the authentication process."
       case "OAuthCreateAccount":
-        return "Could not create an account with the provided information.";
+        return "Could not create an account with the provided information."
       case "EmailCreateAccount":
-        return "Could not create an account with this email address.";
+        return "Could not create an account with this email address."
       case "Callback":
-        return "Error in the authentication callback.";
+        return "Error in the authentication callback."
       case "OAuthAccountNotLinked":
-        return "This email is already associated with another account. Please sign in using the original method.";
+        return "This email is already associated with another account. Please sign in using the original method."
       case "EmailSignin":
-        return "The email could not be sent. Please try again.";
+        return "The email could not be sent. Please try again."
       case "CredentialsSignin":
-        return "Sign in failed. Check the details you provided are correct.";
+        return "Sign in failed. Check the details you provided are correct."
       case "SessionRequired":
-        return "Please sign in to access this page.";
+        return "Please sign in to access this page."
       default:
-        return "An unexpected error occurred during authentication.";
+        return "An unexpected error occurred during authentication."
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary px-4">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
+    <div className="from-background to-secondary flex min-h-screen items-center justify-center bg-gradient-to-br px-4">
+      <div className="w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-lg">
         <div className="text-center">
           {/* Error Icon */}
-          <div className="mx-auto h-24 w-24 bg-destructive/10 rounded-full flex items-center justify-center mb-4">
+          <div className="bg-destructive/10 mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full">
             <svg
-              className="h-12 w-12 text-destructive"
+              className="text-destructive h-12 w-12"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -59,16 +59,16 @@ export default function AuthErrorPage() {
             </svg>
           </div>
 
-          <h1 className="text-3xl font-bold text-foreground mb-4">
+          <h1 className="text-foreground mb-4 text-3xl font-bold">
             Authentication Error
           </h1>
 
-          <div className="bg-destructive/10 border border-destructive rounded-lg p-4 mb-6">
+          <div className="bg-destructive/10 border-destructive mb-6 rounded-lg border p-4">
             <p className="text-destructive-foreground text-sm">
               {getErrorMessage()}
             </p>
             {error && (
-              <p className="text-destructive text-xs mt-2">
+              <p className="text-destructive mt-2 text-xs">
                 Error code: {error}
               </p>
             )}
@@ -77,30 +77,27 @@ export default function AuthErrorPage() {
           <div className="space-y-3">
             <Link
               href="/sign-in"
-              className="block w-full py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-primary to-primary hover:from-primary hover:to-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+              className="from-primary to-primary hover:from-primary hover:to-primary focus:ring-primary block w-full rounded-lg border border-transparent bg-gradient-to-r px-4 py-2 text-sm font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2"
             >
               Try signing in again
             </Link>
 
             <Link
               href="/"
-              className="block w-full py-2 px-4 border border-input rounded-lg shadow-sm text-sm font-medium text-foreground bg-white hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+              className="border-input text-foreground hover:bg-muted/50 focus:ring-primary block w-full rounded-lg border bg-white px-4 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2"
             >
               Return to home
             </Link>
           </div>
 
-          <p className="mt-6 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-6 text-xs">
             If this error persists, please{" "}
-            <Link
-              href="/support"
-              className="text-primary hover:text-primary"
-            >
+            <Link href="/support" className="text-primary hover:text-primary">
               contact support
             </Link>
           </p>
         </div>
       </div>
     </div>
-  );
+  )
 }

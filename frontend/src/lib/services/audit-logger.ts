@@ -34,8 +34,9 @@ export async function logAudit(params: AuditLogParams): Promise<void> {
   try {
     const db = await getDatabase()
     const headersList = await headers()
-    
-    const ipAddress = headersList.get("x-forwarded-for") || headersList.get("x-real-ip") || null
+
+    const ipAddress =
+      headersList.get("x-forwarded-for") || headersList.get("x-real-ip") || null
     const userAgent = headersList.get("user-agent") || null
 
     const logEntry = {
@@ -55,7 +56,11 @@ export async function logAudit(params: AuditLogParams): Promise<void> {
   }
 }
 
-export async function logSecretCreated(userId: string, secretId: string, details?: Record<string, any>) {
+export async function logSecretCreated(
+  userId: string,
+  secretId: string,
+  details?: Record<string, any>,
+) {
   await logAudit({
     userId,
     eventType: "secret_created",
@@ -66,7 +71,11 @@ export async function logSecretCreated(userId: string, secretId: string, details
   })
 }
 
-export async function logSecretEdited(userId: string, secretId: string, details?: Record<string, any>) {
+export async function logSecretEdited(
+  userId: string,
+  secretId: string,
+  details?: Record<string, any>,
+) {
   await logAudit({
     userId,
     eventType: "secret_edited",
@@ -77,7 +86,11 @@ export async function logSecretEdited(userId: string, secretId: string, details?
   })
 }
 
-export async function logSecretDeleted(userId: string, secretId: string, details?: Record<string, any>) {
+export async function logSecretDeleted(
+  userId: string,
+  secretId: string,
+  details?: Record<string, any>,
+) {
   await logAudit({
     userId,
     eventType: "secret_deleted",
@@ -88,7 +101,11 @@ export async function logSecretDeleted(userId: string, secretId: string, details
   })
 }
 
-export async function logCheckIn(userId: string, secretId: string, details?: Record<string, any>) {
+export async function logCheckIn(
+  userId: string,
+  secretId: string,
+  details?: Record<string, any>,
+) {
   await logAudit({
     userId,
     eventType: "check_in",
@@ -99,7 +116,11 @@ export async function logCheckIn(userId: string, secretId: string, details?: Rec
   })
 }
 
-export async function logSecretTriggered(userId: string, secretId: string, details?: Record<string, any>) {
+export async function logSecretTriggered(
+  userId: string,
+  secretId: string,
+  details?: Record<string, any>,
+) {
   await logAudit({
     userId,
     eventType: "secret_triggered",
@@ -110,7 +131,12 @@ export async function logSecretTriggered(userId: string, secretId: string, detai
   })
 }
 
-export async function logRecipientAdded(userId: string, secretId: string, recipientId: string, details?: Record<string, any>) {
+export async function logRecipientAdded(
+  userId: string,
+  secretId: string,
+  recipientId: string,
+  details?: Record<string, any>,
+) {
   await logAudit({
     userId,
     eventType: "recipient_added",
@@ -121,7 +147,12 @@ export async function logRecipientAdded(userId: string, secretId: string, recipi
   })
 }
 
-export async function logRecipientRemoved(userId: string, secretId: string, recipientId: string, details?: Record<string, any>) {
+export async function logRecipientRemoved(
+  userId: string,
+  secretId: string,
+  recipientId: string,
+  details?: Record<string, any>,
+) {
   await logAudit({
     userId,
     eventType: "recipient_removed",
@@ -141,7 +172,10 @@ export async function logLogin(userId: string, details?: Record<string, any>) {
   })
 }
 
-export async function logSubscriptionChanged(userId: string, details?: Record<string, any>) {
+export async function logSubscriptionChanged(
+  userId: string,
+  details?: Record<string, any>,
+) {
   await logAudit({
     userId,
     eventType: "subscription_changed",
@@ -150,7 +184,10 @@ export async function logSubscriptionChanged(userId: string, details?: Record<st
   })
 }
 
-export async function logSettingsChanged(userId: string, details?: Record<string, any>) {
+export async function logSettingsChanged(
+  userId: string,
+  details?: Record<string, any>,
+) {
   await logAudit({
     userId,
     eventType: "settings_changed",

@@ -149,17 +149,19 @@ export function EmailVerificationStatus({
       {showIcon &&
         (status.isVerified ? (
           <CheckCircle2
-            className="h-4 w-4 text-accent-foreground"
+            className="text-accent-foreground h-4 w-4"
             data-testid="verified-icon"
           />
         ) : (
           <XCircle
-            className="h-4 w-4 text-muted-foreground"
+            className="text-muted-foreground h-4 w-4"
             data-testid="unverified-icon"
           />
         ))}
       <span
-        className={status.isVerified ? "text-accent-foreground" : "text-muted-foreground"}
+        className={
+          status.isVerified ? "text-accent-foreground" : "text-muted-foreground"
+        }
       >
         {status.isVerified ? "Email verified" : "Email not verified"}
       </span>
@@ -298,9 +300,9 @@ export function EmailVerificationPrompt({
       <Card>
         <CardContent className="pt-6">
           <div className="space-y-4 text-center">
-            <CheckCircle2 className="mx-auto h-16 w-16 text-accent-foreground" />
+            <CheckCircle2 className="text-accent-foreground mx-auto h-16 w-16" />
             <div>
-              <h3 className="text-lg font-semibold text-accent-foreground">
+              <h3 className="text-accent-foreground text-lg font-semibold">
                 Email Verified!
               </h3>
               <p className="text-muted-foreground text-sm">

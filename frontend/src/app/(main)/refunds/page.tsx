@@ -29,9 +29,9 @@ export default function RefundsPage() {
         </div>
 
         {/* Quick Overview */}
-        <Card className="mb-8 border-accent/40">
+        <Card className="border-accent/40 mb-8">
           <CardHeader>
-            <CardTitle className="flex items-center text-accent-foreground dark:text-accent-foreground">
+            <CardTitle className="text-accent-foreground dark:text-accent-foreground flex items-center">
               <CheckCircle className="mr-2 h-5 w-5" />
               30-Day Money-Back Guarantee
             </CardTitle>
@@ -51,14 +51,14 @@ export default function RefundsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Shield className="mr-2 h-5 w-5 text-primary dark:text-primary" />
+                <Shield className="text-primary dark:text-primary mr-2 h-5 w-5" />
                 Refund Eligibility
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
                 <div className="flex items-start space-x-3">
-                  <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-accent-foreground dark:text-accent-foreground" />
+                  <CheckCircle className="text-accent-foreground dark:text-accent-foreground mt-0.5 h-5 w-5 flex-shrink-0" />
                   <div>
                     <h4 className="font-medium">Pro Subscriptions</h4>
                     <p className="text-muted-foreground text-sm">
@@ -69,7 +69,7 @@ export default function RefundsPage() {
                 </div>
 
                 <div className="flex items-start space-x-3">
-                  <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-accent-foreground dark:text-accent-foreground" />
+                  <CheckCircle className="text-accent-foreground dark:text-accent-foreground mt-0.5 h-5 w-5 flex-shrink-0" />
                   <div>
                     <h4 className="font-medium">Unused Portions</h4>
                     <p className="text-muted-foreground text-sm">
@@ -80,7 +80,7 @@ export default function RefundsPage() {
                 </div>
 
                 <div className="flex items-start space-x-3">
-                  <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-accent-foreground dark:text-accent-foreground" />
+                  <CheckCircle className="text-accent-foreground dark:text-accent-foreground mt-0.5 h-5 w-5 flex-shrink-0" />
                   <div>
                     <h4 className="font-medium">Billing Errors</h4>
                     <p className="text-muted-foreground text-sm">
@@ -97,14 +97,14 @@ export default function RefundsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Clock className="mr-2 h-5 w-5 text-muted-foreground dark:text-muted-foreground" />
+                <Clock className="text-muted-foreground dark:text-muted-foreground mr-2 h-5 w-5" />
                 Refund Timeline
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-4">
-                <div className="border-l-4 border-accent pl-4">
-                  <h4 className="font-medium text-accent-foreground dark:text-accent-foreground">
+                <div className="border-accent border-l-4 pl-4">
+                  <h4 className="text-accent-foreground dark:text-accent-foreground font-medium">
                     Within 30 Days
                   </h4>
                   <p className="text-muted-foreground text-sm">
@@ -113,8 +113,8 @@ export default function RefundsPage() {
                   </p>
                 </div>
 
-                <div className="border-l-4 border-primary pl-4">
-                  <h4 className="font-medium text-primary dark:text-primary">
+                <div className="border-primary border-l-4 pl-4">
+                  <h4 className="text-primary dark:text-primary font-medium">
                     31-365 Days (Annual Plans)
                   </h4>
                   <p className="text-muted-foreground text-sm">
@@ -140,7 +140,7 @@ export default function RefundsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <RefreshCw className="mr-2 h-5 w-5 text-secondary-foreground dark:text-secondary-foreground" />
+                <RefreshCw className="text-secondary-foreground dark:text-secondary-foreground mr-2 h-5 w-5" />
                 How to Request a Refund
               </CardTitle>
             </CardHeader>
@@ -179,7 +179,7 @@ export default function RefundsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <AlertTriangle className="mr-2 h-5 w-5 text-muted-foreground dark:text-muted-foreground" />
+                <AlertTriangle className="text-muted-foreground dark:text-muted-foreground mr-2 h-5 w-5" />
                 Special Circumstances
               </CardTitle>
             </CardHeader>
