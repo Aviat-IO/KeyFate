@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Check, Sparkles } from "lucide-react"
+import { Check, Crown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface WelcomeToProModalProps {
@@ -25,7 +25,7 @@ export function WelcomeToProModal({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <Sparkles className="text-primary h-6 w-6" />
+            <Crown className="text-primary h-6 w-6" />
             <DialogTitle className="text-2xl">Welcome to Pro!</DialogTitle>
           </div>
           <DialogDescription>

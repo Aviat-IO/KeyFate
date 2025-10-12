@@ -5,16 +5,16 @@ import { DevTierToggle } from "@/components/dev-tier-toggle"
 import { WelcomeToProModal } from "@/components/subscription/WelcomeToProModal"
 import { Button } from "@/components/ui/button"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { useConfig } from "@/contexts/ConfigContext"
-import { Menu, Sparkles } from "lucide-react"
+import { Menu, Crown } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
@@ -24,7 +24,6 @@ export function NavBar() {
   const pathname = usePathname()
   const { data: session, status } = useSession()
   const { config } = useConfig()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userTier, setUserTier] = useState<"free" | "pro">("free")
   const [checkingSubscription, setCheckingSubscription] = useState(false)
   const [proModalOpen, setProModalOpen] = useState(false)
@@ -58,18 +57,13 @@ export function NavBar() {
 
   const handleSignOut = async () => {
     await signOut({ callbackUrl: "/sign-in" })
-    setMobileMenuOpen(false) // Close mobile menu
-  }
-
-  const handleMobileMenuItemClick = () => {
-    setMobileMenuOpen(false)
   }
 
   return (
     <nav className="bg-background/95 supports-[backdrop-filter]:bg-background/60 border-b backdrop-blur">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
+          {/* Logo and Dashboard Link */}
           <div className="flex items-center space-x-4">
             <Link
               href={user ? "/dashboard" : "/"}
@@ -77,83 +71,31 @@ export function NavBar() {
             >
               {config?.company || "KeyFate"}
             </Link>
-            {/* Dashboard link when authenticated user is on home page */}
-            {user && pathname === "/" && (
+            {user && pathname !== "/dashboard" && (
               <Button variant="ghost" asChild>
                 <Link href="/dashboard">Dashboard</Link>
               </Button>
             )}
           </div>
 
-            {/* Desktop Menu */}
-          <div className="hidden items-center space-x-4 md:flex">
-            {!user && (
-              <Button variant="ghost" asChild>
-                <Link href="/pricing">Pricing</Link>
-              </Button>
-            )}
-            {user && isProUser && (
-              <Button variant="ghost" asChild>
-                <Link href="/audit-logs">Audit Logs</Link>
-              </Button>
-            )}
-            <Button variant="ghost" asChild>
-              <Link href="/decrypt">Recover Secret</Link>
-            </Button>
+          {/* Unified Menu for Desktop and Mobile */}
+          <div className="flex items-center space-x-2">
             <ThemeToggle />
 
-            {loading ? (
-              // Show nothing while loading to avoid flash
-              <div className="h-9 w-20" />
-            ) : user ? (
-              // User is logged in - show dev toggle, pro badge/upgrade button, and sign out
-              <>
-                <DevTierToggle currentTier={userTier} />
-                {!checkingSubscription && isProUser && (
-                  <Button
-                    variant="outline"
-                    onClick={() => setProModalOpen(true)}
-                    className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                  >
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Pro
-                  </Button>
-                )}
-                {!checkingSubscription && !isProUser && (
-                  <Button variant="outline" asChild className="border-primary hover:bg-primary hover:text-primary-foreground">
-                    <Link href="/pricing">Upgrade to Pro</Link>
-                  </Button>
-                )}
-                <Button variant="outline" onClick={handleSignOut}>
-                  Sign Out
-                </Button>
-              </>
-            ) : (
-              // User is not logged in - show log in and sign up
-              <>
-                <Button variant="ghost" asChild>
-                  <Link href="/sign-in">Sign In</Link>
-                </Button>
-                <Button asChild>
-                  <Link href="/sign-in">Sign Up</Link>
-                </Button>
-              </>
-            )}
-          </div>
-
-          {/* Mobile Menu */}
-          <div className="flex items-center space-x-2 md:hidden">
-            <ThemeToggle />
-
-            {/* Show Sign Up button on mobile for unauthenticated users */}
-            {!loading && !user && (
-              <Button asChild size="sm">
-                <Link href="/sign-in">Sign Up</Link>
+            {!checkingSubscription && isProUser && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setProModalOpen(true)}
+                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+              >
+                <Crown className="mr-2 h-4 w-4" />
+                Pro
               </Button>
             )}
 
-            <Dialog open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-              <DialogTrigger asChild>
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -163,137 +105,56 @@ export function NavBar() {
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Open menu</span>
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="w-[90vw] max-w-sm p-4">
-                <DialogTitle className="sr-only">Navigation Menu</DialogTitle>
-                <DialogDescription className="sr-only">
-                  Mobile navigation menu with links and user options
-                </DialogDescription>
-                <div className="flex flex-col space-y-2">
-                  {/* Menu Items */}
-                  {!user && (
-                    <>
-                      <Button
-                        variant="ghost"
-                        asChild
-                        className="h-12 justify-start"
-                      >
-                        <Link
-                          href="/pricing"
-                          onClick={handleMobileMenuItemClick}
-                        >
-                          Pricing
-                        </Link>
-                      </Button>
-                      <Separator className="my-1" />
-                    </>
-                  )}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56" data-testid="dropdown-content">
+                {!user && (
+                  <>
+                    <DropdownMenuItem asChild className="cursor-pointer">
+                      <Link href="/pricing" className="w-full">Pricing</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
 
-                  {/* Dashboard link when authenticated user is on home page */}
-                  {user && pathname === "/" && (
-                    <>
-                      <Button
-                        variant="ghost"
-                        asChild
-                        className="h-12 justify-start"
-                        data-testid="mobile-dashboard"
-                      >
-                        <Link
-                          href="/dashboard"
-                          onClick={handleMobileMenuItemClick}
-                        >
-                          Dashboard
-                        </Link>
-                      </Button>
-                      <Separator className="my-1" />
-                    </>
-                  )}
+                {user && isProUser && (
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link href="/audit-logs" className="w-full">Audit Logs</Link>
+                  </DropdownMenuItem>
+                )}
 
-                  {user && isProUser && (
-                    <Button
-                      variant="ghost"
-                      asChild
-                      className="h-12 justify-start"
-                    >
-                      <Link href="/audit-logs" onClick={handleMobileMenuItemClick}>
-                        Audit Logs
-                      </Link>
-                    </Button>
-                  )}
+                <DropdownMenuItem asChild data-testid="mobile-recover-secret" className="cursor-pointer">
+                  <Link href="/decrypt" className="w-full">Recover Secret</Link>
+                </DropdownMenuItem>
 
-                  <Button
-                    variant="ghost"
-                    asChild
-                    className="h-12 justify-start"
-                    data-testid="mobile-recover-secret"
-                  >
-                    <Link href="/decrypt" onClick={handleMobileMenuItemClick}>
-                      Recover Secret
-                    </Link>
-                  </Button>
-
-                  {loading ? (
-                    // Show nothing while loading to avoid flash
-                    <div className="h-9" />
-                  ) : user ? (
-                    // User is logged in - show dev toggle, pro badge/upgrade button, and sign out
-                    <>
-                      <Separator className="my-1" />
-                      <div className="px-3 py-2">
-                        <DevTierToggle currentTier={userTier} />
-                      </div>
-                      {!checkingSubscription && isProUser && (
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setProModalOpen(true)
-                            handleMobileMenuItemClick()
-                          }}
-                          className="h-12 justify-start border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                        >
-                          <Sparkles className="mr-2 h-4 w-4" />
-                          View Pro Features
-                        </Button>
-                      )}
-                      {!checkingSubscription && !isProUser && (
-                        <Button
-                          variant="outline"
-                          asChild
-                          className="h-12 justify-start border-primary hover:bg-primary hover:text-primary-foreground"
-                          onClick={handleMobileMenuItemClick}
-                        >
-                          <Link href="/pricing">Upgrade to Pro</Link>
-                        </Button>
-                      )}
-                      <Button
-                        variant="outline"
-                        onClick={handleSignOut}
-                        className="h-12 justify-start"
-                      >
-                        Sign Out
-                      </Button>
-                    </>
-                  ) : (
-                    // User is not logged in - show sign in only (sign up is outside the menu)
-                    <>
-                      <Separator className="my-1" />
-                      <Button
-                        variant="ghost"
-                        asChild
-                        className="h-12 justify-start"
-                      >
-                        <Link
-                          href="/sign-in"
-                          onClick={handleMobileMenuItemClick}
-                        >
-                          Sign In
-                        </Link>
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </DialogContent>
-            </Dialog>
+                {!loading && (
+                  <>
+                    {user ? (
+                      <>
+                        <DropdownMenuSeparator />
+                        {!checkingSubscription && !isProUser && (
+                          <DropdownMenuItem asChild className="cursor-pointer">
+                            <Link href="/pricing" className="w-full">Upgrade to Pro</Link>
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
+                          Sign Out
+                        </DropdownMenuItem>
+                      </>
+                    ) : (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild className="cursor-pointer">
+                          <Link href="/sign-in" className="w-full">Sign In</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild className="cursor-pointer">
+                          <Link href="/sign-in" className="w-full">Sign Up</Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
