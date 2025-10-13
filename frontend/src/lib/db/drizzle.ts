@@ -1,5 +1,5 @@
 import { and, desc, eq, lt } from "drizzle-orm"
-import { secrets, users } from "./schema"
+import { secrets, users, type SecretUpdate } from "./schema"
 import { connectionManager } from "./connection-manager"
 import { getDatabase } from "./get-database"
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js"
@@ -59,11 +59,7 @@ export const secretsService = {
       .orderBy(desc(secrets.createdAt))
   },
 
-  async update(
-    id: string,
-    userId: string,
-    data: Partial<typeof secrets.$inferInsert>,
-  ) {
+  async update(id: string, userId: string, data: SecretUpdate) {
     const database = await getDatabase()
     const [result] = await database
       .update(secrets)

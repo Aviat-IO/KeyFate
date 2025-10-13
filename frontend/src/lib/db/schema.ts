@@ -379,9 +379,7 @@ export const auditLogs = pgTable(
 // Export types for use in application
 export type Secret = typeof secrets.$inferSelect
 export type SecretInsert = typeof secrets.$inferInsert
-export type SecretUpdate = Partial<Omit<SecretInsert, "id" | "createdAt">> & {
-  updatedAt?: Date
-}
+export type SecretUpdate = Partial<Omit<Secret, "id" | "createdAt">>
 
 export type AdminNotification = typeof adminNotifications.$inferSelect
 export type CheckInToken = typeof checkInTokens.$inferSelect
