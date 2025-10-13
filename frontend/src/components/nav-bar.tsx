@@ -91,7 +91,7 @@ export function NavBar() {
                 onClick={() => setProModalOpen(true)}
                 className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
               >
-                <Crown className="mr-2 h-4 w-4" />
+                <Crown className="h-4 w-4" />
                 Pro
               </Button>
             )}
