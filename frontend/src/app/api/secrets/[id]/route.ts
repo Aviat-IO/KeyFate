@@ -99,7 +99,14 @@ export async function PUT(
       )
     }
 
-    // Update secret metadata
+    const existingSecret = await secretsService.getById(id, session.user.id)
+    if (!existingSecret) {
+      return NextResponse.json({ error: "Secret not found" }, { status: 404 })
+    }
+
+    const checkInDaysChanged =
+      existingSecret.checkInDays !== validatedData.check_in_days
+
     const updateData = {
       title: validatedData.title,
       checkInDays: validatedData.check_in_days,
@@ -111,7 +118,6 @@ export async function PUT(
       return NextResponse.json({ error: "Secret not found" }, { status: 404 })
     }
 
-    // Update recipients - cast to RecipientInput since validation ensures correct shape
     await updateSecretRecipients(
       id,
       validatedData.recipients as Array<{
@@ -121,13 +127,32 @@ export async function PUT(
       }>,
     )
 
+    if (checkInDaysChanged) {
+      const now = new Date()
+      const nextCheckIn = new Date(
+        now.getTime() + validatedData.check_in_days * 24 * 60 * 60 * 1000,
+      )
+
+      await secretsService.update(id, session.user.id, {
+        lastCheckIn: now,
+        nextCheckIn,
+      })
+
+      const db = await getDatabase()
+      await db.insert(checkinHistory).values({
+        secretId: id,
+        userId: session.user.id,
+        checkedInAt: now,
+        nextCheckIn: nextCheckIn,
+      })
+    }
+
     await logSecretEdited(session.user.id, id, {
       title: validatedData.title,
       recipientCount: validatedData.recipients.length,
       checkInDays: validatedData.check_in_days,
     })
 
-    // Return updated secret with recipients
     const updatedSecret = await getSecretWithRecipients(id, session.user.id)
     return NextResponse.json(updatedSecret)
   } catch (error) {
