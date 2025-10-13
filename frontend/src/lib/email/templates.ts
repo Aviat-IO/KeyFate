@@ -142,9 +142,9 @@ export function renderBaseTemplate(data: BaseTemplateData): EmailTemplate {
 ${data.title}
 
 ${data.content
-  .replace(/<[^>]*>/g, "")
-  .replace(/\s+/g, " ")
-  .trim()}
+      .replace(/<[^>]*>/g, "")
+      .replace(/\s+/g, " ")
+      .trim()}
 
 ${data.footerText || ""}
 
@@ -174,7 +174,7 @@ export function renderVerificationTemplate(
     <p>Please click the button below to verify your email address and complete your account setup:</p>
 
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${data.verificationUrl}" class="button">Verify Email Address</a>
+      <a href="${data.verificationUrl}" class="button" style="text: white">Verify Email Address</a>
     </div>
 
     <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
@@ -192,13 +192,13 @@ export function renderVerificationTemplate(
   `
 
   const baseTemplate = renderBaseTemplate({
-    title: `Verify your email address - ${companyName}`,
+    title: `Verify your email address`,
     content,
     footerText: `If you have any questions, please contact us at ${supportEmail}`,
   })
 
   return {
-    subject: `Verify your email address - ${companyName}`,
+    subject: `Verify your email address`,
     html: baseTemplate.html,
     text: baseTemplate.text,
   }
@@ -228,14 +228,13 @@ export function renderReminderTemplate(
       <p style="margin: 0 0 10px 0; font-size: 16px; font-weight: bold; color: ${urgency.textColor};">
         You need to check in for "${data.secretTitle}" within ${timeText}
       </p>
-      ${
-        data.urgencyLevel === "critical" || data.urgencyLevel === "high"
-          ? `
+      ${data.urgencyLevel === "critical" || data.urgencyLevel === "high"
+      ? `
       <p style="margin: 10px 0 0 0; font-size: 15px; color: ${urgency.textColor};"><strong>Time is running out!</strong></p>
       <p style="margin: 5px 0 0 0; color: ${urgency.textColor};">Please check in immediately to prevent automatic disclosure.</p>
       `
-          : ""
-      }
+      : ""
+    }
     </div>
 
     <p>Hi ${data.userName},</p>

@@ -29,7 +29,7 @@ describe("Email Templates", () => {
 
     it("should render verification email with all required elements", async () => {
       mockEmailTemplates.renderVerificationTemplate.mockReturnValue({
-        subject: "Verify your email address - Dead Man's Switch",
+        subject: "Verify your email address",
         html: `
           <div>
             <h1>Welcome John Doe!</h1>
