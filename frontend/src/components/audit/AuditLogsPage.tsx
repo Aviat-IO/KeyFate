@@ -121,13 +121,7 @@ export function AuditLogsPage({ initialLogs = [] }: AuditLogsPageProps) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Audit Logs</CardTitle>
-        <CardDescription>
-          Comprehensive audit trail of all activities in your account
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <div className="space-y-4">
           <div className="flex flex-wrap gap-4">
             <Select

@@ -13,6 +13,7 @@ import type { Session } from "next-auth"
 import { getServerSession } from "next-auth/next"
 import Link from "next/link"
 import { redirect } from "next/navigation"
+import { SettingsPageHeader } from "@/components/settings/SettingsPageHeader"
 
 export default async function AuditLogsRoute() {
   const session = (await getServerSession(
@@ -28,7 +29,12 @@ export default async function AuditLogsRoute() {
 
   if (userTier !== "pro") {
     return (
-      <div className="mx-auto py-8 sm:px-4">
+      <div className="space-y-6">
+        <SettingsPageHeader
+          title="Audit Logs"
+          description="Comprehensive audit trails are a Pro feature"
+        />
+
         <Card>
           <CardHeader>
             <CardTitle>Audit Logs</CardTitle>
@@ -66,7 +72,12 @@ export default async function AuditLogsRoute() {
   }
 
   return (
-    <div className="mx-auto py-8 sm:px-4">
+    <div className="space-y-6">
+      <SettingsPageHeader
+        title="Audit Logs"
+        description="Comprehensive audit trail of all activities in your account"
+      />
+
       <AuditLogsPage />
     </div>
   )

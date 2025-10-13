@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth/next"
 import { redirect } from "next/navigation"
 import { getUserTierInfo } from "@/lib/subscription"
 import { SubscriptionManagement } from "@/components/settings/SubscriptionManagement"
+import { SettingsPageHeader } from "@/components/settings/SettingsPageHeader"
 
 export default async function SubscriptionSettingsPage() {
   const session = (await getServerSession(authConfig as any)) as Session | null
@@ -21,12 +22,10 @@ export default async function SubscriptionSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Subscription</h1>
-        <p className="text-muted-foreground">
-          Manage your subscription and billing
-        </p>
-      </div>
+      <SettingsPageHeader
+        title="Subscription"
+        description="Manage your subscription and billing"
+      />
 
       <SubscriptionManagement tierInfo={tierInfo} />
     </div>
