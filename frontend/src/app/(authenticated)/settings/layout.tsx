@@ -22,7 +22,7 @@ export default async function SettingsLayout({
   const isProUser = tierInfo?.tier?.tiers?.name === "pro"
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="mx-auto py-8 sm:px-4">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-[200px_1px_1fr]">
         <aside className="md:col-span-1">
           <SettingsNav isProUser={isProUser} />

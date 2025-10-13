@@ -6,18 +6,11 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 import { useToast } from "@/hooks/use-toast"
-import { cn } from "@/lib/utils"
 import { formatGranularTime } from "@/lib/time-utils"
 import type { SecretWithRecipients } from "@/lib/types/secret-types"
-import { getRecipientContactInfo } from "@/lib/types/secret-types"
-import { Clock, Pencil, User } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Pencil } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { format } from "timeago.js"
@@ -140,11 +133,10 @@ export function SecretCard({ secret }: SecretCardProps) {
     toast({
       title:
         updatedSecret.status === "active" ? "Secret resumed" : "Secret paused",
-      description: `"${secret.title}" has been ${
-        updatedSecret.status === "active"
-          ? "resumed and a check-in has been applied"
-          : "paused"
-      }.`,
+      description: `"${secret.title}" has been ${updatedSecret.status === "active"
+        ? "resumed and a check-in has been applied"
+        : "paused"
+        }.`,
       duration: 6000,
     })
   }
@@ -216,7 +208,7 @@ export function SecretCard({ secret }: SecretCardProps) {
         isTriggered && "border-destructive/50 bg-destructive/5",
         secretState.status === "paused" && "border-accent bg-accent/10",
         serverShareDeleted &&
-          "border-muted-foreground/30 bg-muted/50 opacity-90",
+        "border-muted-foreground/30 bg-muted/50 opacity-90",
       )}
     >
       <CardHeader className="flex-1 pb-4">
@@ -377,57 +369,62 @@ export function SecretCard({ secret }: SecretCardProps) {
         <Separator className="mb-3" />
 
         {/* Action Buttons - Responsive layout */}
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-between gap-2">
           {!isTriggered ? (
             <>
-              {/* Check-in button - only on larger screens or when urgent */}
-              {!serverShareDeleted &&
-                secretState.status === "active" &&
-                canCheckIn && (
+
+              {/* Pause/Resume and Edit buttons - left aligned with separator */}
+              <div className="flex items-center gap-2">
+                {!serverShareDeleted && (
                   <>
-                    <CheckInButton
+                    <TogglePauseButton
                       secretId={secretState.id}
-                      onCheckInSuccess={handleCheckInSuccess}
-                      variant="ghost"
+                      status={secretState.status}
+                      onToggleSuccess={handleToggleSuccess}
                     />
                     <Separator orientation="vertical" className="h-4" />
                   </>
                 )}
 
-              {/* Pause/Resume button */}
-              {!serverShareDeleted && (
-                <>
-                  <TogglePauseButton
-                    secretId={secretState.id}
-                    status={secretState.status}
-                    onToggleSuccess={handleToggleSuccess}
-                  />
-                  <Separator orientation="vertical" className="h-4" />
-                </>
-              )}
+                <Button variant="ghost" size="sm" asChild>
+                  <Link
+                    href={
+                      serverShareDeleted
+                        ? `/secrets/${secretState.id}/view`
+                        : `/secrets/${secretState.id}/edit`
+                    }
+                  >
+                    <Pencil className="mr-1 h-4 w-4" />
+                    <span className="hidden sm:inline">
+                      {serverShareDeleted ? "View" : "Edit"}
+                    </span>
+                  </Link>
+                </Button>
+              </div>
 
-              {/* Edit/View button */}
+              {/* Check-in button - right aligned */}
+              <div>
+                {!serverShareDeleted &&
+                  secretState.status === "active" &&
+                  canCheckIn && (
+                    <CheckInButton
+                      secretId={secretState.id}
+                      onCheckInSuccess={handleCheckInSuccess}
+                      variant="ghost"
+                    />
+                  )}
+              </div>
+
+            </>
+          ) : (
+            <>
+              <div />
               <Button variant="ghost" size="sm" asChild>
-                <Link
-                  href={
-                    serverShareDeleted
-                      ? `/secrets/${secretState.id}/view`
-                      : `/secrets/${secretState.id}/edit`
-                  }
-                >
-                  <Pencil className="mr-1 h-4 w-4" />
-                  <span className="hidden sm:inline">
-                    {serverShareDeleted ? "View" : "Edit"}
-                  </span>
+                <Link href={`/secrets/${secretState.id}/view`}>
+                  <span className="text-sm">View</span>
                 </Link>
               </Button>
             </>
-          ) : (
-            <Button variant="ghost" size="sm" asChild>
-              <Link href={`/secrets/${secretState.id}/view`}>
-                <span className="text-sm">View</span>
-              </Link>
-            </Button>
           )}
         </div>
       </CardContent>
