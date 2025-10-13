@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { SettingsPageHeader } from "@/components/settings/SettingsPageHeader"
 
 export default async function GeneralSettingsPage() {
   const session = (await getServerSession(authConfig as any)) as Session | null
@@ -39,10 +40,10 @@ export default async function GeneralSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">General Settings</h1>
-        <p className="text-muted-foreground">View your account information</p>
-      </div>
+      <SettingsPageHeader
+        title="General Settings"
+        description="View your account information"
+      />
 
       <Card>
         <CardHeader>
