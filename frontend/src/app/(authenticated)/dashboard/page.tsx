@@ -87,9 +87,17 @@ async function SecretsLoader() {
       "secrets",
     )
 
+    const sortedSecrets = [...secrets].sort((a, b) => {
+      if (!a.nextCheckIn) return 1
+      if (!b.nextCheckIn) return -1
+      return (
+        new Date(a.nextCheckIn).getTime() - new Date(b.nextCheckIn).getTime()
+      )
+    })
+
     return (
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6 xl:grid-cols-3">
-        {secrets.map((secret) => (
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-4 lg:gap-6 xl:grid-cols-3">
+        {sortedSecrets.map((secret) => (
           <SecretCard key={secret.id} secret={secret} />
         ))}
       </div>

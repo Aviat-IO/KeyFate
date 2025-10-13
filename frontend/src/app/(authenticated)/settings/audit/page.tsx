@@ -28,7 +28,7 @@ export default async function AuditLogsRoute() {
 
   if (userTier !== "pro") {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="mx-auto py-8 sm:px-4">
         <Card>
           <CardHeader>
             <CardTitle>Audit Logs</CardTitle>
@@ -66,7 +66,7 @@ export default async function AuditLogsRoute() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="mx-auto py-8 sm:px-4">
       <AuditLogsPage />
     </div>
   )
