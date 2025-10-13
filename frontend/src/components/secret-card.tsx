@@ -133,10 +133,11 @@ export function SecretCard({ secret }: SecretCardProps) {
     toast({
       title:
         updatedSecret.status === "active" ? "Secret resumed" : "Secret paused",
-      description: `"${secret.title}" has been ${updatedSecret.status === "active"
-        ? "resumed and a check-in has been applied"
-        : "paused"
-        }.`,
+      description: `"${secret.title}" has been ${
+        updatedSecret.status === "active"
+          ? "resumed and a check-in has been applied"
+          : "paused"
+      }.`,
       duration: 6000,
     })
   }
@@ -208,7 +209,7 @@ export function SecretCard({ secret }: SecretCardProps) {
         isTriggered && "border-destructive/50 bg-destructive/5",
         secretState.status === "paused" && "border-accent bg-accent/10",
         serverShareDeleted &&
-        "border-muted-foreground/30 bg-muted/50 opacity-90",
+          "border-muted-foreground/30 bg-muted/50 opacity-90",
       )}
     >
       <CardHeader className="flex-1 pb-4">
@@ -372,7 +373,6 @@ export function SecretCard({ secret }: SecretCardProps) {
         <div className="flex items-center justify-between gap-2">
           {!isTriggered ? (
             <>
-
               {/* Pause/Resume and Edit buttons - left aligned with separator */}
               <div className="flex items-center gap-2">
                 {!serverShareDeleted && (
@@ -410,11 +410,10 @@ export function SecretCard({ secret }: SecretCardProps) {
                     <CheckInButton
                       secretId={secretState.id}
                       onCheckInSuccess={handleCheckInSuccess}
-                      variant="ghost"
+                      variant="default"
                     />
                   )}
               </div>
-
             </>
           ) : (
             <>
