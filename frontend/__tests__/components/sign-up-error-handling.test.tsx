@@ -29,7 +29,7 @@ vi.mock("@/components/auth-form", () => ({
 global.fetch = vi.fn()
 
 // Import the component after mocking
-import SignUpPage from "@/app/auth/signup/page"
+import SignUpPage from "@/app/sign-up/page"
 
 describe("Sign-Up Error Handling", () => {
   const user = userEvent.setup()
@@ -41,7 +41,7 @@ describe("Sign-Up Error Handling", () => {
     // Mock window.location for redirects
     Object.defineProperty(window, "location", {
       value: {
-        href: "http://localhost:3000/auth/signup",
+        href: "http://localhost:3000/sign-up",
       },
       writable: true,
     })

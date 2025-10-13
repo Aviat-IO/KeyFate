@@ -1,66 +1,24 @@
 "use client"
 
+import { AuthForm } from "@/components/auth-form"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { SocialButtons } from "@/components/ui/social-buttons"
 import { signIn } from "next-auth/react"
-import Link from "next/link"
-import { useState, useEffect, Suspense } from "react"
-import { useSearchParams } from "next/navigation"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
+import Link from "next/link"
+import { useSearchParams } from "next/navigation"
+import { useState, useEffect } from "react"
 
-function SocialButtonsSeparator() {
-  const [showSeparator, setShowSeparator] = useState(false)
-
-  useEffect(() => {
-    const checkProviders = async () => {
-      try {
-        const response = await fetch("/api/auth/providers")
-        const data = await response.json()
-        setShowSeparator(data.google) // Show separator if Google OAuth is available
-      } catch (error) {
-        console.error("Failed to check provider status:", error)
-      }
-    }
-
-    checkProviders()
-  }, [])
-
-  if (!showSeparator) {
-    return null
-  }
-
-  return (
-    <div className="relative">
-      <div className="absolute inset-0 flex items-center">
-        <span className="w-full border-t" />
-      </div>
-      <div className="relative flex justify-center text-xs uppercase">
-        <span className="bg-background text-muted-foreground px-2">
-          Or continue with
-        </span>
-      </div>
-    </div>
-  )
-}
-
-function SignInContent() {
+export default function SignInPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const searchParams = useSearchParams()
+  const nextUrl = searchParams.get("next")
 
-  // Get NextAuth error message from URL parameters
   const getNextAuthErrorMessage = (
     errorParam: string | null,
   ): string | null => {
@@ -94,19 +52,16 @@ function SignInContent() {
     }
   }
 
-  // Check for NextAuth errors on component mount and URL changes
   useEffect(() => {
     const errorParam = searchParams.get("error")
     if (errorParam) {
       const errorMessage = getNextAuthErrorMessage(errorParam)
       setError(errorMessage)
     } else {
-      // Clear any existing errors when no URL error is present
       setError(null)
     }
   }, [searchParams])
 
-  // Clear URL errors when component mounts to start fresh
   useEffect(() => {
     const currentUrl = new URL(window.location.href)
     if (currentUrl.searchParams.has("error")) {
@@ -118,22 +73,20 @@ function SignInContent() {
   const handleCredentialsSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setError(null) // Clear any existing errors
+    setError(null)
 
     try {
       const result = await signIn("credentials", {
         email,
         password,
-        redirect: false, // Prevent NextAuth from redirecting
+        redirect: false,
         callbackUrl: searchParams.get("callbackUrl") || "/",
       })
 
       if (result?.ok && !result?.error) {
-        // Successful login - redirect to callback URL or home
         const callbackUrl = searchParams.get("callbackUrl") || "/"
         window.location.href = callbackUrl
       } else {
-        // Authentication failed - show error and stay on page
         const errorMessage = result?.error
           ? getNextAuthErrorMessage(result.error) ||
             "Invalid email or password. Please try again."
@@ -149,77 +102,72 @@ function SignInContent() {
   }
 
   return (
-    <div className="container mx-auto max-w-md px-4 py-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>Sign In</CardTitle>
-          <CardDescription>
-            Welcome back! Sign in to your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <SocialButtons />
-
-          <SocialButtonsSeparator />
-
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          <form onSubmit={handleCredentialsSignIn} className="space-y-3">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={8}
-              />
-            </div>
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in..." : "Sign in"}
-            </Button>
-          </form>
-
-          <div className="text-center text-sm">
-            <span className="text-muted-foreground">
-              Don't have an account?{" "}
-            </span>
-            <Link href="/auth/signup" className="underline">
-              Sign up
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
-
-export default function SignInPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="container mx-auto max-w-md px-4 py-8">Loading...</div>
+    <AuthForm
+      title="Sign in to your account"
+      description={
+        <>
+          Or{" "}
+          <Link
+            href={
+              nextUrl
+                ? `/sign-up?next=${encodeURIComponent(nextUrl)}`
+                : "/sign-up"
+            }
+            className="text-primary hover:text-primary/90 transition hover:underline"
+          >
+            create an account
+          </Link>{" "}
+          if you don't have one yet
+        </>
       }
+      leftLink={{ href: "/", text: "Back to home" }}
+      rightLink={{
+        text: "Don't have an account?",
+        linkText: "Sign up",
+        href: nextUrl
+          ? `/sign-up?next=${encodeURIComponent(nextUrl)}`
+          : "/sign-up",
+      }}
     >
-      <SignInContent />
-    </Suspense>
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      <form onSubmit={handleCredentialsSignIn} className="space-y-3">
+        <div className="space-y-2">
+          <Label htmlFor="email">Email address</Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={8}
+          />
+        </div>
+
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? "Signing in..." : "Sign in"}
+        </Button>
+      </form>
+    </AuthForm>
   )
 }

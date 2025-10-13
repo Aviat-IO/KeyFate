@@ -19,7 +19,7 @@ export default withAuth(
       "/api/auth/resend-verification",
       "/api/auth/verification-status",
       "/sign-in",
-      "/auth/signup",
+      "/sign-up",
       "/auth/error",
       "/check-in", // Token-based authentication, not session-based
       "/api/check-in", // API endpoint also uses token-based auth
@@ -60,7 +60,7 @@ export default withAuth(
         const publicRoutes = [
           "/",
           "/sign-in",
-          "/auth/signup",
+          "/sign-up",
           "/auth/verify-email",
           "/check-in", // Allow unauthenticated access for token-based check-ins
           "/pricing",
