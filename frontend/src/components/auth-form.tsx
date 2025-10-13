@@ -19,7 +19,7 @@ interface AuthFormProps {
     href: string
     text: string
   }
-  rightLink: {
+  rightLink?: {
     text: string
     linkText: string
     href: string
@@ -75,17 +75,19 @@ export function AuthForm({
                 >
                   {leftLink.text}
                 </Link>
-                <div>
-                  <span className="text-muted-foreground">
-                    {rightLink.text}{" "}
-                  </span>
-                  <Link
-                    href={rightLink.href}
-                    className="text-primary hover:text-primary/90 font-medium hover:underline"
-                  >
-                    {rightLink.linkText}
-                  </Link>
-                </div>
+                {rightLink && (
+                  <div>
+                    <span className="text-muted-foreground">
+                      {rightLink.text}{" "}
+                    </span>
+                    <Link
+                      href={rightLink.href}
+                      className="text-primary hover:text-primary/90 font-medium hover:underline"
+                    >
+                      {rightLink.linkText}
+                    </Link>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

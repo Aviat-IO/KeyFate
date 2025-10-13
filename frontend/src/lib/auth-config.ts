@@ -93,8 +93,42 @@ providers.push(
         label: "Password",
         type: "password",
       },
+      verificationToken: {
+        label: "Verification Token",
+        type: "text",
+      },
+      userId: {
+        label: "User ID",
+        type: "text",
+      },
     },
     async authorize(credentials) {
+      // Check if this is a verification token auto-login
+      if (credentials?.verificationToken && credentials?.userId) {
+        try {
+          const db = await getDatabase()
+          const userResult = await db
+            .select()
+            .from(users)
+            .where(eq(users.id, credentials.userId))
+            .limit(1)
+
+          const user = userResult[0]
+          if (user && user.emailVerified) {
+            return {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              image: user.image,
+            }
+          }
+        } catch (error) {
+          console.error("Verification token authentication error:", error)
+          return null
+        }
+      }
+
+      // Standard email/password authentication
       if (!credentials?.email || !credentials?.password) {
         return null
       }

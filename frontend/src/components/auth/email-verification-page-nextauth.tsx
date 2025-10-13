@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import { AlertCircle, CheckCircle2, Clock, Loader2, Mail } from "lucide-react"
-import { useSession } from "next-auth/react"
+import { useSession, signIn } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 
@@ -135,12 +135,34 @@ export function EmailVerificationPageNextAuth() {
           setSuccess(true)
           toast({
             title: "Email verified!",
-            description: "Your email address has been successfully verified.",
+            description:
+              "Your email address has been successfully verified. Signing you in...",
           })
 
-          // Brief delay to show success message, then redirect
+          // If we have a session token and userId, attempt auto-login
+          if (result.sessionToken && result.userId) {
+            try {
+              const signInResult = await signIn("credentials", {
+                verificationToken: result.sessionToken,
+                userId: result.userId,
+                redirect: false,
+              })
+
+              if (signInResult?.ok) {
+                // Auto-login successful, redirect to dashboard immediately
+                router.push(callbackUrl)
+                return
+              } else {
+                console.error("Auto-login failed:", signInResult?.error)
+              }
+            } catch (signInError) {
+              console.error("Auto-login error:", signInError)
+            }
+          }
+
+          // Fallback: Show success and redirect to sign-in after delay
           setTimeout(() => {
-            router.push(callbackUrl)
+            router.push("/sign-in")
           }, SUCCESS_REDIRECT_DELAY)
         } else {
           setError(result.error || "Verification failed")

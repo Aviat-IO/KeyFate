@@ -17,6 +17,7 @@ export default function SignUpPage() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [registeredEmail, setRegisteredEmail] = useState<string | null>(null)
   const searchParams = useSearchParams()
   const nextUrl = searchParams.get("next")
 
@@ -107,28 +108,9 @@ export default function SignUpPage() {
         return
       }
 
-      // New registration successful, now sign in
-      const signInResult = await signIn("credentials", {
-        email: email.toLowerCase().trim(),
-        password,
-        redirect: false,
-      })
-
-      if (signInResult?.error) {
-        setError(
-          "Account created successfully, but automatic sign-in failed. Please sign in manually.",
-        )
-        setLoading(false)
-        return // Prevent redirect on sign-in error
-      } else if (signInResult?.ok) {
-        // Successful registration and login
-        window.location.href = nextUrl || "/"
-      } else {
-        setError(
-          "Account created successfully, but sign-in failed. Please try signing in manually.",
-        )
-        setLoading(false)
-      }
+      // New registration successful - show verification message
+      setRegisteredEmail(email.toLowerCase().trim())
+      setLoading(false)
     } catch (error) {
       console.error("Registration error:", error)
       let errorMessage = "An unexpected error occurred during registration"
@@ -143,6 +125,76 @@ export default function SignUpPage() {
       setError(errorMessage)
       setLoading(false) // Ensure loading state is cleared on error
     }
+  }
+
+  const handleResendVerification = async () => {
+    if (!registeredEmail) return
+
+    setError(null)
+    setLoading(true)
+
+    try {
+      const response = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: registeredEmail }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error || "Failed to resend verification email")
+      }
+    } catch (error) {
+      console.error("Resend error:", error)
+      setError("Failed to resend verification email")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (registeredEmail) {
+    return (
+      <AuthForm
+        title="Check your email"
+        description="We've sent you a verification link"
+        leftLink={{ href: "/", text: "Back to home" }}
+      >
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            We've sent a verification email to{" "}
+            <span className="font-semibold">{registeredEmail}</span>. Please
+            check your inbox and click the verification link to continue.
+          </AlertDescription>
+        </Alert>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <div className="space-y-3">
+          <p className="text-muted-foreground text-sm">
+            Didn't receive the email? Check your spam folder or request a new
+            one.
+          </p>
+
+          <Button
+            onClick={handleResendVerification}
+            variant="outline"
+            className="w-full"
+            disabled={loading}
+          >
+            {loading ? "Sending..." : "Resend verification email"}
+          </Button>
+        </div>
+      </AuthForm>
+    )
   }
 
   return (
