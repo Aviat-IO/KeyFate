@@ -96,6 +96,22 @@ export function NavBar() {
               </Button>
             )}
 
+            {!loading && !user && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  asChild
+                  className="hidden md:flex"
+                >
+                  <Link href="/sign-in">Sign In</Link>
+                </Button>
+                <Button variant="default" size="sm" asChild>
+                  <Link href="/sign-in">Sign Up</Link>
+                </Button>
+              </>
+            )}
+
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -168,14 +184,12 @@ export function NavBar() {
                     ) : (
                       <>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild className="cursor-pointer">
+                        <DropdownMenuItem
+                          asChild
+                          className="cursor-pointer md:hidden"
+                        >
                           <Link href="/sign-in" className="w-full">
                             Sign In
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild className="cursor-pointer">
-                          <Link href="/sign-in" className="w-full">
-                            Sign Up
                           </Link>
                         </DropdownMenuItem>
                       </>

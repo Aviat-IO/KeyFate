@@ -62,6 +62,7 @@ vi.mock("lucide-react", () => ({
   X: () => <span data-testid="x-icon">X</span>,
   Crown: () => <span data-testid="crown-icon">Crown</span>,
   Check: () => <span data-testid="check-icon">Check</span>,
+  Settings: () => <span data-testid="settings-icon">Settings</span>,
 }))
 
 const mockSession = {
