@@ -3,6 +3,7 @@ import { users, verificationTokens } from "@/lib/db/schema"
 import { and, eq } from "drizzle-orm"
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
+import crypto from "crypto"
 
 // Prevent static analysis during build
 export const dynamic = "force-dynamic"
@@ -99,10 +100,15 @@ export async function POST(request: NextRequest) {
 
     console.log(`[VerifyEmail] Successfully verified email for user: ${email}`)
 
+    // Generate a verification token for auto-login
+    const verificationToken = crypto.randomBytes(32).toString("hex")
+
     return NextResponse.json({
       success: true,
       verified: true,
       message: "Email successfully verified",
+      sessionToken: verificationToken,
+      userId: updatedUser.id,
     })
   } catch (error) {
     console.error("[VerifyEmail] Unexpected error:", error)
