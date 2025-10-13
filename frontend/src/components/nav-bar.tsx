@@ -14,7 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { useConfig } from "@/contexts/ConfigContext"
-import { Menu, Crown, Settings } from "lucide-react"
+import { Menu, Crown, Settings, KeyRound, LogOut } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
@@ -157,7 +157,11 @@ export function NavBar() {
                   data-testid="mobile-recover-secret"
                   className="cursor-pointer"
                 >
-                  <Link href="/decrypt" className="w-full">
+                  <Link
+                    href="/decrypt"
+                    className="flex w-full items-center gap-2"
+                  >
+                    <KeyRound className="h-4 w-4" />
                     Recover Secret
                   </Link>
                 </DropdownMenuItem>
@@ -176,8 +180,9 @@ export function NavBar() {
                         )}
                         <DropdownMenuItem
                           onClick={handleSignOut}
-                          className="cursor-pointer"
+                          className="flex cursor-pointer items-center gap-2"
                         >
+                          <LogOut className="h-4 w-4" />
                           Sign Out
                         </DropdownMenuItem>
                       </>
