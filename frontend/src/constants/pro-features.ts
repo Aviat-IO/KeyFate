@@ -62,7 +62,7 @@ export const PRO_FEATURES: ProFeature[] = [
     title: "Priority Email Support",
     description: "Direct access to our support team for faster assistance",
     features: [
-      `Email: ${NEXT_PUBLIC_SUPPORT_EMAIL}`,
+      `Email: ${NEXT_PUBLIC_SUPPORT_EMAIL || 'support@keyfate.com'}`,
       "Response within 72 hours",
     ],
   },

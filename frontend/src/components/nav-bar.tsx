@@ -107,7 +107,7 @@ export function NavBar() {
                   <Link href="/sign-in">Sign In</Link>
                 </Button>
                 <Button variant="default" size="sm" asChild>
-                  <Link href="/sign-in">Sign Up</Link>
+                  <Link href="/sign-up">Sign Up</Link>
                 </Button>
               </>
             )}
