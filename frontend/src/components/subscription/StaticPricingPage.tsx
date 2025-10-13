@@ -65,7 +65,7 @@ export function StaticPricingPage({ className = "" }: StaticPricingPageProps) {
           price="$0"
           features={TIER_CONFIGS.free.features}
           buttonText="Get Started"
-          buttonHref="/auth/signup"
+          buttonHref="/sign-up"
         />
 
         <PricingCard

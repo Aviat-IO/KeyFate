@@ -127,16 +127,15 @@ describe("Dashboard Page Loading Fix", () => {
       expect(route.startsWith("/api/auth/")).toBe(true)
     })
 
-    // Our custom auth pages should not conflict
+    // Our custom auth pages should not conflict with API routes
     const customAuthPages = [
-      "/auth/signin",
-      "/auth/signup",
+      "/sign-in",
+      "/sign-up",
       "/auth/error",
       "/auth/verify-email",
     ]
 
     customAuthPages.forEach((page) => {
-      expect(page.startsWith("/auth/")).toBe(true)
       expect(page.startsWith("/api/auth/")).toBe(false)
     })
   })

@@ -70,7 +70,7 @@ export function UserPricingActions() {
             Sign up for a free account to start using KeyFate.
           </p>
           <Button className="w-full" asChild>
-            <a href="/auth/signup">Sign Up Free</a>
+            <a href="/sign-up">Sign Up Free</a>
           </Button>
         </CardContent>
       </Card>

@@ -164,7 +164,7 @@ export default function SignUpPage() {
           if you already have an account
         </>
       }
-      leftLink={{ href: "/sign-in", text: "Back to sign in" }}
+      leftLink={{ href: "/", text: "Back to home" }}
       rightLink={{
         text: "Have an account?",
         linkText: "Sign in",
