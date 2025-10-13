@@ -210,6 +210,7 @@ export function SecretCard({ secret }: SecretCardProps) {
         secretState.status === "paused" && "border-accent bg-accent/10",
         serverShareDeleted &&
           "border-muted-foreground/30 bg-muted/50 opacity-90",
+        statusBadge.label === "Urgent" && "border-destructive",
       )}
     >
       <CardHeader className="flex-1 pb-4">
