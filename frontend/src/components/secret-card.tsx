@@ -133,11 +133,10 @@ export function SecretCard({ secret }: SecretCardProps) {
     toast({
       title:
         updatedSecret.status === "active" ? "Secret resumed" : "Secret paused",
-      description: `"${secret.title}" has been ${
-        updatedSecret.status === "active"
+      description: `"${secret.title}" has been ${updatedSecret.status === "active"
           ? "resumed and a check-in has been applied"
           : "paused"
-      }.`,
+        }.`,
       duration: 6000,
     })
   }
@@ -209,7 +208,7 @@ export function SecretCard({ secret }: SecretCardProps) {
         isTriggered && "border-destructive/50 bg-destructive/5",
         secretState.status === "paused" && "border-accent bg-accent/10",
         serverShareDeleted &&
-          "border-muted-foreground/30 bg-muted/50 opacity-90",
+        "border-muted-foreground/30 bg-muted/50 opacity-90",
         statusBadge.label === "Urgent" && "border-destructive",
       )}
     >
