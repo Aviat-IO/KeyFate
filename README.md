@@ -24,6 +24,8 @@ open http://localhost:3000
 
 For detailed setup instructions, see [INFRASTRUCTURE.md](./INFRASTRUCTURE.md)
 
+**Payment testing:** See [PAYMENT_TESTING.md](./PAYMENT_TESTING.md) for BTCPay Server and Stripe testing
+
 ## Alternative Setup Options
 
 1. **Deploy Infrastructure:** See [Infrastructure README](infrastructure/README.md) for automated Terragrunt deployment

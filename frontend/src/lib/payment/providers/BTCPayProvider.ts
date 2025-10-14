@@ -52,9 +52,19 @@ export class BTCPayProvider implements PaymentProvider {
   private config: BTCPayConfig
   private baseUrl: string
 
+  private static readonly PROD_MONTHLY_BTC = 0.0002
+  private static readonly PROD_YEARLY_BTC = 0.002
+  private static readonly TEST_MONTHLY_BTC = 0.0000001
+  private static readonly TEST_YEARLY_BTC = 0.000001
+
   constructor(config: BTCPayConfig) {
     this.config = config
     this.baseUrl = `${config.serverUrl.replace(/\/$/, "")}/api/v1`
+  }
+
+  private isTestEnvironment(): boolean {
+    const env = process.env.NEXT_PUBLIC_ENV?.toLowerCase() || ""
+    return ["local", "development", "dev", "staging", "stage"].includes(env)
   }
 
   getProviderType(): "fiat" | "crypto" {
@@ -270,13 +280,21 @@ export class BTCPayProvider implements PaymentProvider {
   }
 
   async listPrices(_productId?: string): Promise<Price[]> {
-    void _productId // Explicitly ignore unused parameter
+    void _productId
+    const isTest = this.isTestEnvironment()
+    const monthlyAmount = isTest
+      ? BTCPayProvider.TEST_MONTHLY_BTC
+      : BTCPayProvider.PROD_MONTHLY_BTC
+    const yearlyAmount = isTest
+      ? BTCPayProvider.TEST_YEARLY_BTC
+      : BTCPayProvider.PROD_YEARLY_BTC
+
     return [
       {
         id: "pro_btc_monthly",
         productId: "keyfate_pro",
         currency: "BTC",
-        unitAmount: 0.0002,
+        unitAmount: monthlyAmount,
         interval: "month",
         lookupKey: "pro_btc_monthly",
         metadata: { provider: "btcpay" },
@@ -285,7 +303,7 @@ export class BTCPayProvider implements PaymentProvider {
         id: "pro_btc_yearly",
         productId: "keyfate_pro",
         currency: "BTC",
-        unitAmount: 0.002,
+        unitAmount: yearlyAmount,
         interval: "year",
         lookupKey: "pro_btc_yearly",
         metadata: { provider: "btcpay" },
