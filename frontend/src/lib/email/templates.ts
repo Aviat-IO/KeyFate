@@ -31,6 +31,7 @@ interface DisclosureTemplateData {
   secretContent: string
   disclosureReason?: "scheduled" | "manual"
   senderLastSeen?: Date
+  secretCreatedAt?: Date
 }
 
 interface BaseTemplateData {
@@ -142,9 +143,9 @@ export function renderBaseTemplate(data: BaseTemplateData): EmailTemplate {
 ${data.title}
 
 ${data.content
-      .replace(/<[^>]*>/g, "")
-      .replace(/\s+/g, " ")
-      .trim()}
+  .replace(/<[^>]*>/g, "")
+  .replace(/\s+/g, " ")
+  .trim()}
 
 ${data.footerText || ""}
 
@@ -228,13 +229,14 @@ export function renderReminderTemplate(
       <p style="margin: 0 0 10px 0; font-size: 16px; font-weight: bold; color: ${urgency.textColor};">
         You need to check in for "${data.secretTitle}" within ${timeText}
       </p>
-      ${data.urgencyLevel === "critical" || data.urgencyLevel === "high"
-      ? `
+      ${
+        data.urgencyLevel === "critical" || data.urgencyLevel === "high"
+          ? `
       <p style="margin: 10px 0 0 0; font-size: 15px; color: ${urgency.textColor};"><strong>Time is running out!</strong></p>
       <p style="margin: 5px 0 0 0; color: ${urgency.textColor};">Please check in immediately to prevent automatic disclosure.</p>
       `
-      : ""
-    }
+          : ""
+      }
     </div>
 
     <p>Hi ${data.userName},</p>
@@ -300,6 +302,8 @@ export function renderDisclosureTemplate(
 
     <p>Dear ${data.contactName},</p>
 
+    <p>KeyFate is a secure dead man's switch platform that helps people share sensitive information with trusted recipients in case of emergency. ${data.senderName} trusted you with this confidential information.</p>
+
     <p>${reasonText}</p>
 
     <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin: 20px 0;">
@@ -318,7 +322,7 @@ ${data.secretContent}
     <div style="background: #e8f4f8; border-left: 4px solid #2563eb; padding: 15px; margin: 20px 0;">
       <h4 style="margin: 0 0 10px 0; color: #2563eb;">How to Reconstruct the Secret</h4>
       <ol style="margin: 10px 0; padding-left: 20px;">
-        <li>You should have already received the <strong>first share</strong> from ${data.senderName}</li>
+        <li>You should have already received the <strong>first share</strong> from ${data.senderName}${data.secretCreatedAt ? ` (sent approximately ${data.secretCreatedAt.toLocaleDateString()})` : ""}</li>
         <li>Copy the share above (the second share)</li>
         <li>Visit <a href="${decryptUrl}" style="color: #2563eb;">${decryptUrl}</a> and combine both shares using our decryption tool</li>
         <li>You need 2 shares total to reconstruct the complete secret</li>

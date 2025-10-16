@@ -388,6 +388,7 @@ export async function sendSecretDisclosureEmail(disclosureData: {
   secretContent: string
   disclosureReason?: "scheduled" | "manual"
   senderLastSeen?: Date
+  secretCreatedAt?: Date
 }): Promise<EmailResult & { templateUsed?: string }> {
   const { renderDisclosureTemplate } = await import("./templates")
 
