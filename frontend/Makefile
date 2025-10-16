@@ -1,13 +1,13 @@
 .PHONY: install dev build test deploy-dev
 
 install:
-	pnpm install
+	doppler run -p keyfate -c dev -- pnpm install
 
 dev:
-	pnpm dev
+	doppler run -p keyfate -c dev -- pnpm dev
 
 build: install
-	pnpm build
+	doppler run -p keyfate -c dev -- pnpm build
 
 test:
-	pnpm test
+	doppler run -p keyfate -c dev -- pnpm test
