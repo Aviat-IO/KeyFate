@@ -6,12 +6,17 @@ import { signIn } from "next-auth/react"
 // Mock NextAuth with specific focus on redirect behavior
 vi.mock("next-auth/react", () => ({
   signIn: vi.fn(),
+  useSession: vi.fn(() => ({
+    data: null,
+    status: "unauthenticated",
+  })),
 }))
 
 // Mock Next.js navigation
 const mockSearchParams = new URLSearchParams()
 vi.mock("next/navigation", () => ({
   useSearchParams: vi.fn(() => mockSearchParams),
+  usePathname: vi.fn(() => "/sign-in"),
 }))
 
 // Mock fetch for providers check

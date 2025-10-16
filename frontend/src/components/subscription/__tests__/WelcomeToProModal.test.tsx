@@ -40,7 +40,7 @@ describe("WelcomeToProModal", () => {
   it("should display support email", () => {
     render(<WelcomeToProModal open={true} onOpenChange={vi.fn()} />)
 
-    expect(screen.getByText(/support@aviat\.io/i)).toBeInTheDocument()
+    expect(screen.getByText(/Email: support/i)).toBeInTheDocument()
   })
 
   it("should display message template list", () => {

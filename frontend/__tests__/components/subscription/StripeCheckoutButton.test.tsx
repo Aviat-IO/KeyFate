@@ -9,6 +9,8 @@ window.location = { href: "" } as any
 vi.mock("next-auth/react")
 const mockUseSession = vi.mocked(useSession as unknown as () => any)
 
+global.fetch = vi.fn()
+
 describe("StripeCheckoutButton", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -30,6 +32,11 @@ describe("StripeCheckoutButton", () => {
   })
 
   it("should redirect to payment link when authenticated user clicks", async () => {
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: true,
+      json: async () => ({ url: "https://buy.stripe.com/test123" }),
+    } as any)
+
     render(
       <StripeCheckoutButton lookupKey="pro_monthly">
         Subscribe

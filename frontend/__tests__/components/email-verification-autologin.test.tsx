@@ -18,6 +18,7 @@ vi.mock("next/navigation", () => ({
     push: mockPush,
   })),
   useSearchParams: vi.fn(() => mockSearchParams),
+  usePathname: vi.fn(() => "/verify-email"),
 }))
 
 vi.mock("@/hooks/use-toast", () => ({
