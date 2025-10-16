@@ -132,6 +132,7 @@ export async function POST(req: NextRequest) {
                   secretContent: decryptedContent,
                   disclosureReason: "scheduled",
                   senderLastSeen: secret.lastCheckIn || undefined,
+                  secretCreatedAt: secret.createdAt || undefined,
                 })
               },
               3,
