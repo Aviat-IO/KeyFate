@@ -114,13 +114,13 @@ class EmailTemplates {
                 ${this.getTierFeaturesFromConfig(params.tierName)}
               </ul>
 
-              <p style="text-align: center;">
-                <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard" class="button" style="color: white;">
-                  Access Your Dashboard
-                </a>
-              </p>
+               <p style="text-align: center;">
+                 <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard" class="button" style="color: white !important;">
+                   Access Your Dashboard
+                 </a>
+               </p>
 
-              <p>If you have any questions, please contact our support team at <a href="mailto:${supportEmail}">${supportEmail}</a>.</p>
+               <p>If you have any questions, please contact our <a href="mailto:${supportEmail}">support team</a>.</p>
             </div>
             <div class="footer">
               <p>${companyName} - Secure Secret Management</p>
