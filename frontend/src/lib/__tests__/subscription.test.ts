@@ -68,6 +68,15 @@ describe("Subscription Tier Management", () => {
       const mockSubscription = {
         id: "sub-123",
         userId: "user-123",
+        tierId: "tier-pro",
+        provider: "stripe",
+        providerCustomerId: "cus-123",
+        providerSubscriptionId: "sub-stripe-123",
+        status: "active",
+        currentPeriodStart: "2024-01-01T00:00:00Z",
+        currentPeriodEnd: "2024-02-01T00:00:00Z",
+        cancelAtPeriodEnd: false,
+        scheduledDowngradeAt: null,
         tier: {
           id: "tier-pro",
           name: "pro",
@@ -78,7 +87,6 @@ describe("Subscription Tier Management", () => {
           priceMonthly: "9.00",
           priceYearly: "90.00",
         },
-        status: "active",
       }
 
       vi.spyOn(subscriptionModule, "calculateUserUsage").mockResolvedValue({
