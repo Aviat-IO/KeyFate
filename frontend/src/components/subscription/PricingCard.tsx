@@ -49,7 +49,7 @@ export function PricingCard({
             </Badge>
           )}
         </div>
-        <div className="min-h-[200px] space-y-2">
+        <div className="space-y-2 md:min-h-[200px]">
           <div className="text-foreground text-4xl font-bold">{price}</div>
           {subtext && (
             <p className="text-muted-foreground text-sm">{subtext}</p>
