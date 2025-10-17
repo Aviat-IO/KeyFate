@@ -83,13 +83,27 @@ export function NavBar() {
                 <Image
                   src={
                     theme === "dark"
+                      ? "/img/icon-dark.png"
+                      : "/img/icon-light.png"
+                  }
+                  alt={config?.company || "KeyFate"}
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 md:hidden"
+                  priority
+                />
+              ) : null}
+              {mounted ? (
+                <Image
+                  src={
+                    theme === "dark"
                       ? "/img/logo-dark.png"
                       : "/img/logo-light.png"
                   }
                   alt={config?.company || "KeyFate"}
                   width={200}
                   height={40}
-                  className="h-10 w-auto"
+                  className="hidden h-10 w-auto md:block"
                   priority
                 />
               ) : (
