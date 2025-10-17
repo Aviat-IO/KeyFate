@@ -76,22 +76,23 @@ export default function SignInPage() {
     setError(null)
 
     try {
+      const callbackUrl = searchParams.get("callbackUrl") || "/"
       const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
-        callbackUrl: searchParams.get("callbackUrl") || "/",
+        callbackUrl,
       })
 
-      if (result?.ok && !result?.error) {
-        const callbackUrl = searchParams.get("callbackUrl") || "/"
+      if (result?.ok) {
         window.location.href = callbackUrl
-      } else {
-        const errorMessage = result?.error
-          ? getNextAuthErrorMessage(result.error) ||
-            "Invalid email or password. Please try again."
-          : "Invalid email or password. Please try again."
+      } else if (result?.error) {
+        const errorMessage =
+          getNextAuthErrorMessage(result.error) ||
+          "Invalid email or password. Please try again."
         setError(errorMessage)
+      } else {
+        setError("Invalid email or password. Please try again.")
       }
     } catch (error) {
       console.error("Sign-in error:", error)
