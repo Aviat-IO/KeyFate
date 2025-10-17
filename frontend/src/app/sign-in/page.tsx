@@ -76,15 +76,14 @@ export default function SignInPage() {
     setError(null)
 
     try {
-      const callbackUrl = searchParams.get("callbackUrl") || "/"
       const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
-        callbackUrl,
       })
 
       if (result?.ok) {
+        const callbackUrl = searchParams.get("callbackUrl") || "/"
         window.location.href = callbackUrl
       } else if (result?.error) {
         const errorMessage =
