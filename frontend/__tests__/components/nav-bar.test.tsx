@@ -89,9 +89,9 @@ describe("NavBar", () => {
   it("should render logo linking to home when not authenticated", () => {
     render(<NavBar />)
 
-    const logo = screen.getByText("KeyFate")
-    expect(logo).toBeInTheDocument()
-    expect(logo.closest("a")).toHaveAttribute("href", "/")
+    const logos = screen.getAllByAltText("KeyFate")
+    expect(logos.length).toBeGreaterThan(0)
+    expect(logos[0].closest("a")).toHaveAttribute("href", "/")
   })
 
   it("should render logo linking to dashboard when authenticated", () => {
@@ -102,9 +102,9 @@ describe("NavBar", () => {
 
     render(<NavBar />)
 
-    const logo = screen.getByText("KeyFate")
-    expect(logo).toBeInTheDocument()
-    expect(logo.closest("a")).toHaveAttribute("href", "/dashboard")
+    const logos = screen.getAllByAltText("KeyFate")
+    expect(logos.length).toBeGreaterThan(0)
+    expect(logos[0].closest("a")).toHaveAttribute("href", "/dashboard")
   })
 
   it("should render theme toggle", () => {
