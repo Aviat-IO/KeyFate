@@ -171,16 +171,29 @@ const baseAuthConfig = {
   },
   callbacks: {
     /**
-     * Ensure OAuth redirects use the correct base URL
+     * Ensure OAuth redirects use the correct base URL and prevent open redirects
      */
     async redirect({ url, baseUrl }) {
       const correctBaseUrl = getBaseUrl()
 
+      // Relative URLs are always safe
       if (url.startsWith("/")) return `${correctBaseUrl}${url}`
+
+      // Fix 0.0.0.0 URLs
       if (url.includes("0.0.0.0")) {
         return url.replace(/https?:\/\/0\.0\.0\.0(:\d+)?/, correctBaseUrl)
       }
-      if (url.startsWith(correctBaseUrl)) return url
+
+      // Only allow redirects to the same origin
+      try {
+        const urlObj = new URL(url)
+        const baseUrlObj = new URL(correctBaseUrl)
+        if (urlObj.origin === baseUrlObj.origin) {
+          return url
+        }
+      } catch {
+        // Invalid URL, fall back to base
+      }
 
       return correctBaseUrl
     },
