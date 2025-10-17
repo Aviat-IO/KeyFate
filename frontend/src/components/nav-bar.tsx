@@ -19,19 +19,27 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import { useState, useEffect } from "react"
+import { useTheme } from "next-themes"
+import Image from "next/image"
 
 export function NavBar() {
   const pathname = usePathname()
   const { data: session, status } = useSession()
   const { config } = useConfig()
+  const { theme } = useTheme()
   const [userTier, setUserTier] = useState<"free" | "pro">("free")
   const [checkingSubscription, setCheckingSubscription] = useState(false)
   const [proModalOpen, setProModalOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   const user = session?.user as
     | { id?: string; name?: string; email?: string; image?: string }
     | undefined
   const loading = status === "loading"
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Fetch user tier on mount and when session changes
   useEffect(() => {
@@ -69,9 +77,24 @@ export function NavBar() {
           <div className="flex items-center space-x-4">
             <Link
               href={user ? "/dashboard" : "/"}
-              className="text-xl font-bold"
+              className="flex items-center"
             >
-              {config?.company || "KeyFate"}
+              {mounted ? (
+                <Image
+                  src={
+                    theme === "dark"
+                      ? "/img/logo-dark.png"
+                      : "/img/logo-light.png"
+                  }
+                  alt={config?.company || "KeyFate"}
+                  width={200}
+                  height={40}
+                  className="h-10 w-auto"
+                  priority
+                />
+              ) : (
+                <div className="h-10 w-[200px]" />
+              )}
             </Link>
             {user && pathname !== "/dashboard" && (
               <Button variant="ghost" asChild>
