@@ -26,7 +26,7 @@ export function NavBar() {
   const pathname = usePathname()
   const { data: session, status } = useSession()
   const { config } = useConfig()
-  const { theme } = useTheme()
+  const { resolvedTheme } = useTheme()
   const [userTier, setUserTier] = useState<"free" | "pro">("free")
   const [checkingSubscription, setCheckingSubscription] = useState(false)
   const [proModalOpen, setProModalOpen] = useState(false)
@@ -82,7 +82,7 @@ export function NavBar() {
               {mounted ? (
                 <Image
                   src={
-                    theme === "dark"
+                    resolvedTheme === "dark"
                       ? "/img/icon-dark.png"
                       : "/img/icon-light.png"
                   }
@@ -96,7 +96,7 @@ export function NavBar() {
               {mounted ? (
                 <Image
                   src={
-                    theme === "dark"
+                    resolvedTheme === "dark"
                       ? "/img/logo-dark.png"
                       : "/img/logo-light.png"
                   }
