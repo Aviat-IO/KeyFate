@@ -5,11 +5,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { signIn } from "next-auth/react"
 import { AlertCircle } from "lucide-react"
+import { getCsrfToken } from "next-auth/react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 
 export default function SignInPage() {
   const [email, setEmail] = useState("")
@@ -76,20 +76,26 @@ export default function SignInPage() {
     setError(null)
 
     try {
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
+      const csrfToken = await getCsrfToken()
+
+      const res = await fetch("/api/auth/callback/credentials", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          email,
+          password,
+          csrfToken: csrfToken || "",
+          json: "true",
+        }),
       })
 
-      if (result?.ok) {
-        const callbackUrl = searchParams.get("callbackUrl") || "/"
+      const data = await res.json()
+
+      if (res.ok && !data.error) {
+        const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
         window.location.href = callbackUrl
-      } else if (result?.error) {
-        const errorMessage =
-          getNextAuthErrorMessage(result.error) ||
-          "Invalid email or password. Please try again."
-        setError(errorMessage)
       } else {
         setError("Invalid email or password. Please try again.")
       }

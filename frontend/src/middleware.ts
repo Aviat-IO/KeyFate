@@ -104,7 +104,7 @@ export default withAuth(
     },
     pages: {
       signIn: "/sign-in",
-      error: "/auth/error",
+      error: "/sign-in",
     },
     secret: process.env.NEXTAUTH_SECRET,
   },
