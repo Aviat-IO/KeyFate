@@ -54,10 +54,13 @@ export function EmailVerificationPageNextAuth() {
   // Check verification status on mount and handle token verification
   useEffect(() => {
     if (token && email) {
+      // If we have a token, verify it regardless of auth status
       handleTokenVerification(token, email)
     } else if (status === "authenticated" && (session?.user as any)?.id) {
+      // If authenticated but no token, check if already verified
       checkVerificationStatus()
-    } else if (status === "unauthenticated") {
+    } else if (status === "unauthenticated" && !token) {
+      // Unauthenticated without token - nothing to do
       setChecking(false)
     } else if (status === "loading") {
       // Still loading session, keep checking state
@@ -247,7 +250,8 @@ export function EmailVerificationPageNextAuth() {
     )
   }
 
-  if (status === "unauthenticated") {
+  // Allow unauthenticated users to verify if they have a token
+  if (status === "unauthenticated" && !token) {
     router.push("/sign-in")
     return null
   }
