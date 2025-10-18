@@ -42,6 +42,12 @@ interface DisclosureTemplateData {
   secretCreatedAt?: Date
 }
 
+interface PasswordResetTemplateData {
+  resetUrl: string
+  userName?: string
+  supportEmail?: string
+}
+
 interface BaseTemplateData {
   title: string
   content: string
@@ -360,15 +366,63 @@ ${data.secretContent}
 }
 
 /**
+ * Password reset email template
+ */
+export function renderPasswordResetTemplate(
+  data: PasswordResetTemplateData,
+): EmailTemplate {
+  const companyName = process.env.NEXT_PUBLIC_COMPANY || "Dead Man's Switch"
+  const userName = data.userName || "there"
+  const supportEmail = data.supportEmail || getSupportEmail()
+
+  const content = `
+    <p>Hi ${userName},</p>
+    <p>We received a request to reset your password. Click the button below to create a new password:</p>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${data.resetUrl}" class="button" style="color: #ffffff; text-decoration: none;">Reset Password</a>
+    </div>
+
+    <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
+    <p style="word-break: break-all; background: #f5f5f5; padding: 10px; border-radius: 4px;">
+      ${data.resetUrl}
+    </p>
+
+    <div class="warning">
+      <p><strong>This reset link expires in 1 hour.</strong></p>
+      <p>For security, this link can only be used once.</p>
+    </div>
+
+    <div style="background-color: #fff3cd; padding: 15px; border-radius: 6px; margin: 15px 0;">
+      <p style="margin: 0 0 5px 0; font-weight: bold;">Security Notice</p>
+      <p style="margin: 5px 0;">If you didn't request a password reset, you can safely ignore this email. Your password will not be changed.</p>
+    </div>
+
+    <p>Need help? Contact us at <a href="mailto:${supportEmail}">${supportEmail}</a></p>
+  `
+
+  const baseTemplate = renderBaseTemplate({
+    title: `Reset your password`,
+    content,
+    footerText: `If you have any questions, please contact us at ${supportEmail}`,
+  })
+
+  return {
+    subject: `Reset your password`,
+    html: baseTemplate.html,
+    text: baseTemplate.text,
+  }
+}
+
+/**
  * Validate template data
  */
 export function validateTemplateData(
-  templateType: "verification" | "reminder" | "disclosure",
+  templateType: "verification" | "reminder" | "disclosure" | "password-reset",
   data: any,
 ): ValidationResult {
   const errors: string[] = []
 
-  // Email format validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
   switch (templateType) {
@@ -414,6 +468,15 @@ export function validateTemplateData(
       }
       if (!data.secretContent) {
         errors.push("secretContent is required")
+      }
+      break
+
+    case "password-reset":
+      if (!data.resetUrl) {
+        errors.push("resetUrl is required")
+      }
+      if (data.supportEmail && !emailRegex.test(data.supportEmail)) {
+        errors.push("Invalid email format in supportEmail")
       }
       break
 

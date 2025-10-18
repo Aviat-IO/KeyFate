@@ -156,6 +156,16 @@ export const verificationTokens = pgTable(
   }),
 )
 
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  expires: timestamp("expires", { mode: "date" }).notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+})
+
 // Application Tables
 export const secrets = pgTable("secrets", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -402,3 +412,5 @@ export type UserInsert = typeof users.$inferInsert
 export type Account = typeof accounts.$inferSelect
 export type Session = typeof sessions.$inferSelect
 export type VerificationToken = typeof verificationTokens.$inferSelect
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect
+export type PasswordResetTokenInsert = typeof passwordResetTokens.$inferInsert

@@ -62,6 +62,8 @@ export default withAuth(
           "/sign-in",
           "/sign-up",
           "/auth/verify-email",
+          "/auth/forgot-password",
+          "/auth/reset-password",
           "/check-in", // Allow unauthenticated access for token-based check-ins
           "/pricing",
           "/terms-of-service",
