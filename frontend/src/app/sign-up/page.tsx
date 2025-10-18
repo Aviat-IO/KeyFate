@@ -18,8 +18,41 @@ export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null)
+  const [validationErrors, setValidationErrors] = useState<string[]>([])
   const searchParams = useSearchParams()
   const nextUrl = searchParams.get("next")
+
+  const validatePasswordClient = (pwd: string): string[] => {
+    const errors: string[] = []
+
+    if (pwd.length < 10) {
+      errors.push("At least 10 characters long")
+    }
+    if (!/(?=.*[a-z])/.test(pwd)) {
+      errors.push("One lowercase letter")
+    }
+    if (!/(?=.*[A-Z])/.test(pwd)) {
+      errors.push("One uppercase letter")
+    }
+    if (!/(?=.*\d)/.test(pwd)) {
+      errors.push("One number")
+    }
+    if (!/(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(pwd)) {
+      errors.push("One special character (!@#$%^&*)")
+    }
+
+    return errors
+  }
+
+  const handlePasswordChange = (value: string) => {
+    setPassword(value)
+    if (value) {
+      const errors = validatePasswordClient(value)
+      setValidationErrors(errors)
+    } else {
+      setValidationErrors([])
+    }
+  }
 
   const handleCredentialsSignUp = async (
     e: React.FormEvent<HTMLFormElement>,
@@ -28,21 +61,19 @@ export default function SignUpPage() {
     setLoading(true)
     setError(null)
 
-    // Validate passwords match
     if (password !== confirmPassword) {
       setError("Passwords do not match")
       setLoading(false)
       return
     }
 
-    // Additional client-side validation
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters long")
+    const clientErrors = validatePasswordClient(password)
+    if (clientErrors.length > 0) {
+      setError("Password does not meet requirements")
       setLoading(false)
       return
     }
 
-    // Better email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!email || !emailRegex.test(email)) {
       setError("Please enter a valid email address")
@@ -254,14 +285,27 @@ export default function SignUpPage() {
             type="password"
             autoComplete="new-password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => handlePasswordChange(e.target.value)}
             required
-            minLength={8}
+            minLength={10}
           />
-          <p className="text-muted-foreground text-xs">
-            Must be at least 8 characters with uppercase, lowercase, and a
-            number
-          </p>
+          {password && validationErrors.length > 0 && (
+            <div className="text-muted-foreground text-sm">
+              <p className="font-medium">Password must include:</p>
+              <ul className="list-inside list-disc space-y-1">
+                {validationErrors.map((err, idx) => (
+                  <li key={idx} className="text-red-600">
+                    {err}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {password && validationErrors.length === 0 && (
+            <p className="text-sm text-green-600">
+              ✓ Password meets all requirements
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -274,7 +318,7 @@ export default function SignUpPage() {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
-            minLength={8}
+            minLength={10}
           />
         </div>
 

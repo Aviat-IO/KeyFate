@@ -33,6 +33,14 @@ const RATE_LIMIT_CONFIGS: Record<string, RateLimitConfig> = {
     maxAttempts: 3,
     windowMs: 60 * 60 * 1000, // 1 hour
   },
+  "request-password-reset": {
+    maxAttempts: 3,
+    windowMs: 60 * 60 * 1000, // 1 hour
+  },
+  "reset-password-attempt": {
+    maxAttempts: 5,
+    windowMs: 60 * 60 * 1000, // 1 hour
+  },
 }
 
 /**
