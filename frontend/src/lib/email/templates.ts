@@ -7,6 +7,14 @@
 
 import { formatTimeRemaining } from "@/lib/time-utils"
 
+/**
+ * Get support email from environment variable with fallback
+ * Centralized to ensure consistency across all email templates
+ */
+function getSupportEmail(): string {
+  return process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@keyfate.com"
+}
+
 // Template data interfaces
 interface VerificationTemplateData {
   verificationUrl: string
@@ -168,14 +176,14 @@ export function renderVerificationTemplate(
 ): EmailTemplate {
   const companyName = process.env.NEXT_PUBLIC_COMPANY || "Dead Man's Switch"
   const userName = data.userName || "there"
-  const supportEmail = data.supportEmail || "support@example.com"
+  const supportEmail = data.supportEmail || getSupportEmail()
 
   const content = `
     <p>Welcome ${userName}!</p>
     <p>Please click the button below to verify your email address and complete your account setup:</p>
 
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${data.verificationUrl}" class="button" style="text: white">Verify Email Address</a>
+      <a href="${data.verificationUrl}" class="button" style="color: #ffffff; text-decoration: none;">Verify Email Address</a>
     </div>
 
     <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
@@ -279,8 +287,7 @@ export function renderReminderTemplate(
 export function renderDisclosureTemplate(
   data: DisclosureTemplateData,
 ): EmailTemplate {
-  const supportEmail =
-    process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@example.com"
+  const supportEmail = getSupportEmail()
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://keyfate.com"
   const decryptUrl = `${siteUrl}/decrypt`
   const lastSeenText = data.senderLastSeen
