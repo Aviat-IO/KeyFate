@@ -167,7 +167,7 @@ const baseAuthConfig = {
   providers,
   pages: {
     signIn: "/sign-in",
-    error: "/auth/error",
+    error: "/sign-in",
   },
   callbacks: {
     /**
