@@ -92,6 +92,13 @@
       "when": 1760895572543,
       "tag": "0012_vengeful_silverclaw",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1760906833868,
+      "tag": "0013_narrow_rockslide",
+      "breakpoints": true
     }
   ]
 }
