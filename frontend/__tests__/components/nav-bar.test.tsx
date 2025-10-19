@@ -49,22 +49,17 @@ vi.mock("@/components/theme-toggle", () => ({
   ThemeToggle: () => <button data-testid="theme-toggle">Theme Toggle</button>,
 }))
 
-vi.mock("@/components/dev-tier-toggle", () => ({
-  DevTierToggle: ({ currentTier }: { currentTier?: "free" | "pro" }) => (
-    <button data-testid="dev-tier-toggle">
-      {currentTier === "pro" ? "Pro [DEV]" : "Free [DEV]"}
-    </button>
-  ),
+vi.mock("@/components/subscription/WelcomeToProModal", () => ({
+  WelcomeToProModal: () => <div data-testid="welcome-to-pro-modal" />,
 }))
 
 vi.mock("lucide-react", () => ({
   Menu: () => <span data-testid="menu-icon">Menu</span>,
-  X: () => <span data-testid="x-icon">X</span>,
   Crown: () => <span data-testid="crown-icon">Crown</span>,
-  Check: () => <span data-testid="check-icon">Check</span>,
   Settings: () => <span data-testid="settings-icon">Settings</span>,
   KeyRound: () => <span data-testid="key-round-icon">KeyRound</span>,
   LogOut: () => <span data-testid="logout-icon">LogOut</span>,
+  ChevronDown: () => <span data-testid="chevron-down-icon">ChevronDown</span>,
 }))
 
 const mockSession = {
@@ -119,7 +114,6 @@ describe("NavBar", () => {
 
     const mobileMenuTrigger = screen.getByTestId("mobile-menu-trigger")
     expect(mobileMenuTrigger).toBeInTheDocument()
-    expect(screen.getByTestId("menu-icon")).toBeInTheDocument()
   })
 
   it("should show Pro badge when user is pro tier", async () => {
@@ -162,18 +156,19 @@ describe("NavBar", () => {
   it("should have correct navigation structure", () => {
     render(<NavBar />)
 
-    const nav = screen.getByRole("navigation")
-    expect(nav).toHaveClass("bg-background/95", "border-b", "backdrop-blur")
+    const navs = screen.getAllByRole("navigation")
+    const mainNav = navs[0]
+    expect(mainNav).toHaveClass("bg-background/95", "border-b", "backdrop-blur")
 
-    const container = nav.querySelector(".container")
+    const container = mainNav.querySelector(".container")
     expect(container).toHaveClass("mx-auto", "px-4")
   })
 
   it("should have accessible navigation landmark", () => {
     render(<NavBar />)
 
-    const nav = screen.getByRole("navigation")
-    expect(nav).toBeInTheDocument()
+    const navs = screen.getAllByRole("navigation")
+    expect(navs.length).toBeGreaterThan(0)
   })
 
   it("should have accessible links", () => {
@@ -185,9 +180,32 @@ describe("NavBar", () => {
     })
   })
 
-  it("should have screen reader text for menu button", () => {
+  it("should have screen reader text for mobile menu button", () => {
     render(<NavBar />)
 
     expect(screen.getByText("Open menu")).toBeInTheDocument()
+  })
+
+  it("should show desktop navigation menu for authenticated users", () => {
+    mockUseSession.mockReturnValue({
+      data: mockSession,
+      status: "authenticated",
+    })
+
+    render(<NavBar />)
+
+    expect(screen.getByText("Recover Secret")).toBeInTheDocument()
+  })
+
+  it("should show Account menu for authenticated users on desktop", () => {
+    mockUseSession.mockReturnValue({
+      data: mockSession,
+      status: "authenticated",
+    })
+
+    render(<NavBar />)
+
+    const accountButton = screen.getByText("Account")
+    expect(accountButton).toBeInTheDocument()
   })
 })
