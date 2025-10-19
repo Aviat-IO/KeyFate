@@ -162,7 +162,7 @@ async function markReminderSent(
         status: "sent",
         sentAt: now,
         updatedAt: now,
-      })
+      } as any)
       .where(eq(reminderJobs.id, reminderId))
 
     if (process.env.NODE_ENV === "development") {
@@ -194,7 +194,7 @@ async function markReminderFailed(
         retryCount: sql`COALESCE(${reminderJobs.retryCount}, 0) + 1`,
         nextRetryAt: sql`${now}::timestamp + (INTERVAL '${sql.raw(CRON_CONFIG.RETRY_BACKOFF_BASE_MINUTES.toString())} minutes' * POW(${sql.raw(CRON_CONFIG.RETRY_BACKOFF_EXPONENT.toString())}, COALESCE(${reminderJobs.retryCount}, 0)))`,
         updatedAt: now,
-      })
+      } as any)
       .where(
         and(
           eq(reminderJobs.id, reminderId),
