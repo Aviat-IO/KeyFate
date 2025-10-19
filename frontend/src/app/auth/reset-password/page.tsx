@@ -90,7 +90,7 @@ export default function ResetPasswordPage() {
         setSuccess(true)
         setTimeout(() => {
           router.push("/sign-in")
-        }, 2000)
+        }, 3000)
       } else {
         setError(data.error || "Failed to reset password")
       }
@@ -142,7 +142,7 @@ export default function ResetPasswordPage() {
       )}
 
       {success && (
-        <Alert className="border-green-500 bg-green-50 text-green-900">
+        <Alert className="border-accent bg-accent text-accent-foreground">
           <CheckCircle2 className="h-4 w-4" />
           <AlertDescription>
             Password reset successfully! Redirecting to sign in...
