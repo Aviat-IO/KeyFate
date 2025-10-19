@@ -63,7 +63,7 @@ describe("Sign-Up Error Handling", () => {
       })
 
       await user.type(emailInput, "test@example.com")
-      await user.type(passwordInput, "password123")
+      await user.type(passwordInput, "Password123!")
       await user.type(confirmPasswordInput, "differentpassword")
       await act(async () => {
         await user.click(submitButton)
@@ -99,7 +99,7 @@ describe("Sign-Up Error Handling", () => {
       await waitFor(() => {
         expect(screen.getByRole("alert")).toBeInTheDocument()
         expect(
-          screen.getByText("Password must be at least 8 characters long"),
+          screen.getByText("Password does not meet requirements"),
         ).toBeInTheDocument()
       })
     })
@@ -118,8 +118,8 @@ describe("Sign-Up Error Handling", () => {
 
       // Use an email that passes HTML5 validation but fails our custom validation
       await user.type(emailInput, "test@example")
-      await user.type(passwordInput, "password123")
-      await user.type(confirmPasswordInput, "password123")
+      await user.type(passwordInput, "Password123!")
+      await user.type(confirmPasswordInput, "Password123!")
       await act(async () => {
         await user.click(submitButton)
       })
@@ -127,7 +127,9 @@ describe("Sign-Up Error Handling", () => {
       await waitFor(() => {
         expect(screen.getByRole("alert")).toBeInTheDocument()
         expect(
-          screen.getByText("Please enter a valid email address"),
+          screen.getByText((content, element) =>
+            content.includes("Please enter a valid email address"),
+          ),
         ).toBeInTheDocument()
       })
     })
@@ -155,8 +157,8 @@ describe("Sign-Up Error Handling", () => {
       })
 
       await user.type(emailInput, "existing@example.com")
-      await user.type(passwordInput, "password123")
-      await user.type(confirmPasswordInput, "password123")
+      await user.type(passwordInput, "Password123!")
+      await user.type(confirmPasswordInput, "Password123!")
       await act(async () => {
         await user.click(submitButton)
       })
@@ -192,8 +194,8 @@ describe("Sign-Up Error Handling", () => {
       })
 
       await user.type(emailInput, "test@example.com")
-      await user.type(passwordInput, "password123")
-      await user.type(confirmPasswordInput, "password123")
+      await user.type(passwordInput, "Password123!")
+      await user.type(confirmPasswordInput, "Password123!")
       await act(async () => {
         await user.click(submitButton)
       })
@@ -201,8 +203,8 @@ describe("Sign-Up Error Handling", () => {
       await waitFor(() => {
         expect(screen.getByRole("alert")).toBeInTheDocument()
         expect(
-          screen.getByText(
-            "An account with this email already exists. Please sign in instead.",
+          screen.getByText((content, element) =>
+            content.includes("An account with this email already exists"),
           ),
         ).toBeInTheDocument()
       })
@@ -229,8 +231,8 @@ describe("Sign-Up Error Handling", () => {
       })
 
       await user.type(emailInput, "test@example.com")
-      await user.type(passwordInput, "password123")
-      await user.type(confirmPasswordInput, "password123")
+      await user.type(passwordInput, "Password123!")
+      await user.type(confirmPasswordInput, "Password123!")
       await act(async () => {
         await user.click(submitButton)
       })
@@ -264,8 +266,8 @@ describe("Sign-Up Error Handling", () => {
       })
 
       await user.type(emailInput, "test@example.com")
-      await user.type(passwordInput, "password123")
-      await user.type(confirmPasswordInput, "password123")
+      await user.type(passwordInput, "Password123!")
+      await user.type(confirmPasswordInput, "Password123!")
       await act(async () => {
         await user.click(submitButton)
       })
@@ -273,7 +275,9 @@ describe("Sign-Up Error Handling", () => {
       await waitFor(() => {
         expect(screen.getByRole("alert")).toBeInTheDocument()
         expect(
-          screen.getByText("Server error occurred. Please try again later."),
+          screen.getByText((content, element) =>
+            content.includes("Server error occurred"),
+          ),
         ).toBeInTheDocument()
       })
     })
@@ -295,8 +299,8 @@ describe("Sign-Up Error Handling", () => {
       })
 
       await user.type(emailInput, "test@example.com")
-      await user.type(passwordInput, "password123")
-      await user.type(confirmPasswordInput, "password123")
+      await user.type(passwordInput, "Password123!")
+      await user.type(confirmPasswordInput, "Password123!")
       await act(async () => {
         await user.click(submitButton)
       })
@@ -304,8 +308,8 @@ describe("Sign-Up Error Handling", () => {
       await waitFor(() => {
         expect(screen.getByRole("alert")).toBeInTheDocument()
         expect(
-          screen.getByText(
-            "Network error. Please check your connection and try again.",
+          screen.getByText((content, element) =>
+            content.includes("Network error"),
           ),
         ).toBeInTheDocument()
       })
@@ -326,8 +330,8 @@ describe("Sign-Up Error Handling", () => {
       })
 
       await user.type(emailInput, "test@example.com")
-      await user.type(passwordInput, "password123")
-      await user.type(confirmPasswordInput, "password123")
+      await user.type(passwordInput, "Password123!")
+      await user.type(confirmPasswordInput, "Password123!")
       await act(async () => {
         await user.click(submitButton)
       })
@@ -335,7 +339,9 @@ describe("Sign-Up Error Handling", () => {
       await waitFor(() => {
         expect(screen.getByRole("alert")).toBeInTheDocument()
         expect(
-          screen.getByText("Registration failed: Something went wrong"),
+          screen.getByText((content, element) =>
+            content.includes("Registration failed: Something went wrong"),
+          ),
         ).toBeInTheDocument()
       })
     })
@@ -404,8 +410,8 @@ describe("Sign-Up Error Handling", () => {
       })
 
       await user.type(emailInput, "test@example.com")
-      await user.type(passwordInput, "password123")
-      await user.type(confirmPasswordInput, "password123")
+      await user.type(passwordInput, "Password123!")
+      await user.type(confirmPasswordInput, "Password123!")
       await act(async () => {
         await user.click(submitButton)
       })

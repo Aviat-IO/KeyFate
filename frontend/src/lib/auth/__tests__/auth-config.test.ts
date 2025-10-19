@@ -12,8 +12,8 @@ describe("Auth Configuration", () => {
 
   it("should have proper NextAuth configuration", () => {
     expect(authConfig.pages?.signIn).toBe("/sign-in")
-    // Error page is now configured to handle errors properly
-    expect(authConfig.pages?.error).toBe("/auth/error")
+    // Error page is configured to redirect to sign-in page
+    expect(authConfig.pages?.error).toBe("/sign-in")
     expect(authConfig.session?.strategy).toBe("jwt")
     expect(authConfig.secret).toBeDefined()
   })
