@@ -85,6 +85,13 @@
       "when": 1760827592795,
       "tag": "0011_adorable_wallflower",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1760895572543,
+      "tag": "0012_vengeful_silverclaw",
+      "breakpoints": true
     }
   ]
 }
