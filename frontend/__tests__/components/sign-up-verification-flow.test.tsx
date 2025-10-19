@@ -63,8 +63,8 @@ describe("Sign-Up Verification Flow", () => {
     })
 
     await user.type(emailInput, "test@example.com")
-    await user.type(passwordInput, "Password123")
-    await user.type(confirmPasswordInput, "Password123")
+    await user.type(passwordInput, "Password123!")
+    await user.type(confirmPasswordInput, "Password123!")
     await act(async () => {
       await user.click(submitButton)
     })
@@ -101,8 +101,8 @@ describe("Sign-Up Verification Flow", () => {
     })
 
     await user.type(emailInput, "test@example.com")
-    await user.type(passwordInput, "Password123")
-    await user.type(confirmPasswordInput, "Password123")
+    await user.type(passwordInput, "Password123!")
+    await user.type(confirmPasswordInput, "Password123!")
     await act(async () => {
       await user.click(submitButton)
     })
@@ -138,6 +138,29 @@ describe("Sign-Up Verification Flow", () => {
     })
 
     await user.type(emailInput, testEmail)
+    await user.type(passwordInput, "Password123!")
+    await user.type(confirmPasswordInput, "Password123!")
+    await act(async () => {
+      await user.click(submitButton)
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText(/user@test\.com/)).toBeInTheDocument()
+    })
+  })
+
+    await act(async () => {
+      render(<SignUpPage />)
+    })
+
+    const emailInput = screen.getByLabelText("Email address")
+    const passwordInput = screen.getByLabelText("Password")
+    const confirmPasswordInput = screen.getByLabelText("Confirm Password")
+    const submitButton = screen.getByRole("button", {
+      name: /create account/i,
+    })
+
+    await user.type(emailInput, testEmail)
     await user.type(passwordInput, "Password123")
     await user.type(confirmPasswordInput, "Password123")
     await act(async () => {
@@ -145,7 +168,9 @@ describe("Sign-Up Verification Flow", () => {
     })
 
     await waitFor(() => {
-      expect(screen.getByText(testEmail)).toBeInTheDocument()
+      expect(
+        screen.getByText((content, element) => content.includes(testEmail)),
+      ).toBeInTheDocument()
     })
   })
 
@@ -172,8 +197,8 @@ describe("Sign-Up Verification Flow", () => {
     })
 
     await user.type(emailInput, "test@example.com")
-    await user.type(passwordInput, "Password123")
-    await user.type(confirmPasswordInput, "Password123")
+    await user.type(passwordInput, "Password123!")
+    await user.type(confirmPasswordInput, "Password123!")
     await act(async () => {
       await user.click(submitButton)
     })
@@ -213,8 +238,8 @@ describe("Sign-Up Verification Flow", () => {
     })
 
     await user.type(emailInput, "test@example.com")
-    await user.type(passwordInput, "Password123")
-    await user.type(confirmPasswordInput, "Password123")
+    await user.type(passwordInput, "Password123!")
+    await user.type(confirmPasswordInput, "Password123!")
     await act(async () => {
       await user.click(submitButton)
     })
@@ -269,8 +294,8 @@ describe("Sign-Up Verification Flow", () => {
     })
 
     await user.type(emailInput, "test@example.com")
-    await user.type(passwordInput, "Password123")
-    await user.type(confirmPasswordInput, "Password123")
+    await user.type(passwordInput, "Password123!")
+    await user.type(confirmPasswordInput, "Password123!")
     await act(async () => {
       await user.click(submitButton)
     })

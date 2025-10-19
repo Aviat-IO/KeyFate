@@ -31,19 +31,21 @@ vi.mock("../email-verification", () => ({
 describe("Password Utilities", () => {
   describe("validatePassword", () => {
     it("should accept valid passwords", () => {
-      const result = validatePassword("Password123")
+      const result = validatePassword("Password123!")
       expect(result.isValid).toBe(true)
       expect(result.message).toBe("Password is valid")
     })
 
     it("should reject short passwords", () => {
-      const result = validatePassword("Short1")
+      const result = validatePassword("Short1!")
       expect(result.isValid).toBe(false)
-      expect(result.message).toBe("Password must be at least 8 characters long")
+      expect(result.message).toBe(
+        "Password must be at least 10 characters long",
+      )
     })
 
     it("should reject passwords without lowercase", () => {
-      const result = validatePassword("PASSWORD123")
+      const result = validatePassword("PASSWORD123!")
       expect(result.isValid).toBe(false)
       expect(result.message).toBe(
         "Password must contain at least one lowercase letter",
@@ -51,7 +53,7 @@ describe("Password Utilities", () => {
     })
 
     it("should reject passwords without uppercase", () => {
-      const result = validatePassword("password123")
+      const result = validatePassword("password123!")
       expect(result.isValid).toBe(false)
       expect(result.message).toBe(
         "Password must contain at least one uppercase letter",
@@ -59,15 +61,23 @@ describe("Password Utilities", () => {
     })
 
     it("should reject passwords without numbers", () => {
-      const result = validatePassword("PasswordABC")
+      const result = validatePassword("PasswordABC!")
       expect(result.isValid).toBe(false)
       expect(result.message).toBe("Password must contain at least one number")
+    })
+
+    it("should reject passwords without special characters", () => {
+      const result = validatePassword("Password123")
+      expect(result.isValid).toBe(false)
+      expect(result.message).toBe(
+        "Password must contain at least one special character (!@#$%^&*)",
+      )
     })
   })
 
   describe("Password Hashing", () => {
     it("should hash and verify passwords correctly", async () => {
-      const password = "TestPassword123"
+      const password = "TestPassword123!"
       const hash = await hashPassword(password)
 
       expect(hash).toBeDefined()
@@ -121,7 +131,7 @@ describe("User Management", () => {
 
       const result = await createUser({
         email: "test@example.com",
-        password: "TestPassword123",
+        password: "TestPassword123!",
         name: "Test User",
       })
 
