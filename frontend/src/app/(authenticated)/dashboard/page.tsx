@@ -1,4 +1,5 @@
 import { SecretCard } from "@/components/secret-card"
+import { SecretsGrid } from "@/components/secrets-grid"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LoadingIndicator } from "@/components/ui/loading-indicator"
@@ -87,21 +88,7 @@ async function SecretsLoader() {
       "secrets",
     )
 
-    const sortedSecrets = [...secrets].sort((a, b) => {
-      if (!a.nextCheckIn) return 1
-      if (!b.nextCheckIn) return -1
-      return (
-        new Date(a.nextCheckIn).getTime() - new Date(b.nextCheckIn).getTime()
-      )
-    })
-
-    return (
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-4 lg:gap-6 xl:grid-cols-3">
-        {sortedSecrets.map((secret) => (
-          <SecretCard key={secret.id} secret={secret} />
-        ))}
-      </div>
-    )
+    return <SecretsGrid secrets={secrets} />
   } catch (error) {
     console.error("[Dashboard] Unexpected error in SecretsLoader:", error)
 
