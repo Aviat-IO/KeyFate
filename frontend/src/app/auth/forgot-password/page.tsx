@@ -49,6 +49,7 @@ export default function ForgotPasswordPage() {
       title="Reset your password"
       description="Enter your email address and we'll send you a link to reset your password."
       leftLink={{ href: "/sign-in", text: "Back to sign in" }}
+      hideSocialButtons={true}
     >
       {error && (
         <Alert variant="destructive">
