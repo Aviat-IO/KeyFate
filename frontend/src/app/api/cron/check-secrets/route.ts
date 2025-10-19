@@ -1,27 +1,26 @@
-import { getDatabase } from "@/lib/db/drizzle"
 import {
-  secrets,
-  checkInTokens,
-  users,
-  emailFailures,
-  reminderJobs,
-  type Secret,
-  type User,
-  type ReminderJob,
-} from "@/lib/db/schema"
-import { and, eq, isNotNull, desc, sql, lt, isNull, gt, gte } from "drizzle-orm"
-import { NextRequest, NextResponse } from "next/server"
-import { sendReminderEmail } from "@/lib/email/email-service"
-import { logEmailFailure } from "@/lib/email/email-failure-logger"
-import { sendAdminNotification } from "@/lib/email/admin-notification-service"
-import { randomBytes } from "crypto"
-import {
-  sanitizeError,
   authorizeRequest,
   CRON_CONFIG,
   isApproachingTimeout,
   logCronMetrics,
+  sanitizeError,
 } from "@/lib/cron/utils"
+import { getDatabase } from "@/lib/db/drizzle"
+import {
+  checkInTokens,
+  emailFailures,
+  reminderJobs,
+  secrets,
+  users,
+  type Secret,
+  type User
+} from "@/lib/db/schema"
+import { sendAdminNotification } from "@/lib/email/admin-notification-service"
+import { logEmailFailure } from "@/lib/email/email-failure-logger"
+import { sendReminderEmail } from "@/lib/email/email-service"
+import { randomBytes } from "crypto"
+import { and, desc, eq, gt, gte, isNotNull, isNull, lt, sql } from "drizzle-orm"
+import { NextRequest, NextResponse } from "next/server"
 
 export const dynamic = "force-dynamic"
 
@@ -560,9 +559,9 @@ export async function POST(req: NextRequest) {
 
         secretsProcessed++
 
-        if (!secret.nextCheckIn || !secret.lastCheckIn) {
+        if (!secret.nextCheckIn) {
           console.warn(
-            `[check-secrets] Secret ${secret.id} missing nextCheckIn or lastCheckIn - data integrity issue`,
+            `[check-secrets] Secret ${secret.id} missing nextCheckIn - data integrity issue`,
           )
           continue
         }
@@ -585,7 +584,7 @@ export async function POST(req: NextRequest) {
           if (
             isApproachingTimeout(startTime) ||
             remindersForThisSecret >=
-              CRON_CONFIG.MAX_REMINDERS_PER_RUN_PER_SECRET
+            CRON_CONFIG.MAX_REMINDERS_PER_RUN_PER_SECRET
           ) {
             break
           }
