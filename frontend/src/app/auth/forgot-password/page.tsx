@@ -58,7 +58,7 @@ export default function ForgotPasswordPage() {
       )}
 
       {success && (
-        <Alert className="border-green-500 bg-green-50 text-green-900">
+        <Alert className="border-accent bg-accent text-accent-foreground">
           <CheckCircle2 className="h-4 w-4" />
           <AlertDescription>
             If an account exists with that email, we've sent password reset

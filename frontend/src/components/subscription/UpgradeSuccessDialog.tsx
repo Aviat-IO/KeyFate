@@ -43,8 +43,8 @@ export function UpgradeSuccessDialog() {
     >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
-            <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
+          <div className="bg-accent mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+            <CheckCircle2 className="text-accent-foreground h-6 w-6" />
           </div>
           <DialogTitle className="text-center">Welcome to Pro!</DialogTitle>
           <DialogDescription className="text-center">
@@ -58,7 +58,7 @@ export function UpgradeSuccessDialog() {
             <ul className="text-muted-foreground space-y-2 text-sm">
               {TIER_CONFIGS.pro?.features.map((feature, index) => (
                 <li key={index} className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600 dark:text-green-400" />
+                  <CheckCircle2 className="text-accent-foreground mt-0.5 h-4 w-4 flex-shrink-0" />
                   <span>{feature}</span>
                 </li>
               ))}
