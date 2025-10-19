@@ -60,6 +60,9 @@ export const CRON_CONFIG = {
   BACKOFF_BASE_MS: 5 * 60 * 1000,
   BACKOFF_MAX_MS: 60 * 60 * 1000,
   MAX_REMINDERS_PER_RUN_PER_SECRET: 10,
+  RETRY_BACKOFF_EXPONENT: 2,
+  RETRY_BACKOFF_BASE_MINUTES: 5,
+  BATCH_SIZE: 100,
 } as const
 
 export function isApproachingTimeout(startTime: number): boolean {
