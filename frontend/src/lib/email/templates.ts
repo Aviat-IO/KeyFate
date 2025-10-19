@@ -371,7 +371,7 @@ ${data.secretContent}
 export function renderPasswordResetTemplate(
   data: PasswordResetTemplateData,
 ): EmailTemplate {
-  const companyName = process.env.NEXT_PUBLIC_COMPANY || "Dead Man's Switch"
+  const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
   const userName = data.userName || "there"
   const supportEmail = data.supportEmail || getSupportEmail()
 
