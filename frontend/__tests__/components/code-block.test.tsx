@@ -29,10 +29,13 @@ function CodeBlock({
     return code
       .replace(
         /(import|from|const|let|var|function|return|console\.log)/g,
-        '<span class="text-blue-400">$1</span>',
+        '<span class="text-primary">$1</span>',
       )
-      .replace(/('.*?'|`.*?`)/g, '<span class="text-green-400">$1</span>')
-      .replace(/(\/\/.*$)/gm, '<span class="text-gray-500">$1</span>')
+      .replace(
+        /('.*?'|`.*?`)/g,
+        '<span class="text-accent-foreground">$1</span>',
+      )
+      .replace(/(\/\/.*$)/gm, '<span class="text-muted-foreground">$1</span>')
   }
 
   return (
@@ -55,7 +58,7 @@ function CodeBlock({
           onClick={handleCopy}
         >
           {copied ? (
-            <Check className="h-4 w-4 text-green-600" />
+            <Check className="text-accent-foreground h-4 w-4" />
           ) : (
             <Copy className="h-4 w-4" />
           )}
@@ -140,7 +143,7 @@ describe("CodeBlock Component", () => {
     })
 
     // Should show check icon immediately after click
-    const checkIcon = copyButton.querySelector(".text-green-600")
+    const checkIcon = copyButton.querySelector(".text-accent-foreground")
     expect(checkIcon).toBeInTheDocument()
 
     // Wait for the setTimeout to complete
@@ -164,7 +167,9 @@ describe("CodeBlock Component", () => {
     })
 
     // Should revert to copy icon
-    const copyIcon = copyButton.querySelector(".h-4.w-4:not(.text-green-600)")
+    const copyIcon = copyButton.querySelector(
+      ".h-4.w-4:not(.text-accent-foreground)",
+    )
     expect(copyIcon).toBeInTheDocument()
   })
 

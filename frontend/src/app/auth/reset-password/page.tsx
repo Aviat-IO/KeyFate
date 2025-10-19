@@ -169,7 +169,7 @@ export default function ResetPasswordPage() {
               <p className="font-medium">Password must include:</p>
               <ul className="list-inside list-disc space-y-1">
                 {validationErrors.map((err, idx) => (
-                  <li key={idx} className="text-red-600">
+                  <li key={idx} className="text-destructive">
                     {err}
                   </li>
                 ))}
@@ -177,7 +177,7 @@ export default function ResetPasswordPage() {
             </div>
           )}
           {password && validationErrors.length === 0 && (
-            <p className="text-sm text-green-600">
+            <p className="text-accent-foreground text-sm">
               ✓ Password meets all requirements
             </p>
           )}
