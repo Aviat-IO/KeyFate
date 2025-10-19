@@ -218,16 +218,26 @@ export const adminNotifications = pgTable("admin_notifications", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 })
 
-export const checkInTokens = pgTable("check_in_tokens", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  secretId: uuid("secret_id")
-    .notNull()
-    .references(() => secrets.id, { onDelete: "cascade" }),
-  token: text("token").notNull().unique(),
-  expiresAt: timestamp("expires_at").notNull(),
-  usedAt: timestamp("used_at"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-})
+export const checkInTokens = pgTable(
+  "check_in_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    secretId: uuid("secret_id")
+      .notNull()
+      .references(() => secrets.id, { onDelete: "cascade" }),
+    token: text("token").notNull().unique(),
+    expiresAt: timestamp("expires_at").notNull(),
+    usedAt: timestamp("used_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    secretValidTokenIdx: index("check_in_tokens_secret_valid_idx").on(
+      table.secretId,
+      table.usedAt,
+      table.expiresAt,
+    ),
+  }),
+)
 
 export const checkinHistory = pgTable("checkin_history", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -264,22 +274,40 @@ export const emailNotifications = pgTable("email_notifications", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 })
 
-export const reminderJobs = pgTable("reminder_jobs", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  secretId: uuid("secret_id")
-    .notNull()
-    .references(() => secrets.id, { onDelete: "cascade" }),
-  reminderType: reminderTypeEnum("reminder_type").notNull(),
-  scheduledFor: timestamp("scheduled_for").notNull(),
-  status: reminderStatusEnum("status").notNull().default("pending"),
-  sentAt: timestamp("sent_at"),
-  failedAt: timestamp("failed_at"),
-  error: text("error"),
-  retryCount: integer("retry_count").default(0),
-  nextRetryAt: timestamp("next_retry_at"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-})
+export const reminderJobs = pgTable(
+  "reminder_jobs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    secretId: uuid("secret_id")
+      .notNull()
+      .references(() => secrets.id, { onDelete: "cascade" }),
+    reminderType: reminderTypeEnum("reminder_type").notNull(),
+    scheduledFor: timestamp("scheduled_for").notNull(),
+    status: reminderStatusEnum("status").notNull().default("pending"),
+    sentAt: timestamp("sent_at"),
+    failedAt: timestamp("failed_at"),
+    error: text("error"),
+    retryCount: integer("retry_count").default(0),
+    nextRetryAt: timestamp("next_retry_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    secretReminderStatusIdx: index(
+      "reminder_jobs_secret_reminder_status_idx",
+    ).on(table.secretId, table.reminderType, table.status, table.sentAt),
+    statusRetryIdx: index("reminder_jobs_status_retry_idx").on(
+      table.status,
+      table.retryCount,
+      table.nextRetryAt,
+    ),
+    uniqueSecretReminder: index("unique_secret_reminder_scheduled").on(
+      table.secretId,
+      table.reminderType,
+      table.scheduledFor,
+    ),
+  }),
+)
 
 export const disclosureLog = pgTable("disclosure_log", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -375,17 +403,27 @@ export const paymentHistory = pgTable("payment_history", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
 
-export const emailFailures = pgTable("email_failures", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  emailType: emailFailureTypeEnum("email_type").notNull(),
-  provider: emailFailureProviderEnum("provider").notNull(),
-  recipient: text("recipient").notNull(),
-  subject: text("subject").notNull(),
-  errorMessage: text("error_message").notNull(),
-  retryCount: integer("retry_count").notNull().default(0),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  resolvedAt: timestamp("resolved_at"),
-})
+export const emailFailures = pgTable(
+  "email_failures",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    emailType: emailFailureTypeEnum("email_type").notNull(),
+    provider: emailFailureProviderEnum("provider").notNull(),
+    recipient: text("recipient").notNull(),
+    subject: text("subject").notNull(),
+    errorMessage: text("error_message").notNull(),
+    retryCount: integer("retry_count").notNull().default(0),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    resolvedAt: timestamp("resolved_at"),
+  },
+  (table) => ({
+    recipientTypeIdx: index("email_failures_recipient_type_idx").on(
+      table.recipient,
+      table.emailType,
+      table.createdAt,
+    ),
+  }),
+)
 
 export const auditLogs = pgTable(
   "audit_logs",
@@ -417,7 +455,10 @@ export type SecretUpdate = Partial<Omit<Secret, "id" | "createdAt">>
 
 export type AdminNotification = typeof adminNotifications.$inferSelect
 export type CheckInToken = typeof checkInTokens.$inferSelect
+export type CheckInTokenInsert = typeof checkInTokens.$inferInsert
 export type CheckinHistory = typeof checkinHistory.$inferSelect
+export type ReminderJob = typeof reminderJobs.$inferSelect
+export type ReminderJobInsert = typeof reminderJobs.$inferInsert
 export type UserContactMethod = typeof userContactMethods.$inferSelect
 export type UserSubscription = typeof userSubscriptions.$inferSelect
 export type SubscriptionTier = typeof subscriptionTiers.$inferSelect
