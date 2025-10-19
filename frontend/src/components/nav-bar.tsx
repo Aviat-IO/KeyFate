@@ -210,7 +210,11 @@ export function NavBar() {
                         <DropdownMenuSeparator />
                         {!checkingSubscription && !isProUser && (
                           <DropdownMenuItem asChild className="cursor-pointer">
-                            <Link href="/pricing" className="w-full">
+                            <Link
+                              href="/pricing"
+                              className="flex w-full items-center gap-2"
+                            >
+                              <Crown className="h-4 w-4" />
                               Upgrade to Pro
                             </Link>
                           </DropdownMenuItem>
