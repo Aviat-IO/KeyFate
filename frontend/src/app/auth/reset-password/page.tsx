@@ -108,6 +108,7 @@ export default function ResetPasswordPage() {
         title="Reset your password"
         description="Invalid password reset link"
         leftLink={{ href: "/sign-in", text: "Back to sign in" }}
+        hideSocialButtons={true}
       >
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -133,6 +134,7 @@ export default function ResetPasswordPage() {
       title="Reset your password"
       description="Enter your new password below."
       leftLink={{ href: "/sign-in", text: "Back to sign in" }}
+      hideSocialButtons={true}
     >
       {error && (
         <Alert variant="destructive">
