@@ -1,26 +1,26 @@
 "use client"
 
 import { ThemeToggle } from "@/components/theme-toggle"
-import { DevTierToggle } from "@/components/dev-tier-toggle"
 import { WelcomeToProModal } from "@/components/subscription/WelcomeToProModal"
 import { Button } from "@/components/ui/button"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu"
 import { useConfig } from "@/contexts/ConfigContext"
-import { Menu, Crown, Settings, KeyRound, LogOut } from "lucide-react"
+import { Crown, Settings, KeyRound, LogOut, Menu } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import { useState, useEffect } from "react"
 import { useTheme } from "next-themes"
 import Image from "next/image"
+import { cn } from "@/lib/utils"
 
 export function NavBar() {
   const pathname = usePathname()
@@ -41,7 +41,6 @@ export function NavBar() {
     setMounted(true)
   }, [])
 
-  // Fetch user tier on mount and when session changes
   useEffect(() => {
     async function fetchUserTier() {
       if (!user?.id) return
@@ -73,7 +72,6 @@ export function NavBar() {
     <nav className="bg-background/95 supports-[backdrop-filter]:bg-background/60 border-b backdrop-blur">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo and Dashboard Link */}
           <div className="flex items-center space-x-4">
             <Link
               href={user ? "/dashboard" : "/"}
@@ -89,7 +87,7 @@ export function NavBar() {
                   alt={config?.company || "KeyFate"}
                   width={40}
                   height={40}
-                  className="h-10 w-10 md:hidden"
+                  className="h-10 w-10 sm:hidden"
                   priority
                 />
               ) : null}
@@ -103,21 +101,54 @@ export function NavBar() {
                   alt={config?.company || "KeyFate"}
                   width={200}
                   height={40}
-                  className="hidden h-10 w-auto md:block"
+                  className="hidden h-10 w-auto sm:block"
                   priority
                 />
               ) : (
                 <div className="h-10 w-[200px]" />
               )}
             </Link>
-            {user && pathname !== "/dashboard" && (
-              <Button variant="ghost" asChild>
-                <Link href="/dashboard">Dashboard</Link>
-              </Button>
-            )}
+
+            <NavigationMenu className="hidden md:flex">
+              <NavigationMenuList>
+                {user && pathname !== "/dashboard" && (
+                  <NavigationMenuItem>
+                    <Link href="/dashboard" legacyBehavior passHref>
+                      <NavigationMenuLink
+                        className={navigationMenuTriggerStyle()}
+                      >
+                        Dashboard
+                      </NavigationMenuLink>
+                    </Link>
+                  </NavigationMenuItem>
+                )}
+
+                <NavigationMenuItem>
+                  <Link href="/decrypt" legacyBehavior passHref>
+                    <NavigationMenuLink
+                      className={navigationMenuTriggerStyle()}
+                    >
+                      <KeyRound className="mr-2 h-4 w-4" />
+                      Recover Secret
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+
+                {!loading && !user && (
+                  <NavigationMenuItem>
+                    <Link href="/pricing" legacyBehavior passHref>
+                      <NavigationMenuLink
+                        className={navigationMenuTriggerStyle()}
+                      >
+                        Pricing
+                      </NavigationMenuLink>
+                    </Link>
+                  </NavigationMenuItem>
+                )}
+              </NavigationMenuList>
+            </NavigationMenu>
           </div>
 
-          {/* Unified Menu for Desktop and Mobile */}
           <div className="flex items-center space-x-2">
             <ThemeToggle />
 
@@ -126,7 +157,7 @@ export function NavBar() {
                 variant="outline"
                 size="sm"
                 onClick={() => setProModalOpen(true)}
-                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground hidden md:flex"
               >
                 <Crown className="h-4 w-4" />
                 Pro
@@ -149,101 +180,149 @@ export function NavBar() {
               </>
             )}
 
-            <DropdownMenu modal={false}>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9"
-                  data-testid="mobile-menu-trigger"
-                >
-                  <Menu className="h-5 w-5" />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="w-56"
-                data-testid="dropdown-content"
-              >
-                {!user && (
-                  <>
-                    <DropdownMenuItem asChild className="cursor-pointer">
-                      <Link href="/pricing" className="w-full">
-                        Pricing
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-
-                {user && (
-                  <DropdownMenuItem asChild className="cursor-pointer">
-                    <Link
-                      href="/settings"
-                      className="flex w-full items-center gap-2"
-                    >
-                      <Settings className="h-4 w-4" />
-                      Settings
-                    </Link>
-                  </DropdownMenuItem>
-                )}
-
-                <DropdownMenuItem
-                  asChild
-                  data-testid="mobile-recover-secret"
-                  className="cursor-pointer"
-                >
-                  <Link
-                    href="/decrypt"
-                    className="flex w-full items-center gap-2"
-                  >
-                    <KeyRound className="h-4 w-4" />
-                    Recover Secret
-                  </Link>
-                </DropdownMenuItem>
-
-                {!loading && (
-                  <>
-                    {user ? (
-                      <>
-                        <DropdownMenuSeparator />
+            {user && (
+              <NavigationMenu className="hidden justify-end md:flex">
+                <NavigationMenuList>
+                  <NavigationMenuItem>
+                    <NavigationMenuTrigger>Account</NavigationMenuTrigger>
+                    <NavigationMenuContent className="!left-auto !right-0">
+                      <ul className="grid w-[200px] gap-1 p-2">
+                        <li>
+                          <NavigationMenuLink asChild>
+                            <Link
+                              href="/settings"
+                              className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex select-none items-center gap-2 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors"
+                            >
+                              <Settings className="h-4 w-4" />
+                              <span>Settings</span>
+                            </Link>
+                          </NavigationMenuLink>
+                        </li>
                         {!checkingSubscription && !isProUser && (
-                          <DropdownMenuItem asChild className="cursor-pointer">
+                          <li>
+                            <NavigationMenuLink asChild>
+                              <Link
+                                href="/pricing"
+                                className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex select-none items-center gap-2 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors"
+                              >
+                                <Crown className="h-4 w-4" />
+                                <span>Upgrade to Pro</span>
+                              </Link>
+                            </NavigationMenuLink>
+                          </li>
+                        )}
+                        <li>
+                          <button
+                            onClick={handleSignOut}
+                            className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex w-full select-none items-center gap-2 rounded-md px-3 py-2 text-left leading-none outline-none transition-colors"
+                          >
+                            <LogOut className="h-4 w-4" />
+                            <span>Sign Out</span>
+                          </button>
+                        </li>
+                      </ul>
+                    </NavigationMenuContent>
+                  </NavigationMenuItem>
+                </NavigationMenuList>
+              </NavigationMenu>
+            )}
+
+            <NavigationMenu className="md:hidden">
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger
+                    className="h-9 px-3"
+                    data-testid="mobile-menu-trigger"
+                  >
+                    <Menu className="h-5 w-5" />
+                    <span className="sr-only">Open menu</span>
+                  </NavigationMenuTrigger>
+                  <NavigationMenuContent data-testid="dropdown-content">
+                    <ul className="grid w-[280px] gap-1 p-2">
+                      {!user && (
+                        <li>
+                          <NavigationMenuLink asChild>
                             <Link
                               href="/pricing"
-                              className="flex w-full items-center gap-2"
+                              className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground block select-none rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors"
                             >
-                              <Crown className="h-4 w-4" />
-                              Upgrade to Pro
+                              Pricing
                             </Link>
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem
-                          onClick={handleSignOut}
-                          className="flex cursor-pointer items-center gap-2"
-                        >
-                          <LogOut className="h-4 w-4" />
-                          Sign Out
-                        </DropdownMenuItem>
-                      </>
-                    ) : (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          asChild
-                          className="cursor-pointer md:hidden"
-                        >
-                          <Link href="/sign-in" className="w-full">
-                            Sign In
+                          </NavigationMenuLink>
+                        </li>
+                      )}
+
+                      {user && (
+                        <li>
+                          <NavigationMenuLink asChild>
+                            <Link
+                              href="/settings"
+                              className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex select-none items-center gap-2 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors"
+                            >
+                              <Settings className="h-4 w-4" />
+                              Settings
+                            </Link>
+                          </NavigationMenuLink>
+                        </li>
+                      )}
+
+                      <li>
+                        <NavigationMenuLink asChild>
+                          <Link
+                            href="/decrypt"
+                            className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex select-none items-center gap-2 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors"
+                            data-testid="mobile-recover-secret"
+                          >
+                            <KeyRound className="h-4 w-4" />
+                            Recover Secret
                           </Link>
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                        </NavigationMenuLink>
+                      </li>
+
+                      {!loading && user && (
+                        <>
+                          {!checkingSubscription && !isProUser && (
+                            <li>
+                              <NavigationMenuLink asChild>
+                                <Link
+                                  href="/pricing"
+                                  className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex select-none items-center gap-2 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors"
+                                >
+                                  <Crown className="h-4 w-4" />
+                                  Upgrade to Pro
+                                </Link>
+                              </NavigationMenuLink>
+                            </li>
+                          )}
+                          <li>
+                            <button
+                              onClick={handleSignOut}
+                              className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex w-full select-none items-center gap-2 rounded-md px-3 py-2 text-left leading-none outline-none transition-colors"
+                            >
+                              <LogOut className="h-4 w-4" />
+                              Sign Out
+                            </button>
+                          </li>
+                        </>
+                      )}
+
+                      {!loading && !user && (
+                        <li>
+                          <NavigationMenuLink asChild>
+                            <Link
+                              href="/sign-in"
+                              className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground block select-none rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors"
+                            >
+                              Sign In
+                            </Link>
+                          </NavigationMenuLink>
+                        </li>
+                      )}
+                    </ul>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
           </div>
         </div>
       </div>
