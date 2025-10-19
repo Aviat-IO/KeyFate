@@ -97,6 +97,11 @@ export const auditEventCategoryEnum = pgEnum("audit_event_category", [
   "settings",
   "recipients",
 ])
+export const disclosureStatusEnum = pgEnum("disclosure_status", [
+  "pending",
+  "sent",
+  "failed",
+])
 
 // NextAuth.js Tables
 export const users = pgTable("users", {
@@ -183,6 +188,8 @@ export const secrets = pgTable("secrets", {
   lastCheckIn: timestamp("last_check_in"),
   nextCheckIn: timestamp("next_check_in"),
   triggeredAt: timestamp("triggered_at"),
+  processingStartedAt: timestamp("processing_started_at"),
+  lastError: text("last_error"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
@@ -268,6 +275,23 @@ export const reminderJobs = pgTable("reminder_jobs", {
   sentAt: timestamp("sent_at"),
   failedAt: timestamp("failed_at"),
   error: text("error"),
+  retryCount: integer("retry_count").default(0),
+  nextRetryAt: timestamp("next_retry_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+export const disclosureLog = pgTable("disclosure_log", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  secretId: uuid("secret_id")
+    .notNull()
+    .references(() => secrets.id, { onDelete: "cascade" }),
+  recipientEmail: text("recipient_email").notNull(),
+  recipientName: text("recipient_name"),
+  status: disclosureStatusEnum("status").notNull().default("pending"),
+  sentAt: timestamp("sent_at"),
+  error: text("error"),
+  retryCount: integer("retry_count").default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })

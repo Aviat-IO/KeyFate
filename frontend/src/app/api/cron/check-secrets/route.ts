@@ -6,12 +6,19 @@ import {
   emailFailures,
   reminderJobs,
 } from "@/lib/db/schema"
-import { and, eq, isNotNull, desc, sql } from "drizzle-orm"
+import { and, eq, isNotNull, desc, sql, lt } from "drizzle-orm"
 import { NextRequest, NextResponse } from "next/server"
 import { sendReminderEmail } from "@/lib/email/email-service"
 import { logEmailFailure } from "@/lib/email/email-failure-logger"
 import { sendAdminNotification } from "@/lib/email/admin-notification-service"
 import { randomBytes } from "crypto"
+import {
+  sanitizeError,
+  authorizeRequest,
+  CRON_CONFIG,
+  isApproachingTimeout,
+  logCronMetrics,
+} from "@/lib/cron/utils"
 
 // Prevent static analysis during build
 export const dynamic = "force-dynamic"
@@ -27,19 +34,22 @@ type ReminderType =
   | "50_percent"
 
 /**
- * Determine reminder type based on time remaining
- * Returns null if no reminder threshold is met
+ * Determine all applicable reminder types based on time remaining
+ * Returns array of reminder types that should be sent (empty if none)
+ *
+ * IMPORTANT: Returns ALL reminder types whose thresholds have been crossed,
+ * allowing the cron job to send multiple reminders in the same run if needed.
  */
-function getReminderType(
+function getApplicableReminderTypes(
   nextCheckIn: Date,
   checkInDays: number,
-): ReminderType | null {
+): ReminderType[] {
   const now = new Date()
   const msRemaining = nextCheckIn.getTime() - now.getTime()
 
-  // Return null for expired check-ins
+  // Return empty array for expired check-ins
   if (msRemaining <= 0) {
-    return null
+    return []
   }
 
   const hoursRemaining = msRemaining / (1000 * 60 * 60)
@@ -47,36 +57,40 @@ function getReminderType(
   const totalHours = checkInDays * 24
   const percentRemaining = (hoursRemaining / totalHours) * 100
 
-  // Critical: 1h before (highest priority)
+  const applicableTypes: ReminderType[] = []
+
+  // Check all thresholds and collect applicable types
+  // Order matters: check most urgent first to prioritize in result array
+
   if (hoursRemaining <= 1) {
-    return "1_hour"
+    applicableTypes.push("1_hour")
   }
 
-  // High urgency: 12h, 24h before
   if (hoursRemaining <= 12) {
-    return "12_hours"
+    applicableTypes.push("12_hours")
   }
+
   if (hoursRemaining <= 24) {
-    return "24_hours"
+    applicableTypes.push("24_hours")
   }
 
-  // Medium urgency: 3d, 7d before
   if (daysRemaining <= 3) {
-    return "3_days"
+    applicableTypes.push("3_days")
   }
+
   if (daysRemaining <= 7) {
-    return "7_days"
+    applicableTypes.push("7_days")
   }
 
-  // Low urgency: 25%, 50% of check-in period (lowest priority)
   if (percentRemaining <= 25) {
-    return "25_percent"
-  }
-  if (percentRemaining <= 50) {
-    return "50_percent"
+    applicableTypes.push("25_percent")
   }
 
-  return null
+  if (percentRemaining <= 50) {
+    applicableTypes.push("50_percent")
+  }
+
+  return applicableTypes
 }
 
 /**
@@ -127,66 +141,51 @@ async function hasReminderBeenSent(
 }
 
 /**
- * Record that a reminder was sent
- *
- * BUG FIX #2: Now accepts checkInDays parameter to calculate proper scheduledFor
- * for percentage-based reminders (25%, 50%)
- *
- * BUG FIX #4: Insert with status='pending' BEFORE email send to ensure idempotency
+ * Calculate scheduledFor timestamp for a reminder type
  */
-async function recordReminderSent(
+function calculateScheduledFor(
+  reminderType: ReminderType,
+  nextCheckIn: Date,
+  checkInDays: number,
+): Date {
+  const checkInTime = nextCheckIn.getTime()
+
+  switch (reminderType) {
+    case "1_hour":
+      return new Date(checkInTime - 1 * 60 * 60 * 1000)
+    case "12_hours":
+      return new Date(checkInTime - 12 * 60 * 60 * 1000)
+    case "24_hours":
+      return new Date(checkInTime - 24 * 60 * 60 * 1000)
+    case "3_days":
+      return new Date(checkInTime - 3 * 24 * 60 * 60 * 1000)
+    case "7_days":
+      return new Date(checkInTime - 7 * 24 * 60 * 60 * 1000)
+    case "25_percent":
+      return new Date(checkInTime - checkInDays * 24 * 60 * 60 * 1000 * 0.75)
+    case "50_percent":
+      return new Date(checkInTime - checkInDays * 24 * 60 * 60 * 1000 * 0.5)
+  }
+}
+
+/**
+ * Try to record reminder as pending (race-safe)
+ * Returns true if successfully recorded, false if already exists
+ */
+async function tryRecordReminderPending(
   secretId: string,
   reminderType: ReminderType,
   nextCheckIn: Date,
   checkInDays: number,
-): Promise<void> {
+): Promise<{ success: boolean; id?: string }> {
   try {
     const db = await getDatabase()
-
-    const now = new Date()
-
-    console.log(
-      `[check-secrets] Recording reminder sent: secretId=${secretId}, type=${reminderType}`,
+    const scheduledFor = calculateScheduledFor(
+      reminderType,
+      nextCheckIn,
+      checkInDays,
     )
 
-    // Calculate when this reminder should have been scheduled
-    // scheduledFor = nextCheckIn - reminder threshold
-    let scheduledFor: Date
-    const checkInTime = nextCheckIn.getTime()
-
-    switch (reminderType) {
-      case "1_hour":
-        scheduledFor = new Date(checkInTime - 1 * 60 * 60 * 1000)
-        break
-      case "12_hours":
-        scheduledFor = new Date(checkInTime - 12 * 60 * 60 * 1000)
-        break
-      case "24_hours":
-        scheduledFor = new Date(checkInTime - 24 * 60 * 60 * 1000)
-        break
-      case "3_days":
-        scheduledFor = new Date(checkInTime - 3 * 24 * 60 * 60 * 1000)
-        break
-      case "7_days":
-        scheduledFor = new Date(checkInTime - 7 * 24 * 60 * 60 * 1000)
-        break
-      case "25_percent":
-        scheduledFor = new Date(
-          checkInTime - checkInDays * 24 * 60 * 60 * 1000 * 0.75,
-        )
-        break
-      case "50_percent":
-        scheduledFor = new Date(
-          checkInTime - checkInDays * 24 * 60 * 60 * 1000 * 0.5,
-        )
-        break
-    }
-
-    console.log(
-      `[check-secrets] Calculated scheduledFor: ${scheduledFor.toISOString()} for ${reminderType} reminder (nextCheckIn: ${nextCheckIn.toISOString()})`,
-    )
-
-    // Status defaults to 'pending' in the schema
     const [inserted] = await db
       .insert(reminderJobs)
       .values({
@@ -194,50 +193,85 @@ async function recordReminderSent(
         reminderType,
         scheduledFor,
       })
+      .onConflictDoNothing()
       .returning({ id: reminderJobs.id })
 
     if (!inserted?.id) {
-      console.error(
-        `[check-secrets] Failed to insert reminder job - no ID returned`,
+      console.log(
+        `[check-secrets] Reminder already exists: secretId=${secretId}, type=${reminderType}`,
       )
-      return
+      return { success: false }
     }
 
     console.log(
-      `[check-secrets] Inserted reminder job with ID: ${inserted.id} (status: pending)`,
+      `[check-secrets] Inserted pending reminder job with ID: ${inserted.id}`,
     )
 
-    // Update status to 'sent' and set sentAt timestamp
-    await db.execute(sql`
-      UPDATE reminder_jobs
-      SET status = 'sent', sent_at = ${now.toISOString()}
-      WHERE id = ${inserted.id}
-    `)
-
-    console.log(
-      `[check-secrets] Updated reminder job status to 'sent' for ID: ${inserted.id}`,
-    )
+    return { success: true, id: inserted.id }
   } catch (error) {
-    console.error(`[check-secrets] Error recording reminder:`, error)
-    throw error // Re-throw to bubble up to caller
+    console.error(
+      `[check-secrets] Error recording pending reminder:`,
+      sanitizeError(error, secretId),
+    )
+    return { success: false }
   }
 }
 
 /**
- * Authorization helper
+ * Mark reminder as sent
  */
-function authorize(req: NextRequest): boolean {
-  const header =
-    req.headers.get("authorization") || req.headers.get("Authorization")
+async function markReminderSent(reminderId: string): Promise<void> {
+  try {
+    const db = await getDatabase()
+    const now = new Date()
 
-  if (!header?.startsWith("Bearer ")) {
-    return false
+    await db.execute(sql`
+      UPDATE reminder_jobs
+      SET status = 'sent', sent_at = ${now.toISOString()}, updated_at = ${now.toISOString()}
+      WHERE id = ${reminderId}
+    `)
+
+    console.log(`[check-secrets] Marked reminder ${reminderId} as sent`)
+  } catch (error) {
+    console.error(
+      `[check-secrets] Error marking reminder sent:`,
+      sanitizeError(error),
+    )
+    throw error
   }
+}
 
-  const token = header.slice(7).trim()
-  const cronSecret = process.env.CRON_SECRET
+/**
+ * Mark reminder as failed
+ */
+async function markReminderFailed(
+  reminderId: string,
+  error: string,
+): Promise<void> {
+  try {
+    const db = await getDatabase()
+    const now = new Date()
 
-  return !!cronSecret && token === cronSecret
+    await db.execute(sql`
+      UPDATE reminder_jobs
+      SET 
+        status = 'failed',
+        failed_at = ${now.toISOString()},
+        error = ${error},
+        retry_count = COALESCE(retry_count, 0) + 1,
+        next_retry_at = ${now.toISOString()}::timestamp + 
+          (INTERVAL '5 minutes' * POW(2, COALESCE(retry_count, 0))),
+        updated_at = ${now.toISOString()}
+      WHERE id = ${reminderId} AND COALESCE(retry_count, 0) < ${CRON_CONFIG.MAX_RETRIES}
+    `)
+
+    console.log(`[check-secrets] Marked reminder ${reminderId} as failed`)
+  } catch (err) {
+    console.error(
+      `[check-secrets] Error marking reminder failed:`,
+      sanitizeError(err),
+    )
+  }
 }
 
 /**
@@ -291,15 +325,16 @@ async function generateCheckInToken(
 }
 
 /**
- * Process a single secret for reminder sending
+ * Process a single secret for reminder sending (race-safe)
  */
 async function processSecret(
   secret: any,
   user: any,
   reminderType: ReminderType,
-): Promise<{ sent: boolean; error?: string; recordedPending?: boolean }> {
+): Promise<{ sent: boolean; error?: string; reminderId?: string }> {
+  let reminderId: string | undefined
+
   try {
-    // BUG FIX #5: Type-safe check for nextCheckIn
     if (!secret.nextCheckIn) {
       console.warn(
         `[check-secrets] Secret ${secret.id} missing nextCheckIn, skipping`,
@@ -309,41 +344,30 @@ async function processSecret(
 
     const nextCheckIn: Date = new Date(secret.nextCheckIn)
 
-    // This ensures idempotency - if send fails, pending record prevents duplicate retry
-    try {
-      await recordReminderSent(
-        secret.id,
-        reminderType,
-        nextCheckIn,
-        secret.checkInDays,
-      )
-      console.log(
-        `[check-secrets] Recorded pending reminder for secret ${secret.id}`,
-      )
-    } catch (recordError) {
-      console.error(
-        `[check-secrets] Failed to record pending reminder:`,
-        recordError,
-      )
+    const recordResult = await tryRecordReminderPending(
+      secret.id,
+      reminderType,
+      nextCheckIn,
+      secret.checkInDays,
+    )
+
+    if (!recordResult.success) {
       return {
         sent: false,
-        error: "failed_to_record_pending",
-        recordedPending: false,
+        error: "already_processing_or_sent",
       }
     }
 
-    // Calculate urgency
+    reminderId = recordResult.id
+
     const urgency = calculateUrgency(nextCheckIn)
 
-    // Calculate days remaining
     const now = new Date()
     const msRemaining = nextCheckIn.getTime() - now.getTime()
     const daysRemaining = Math.max(0, msRemaining / (1000 * 60 * 60 * 24))
 
-    // Generate check-in token and URL
     const { url: checkInUrl } = await generateCheckInToken(secret.id)
 
-    // Send reminder email
     const result = await sendReminderEmail({
       userEmail: user.email,
       userName: user.name || user.email.split("@")[0],
@@ -354,7 +378,6 @@ async function processSecret(
     })
 
     if (!result.success) {
-      // Log failure to email_failures table
       const db = await getDatabase()
       await logEmailFailure({
         emailType: "reminder",
@@ -366,7 +389,6 @@ async function processSecret(
         errorMessage: result.error || "Unknown error",
       })
 
-      // Check retry count for this recipient/secret combination
       const recentFailures = await db
         .select()
         .from(emailFailures)
@@ -384,8 +406,7 @@ async function processSecret(
         0,
       )
 
-      // Send admin notification if retry count exceeds threshold (>3 retries)
-      if (retryCount > 3) {
+      if (retryCount > CRON_CONFIG.ADMIN_NOTIFICATION_THRESHOLD) {
         await sendAdminNotification({
           emailType: "reminder",
           recipient: user.email,
@@ -396,53 +417,118 @@ async function processSecret(
         })
       }
 
+      if (reminderId) {
+        await markReminderFailed(reminderId, result.error || "Unknown error")
+      }
+
       return {
         sent: false,
         error: result.error,
-        recordedPending: true,
+        reminderId,
       }
     }
 
-    return { sent: true, recordedPending: true }
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error"
+    if (reminderId) {
+      await markReminderSent(reminderId)
+    }
 
-    console.error(
-      `[check-secrets] Failed to process secret ${secret.id}:`,
-      error,
-    )
+    return { sent: true, reminderId }
+  } catch (error) {
+    const errorMessage = sanitizeError(error, secret.id)
+
+    console.error(`[check-secrets] Failed to process secret:`, errorMessage)
+
+    if (reminderId) {
+      await markReminderFailed(reminderId, errorMessage)
+    }
 
     return {
       sent: false,
       error: errorMessage,
+      reminderId,
     }
   }
+}
+
+/**
+ * Process failed reminders that are ready for retry
+ */
+async function processFailedReminders(
+  db: any,
+  startTimeMs: number,
+): Promise<{ processed: number; sent: number; failed: number }> {
+  const now = new Date()
+  let processed = 0
+  let sent = 0
+  let failed = 0
+
+  try {
+    const failedReminders = await db
+      .select({
+        reminder: reminderJobs,
+        secret: secrets,
+        user: users,
+      })
+      .from(reminderJobs)
+      .innerJoin(secrets, eq(reminderJobs.secretId, secrets.id))
+      .innerJoin(users, eq(secrets.userId, users.id))
+      .where(
+        and(
+          eq(reminderJobs.status, "failed"),
+          lt(reminderJobs.retryCount, CRON_CONFIG.MAX_RETRIES),
+          lt(reminderJobs.nextRetryAt, now),
+        ),
+      )
+      .limit(50)
+
+    for (const row of failedReminders) {
+      if (isApproachingTimeout(startTimeMs)) {
+        console.log(
+          `[check-secrets] Approaching timeout, stopping retry processing`,
+        )
+        break
+      }
+
+      const { reminder, secret, user } = row
+      processed++
+
+      const result = await processSecret(
+        secret,
+        user,
+        reminder.reminderType as ReminderType,
+      )
+
+      if (result.sent) {
+        sent++
+      } else {
+        failed++
+      }
+    }
+  } catch (error) {
+    console.error(
+      `[check-secrets] Error processing failed reminders:`,
+      sanitizeError(error),
+    )
+  }
+
+  return { processed, sent, failed }
 }
 
 /**
  * Main cron job handler
  */
 export async function POST(req: NextRequest) {
-  if (!authorize(req)) {
+  if (!authorizeRequest(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const startTime = new Date()
-  console.log(`[check-secrets] Cron job started at ${startTime.toISOString()}`)
+  const startTime = Date.now()
+  const startDate = new Date()
+  console.log(`[check-secrets] Cron job started at ${startDate.toISOString()}`)
 
   try {
     const db = await getDatabase()
 
-    // Debug: Check if reminder_jobs table has any records
-    const existingReminderCount = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(reminderJobs)
-    console.log(
-      `[check-secrets] Existing reminder_jobs count: ${existingReminderCount[0]?.count || 0}`,
-    )
-
-    // Query all active secrets with server shares (excluding triggered)
     const allActiveSecrets = await db
       .select({
         secret: secrets,
@@ -452,7 +538,6 @@ export async function POST(req: NextRequest) {
       .innerJoin(users, eq(secrets.userId, users.id))
       .where(
         and(
-          eq(secrets.status, "active"),
           eq(secrets.status, "active"),
           isNotNull(secrets.serverShare),
           isNotNull(secrets.nextCheckIn),
@@ -466,16 +551,19 @@ export async function POST(req: NextRequest) {
     let remindersProcessed = 0
     let remindersSent = 0
     let remindersFailed = 0
+    let secretsProcessed = 0
 
-    // Process each secret
     for (const row of allActiveSecrets) {
+      if (isApproachingTimeout(startTime)) {
+        console.log(
+          `[check-secrets] Approaching timeout, stopping processing. Processed ${secretsProcessed}/${allActiveSecrets.length} secrets`,
+        )
+        break
+      }
+
       const { secret, user } = row
+      secretsProcessed++
 
-      console.log(
-        `[check-secrets] Processing secret ${secret.id} (title: ${secret.title})`,
-      )
-
-      // BUG FIX #5: Type-safe null check for nextCheckIn
       if (!secret.nextCheckIn) {
         console.warn(
           `[check-secrets] Secret ${secret.id} missing nextCheckIn, skipping`,
@@ -483,25 +571,34 @@ export async function POST(req: NextRequest) {
         continue
       }
 
-      // BUG FIX #5: Type-safe null check for lastCheckIn
       if (!secret.lastCheckIn) {
         console.warn(
-          `[check-secrets] Secret ${secret.id} missing lastCheckIn, skipping`,
+          `[check-secrets] Secret ${secret.id} missing lastCheckIn - data integrity issue`,
         )
         continue
       }
 
-      // Determine reminder type based on time remaining
       const nextCheckIn: Date = new Date(secret.nextCheckIn)
       const lastCheckIn: Date = new Date(secret.lastCheckIn)
-      const reminderType = getReminderType(nextCheckIn, secret.checkInDays)
-
-      console.log(
-        `[check-secrets] Reminder type for secret ${secret.id}: ${reminderType || "none"}`,
+      const applicableTypes = getApplicableReminderTypes(
+        nextCheckIn,
+        secret.checkInDays,
       )
 
-      // Check if we should send a reminder
-      if (reminderType) {
+      console.log(
+        `[check-secrets] Secret ${secret.id}: ${applicableTypes.length} applicable reminder types`,
+      )
+
+      let remindersForThisSecret = 0
+
+      for (const reminderType of applicableTypes) {
+        if (
+          isApproachingTimeout(startTime) ||
+          remindersForThisSecret >= CRON_CONFIG.MAX_REMINDERS_PER_RUN_PER_SECRET
+        ) {
+          break
+        }
+
         const alreadySent = await hasReminderBeenSent(
           secret.id,
           reminderType,
@@ -509,44 +606,51 @@ export async function POST(req: NextRequest) {
         )
 
         if (alreadySent) {
-          console.log(
-            `[check-secrets] Skipping reminder for secret ${secret.id} - already sent ${reminderType} in current period`,
-          )
+          continue
+        }
+
+        remindersProcessed++
+        remindersForThisSecret++
+
+        const result = await processSecret(secret, user, reminderType)
+
+        if (result.sent) {
+          remindersSent++
         } else {
-          console.log(
-            `[check-secrets] Sending reminder for secret ${secret.id} - type: ${reminderType}`,
-          )
-          remindersProcessed++
-
-          const result = await processSecret(secret, user, reminderType)
-
-          if (result.sent) {
-            remindersSent++
-            console.log(
-              `[check-secrets] Successfully sent and recorded reminder for secret ${secret.id}`,
-            )
-          } else {
-            remindersFailed++
-            console.error(
-              `[check-secrets] Failed to send reminder for secret ${secret.id}: ${result.error}`,
-            )
-          }
+          remindersFailed++
         }
       }
     }
+
+    const retryStats = await processFailedReminders(db, startTime)
+
+    const duration = Date.now() - startTime
+
+    logCronMetrics("check-secrets", {
+      duration,
+      processed: remindersProcessed + retryStats.processed,
+      succeeded: remindersSent + retryStats.sent,
+      failed: remindersFailed + retryStats.failed,
+    })
 
     return NextResponse.json({
       remindersProcessed,
       remindersSent,
       remindersFailed,
+      retriesProcessed: retryStats.processed,
+      retriesSent: retryStats.sent,
+      retriesFailed: retryStats.failed,
+      secretsProcessed,
+      totalSecrets: allActiveSecrets.length,
+      duration,
       timestamp: new Date().toISOString(),
     })
   } catch (error) {
-    console.error("[check-secrets] Error:", error)
+    console.error("[check-secrets] Error:", sanitizeError(error))
 
     const errorDetails = {
       error: "Database operation failed",
-      message: error instanceof Error ? error.message : "Unknown error",
+      message: sanitizeError(error),
       timestamp: new Date().toISOString(),
     }
 

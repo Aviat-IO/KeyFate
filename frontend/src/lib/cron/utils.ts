@@ -1,0 +1,81 @@
+import { timingSafeEqual } from "crypto"
+import { NextRequest } from "next/server"
+
+export function sanitizeError(error: unknown, secretId?: string): string {
+  const message = error instanceof Error ? error.message : String(error)
+
+  const sanitized = message
+    .replace(/serverShare":\s*"[^"]+"/g, 'serverShare":"[REDACTED]"')
+    .replace(/decrypted":\s*"[^"]+"/g, 'decrypted":"[REDACTED]"')
+    .replace(/secret":\s*"[^"]+"/g, 'secret":"[REDACTED]"')
+    .replace(/share":\s*"[^"]+"/g, 'share":"[REDACTED]"')
+    .replace(/content":\s*"[^"]+"/g, 'content":"[REDACTED]"')
+    .replace(/BEGIN\s+[A-Z\s]+KEY[^-]+-+/g, "[REDACTED_KEY]")
+    .replace(/[A-Za-z0-9+/]{40,}={0,2}/g, (match) => {
+      if (match.length > 50) {
+        return "[REDACTED_BASE64]"
+      }
+      return match
+    })
+
+  if (secretId) {
+    return `Secret ${secretId}: ${sanitized}`
+  }
+
+  return sanitized
+}
+
+export function authorizeRequest(req: NextRequest): boolean {
+  const header =
+    req.headers.get("authorization") || req.headers.get("Authorization")
+
+  if (!header?.startsWith("Bearer ")) {
+    return false
+  }
+
+  const token = header.slice(7).trim()
+  const cronSecret = process.env.CRON_SECRET
+
+  if (!cronSecret || !token) {
+    return false
+  }
+
+  if (token.length !== cronSecret.length) {
+    return false
+  }
+
+  try {
+    const tokenBuffer = Buffer.from(token, "utf-8")
+    const secretBuffer = Buffer.from(cronSecret, "utf-8")
+    return timingSafeEqual(tokenBuffer, secretBuffer)
+  } catch {
+    return false
+  }
+}
+
+export const CRON_CONFIG = {
+  TIMEOUT_MS: 9 * 60 * 1000,
+  MAX_RETRIES: 3,
+  ADMIN_NOTIFICATION_THRESHOLD: 3,
+  BACKOFF_BASE_MS: 5 * 60 * 1000,
+  BACKOFF_MAX_MS: 60 * 60 * 1000,
+  MAX_REMINDERS_PER_RUN_PER_SECRET: 10,
+} as const
+
+export function isApproachingTimeout(startTime: number): boolean {
+  return Date.now() - startTime > CRON_CONFIG.TIMEOUT_MS
+}
+
+export function logCronMetrics(
+  jobName: string,
+  metrics: {
+    duration: number
+    processed: number
+    succeeded: number
+    failed: number
+  },
+) {
+  console.log(
+    `[${jobName}] Completed in ${metrics.duration}ms - Processed: ${metrics.processed}, Succeeded: ${metrics.succeeded}, Failed: ${metrics.failed}`,
+  )
+}

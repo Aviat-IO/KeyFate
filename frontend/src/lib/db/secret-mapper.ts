@@ -90,7 +90,6 @@ export function mapApiSecretToDrizzleShape(
     authTag: apiSecret.auth_tag,
     sssSharesTotal: apiSecret.sss_shares_total,
     sssThreshold: apiSecret.sss_threshold,
-    // isTriggered removed - inferred from triggeredAt and status
     lastCheckIn: apiSecret.last_check_in
       ? new Date(apiSecret.last_check_in)
       : null,
@@ -100,6 +99,8 @@ export function mapApiSecretToDrizzleShape(
     triggeredAt: apiSecret.triggered_at
       ? new Date(apiSecret.triggered_at)
       : null,
+    processingStartedAt: null,
+    lastError: null,
     createdAt: new Date(apiSecret.created_at),
     updatedAt: new Date(apiSecret.updated_at),
   }
