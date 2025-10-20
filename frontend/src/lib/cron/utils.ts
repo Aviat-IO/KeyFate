@@ -5,11 +5,15 @@ export function sanitizeError(error: unknown, secretId?: string): string {
   const message = error instanceof Error ? error.message : String(error)
 
   const sanitized = message
+    .replace(/server_share":\s*"[^"]+"/g, 'server_share":"[REDACTED]"')
     .replace(/serverShare":\s*"[^"]+"/g, 'serverShare":"[REDACTED]"')
     .replace(/decrypted":\s*"[^"]+"/g, 'decrypted":"[REDACTED]"')
     .replace(/secret":\s*"[^"]+"/g, 'secret":"[REDACTED]"')
     .replace(/share":\s*"[^"]+"/g, 'share":"[REDACTED]"')
     .replace(/content":\s*"[^"]+"/g, 'content":"[REDACTED]"')
+    .replace(/iv":\s*"[^"]+"/g, 'iv":"[REDACTED]"')
+    .replace(/authTag":\s*"[^"]+"/g, 'authTag":"[REDACTED]"')
+    .replace(/auth_tag":\s*"[^"]+"/g, 'auth_tag":"[REDACTED]"')
     .replace(/BEGIN\s+[A-Z\s]+KEY[^-]+-+/g, "[REDACTED_KEY]")
     .replace(/[A-Za-z0-9+/]{40,}={0,2}/g, (match) => {
       if (match.length > 50) {
@@ -63,6 +67,9 @@ export const CRON_CONFIG = {
   RETRY_BACKOFF_EXPONENT: 2,
   RETRY_BACKOFF_BASE_MINUTES: 5,
   BATCH_SIZE: 100,
+  MAX_SECRET_RETRIES: 5,
+  MAX_CONCURRENT_SECRETS: 20,
+  CRON_INTERVAL_MS: 15 * 60 * 1000,
 } as const
 
 export function isApproachingTimeout(startTime: number): boolean {
