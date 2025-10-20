@@ -11,6 +11,7 @@ import {
 } from "@/lib/subscription"
 import { isValidThreshold } from "@/lib/tier-validation"
 import { logSecretCreated } from "@/lib/services/audit-logger"
+import { scheduleRemindersForSecret } from "@/lib/services/reminder-scheduler"
 import type { Session } from "next-auth"
 import { getServerSession } from "next-auth/next"
 import { NextRequest, NextResponse } from "next/server"
@@ -193,8 +194,12 @@ export async function POST(request: NextRequest) {
       checkInDays: validatedData.check_in_days,
     })
 
-    // Note: Reminder scheduling would be handled by a separate service
-    // For now, we'll skip this to get the basic functionality working
+    await scheduleRemindersForSecret(
+      data.id,
+      data.nextCheckIn!,
+      validatedData.check_in_days,
+    )
+
     const warning = undefined
 
     const responseBody = {
