@@ -59,11 +59,11 @@ resource "google_secret_manager_secret_iam_member" "frontend_cron_secret_access"
   member    = "serviceAccount:${module.frontend_service_account.email}"
 }
 
-# Cloud Scheduler job to check and send reminders every 15 minutes
+# Cloud Scheduler job to check and send reminders
 resource "google_cloud_scheduler_job" "process_reminders" {
   name        = "keyfate-process-reminders-${var.env}"
-  description = "Check and send reminders for KeyFate dead man's switch every 5 minutes"
-  schedule    = "*/15 * * * *" # Every 15 minutes
+  description = "Check and send reminders for KeyFate dead man's switch"
+  schedule    = var.env == "prod" ? "*/15 * * * *" : "0 */2 * * *" # Every 15 min (prod), every 2 hours (dev)
   project     = module.project.id
 
   http_target {
@@ -100,11 +100,11 @@ resource "google_cloud_scheduler_job" "process_reminders" {
   ]
 }
 
-# Cloud Scheduler job to check and trigger secrets every 15 minutes
+# Cloud Scheduler job to check and trigger secrets
 resource "google_cloud_scheduler_job" "check_secrets" {
   name        = "keyfate-check-secrets-${var.env}"
-  description = "Check and trigger secrets for KeyFate dead man's switch every 5 minutes"
-  schedule    = "*/15 * * * *" # Every 15 minutes
+  description = "Check and trigger secrets for KeyFate dead man's switch"
+  schedule    = var.env == "prod" ? "*/15 * * * *" : "0 */2 * * *" # Every 15 min (prod), every 2 hours (dev)
   project     = module.project.id
 
   http_target {
