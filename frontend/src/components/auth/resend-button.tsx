@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Loader2, RotateCcw } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { Loader2, RotateCcw } from "lucide-react"
+import { useEffect, useState } from "react"
 
 interface ResendButtonProps {
   email: string

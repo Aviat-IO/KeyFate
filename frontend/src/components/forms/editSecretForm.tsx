@@ -25,7 +25,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { AlertCircle, Plus, Trash2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { useForm, useFieldArray } from "react-hook-form"
+import { useFieldArray, useForm } from "react-hook-form"
 import { z } from "zod"
 
 const recipientSchema = z

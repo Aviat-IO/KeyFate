@@ -26,23 +26,23 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { UpgradeModal } from "@/components/upgrade-modal"
 import { secretFormSchema, type SecretFormValues } from "@/lib/schemas/secret"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Buffer } from "buffer"
 import {
   AlertCircle,
+  AlertTriangle,
+  Crown,
   Info,
   LockIcon,
   Plus,
   Trash2,
-  Crown,
-  AlertTriangle,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { useForm, useFieldArray } from "react-hook-form"
+import { useFieldArray, useForm } from "react-hook-form"
 import sss from "shamirs-secret-sharing"
-import { UpgradeModal } from "@/components/upgrade-modal"
 import { ThresholdSelector } from "./ThresholdSelector"
 
 interface NewSecretFormProps {

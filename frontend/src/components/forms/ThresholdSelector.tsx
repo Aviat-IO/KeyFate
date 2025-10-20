@@ -1,5 +1,6 @@
 "use client"
 
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
   FormControl,
   FormDescription,
@@ -9,10 +10,9 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { getMaxShares } from "@/lib/tier-validation"
 import { Crown, Info } from "lucide-react"
 import { Control } from "react-hook-form"
-import { getMaxShares } from "@/lib/tier-validation"
 
 interface ThresholdSelectorProps {
   control: Control<any>

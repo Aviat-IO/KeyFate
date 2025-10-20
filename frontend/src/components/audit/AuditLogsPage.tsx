@@ -1,8 +1,15 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import {
   Table,
   TableBody,
@@ -11,15 +18,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
 import { Download } from "lucide-react"
+import { useCallback, useEffect, useState } from "react"
 
 interface AuditLog {
   id: string
@@ -46,7 +46,7 @@ export function AuditLogsPage({ initialLogs = [] }: AuditLogsPageProps) {
   const [categoryFilter, setCategoryFilter] = useState<string>("")
   const [startDate, setStartDate] = useState<Date>()
   const [endDate, setEndDate] = useState<Date>()
-  const [search, setSearch] = useState("")
+  const [search, _setSearch] = useState("")
 
   const fetchLogs = useCallback(async () => {
     setLoading(true)

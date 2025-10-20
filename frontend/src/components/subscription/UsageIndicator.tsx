@@ -1,8 +1,8 @@
 "use client"
 
+import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { Badge } from "@/components/ui/badge"
 
 export function UsageIndicator() {
   // Temporarily disabled during Supabase to NextAuth migration

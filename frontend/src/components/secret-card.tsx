@@ -89,7 +89,6 @@ export function SecretCard({ secret }: SecretCardProps) {
     ),
   )
 
-  const firstRecipient = secretState.recipients[0]
   const isTriggered =
     secretState.triggeredAt !== null || secretState.status === "triggered"
 
@@ -139,19 +138,6 @@ export function SecretCard({ secret }: SecretCardProps) {
         }.`,
       duration: 6000,
     })
-  }
-
-  const getContactDetails = () => {
-    const details = []
-    secretState.recipients.forEach((recipient) => {
-      if (recipient.email) {
-        details.push(`${recipient.name} - Email: ${recipient.email}`)
-      }
-      if (recipient.phone) {
-        details.push(`${recipient.name} - Phone: ${recipient.phone}`)
-      }
-    })
-    return details.join("\n")
   }
 
   const canCheckIn = useMemo(() => {

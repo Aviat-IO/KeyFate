@@ -27,7 +27,7 @@ export function EmailVerificationPage() {
   const { data: session, status } = useSession()
   const { toast } = useToast()
 
-  const [otp, setOtp] = useState("")
+  const [_otp, setOtp] = useState("")
   const [loading, setLoading] = useState(false)
   const [checking, setChecking] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -98,7 +98,7 @@ export function EmailVerificationPage() {
     setError(null)
 
     setTimeout(() => {
-      ;(async () => {
+      ; (async () => {
         try {
           const result = await verifyEmailWithOTP(email, otpValue)
 
