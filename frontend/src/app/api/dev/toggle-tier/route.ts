@@ -1,7 +1,7 @@
 import { authConfig } from "@/lib/auth-config"
 import { getDatabase } from "@/lib/db/get-database"
 import { userSubscriptions, subscriptionTiers } from "@/lib/db/schema"
-import { eq, and } from "drizzle-orm"
+import { eq } from "drizzle-orm"
 import type { Session } from "next-auth"
 import { getServerSession } from "next-auth/next"
 import { NextResponse } from "next/server"

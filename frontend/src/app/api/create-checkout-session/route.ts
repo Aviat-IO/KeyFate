@@ -60,14 +60,8 @@ async function createCheckoutSession(
     const fiatPaymentProvider = getFiatPaymentProvider()
     console.log("✅ Payment provider initialized")
 
-    // Get or create customer
-    let customerId: string
-
-    // Try to get existing subscription with Stripe customer ID
-    // Handle case where Stripe columns might not exist yet
-    // Create or resolve customer by email (provider handles mapping)
-    customerId = await fiatPaymentProvider.createCustomer(user.email!, {
-      user_id: (user as any).id,
+    const customerId = await fiatPaymentProvider.createCustomer(user.email!, {
+      user_id: user.id,
     })
 
     // Get price by lookup key

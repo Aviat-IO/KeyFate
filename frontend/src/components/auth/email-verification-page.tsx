@@ -86,7 +86,7 @@ export function EmailVerificationPage() {
     }
 
     checkStatus()
-  }, [status, callbackUrl, router, toast, email])
+  }, [status, callbackUrl, router, toast, email, searchParams])
 
   const handleOTPComplete = async (otpValue: string) => {
     if (!email) {

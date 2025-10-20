@@ -1,7 +1,5 @@
 import { authConfig } from "@/lib/auth-config"
 import { ensureUserExists } from "@/lib/auth/user-verification"
-import { secretsService } from "@/lib/db/drizzle"
-import { RobustSecretsService } from "@/lib/db/secrets-service-robust"
 import { encryptMessage } from "@/lib/encryption"
 import { secretSchema } from "@/lib/schemas/secret"
 import {

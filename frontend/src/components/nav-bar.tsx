@@ -20,7 +20,6 @@ import { useSession, signOut } from "next-auth/react"
 import { useState, useEffect } from "react"
 import { useTheme } from "next-themes"
 import Image from "next/image"
-import { cn } from "@/lib/utils"
 
 export function NavBar() {
   const pathname = usePathname()

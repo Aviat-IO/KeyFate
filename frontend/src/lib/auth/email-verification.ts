@@ -20,7 +20,7 @@ function generateVerificationToken(): string {
         array[i] = Math.floor(Math.random() * 256)
       }
     }
-  } catch (error) {
+  } catch {
     // Fallback for environments without crypto
     for (let i = 0; i < array.length; i++) {
       array[i] = Math.floor(Math.random() * 256)

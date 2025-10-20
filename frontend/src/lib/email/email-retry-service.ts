@@ -6,11 +6,7 @@
  */
 
 import { db } from "@/lib/db/drizzle"
-import {
-  emailFailures,
-  type EmailFailure,
-  type EmailFailureUpdate,
-} from "@/lib/db/schema"
+import { emailFailures, type EmailFailureUpdate } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 
 /**

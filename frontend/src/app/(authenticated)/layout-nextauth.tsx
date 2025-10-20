@@ -6,10 +6,7 @@ import { redirect } from "next/navigation"
 import { ReactNode } from "react"
 
 export async function getSessionSafe(): Promise<Session | null> {
-  // next-auth v4 getServerSession accepts (req,res,options) or (options) typed as NextAuthOptions.
-  // Our authConfig matches NextAuthOptions shape.
-  // Cast to any to satisfy type mismatch between our rich callbacks and narrowed type in helper.
-  return (await getServerSession(authConfig as any)) as Session | null
+  return await getServerSession(authConfig)
 }
 
 interface AuthenticatedLayoutProps {

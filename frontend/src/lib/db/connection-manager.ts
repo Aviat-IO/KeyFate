@@ -185,12 +185,18 @@ class ConnectionManager {
         this.circuitBreakerOpen = false
 
         return this.connection
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const err = error as {
+          code?: string
+          message?: string
+          address?: string
+          port?: number
+        }
         console.error(`❌ Connection attempt ${attempt} failed:`, {
-          code: error.code,
-          message: error.message,
-          address: error.address,
-          port: error.port,
+          code: err.code,
+          message: err.message,
+          address: err.address,
+          port: err.port,
         })
 
         this.connectionAttempts++
@@ -211,7 +217,7 @@ class ConnectionManager {
         } else {
           // Final attempt failed
           throw new Error(
-            `Database connection failed after ${this.retryConfig.maxAttempts} attempts: ${error.message}`,
+            `Database connection failed after ${this.retryConfig.maxAttempts} attempts: ${err.message || "Unknown error"}`,
           )
         }
       }

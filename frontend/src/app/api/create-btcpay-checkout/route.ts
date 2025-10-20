@@ -58,9 +58,7 @@ async function createBTCPayCheckoutSession(params: {
   interval?: Subscription["interval"]
 }) {
   try {
-    const session = (await getServerSession(
-      authConfig as any,
-    )) as Session | null
+    const session = (await getServerSession(authConfig)) as Session | null
     const user = session?.user
     if (!user?.email || !user?.id) {
       return NextResponse.json(

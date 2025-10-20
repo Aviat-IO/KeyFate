@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -29,6 +29,49 @@ export function VerificationCallback({
   const [message, setMessage] = useState("")
   const [email, setEmail] = useState("")
 
+  const verifyEmail = useCallback(
+    async (token: string, emailAddress: string) => {
+      try {
+        const response = await fetch("/api/auth/verify-email-nextauth", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            token,
+            email: emailAddress,
+          }),
+        })
+
+        const result = await response.json()
+
+        if (result.success) {
+          setStatus("success")
+          setMessage("Your email has been verified successfully!")
+          setEmail(emailAddress)
+          onSuccess?.(emailAddress)
+
+          // Auto-redirect after 3 seconds
+          setTimeout(() => {
+            router.push(redirectUrl)
+          }, 3000)
+        } else {
+          setStatus("error")
+          setMessage(
+            result.error || "Email verification failed. Please try again.",
+          )
+          onError?.(result.error || "Verification failed")
+        }
+      } catch (error) {
+        console.error("Verification error:", error)
+        setStatus("error")
+        setMessage("Network error. Please check your connection and try again.")
+        onError?.("Network error")
+      }
+    },
+    [onError, onSuccess, redirectUrl, router],
+  )
+
   useEffect(() => {
     const token = searchParams.get("token")
     const emailParam = searchParams.get("email")
@@ -43,47 +86,7 @@ export function VerificationCallback({
     }
 
     verifyEmail(token, emailParam)
-  }, [searchParams])
-
-  const verifyEmail = async (token: string, emailAddress: string) => {
-    try {
-      const response = await fetch("/api/auth/verify-email-nextauth", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token,
-          email: emailAddress,
-        }),
-      })
-
-      const result = await response.json()
-
-      if (result.success) {
-        setStatus("success")
-        setMessage("Your email has been verified successfully!")
-        setEmail(emailAddress)
-        onSuccess?.(emailAddress)
-
-        // Auto-redirect after 3 seconds
-        setTimeout(() => {
-          router.push(redirectUrl)
-        }, 3000)
-      } else {
-        setStatus("error")
-        setMessage(
-          result.error || "Email verification failed. Please try again.",
-        )
-        onError?.(result.error || "Verification failed")
-      }
-    } catch (error) {
-      console.error("Verification error:", error)
-      setStatus("error")
-      setMessage("Network error. Please check your connection and try again.")
-      onError?.("Network error")
-    }
-  }
+  }, [searchParams, onError, verifyEmail])
 
   const handleContinue = () => {
     router.push(redirectUrl)

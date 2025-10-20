@@ -1,5 +1,5 @@
 import { useSession } from "next-auth/react"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 
 export interface ContactMethods {
   email: string
@@ -18,26 +18,24 @@ export interface ContactMethodsDbInput {
 }
 
 export function useContactMethods() {
-  const [contactMethods, setContactMethods] = useState<any[]>([])
+  const [contactMethods, setContactMethods] = useState<ContactMethods[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { data: session } = useSession()
 
+  const userId = useMemo(() => {
+    return (session?.user as { id?: string })?.id
+  }, [session])
+
   useEffect(() => {
     async function fetchContactMethods() {
       try {
-        if (!(session?.user as any)?.id) {
+        if (!userId) {
           setError("User not authenticated")
           setLoading(false)
           return
         }
 
-        // TODO: Call API endpoint for contact methods
-        // const response = await fetch('/api/user/contact-methods');
-        // const data = await response.json();
-        // setContactMethods(data || []);
-
-        // Temporarily return empty array during migration
         setContactMethods([])
         setError(null)
       } catch (err) {
@@ -47,33 +45,20 @@ export function useContactMethods() {
       }
     }
 
-    if ((session?.user as any)?.id) {
+    if (userId) {
       fetchContactMethods()
     } else if (session === null) {
-      // Session is explicitly null (not loading)
       setError("User not authenticated")
       setLoading(false)
     }
-  }, [(session?.user as any)?.id])
+  }, [userId, session])
 
   const saveContactMethods = async (methods: ContactMethodsDbInput) => {
     try {
-      if (!(session?.user as any)?.id) {
+      if (!userId) {
         throw new Error("User not authenticated")
       }
 
-      // TODO: Call API endpoint to save contact methods
-      // const response = await fetch('/api/user/contact-methods', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(methods)
-      // });
-      //
-      // if (!response.ok) {
-      //   throw new Error('Failed to save contact methods');
-      // }
-
-      // Temporarily return mock result during migration
       setContactMethods([])
       return {}
     } catch (err) {

@@ -1,14 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -36,7 +30,7 @@ interface AuditLog {
   ipAddress: string | null
   userAgent: string | null
   createdAt: string
-  details: Record<string, any> | null
+  details: Record<string, unknown> | null
 }
 
 interface AuditLogsPageProps {
@@ -54,7 +48,7 @@ export function AuditLogsPage({ initialLogs = [] }: AuditLogsPageProps) {
   const [endDate, setEndDate] = useState<Date>()
   const [search, setSearch] = useState("")
 
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams({
@@ -79,11 +73,11 @@ export function AuditLogsPage({ initialLogs = [] }: AuditLogsPageProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [page, eventTypeFilter, categoryFilter, startDate, endDate, search])
 
   useEffect(() => {
     fetchLogs()
-  }, [page, eventTypeFilter, categoryFilter, startDate, endDate])
+  }, [fetchLogs])
 
   const handleExport = async (format: "csv" | "json") => {
     try {

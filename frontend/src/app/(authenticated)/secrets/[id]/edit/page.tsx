@@ -11,9 +11,9 @@ interface EditSecretPageProps {
 
 export default async function EditSecretPage({ params }: EditSecretPageProps) {
   const { id } = await params
-  const session = (await getServerSession(authConfig as any)) as Session | null
+  const session = (await getServerSession(authConfig)) as Session | null
 
-  if (!session?.user) {
+  if (!session?.user?.id) {
     redirect("/auth/signin")
   }
 
@@ -49,7 +49,7 @@ export default async function EditSecretPage({ params }: EditSecretPageProps) {
         <EditSecretForm initialData={initialData} secretId={secret.id} />
       </div>
     )
-  } catch (error) {
+  } catch {
     notFound()
   }
 }

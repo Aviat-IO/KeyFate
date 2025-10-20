@@ -1,5 +1,5 @@
-import { authConfig } from "@/lib/auth-config"
 import type { Session } from "next-auth"
+import { authConfig } from "@/lib/auth-config"
 import { getServerSession } from "next-auth/next"
 import { redirect } from "next/navigation"
 import { getDatabase } from "@/lib/db/drizzle"
@@ -15,13 +15,13 @@ import {
 import { SettingsPageHeader } from "@/components/settings/SettingsPageHeader"
 
 export default async function GeneralSettingsPage() {
-  const session = (await getServerSession(authConfig as any)) as Session | null
+  const session = (await getServerSession(authConfig)) as Session | null
 
-  if (!session?.user) {
+  if (!session?.user?.id) {
     redirect("/sign-in")
   }
 
-  const userId = (session.user as any).id
+  const userId = session.user.id
   const db = await getDatabase()
 
   const [user] = await db

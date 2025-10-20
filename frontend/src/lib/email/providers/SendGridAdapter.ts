@@ -212,7 +212,7 @@ export class SendGridAdapter implements EmailProvider {
     if (
       errorMessage.includes("Rate limit") ||
       errorMessage.includes("429") ||
-      (error as any).statusCode === 429
+      (error as { statusCode?: number }).statusCode === 429
     ) {
       return {
         retryable: true,

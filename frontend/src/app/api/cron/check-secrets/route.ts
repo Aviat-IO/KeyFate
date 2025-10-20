@@ -28,7 +28,6 @@ import {
   isNotNull,
   isNull,
   lt,
-  notExists,
   or,
   sql,
 } from "drizzle-orm"
