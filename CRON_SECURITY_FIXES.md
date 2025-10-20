@@ -326,15 +326,89 @@ If issues occur:
 - `frontend/src/lib/db/schema.ts` - New columns and tables
 - `frontend/src/lib/db/secret-mapper.ts` - Support new schema fields
 
+## October 2024 Update: Comprehensive Reliability Fixes
+
+### Additional Changes (Migration 0014-0016)
+
+**File**: `drizzle/0014_old_odin.sql`, `0015_pre_migration_cleanup.sql`,
+`0016_add_unique_constraint_disclosure_log.sql`
+
+Added to secrets table:
+
+- `retry_count` - Track number of disclosure retry attempts
+- `last_retry_at` - Timestamp of last retry for exponential backoff
+- `status = 'failed'` - New enum value for secrets exceeding max retries
+
+Added to disclosure_log table:
+
+- Unique partial index on `(secret_id, recipient_email) WHERE status='sent'`
+- Performance index on `(secret_id, recipient_email, status, created_at)`
+
+**Security Enhancements**:
+
+- Enhanced `sanitizeError()` to explicitly strip `server_share`, `iv`,
+  `authTag`, `auth_tag` fields
+- Prevents any encryption data from appearing in logs
+- Added comprehensive test coverage for sanitization
+
+**Reliability Improvements**:
+
+1. **Worker Pool Pattern**: Continuous parallel processing with exactly 20
+   concurrent workers
+   - Always maintains full concurrency (vs batched waiting for slowest)
+   - Processes until queue empty (handles unbounded workload)
+   - Warns when exceeding 15-minute cron interval but continues processing
+   - Handles overlapping cron runs via optimistic locking
+
+2. **Retry Logic with Limits**:
+   - Max 5 retry attempts per secret (prevents infinite loops)
+   - Exponential backoff between retries
+   - Secrets exceeding max retries marked as `status='failed'`
+   - Manual intervention required for failed secrets
+
+3. **Batch Query Optimization**:
+   - Eliminated N+1 query pattern (50 recipients = 50 queries → 1 query)
+   - Fetch all disclosure logs upfront, use Set for O(1) duplicate checking
+   - 98% reduction in disclosure log queries
+
+4. **Database-Level Duplicate Prevention**:
+   - Unique constraint prevents race conditions at schema level
+   - `ON CONFLICT DO NOTHING` for graceful duplicate handling
+   - Email-sent-but-DB-failed scenario handled (increment counter anyway)
+
+5. **Final Status Correctness**:
+   - Status set to 'triggered' only if ALL emails sent
+   - Partial success returns to 'active' for retry
+   - `processing_started_at` always cleared to prevent stuck state
+
+6. **Memory Safety**:
+   - Decrypted content cleared from memory in `finally` block
+   - Minimizes exposure window for sensitive data
+
+**Performance Expectations**:
+
+- 100 secrets: ~25s (5s avg × 100 / 20 concurrent)
+- 1000 secrets: ~250s (~4 minutes)
+- 5000 secrets: ~1250s (~21 minutes, exceeds interval but completes)
+- Worker pool ensures 20 always active vs batch waiting for slowest
+
+**Breaking Changes**:
+
+- Database migration required (adds columns, constraints, indexes)
+- Pre-migration cleanup script removes duplicate disclosure logs
+- Unique constraint may fail if duplicates exist (migration includes cleanup)
+
 ## Next Steps
 
-1. ✅ Run database migration
+1. ✅ Run database migration (0014, 0015, 0016)
 2. ✅ Deploy to staging
-3. ⏳ Monitor logs for sanitization (no secrets in logs)
-4. ⏳ Test reminder retry logic
-5. ⏳ Test disclosure idempotency
-6. ⏳ Deploy to production
-7. ⏳ Monitor metrics for 24 hours
+3. ✅ Monitor logs for sanitization (no secrets in logs)
+4. ✅ Test reminder retry logic
+5. ✅ Test disclosure idempotency
+6. ✅ Test worker pool with high volume
+7. ✅ Test duplicate prevention with unique constraint
+8. ⏳ Deploy to production
+9. ⏳ Monitor metrics for 24 hours
 
 ## Breaking Changes
 
