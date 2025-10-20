@@ -1,11 +1,11 @@
-import react from "@vitejs/plugin-react";
-import { dirname, resolve } from "path";
-import { fileURLToPath } from "url";
-import tsconfigPaths from "vite-tsconfig-paths";
-import { defineConfig } from "vitest/config";
+import react from "@vitejs/plugin-react"
+import { dirname, resolve } from "path"
+import { fileURLToPath } from "url"
+import tsconfigPaths from "vite-tsconfig-paths"
+import { defineConfig } from "vitest/config"
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 export default defineConfig({
   plugins: [tsconfigPaths(), react()],
@@ -42,10 +42,13 @@ export default defineConfig({
       GOOGLE_CLIENT_SECRET: "test-client-secret",
       NEXTAUTH_SECRET: "test-nextauth-secret-32-chars-l",
       NEXTAUTH_URL: "http://localhost:3000",
-      // Database configuration for tests
+      // Database configuration for tests - uses same DB as db:studio
       DATABASE_URL:
-        "postgresql://postgres:test_password@localhost:5432/test_db",
-      ENCRYPTION_KEY: "test_encryption_key_32_bytes_long_for_testing",
+        process.env.DATABASE_URL ||
+        "postgresql://postgres:dev_password_change_in_prod@localhost:5432/keyfate_dev",
+      ENCRYPTION_KEY:
+        process.env.ENCRYPTION_KEY ||
+        "test_encryption_key_32_bytes_long_for_testing",
       // Email service configuration for tests
       EMAIL_PROVIDER: "mock",
       SENDGRID_API_KEY: "test-sendgrid-api-key",
@@ -67,7 +70,7 @@ export default defineConfig({
           "The current testing environment is not configured to support act",
         )
       ) {
-        return false;
+        return false
       }
       // Suppress expected API error logs during testing
       if (
@@ -77,8 +80,8 @@ export default defineConfig({
           log.includes("Error:") ||
           log.includes("SyntaxError:"))
       ) {
-        return false;
+        return false
       }
     },
   },
-});
+})
