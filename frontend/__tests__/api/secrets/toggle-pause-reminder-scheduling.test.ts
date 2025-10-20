@@ -5,7 +5,10 @@ vi.unmock("@/lib/db/drizzle")
 import { getDatabase } from "@/lib/db/drizzle"
 import { secrets, reminderJobs, users, secretRecipients } from "@/lib/db/schema"
 import { eq, and } from "drizzle-orm"
-import { scheduleRemindersForSecret } from "@/lib/services/reminder-scheduler"
+import {
+  scheduleRemindersForSecret,
+  cancelRemindersForSecret,
+} from "@/lib/services/reminder-scheduler"
 
 describe("Toggle Pause - Reminder Scheduling Integration", () => {
   let db: Awaited<ReturnType<typeof getDatabase>>
@@ -119,7 +122,7 @@ describe("Toggle Pause - Reminder Scheduling Integration", () => {
     vi.useRealTimers()
   })
 
-  it("should not schedule reminders when pausing a secret", async () => {
+  it("should cancel reminders when pausing a secret", async () => {
     const createdAt = new Date("2025-10-29T20:25:52.000Z")
     const checkInDays = 30
     const nextCheckIn = new Date(
@@ -156,11 +159,16 @@ describe("Toggle Pause - Reminder Scheduling Integration", () => {
       .where(eq(reminderJobs.secretId, secret.id))
 
     expect(remindersBeforePause).toHaveLength(7)
+    expect(remindersBeforePause.every((r) => r.status === "pending")).toBe(true)
 
     await db
       .update(secrets)
       .set({ status: "paused" })
       .where(eq(secrets.id, secret.id))
+
+    const cancelledCount = await cancelRemindersForSecret(secret.id)
+
+    expect(cancelledCount).toBe(7)
 
     const remindersAfterPause = await db
       .select()
@@ -168,6 +176,9 @@ describe("Toggle Pause - Reminder Scheduling Integration", () => {
       .where(eq(reminderJobs.secretId, secret.id))
 
     expect(remindersAfterPause).toHaveLength(7)
+    expect(remindersAfterPause.every((r) => r.status === "cancelled")).toBe(
+      true,
+    )
 
     vi.useRealTimers()
   })
