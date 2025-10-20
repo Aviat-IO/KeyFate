@@ -8,10 +8,10 @@ export const dynamic = "force-dynamic"
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    let { email, password } = body
+    let { email, password: rawPassword } = body
 
     // Validate required fields
-    if (!email || !password) {
+    if (!email || !rawPassword) {
       return NextResponse.json(
         { error: "Email and password are required" },
         { status: 400 },
@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
 
     // Trim and lowercase email before validation
     email = email.toLowerCase().trim()
+    const password = rawPassword
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/

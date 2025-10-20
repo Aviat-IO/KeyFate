@@ -50,7 +50,10 @@ export default function ProfilePage() {
         telegram_username: "", // Not in database
         whatsapp: "", // Not in database
         signal: "", // Not in database
-        preferred_method: firstContactMethod.preferredMethod as any,
+        preferred_method:
+          ((firstContactMethod as { preferredMethod?: string })
+            .preferredMethod as "email" | "phone" | "both" | undefined) ||
+          "email",
         check_in_days: 90, // Default value
       }
     : null

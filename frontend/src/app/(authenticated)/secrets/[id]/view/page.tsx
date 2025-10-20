@@ -36,9 +36,9 @@ interface ViewSecretPageProps {
 
 export default async function ViewSecretPage({ params }: ViewSecretPageProps) {
   const { id } = await params
-  const session = (await getServerSession(authConfig as any)) as Session | null
+  const session = (await getServerSession(authConfig)) as Session | null
 
-  if (!session?.user) {
+  if (!session?.user?.id) {
     redirect("/auth/signin")
   }
 
@@ -249,7 +249,7 @@ export default async function ViewSecretPage({ params }: ViewSecretPageProps) {
         </div>
       </div>
     )
-  } catch (error) {
+  } catch {
     notFound()
   }
 }

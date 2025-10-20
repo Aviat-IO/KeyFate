@@ -1,4 +1,3 @@
-import { SecretCard } from "@/components/secret-card"
 import { SecretsGrid } from "@/components/secrets-grid"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"

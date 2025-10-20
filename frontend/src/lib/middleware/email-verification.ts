@@ -2,15 +2,6 @@ import { NextRequest, NextResponse } from "next/server"
 // import { updateSession } from '@/utils/supabase/middleware'
 // import type { User } from '@supabase/supabase-js'
 
-// TODO: Replace with NextAuth types
-interface NextAuthUser {
-  id: string
-  email?: string
-  name?: string
-  image?: string
-  email_verified?: boolean
-}
-
 // Routes that don't require email verification
 const NON_VERIFICATION_REQUIRED_ROUTES = [
   /^\/auth\/login$/,
@@ -29,18 +20,6 @@ const NON_VERIFICATION_REQUIRED_ROUTES = [
  */
 function requiresEmailVerification(pathname: string): boolean {
   return !NON_VERIFICATION_REQUIRED_ROUTES.some((regex) => regex.test(pathname))
-}
-
-/**
- * Check if user needs email verification based on provider and status
- * TODO: Implement with NextAuth session
- */
-function userNeedsVerification(user: NextAuthUser): boolean {
-  // TODO: Replace with NextAuth logic
-  console.warn(
-    "[Email Verification] userNeedsVerification is deprecated - use NextAuth middleware",
-  )
-  return false
 }
 
 /**

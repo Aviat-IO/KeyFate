@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest"
 import { validatePassword, hashPassword, verifyPassword } from "../password"
-import { createUser, authenticateUser } from "../users"
+import { createUser } from "../users"
 
 // Mock the database
 vi.mock("@/lib/db/drizzle", () => {

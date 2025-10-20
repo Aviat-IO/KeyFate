@@ -11,10 +11,7 @@ export const dynamic = "force-dynamic"
 
 export async function GET(_request: Request) {
   try {
-    // Get NextAuth session
-    const session = (await getServerSession(
-      authConfig as any,
-    )) as Session | null
+    const session = (await getServerSession(authConfig)) as Session | null
 
     if (!session?.user?.id) {
       return NextResponse.json(

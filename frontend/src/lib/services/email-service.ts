@@ -1,5 +1,5 @@
 import { getDatabase } from "@/lib/db/drizzle"
-import { emailNotifications, users } from "@/lib/db/schema"
+import { users } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { emailTemplates } from "./email-templates"
 import { smtpService } from "./smtp-service"
@@ -37,7 +37,7 @@ export interface AdminAlertData {
   type: string
   severity: "low" | "medium" | "high" | "critical"
   message: string
-  details: Record<string, any>
+  details: Record<string, unknown>
 }
 
 class EmailService {

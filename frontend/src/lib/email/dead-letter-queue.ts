@@ -11,7 +11,7 @@ import {
   type EmailFailure,
   type EmailFailureUpdate,
 } from "@/lib/db/schema"
-import { eq, and, isNull, lt, desc } from "drizzle-orm"
+import { eq, and, isNull, lt } from "drizzle-orm"
 import {
   EmailRetryService,
   type EmailFailureContext,

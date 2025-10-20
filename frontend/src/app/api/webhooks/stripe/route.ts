@@ -49,9 +49,9 @@ export async function POST(request: NextRequest) {
 
     // For invoices, also check parent.subscription_details
     if (event.type.startsWith("invoice.")) {
-      const parent = eventData.parent as Record<string, any> | undefined
+      const parent = eventData.parent as Record<string, unknown> | undefined
       const subscriptionDetails = parent?.subscription_details as
-        | Record<string, any>
+        | Record<string, unknown>
         | undefined
       console.log(
         "📋 Parent subscription ID:",
@@ -171,9 +171,9 @@ async function extractUserIdFromEvent(
 
       // If not found, check parent.subscription_details.subscription
       if (!subscriptionId) {
-        const parent = eventData.parent as Record<string, any> | undefined
+        const parent = eventData.parent as Record<string, unknown> | undefined
         const subscriptionDetails = parent?.subscription_details as
-          | Record<string, any>
+          | Record<string, unknown>
           | undefined
         subscriptionId = subscriptionDetails?.subscription as string
       }

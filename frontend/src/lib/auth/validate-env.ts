@@ -46,7 +46,7 @@ export function validateAuthEnvironment() {
           hostname: url.hostname,
           pathname: url.pathname,
         })
-      } catch (error) {
+      } catch {
         console.error(
           "[Auth Environment] Invalid NEXTAUTH_URL format:",
           process.env.NEXTAUTH_URL,
@@ -57,7 +57,7 @@ export function validateAuthEnvironment() {
     // Still validate URL format silently in production
     try {
       new URL(process.env.NEXTAUTH_URL)
-    } catch (error) {
+    } catch {
       console.error(
         "[Auth Environment] Invalid NEXTAUTH_URL format:",
         process.env.NEXTAUTH_URL,
