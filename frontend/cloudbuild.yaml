@@ -1,9 +1,9 @@
 steps:
   # Pull the latest image for caching (if it exists)
-  - name: 'gcr.io/cloud-builders/docker'
-    entrypoint: 'bash'
+  - name: "gcr.io/cloud-builders/docker"
+    entrypoint: "bash"
     args:
-      - '-c'
+      - "-c"
       - |
         docker pull ${_IMAGE_URL}-cache-deps || true
         docker pull ${_IMAGE_URL}-cache-builder || true
@@ -12,78 +12,78 @@ steps:
   # Build the Docker image with intelligent caching
   # Step 1: Build dependencies layer (rarely changes)
   # NOTE: Temporarily disabled cache to fix BuildKit issue
-  - name: 'gcr.io/cloud-builders/docker'
+  - name: "gcr.io/cloud-builders/docker"
     args:
-      - 'build'
-      - '--no-cache'  # Temporarily disable cache to fix BuildKit issue
-      - '--target=deps'
-      - '--platform=linux/amd64'
-      - '--build-arg=BUILD_ENV=${_BUILD_ENV}'
-      - '-t=${_IMAGE_URL}-cache-deps'
-      - '-f=frontend/Dockerfile'
-      - './frontend'
+      - "build"
+      - "--no-cache" # Temporarily disable cache to fix BuildKit issue
+      - "--target=deps"
+      - "--platform=linux/amd64"
+      - "--build-arg=BUILD_ENV=${_BUILD_ENV}"
+      - "-t=${_IMAGE_URL}-cache-deps"
+      - "-f=frontend/Dockerfile"
+      - "./frontend"
 
   # Step 2: Build the builder stage (changes when source code changes)
-  - name: 'gcr.io/cloud-builders/docker'
+  - name: "gcr.io/cloud-builders/docker"
     args:
-      - 'build'
-      - '--cache-from=${_IMAGE_URL}-cache-deps'
-      - '--cache-from=${_IMAGE_URL}-cache-builder'
-      - '--target=builder'
-      - '--platform=linux/amd64'
-      - '--build-arg=BUILD_ENV=${_BUILD_ENV}'
-      - '--build-arg=NEXTAUTH_URL=${_NEXTAUTH_URL}'
-      - '--build-arg=NEXT_PUBLIC_SITE_URL=${_NEXT_PUBLIC_SITE_URL}'
-      - '--build-arg=NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${_NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}'
-      - '--build-arg=NEXT_PUBLIC_SUPPORT_EMAIL=${_NEXT_PUBLIC_SUPPORT_EMAIL}'
-      - '-t=${_IMAGE_URL}-cache-builder'
-      - '-f=frontend/Dockerfile'
-      - './frontend'
+      - "build"
+      - "--cache-from=${_IMAGE_URL}-cache-deps"
+      - "--cache-from=${_IMAGE_URL}-cache-builder"
+      - "--target=builder"
+      - "--platform=linux/amd64"
+      - "--build-arg=BUILD_ENV=${_BUILD_ENV}"
+      - "--build-arg=NEXTAUTH_URL=${_NEXTAUTH_URL}"
+      - "--build-arg=NEXT_PUBLIC_SITE_URL=${_NEXT_PUBLIC_SITE_URL}"
+      - "--build-arg=NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${_NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}"
+      - "--build-arg=NEXT_PUBLIC_SUPPORT_EMAIL=${_NEXT_PUBLIC_SUPPORT_EMAIL}"
+      - "-t=${_IMAGE_URL}-cache-builder"
+      - "-f=frontend/Dockerfile"
+      - "./frontend"
 
   # Step 3: Build the final image
-  - name: 'gcr.io/cloud-builders/docker'
+  - name: "gcr.io/cloud-builders/docker"
     args:
-      - 'build'
-      - '--cache-from=${_IMAGE_URL}-cache-deps'
-      - '--cache-from=${_IMAGE_URL}-cache-builder'
-      - '--cache-from=${_IMAGE_URL}'
-      - '--platform=linux/amd64'
-      - '--build-arg=BUILD_ENV=${_BUILD_ENV}'
-      - '--build-arg=NEXTAUTH_URL=${_NEXTAUTH_URL}'
-      - '--build-arg=NEXT_PUBLIC_SITE_URL=${_NEXT_PUBLIC_SITE_URL}'
-      - '--build-arg=NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${_NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}'
-      - '--build-arg=NEXT_PUBLIC_SUPPORT_EMAIL=${_NEXT_PUBLIC_SUPPORT_EMAIL}'
-      - '-t=${_IMAGE_URL}'
-      - '-f=frontend/Dockerfile'
-      - './frontend'
+      - "build"
+      - "--cache-from=${_IMAGE_URL}-cache-deps"
+      - "--cache-from=${_IMAGE_URL}-cache-builder"
+      - "--cache-from=${_IMAGE_URL}"
+      - "--platform=linux/amd64"
+      - "--build-arg=BUILD_ENV=${_BUILD_ENV}"
+      - "--build-arg=NEXTAUTH_URL=${_NEXTAUTH_URL}"
+      - "--build-arg=NEXT_PUBLIC_SITE_URL=${_NEXT_PUBLIC_SITE_URL}"
+      - "--build-arg=NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${_NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}"
+      - "--build-arg=NEXT_PUBLIC_SUPPORT_EMAIL=${_NEXT_PUBLIC_SUPPORT_EMAIL}"
+      - "-t=${_IMAGE_URL}"
+      - "-f=frontend/Dockerfile"
+      - "./frontend"
 
   # Push all images for caching
-  - name: 'gcr.io/cloud-builders/docker'
+  - name: "gcr.io/cloud-builders/docker"
     args:
-      - 'push'
-      - '${_IMAGE_URL}-cache-deps'
+      - "push"
+      - "${_IMAGE_URL}-cache-deps"
 
-  - name: 'gcr.io/cloud-builders/docker'
+  - name: "gcr.io/cloud-builders/docker"
     args:
-      - 'push'
-      - '${_IMAGE_URL}-cache-builder'
+      - "push"
+      - "${_IMAGE_URL}-cache-builder"
 
-  - name: 'gcr.io/cloud-builders/docker'
+  - name: "gcr.io/cloud-builders/docker"
     args:
-      - 'push'
-      - '${_IMAGE_URL}'
+      - "push"
+      - "${_IMAGE_URL}"
 
 # Default substitutions (will be overridden by Terraform)
 substitutions:
-  _IMAGE_URL: '${_IMAGE_URL}'
-  _BUILD_ENV: 'staging'
+  _IMAGE_URL: "${_IMAGE_URL}"
+  _BUILD_ENV: "staging"
 
 options:
   logging: CLOUD_LOGGING_ONLY
-  # Use a machine with more CPU for faster builds
-  machineType: 'E2_HIGHCPU_32'
+  # Use cheaper machine type (E2_HIGHCPU_8 is 75% cheaper than E2_HIGHCPU_32)
+  machineType: "E2_HIGHCPU_8"
   # Disk size for build
-  diskSizeGb: 100
+  diskSizeGb: 50
 
 # Timeout for the entire build (10 minutes should be enough with caching)
-timeout: '600s'
+timeout: "600s"

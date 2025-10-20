@@ -43,19 +43,19 @@ variable "frontend_dir" {
 variable "cpu_limit" {
   description = "CPU limit for the container"
   type        = string
-  default     = "1000m"
+  default     = "1000m"  # 1 vCPU
 }
 
 variable "memory_limit" {
   description = "Memory limit for the container"
   type        = string
-  default     = "512Mi"
+  default     = "256Mi"  # Reduced from 512Mi (Next.js typically needs 256Mi)
 }
 
 variable "cpu_boost" {
   description = "Enable CPU boost for faster cold starts"
   type        = bool
-  default     = true
+  default     = false  # Disable to save costs (adds ~20% to CPU costs)
 }
 
 variable "max_instances" {
