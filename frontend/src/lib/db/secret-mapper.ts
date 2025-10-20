@@ -11,7 +11,7 @@ export type ApiSecret = {
     phone: string | null
   }>
   check_in_days: number
-  status: "active" | "paused" | "triggered"
+  status: "active" | "paused" | "triggered" | "failed"
   server_share: string | null
   iv: string | null
   auth_tag: string | null
@@ -21,6 +21,8 @@ export type ApiSecret = {
   last_check_in: string | null
   next_check_in: string | null
   triggered_at: string | null
+  retry_count: number
+  last_retry_at: string | null
   created_at: string
   updated_at: string
 }
@@ -62,6 +64,8 @@ export function mapDrizzleSecretToApiShape(
     last_check_in: toIsoString(row.lastCheckIn),
     next_check_in: toIsoString(row.nextCheckIn),
     triggered_at: toIsoString(row.triggeredAt),
+    retry_count: row.retryCount,
+    last_retry_at: toIsoString(row.lastRetryAt),
     created_at: toIsoString(row.createdAt)!,
     updated_at: toIsoString(row.updatedAt)!,
   }
@@ -101,6 +105,10 @@ export function mapApiSecretToDrizzleShape(
       : null,
     processingStartedAt: null,
     lastError: null,
+    retryCount: apiSecret.retry_count,
+    lastRetryAt: apiSecret.last_retry_at
+      ? new Date(apiSecret.last_retry_at)
+      : null,
     createdAt: new Date(apiSecret.created_at),
     updatedAt: new Date(apiSecret.updated_at),
   }
