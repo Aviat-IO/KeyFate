@@ -1,5 +1,6 @@
 import { getDatabase } from "@/lib/db/drizzle"
 import { checkInTokens, secrets, checkinHistory } from "@/lib/db/schema"
+import { scheduleRemindersForSecret } from "@/lib/services/reminder-scheduler"
 import { eq } from "drizzle-orm"
 import { NextRequest, NextResponse } from "next/server"
 
@@ -167,10 +168,21 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    if (!secret.checkInDays) {
+      console.error("[CHECK-IN] Secret missing checkInDays", {
+        secretId: secret.id,
+        secretTitle: secret.title,
+      })
+      return NextResponse.json(
+        { error: "Secret configuration error: missing check-in interval" },
+        { status: 500 },
+      )
+    }
+
     // Calculate next check-in using milliseconds to avoid DST issues
     const now = new Date()
     const nextCheckIn = new Date(
-      now.getTime() + (secret.checkInDays ?? 30) * 24 * 60 * 60 * 1000,
+      now.getTime() + secret.checkInDays * 24 * 60 * 60 * 1000,
     )
 
     await db
@@ -189,6 +201,12 @@ export async function POST(req: NextRequest) {
       checkedInAt: now,
       nextCheckIn: nextCheckIn,
     })
+
+    await scheduleRemindersForSecret(
+      tokenRow.secretId,
+      nextCheckIn,
+      secret.checkInDays,
+    )
 
     // Log successful check-in for security monitoring
     console.log("[CHECK-IN] Success", {

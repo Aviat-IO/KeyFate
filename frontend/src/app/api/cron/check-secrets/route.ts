@@ -13,13 +13,25 @@ import {
   secrets,
   users,
   type Secret,
-  type User
+  type User,
 } from "@/lib/db/schema"
 import { sendAdminNotification } from "@/lib/email/admin-notification-service"
 import { logEmailFailure } from "@/lib/email/email-failure-logger"
 import { sendReminderEmail } from "@/lib/email/email-service"
 import { randomBytes } from "crypto"
-import { and, desc, eq, gt, gte, isNotNull, isNull, lt, sql } from "drizzle-orm"
+import {
+  and,
+  desc,
+  eq,
+  gt,
+  gte,
+  isNotNull,
+  isNull,
+  lt,
+  notExists,
+  or,
+  sql,
+} from "drizzle-orm"
 import { NextRequest, NextResponse } from "next/server"
 
 export const dynamic = "force-dynamic"
@@ -33,10 +45,9 @@ type ReminderType =
   | "25_percent"
   | "50_percent"
 
-type SecretWithUserAndReminders = {
+type SecretWithUser = {
   secret: Secret
   user: User
-  sentReminders: ReminderType[]
 }
 
 type DatabaseConnection = Awaited<ReturnType<typeof getDatabase>>
@@ -468,29 +479,42 @@ async function processFailedReminders(
   return { processed, sent, failed }
 }
 
+async function shouldSendReminder(
+  db: DatabaseConnection,
+  secretId: string,
+  reminderType: ReminderType,
+  lastCheckIn: Date | null,
+): Promise<boolean> {
+  const existing = await db
+    .select({ id: reminderJobs.id, status: reminderJobs.status })
+    .from(reminderJobs)
+    .where(
+      and(
+        eq(reminderJobs.secretId, secretId),
+        eq(reminderJobs.reminderType, reminderType),
+        or(
+          eq(reminderJobs.status, "sent"),
+          eq(reminderJobs.status, "cancelled"),
+        ),
+        lastCheckIn ? gte(reminderJobs.createdAt, lastCheckIn) : sql`true`,
+      ),
+    )
+    .limit(1)
+
+  return existing.length === 0
+}
+
 async function fetchSecretsWithReminders(
   db: DatabaseConnection,
   offset: number,
-): Promise<SecretWithUserAndReminders[]> {
+): Promise<SecretWithUser[]> {
   const results = await db
     .select({
       secret: secrets,
       user: users,
-      reminderId: reminderJobs.id,
-      reminderType: reminderJobs.reminderType,
-      reminderStatus: reminderJobs.status,
-      reminderSentAt: reminderJobs.sentAt,
     })
     .from(secrets)
     .innerJoin(users, eq(secrets.userId, users.id))
-    .leftJoin(
-      reminderJobs,
-      and(
-        eq(reminderJobs.secretId, secrets.id),
-        eq(reminderJobs.status, "sent"),
-        gte(reminderJobs.sentAt, secrets.lastCheckIn),
-      ),
-    )
     .where(
       and(
         eq(secrets.status, "active"),
@@ -501,25 +525,7 @@ async function fetchSecretsWithReminders(
     .limit(CRON_CONFIG.BATCH_SIZE)
     .offset(offset)
 
-  const secretsMap = new Map<string, SecretWithUserAndReminders>()
-
-  for (const row of results) {
-    const secretId = row.secret.id
-    if (!secretsMap.has(secretId)) {
-      secretsMap.set(secretId, {
-        secret: row.secret,
-        user: row.user,
-        sentReminders: [],
-      })
-    }
-
-    const secretData = secretsMap.get(secretId)!
-    if (row.reminderType && row.reminderStatus === "sent") {
-      secretData.sentReminders.push(row.reminderType as ReminderType)
-    }
-  }
-
-  return Array.from(secretsMap.values())
+  return results
 }
 
 export async function POST(req: NextRequest) {
@@ -549,7 +555,7 @@ export async function POST(req: NextRequest) {
         hasMore = false
       }
 
-      for (const { secret, user, sentReminders } of batchSecrets) {
+      for (const { secret, user } of batchSecrets) {
         if (isApproachingTimeout(startTime)) {
           console.log(
             `[check-secrets] Approaching timeout, stopping processing. Processed ${secretsProcessed} secrets`,
@@ -584,12 +590,24 @@ export async function POST(req: NextRequest) {
           if (
             isApproachingTimeout(startTime) ||
             remindersForThisSecret >=
-            CRON_CONFIG.MAX_REMINDERS_PER_RUN_PER_SECRET
+              CRON_CONFIG.MAX_REMINDERS_PER_RUN_PER_SECRET
           ) {
             break
           }
 
-          if (sentReminders.includes(reminderType)) {
+          const shouldSend = await shouldSendReminder(
+            db,
+            secret.id,
+            reminderType,
+            secret.lastCheckIn,
+          )
+
+          if (!shouldSend) {
+            if (process.env.NODE_ENV === "development") {
+              console.log(
+                `[check-secrets] Skipping ${reminderType} for secret ${secret.id} - already sent or cancelled`,
+              )
+            }
             remindersSkipped++
             continue
           }
