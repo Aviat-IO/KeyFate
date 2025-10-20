@@ -1,6 +1,6 @@
 "use client"
 
-import { PRO_FEATURES } from "@/constants/pro-features"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -8,8 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { PRO_FEATURES } from "@/constants/pro-features"
 import { Check, Crown } from "lucide-react"
-import { Button } from "@/components/ui/button"
 
 interface WelcomeToProModalProps {
   open: boolean

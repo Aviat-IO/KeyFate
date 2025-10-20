@@ -2,8 +2,8 @@
 
 import { Button } from "@/components/ui/button"
 import { Subscription } from "@/lib/payment/interfaces/PaymentProvider"
-import { useSession } from "next-auth/react"
 import { Bitcoin } from "lucide-react"
+import { useSession } from "next-auth/react"
 import { useState } from "react"
 
 interface BTCPayCheckoutButtonProps {

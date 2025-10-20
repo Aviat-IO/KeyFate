@@ -1,5 +1,6 @@
 "use client"
 
+import { ContactMethodsForm } from "@/components/contact-methods-form"
 import {
   Dialog,
   DialogContent,
@@ -7,7 +8,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { ContactMethodsForm } from "@/components/contact-methods-form"
 import type { ContactMethods } from "@/hooks/useContactMethods"
 
 type ContactMethodData = {

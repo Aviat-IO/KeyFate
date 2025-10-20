@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import { AlertCircle, CheckCircle2, Clock, Loader2, Mail } from "lucide-react"
-import { useSession, signIn } from "next-auth/react"
+import { signIn, useSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 
@@ -24,10 +24,10 @@ export function EmailVerificationPageNextAuth() {
   const [checking, setChecking] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
-  const [alreadyVerified, setAlreadyVerified] = useState(false)
+  const [_alreadyVerified, setAlreadyVerified] = useState(false)
   const [resendingEmail, setResendingEmail] = useState(false)
   const [lastResendTime, setLastResendTime] = useState<number>(0)
-  const [resendCooldown, setResendCooldown] = useState<number>(0)
+  const [_resendCooldown, setResendCooldown] = useState<number>(0)
 
   // Constants for better maintainability
   const RATE_LIMIT_SECONDS = 60

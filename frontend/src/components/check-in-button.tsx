@@ -1,10 +1,10 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { useToast } from "@/hooks/use-toast"
 import { useConfig } from "@/contexts/ConfigContext"
-import { Secret } from "@/types"
+import { useToast } from "@/hooks/use-toast"
 import { mapApiSecretToDrizzleShape } from "@/lib/db/secret-mapper"
+import { Secret } from "@/types"
 import { CheckCircle, Loader2 } from "lucide-react"
 import { useState } from "react"
 

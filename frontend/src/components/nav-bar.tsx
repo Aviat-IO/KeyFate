@@ -1,7 +1,7 @@
 "use client"
 
-import { ThemeToggle } from "@/components/theme-toggle"
 import { WelcomeToProModal } from "@/components/subscription/WelcomeToProModal"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import {
   NavigationMenu,
@@ -13,13 +13,13 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
 import { useConfig } from "@/contexts/ConfigContext"
-import { Crown, Settings, KeyRound, LogOut, Menu } from "lucide-react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { useSession, signOut } from "next-auth/react"
-import { useState, useEffect } from "react"
+import { Crown, KeyRound, LogOut, Menu, Settings } from "lucide-react"
+import { signOut, useSession } from "next-auth/react"
 import { useTheme } from "next-themes"
 import Image from "next/image"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { useEffect, useState } from "react"
 
 export function NavBar() {
   const pathname = usePathname()

@@ -1,12 +1,8 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-// import { createClient } from "@/utils/supabase/client"
-// import { User } from "@supabase/supabase-js"
-
-// // const supabase = createClient()
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export function SubscriptionManager() {
   // Temporarily disabled during Supabase to NextAuth migration

@@ -1,8 +1,8 @@
 "use client"
 
-import { AlertCircle, CheckCircle2, Clock, Mail } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
+import { AlertCircle, CheckCircle2, Clock, Mail } from "lucide-react"
 
 interface VerificationStatusProps {
   email: string
