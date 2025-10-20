@@ -74,6 +74,37 @@ export function getApplicableReminderTypes(
   return applicableTypes
 }
 
+export async function cancelRemindersForSecret(
+  secretId: string,
+): Promise<number> {
+  const db = await getDatabase()
+  const now = new Date()
+
+  const result = await db
+    .update(reminderJobs)
+    .set({
+      status: "cancelled" as const,
+      updatedAt: now,
+    } as any)
+    .where(
+      and(
+        eq(reminderJobs.secretId, secretId),
+        eq(reminderJobs.status, "pending"),
+      ),
+    )
+    .returning({ id: reminderJobs.id })
+
+  const cancelledCount = result.length
+
+  if (process.env.NODE_ENV === "development") {
+    console.log(
+      `[reminder-scheduler] Cancelled ${cancelledCount} reminders for secret ${secretId}`,
+    )
+  }
+
+  return cancelledCount
+}
+
 export async function scheduleRemindersForSecret(
   secretId: string,
   nextCheckIn: Date,
