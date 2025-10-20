@@ -10,6 +10,7 @@ import {
   numeric,
   primaryKey,
   index,
+  unique,
 } from "drizzle-orm/pg-core"
 
 // Enums
@@ -304,7 +305,7 @@ export const reminderJobs = pgTable(
       table.retryCount,
       table.nextRetryAt,
     ),
-    uniqueSecretReminder: index("unique_secret_reminder_scheduled").on(
+    uniqueSecretReminder: unique("unique_secret_reminder_scheduled").on(
       table.secretId,
       table.reminderType,
       table.scheduledFor,
