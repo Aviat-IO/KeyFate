@@ -1,0 +1,2 @@
+DROP INDEX IF EXISTS "unique_secret_reminder_scheduled";--> statement-breakpoint
+ALTER TABLE "reminder_jobs" ADD CONSTRAINT "unique_secret_reminder_scheduled" UNIQUE("secret_id","reminder_type","scheduled_for");
