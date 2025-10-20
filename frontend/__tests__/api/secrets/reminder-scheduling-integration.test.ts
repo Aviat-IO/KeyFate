@@ -15,16 +15,14 @@ describe("Secret Creation - Reminder Scheduling Integration", () => {
   beforeEach(async () => {
     db = await getDatabase()
 
-    const [user] = await db
-      .insert(users)
-      .values({
-        email: `test-reminder-${Date.now()}@example.com`,
-        name: "Test User",
-        emailVerified: new Date(),
-      })
-      .returning()
+    testUserId = `test-user-${Date.now()}`
 
-    testUserId = user.id
+    await db.insert(users).values({
+      id: testUserId,
+      email: `test-reminder-${Date.now()}@example.com`,
+      name: "Test User",
+      emailVerified: new Date(),
+    })
   })
 
   afterEach(async () => {

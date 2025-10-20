@@ -1,11 +1,15 @@
-import { describe, it, expect, beforeAll } from "vitest"
+import { describe, it, expect, beforeAll, vi } from "vitest"
 import { config } from "dotenv"
 import { resolve } from "path"
+
+vi.unmock("@/lib/db/drizzle")
 
 // Load environment variables from .env.local
 config({ path: resolve(__dirname, "../.env.local") })
 
-describe("Database Schema Fix - TDD Approach", () => {
+const shouldSkip = !process.env.RUN_INTEGRATION_TESTS
+
+describe.skipIf(shouldSkip)("Database Schema Fix - TDD Approach", () => {
   beforeAll(async () => {
     // Skip tests if DATABASE_URL is not available (CI/testing environment)
     if (
@@ -20,18 +24,10 @@ describe("Database Schema Fix - TDD Approach", () => {
   })
 
   it("should verify recipient_name column exists in database", async () => {
-    if (
-      !process.env.DATABASE_URL ||
-      process.env.DATABASE_URL.includes("test_db")
-    ) {
-      console.log("Skipping test - no DATABASE_URL or test database not set up")
-      expect(true).toBe(true) // Pass test in CI/test environment
-      return
-    }
-
     try {
       // Dynamic import to avoid loading db when not needed
-      const { db } = await import("@/lib/db/drizzle")
+      const { getDatabase } = await import("@/lib/db/get-database")
+      const db = await getDatabase()
 
       // Check if recipient_name column exists
       const result = await db.execute(`
@@ -61,18 +57,10 @@ describe("Database Schema Fix - TDD Approach", () => {
   })
 
   it("should verify secrets table has all required columns", async () => {
-    if (
-      !process.env.DATABASE_URL ||
-      process.env.DATABASE_URL.includes("test_db")
-    ) {
-      console.log("Skipping test - no DATABASE_URL or test database not set up")
-      expect(true).toBe(true) // Pass test in CI/test environment
-      return
-    }
-
     try {
       // Dynamic import to avoid loading db when not needed
-      const { db } = await import("@/lib/db/drizzle")
+      const { getDatabase } = await import("@/lib/db/get-database")
+      const db = await getDatabase()
 
       const result = await db.execute(`
         SELECT column_name
@@ -124,18 +112,10 @@ describe("Database Schema Fix - TDD Approach", () => {
   })
 
   it("should verify drizzle schema matches database structure", async () => {
-    if (
-      !process.env.DATABASE_URL ||
-      process.env.DATABASE_URL.includes("test_db")
-    ) {
-      console.log("Skipping test - no DATABASE_URL or test database not set up")
-      expect(true).toBe(true) // Pass test in CI/test environment
-      return
-    }
-
     try {
       // Dynamic imports to avoid loading db when not needed
-      const { db } = await import("@/lib/db/drizzle")
+      const { getDatabase } = await import("@/lib/db/get-database")
+      const db = await getDatabase()
       const { secrets } = await import("@/lib/db/schema")
 
       // Test that we can perform a select using the Drizzle schema
@@ -167,18 +147,10 @@ describe("Database Schema Fix - TDD Approach", () => {
   })
 
   it("should test secret creation after schema fix", async () => {
-    if (
-      !process.env.DATABASE_URL ||
-      process.env.DATABASE_URL.includes("test_db")
-    ) {
-      console.log("Skipping test - no DATABASE_URL or test database not set up")
-      expect(true).toBe(true) // Pass test in CI/test environment
-      return
-    }
-
     try {
       // Dynamic imports to avoid loading db when not needed
-      const { db } = await import("@/lib/db/drizzle")
+      const { getDatabase } = await import("@/lib/db/get-database")
+      const db = await getDatabase()
       const { secrets } = await import("@/lib/db/schema")
 
       const testSecret = {
