@@ -49,7 +49,7 @@ variable "cpu_limit" {
 variable "memory_limit" {
   description = "Memory limit for the container"
   type        = string
-  default     = "256Mi"  # Reduced from 512Mi (Next.js typically needs 256Mi)
+  default     = "512Mi"  # Cloud Run requires 512Mi minimum with 1 vCPU
 }
 
 variable "cpu_boost" {
