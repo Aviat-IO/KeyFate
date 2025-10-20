@@ -9,7 +9,7 @@ export async function updateDisclosureLog(
 ): Promise<boolean> {
   try {
     const now = new Date()
-    const updates: Record<string, any> = {
+    const updates: Record<string, unknown> = {
       status,
       updatedAt: now,
     }

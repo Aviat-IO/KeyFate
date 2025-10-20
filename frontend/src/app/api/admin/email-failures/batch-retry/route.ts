@@ -7,9 +7,6 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { DeadLetterQueue } from "@/lib/email/dead-letter-queue"
-import { db } from "@/lib/db/drizzle"
-import { emailFailures } from "@/lib/db/schema"
-import { eq } from "drizzle-orm"
 import { sendReminderEmail } from "@/lib/email/email-service"
 import type { EmailFailureContext } from "@/lib/email/email-retry-service"
 

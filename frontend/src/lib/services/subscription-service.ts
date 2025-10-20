@@ -692,7 +692,7 @@ class SubscriptionService {
     currency?: string
     status: "succeeded" | "failed" | "pending" | "refunded"
     failureReason?: string
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   }) {
     const db = await getDatabase()
     try {

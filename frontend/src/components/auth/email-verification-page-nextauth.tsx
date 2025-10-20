@@ -39,13 +39,13 @@ export function EmailVerificationPageNextAuth() {
     searchParams.get("callbackUrl") || searchParams.get("next") || "/dashboard"
 
   // Helper functions
-  const getRemainingCooldownTime = () => {
+  const getRemainingCooldownTime = useCallback(() => {
     if (!lastResendTime) return 0
     const now = Date.now()
     const rateLimitMs = RATE_LIMIT_SECONDS * 1000
     const elapsed = now - lastResendTime
     return elapsed < rateLimitMs ? Math.ceil((rateLimitMs - elapsed) / 1000) : 0
-  }
+  }, [lastResendTime, RATE_LIMIT_SECONDS])
 
   const isResendDisabled = () => {
     return resendingEmail || !email || getRemainingCooldownTime() > 0
@@ -80,7 +80,7 @@ export function EmailVerificationPageNextAuth() {
 
       return () => clearInterval(interval)
     }
-  }, [lastResendTime])
+  }, [lastResendTime, getRemainingCooldownTime])
 
   const checkVerificationStatus = useCallback(async () => {
     setError(null)

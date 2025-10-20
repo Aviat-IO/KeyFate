@@ -11,7 +11,7 @@ interface UnixSocketConnectionOptions {
 
 export function createPostgresConnection(
   connectionString: string,
-  options: Partial<PostgresOptions<{}>> = {},
+  options: Partial<PostgresOptions<Record<string, never>>> = {},
 ) {
   // Skip during build phase to prevent database connection attempts
   const isBuildTime =
@@ -30,7 +30,8 @@ export function createPostgresConnection(
   // Parse connection string for Cloud SQL Unix socket support
   let connectionOptions:
     | string
-    | (UnixSocketConnectionOptions & Partial<PostgresOptions<{}>>)
+    | (UnixSocketConnectionOptions &
+        Partial<PostgresOptions<Record<string, never>>>)
 
   // Check if this is a Unix socket connection (for Cloud SQL)
   if (connectionString.includes("/cloudsql/")) {

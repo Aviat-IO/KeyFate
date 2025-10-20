@@ -10,10 +10,7 @@ import { DeadLetterQueue } from "@/lib/email/dead-letter-queue"
 import { db } from "@/lib/db/drizzle"
 import { emailFailures } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
-import {
-  sendReminderEmail,
-  sendSecretDisclosureEmail,
-} from "@/lib/email/email-service"
+import { sendReminderEmail } from "@/lib/email/email-service"
 
 export const dynamic = "force-dynamic"
 

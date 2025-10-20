@@ -150,7 +150,7 @@ export interface AuthorizationOptions {
  * );
  * ```
  */
-export function withAuthorization<TParams = any, TResult = any>(
+export function withAuthorization<TParams = unknown, TResult = unknown>(
   handler: (
     request: Request,
     params: TParams,
@@ -245,7 +245,7 @@ export async function validateAdminRole(userId: string): Promise<boolean> {
  */
 export function logSecurityEvent(
   event: "unauthorized_access" | "forbidden_access" | "admin_access",
-  details: Record<string, any>,
+  details: Record<string, unknown>,
 ): void {
   console.warn(`[Security Event] ${event}`, {
     ...details,

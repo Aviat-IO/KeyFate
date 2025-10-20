@@ -69,7 +69,7 @@ export async function GET() {
     }
 
     return NextResponse.json(response, { status: 200 })
-  } catch (error: any) {
+  } catch (error: unknown) {
     const errorResponse: HealthCheckResponse = {
       status: "error",
       timestamp: new Date().toISOString(),
@@ -80,7 +80,7 @@ export async function GET() {
         circuitBreakerOpen: false,
         circuitBreakerResetTime: null,
       },
-      error: error?.message || "Health check failed",
+      error: error instanceof Error ? error.message : "Health check failed",
     }
 
     return NextResponse.json(errorResponse, { status: 500 })

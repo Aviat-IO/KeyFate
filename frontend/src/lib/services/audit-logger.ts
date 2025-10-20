@@ -27,7 +27,7 @@ interface AuditLogParams {
   eventCategory: AuditEventCategory
   resourceType?: string
   resourceId?: string
-  details?: Record<string, any>
+  details?: Record<string, unknown>
 }
 
 export async function logAudit(params: AuditLogParams): Promise<void> {
@@ -59,7 +59,7 @@ export async function logAudit(params: AuditLogParams): Promise<void> {
 export async function logSecretCreated(
   userId: string,
   secretId: string,
-  details?: Record<string, any>,
+  details?: Record<string, unknown>,
 ) {
   await logAudit({
     userId,
@@ -74,7 +74,7 @@ export async function logSecretCreated(
 export async function logSecretEdited(
   userId: string,
   secretId: string,
-  details?: Record<string, any>,
+  details?: Record<string, unknown>,
 ) {
   await logAudit({
     userId,
@@ -89,7 +89,7 @@ export async function logSecretEdited(
 export async function logSecretDeleted(
   userId: string,
   secretId: string,
-  details?: Record<string, any>,
+  details?: Record<string, unknown>,
 ) {
   await logAudit({
     userId,
@@ -104,7 +104,7 @@ export async function logSecretDeleted(
 export async function logCheckIn(
   userId: string,
   secretId: string,
-  details?: Record<string, any>,
+  details?: Record<string, unknown>,
 ) {
   await logAudit({
     userId,
@@ -119,7 +119,7 @@ export async function logCheckIn(
 export async function logSecretTriggered(
   userId: string,
   secretId: string,
-  details?: Record<string, any>,
+  details?: Record<string, unknown>,
 ) {
   await logAudit({
     userId,
@@ -135,7 +135,7 @@ export async function logRecipientAdded(
   userId: string,
   secretId: string,
   recipientId: string,
-  details?: Record<string, any>,
+  details?: Record<string, unknown>,
 ) {
   await logAudit({
     userId,
@@ -151,7 +151,7 @@ export async function logRecipientRemoved(
   userId: string,
   secretId: string,
   recipientId: string,
-  details?: Record<string, any>,
+  details?: Record<string, unknown>,
 ) {
   await logAudit({
     userId,
@@ -163,7 +163,7 @@ export async function logRecipientRemoved(
   })
 }
 
-export async function logLogin(userId: string, details?: Record<string, any>) {
+export async function logLogin(userId: string, details?: Record<string, unknown>) {
   await logAudit({
     userId,
     eventType: "login",
@@ -174,7 +174,7 @@ export async function logLogin(userId: string, details?: Record<string, any>) {
 
 export async function logSubscriptionChanged(
   userId: string,
-  details?: Record<string, any>,
+  details?: Record<string, unknown>,
 ) {
   await logAudit({
     userId,
@@ -186,7 +186,7 @@ export async function logSubscriptionChanged(
 
 export async function logSettingsChanged(
   userId: string,
-  details?: Record<string, any>,
+  details?: Record<string, unknown>,
 ) {
   await logAudit({
     userId,

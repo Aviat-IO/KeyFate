@@ -19,6 +19,7 @@ interface SecretCardProps {
   secret: SecretWithRecipients
 }
 
+// foo bar
 interface StatusBadge {
   label: string
   variant: "default" | "secondary" | "destructive" | "outline"
@@ -134,8 +135,8 @@ export function SecretCard({ secret }: SecretCardProps) {
       title:
         updatedSecret.status === "active" ? "Secret resumed" : "Secret paused",
       description: `"${secret.title}" has been ${updatedSecret.status === "active"
-          ? "resumed and a check-in has been applied"
-          : "paused"
+        ? "resumed and a check-in has been applied"
+        : "paused"
         }.`,
       duration: 6000,
     })

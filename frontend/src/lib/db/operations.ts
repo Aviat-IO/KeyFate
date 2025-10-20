@@ -1,4 +1,4 @@
-import { and, desc, eq, lt } from "drizzle-orm"
+import { and, eq, lt } from "drizzle-orm"
 import { getDatabase } from "./get-database"
 import {
   type Secret,

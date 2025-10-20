@@ -11,12 +11,9 @@ export const dynamic = "force-dynamic"
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function POST(_request: NextRequest) {
   try {
-    // Get user from NextAuth
-    const session = (await getServerSession(
-      authConfig as any,
-    )) as Session | null
+    const session = (await getServerSession(authConfig)) as Session | null
     const user = session?.user
-    if (!user?.email || !(user as any).id) {
+    if (!user?.email || !user.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 

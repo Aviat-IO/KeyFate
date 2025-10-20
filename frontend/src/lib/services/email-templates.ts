@@ -47,7 +47,7 @@ interface AdminAlertParams {
   type: string
   severity: "low" | "medium" | "high" | "critical"
   message: string
-  details: Record<string, any>
+  details: Record<string, unknown>
   timestamp: Date
 }
 
