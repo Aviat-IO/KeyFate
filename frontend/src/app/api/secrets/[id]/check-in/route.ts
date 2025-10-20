@@ -6,6 +6,7 @@ import { checkinHistory } from "@/lib/db/schema"
 import { mapDrizzleSecretToApiShape } from "@/lib/db/secret-mapper"
 import { getSecretWithRecipients } from "@/lib/db/queries/secrets"
 import { logCheckIn } from "@/lib/services/audit-logger"
+import { scheduleRemindersForSecret } from "@/lib/services/reminder-scheduler"
 import type { Session } from "next-auth"
 import { getServerSession } from "next-auth/next"
 import { NextRequest, NextResponse } from "next/server"
@@ -86,6 +87,8 @@ export async function POST(
       nextCheckIn: nextCheckIn.toISOString(),
       checkInDays: secret.checkInDays,
     })
+
+    await scheduleRemindersForSecret(id, nextCheckIn, secret.checkInDays)
 
     // Get the updated secret with recipients
     const updatedSecretWithRecipients = await getSecretWithRecipients(
