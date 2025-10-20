@@ -11,7 +11,7 @@
 
 ## UI
 
-- Use TailwindCSS for styling.
+- Use TailwindCSS for styling but only use semantic colors in global.css.
 - Use Shadcn/UI for components. Prompt the user to install any needed components.
 - Theme configuration defined in `frontend/src/app/globals.css`
 
