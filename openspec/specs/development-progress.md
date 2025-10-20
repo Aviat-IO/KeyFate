@@ -3,6 +3,7 @@
 ## Completed Features
 
 ### Core Functionality
+
 - [x] Next.js 15 app with App Router
 - [x] PostgreSQL database setup (Cloud SQL production, Docker local)
 - [x] Google OAuth login with NextAuth.js
@@ -18,6 +19,7 @@
 - [x] Terms of Service and Privacy Policy (awaiting legal review)
 
 ### Testing & Quality
+
 - [x] Comprehensive unit testing framework (179 passing tests across 19 test files)
   - [x] Utility functions & core logic (33 tests)
   - [x] Database & integration (12 tests)
@@ -27,6 +29,7 @@
   - [x] Test setup & configuration (2 tests)
 
 ### Infrastructure
+
 - [x] Docker Compose setup for local development
 - [x] Terraform/Terragrunt infrastructure as code
 - [x] Cloud Run deployment configuration
@@ -37,6 +40,7 @@
 ## In Progress
 
 ### Payment Integration
+
 - [ ] Stripe credit card processing
 - [ ] BTCPay Server Bitcoin payments
 - [ ] Subscription management
@@ -45,12 +49,14 @@
 - [ ] Usage tracking and limits
 
 ### Authentication & Security
+
 - [ ] Email verification for user.meta.email_verified
 - [ ] OTP-based email verification
 
 ## Planned Features
 
 ### Core Features
+
 - [ ] Automatic expiration of triggered secrets (GDPR compliance)
   - [ ] Daily cron job to delete expired secrets
 - [ ] User account deletion process (GDPR compliance)
@@ -59,6 +65,7 @@
   - [ ] Share generation (with disclaimers)
 
 ### Testing Expansion
+
 - [ ] Form component tests
 - [ ] API route handler tests
 - [ ] Authentication middleware tests
@@ -66,6 +73,7 @@
 - [ ] Error handling and edge case tests
 
 ### Deployment
+
 - [ ] Production deployment confidence
 - [ ] Database management procedures
 - [ ] Rollback procedures
