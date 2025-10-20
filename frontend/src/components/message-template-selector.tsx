@@ -1,5 +1,6 @@
 "use client"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -9,14 +10,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { FileText, Crown } from "lucide-react"
 import {
   MESSAGE_TEMPLATES,
   MessageTemplate,
   getAllCategories,
 } from "@/constants/message-templates"
+import { Crown, FileText } from "lucide-react"
 import { useState } from "react"
 
 interface MessageTemplateSelectorProps {

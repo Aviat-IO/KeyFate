@@ -1,8 +1,8 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Secret } from "@/types"
 import { mapApiSecretToDrizzleShape } from "@/lib/db/secret-mapper"
+import { Secret } from "@/types"
 import { Loader2, PauseIcon, PlayIcon } from "lucide-react"
 import { useState } from "react"
 

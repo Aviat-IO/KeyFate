@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { Crown } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 
 interface DevTierToggleProps {
   currentTier?: "free" | "pro"

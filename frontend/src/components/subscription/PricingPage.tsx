@@ -1,9 +1,9 @@
 "use client"
 
-import { StaticPricingPage } from "./StaticPricingPage"
-import { UserPricingActions } from "./UserPricingActions"
 import { Card, CardContent } from "@/components/ui/card"
 import { Suspense } from "react"
+import { StaticPricingPage } from "./StaticPricingPage"
+import { UserPricingActions } from "./UserPricingActions"
 
 export function PricingPage() {
   return (

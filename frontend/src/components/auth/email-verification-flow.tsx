@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
+
 type MinimalUser = {
   id?: string
   email?: string
@@ -71,8 +72,8 @@ export function EmailVerificationFlow({
                 </h3>
                 <p className="text-muted-foreground text-sm">
                   {provider === "google" ||
-                  provider === "github" ||
-                  provider === "apple"
+                    provider === "github" ||
+                    provider === "apple"
                     ? `Your ${provider} account is already verified.`
                     : "Your email is already verified."}{" "}
                   Redirecting...

@@ -1,25 +1,9 @@
 "use client"
 
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import {
-  AlertCircle,
-  Clock,
-  User,
-  Mail,
-  Phone,
-  Calendar,
-  Shield,
-  Eye,
-  Trash2,
-  AlertTriangle,
-} from "lucide-react"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
-import { format } from "timeago.js"
 import {
   Dialog,
   DialogContent,
@@ -29,7 +13,23 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
+import {
+  AlertCircle,
+  AlertTriangle,
+  Calendar,
+  Clock,
+  Eye,
+  Mail,
+  Phone,
+  Shield,
+  Trash2,
+  User,
+} from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
+import { format } from "timeago.js"
 
 interface SecretRecipient {
   id: string
