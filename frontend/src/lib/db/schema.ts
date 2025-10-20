@@ -22,6 +22,7 @@ export const secretStatusEnum = pgEnum("secret_status", [
   "active",
   "paused",
   "triggered",
+  "failed",
 ])
 export const subscriptionTierEnum = pgEnum("subscription_tier", [
   "free",
@@ -190,6 +191,8 @@ export const secrets = pgTable("secrets", {
   triggeredAt: timestamp("triggered_at"),
   processingStartedAt: timestamp("processing_started_at"),
   lastError: text("last_error"),
+  retryCount: integer("retry_count").notNull().default(0),
+  lastRetryAt: timestamp("last_retry_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
@@ -309,20 +312,31 @@ export const reminderJobs = pgTable(
   }),
 )
 
-export const disclosureLog = pgTable("disclosure_log", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  secretId: uuid("secret_id")
-    .notNull()
-    .references(() => secrets.id, { onDelete: "cascade" }),
-  recipientEmail: text("recipient_email").notNull(),
-  recipientName: text("recipient_name"),
-  status: disclosureStatusEnum("status").notNull().default("pending"),
-  sentAt: timestamp("sent_at"),
-  error: text("error"),
-  retryCount: integer("retry_count").default(0),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-})
+export const disclosureLog = pgTable(
+  "disclosure_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    secretId: uuid("secret_id")
+      .notNull()
+      .references(() => secrets.id, { onDelete: "cascade" }),
+    recipientEmail: text("recipient_email").notNull(),
+    recipientName: text("recipient_name"),
+    status: disclosureStatusEnum("status").notNull().default("pending"),
+    sentAt: timestamp("sent_at"),
+    error: text("error"),
+    retryCount: integer("retry_count").default(0),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    batchFetchIdx: index("disclosure_log_batch_fetch_idx").on(
+      table.secretId,
+      table.recipientEmail,
+      table.status,
+      table.createdAt,
+    ),
+  }),
+)
 
 export const subscriptionTiers = pgTable("subscription_tiers", {
   id: uuid("id").primaryKey().defaultRandom(),
