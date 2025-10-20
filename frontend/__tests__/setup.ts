@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom"
-import { vi } from "vitest"
+import { vi, beforeEach } from "vitest"
 
 // Configure React Testing Library for React 18
 import { configure } from "@testing-library/react"
@@ -107,9 +107,11 @@ vi.mock("@/lib/auth/config", () => ({
 }))
 
 // Mock environment variables for NextAuth + Drizzle
+// Use the same DATABASE_URL as db:studio for test compatibility
 vi.stubEnv(
   "DATABASE_URL",
-  "postgresql://postgres:test_password@localhost:5432/test_db",
+  process.env.DATABASE_URL ||
+    "postgresql://postgres:dev_password_change_in_prod@localhost:5432/keyfate_dev",
 )
 vi.stubEnv("NEXTAUTH_SECRET", "test-nextauth-secret-32-chars-long")
 vi.stubEnv("NEXTAUTH_URL", "http://localhost:3000")
@@ -165,3 +167,16 @@ if (!global.fetch) {
     this.delete(key)
   }
 }
+
+// Reset database connection manager circuit breaker before each test
+beforeEach(async () => {
+  try {
+    const { default: ConnectionManager } = await import(
+      "@/lib/db/connection-manager"
+    )
+    const manager = ConnectionManager.getInstance()
+    manager.reset()
+  } catch (error) {
+    // Connection manager might not be imported in all tests
+  }
+})
