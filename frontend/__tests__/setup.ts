@@ -93,7 +93,12 @@ vi.mock("@/lib/db/drizzle", () => ({
       from: vi.fn().mockReturnThis(),
       where: vi.fn(() => Promise.resolve([])),
     })),
-    execute: vi.fn(() => Promise.resolve([])),
+    execute: vi.fn(() => Promise.resolve({ rows: [] })),
+  },
+  secretsService: {
+    create: vi.fn(async (data) => ({ id: "test-secret-id", ...data })),
+    update: vi.fn(async (id, data) => ({ id, ...data })),
+    delete: vi.fn(async () => true),
   },
 }))
 

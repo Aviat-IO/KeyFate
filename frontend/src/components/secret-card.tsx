@@ -19,7 +19,6 @@ interface SecretCardProps {
   secret: SecretWithRecipients
 }
 
-// foo bar
 interface StatusBadge {
   label: string
   variant: "default" | "secondary" | "destructive" | "outline"
