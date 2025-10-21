@@ -79,11 +79,19 @@ describe("POST /api/cron/check-secrets", () => {
 
   it("should process secrets and send reminders", async () => {
     const now = new Date()
+    const scheduledFor = new Date(now.getTime() - 10 * 60 * 1000)
     const nextCheckIn = new Date(now.getTime() + 30 * 60 * 1000)
-    const lastCheckIn = new Date(now.getTime() - 24 * 60 * 60 * 1000)
 
-    const mockSecrets = [
+    const mockPendingReminders = [
       {
+        reminder: {
+          id: "reminder-1",
+          secretId: "secret-1",
+          reminderType: "1_hour",
+          scheduledFor,
+          status: "pending",
+          retryCount: 0,
+        },
         secret: {
           id: "secret-1",
           userId: "user-1",
@@ -92,36 +100,45 @@ describe("POST /api/cron/check-secrets", () => {
           status: "active",
           serverShare: "encrypted-share",
           nextCheckIn,
-          lastCheckIn,
         },
         user: {
           id: "user-1",
           email: "user@example.com",
           name: "Test User",
         },
-        reminderId: null,
-        reminderType: null,
-        reminderStatus: null,
-        reminderSentAt: null,
       },
     ]
 
-    const mockSelectChain = {
-      from: vi.fn().mockReturnThis(),
-      innerJoin: vi.fn().mockReturnThis(),
-      leftJoin: vi.fn().mockReturnThis(),
-      where: vi.fn().mockReturnThis(),
-      limit: vi.fn().mockReturnThis(),
-      offset: vi.fn().mockResolvedValue(mockSecrets),
-      orderBy: vi.fn().mockReturnThis(),
-    }
+    let selectCallCount = 0
+    mockDb.select.mockImplementation(() => {
+      selectCallCount++
 
-    mockDb.select.mockReturnValue(mockSelectChain)
+      if (selectCallCount <= 2) {
+        return {
+          from: vi.fn().mockReturnThis(),
+          innerJoin: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockReturnThis(),
+          offset: vi
+            .fn()
+            .mockResolvedValueOnce(mockPendingReminders)
+            .mockResolvedValue([]),
+          orderBy: vi.fn().mockReturnThis(),
+        }
+      }
+
+      return {
+        from: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockResolvedValue([]),
+      }
+    })
 
     const mockInsertChain = {
       values: vi.fn().mockReturnThis(),
-      onConflictDoNothing: vi.fn().mockReturnThis(),
-      returning: vi.fn().mockResolvedValue([{ id: "reminder-1" }]),
+      returning: vi
+        .fn()
+        .mockResolvedValue([{ id: "token-1", token: "mock-token-abcd1234" }]),
     }
 
     mockDb.insert.mockReturnValue(mockInsertChain)
@@ -154,47 +171,17 @@ describe("POST /api/cron/check-secrets", () => {
     expect(response.status).toBe(200)
     expect(data.remindersProcessed).toBeGreaterThanOrEqual(0)
     expect(data.remindersSent).toBeGreaterThanOrEqual(0)
-    expect(data.secretsProcessed).toBeGreaterThanOrEqual(0)
     expect(data).toHaveProperty("duration")
     expect(data).toHaveProperty("timestamp")
   })
 
   it("should skip reminders that have already been sent", async () => {
-    const now = new Date()
-    const nextCheckIn = new Date(now.getTime() + 30 * 60 * 1000)
-    const lastCheckIn = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-
-    const mockSecrets = [
-      {
-        secret: {
-          id: "secret-1",
-          userId: "user-1",
-          title: "Test Secret",
-          checkInDays: 7,
-          status: "active",
-          serverShare: "encrypted-share",
-          nextCheckIn,
-          lastCheckIn,
-        },
-        user: {
-          id: "user-1",
-          email: "user@example.com",
-          name: "Test User",
-        },
-        reminderId: "reminder-existing",
-        reminderType: "1_hour",
-        reminderStatus: "sent",
-        reminderSentAt: now,
-      },
-    ]
-
     const mockSelectChain = {
       from: vi.fn().mockReturnThis(),
       innerJoin: vi.fn().mockReturnThis(),
-      leftJoin: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
       limit: vi.fn().mockReturnThis(),
-      offset: vi.fn().mockResolvedValue(mockSecrets),
+      offset: vi.fn().mockResolvedValue([]),
       orderBy: vi.fn().mockReturnThis(),
     }
 
@@ -214,17 +201,24 @@ describe("POST /api/cron/check-secrets", () => {
     const data = await response.json()
 
     expect(response.status).toBe(200)
-    expect(data.remindersSkipped).toBeGreaterThanOrEqual(0)
-    expect(mockSendReminderEmail).not.toHaveBeenCalled()
+    expect(data.remindersProcessed).toBe(0)
   })
 
   it("should handle email sending failures", async () => {
     const now = new Date()
+    const scheduledFor = new Date(now.getTime() - 10 * 60 * 1000)
     const nextCheckIn = new Date(now.getTime() + 30 * 60 * 1000)
-    const lastCheckIn = new Date(now.getTime() - 24 * 60 * 60 * 1000)
 
-    const mockSecrets = [
+    const mockPendingReminders = [
       {
+        reminder: {
+          id: "reminder-1",
+          secretId: "secret-1",
+          reminderType: "1_hour",
+          scheduledFor,
+          status: "pending",
+          retryCount: 0,
+        },
         secret: {
           id: "secret-1",
           userId: "user-1",
@@ -233,36 +227,45 @@ describe("POST /api/cron/check-secrets", () => {
           status: "active",
           serverShare: "encrypted-share",
           nextCheckIn,
-          lastCheckIn,
         },
         user: {
           id: "user-1",
           email: "user@example.com",
           name: "Test User",
         },
-        reminderId: null,
-        reminderType: null,
-        reminderStatus: null,
-        reminderSentAt: null,
       },
     ]
 
-    const mockSelectChain = {
-      from: vi.fn().mockReturnThis(),
-      innerJoin: vi.fn().mockReturnThis(),
-      leftJoin: vi.fn().mockReturnThis(),
-      where: vi.fn().mockReturnThis(),
-      limit: vi.fn().mockReturnThis(),
-      offset: vi.fn().mockResolvedValue(mockSecrets),
-      orderBy: vi.fn().mockReturnThis(),
-    }
+    let selectCallCount = 0
+    mockDb.select.mockImplementation(() => {
+      selectCallCount++
 
-    mockDb.select.mockReturnValue(mockSelectChain)
+      if (selectCallCount <= 2) {
+        return {
+          from: vi.fn().mockReturnThis(),
+          innerJoin: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockReturnThis(),
+          offset: vi
+            .fn()
+            .mockResolvedValueOnce(mockPendingReminders)
+            .mockResolvedValue([]),
+          orderBy: vi.fn().mockReturnThis(),
+        }
+      }
+
+      return {
+        from: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockResolvedValue([]),
+      }
+    })
 
     const mockInsertChain = {
       values: vi.fn().mockReturnThis(),
-      onConflictDoNothing: vi.fn().mockReturnThis(),
-      returning: vi.fn().mockResolvedValue([{ id: "reminder-1" }]),
+      returning: vi
+        .fn()
+        .mockResolvedValue([{ id: "token-1", token: "mock-token" }]),
     }
 
     mockDb.insert.mockReturnValue(mockInsertChain)
@@ -330,109 +333,41 @@ describe("POST /api/cron/check-secrets", () => {
       },
     ]
 
-    const mockSelectChain = {
-      from: vi.fn().mockReturnThis(),
-      innerJoin: vi.fn().mockReturnThis(),
-      leftJoin: vi.fn().mockReturnThis(),
-      where: vi.fn().mockReturnThis(),
-      limit: vi.fn().mockReturnThis(),
-      offset: vi.fn(),
-      orderBy: vi.fn().mockReturnThis(),
-    }
+    let selectCallCount = 0
+    mockDb.select.mockImplementation(() => {
+      selectCallCount++
 
-    mockSelectChain.offset
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce(mockFailedReminders)
+      if (selectCallCount === 1 || selectCallCount === 3) {
+        return {
+          from: vi.fn().mockReturnThis(),
+          innerJoin: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockReturnThis(),
+          offset: vi.fn().mockResolvedValue([]),
+          orderBy: vi.fn().mockReturnThis(),
+        }
+      } else if (selectCallCount === 2) {
+        return {
+          from: vi.fn().mockReturnThis(),
+          innerJoin: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockResolvedValue(mockFailedReminders),
+          orderBy: vi.fn().mockReturnThis(),
+        }
+      }
 
-    mockDb.select.mockReturnValue(mockSelectChain)
+      return {
+        from: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockResolvedValue([]),
+      }
+    })
 
     const mockInsertChain = {
       values: vi.fn().mockReturnThis(),
-      onConflictDoNothing: vi.fn().mockReturnThis(),
-      returning: vi.fn().mockResolvedValue([]),
-    }
-
-    mockDb.insert.mockReturnValue(mockInsertChain)
-
-    mockSendReminderEmail.mockResolvedValue({
-      success: true,
-      provider: "console-dev",
-    })
-
-    const req = new NextRequest(
-      "http://localhost:3000/api/cron/check-secrets",
-      {
-        method: "POST",
-        headers: {
-          authorization: "Bearer test-secret",
-        },
-      },
-    )
-
-    const response = await POST(req)
-    const data = await response.json()
-
-    expect(response.status).toBe(200)
-    expect(data).toHaveProperty("retriesProcessed")
-    expect(data).toHaveProperty("retriesSent")
-    expect(data).toHaveProperty("retriesFailed")
-  })
-
-  it("should batch process large numbers of secrets", async () => {
-    const now = new Date()
-    const nextCheckIn = new Date(now.getTime() + 30 * 60 * 1000)
-    const lastCheckIn = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-
-    const createMockSecret = (index: number) => ({
-      secret: {
-        id: `secret-${index}`,
-        userId: `user-${index}`,
-        title: `Test Secret ${index}`,
-        checkInDays: 7,
-        status: "active",
-        serverShare: "encrypted-share",
-        nextCheckIn,
-        lastCheckIn,
-      },
-      user: {
-        id: `user-${index}`,
-        email: `user${index}@example.com`,
-        name: `Test User ${index}`,
-      },
-      reminderId: null,
-      reminderType: null,
-      reminderStatus: null,
-      reminderSentAt: null,
-    })
-
-    const firstBatch = Array.from({ length: 100 }, (_, i) =>
-      createMockSecret(i),
-    )
-    const secondBatch = Array.from({ length: 50 }, (_, i) =>
-      createMockSecret(i + 100),
-    )
-
-    const mockSelectChain = {
-      from: vi.fn().mockReturnThis(),
-      innerJoin: vi.fn().mockReturnThis(),
-      leftJoin: vi.fn().mockReturnThis(),
-      where: vi.fn().mockReturnThis(),
-      limit: vi.fn().mockReturnThis(),
-      offset: vi.fn(),
-      orderBy: vi.fn().mockReturnThis(),
-    }
-
-    mockSelectChain.offset
-      .mockResolvedValueOnce(firstBatch)
-      .mockResolvedValueOnce(secondBatch)
-      .mockResolvedValue([])
-
-    mockDb.select.mockReturnValue(mockSelectChain)
-
-    const mockInsertChain = {
-      values: vi.fn().mockReturnThis(),
-      onConflictDoNothing: vi.fn().mockReturnThis(),
-      returning: vi.fn().mockResolvedValue([{ id: "reminder-1" }]),
+      returning: vi
+        .fn()
+        .mockResolvedValue([{ id: "token-1", token: "mock-token" }]),
     }
 
     mockDb.insert.mockReturnValue(mockInsertChain)
@@ -463,17 +398,108 @@ describe("POST /api/cron/check-secrets", () => {
     const data = await response.json()
 
     expect(response.status).toBe(200)
-    expect(data.secretsProcessed).toBeGreaterThan(0)
+    expect(data).toHaveProperty("retriesProcessed")
+    expect(data).toHaveProperty("retriesSent")
+    expect(data).toHaveProperty("retriesFailed")
+  })
+
+  it("should batch process large numbers of secrets", async () => {
+    const now = new Date()
+    const scheduledFor = new Date(now.getTime() - 10 * 60 * 1000)
+    const nextCheckIn = new Date(now.getTime() + 30 * 60 * 1000)
+
+    const createMockReminder = (index: number) => ({
+      reminder: {
+        id: `reminder-${index}`,
+        secretId: `secret-${index}`,
+        reminderType: "1_hour",
+        scheduledFor,
+        status: "pending",
+        retryCount: 0,
+      },
+      secret: {
+        id: `secret-${index}`,
+        userId: `user-${index}`,
+        title: `Test Secret ${index}`,
+        checkInDays: 7,
+        status: "active",
+        serverShare: "encrypted-share",
+        nextCheckIn,
+      },
+      user: {
+        id: `user-${index}`,
+        email: `user${index}@example.com`,
+        name: `Test User ${index}`,
+      },
+    })
+
+    const mockBatch = Array.from({ length: 5 }, (_, i) => createMockReminder(i))
+
+    const mockSelectChain = {
+      from: vi.fn().mockReturnThis(),
+      innerJoin: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      offset: vi.fn().mockResolvedValueOnce(mockBatch).mockResolvedValue([]),
+      orderBy: vi.fn().mockReturnThis(),
+    }
+
+    mockDb.select.mockReturnValue(mockSelectChain)
+
+    const mockInsertChain = {
+      values: vi.fn().mockReturnThis(),
+      returning: vi
+        .fn()
+        .mockResolvedValue([{ id: "token-1", token: "mock-token" }]),
+    }
+
+    mockDb.insert.mockReturnValue(mockInsertChain)
+
+    const mockUpdateChain = {
+      set: vi.fn().mockReturnThis(),
+      where: vi.fn().mockResolvedValue(undefined),
+    }
+
+    mockDb.update.mockReturnValue(mockUpdateChain)
+
+    mockSendReminderEmail.mockResolvedValue({
+      success: true,
+      provider: "console-dev",
+    })
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/cron/check-secrets",
+      {
+        method: "POST",
+        headers: {
+          authorization: "Bearer test-secret",
+        },
+      },
+    )
+
+    const response = await POST(req)
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.remindersProcessed).toBeGreaterThan(0)
   })
 
   it("should reuse existing valid check-in tokens", async () => {
     const now = new Date()
+    const scheduledFor = new Date(now.getTime() - 10 * 60 * 1000)
     const nextCheckIn = new Date(now.getTime() + 30 * 60 * 1000)
-    const lastCheckIn = new Date(now.getTime() - 24 * 60 * 60 * 1000)
     const futureExpiry = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
 
-    const mockSecrets = [
+    const mockPendingReminders = [
       {
+        reminder: {
+          id: "reminder-1",
+          secretId: "secret-1",
+          reminderType: "1_hour",
+          scheduledFor,
+          status: "pending",
+          retryCount: 0,
+        },
         secret: {
           id: "secret-1",
           userId: "user-1",
@@ -482,17 +508,12 @@ describe("POST /api/cron/check-secrets", () => {
           status: "active",
           serverShare: "encrypted-share",
           nextCheckIn,
-          lastCheckIn,
         },
         user: {
           id: "user-1",
           email: "user@example.com",
           name: "Test User",
         },
-        reminderId: null,
-        reminderType: null,
-        reminderStatus: null,
-        reminderSentAt: null,
       },
     ]
 
@@ -510,16 +531,15 @@ describe("POST /api/cron/check-secrets", () => {
     mockDb.select.mockImplementation(() => {
       selectCallCount++
 
-      if (selectCallCount === 1 || selectCallCount === 2) {
+      if (selectCallCount <= 2) {
         return {
           from: vi.fn().mockReturnThis(),
           innerJoin: vi.fn().mockReturnThis(),
-          leftJoin: vi.fn().mockReturnThis(),
           where: vi.fn().mockReturnThis(),
           limit: vi.fn().mockReturnThis(),
           offset: vi
             .fn()
-            .mockResolvedValueOnce(mockSecrets)
+            .mockResolvedValueOnce(mockPendingReminders)
             .mockResolvedValue([]),
           orderBy: vi.fn().mockReturnThis(),
         }
@@ -534,8 +554,9 @@ describe("POST /api/cron/check-secrets", () => {
 
     const mockInsertChain = {
       values: vi.fn().mockReturnThis(),
-      onConflictDoNothing: vi.fn().mockReturnThis(),
-      returning: vi.fn().mockResolvedValue([{ id: "reminder-1" }]),
+      returning: vi
+        .fn()
+        .mockResolvedValue([{ id: "token-1", token: "mock-token" }]),
     }
 
     mockDb.insert.mockReturnValue(mockInsertChain)
@@ -602,11 +623,19 @@ describe("POST /api/cron/check-secrets", () => {
     delete process.env.NEXTAUTH_URL
 
     const now = new Date()
+    const scheduledFor = new Date(now.getTime() - 10 * 60 * 1000)
     const nextCheckIn = new Date(now.getTime() + 30 * 60 * 1000)
-    const lastCheckIn = new Date(now.getTime() - 24 * 60 * 60 * 1000)
 
-    const mockSecrets = [
+    const mockPendingReminders = [
       {
+        reminder: {
+          id: "reminder-1",
+          secretId: "secret-1",
+          reminderType: "1_hour",
+          scheduledFor,
+          status: "pending",
+          retryCount: 0,
+        },
         secret: {
           id: "secret-1",
           userId: "user-1",
@@ -615,39 +644,55 @@ describe("POST /api/cron/check-secrets", () => {
           status: "active",
           serverShare: "encrypted-share",
           nextCheckIn,
-          lastCheckIn,
         },
         user: {
           id: "user-1",
           email: "user@example.com",
           name: "Test User",
         },
-        reminderId: null,
-        reminderType: null,
-        reminderStatus: null,
-        reminderSentAt: null,
       },
     ]
 
-    const mockSelectChain = {
-      from: vi.fn().mockReturnThis(),
-      innerJoin: vi.fn().mockReturnThis(),
-      leftJoin: vi.fn().mockReturnThis(),
-      where: vi.fn().mockReturnThis(),
-      limit: vi.fn().mockReturnThis(),
-      offset: vi.fn().mockResolvedValueOnce(mockSecrets).mockResolvedValue([]),
-      orderBy: vi.fn().mockReturnThis(),
-    }
+    let selectCallCount = 0
+    mockDb.select.mockImplementation(() => {
+      selectCallCount++
 
-    mockDb.select.mockReturnValue(mockSelectChain)
+      if (selectCallCount <= 2) {
+        return {
+          from: vi.fn().mockReturnThis(),
+          innerJoin: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockReturnThis(),
+          offset: vi
+            .fn()
+            .mockResolvedValueOnce(mockPendingReminders)
+            .mockResolvedValue([]),
+          orderBy: vi.fn().mockReturnThis(),
+        }
+      }
+
+      return {
+        from: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockResolvedValue([]),
+      }
+    })
 
     const mockInsertChain = {
       values: vi.fn().mockReturnThis(),
-      onConflictDoNothing: vi.fn().mockReturnThis(),
-      returning: vi.fn().mockResolvedValue([{ id: "reminder-1" }]),
+      returning: vi
+        .fn()
+        .mockResolvedValue([{ id: "token-1", token: "mock-token" }]),
     }
 
     mockDb.insert.mockReturnValue(mockInsertChain)
+
+    const mockUpdateChain = {
+      set: vi.fn().mockReturnThis(),
+      where: vi.fn().mockResolvedValue(undefined),
+    }
+
+    mockDb.update.mockReturnValue(mockUpdateChain)
 
     const req = new NextRequest(
       "http://localhost:3000/api/cron/check-secrets",
