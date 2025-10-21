@@ -65,6 +65,7 @@ export default withAuth(
           "/auth/forgot-password",
           "/auth/reset-password",
           "/check-in", // Allow unauthenticated access for token-based check-ins
+          "/decrypt", // Allow unauthenticated access for decrypting shares
           "/pricing",
           "/terms-of-service",
           "/privacy-policy",
