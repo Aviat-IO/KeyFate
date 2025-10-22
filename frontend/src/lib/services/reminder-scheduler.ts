@@ -42,7 +42,7 @@ export function calculateScheduledFor(
     case "7_days":
       return new Date(checkInTime - 7 * 24 * 60 * 60 * 1000)
     case "25_percent":
-      return new Date(checkInTime - checkInDays * 24 * 60 * 60 * 1000 * 0.75)
+      return new Date(checkInTime - checkInDays * 24 * 60 * 60 * 1000 * 0.25)
     case "50_percent":
       return new Date(checkInTime - checkInDays * 24 * 60 * 60 * 1000 * 0.5)
   }

@@ -57,7 +57,7 @@ describe("reminder-scheduler", () => {
       const nextCheckIn = new Date("2025-10-30T12:00:00Z")
       const scheduledFor = calculateScheduledFor("25_percent", nextCheckIn, 30)
       const expectedDate = new Date(
-        nextCheckIn.getTime() - 30 * 24 * 60 * 60 * 1000 * 0.75,
+        nextCheckIn.getTime() - 30 * 24 * 60 * 60 * 1000 * 0.25,
       )
       expect(scheduledFor).toEqual(expectedDate)
     })
@@ -169,7 +169,7 @@ describe("reminder-scheduler", () => {
       )
       expect(reminders["25_percent"]).toEqual(
         new Date(
-          createdAt.getTime() + checkInDays * 24 * 60 * 60 * 1000 * 0.25,
+          createdAt.getTime() + checkInDays * 24 * 60 * 60 * 1000 * 0.75,
         ),
       )
       expect(reminders["7_days"]).toEqual(

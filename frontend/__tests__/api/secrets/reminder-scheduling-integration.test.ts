@@ -84,8 +84,8 @@ describe("Secret Creation - Reminder Scheduling Integration", () => {
 
     const reminderTypes = reminders.map((r) => r.reminderType).sort()
     expect(reminderTypes).toEqual([
-      "1_hour",
       "12_hours",
+      "1_hour",
       "24_hours",
       "25_percent",
       "3_days",
