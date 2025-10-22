@@ -29,6 +29,14 @@ interface ReminderTemplateData {
   daysRemaining: number
   checkInUrl: string
   urgencyLevel?: "low" | "medium" | "high" | "critical"
+  reminderType?:
+    | "1_hour"
+    | "12_hours"
+    | "24_hours"
+    | "3_days"
+    | "7_days"
+    | "25_percent"
+    | "50_percent"
 }
 
 interface DisclosureTemplateData {
@@ -220,6 +228,34 @@ export function renderVerificationTemplate(
 }
 
 /**
+ * Convert reminder type to human-readable text
+ */
+function getReminderTypeText(
+  reminderType?:
+    | "1_hour"
+    | "12_hours"
+    | "24_hours"
+    | "3_days"
+    | "7_days"
+    | "25_percent"
+    | "50_percent",
+): string | null {
+  if (!reminderType) return null
+
+  const typeMap: Record<string, string> = {
+    "1_hour": "1 hour before deadline",
+    "12_hours": "12 hours before deadline",
+    "24_hours": "24 hours before deadline",
+    "3_days": "3 days before deadline",
+    "7_days": "7 days before deadline",
+    "25_percent": "75% time elapsed",
+    "50_percent": "halfway to deadline",
+  }
+
+  return typeMap[reminderType] || null
+}
+
+/**
  * Reminder email template with urgency levels
  */
 export function renderReminderTemplate(
@@ -234,6 +270,7 @@ export function renderReminderTemplate(
 
   const urgency = urgencyConfig[data.urgencyLevel || "medium"]
   const timeText = formatTimeRemaining(data.daysRemaining)
+  const reminderTypeText = getReminderTypeText(data.reminderType)
 
   const subject = `${urgency.label}: Check-in required within ${timeText} - ${data.secretTitle}`
 
@@ -259,7 +296,12 @@ export function renderReminderTemplate(
 
     <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin: 20px 0;">
       <h3 style="margin: 0 0 10px 0;">${data.secretTitle}</h3>
-      <p style="margin: 0;"><strong>Time remaining:</strong> ${timeText}</p>
+      <p style="margin: 0;"><strong>Time remaining:</strong> ${timeText}</p>${
+        reminderTypeText
+          ? `
+      <p style="margin: 5px 0 0 0; font-size: 13px; color: #666;">Reminder: ${reminderTypeText}</p>`
+          : ""
+      }
     </div>
 
     <div style="text-align: center; margin: 30px 0;">

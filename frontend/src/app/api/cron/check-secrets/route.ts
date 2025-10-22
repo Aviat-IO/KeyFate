@@ -212,6 +212,7 @@ async function processSecret(
       daysRemaining,
       checkInUrl,
       urgencyLevel: urgency,
+      reminderType,
     })
 
     if (!result.success) {

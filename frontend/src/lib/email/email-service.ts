@@ -348,6 +348,14 @@ export async function sendReminderEmail(reminderData: {
   daysRemaining: number
   checkInUrl: string
   urgencyLevel?: "low" | "medium" | "high" | "critical"
+  reminderType?:
+    | "1_hour"
+    | "12_hours"
+    | "24_hours"
+    | "3_days"
+    | "7_days"
+    | "25_percent"
+    | "50_percent"
 }): Promise<EmailResult & { templateUsed?: string }> {
   const { renderReminderTemplate } = await import("./templates")
 
