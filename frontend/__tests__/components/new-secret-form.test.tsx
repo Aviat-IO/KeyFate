@@ -33,6 +33,9 @@ Object.defineProperty(window, "localStorage", {
   writable: true,
 })
 
+// Mock scrollIntoView
+Element.prototype.scrollIntoView = vi.fn()
+
 describe("NewSecretForm", () => {
   beforeEach(() => {
     vi.clearAllMocks()
