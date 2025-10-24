@@ -296,6 +296,54 @@ ${emailData.text || "HTML content provided"}
 }
 
 /**
+ * Send OTP authentication email
+ */
+export async function sendOTPEmail(
+  email: string,
+  code: string,
+  expirationMinutes: number = 10,
+): Promise<EmailResult & { templateUsed?: string; emailData?: any }> {
+  const { renderOTPTemplate } = await import("./templates")
+
+  const templateData = {
+    code,
+    expirationMinutes,
+    userName: email.split("@")[0],
+    supportEmail: process.env.SENDGRID_ADMIN_EMAIL,
+  }
+
+  const template = renderOTPTemplate(templateData)
+
+  const maxRetries = 2
+  const retryDelay = 1000
+
+  const result = await sendEmail(
+    {
+      to: email,
+      subject: template.subject,
+      html: template.html,
+      text: template.text,
+      priority: "high",
+      trackDelivery: true,
+    },
+    { maxRetries, retryDelay },
+  )
+
+  if (result.success) {
+    return {
+      ...result,
+      templateUsed: "otp",
+      emailData: {
+        subject: template.subject,
+        expirationMinutes,
+      },
+    }
+  }
+
+  return result
+}
+
+/**
  * Send verification email using template
  */
 export async function sendVerificationEmail(
