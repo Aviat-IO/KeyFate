@@ -3,40 +3,141 @@
 import { signIn } from "next-auth/react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
+import { OTPInput } from "@/components/auth/otp-input"
+
+type AuthStep = "email" | "otp"
 
 export default function SignInPage() {
+  const [authStep, setAuthStep] = useState<AuthStep>("email")
   const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const [otpCode, setOtpCode] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
+  const [successMessage, setSuccessMessage] = useState("")
+  const [resendCountdown, setResendCountdown] = useState(0)
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
   const urlError = searchParams.get("error")
+  const emailInputRef = useRef<HTMLInputElement>(null)
 
-  const handleCredentialsSignIn = async (e: React.FormEvent) => {
+  useEffect(() => {
+    if (resendCountdown > 0) {
+      const timer = setTimeout(
+        () => setResendCountdown(resendCountdown - 1),
+        1000,
+      )
+      return () => clearTimeout(timer)
+    }
+  }, [resendCountdown])
+
+  useEffect(() => {
+    // Auto-focus email input when page loads or when returning to email step
+    if (authStep === "email" && emailInputRef.current) {
+      emailInputRef.current.focus()
+    }
+  }, [authStep])
+
+  const handleRequestOTP = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsLoading(true)
+    setErrorMessage("")
+    setSuccessMessage("")
+
+    try {
+      const response = await fetch("/api/auth/request-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.toLowerCase().trim() }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccessMessage(`Code sent to ${email}\nCheck your email`)
+        setAuthStep("otp")
+        setResendCountdown(60)
+      } else if (response.status === 429) {
+        setErrorMessage(
+          data.resetAt
+            ? `Too many requests. Please try again in ${Math.ceil((new Date(data.resetAt).getTime() - Date.now()) / 60000)} minutes.`
+            : "Too many requests. Please try again later.",
+        )
+      } else {
+        setErrorMessage(data.error || "Failed to send code. Please try again.")
+      }
+    } catch (error) {
+      console.error("Request OTP error:", error)
+      setErrorMessage("An unexpected error occurred. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleVerifyOTP = async (code: string) => {
     setIsLoading(true)
     setErrorMessage("")
 
     try {
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
+      const csrfResponse = await fetch("/api/auth/csrf")
+      const { csrfToken } = await csrfResponse.json()
+
+      const formData = new URLSearchParams({
+        csrfToken,
+        email: email.toLowerCase().trim(),
+        otpCode: code,
+        action: "otp",
         callbackUrl,
       })
 
-      if (result?.error) {
-        setErrorMessage("Invalid email or password. Please try again.")
-      } else if (result?.ok) {
+      const authResponse = await fetch("/api/auth/callback/credentials", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: formData,
+      })
+
+      if (
+        authResponse.url.includes(callbackUrl) ||
+        authResponse.url.includes("/dashboard")
+      ) {
         window.location.href = callbackUrl
+      } else if (
+        authResponse.url.includes("/auth/signin") ||
+        authResponse.url.includes("error=")
+      ) {
+        setErrorMessage("Invalid or expired code. Please try again.")
+        setOtpCode("")
+      } else {
+        const sessionResponse = await fetch("/api/auth/session")
+        const session = await sessionResponse.json()
+
+        if (session?.user) {
+          window.location.href = callbackUrl
+        } else {
+          setErrorMessage("Invalid or expired code. Please try again.")
+          setOtpCode("")
+        }
       }
     } catch (error) {
-      console.error("Sign in error:", error)
+      console.error("Verify OTP error:", error)
       setErrorMessage("An unexpected error occurred. Please try again.")
+    } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleEditEmail = () => {
+    setAuthStep("email")
+    setOtpCode("")
+    setErrorMessage("")
+    setSuccessMessage("")
+  }
+
+  const handleResendOTP = async () => {
+    if (resendCountdown > 0) return
+    await handleRequestOTP(new Event("submit") as any)
   }
 
   const handleGoogleSignIn = async () => {
@@ -84,8 +185,8 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="from-background to-secondary flex min-h-screen items-center justify-center bg-gradient-to-br px-4">
-      <div className="w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-lg">
+    <div className="bg-background flex min-h-screen items-center justify-center px-4">
+      <div className="bg-card border-border w-full max-w-md space-y-8 rounded-xl border p-8 shadow-lg">
         <div>
           <h2 className="text-foreground mt-6 text-center text-3xl font-extrabold">
             Sign in to KeyFate
@@ -101,66 +202,92 @@ export default function SignInPage() {
           </div>
         )}
 
+        {successMessage && (
+          <div className="border-accent bg-accent/10 text-accent-foreground whitespace-pre-line rounded-lg border px-4 py-3 text-center text-sm">
+            {successMessage}
+          </div>
+        )}
+
         <div className="mt-8 space-y-6">
-          {/* Credentials Sign In */}
-          <form onSubmit={handleCredentialsSignIn} className="space-y-4">
-            <div>
-              <label
-                htmlFor="email"
-                className="text-foreground block text-sm font-medium"
-              >
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="border-input text-foreground placeholder-muted-foreground focus:border-primary focus:ring-primary relative mt-1 block w-full appearance-none rounded-lg border px-3 py-2 focus:z-10 focus:outline-none sm:text-sm"
-                placeholder="you@example.com"
-                disabled={isLoading}
-              />
-            </div>
+          {authStep === "email" ? (
+            <form onSubmit={handleRequestOTP} className="space-y-4">
+              <div>
+                <label
+                  htmlFor="email"
+                  className="text-foreground block text-sm font-medium"
+                >
+                  Email address
+                </label>
+                <input
+                  ref={emailInputRef}
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="border-input text-foreground placeholder-muted-foreground focus:border-primary focus:ring-primary relative mt-1 block w-full appearance-none rounded-lg border px-3 py-2 focus:z-10 focus:outline-none sm:text-sm"
+                  placeholder="you@example.com"
+                  disabled={isLoading}
+                />
+              </div>
 
-            <div>
-              <label
-                htmlFor="password"
-                className="text-foreground block text-sm font-medium"
-              >
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="border-input text-foreground placeholder-muted-foreground focus:border-primary focus:ring-primary relative mt-1 block w-full appearance-none rounded-lg border px-3 py-2 focus:z-10 focus:outline-none sm:text-sm"
-                placeholder="Password"
+              <button
+                type="submit"
                 disabled={isLoading}
-              />
-            </div>
+                className="bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-ring group relative flex w-full justify-center rounded-lg border border-transparent px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isLoading ? "Sending code..." : "Continue with Email"}
+              </button>
+            </form>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <label className="text-foreground mb-2 block text-sm font-medium">
+                  Enter 6-digit code
+                </label>
+                <OTPInput
+                  length={6}
+                  onComplete={handleVerifyOTP}
+                  onChange={setOtpCode}
+                  disabled={isLoading}
+                />
+              </div>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="from-primary to-primary hover:from-primary hover:to-primary focus:ring-primary group relative flex w-full justify-center rounded-lg border border-transparent bg-gradient-to-r px-4 py-2 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isLoading ? "Signing in..." : "Sign in"}
-            </button>
-          </form>
+              <div className="text-center">
+                {resendCountdown > 0 ? (
+                  <p className="text-muted-foreground text-sm">
+                    Resend code in {resendCountdown}s
+                  </p>
+                ) : (
+                  <button
+                    onClick={handleResendOTP}
+                    disabled={isLoading}
+                    className="text-primary hover:text-primary text-sm font-medium disabled:opacity-50"
+                  >
+                    Resend code
+                  </button>
+                )}
+              </div>
+
+              <div className="border-muted bg-muted text-muted-foreground rounded-lg border px-4 py-3 text-sm">
+                <p className="font-medium">Didn't receive the code?</p>
+                <ul className="mt-1 list-inside list-disc space-y-1 text-xs">
+                  <li>Check your spam folder</li>
+                  <li>Codes expire after 10 minutes</li>
+                  <li>Wait 60 seconds before requesting a new code</li>
+                </ul>
+              </div>
+            </div>
+          )}
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <div className="border-input w-full border-t" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="text-muted-foreground bg-white px-2">
+              <span className="text-muted-foreground bg-card px-2">
                 Or continue with
               </span>
             </div>
@@ -170,7 +297,7 @@ export default function SignInPage() {
           <button
             onClick={handleGoogleSignIn}
             disabled={isLoading}
-            className="border-input text-foreground hover:bg-muted/50 focus:ring-primary flex w-full items-center justify-center rounded-lg border bg-white px-4 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="border-input text-foreground hover:bg-secondary focus:ring-ring bg-card flex w-full items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <svg
               className="mr-2 h-5 w-5"
@@ -199,17 +326,13 @@ export default function SignInPage() {
           </button>
         </div>
 
-        <div className="text-center">
-          <p className="text-muted-foreground text-sm">
-            Don't have an account?{" "}
-            <Link
-              href={`/auth/signup${callbackUrl !== "/dashboard" ? `?next=${encodeURIComponent(callbackUrl)}` : ""}`}
-              className="text-primary hover:text-primary font-medium"
-            >
-              Sign up
-            </Link>
-          </p>
-        </div>
+        {authStep === "email" && (
+          <div className="text-center">
+            <p className="text-muted-foreground text-sm">
+              New to KeyFate? Just enter your email to get started.
+            </p>
+          </div>
+        )}
 
         <p className="text-muted-foreground mt-4 text-center text-xs">
           By signing in, you agree to our{" "}

@@ -1,5 +1,5 @@
 import { getDatabase } from "@/lib/db/drizzle"
-import { users } from "@/lib/db/schema"
+import { users, type UserInsert } from "@/lib/db/schema"
 import { logLogin } from "@/lib/services/audit-logger"
 import { eq } from "drizzle-orm"
 import CredentialsProvider from "next-auth/providers/credentials"
@@ -9,6 +9,7 @@ import { assertValidOAuthConfig } from "./auth/oauth-config-validator"
 import { validatePassword } from "./auth/password"
 import { authenticateUser } from "./auth/users"
 import { validateAuthEnvironment } from "./auth/validate-env"
+import { validateOTPToken } from "./auth/otp"
 
 // Validate auth environment and OAuth configuration at startup (skip in test environment)
 if (process.env.NODE_ENV !== "test") {
@@ -79,10 +80,10 @@ if (
 
 // Email provider removed - using only Google OAuth and credentials authentication
 
-// Add Credentials provider for email+password authentication (always available)
 providers.push(
   CredentialsProvider({
-    name: "credentials",
+    id: "credentials",
+    name: "OTP Login",
     credentials: {
       email: {
         label: "Email",
@@ -92,6 +93,14 @@ providers.push(
       password: {
         label: "Password",
         type: "password",
+      },
+      otpCode: {
+        label: "OTP Code",
+        type: "text",
+      },
+      action: {
+        label: "Action",
+        type: "text",
       },
       verificationToken: {
         label: "Verification Token",
@@ -103,7 +112,6 @@ providers.push(
       },
     },
     async authorize(credentials) {
-      // Check if this is a verification token auto-login
       if (credentials?.verificationToken && credentials?.userId) {
         try {
           const db = await getDatabase()
@@ -128,37 +136,91 @@ providers.push(
         }
       }
 
-      // Standard email/password authentication
-      if (!credentials?.email || !credentials?.password) {
+      if (!credentials?.email) {
         return null
       }
 
-      // Validate password format
-      const passwordValidation = validatePassword(credentials.password)
-      if (!passwordValidation.isValid) {
-        return null
-      }
+      const action = credentials.action || "otp"
 
-      try {
-        const result = await authenticateUser({
-          email: credentials.email,
-          password: credentials.password,
-        })
+      if (action === "otp" && credentials.otpCode) {
+        try {
+          const validationResult = await validateOTPToken(
+            credentials.email,
+            credentials.otpCode,
+          )
 
-        if (result.success && result.user) {
-          return {
-            id: result.user.id,
-            email: result.user.email,
-            name: result.user.name,
-            image: result.user.image,
+          if (!validationResult.success || !validationResult.valid) {
+            return null
           }
+
+          const db = await getDatabase()
+          let userResult = await db
+            .select()
+            .from(users)
+            .where(eq(users.email, credentials.email.toLowerCase().trim()))
+            .limit(1)
+
+          let user
+          if (userResult.length === 0) {
+            const newUsers = await db
+              .insert(users)
+              .values({
+                id: crypto.randomUUID(),
+                email: credentials.email.toLowerCase().trim(),
+                emailVerified: new Date(),
+                password: null,
+                name: null,
+                image: null,
+              } as UserInsert)
+              .returning()
+            user = newUsers[0]
+          } else {
+            user = userResult[0]
+          }
+
+          await logLogin(user.id, { method: "otp" })
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            image: user.image,
+          }
+        } catch (error) {
+          console.error("OTP authentication error:", error)
+          return null
+        }
+      }
+
+      if (action === "password" && credentials.password) {
+        const passwordValidation = validatePassword(credentials.password)
+        if (!passwordValidation.isValid) {
+          return null
         }
 
-        return null
-      } catch (error) {
-        console.error("Credentials authentication error:", error)
-        return null
+        try {
+          const result = await authenticateUser({
+            email: credentials.email,
+            password: credentials.password,
+          })
+
+          if (result.success && result.user) {
+            return {
+              id: result.user.id,
+              email: result.user.email,
+              name: result.user.name,
+              image: result.user.image,
+            }
+          }
+
+          return null
+        } catch (error) {
+          console.error("Password authentication error:", error)
+          return null
+        }
       }
+
+      return null
     },
   }),
 )
@@ -166,8 +228,8 @@ providers.push(
 const baseAuthConfig = {
   providers,
   pages: {
-    signIn: "/sign-in",
-    error: "/sign-in",
+    signIn: "/auth/signin",
+    error: "/auth/signin",
   },
   callbacks: {
     /**
@@ -273,19 +335,17 @@ const baseAuthConfig = {
             .limit(1)
 
           if (existingUser.length === 0) {
-            // Create new user for Google OAuth
-            const userData = {
-              id: crypto.randomUUID(),
+            const userId = crypto.randomUUID()
+            await db.insert(users).values({
+              id: userId,
               email: normalizedEmail,
               name: googleProfile.name || null,
               image: googleProfile.picture || null,
-              emailVerified: new Date(), // Google email is verified
-              password: null, // No password for OAuth users
-            }
+              emailVerified: new Date(),
+              password: null,
+            } as UserInsert)
 
-            await db.insert(users).values(userData)
-
-            await logLogin(userData.id, {
+            await logLogin(userId, {
               provider: "google",
               email: normalizedEmail,
               newUser: true,
@@ -364,7 +424,6 @@ const baseAuthConfig = {
           console.error("[Auth] Error looking up user in JWT callback:", error)
         }
       } else if (user) {
-        // For credentials provider, use the user ID directly
         token.id = user.id
         // Fetch email verification status from database
         try {
