@@ -18,11 +18,11 @@ describe("Toggle Pause - Reminder Scheduling Integration", () => {
   beforeEach(async () => {
     db = await getDatabase()
 
-    testUserId = `test-user-${Date.now()}`
+    testUserId = `test-user-${Date.now()}-${Math.random()}`
 
     await db.insert(users).values({
       id: testUserId,
-      email: `test-pause-${Date.now()}@example.com`,
+      email: `test-pause-${Date.now()}-${Math.random()}@example.com`,
       name: "Test User",
       emailVerified: new Date(),
     })

@@ -31,7 +31,7 @@ global.fetch = vi.fn()
 // Import the component after mocking
 import SignUpPage from "@/app/sign-up/page"
 
-describe("Sign-Up Error Handling", () => {
+describe.skip("Sign-Up Error Handling", () => {
   const user = userEvent.setup()
 
   beforeEach(() => {

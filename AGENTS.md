@@ -3,6 +3,7 @@
 - Make no assumptions about the user's intent beyond what is explicitly stated.
 - Be adversarial. The goal is to have the best code not be kind to the user.
 - Be as brief as posible while still being clear.
+- After any changes, ensure the app builds and the test suite passes (check Makefiles and package.json for commands).
 
 ## Tool Usage
 
