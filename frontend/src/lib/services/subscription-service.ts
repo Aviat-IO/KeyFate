@@ -69,6 +69,8 @@ class SubscriptionService {
         tier: data.tierName,
         provider: data.provider,
         status: data.status,
+        resourceType: "subscription",
+        resourceId: `${data.provider}:${data.tierName}`,
       })
 
       // Send confirmation email (don't await to avoid blocking)
@@ -119,6 +121,10 @@ class SubscriptionService {
       await logSubscriptionChanged(userId, {
         action: "updated",
         ...data,
+        resourceType: "subscription",
+        resourceId: data.tierName
+          ? `${data.provider || "unknown"}:${data.tierName}`
+          : undefined,
       })
 
       return subscription
@@ -719,6 +725,8 @@ class SubscriptionService {
         amount: data.amount,
         status: data.status,
         paymentId: data.providerPaymentId,
+        resourceType: "payment",
+        resourceId: `${data.provider}:${data.providerPaymentId}`,
       })
 
       return payment
@@ -794,6 +802,8 @@ class SubscriptionService {
       await logSubscriptionChanged(userId, {
         action: "downgrade_scheduled",
         scheduledFor: scheduledDowngradeAt,
+        resourceType: "subscription",
+        resourceId: `downgrade:free`,
       })
 
       return updatedSubscription
@@ -841,6 +851,8 @@ class SubscriptionService {
 
       await logSubscriptionChanged(userId, {
         action: "downgrade_cancelled",
+        resourceType: "subscription",
+        resourceId: "downgrade:cancelled",
       })
 
       return updatedSubscription
@@ -876,6 +888,8 @@ class SubscriptionService {
         action: "downgrade_executed",
         from: oldTierName,
         to: "free",
+        resourceType: "subscription",
+        resourceId: `${oldTierName}:free`,
       })
 
       return updatedSubscription
