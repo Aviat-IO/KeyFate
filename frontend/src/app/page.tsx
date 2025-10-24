@@ -86,7 +86,7 @@ export default function Home() {
 
           <div className="animate-in fade-in slide-in-from-bottom-10 delay-600 mb-16 flex flex-col items-center justify-center gap-4 duration-700 sm:flex-row">
             <Button size="lg" className="px-8 py-6 text-lg" asChild>
-              <Link href="/sign-up">
+              <Link href="/auth/signin">
                 Start Protecting Your Secrets
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
@@ -427,7 +427,7 @@ export default function Home() {
 
             <div className="mb-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Button size="lg" className="px-8 py-6 text-lg" asChild>
-                <Link href="/sign-up">
+                <Link href="/auth/signin">
                   Get Started Free
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>

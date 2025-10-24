@@ -56,6 +56,13 @@ interface PasswordResetTemplateData {
   supportEmail?: string
 }
 
+interface OTPTemplateData {
+  code: string
+  expirationMinutes: number
+  userName?: string
+  supportEmail?: string
+}
+
 interface BaseTemplateData {
   title: string
   content: string
@@ -78,7 +85,7 @@ interface ValidationResult {
  * Uses table-based layout for maximum email client compatibility
  */
 export function renderBaseTemplate(data: BaseTemplateData): EmailTemplate {
-  const companyName = process.env.NEXT_PUBLIC_COMPANY || "Dead Man's Switch"
+  const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
   const currentYear = new Date().getFullYear()
 
   const html = `
@@ -188,7 +195,7 @@ This is an automated message. Please do not reply to this email.
 export function renderVerificationTemplate(
   data: VerificationTemplateData,
 ): EmailTemplate {
-  const companyName = process.env.NEXT_PUBLIC_COMPANY || "Dead Man's Switch"
+  const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
   const userName = data.userName || "there"
   const supportEmail = data.supportEmail || getSupportEmail()
 
@@ -408,6 +415,54 @@ ${data.secretContent}
 }
 
 /**
+ * OTP authentication email template
+ */
+export function renderOTPTemplate(data: OTPTemplateData): EmailTemplate {
+  const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
+  const userName = data.userName || "there"
+  const supportEmail = data.supportEmail || getSupportEmail()
+
+  const content = `
+    <p>Hi ${userName},</p>
+    <p>Your verification code for signing in to ${companyName} is:</p>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <div style="display: inline-block; font-size: 48px; font-weight: bold; letter-spacing: 8px; color: #2563eb; background: #f0f7ff; padding: 20px 30px; border-radius: 8px; border: 2px solid #2563eb;">
+        ${data.code}
+      </div>
+    </div>
+
+    <div class="warning">
+      <p><strong>This code expires in ${data.expirationMinutes} minutes.</strong></p>
+      <p>For security, this code can only be used once.</p>
+    </div>
+
+    <div style="background-color: #fff3cd; padding: 15px; border-radius: 6px; margin: 15px 0;">
+      <p style="margin: 0 0 5px 0; font-weight: bold;">Security Notice</p>
+      <ul style="margin: 5px 0 0 0; padding-left: 20px;">
+        <li>Never share this code with anyone</li>
+        <li>KeyFate staff will never ask you for this code</li>
+        <li>If you didn't request this code, please ignore this email</li>
+      </ul>
+    </div>
+
+    <p style="font-size: 12px; color: #666; margin-top: 30px;">Having trouble signing in? Contact us at <a href="mailto:${supportEmail}">${supportEmail}</a></p>
+  `
+
+  const baseTemplate = renderBaseTemplate({
+    title: `Your sign-in code`,
+    content,
+    footerText: `If you didn't request this code, you can safely ignore this email.`,
+  })
+
+  return {
+    subject: `Your ${companyName} sign-in code: ${data.code}`,
+    html: baseTemplate.html,
+    text: baseTemplate.text,
+  }
+}
+
+/**
  * Password reset email template
  */
 export function renderPasswordResetTemplate(
@@ -460,7 +515,12 @@ export function renderPasswordResetTemplate(
  * Validate template data
  */
 export function validateTemplateData(
-  templateType: "verification" | "reminder" | "disclosure" | "password-reset",
+  templateType:
+    | "verification"
+    | "reminder"
+    | "disclosure"
+    | "password-reset"
+    | "otp",
   data: any,
 ): ValidationResult {
   const errors: string[] = []
@@ -516,6 +576,24 @@ export function validateTemplateData(
     case "password-reset":
       if (!data.resetUrl) {
         errors.push("resetUrl is required")
+      }
+      if (data.supportEmail && !emailRegex.test(data.supportEmail)) {
+        errors.push("Invalid email format in supportEmail")
+      }
+      break
+
+    case "otp":
+      if (!data.code) {
+        errors.push("code is required")
+      }
+      if (data.code && !/^\d{6}$/.test(data.code)) {
+        errors.push("code must be a 6-digit number")
+      }
+      if (
+        !data.expirationMinutes ||
+        typeof data.expirationMinutes !== "number"
+      ) {
+        errors.push("expirationMinutes is required and must be a number")
       }
       if (data.supportEmail && !emailRegex.test(data.supportEmail)) {
         errors.push("Invalid email format in supportEmail")

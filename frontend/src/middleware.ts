@@ -18,6 +18,7 @@ export default withAuth(
       "/api/auth/verify-email-nextauth",
       "/api/auth/resend-verification",
       "/api/auth/verification-status",
+      "/auth/signin",
       "/sign-in",
       "/sign-up",
       "/auth/error",
@@ -26,7 +27,7 @@ export default withAuth(
     ]
 
     // If user is authenticated and trying to access sign-in page, redirect to dashboard
-    if (token && pathname === "/sign-in") {
+    if (token && (pathname === "/sign-in" || pathname === "/auth/signin")) {
       const url = request.nextUrl.clone()
       url.pathname = "/dashboard"
       return NextResponse.redirect(url)
@@ -59,6 +60,7 @@ export default withAuth(
         // Public routes that don't require authentication
         const publicRoutes = [
           "/",
+          "/auth/signin",
           "/sign-in",
           "/sign-up",
           "/auth/verify-email",
@@ -106,8 +108,8 @@ export default withAuth(
       },
     },
     pages: {
-      signIn: "/sign-in",
-      error: "/sign-in",
+      signIn: "/auth/signin",
+      error: "/auth/signin",
     },
     secret: process.env.NEXTAUTH_SECRET,
   },
