@@ -163,23 +163,36 @@ export async function logRecipientRemoved(
   })
 }
 
-export async function logLogin(userId: string, details?: Record<string, unknown>) {
+export async function logLogin(
+  userId: string,
+  details?: Record<string, unknown> & {
+    resourceType?: string
+    resourceId?: string
+  },
+) {
   await logAudit({
     userId,
     eventType: "login",
     eventCategory: "authentication",
+    resourceType: details?.resourceType,
+    resourceId: details?.resourceId,
     details,
   })
 }
 
 export async function logSubscriptionChanged(
   userId: string,
-  details?: Record<string, unknown>,
+  details?: Record<string, unknown> & {
+    resourceType?: string
+    resourceId?: string
+  },
 ) {
   await logAudit({
     userId,
     eventType: "subscription_changed",
     eventCategory: "subscriptions",
+    resourceType: details?.resourceType,
+    resourceId: details?.resourceId,
     details,
   })
 }

@@ -178,8 +178,6 @@ providers.push(
             user = userResult[0]
           }
 
-          await logLogin(user.id, { method: "otp" })
-
           return {
             id: user.id,
             email: user.email,
@@ -349,12 +347,16 @@ const baseAuthConfig = {
               provider: "google",
               email: normalizedEmail,
               newUser: true,
+              resourceType: "auth_method",
+              resourceId: `google:${normalizedEmail}`,
             })
           } else {
             await logLogin(existingUser[0].id, {
               provider: "google",
               email: normalizedEmail,
               newUser: false,
+              resourceType: "auth_method",
+              resourceId: `google:${normalizedEmail}`,
             })
           }
 
@@ -368,11 +370,12 @@ const baseAuthConfig = {
         }
       }
 
-      // Allow credentials provider (we handle authentication in authorize function)
       if (account?.provider === "credentials" && user?.id) {
         await logLogin(user.id, {
           provider: "credentials",
           email: user.email || undefined,
+          resourceType: "auth_method",
+          resourceId: user.email ? `otp:${user.email}` : "otp:unknown",
         })
         return true
       }
