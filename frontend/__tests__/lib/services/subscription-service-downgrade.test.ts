@@ -97,6 +97,8 @@ describe("SubscriptionService - Downgrade Methods (TDD)", () => {
       expect(logSubscriptionChanged).toHaveBeenCalledWith("user-123", {
         action: "downgrade_scheduled",
         scheduledFor: expect.any(Date),
+        resourceType: "subscription",
+        resourceId: "downgrade:free",
       })
       expect(result.scheduledDowngradeAt).toBeDefined()
     })
@@ -231,6 +233,8 @@ describe("SubscriptionService - Downgrade Methods (TDD)", () => {
       )
       expect(logSubscriptionChanged).toHaveBeenCalledWith("user-123", {
         action: "downgrade_cancelled",
+        resourceType: "subscription",
+        resourceId: "downgrade:cancelled",
       })
       expect(result.scheduledDowngradeAt).toBeNull()
     })
@@ -318,6 +322,8 @@ describe("SubscriptionService - Downgrade Methods (TDD)", () => {
         action: "downgrade_executed",
         from: expect.any(String),
         to: "free",
+        resourceType: "subscription",
+        resourceId: expect.stringMatching(/:free$/),
       })
     })
 

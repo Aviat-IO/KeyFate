@@ -21,11 +21,11 @@ describe("Check-In Endpoint - Reminder Rescheduling Integration", () => {
   beforeEach(async () => {
     db = await getDatabase()
 
-    testUserId = `test-user-${Date.now()}`
+    testUserId = `test-user-${Date.now()}-${Math.random()}`
 
     await db.insert(users).values({
       id: testUserId,
-      email: `test-checkin-${Date.now()}@example.com`,
+      email: `test-checkin-${Date.now()}-${Math.random()}@example.com`,
       name: "Test User",
       emailVerified: new Date(),
     })

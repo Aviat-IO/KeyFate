@@ -4,83 +4,100 @@ import { formatGranularTime } from "@/lib/time-utils"
 describe("formatGranularTime", () => {
   describe("future dates - days", () => {
     it("formats >24 hours as days (plural)", () => {
-      const future = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) // 3 days
+      const now = new Date()
+      const future = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000) // 3 days
       expect(formatGranularTime(future)).toBe("3 days")
     })
 
     it("formats exactly 24 hours as 1 day (singular)", () => {
-      const future = new Date(Date.now() + 24 * 60 * 60 * 1000) // exactly 24 hours
+      const now = new Date()
+      const future = new Date(now.getTime() + 24 * 60 * 60 * 1000) // exactly 24 hours
       expect(formatGranularTime(future)).toBe("1 day")
     })
 
     it("formats 25 hours as 1 day", () => {
-      const future = new Date(Date.now() + 25 * 60 * 60 * 1000) // 25 hours
+      const now = new Date()
+      const future = new Date(now.getTime() + 25 * 60 * 60 * 1000) // 25 hours
       expect(formatGranularTime(future)).toBe("1 day")
     })
 
     it("formats 48 hours as 2 days", () => {
-      const future = new Date(Date.now() + 48 * 60 * 60 * 1000) // 48 hours
+      const now = new Date()
+      const future = new Date(now.getTime() + 48 * 60 * 60 * 1000) // 48 hours
       expect(formatGranularTime(future)).toBe("2 days")
     })
   })
 
   describe("future dates - hours", () => {
     it("formats 1-24 hours as hours", () => {
-      const future = new Date(Date.now() + 5 * 60 * 60 * 1000) // 5 hours
+      const now = new Date()
+      const future = new Date(now.getTime() + 5 * 60 * 60 * 1000) // 5 hours
       expect(formatGranularTime(future)).toBe("5 hours")
     })
 
     it("formats exactly 1 hour (singular)", () => {
-      const future = new Date(Date.now() + 1 * 60 * 60 * 1000) // exactly 1 hour
+      const now = new Date()
+      const future = new Date(now.getTime() + 1 * 60 * 60 * 1000) // exactly 1 hour
       expect(formatGranularTime(future)).toBe("1 hour")
     })
 
     it("formats 23 hours as hours (not days)", () => {
-      const future = new Date(Date.now() + 23 * 60 * 60 * 1000) // 23 hours
+      const now = new Date()
+      const future = new Date(now.getTime() + 23 * 60 * 60 * 1000) // 23 hours
       expect(formatGranularTime(future)).toBe("23 hours")
     })
 
     it("formats 23.5 hours as 23 hours (not 1 day) - CRITICAL BUG TEST", () => {
-      const future = new Date(Date.now() + 23.5 * 60 * 60 * 1000) // 23 hours 30 minutes
+      const now = new Date()
+      const future = new Date(now.getTime() + 23.5 * 60 * 60 * 1000) // 23 hours 30 minutes
       expect(formatGranularTime(future)).toBe("23 hours")
     })
 
     it("formats 23 hours 59 minutes as 23 hours (not 1 day)", () => {
-      const future = new Date(Date.now() + 23 * 60 * 60 * 1000 + 59 * 60 * 1000) // 23h 59m
+      const now = new Date()
+      const future = new Date(
+        now.getTime() + 23 * 60 * 60 * 1000 + 59 * 60 * 1000,
+      ) // 23h 59m
       expect(formatGranularTime(future)).toBe("23 hours")
     })
 
     it("formats 90 minutes as 1 hour", () => {
-      const future = new Date(Date.now() + 90 * 60 * 1000) // 90 minutes
+      const now = new Date()
+      const future = new Date(now.getTime() + 90 * 60 * 1000) // 90 minutes
       expect(formatGranularTime(future)).toBe("1 hour")
     })
   })
 
   describe("future dates - minutes", () => {
     it("formats <1 hour as minutes", () => {
-      const future = new Date(Date.now() + 45 * 60 * 1000) // 45 minutes
+      const now = new Date()
+      const future = new Date(now.getTime() + 45 * 60 * 1000) // 45 minutes
       expect(formatGranularTime(future)).toBe("45 minutes")
     })
 
     it("formats exactly 1 minute (singular)", () => {
-      const future = new Date(Date.now() + 1 * 60 * 1000) // exactly 1 minute
+      const now = new Date()
+      const future = new Date(now.getTime() + 1 * 60 * 1000) // exactly 1 minute
       expect(formatGranularTime(future)).toBe("1 minute")
     })
 
     it("formats 59 minutes as minutes (not hours)", () => {
-      const future = new Date(Date.now() + 59 * 60 * 1000) // 59 minutes
+      const now = new Date()
+      const future = new Date(now.getTime() + 59 * 60 * 1000) // 59 minutes
       expect(formatGranularTime(future)).toBe("59 minutes")
     })
 
     it("formats 0 minutes as 'less than a minute'", () => {
-      const future = new Date(Date.now() + 30 * 1000) // 30 seconds
+      const now = new Date()
+      const future = new Date(now.getTime() + 30 * 1000) // 30 seconds
       expect(formatGranularTime(future)).toBe("less than a minute")
     })
   })
 
   describe("edge cases", () => {
     it("accepts string dates", () => {
-      const future = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
+      const now = new Date()
+      const future = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000)
       const futureStr = future.toISOString()
       const result = formatGranularTime(futureStr)
       // Should be "2 days" or "1 day" depending on exact timing
@@ -95,17 +112,20 @@ describe("formatGranularTime", () => {
 
   describe("past dates (for 'ago' display)", () => {
     it("formats past dates with 'ago' suffix - days", () => {
-      const past = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) // 3 days ago
+      const now = new Date()
+      const past = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000) // 3 days ago
       expect(formatGranularTime(past)).toBe("3 days ago")
     })
 
     it("formats past dates with 'ago' suffix - hours", () => {
-      const past = new Date(Date.now() - 5 * 60 * 60 * 1000) // 5 hours ago
+      const now = new Date()
+      const past = new Date(now.getTime() - 5 * 60 * 60 * 1000) // 5 hours ago
       expect(formatGranularTime(past)).toBe("5 hours ago")
     })
 
     it("formats past dates with 'ago' suffix - minutes", () => {
-      const past = new Date(Date.now() - 45 * 60 * 1000) // 45 minutes ago
+      const now = new Date()
+      const past = new Date(now.getTime() - 45 * 60 * 1000) // 45 minutes ago
       expect(formatGranularTime(past)).toBe("45 minutes ago")
     })
   })
@@ -136,7 +156,8 @@ describe("formatGranularTime", () => {
       ]
 
       testCases.forEach(({ hours, expected }) => {
-        const future = new Date(Date.now() + hours * 60 * 60 * 1000)
+        const now = new Date()
+        const future = new Date(now.getTime() + hours * 60 * 60 * 1000)
         expect(formatGranularTime(future)).toBe(expected)
       })
     })
