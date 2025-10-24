@@ -64,7 +64,7 @@ export function NavBar() {
   const isProUser = userTier === "pro"
 
   const handleSignOut = async () => {
-    await signOut({ callbackUrl: "/sign-in" })
+    await signOut({ callbackUrl: "/auth/signin" })
   }
 
   return (
@@ -171,10 +171,10 @@ export function NavBar() {
                   asChild
                   className="hidden md:flex"
                 >
-                  <Link href="/sign-in">Sign In</Link>
+                  <Link href="/auth/signin">Sign In</Link>
                 </Button>
                 <Button variant="default" size="sm" asChild>
-                  <Link href="/sign-up">Sign Up</Link>
+                  <Link href="/auth/signin">Sign Up</Link>
                 </Button>
               </>
             )}
@@ -309,7 +309,7 @@ export function NavBar() {
                         <li>
                           <NavigationMenuLink asChild>
                             <Link
-                              href="/sign-in"
+                              href="/auth/signin"
                               className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground block select-none rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors"
                             >
                               Sign In

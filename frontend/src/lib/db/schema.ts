@@ -80,6 +80,10 @@ export const emailFailureProviderEnum = pgEnum("email_failure_provider", [
   "console-dev",
   "resend",
 ])
+export const tokenPurposeEnum = pgEnum("token_purpose", [
+  "email_verification",
+  "authentication",
+])
 export const auditEventTypeEnum = pgEnum("audit_event_type", [
   "secret_created",
   "secret_edited",
@@ -157,6 +161,8 @@ export const verificationTokens = pgTable(
     identifier: text("identifier").notNull(),
     token: text("token").notNull().unique(),
     expires: timestamp("expires", { mode: "date" }).notNull(),
+    purpose: tokenPurposeEnum("purpose").default("email_verification"),
+    attemptCount: integer("attempt_count").default(0),
   },
   (vt) => ({
     compoundKey: primaryKey(vt.identifier, vt.token),
@@ -172,6 +178,25 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
   expires: timestamp("expires", { mode: "date" }).notNull(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 })
+
+export const otpRateLimits = pgTable(
+  "otp_rate_limits",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    email: text("email").notNull(),
+    requestCount: integer("request_count").notNull().default(1),
+    windowStart: timestamp("window_start", { mode: "date" }).notNull(),
+    windowEnd: timestamp("window_end", { mode: "date" }).notNull(),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+  },
+  (table) => ({
+    emailWindowIdx: index("idx_otp_rate_limits_email_window").on(
+      table.email,
+      table.windowEnd,
+    ),
+  }),
+)
 
 // Application Tables
 export const secrets = pgTable("secrets", {
@@ -494,3 +519,5 @@ export type Session = typeof sessions.$inferSelect
 export type VerificationToken = typeof verificationTokens.$inferSelect
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect
 export type PasswordResetTokenInsert = typeof passwordResetTokens.$inferInsert
+export type OTPRateLimit = typeof otpRateLimits.$inferSelect
+export type OTPRateLimitInsert = typeof otpRateLimits.$inferInsert
