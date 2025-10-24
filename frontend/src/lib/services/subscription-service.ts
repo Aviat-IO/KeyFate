@@ -92,6 +92,13 @@ class SubscriptionService {
   async updateSubscription(userId: string, data: UpdateSubscriptionData) {
     const db = await getDatabase()
     try {
+      // Get current subscription to determine provider
+      const [currentSub] = await db
+        .select()
+        .from(userSubscriptions)
+        .where(eq(userSubscriptions.userId, userId))
+        .limit(1)
+
       // Get tier ID if tier name is provided
       let tierId: string | undefined
       if (data.tierName) {
@@ -123,7 +130,7 @@ class SubscriptionService {
         ...data,
         resourceType: "subscription",
         resourceId: data.tierName
-          ? `${data.provider || "unknown"}:${data.tierName}`
+          ? `${currentSub?.provider || "unknown"}:${data.tierName}`
           : undefined,
       })
 

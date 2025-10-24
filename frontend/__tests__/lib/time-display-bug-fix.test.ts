@@ -118,9 +118,6 @@ describe("Time Display Bug Fix - Issue #23hours-shows-as-1day", () => {
 
   describe("Edge Cases - Boundary Conditions", () => {
     it("handles the critical 23-24 hour boundary correctly", () => {
-      const now = new Date()
-
-      // Test every 15 minutes around the 24-hour boundary
       const testCases = [
         { hours: 22.75, expected: "22 hours" }, // 22h 45m
         { hours: 23, expected: "23 hours" }, // 23h 0m
@@ -132,6 +129,7 @@ describe("Time Display Bug Fix - Issue #23hours-shows-as-1day", () => {
       ]
 
       testCases.forEach(({ hours, expected }) => {
+        const now = new Date()
         const future = new Date(now.getTime() + hours * 60 * 60 * 1000)
         const result = formatGranularTime(future)
         expect(result).toBe(expected)
