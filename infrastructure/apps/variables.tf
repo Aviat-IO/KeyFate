@@ -55,13 +55,13 @@ variable "memory_limit" {
 variable "cpu_boost" {
   description = "Enable CPU boost for faster cold starts"
   type        = bool
-  default     = false  # Disable to save costs (adds ~20% to CPU costs)
+  default     = false  # Dev: false, Prod: true
 }
 
 variable "max_instances" {
   description = "Maximum number of instances"
   type        = number
-  default     = 10
+  default     = 3  # Dev: 3, Prod: 5
 }
 
 variable "min_instances" {
@@ -79,7 +79,7 @@ variable "allow_unauthenticated" {
 variable "deletion_protection" {
   description = "Enable deletion protection"
   type        = bool
-  default     = true
+  default     = false  # Dev: false, Prod: true
 }
 
 # Public environment variables (NEXT_PUBLIC_*)

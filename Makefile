@@ -22,6 +22,8 @@ help:
 	@echo "  make test-db-connection - Quick database connection test"
 	@echo "  make db-proxy-staging - Connect to staging Cloud SQL via proxy (port 54321)"
 	@echo "  make db-proxy-prod    - Connect to production Cloud SQL via proxy (port 54321)"
+	@echo "  make sync-doppler-dev - Sync Doppler secrets to dev terraform.tfvars"
+	@echo "  make sync-doppler-prod - Sync Doppler secrets to prod terraform.tfvars"
 	@echo ""
 
 # Complete local environment setup
@@ -263,3 +265,16 @@ db-proxy-prod:
 	@echo "🌐 Proxy will be available at: localhost:54321"
 	@echo ""
 	@cloud-sql-proxy --port=54321 keyfate-dev:us-central1:keyfate-postgres-prod
+
+# Sync Doppler secrets to terraform.tfvars
+sync-doppler-dev:
+	@echo "⬇️  Downloading Doppler secrets for dev environment..."
+	@cd infrastructure/terragrunt/dev && doppler secrets download -p keyfate -c stg --format json --no-file | jq -r 'to_entries | map(select(.key | startswith("DOPPLER_") | not)) | map(.value as $$val | (try ($$val | fromjson) catch $$val) as $$parsed | if ($$parsed | type) == "object" then "\(.key | ascii_downcase) = {\n" + ($$parsed | to_entries | map("  \"\(.key)\" = \"\(.value)\"") | join("\n")) + "\n}" else "\(.key | ascii_downcase) = \($$val | tojson)" end) | .[]' > terraform.tfvars
+	@echo "✅ Secrets downloaded to infrastructure/terragrunt/dev/terraform.tfvars"
+	@echo "💡 Note: Environment-specific overrides (cpu_boost, max_instances, deletion_protection, custom_domain) should be set in Doppler"
+
+sync-doppler-prod:
+	@echo "⬇️  Downloading Doppler secrets for production environment..."
+	@cd infrastructure/terragrunt/prod && doppler secrets download -p keyfate -c prd --format json --no-file | jq -r 'to_entries | map(select(.key | startswith("DOPPLER_") | not)) | map(.value as $$val | (try ($$val | fromjson) catch $$val) as $$parsed | if ($$parsed | type) == "object" then "\(.key | ascii_downcase) = {\n" + ($$parsed | to_entries | map("  \"\(.key)\" = \"\(.value)\"") | join("\n")) + "\n}" else "\(.key | ascii_downcase) = \($$val | tojson)" end) | .[]' > terraform.tfvars
+	@echo "✅ Secrets downloaded to infrastructure/terragrunt/prod/terraform.tfvars"
+	@echo "💡 Note: Environment-specific overrides (cpu_boost, max_instances, deletion_protection, custom_domain) should be set in Doppler"
