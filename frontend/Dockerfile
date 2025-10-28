@@ -26,6 +26,8 @@ ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 ENV NEXT_PUBLIC_SUPPORT_EMAIL=$NEXT_PUBLIC_SUPPORT_EMAIL
 
+# Build without env validation (secrets are injected at runtime in Cloud Run)
+# The validate-env.js script runs when the app starts (see package.json "start" script)
 RUN pnpm build
 
 # Production image, copy all the files and run next

@@ -7,7 +7,7 @@ dev:
 	doppler run -p keyfate -c dev -- pnpm dev
 
 build: install
-	doppler run -p keyfate -c dev -- pnpm build
+	doppler run -p keyfate -c dev -- pnpm build:local
 
 test:
 	doppler run -p keyfate -c dev -- pnpm test
