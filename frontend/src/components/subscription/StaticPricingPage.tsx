@@ -9,9 +9,15 @@ import { useState } from "react"
 
 interface StaticPricingPageProps {
   className?: string
+  userTier?: string
+  userTierDisplayName?: string
 }
 
-export function StaticPricingPage({ className = "" }: StaticPricingPageProps) {
+export function StaticPricingPage({
+  className = "",
+  userTier,
+  userTierDisplayName,
+}: StaticPricingPageProps) {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">(
     "yearly",
   )
@@ -79,6 +85,8 @@ export function StaticPricingPage({ className = "" }: StaticPricingPageProps) {
           stripeLookupKey={proLookupKey || undefined}
           billingPeriod={billingPeriod}
           isPopular={true}
+          userTier={userTier}
+          userTierDisplayName={userTierDisplayName}
         />
       </div>
 

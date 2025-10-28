@@ -4,11 +4,24 @@ import { NavBar } from "@/components/nav-bar"
 import { PricingPage } from "@/components/subscription/PricingPage"
 import { StaticPricingPage } from "@/components/subscription/StaticPricingPage"
 import { authConfig } from "@/lib/auth-config"
+import { getUserTierInfo } from "@/lib/subscription"
 import { getServerSession } from "next-auth/next"
 
 export default async function Pricing() {
   const session = (await getServerSession(authConfig)) as Session | null
   const user = session?.user
+
+  // Fetch user tier information if user is logged in
+  let userTier: string | undefined
+  let userTierDisplayName: string | undefined
+
+  if (user?.id) {
+    const tierInfo = await getUserTierInfo(user.id)
+    if (tierInfo?.tier?.tiers) {
+      userTier = tierInfo.tier.tiers.name
+      userTierDisplayName = tierInfo.tier.tiers.display_name
+    }
+  }
 
   return (
     <div className="bg-background min-h-screen">
@@ -17,7 +30,14 @@ export default async function Pricing() {
       </div>
 
       <div className="container mx-auto px-4 py-16">
-        {user ? <PricingPage /> : <StaticPricingPage />}
+        {user ? (
+          <PricingPage
+            userTier={userTier}
+            userTierDisplayName={userTierDisplayName}
+          />
+        ) : (
+          <StaticPricingPage />
+        )}
       </div>
 
       <Footer />

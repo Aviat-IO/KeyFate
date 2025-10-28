@@ -19,6 +19,8 @@ interface PricingCardProps {
   billingPeriod?: "monthly" | "yearly"
   isPopular?: boolean
   className?: string
+  userTier?: string
+  userTierDisplayName?: string
 }
 
 export function PricingCard({
@@ -34,6 +36,8 @@ export function PricingCard({
   billingPeriod,
   isPopular = false,
   className = "",
+  userTier,
+  userTierDisplayName,
 }: PricingCardProps) {
   return (
     <Card
@@ -80,6 +84,8 @@ export function PricingCard({
               lookupKey={stripeLookupKey}
               amount={billingPeriod === "monthly" ? 9 : 90}
               interval={billingPeriod === "monthly" ? "monthly" : "yearly"}
+              userTier={userTier}
+              userTierDisplayName={userTierDisplayName}
             />
           ) : (
             <div className="space-y-2">

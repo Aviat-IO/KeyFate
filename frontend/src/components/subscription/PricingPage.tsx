@@ -2,10 +2,21 @@
 
 import { StaticPricingPage } from "./StaticPricingPage"
 
-export function PricingPage() {
+interface PricingPageProps {
+  userTier?: string
+  userTierDisplayName?: string
+}
+
+export function PricingPage({
+  userTier,
+  userTierDisplayName,
+}: PricingPageProps) {
   return (
     <div>
-      <StaticPricingPage />
+      <StaticPricingPage
+        userTier={userTier}
+        userTierDisplayName={userTierDisplayName}
+      />
     </div>
   )
 }
