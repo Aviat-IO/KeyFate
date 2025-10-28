@@ -18,6 +18,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { Download } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 
@@ -245,9 +251,25 @@ export function AuditLogsPage({ initialLogs = [] }: AuditLogsPageProps) {
                         {log.eventCategory}
                       </TableCell>
                       <TableCell>
-                        {log.resourceType && log.resourceId
-                          ? `${log.resourceType}: ${log.resourceId.slice(0, 8)}...`
-                          : "-"}
+                        {log.resourceType && log.resourceId ? (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="inline-block max-w-[200px] cursor-help truncate">
+                                  {log.resourceType}:{" "}
+                                  {log.resourceId.slice(0, 8)}...
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="max-w-sm break-all">
+                                  {log.resourceType}: {log.resourceId}
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : (
+                          "-"
+                        )}
                       </TableCell>
                       <TableCell>
                         {new Date(log.createdAt).toLocaleString()}
