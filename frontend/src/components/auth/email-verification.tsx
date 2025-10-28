@@ -40,7 +40,7 @@ export function OTPVerificationForm({
     e.preventDefault()
 
     if (otp.length !== 6) {
-      onError("Please enter a valid 6-digit code")
+      onError("Please enter a valid 8-digit code")
       return
     }
 
@@ -83,7 +83,7 @@ export function OTPVerificationForm({
           className="text-center font-mono text-lg tracking-widest"
         />
         <p className="text-muted-foreground text-sm">
-          Enter the 6-digit code sent to {email}
+          Enter the 8-digit code sent to {email}
         </p>
       </div>
 

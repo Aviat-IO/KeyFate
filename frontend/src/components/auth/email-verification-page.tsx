@@ -263,7 +263,7 @@ export function EmailVerificationPage() {
 
           <div className="space-y-4 text-center">
             <p className="text-muted-foreground text-sm">
-              Enter the 6-digit code sent to{" "}
+              Enter the 8-digit code sent to{" "}
               <span className="font-medium">{email}</span>
             </p>
 
