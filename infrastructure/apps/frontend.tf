@@ -148,6 +148,8 @@ module "cloud_run" {
         NEXTAUTH_URL_INTERNAL = var.next_public_site_url
         # Older NextAuth versions require this env to trust X-Forwarded-Host
         AUTH_TRUST_HOST = "true"
+        # Admin IP whitelist from Cloud SQL authorized networks
+        CLOUDSQL_AUTHORIZED_NETWORKS = join(",", values(var.cloudsql_authorized_networks))
         # Environment indicator for runtime checks
         NEXT_PUBLIC_ENV = var.env
         # All NEXT_PUBLIC_ variables that the app needs
