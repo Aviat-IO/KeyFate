@@ -13,7 +13,7 @@ interface OTPInputProps {
 }
 
 export function OTPInput({
-  length = 6,
+  length = 8,
   onComplete,
   onChange,
   disabled = false,
@@ -121,7 +121,7 @@ export function OTPInput({
   }
 
   return (
-    <div className={cn("flex justify-center gap-2", className)}>
+    <div className={cn("flex justify-center gap-1.5 sm:gap-2", className)}>
       {otp.map((digit, index) => (
         <Input
           key={index}
@@ -143,7 +143,7 @@ export function OTPInput({
           onPaste={(e) => handlePaste(e, index)}
           disabled={disabled}
           className={cn(
-            "h-12 w-12 text-center font-mono text-lg",
+            "h-10 w-10 text-center font-mono text-base sm:h-12 sm:w-12 sm:text-lg",
             "rounded-md border-2",
             "focus:border-primary focus:ring-primary/20 focus:ring-2",
             digit ? "border-primary" : "border-input",

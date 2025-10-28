@@ -186,7 +186,7 @@ export default function SignInPage() {
 
   return (
     <div className="bg-background flex min-h-screen items-center justify-center px-4">
-      <div className="bg-card border-border w-full max-w-md space-y-8 rounded-xl border p-8 shadow-lg">
+      <div className="bg-card border-border w-full max-w-lg space-y-8 rounded-xl border p-8 shadow-lg">
         <div>
           <h2 className="text-foreground mt-6 text-center text-3xl font-extrabold">
             Sign in to KeyFate
@@ -245,10 +245,10 @@ export default function SignInPage() {
             <div className="space-y-4">
               <div>
                 <label className="text-foreground mb-2 block text-sm font-medium">
-                  Enter 6-digit code
+                  Enter 8-digit code
                 </label>
                 <OTPInput
-                  length={6}
+                  length={8}
                   onComplete={handleVerifyOTP}
                   onChange={setOtpCode}
                   disabled={isLoading}
@@ -275,7 +275,7 @@ export default function SignInPage() {
                 <p className="font-medium">Didn't receive the code?</p>
                 <ul className="mt-1 list-inside list-disc space-y-1 text-xs">
                   <li>Check your spam folder</li>
-                  <li>Codes expire after 10 minutes</li>
+                  <li>Codes expire after 5 minutes</li>
                   <li>Wait 60 seconds before requesting a new code</li>
                 </ul>
               </div>
@@ -336,11 +336,14 @@ export default function SignInPage() {
 
         <p className="text-muted-foreground mt-4 text-center text-xs">
           By signing in, you agree to our{" "}
-          <Link href="/terms" className="text-primary hover:text-primary">
+          <Link
+            href="/terms-of-service"
+            className="text-primary hover:underline"
+          >
             Terms of Service
           </Link>{" "}
           and{" "}
-          <Link href="/privacy" className="text-primary hover:text-primary">
+          <Link href="/privacy-policy" className="text-primary hover:underline">
             Privacy Policy
           </Link>
         </p>
