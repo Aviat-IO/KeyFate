@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const emailResult = await sendOTPEmail(normalizedEmail, otpResult.code, 10)
+    const emailResult = await sendOTPEmail(normalizedEmail, otpResult.code, 5)
     if (!emailResult.success) {
       console.error("[OTP] Failed to send email:", emailResult.error)
       return NextResponse.json(

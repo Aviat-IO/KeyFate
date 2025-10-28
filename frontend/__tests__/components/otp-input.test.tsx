@@ -11,11 +11,11 @@ describe("OTPInput Component", () => {
     vi.clearAllMocks()
   })
 
-  it("should render 6 input fields by default", () => {
+  it("should render 8 input fields by default", () => {
     render(<OTPInput onComplete={mockOnComplete} onChange={mockOnChange} />)
 
     const inputs = screen.getAllByRole("textbox")
-    expect(inputs).toHaveLength(6)
+    expect(inputs).toHaveLength(8)
   })
 
   it("should auto-focus on first input", () => {
@@ -72,11 +72,11 @@ describe("OTPInput Component", () => {
     const inputs = screen.getAllByRole("textbox")
 
     // Fill all inputs
-    for (let i = 0; i < 6; i++) {
-      await user.type(inputs[i], (i + 1).toString())
+    for (let i = 0; i < 8; i++) {
+      await user.type(inputs[i], (i % 10).toString())
     }
 
-    expect(mockOnComplete).toHaveBeenCalledWith("123456")
+    expect(mockOnComplete).toHaveBeenCalledWith("01234567")
   })
 
   it("should support paste functionality", async () => {
@@ -87,9 +87,9 @@ describe("OTPInput Component", () => {
 
     // Focus and paste
     firstInput.focus()
-    await user.paste("123456")
+    await user.paste("12345678")
 
-    expect(mockOnComplete).toHaveBeenCalledWith("123456")
+    expect(mockOnComplete).toHaveBeenCalledWith("12345678")
   })
 
   it("should handle paste with non-numeric characters", async () => {
@@ -100,9 +100,9 @@ describe("OTPInput Component", () => {
 
     // Focus and paste mixed content
     firstInput.focus()
-    await user.paste("1a2b3c4d5e6f")
+    await user.paste("1a2b3c4d5e6f7g8h")
 
-    expect(mockOnComplete).toHaveBeenCalledWith("123456")
+    expect(mockOnComplete).toHaveBeenCalledWith("12345678")
   })
 
   it("should be disabled when disabled prop is true", () => {

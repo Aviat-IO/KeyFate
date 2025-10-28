@@ -586,8 +586,8 @@ export function validateTemplateData(
       if (!data.code) {
         errors.push("code is required")
       }
-      if (data.code && !/^\d{6}$/.test(data.code)) {
-        errors.push("code must be a 6-digit number")
+      if (data.code && !/^\d{8}$/.test(data.code)) {
+        errors.push("code must be an 8-digit number")
       }
       if (
         !data.expirationMinutes ||

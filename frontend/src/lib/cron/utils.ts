@@ -30,6 +30,13 @@ export function sanitizeError(error: unknown, secretId?: string): string {
 }
 
 export function authorizeRequest(req: NextRequest): boolean {
+  const signature = req.headers.get("x-cron-signature")
+  const timestamp = req.headers.get("x-cron-timestamp")
+
+  if (signature && timestamp) {
+    return verifyHMACSignature(req, signature, timestamp)
+  }
+
   const header =
     req.headers.get("authorization") || req.headers.get("Authorization")
 
@@ -52,6 +59,49 @@ export function authorizeRequest(req: NextRequest): boolean {
     const tokenBuffer = Buffer.from(token, "utf-8")
     const secretBuffer = Buffer.from(cronSecret, "utf-8")
     return timingSafeEqual(tokenBuffer, secretBuffer)
+  } catch {
+    return false
+  }
+}
+
+function verifyHMACSignature(
+  req: NextRequest,
+  signature: string,
+  timestamp: string,
+): boolean {
+  const cronSecret = process.env.CRON_SECRET
+  if (!cronSecret) {
+    return false
+  }
+
+  const timestampMs = parseInt(timestamp, 10)
+  if (isNaN(timestampMs)) {
+    return false
+  }
+
+  const now = Date.now()
+  const age = now - timestampMs
+
+  if (age < 0 || age > 5 * 60 * 1000) {
+    return false
+  }
+
+  const crypto = require("crypto")
+  const message = `${timestampMs}.${req.url}`
+  const expectedSignature = crypto
+    .createHmac("sha256", cronSecret)
+    .update(message)
+    .digest("hex")
+
+  try {
+    const signatureBuffer = Buffer.from(signature, "hex")
+    const expectedBuffer = Buffer.from(expectedSignature, "hex")
+
+    if (signatureBuffer.length !== expectedBuffer.length) {
+      return false
+    }
+
+    return timingSafeEqual(signatureBuffer, expectedBuffer)
   } catch {
     return false
   }

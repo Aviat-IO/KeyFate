@@ -3,6 +3,10 @@ import type { WebhookEvent } from "@/lib/payment/interfaces/PaymentProvider"
 import { serverEnv } from "@/lib/server-env"
 import { subscriptionService } from "@/lib/services/subscription-service"
 import { emailService } from "@/lib/services/email-service"
+import {
+  isWebhookProcessed,
+  recordWebhookEvent,
+} from "@/lib/webhooks/deduplication"
 import { NextRequest, NextResponse } from "next/server"
 
 // Prevent static analysis during build
@@ -37,6 +41,12 @@ export async function POST(request: NextRequest) {
       id: event.id,
       created: event.created,
     })
+
+    const alreadyProcessed = await isWebhookProcessed("stripe", event.id)
+    if (alreadyProcessed) {
+      console.log("✅ Webhook already processed (replay detected):", event.id)
+      return NextResponse.json({ received: true, duplicate: true })
+    }
 
     const eventData = event.data.object as Record<string, unknown>
     console.log("📦 Event data keys:", Object.keys(eventData))
@@ -93,6 +103,8 @@ export async function POST(request: NextRequest) {
 
     // Handle event using subscription service
     await subscriptionService.handleStripeWebhook(event, userId)
+
+    await recordWebhookEvent("stripe", event.id, event.type, event)
 
     return NextResponse.json({ received: true })
   } catch (error) {

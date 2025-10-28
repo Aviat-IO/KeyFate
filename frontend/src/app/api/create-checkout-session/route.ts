@@ -1,4 +1,5 @@
 import { authConfig } from "@/lib/auth-config"
+import { requireCSRFProtection, createCSRFErrorResponse } from "@/lib/csrf"
 import { NEXT_PUBLIC_SITE_URL } from "@/lib/env"
 import { getFiatPaymentProvider } from "@/lib/payment"
 import type { Session } from "next-auth"
@@ -24,6 +25,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const csrfCheck = await requireCSRFProtection(request)
+    if (!csrfCheck.valid) {
+      return createCSRFErrorResponse()
+    }
+
     const { lookup_key } = await request.json()
     return createCheckoutSession(lookup_key, false) // false = return JSON
   } catch (error) {

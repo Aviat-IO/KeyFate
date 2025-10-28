@@ -3,18 +3,19 @@ import { otpRateLimits, verificationTokens } from "@/lib/db/schema"
 import { and, eq, gt, lt } from "drizzle-orm"
 import crypto from "crypto"
 
-const OTP_EXPIRATION_MINUTES = 10
+const OTP_EXPIRATION_MINUTES = 5
 const OTP_MAX_VALIDATION_ATTEMPTS = 5
 const MAX_COLLISION_RETRIES = 3
 
-// Rate limiting - more lenient in non-production environments
 const isProduction = process.env.NODE_ENV === "production"
 const OTP_RATE_LIMIT_REQUESTS = isProduction ? 3 : 10
 const OTP_RATE_LIMIT_WINDOW_HOURS = 1
+const OTP_RATE_LIMIT_VALIDATION_ATTEMPTS = 5
+const OTP_RATE_LIMIT_VALIDATION_WINDOW_MINUTES = 15
 
 export function generateOTP(): string {
-  const code = crypto.randomInt(0, 1000000)
-  return code.toString().padStart(6, "0")
+  const code = crypto.randomInt(0, 100000000)
+  return code.toString().padStart(8, "0")
 }
 
 interface CreateOTPTokenResult {
@@ -98,6 +99,36 @@ export async function validateOTPToken(
   const db = await getDatabase()
 
   return await db.transaction(async (tx) => {
+    const now = new Date()
+    const validationWindowStart = new Date(
+      now.getTime() - OTP_RATE_LIMIT_VALIDATION_WINDOW_MINUTES * 60 * 1000,
+    )
+
+    const recentAttempts = await tx
+      .select()
+      .from(verificationTokens)
+      .where(
+        and(
+          eq(verificationTokens.identifier, email),
+          eq(verificationTokens.purpose, "authentication"),
+          gt(verificationTokens.attemptCount, 0),
+          gt(verificationTokens.expires, validationWindowStart),
+        ),
+      )
+
+    const totalAttempts = recentAttempts.reduce(
+      (sum, token) => sum + (token.attemptCount ?? 0),
+      0,
+    )
+
+    if (totalAttempts >= OTP_RATE_LIMIT_VALIDATION_ATTEMPTS) {
+      return {
+        success: false,
+        valid: false,
+        error: "Too many validation attempts. Please try again later.",
+      }
+    }
+
     const tokens = await tx
       .select()
       .from(verificationTokens)
@@ -134,7 +165,7 @@ export async function validateOTPToken(
       return {
         success: false,
         valid: false,
-        error: "Too many validation attempts",
+        error: "Too many validation attempts for this OTP",
       }
     }
 

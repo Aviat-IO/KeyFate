@@ -1,4 +1,5 @@
 import { authConfig } from "@/lib/auth-config"
+import { requireCSRFProtection, createCSRFErrorResponse } from "@/lib/csrf"
 import { NEXT_PUBLIC_SITE_URL } from "@/lib/env"
 import { getFiatPaymentProvider } from "@/lib/payment"
 import type { Session } from "next-auth"
@@ -8,9 +9,13 @@ import { NextRequest, NextResponse } from "next/server"
 // Prevent static analysis during build
 export const dynamic = "force-dynamic"
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
+    const csrfCheck = await requireCSRFProtection(request)
+    if (!csrfCheck.valid) {
+      return createCSRFErrorResponse()
+    }
+
     const session = (await getServerSession(authConfig)) as Session | null
     const user = session?.user
     if (!user?.email || !user.id) {

@@ -1,5 +1,7 @@
 import { authConfig } from "@/lib/auth-config"
 import { ensureUserExists } from "@/lib/auth/user-verification"
+import { requireEmailVerification } from "@/lib/auth/require-email-verification"
+import { requireCSRFProtection, createCSRFErrorResponse } from "@/lib/csrf"
 import { encryptMessage } from "@/lib/encryption"
 import { secretSchema } from "@/lib/schemas/secret"
 import {
@@ -10,6 +12,12 @@ import {
 import { isValidThreshold } from "@/lib/tier-validation"
 import { logSecretCreated } from "@/lib/services/audit-logger"
 import { scheduleRemindersForSecret } from "@/lib/services/reminder-scheduler"
+import {
+  checkRateLimit,
+  getRateLimitHeaders,
+  createRateLimitResponse,
+} from "@/lib/rate-limit"
+import { getClientIdentifier } from "@/lib/rate-limit"
 import type { Session } from "next-auth"
 import { getServerSession } from "next-auth/next"
 import { NextRequest, NextResponse } from "next/server"
@@ -22,6 +30,11 @@ export async function POST(request: NextRequest) {
   let insertData: Record<string, unknown> // Declare here so it's available in catch block
 
   try {
+    const csrfCheck = await requireCSRFProtection(request)
+    if (!csrfCheck.valid) {
+      return createCSRFErrorResponse()
+    }
+
     // Use NextAuth for authentication instead of Supabase auth
     let session: Session | null
     try {
@@ -36,6 +49,31 @@ export async function POST(request: NextRequest) {
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const emailVerificationError = await requireEmailVerification(session)
+    if (emailVerificationError) {
+      return emailVerificationError
+    }
+
+    const rateLimitResult = await checkRateLimit(
+      "secretCreation",
+      session.user.id,
+      5,
+    )
+    if (!rateLimitResult.success) {
+      return new Response(
+        JSON.stringify({
+          error: "Too many secrets created. Please try again later.",
+        }),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            ...getRateLimitHeaders(rateLimitResult),
+          },
+        },
+      )
     }
 
     // Ensure user exists in database before creating secret
