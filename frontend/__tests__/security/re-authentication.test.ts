@@ -122,7 +122,18 @@ describe("Re-Authentication", () => {
 
   describe("Server Share Reveal Endpoint", () => {
     it("should require re-authentication for server share access", async () => {
-      const response = await fetch(
+      const { getServerSession } = await import("next-auth/next")
+      vi.mocked(getServerSession).mockResolvedValue({
+        user: {
+          id: "test-user-id",
+          email: "test@example.com",
+          name: "Test User",
+        },
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      })
+
+      // Request without re-auth token should fail
+      const request = new NextRequest(
         "http://localhost:3000/api/secrets/test-id/reveal-server-share",
         {
           method: "POST",
@@ -135,14 +146,11 @@ describe("Re-Authentication", () => {
         },
       )
 
-      // Should get 403 with REAUTH_REQUIRED code
-      expect([401, 403]).toContain(response.status)
-      const data = await response.json()
+      const result = await requireRecentAuthentication(request)
 
-      // Either unauthorized or re-auth required
-      if (response.status === 403) {
-        expect(data.code || data.error).toMatch(/REAUTH|re-authentication/i)
-      }
+      expect(result.valid).toBe(false)
+      expect(result.error).toContain("Re-authentication required")
+      expect(result.userId).toBe("test-user-id")
     })
   })
 })

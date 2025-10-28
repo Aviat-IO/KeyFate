@@ -1,52 +1,47 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest"
-import { getDatabase } from "@/lib/db/drizzle"
-import { users, secrets as secretsTable } from "@/lib/db/schema"
-import { eq } from "drizzle-orm"
+import { describe, it, expect, vi } from "vitest"
+
+// Mock the database - CSRF tests don't need real DB, just test HTTP layer
+vi.mock("@/lib/db/drizzle", async () => {
+  const actual =
+    await vi.importActual<typeof import("@/lib/db/drizzle")>("@/lib/db/drizzle")
+  return {
+    ...actual,
+    getDatabase: vi.fn(async () => ({
+      select: vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn().mockReturnThis(),
+          limit: vi.fn(() => Promise.resolve([])),
+        })),
+      })),
+      insert: vi.fn(() => ({
+        values: vi.fn(() => ({
+          returning: vi.fn(() => Promise.resolve([{ id: "test-id" }])),
+        })),
+      })),
+      update: vi.fn(() => ({
+        set: vi.fn().mockReturnThis(),
+        where: vi.fn(() => Promise.resolve([])),
+      })),
+      delete: vi.fn(() => ({
+        where: vi.fn(() => Promise.resolve([])),
+      })),
+    })),
+  }
+})
+
+// Mock auth to prevent 401 errors
+vi.mock("next-auth/next", () => ({
+  getServerSession: vi.fn(async () => ({
+    user: {
+      id: "test-user-id",
+      email: "test@example.com",
+      emailVerified: new Date(),
+    },
+  })),
+}))
 
 describe("CSRF Protection", () => {
-  let testUserId: string
-  let testSecretId: string
-  let authToken: string
-
-  beforeEach(async () => {
-    const db = await getDatabase()
-
-    testUserId = crypto.randomUUID()
-    await db.insert(users).values({
-      id: testUserId,
-      email: "csrf-test@example.com",
-      emailVerified: new Date(),
-      password: null,
-      name: "CSRF Test User",
-      image: null,
-    })
-
-    const [secret] = await db
-      .insert(secretsTable)
-      .values({
-        id: crypto.randomUUID(),
-        userId: testUserId,
-        title: "Test Secret",
-        checkInDays: 7,
-        threshold: 2,
-        status: "active",
-        lastCheckIn: new Date(),
-        nextCheckIn: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      })
-      .returning()
-
-    testSecretId = secret.id
-  })
-
-  afterEach(async () => {
-    const db = await getDatabase()
-    if (testSecretId) {
-      await db.delete(secretsTable).where(eq(secretsTable.id, testSecretId))
-    }
-    if (testUserId) {
-      await db.delete(users).where(eq(users.id, testUserId))
-    }
-  })
+  const testSecretId = "test-secret-id"
 
   describe("POST /api/secrets", () => {
     it("should reject requests without origin header", async () => {

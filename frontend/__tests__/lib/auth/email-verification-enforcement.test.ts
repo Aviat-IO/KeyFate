@@ -176,7 +176,7 @@ describe("Email Verification Enforcement", () => {
     })
 
     it("should provide clear error code for frontend handling", async () => {
-      const { getServerSession } = await import("next-auth")
+      const { getServerSession } = await import("next-auth/next")
       vi.mocked(getServerSession).mockResolvedValue({
         user: {
           id: "123",
@@ -186,6 +186,7 @@ describe("Email Verification Enforcement", () => {
       } as any)
 
       const result = await requireEmailVerification()
+      expect(result).not.toBeNull()
       const json = await result?.json()
 
       expect(json).toHaveProperty("error")
@@ -233,7 +234,7 @@ describe("Email Verification Enforcement", () => {
     })
 
     it("should handle missing emailVerified field as unverified", async () => {
-      const { getServerSession } = await import("next-auth")
+      const { getServerSession } = await import("next-auth/next")
       vi.mocked(getServerSession).mockResolvedValue({
         user: {
           id: "123",
