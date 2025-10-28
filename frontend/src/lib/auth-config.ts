@@ -457,7 +457,8 @@ const baseAuthConfig = {
   },
   session: {
     strategy: "jwt" as const,
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 24 * 60 * 60, // 24 hours idle timeout
+    updateAge: 60 * 60, // Update session every hour
   },
   jwt: {
     secret: process.env.NEXTAUTH_SECRET,

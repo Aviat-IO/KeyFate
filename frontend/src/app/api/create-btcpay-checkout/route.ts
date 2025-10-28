@@ -1,4 +1,5 @@
 import { authConfig } from "@/lib/auth-config"
+import { requireCSRFProtection, createCSRFErrorResponse } from "@/lib/csrf"
 import { NEXT_PUBLIC_SITE_URL } from "@/lib/env"
 import { getCryptoPaymentProvider } from "@/lib/payment"
 import { Subscription } from "@/lib/payment/interfaces/PaymentProvider"
@@ -28,6 +29,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const csrfCheck = await requireCSRFProtection(request)
+    if (!csrfCheck.valid) {
+      return createCSRFErrorResponse()
+    }
+
     const {
       amount,
       currency = "BTC",

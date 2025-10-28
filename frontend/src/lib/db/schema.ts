@@ -198,30 +198,49 @@ export const otpRateLimits = pgTable(
   }),
 )
 
-// Application Tables
-export const secrets = pgTable("secrets", {
+export const privacyPolicyAcceptance = pgTable("privacy_policy_acceptance", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  title: text("title").notNull(),
-  checkInDays: integer("check_in_days").notNull().default(30),
-  status: secretStatusEnum("status").notNull().default("active"),
-  serverShare: text("server_share"),
-  iv: text("iv"),
-  authTag: text("auth_tag"),
-  sssSharesTotal: integer("sss_shares_total").notNull().default(3),
-  sssThreshold: integer("sss_threshold").notNull().default(2),
-  lastCheckIn: timestamp("last_check_in"),
-  nextCheckIn: timestamp("next_check_in"),
-  triggeredAt: timestamp("triggered_at"),
-  processingStartedAt: timestamp("processing_started_at"),
-  lastError: text("last_error"),
-  retryCount: integer("retry_count").notNull().default(0),
-  lastRetryAt: timestamp("last_retry_at"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  policyVersion: text("policy_version").notNull(),
+  acceptedAt: timestamp("accepted_at").defaultNow().notNull(),
+  ipAddress: text("ip_address"),
 })
+
+// Application Tables
+export const secrets = pgTable(
+  "secrets",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    checkInDays: integer("check_in_days").notNull().default(30),
+    status: secretStatusEnum("status").notNull().default("active"),
+    serverShare: text("server_share"),
+    iv: text("iv"),
+    authTag: text("auth_tag"),
+    sssSharesTotal: integer("sss_shares_total").notNull().default(3),
+    sssThreshold: integer("sss_threshold").notNull().default(2),
+    lastCheckIn: timestamp("last_check_in"),
+    nextCheckIn: timestamp("next_check_in"),
+    triggeredAt: timestamp("triggered_at"),
+    processingStartedAt: timestamp("processing_started_at"),
+    lastError: text("last_error"),
+    retryCount: integer("retry_count").notNull().default(0),
+    lastRetryAt: timestamp("last_retry_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    userStatusIdx: index("secrets_user_status_idx").on(
+      table.userId,
+      table.status,
+    ),
+  }),
+)
 
 export const secretRecipients = pgTable("secret_recipients", {
   id: uuid("id").primaryKey().defaultRandom(),

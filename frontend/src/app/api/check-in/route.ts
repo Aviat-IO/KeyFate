@@ -1,6 +1,11 @@
 import { getDatabase } from "@/lib/db/drizzle"
 import { checkInTokens, secrets, checkinHistory } from "@/lib/db/schema"
 import { scheduleRemindersForSecret } from "@/lib/services/reminder-scheduler"
+import {
+  checkRateLimit,
+  getRateLimitHeaders,
+  getClientIdentifier,
+} from "@/lib/rate-limit"
 import { eq } from "drizzle-orm"
 import { NextRequest, NextResponse } from "next/server"
 
@@ -59,6 +64,23 @@ export async function POST(req: NextRequest) {
         {
           status: 400,
           headers: { "Content-Type": "application/json" },
+        },
+      )
+    }
+
+    const clientIp = getClientIdentifier(req)
+    const rateLimitResult = await checkRateLimit("checkIn", clientIp, 10)
+    if (!rateLimitResult.success) {
+      return new Response(
+        JSON.stringify({
+          error: "Too many check-in attempts. Please try again later.",
+        }),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            ...getRateLimitHeaders(rateLimitResult),
+          },
         },
       )
     }

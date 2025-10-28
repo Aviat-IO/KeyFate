@@ -1,4 +1,5 @@
 import { authConfig } from "@/lib/auth-config"
+import { requireCSRFProtection, createCSRFErrorResponse } from "@/lib/csrf"
 import { secretsService } from "@/lib/db/drizzle"
 import { mapDrizzleSecretToApiShape } from "@/lib/db/secret-mapper"
 import { getSecretWithRecipients } from "@/lib/db/queries/secrets"
@@ -8,17 +9,22 @@ import {
 } from "@/lib/services/reminder-scheduler"
 import type { Session } from "next-auth"
 import { getServerSession } from "next-auth/next"
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 
 // Prevent static analysis during build
 export const dynamic = "force-dynamic"
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params
+
+    const csrfCheck = await requireCSRFProtection(request)
+    if (!csrfCheck.valid) {
+      return createCSRFErrorResponse()
+    }
 
     // Use NextAuth for authentication
     const session = (await getServerSession(

@@ -30,20 +30,20 @@ vi.mock("@/lib/db/drizzle", () => {
 
 describe("OTP Generation", () => {
   describe("generateOTP", () => {
-    it("should generate a 6-digit numeric code", () => {
+    it("should generate an 8-digit numeric code", () => {
       const otp = generateOTP()
 
       expect(otp).toBeDefined()
       expect(typeof otp).toBe("string")
-      expect(otp.length).toBe(6)
-      expect(/^\d{6}$/.test(otp)).toBe(true)
+      expect(otp.length).toBe(8)
+      expect(/^\d{8}$/.test(otp)).toBe(true)
     })
 
-    it("should pad codes to 6 digits", () => {
+    it("should pad codes to 8 digits", () => {
       const otp = generateOTP()
 
-      expect(otp.length).toBe(6)
-      expect(otp.startsWith("0") || Number(otp) >= 100000).toBe(true)
+      expect(otp.length).toBe(8)
+      expect(otp.startsWith("0") || Number(otp) >= 10000000).toBe(true)
     })
 
     it("should generate different codes on subsequent calls", () => {
@@ -62,8 +62,9 @@ describe("OTP Generation", () => {
       }
 
       const avg = codes.reduce((a, b) => a + b, 0) / codes.length
-      expect(avg).toBeGreaterThan(400000)
-      expect(avg).toBeLessThan(600000)
+      // 8-digit codes: 00000000 to 99999999, avg ~50000000
+      expect(avg).toBeGreaterThan(40000000)
+      expect(avg).toBeLessThan(60000000)
     })
 
     it("should not produce predictable patterns", () => {
@@ -125,7 +126,7 @@ describe("OTP Generation", () => {
 
       expect(result.success).toBe(true)
       expect(result.code).toBeDefined()
-      expect(result.code?.length).toBe(6)
+      expect(result.code?.length).toBe(8)
     })
 
     it("should fail after 3 collision attempts", async () => {
@@ -190,7 +191,7 @@ describe("OTP Storage and Retrieval", () => {
 
       expect(result.success).toBe(true)
       expect(result.code).toBeDefined()
-      expect(result.code?.length).toBe(6)
+      expect(result.code?.length).toBe(8)
       expect(mockDb.update).toHaveBeenCalled()
       expect(mockDb.insert).toHaveBeenCalled()
     })
@@ -232,12 +233,12 @@ describe("OTP Storage and Retrieval", () => {
       expect(mockDb.update).toHaveBeenCalled()
     })
 
-    it("should set expiration to 10 minutes", async () => {
+    it("should set expiration to 5 minutes", async () => {
       const { getDatabase } = await import("@/lib/db/drizzle")
       const mockDb = await getDatabase()
 
       const now = Date.now()
-      const expectedExpiry = new Date(now + 10 * 60 * 1000)
+      const expectedExpiry = new Date(now + 5 * 60 * 1000)
 
       vi.mocked(mockDb.select).mockReturnValue({
         from: vi.fn().mockReturnValue({
@@ -291,23 +292,28 @@ describe("OTP Storage and Retrieval", () => {
       vi.mocked(mockDb.transaction).mockImplementation(
         async (callback: any) => {
           const txMock = {
-            select: vi.fn().mockReturnValue({
-              from: vi.fn().mockReturnValue({
-                where: vi.fn().mockReturnValue({
-                  limit: vi.fn().mockReturnValue({
-                    for: vi.fn().mockResolvedValue([
-                      {
-                        identifier: "test@example.com",
-                        token: "123456",
-                        expires: futureDate,
-                        purpose: "authentication",
-                        attemptCount: 0,
-                      },
-                    ]),
-                  }),
-                }),
+            select: vi
+              .fn()
+              // First call: rate limit check (no .for(), resolves directly)
+              .mockReturnValueOnce({
+                from: vi.fn().mockReturnThis(),
+                where: vi.fn().mockResolvedValue([]), // No recent attempts
+              })
+              // Second call: token lookup (with .for())
+              .mockReturnValueOnce({
+                from: vi.fn().mockReturnThis(),
+                where: vi.fn().mockReturnThis(),
+                limit: vi.fn().mockReturnThis(),
+                for: vi.fn().mockResolvedValue([
+                  {
+                    identifier: "test@example.com",
+                    token: "123456",
+                    expires: futureDate,
+                    purpose: "authentication",
+                    attemptCount: 0,
+                  },
+                ]),
               }),
-            }),
             update: vi.fn().mockReturnValue({
               set: vi.fn().mockReturnValue({
                 where: vi.fn().mockResolvedValue(undefined),
@@ -331,15 +337,20 @@ describe("OTP Storage and Retrieval", () => {
       vi.mocked(mockDb.transaction).mockImplementation(
         async (callback: any) => {
           const txMock = {
-            select: vi.fn().mockReturnValue({
-              from: vi.fn().mockReturnValue({
-                where: vi.fn().mockReturnValue({
-                  limit: vi.fn().mockReturnValue({
-                    for: vi.fn().mockResolvedValue([]),
-                  }),
-                }),
+            select: vi
+              .fn()
+              // First call: rate limit check
+              .mockReturnValueOnce({
+                from: vi.fn().mockReturnThis(),
+                where: vi.fn().mockResolvedValue([]), // No recent attempts
+              })
+              // Second call: token lookup returns empty (invalid OTP)
+              .mockReturnValueOnce({
+                from: vi.fn().mockReturnThis(),
+                where: vi.fn().mockReturnThis(),
+                limit: vi.fn().mockReturnThis(),
+                for: vi.fn().mockResolvedValue([]),
               }),
-            }),
           }
           return callback(txMock)
         },
@@ -361,23 +372,28 @@ describe("OTP Storage and Retrieval", () => {
       vi.mocked(mockDb.transaction).mockImplementation(
         async (callback: any) => {
           const txMock = {
-            select: vi.fn().mockReturnValue({
-              from: vi.fn().mockReturnValue({
-                where: vi.fn().mockReturnValue({
-                  limit: vi.fn().mockReturnValue({
-                    for: vi.fn().mockResolvedValue([
-                      {
-                        identifier: "test@example.com",
-                        token: "123456",
-                        expires: pastDate,
-                        purpose: "authentication",
-                        attemptCount: 0,
-                      },
-                    ]),
-                  }),
-                }),
+            select: vi
+              .fn()
+              // First call: rate limit check
+              .mockReturnValueOnce({
+                from: vi.fn().mockReturnThis(),
+                where: vi.fn().mockResolvedValue([]), // No recent attempts
+              })
+              // Second call: token lookup returns expired token
+              .mockReturnValueOnce({
+                from: vi.fn().mockReturnThis(),
+                where: vi.fn().mockReturnThis(),
+                limit: vi.fn().mockReturnThis(),
+                for: vi.fn().mockResolvedValue([
+                  {
+                    identifier: "test@example.com",
+                    token: "123456",
+                    expires: pastDate,
+                    purpose: "authentication",
+                    attemptCount: 0,
+                  },
+                ]),
               }),
-            }),
           }
           return callback(txMock)
         },
@@ -399,23 +415,28 @@ describe("OTP Storage and Retrieval", () => {
       vi.mocked(mockDb.transaction).mockImplementation(
         async (callback: any) => {
           const txMock = {
-            select: vi.fn().mockReturnValue({
-              from: vi.fn().mockReturnValue({
-                where: vi.fn().mockReturnValue({
-                  limit: vi.fn().mockReturnValue({
-                    for: vi.fn().mockResolvedValue([
-                      {
-                        identifier: "test@example.com",
-                        token: "123456",
-                        expires: futureDate,
-                        purpose: "authentication",
-                        attemptCount: 5,
-                      },
-                    ]),
-                  }),
-                }),
+            select: vi
+              .fn()
+              // First call: rate limit check
+              .mockReturnValueOnce({
+                from: vi.fn().mockReturnThis(),
+                where: vi.fn().mockResolvedValue([]), // No recent attempts
+              })
+              // Second call: token lookup returns token with max attempts
+              .mockReturnValueOnce({
+                from: vi.fn().mockReturnThis(),
+                where: vi.fn().mockReturnThis(),
+                limit: vi.fn().mockReturnThis(),
+                for: vi.fn().mockResolvedValue([
+                  {
+                    identifier: "test@example.com",
+                    token: "123456",
+                    expires: futureDate,
+                    purpose: "authentication",
+                    attemptCount: 5,
+                  },
+                ]),
               }),
-            }),
           }
           return callback(txMock)
         },
@@ -440,23 +461,28 @@ describe("OTP Storage and Retrieval", () => {
           validationCount++
           if (validationCount === 1) {
             const txMock = {
-              select: vi.fn().mockReturnValue({
-                from: vi.fn().mockReturnValue({
-                  where: vi.fn().mockReturnValue({
-                    limit: vi.fn().mockReturnValue({
-                      for: vi.fn().mockResolvedValue([
-                        {
-                          identifier: "test@example.com",
-                          token: "123456",
-                          expires: futureDate,
-                          purpose: "authentication",
-                          attemptCount: 0,
-                        },
-                      ]),
-                    }),
-                  }),
+              select: vi
+                .fn()
+                // First call: rate limit check
+                .mockReturnValueOnce({
+                  from: vi.fn().mockReturnThis(),
+                  where: vi.fn().mockResolvedValue([]),
+                })
+                // Second call: token lookup
+                .mockReturnValueOnce({
+                  from: vi.fn().mockReturnThis(),
+                  where: vi.fn().mockReturnThis(),
+                  limit: vi.fn().mockReturnThis(),
+                  for: vi.fn().mockResolvedValue([
+                    {
+                      identifier: "test@example.com",
+                      token: "123456",
+                      expires: futureDate,
+                      purpose: "authentication",
+                      attemptCount: 0,
+                    },
+                  ]),
                 }),
-              }),
               update: vi.fn().mockReturnValue({
                 set: vi.fn().mockReturnValue({
                   where: vi.fn().mockResolvedValue(undefined),
@@ -466,15 +492,20 @@ describe("OTP Storage and Retrieval", () => {
             return callback(txMock)
           } else {
             const txMock = {
-              select: vi.fn().mockReturnValue({
-                from: vi.fn().mockReturnValue({
-                  where: vi.fn().mockReturnValue({
-                    limit: vi.fn().mockReturnValue({
-                      for: vi.fn().mockResolvedValue([]),
-                    }),
-                  }),
+              select: vi
+                .fn()
+                // First call: rate limit check
+                .mockReturnValueOnce({
+                  from: vi.fn().mockReturnThis(),
+                  where: vi.fn().mockResolvedValue([]),
+                })
+                // Second call: token lookup returns empty (already used)
+                .mockReturnValueOnce({
+                  from: vi.fn().mockReturnThis(),
+                  where: vi.fn().mockReturnThis(),
+                  limit: vi.fn().mockReturnThis(),
+                  for: vi.fn().mockResolvedValue([]),
                 }),
-              }),
             }
             return callback(txMock)
           }

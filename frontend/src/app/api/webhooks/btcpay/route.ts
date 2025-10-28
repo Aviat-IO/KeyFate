@@ -2,6 +2,10 @@ import { getCryptoPaymentProvider } from "@/lib/payment"
 import { serverEnv } from "@/lib/server-env"
 import { subscriptionService } from "@/lib/services/subscription-service"
 import { emailService } from "@/lib/services/email-service"
+import {
+  isWebhookProcessed,
+  recordWebhookEvent,
+} from "@/lib/webhooks/deduplication"
 import { NextRequest, NextResponse } from "next/server"
 
 // Prevent static analysis during build
@@ -31,6 +35,15 @@ export async function POST(request: NextRequest) {
       serverEnv.BTCPAY_WEBHOOK_SECRET,
     )
 
+    const alreadyProcessed = await isWebhookProcessed(
+      "btcpay",
+      event.id || `btcpay-${Date.now()}`,
+    )
+    if (alreadyProcessed) {
+      console.log("✅ BTCPay webhook already processed (replay detected)")
+      return NextResponse.json({ received: true, duplicate: true })
+    }
+
     // Extract user ID from event metadata
     const userId = extractUserIdFromBTCPayEvent(event)
 
@@ -54,6 +67,13 @@ export async function POST(request: NextRequest) {
 
     // Handle event using subscription service
     await subscriptionService.handleBTCPayWebhook(event, userId)
+
+    await recordWebhookEvent(
+      "btcpay",
+      event.id || `btcpay-${Date.now()}`,
+      event.type,
+      event,
+    )
 
     return NextResponse.json({ received: true })
   } catch (error) {

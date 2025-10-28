@@ -1,20 +1,27 @@
 import { authConfig } from "@/lib/auth-config"
+import { requireCSRFProtection, createCSRFErrorResponse } from "@/lib/csrf"
 import { getDatabase } from "@/lib/db/drizzle"
 import { secrets } from "@/lib/db/schema"
 import { and, eq } from "drizzle-orm"
 import type { Session } from "next-auth"
 import { getServerSession } from "next-auth/next"
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 
 // Prevent static analysis during build
 export const dynamic = "force-dynamic"
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params
+
+    const csrfCheck = await requireCSRFProtection(request)
+    if (!csrfCheck.valid) {
+      return createCSRFErrorResponse()
+    }
+
     const session = (await getServerSession(
       authConfig as any,
     )) as Session | null

@@ -1,4 +1,6 @@
 import { authConfig } from "@/lib/auth-config"
+import { requireEmailVerification } from "@/lib/auth/require-email-verification"
+import { requireCSRFProtection, createCSRFErrorResponse } from "@/lib/csrf"
 import { getDatabase, secretsService } from "@/lib/db/drizzle"
 import {
   checkinHistory,
@@ -76,6 +78,11 @@ export async function PUT(
   try {
     const { id } = await params
 
+    const csrfCheck = await requireCSRFProtection(request)
+    if (!csrfCheck.valid) {
+      return createCSRFErrorResponse()
+    }
+
     // Use NextAuth for authentication
     type GetServerSessionOptions = Parameters<typeof getServerSession>[0]
     const session = (await getServerSession(
@@ -83,6 +90,11 @@ export async function PUT(
     )) as Session | null
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const emailVerificationError = await requireEmailVerification(session)
+    if (emailVerificationError) {
+      return emailVerificationError
     }
 
     const body = await request.json()
@@ -172,11 +184,16 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params
+
+    const csrfCheck = await requireCSRFProtection(request)
+    if (!csrfCheck.valid) {
+      return createCSRFErrorResponse()
+    }
 
     // Use NextAuth for authentication
     type GetServerSessionOptions = Parameters<typeof getServerSession>[0]

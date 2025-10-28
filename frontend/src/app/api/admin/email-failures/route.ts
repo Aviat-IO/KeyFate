@@ -7,6 +7,12 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { DeadLetterQueue } from "@/lib/email/dead-letter-queue"
+import {
+  getClientIp,
+  getAdminWhitelist,
+  isIpWhitelisted,
+} from "@/lib/auth/ip-whitelist"
+import { logger } from "@/lib/logger"
 
 export const dynamic = "force-dynamic"
 
@@ -14,12 +20,30 @@ export const dynamic = "force-dynamic"
  * Authorization helper - verify admin access
  */
 async function isAdmin(req: NextRequest): Promise<boolean> {
-  // TODO: Implement proper admin authentication
-  // For now, require authorization header with admin token
-  const authHeader = req.headers.get("authorization")
-  const adminToken = process.env.ADMIN_TOKEN || "admin-secret"
+  const adminToken = process.env.ADMIN_TOKEN
 
-  return authHeader === `Bearer ${adminToken}`
+  if (!adminToken) {
+    throw new Error(
+      "ADMIN_TOKEN environment variable is not configured. Server cannot start without admin authentication.",
+    )
+  }
+
+  const clientIp = getClientIp(req)
+  const whitelist = getAdminWhitelist()
+
+  if (!isIpWhitelisted(clientIp, whitelist)) {
+    logger.warn("Admin access denied - IP not whitelisted", { clientIp })
+    return false
+  }
+
+  const authHeader = req.headers.get("authorization")
+  const isAuthenticated = authHeader === `Bearer ${adminToken}`
+
+  if (!isAuthenticated) {
+    logger.warn("Admin access denied - invalid token", { clientIp })
+  }
+
+  return isAuthenticated
 }
 
 /**
