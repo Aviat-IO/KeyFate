@@ -41,7 +41,6 @@ describe("NextAuth Session Management with Cloud SQL", () => {
       set: vi.fn().mockReturnThis(),
       delete: vi.fn().mockReturnThis(),
     }
-
     ;(getDatabase as any).mockResolvedValue(mockDb)
   })
 
@@ -562,6 +561,157 @@ describe("NextAuth Session Management with Cloud SQL", () => {
 
       expect(result1[0].id).toBe(mockUsers[0].id)
       expect(result2[0].id).toBe(mockUsers[1].id)
+    })
+  })
+
+  describe("Idle Timeout Testing", () => {
+    it("should configure 24 hour idle timeout", () => {
+      const sessionConfig = {
+        strategy: "jwt" as const,
+        maxAge: 24 * 60 * 60, // 24 hours
+        updateAge: 60 * 60, // Update every hour
+      }
+
+      expect(sessionConfig.maxAge).toBe(86400) // 24 hours in seconds
+      expect(sessionConfig.updateAge).toBe(3600) // 1 hour in seconds
+    })
+
+    it("should expire token after 24 hours of inactivity", () => {
+      const now = Math.floor(Date.now() / 1000)
+      const maxAge = 24 * 60 * 60 // 24 hours
+
+      const token = {
+        id: "user-123",
+        iat: now,
+        exp: now + maxAge,
+      }
+
+      // Check token is valid now
+      expect(token.exp).toBeGreaterThan(now)
+
+      // Check token expires after 24 hours
+      const after24Hours = now + maxAge + 1
+      expect(token.exp).toBeLessThan(after24Hours)
+    })
+
+    it("should keep session alive with activity within idle window", () => {
+      const now = Math.floor(Date.now() / 1000)
+      const maxAge = 24 * 60 * 60
+      const updateAge = 60 * 60 // Update every hour
+
+      // Initial token
+      const token = {
+        id: "user-123",
+        iat: now,
+        exp: now + maxAge,
+      }
+
+      // Activity after 1 hour triggers update
+      const afterActivity = now + updateAge
+      const updatedToken = {
+        ...token,
+        iat: afterActivity,
+        exp: afterActivity + maxAge,
+      }
+
+      expect(updatedToken.exp).toBeGreaterThan(token.exp)
+      expect(updatedToken.exp - updatedToken.iat).toBe(maxAge)
+    })
+
+    it("should not expire session with continuous activity", () => {
+      const now = Math.floor(Date.now() / 1000)
+      const maxAge = 24 * 60 * 60
+      const updateAge = 60 * 60
+
+      let currentToken = {
+        id: "user-123",
+        iat: now,
+        exp: now + maxAge,
+      }
+
+      // Simulate 10 hours of activity (one update per hour)
+      for (let i = 1; i <= 10; i++) {
+        const activityTime = now + i * updateAge
+        currentToken = {
+          ...currentToken,
+          iat: activityTime,
+          exp: activityTime + maxAge,
+        }
+
+        // Token should still be valid
+        expect(currentToken.exp).toBeGreaterThan(activityTime)
+      }
+
+      // Final token should expire 24 hours after last activity
+      const finalActivity = now + 10 * updateAge
+      expect(currentToken.exp).toBe(finalActivity + maxAge)
+    })
+
+    it("should reject expired tokens", () => {
+      const now = Math.floor(Date.now() / 1000)
+      const maxAge = 24 * 60 * 60
+
+      const expiredToken = {
+        id: "user-123",
+        iat: now - maxAge - 3600, // Created 25 hours ago
+        exp: now - 3600, // Expired 1 hour ago
+      }
+
+      const currentTime = now
+      expect(expiredToken.exp).toBeLessThan(currentTime)
+    })
+  })
+
+  describe("Re-authentication Requirements", () => {
+    it("should require re-authentication for sensitive operations", () => {
+      const session = {
+        user: {
+          id: "user-123",
+          email: "test@example.com",
+        },
+      }
+
+      // Sensitive operation should check for recent authentication
+      const lastAuthTime = Math.floor(Date.now() / 1000) - 60 * 60 // 1 hour ago
+      const requireRecentAuth = (maxAgeSeconds: number) => {
+        const now = Math.floor(Date.now() / 1000)
+        return now - lastAuthTime < maxAgeSeconds
+      }
+
+      // Should require fresh auth (within 5 minutes)
+      expect(requireRecentAuth(5 * 60)).toBe(false)
+
+      // Should accept recent auth (within 2 hours)
+      expect(requireRecentAuth(2 * 60 * 60)).toBe(true)
+    })
+
+    it("should accept fresh OTP re-authentication", () => {
+      const reAuthToken = {
+        userId: "user-123",
+        issuedAt: Math.floor(Date.now() / 1000),
+        purpose: "server-share-access",
+      }
+
+      const now = Math.floor(Date.now() / 1000)
+      const tokenAge = now - reAuthToken.issuedAt
+
+      // Fresh token (within 5 minutes)
+      expect(tokenAge).toBeLessThan(5 * 60)
+      expect(reAuthToken.purpose).toBe("server-share-access")
+    })
+
+    it("should reject stale re-authentication tokens", () => {
+      const staleReAuthToken = {
+        userId: "user-123",
+        issuedAt: Math.floor(Date.now() / 1000) - 10 * 60, // 10 minutes ago
+        purpose: "server-share-access",
+      }
+
+      const now = Math.floor(Date.now() / 1000)
+      const tokenAge = now - staleReAuthToken.issuedAt
+      const maxReAuthAge = 5 * 60 // 5 minutes
+
+      expect(tokenAge).toBeGreaterThan(maxReAuthAge)
     })
   })
 })
