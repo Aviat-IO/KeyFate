@@ -18,30 +18,32 @@ const client = postgres(DATABASE_URL)
 const db = drizzle(client)
 const { users: usersTable } = require("./dist/lib/db/schema.js")
 
+// WARNING: These are DEVELOPMENT-ONLY credentials!
 // These UUIDs match the seeded database records
+const DEV_PASSWORD = "DevPass_c6e7a3f3c9a98b55"
 const seedUsers = [
   {
     id: "48a35ccd-e1e4-458b-86ec-5bd88a0addc7",
     email: "ceo@aviat.io",
-    password: "password123",
+    password: DEV_PASSWORD,
     name: "CEO Aviat",
   },
   {
     id: "836f82db-9912-4b34-8101-1f16b49dfa5f",
     email: "john.doe@example.com",
-    password: "password123",
+    password: DEV_PASSWORD,
     name: "John Doe",
   },
   {
     id: "2734a10c-2335-480b-8bf3-efc468cf89de",
     email: "alice.smith@company.com",
-    password: "password123",
+    password: DEV_PASSWORD,
     name: "Alice Smith",
   },
   {
     id: "78dd97e7-1ce4-4a41-8fdc-69e3371f2175",
     email: "bob.wilson@startup.io",
-    password: "password123",
+    password: DEV_PASSWORD,
     name: "Bob Wilson",
   },
 ]
@@ -78,15 +80,17 @@ async function createUsers() {
   }
 
   console.log("\n🎉 Seed users setup complete!")
+  console.log("\n⚠️  WARNING: These are DEVELOPMENT-ONLY credentials!")
   console.log("\n📧 You can now login with any of these accounts:")
   seedUsers.forEach((user) => {
-    console.log(`   ${user.email} / password123`)
+    console.log(`   ${user.email} / ${DEV_PASSWORD}`)
   })
 
   console.log("\n💡 Special features for ceo@aviat.io:")
   console.log("   🔴 1 secret already triggered (2 days ago)")
   console.log("   🟡 1 secret triggering in 5 minutes")
   console.log("   🟢 1 secret triggering in 30 days")
+  console.log("\n⚠️  NEVER use these credentials in staging or production!")
 }
 
 createUsers().catch(console.error)
