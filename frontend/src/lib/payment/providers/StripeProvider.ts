@@ -215,12 +215,13 @@ export class StripeProvider implements PaymentProvider {
       sessionParams.metadata = config.metadata
     }
 
-    console.log("🛒 Creating Stripe checkout session with params:", {
-      mode: sessionParams.mode,
-      customer: sessionParams.customer,
-      metadata: sessionParams.metadata,
-      subscription_data: sessionParams.subscription_data,
-    })
+    if (process.env.NODE_ENV === "development") {
+      console.log("🛒 Creating Stripe checkout session with params:", {
+        mode: sessionParams.mode,
+        hasCustomer: !!sessionParams.customer,
+        hasMetadata: !!sessionParams.metadata,
+      })
+    }
 
     const session = await this.stripe.checkout.sessions.create(sessionParams)
 
