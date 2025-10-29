@@ -91,9 +91,7 @@ export async function createUser(input: CreateUserInput): Promise<{
       const tokenResult = await createVerificationToken(normalizedEmail)
       if (tokenResult.success && tokenResult.token) {
         await sendVerificationEmail(normalizedEmail, tokenResult.token)
-        console.log(
-          `[CreateUser] Verification email sent to: ${normalizedEmail}`,
-        )
+        console.log(`[CreateUser] Verification email sent`)
       } else {
         console.warn(
           `[CreateUser] Failed to create verification token: ${tokenResult.error}`,

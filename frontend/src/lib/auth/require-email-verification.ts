@@ -27,7 +27,6 @@ export async function requireEmailVerification(
     if (!user.emailVerified) {
       logger.warn("Email verification required", {
         userId: session.user.id,
-        email: session.user.email,
       })
 
       return NextResponse.json(

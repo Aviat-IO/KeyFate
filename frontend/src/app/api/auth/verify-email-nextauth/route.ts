@@ -98,7 +98,9 @@ export async function POST(request: NextRequest) {
       .delete(verificationTokens)
       .where(eq(verificationTokens.token, token))
 
-    console.log(`[VerifyEmail] Successfully verified email for user: ${email}`)
+    console.log(
+      `[VerifyEmail] Successfully verified email for user: ${updatedUser.id}`,
+    )
 
     // Generate a verification token for auto-login
     const verificationToken = crypto.randomBytes(32).toString("hex")

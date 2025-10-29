@@ -60,7 +60,7 @@ async function createCheckoutSession(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    console.log(`✅ User authenticated: ${user.email} (${user.id})`)
+    console.log(`✅ User authenticated: ${user.id}`)
 
     // Get payment provider
     const fiatPaymentProvider = getFiatPaymentProvider()
@@ -109,7 +109,13 @@ async function createCheckoutSession(
       },
     }
 
-    console.log("Session config:", JSON.stringify(sessionConfig, null, 2))
+    if (process.env.NODE_ENV === "development") {
+      console.log("Session config:", {
+        mode: sessionConfig.mode,
+        successUrl: sessionConfig.successUrl,
+        cancelUrl: sessionConfig.cancelUrl,
+      })
+    }
 
     const checkoutSession =
       await fiatPaymentProvider.createCheckoutSession(sessionConfig)
