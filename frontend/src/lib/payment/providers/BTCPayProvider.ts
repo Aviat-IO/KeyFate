@@ -244,19 +244,8 @@ export class BTCPayProvider implements PaymentProvider {
       .update(payload, "utf8")
       .digest("hex")
 
-    // Add debugging information (remove in production)
-    console.log("BTCPay Webhook Signature Debug:", {
-      receivedSignature: signature,
-      extractedSignature: actualSignature,
-      expectedSignature: expected,
-      payloadLength: payload.length,
-      secretLength: secret.length,
-    })
-
     if (actualSignature !== expected) {
-      throw new Error(
-        `Invalid webhook signature. Expected: ${expected}, Received: ${actualSignature}`,
-      )
+      throw new Error("Invalid webhook signature")
     }
 
     const raw: BTCPayWebhookEventRaw = JSON.parse(payload)
