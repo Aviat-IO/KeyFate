@@ -2,12 +2,10 @@
 
 ## MODIFIED Requirements
 
-### REQ-USER-003: Account Lifecycle (MODIFIED)
+### Requirement: Account Lifecycle
 
-**ADDED:** Account deletion with grace period
-
-Users can request permanent account deletion with a 30-day grace period during
-which they can cancel the deletion request.
+Users SHALL be able to request permanent account deletion with a 30-day grace
+period during which they can cancel the deletion request.
 
 **Priority:** High\
 **Type:** Functional

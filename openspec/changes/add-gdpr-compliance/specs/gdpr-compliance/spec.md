@@ -14,9 +14,9 @@ functionality, ensuring compliance with EU data protection regulations (Articles
 
 ## ADDED Requirements
 
-### REQ-GDPR-001: Data Export Request
+### Requirement: Data Export Request
 
-Users must be able to request a complete export of their personal data in a
+Users SHALL be able to request a complete export of their personal data in a
 machine-readable format (JSON).
 
 **Priority:** High\
@@ -42,9 +42,9 @@ THEN system returns 429 Too Many Requests
 AND error message explains 24-hour cooldown period
 ```
 
-### REQ-GDPR-002: Data Export Contents
+### Requirement: Data Export Contents
 
-Exported data must include all personal information stored by the system in
+Exported data SHALL include all personal information stored by the system in
 machine-readable JSON format.
 
 **Priority:** High\
@@ -76,9 +76,10 @@ THEN JSON file includes:
   - payment history array
 ```
 
-### REQ-GDPR-003: Export File Security
+### Requirement: Export File Security
 
-Export files must be securely stored and accessed with time-limited signed URLs.
+Export files SHALL be securely stored and accessed with time-limited signed
+URLs.
 
 **Priority:** High\
 **Type:** Security
@@ -110,9 +111,9 @@ THEN system returns 403 Forbidden
 AND error message explains download limit reached
 ```
 
-### REQ-GDPR-004: Account Deletion Request
+### Requirement: Account Deletion Request
 
-Users must be able to request permanent deletion of their account and all
+Users SHALL be able to request permanent deletion of their account and all
 associated data, with a 30-day grace period.
 
 **Priority:** High\
@@ -151,9 +152,9 @@ AND shows scheduled deletion date in settings
 AND provides cancellation option
 ```
 
-### REQ-GDPR-005: Deletion Grace Period
+### Requirement: Deletion Grace Period
 
-Users must be able to cancel account deletion during the 30-day grace period.
+Users SHALL be able to cancel account deletion during the 30-day grace period.
 
 **Priority:** High\
 **Type:** Functional
@@ -181,9 +182,9 @@ AND user receives deletion completion email
 AND user cannot log in anymore
 ```
 
-### REQ-GDPR-006: Data Deletion Scope
+### Requirement: Data Deletion Scope
 
-Account deletion must remove all user data except legally required records.
+Account deletion SHALL remove all user data except legally required records.
 
 **Priority:** High\
 **Type:** Functional
@@ -226,9 +227,9 @@ THEN database contains:
 AND payment records remain (anonymized)
 ```
 
-### REQ-GDPR-007: Deletion Audit Trail
+### Requirement: Deletion Audit Trail
 
-All deletion requests must be auditable for compliance purposes.
+All deletion requests SHALL be auditable for compliance purposes.
 
 **Priority:** Medium\
 **Type:** Compliance
@@ -257,9 +258,9 @@ THEN audit trail shows:
   - Data deletion confirmation
 ```
 
-### REQ-GDPR-008: Export Background Processing
+### Requirement: Export Background Processing
 
-Data export generation must be processed asynchronously to avoid request
+Data export generation SHALL be processed asynchronously to avoid request
 timeouts.
 
 **Priority:** Medium\
@@ -288,9 +289,9 @@ THEN system:
   - Sends "export ready" email
 ```
 
-### REQ-GDPR-009: API Authentication and Authorization
+### Requirement: API Authentication and Authorization
 
-All GDPR endpoints must require authentication and verify user authorization.
+All GDPR endpoints SHALL require authentication and verify user authorization.
 
 **Priority:** High\
 **Type:** Security
@@ -325,9 +326,9 @@ AND response includes code "REAUTH_REQUIRED"
 AND error message explains OTP required
 ```
 
-### REQ-GDPR-010: Email Notifications
+### Requirement: Email Notifications
 
-System must send email notifications for all critical GDPR operations.
+System SHALL send email notifications for all critical GDPR operations.
 
 **Priority:** Medium\
 **Type:** Functional
