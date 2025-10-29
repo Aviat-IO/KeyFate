@@ -1,7 +1,6 @@
 import { withAuth } from "next-auth/middleware"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { randomUUID } from "crypto"
 
 // Wrap with NextAuth's withAuth for authentication functionality
 export default withAuth(
@@ -11,8 +10,8 @@ export default withAuth(
     const { pathname } = request.nextUrl
     const token = request.nextauth.token
 
-    // Generate unique request ID for tracing
-    const requestId = randomUUID()
+    // Generate unique request ID for tracing (using Web Crypto API for Edge runtime)
+    const requestId = crypto.randomUUID()
     const requestHeaders = new Headers(request.headers)
     requestHeaders.set("x-request-id", requestId)
 
