@@ -59,13 +59,13 @@
 5. [ ] Test webhook replay protection
    - [ ] Send duplicate Stripe webhook (should return 200, not process twice)
    - [ ] Send duplicate BTCPay webhook (should return 200, not process twice)
-6. [ ] Test cron authentication
-   - [ ] Try calling cron without auth (should fail)
-   - [ ] Call with valid HMAC signature (should succeed)
-   - [ ] Try replaying old HMAC signature (should fail)
+6. [x] Test cron authentication
+   - [x] Try calling cron without auth (should fail)
+   - [x] Call with valid HMAC signature (should succeed)
+   - [x] Try replaying old HMAC signature (should fail)
 7. [ ] Test rate limiting
    - [x] Create 6 secrets in quick succession (6th should be rate limited)
-   - [ ] Make 11 check-ins in quick succession (11th should be rate limited)
+   - [x] Make 11 check-ins in quick succession (11th should be rate limited)
 8. [ ] Test admin IP whitelisting
    - [ ] Access admin endpoints from non-whitelisted IP (should fail)
    - [ ] Access from whitelisted IP (should succeed)
