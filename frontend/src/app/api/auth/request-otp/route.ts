@@ -5,10 +5,21 @@ import { NextRequest, NextResponse } from "next/server"
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email } = body
+    const { email, acceptedPrivacyPolicy } = body
 
     if (!email || typeof email !== "string") {
       return NextResponse.json({ error: "Email is required" }, { status: 400 })
+    }
+
+    // Require privacy policy acceptance for new signups
+    if (!acceptedPrivacyPolicy) {
+      return NextResponse.json(
+        {
+          error:
+            "You must accept the Privacy Policy and Terms of Service to continue",
+        },
+        { status: 400 },
+      )
     }
 
     const normalizedEmail = email.toLowerCase().trim()

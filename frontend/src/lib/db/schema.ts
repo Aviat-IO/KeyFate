@@ -198,12 +198,32 @@ export const otpRateLimits = pgTable(
   }),
 )
 
+export const policyDocumentTypeEnum = pgEnum("policy_document_type", [
+  "privacy_policy",
+  "terms_of_service",
+])
+
+export const policyDocuments = pgTable("policy_documents", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  type: policyDocumentTypeEnum("type").notNull(),
+  version: text("version").notNull(),
+  content: text("content").notNull(), // Full markdown/HTML content
+  effectiveDate: timestamp("effective_date").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+})
+
 export const privacyPolicyAcceptance = pgTable("privacy_policy_acceptance", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   policyVersion: text("policy_version").notNull(),
+  policyDocumentId: uuid("policy_document_id").references(
+    () => policyDocuments.id,
+  ), // Link to exact policy content
+  termsDocumentId: uuid("terms_document_id").references(
+    () => policyDocuments.id,
+  ), // Link to exact terms content
   acceptedAt: timestamp("accepted_at").defaultNow().notNull(),
   ipAddress: text("ip_address"),
 })

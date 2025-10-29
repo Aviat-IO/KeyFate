@@ -10,6 +10,7 @@ import { validatePassword } from "./auth/password"
 import { authenticateUser } from "./auth/users"
 import { validateAuthEnvironment } from "./auth/validate-env"
 import { validateOTPToken } from "./auth/otp"
+import { recordPrivacyPolicyAcceptance } from "./auth/privacy-policy"
 
 // Validate auth environment and OAuth configuration at startup (skip in test environment)
 if (process.env.NODE_ENV !== "test") {
@@ -162,10 +163,11 @@ providers.push(
 
           let user
           if (userResult.length === 0) {
+            const userId = crypto.randomUUID()
             const newUsers = await db
               .insert(users)
               .values({
-                id: crypto.randomUUID(),
+                id: userId,
                 email: credentials.email.toLowerCase().trim(),
                 emailVerified: new Date(),
                 password: null,
@@ -174,6 +176,9 @@ providers.push(
               } as UserInsert)
               .returning()
             user = newUsers[0]
+
+            // Record privacy policy acceptance for new users
+            await recordPrivacyPolicyAcceptance(userId)
           } else {
             user = userResult[0]
           }
@@ -342,6 +347,9 @@ const baseAuthConfig = {
               emailVerified: new Date(),
               password: null,
             } as UserInsert)
+
+            // Record privacy policy acceptance for new users
+            await recordPrivacyPolicyAcceptance(userId)
 
             await logLogin(userId, {
               provider: "google",
