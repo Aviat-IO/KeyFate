@@ -87,7 +87,19 @@ function verifyHMACSignature(
   }
 
   const crypto = require("crypto")
-  const message = `${timestampMs}.${req.url}`
+
+  // Validate signature is valid hex (SHA256 = 64 hex chars)
+  if (!/^[a-f0-9]{64}$/i.test(signature)) {
+    return false
+  }
+
+  // Construct the URL from the Host header and pathname to match what clients send
+  const host = req.headers.get("host") || req.nextUrl.host
+  const pathname = req.nextUrl.pathname
+  const protocol = req.headers.get("x-forwarded-proto") || "https"
+  const url = `${protocol}://${host}${pathname}`
+
+  const message = `${timestampMs}.${url}`
   const expectedSignature = crypto
     .createHmac("sha256", cronSecret)
     .update(message)

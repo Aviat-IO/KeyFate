@@ -28,6 +28,11 @@ export function verifyCronSignature(request: NextRequest): {
     return { valid: false, error: "Missing cron authentication headers" }
   }
 
+  // Validate signature is valid hex (SHA256 = 64 hex chars)
+  if (!/^[a-f0-9]{64}$/i.test(signature)) {
+    return { valid: false, error: "Invalid signature format" }
+  }
+
   const timestampMs = parseInt(timestamp, 10)
   if (isNaN(timestampMs)) {
     return { valid: false, error: "Invalid timestamp format" }
@@ -47,12 +52,13 @@ export function verifyCronSignature(request: NextRequest): {
     }
   }
 
-  const payload = request.url || ""
-  const expectedSignature = generateCronSignature(
-    payload,
-    timestampMs,
-    cronSecret,
-  )
+  // Construct the URL from the Host header and pathname to match what clients send
+  const host = request.headers.get("host") || request.nextUrl.host
+  const pathname = request.nextUrl.pathname
+  const protocol = request.headers.get("x-forwarded-proto") || "https"
+  const url = `${protocol}://${host}${pathname}`
+
+  const expectedSignature = generateCronSignature(url, timestampMs, cronSecret)
 
   const signatureBuffer = Buffer.from(signature, "hex")
   const expectedBuffer = Buffer.from(expectedSignature, "hex")
