@@ -7,6 +7,13 @@ resource "random_password" "cron_secret" {
   upper   = true
   lower   = true
   numeric = true
+  
+  # Keepers ensure this gets regenerated if infrastructure changes
+  # but don't regenerate on every apply
+  keepers = {
+    # Only regenerate if we explicitly change this value
+    version = "1"
+  }
 }
 
 # Store the cron secret in Secret Manager
@@ -98,6 +105,13 @@ resource "google_cloud_scheduler_job" "process_reminders" {
     google_secret_manager_secret_version.cron_secret,
     google_secret_manager_secret_iam_member.scheduler_secret_access
   ]
+  
+  # Force replacement when the secret changes
+  lifecycle {
+    replace_triggered_by = [
+      random_password.cron_secret
+    ]
+  }
 }
 
 # Cloud Scheduler job to check and trigger secrets
@@ -139,6 +153,13 @@ resource "google_cloud_scheduler_job" "check_secrets" {
     google_secret_manager_secret_version.cron_secret,
     google_secret_manager_secret_iam_member.scheduler_secret_access
   ]
+  
+  # Force replacement when the secret changes
+  lifecycle {
+    replace_triggered_by = [
+      random_password.cron_secret
+    ]
+  }
 }
 
 # Cloud Scheduler job to process downgrades
@@ -180,5 +201,17 @@ resource "google_cloud_scheduler_job" "process_downgrades" {
     google_secret_manager_secret_version.cron_secret,
     google_secret_manager_secret_iam_member.scheduler_secret_access
   ]
+  
+  # Force replacement when the secret changes
+  lifecycle {
+    replace_triggered_by = [
+      random_password.cron_secret
+    ]
+  }
 }
 
+
+# NOTE: Cloud Run doesn't need to be redeployed when cron_secret changes
+# because it references the secret dynamically via Secret Manager (see frontend.tf line 220-223).
+# Cloud Run will automatically get the latest secret version on container restart.
+# Only Cloud Scheduler jobs need to be replaced because they have the secret hardcoded in headers.
