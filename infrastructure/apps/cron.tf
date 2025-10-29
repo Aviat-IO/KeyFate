@@ -90,13 +90,6 @@ resource "google_cloud_scheduler_job" "process_reminders" {
     google_secret_manager_secret_version.cron_secret,
     google_secret_manager_secret_iam_member.scheduler_secret_access
   ]
-  
-  # Force replacement when the secret changes
-  lifecycle {
-    replace_triggered_by = [
-      random_password.cron_secret
-    ]
-  }
 }
 
 # Cloud Scheduler job to check and trigger secrets
@@ -149,37 +142,12 @@ resource "google_cloud_scheduler_job" "process_downgrades" {
 
   http_target {
     http_method = "POST"
-    uri         = "${var.next_public_site_url}/api/cron/check-secrets"
+    uri         = "${var.next_public_site_url}/api/cron/process-subscription-downgrades"
 
     headers = {
       "Authorization" = "Bearer ${var.cron_secret}"
       "Content-Type"  = "application/json"
     }
-
-    # Using simple Bearer token authentication instead of OIDC
-    # The Authorization header above contains the Bearer token for authentication
-
-    # Empty body for POST request
-    body = base64encode("{}")
-  }
-
-  # Retry configuration
-  retry_config {
-    retry_count          = 3
-    max_retry_duration   = "60s"
-    min_backoff_duration = "5s"
-    max_backoff_duration = "30s"
-    max_doublings        = 2
-  }
-
-  # Timeout configuration
-  time_zone = "UTC"
-
-  depends_on = [
-    google_secret_manager_secret_version.cron_secret,
-    google_secret_manager_secret_iam_member.scheduler_secret_access
-  ]
-}
 
     # Using simple Bearer token authentication instead of OIDC
     # The Authorization header above contains the Bearer token for authentication
