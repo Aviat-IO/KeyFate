@@ -49,16 +49,20 @@ describe("Cron HMAC Authentication", () => {
 
   describe("authorizeRequest with HMAC", () => {
     it("should accept valid HMAC signature", () => {
-      const url = "http://localhost:3000/api/cron/check-secrets"
+      const publicUrl = "https://localhost:3000/api/cron/check-secrets"
       const timestamp = Date.now()
-      const signature = generateCronSignature(url, timestamp, testSecret)
+      const signature = generateCronSignature(publicUrl, timestamp, testSecret)
 
-      const request = new NextRequest(url, {
-        headers: {
-          "x-cron-signature": signature,
-          "x-cron-timestamp": timestamp.toString(),
+      const request = new NextRequest(
+        "http://0.0.0.0:3000/api/cron/check-secrets",
+        {
+          headers: {
+            "x-cron-signature": signature,
+            "x-cron-timestamp": timestamp.toString(),
+            host: "localhost:3000",
+          },
         },
-      })
+      )
 
       const result = authorizeRequest(request)
       expect(result).toBe(true)
@@ -186,16 +190,20 @@ describe("Cron HMAC Authentication", () => {
 
   describe("Replay Protection", () => {
     it("should prevent timestamp replay attacks", () => {
-      const url = "http://localhost:3000/api/cron/check-secrets"
+      const publicUrl = "https://localhost:3000/api/cron/check-secrets"
       const timestamp = Date.now() - 4 * 60 * 1000 // 4 minutes ago (within window)
-      const signature = generateCronSignature(url, timestamp, testSecret)
+      const signature = generateCronSignature(publicUrl, timestamp, testSecret)
 
-      const request1 = new NextRequest(url, {
-        headers: {
-          "x-cron-signature": signature,
-          "x-cron-timestamp": timestamp.toString(),
+      const request1 = new NextRequest(
+        "http://0.0.0.0:3000/api/cron/check-secrets",
+        {
+          headers: {
+            "x-cron-signature": signature,
+            "x-cron-timestamp": timestamp.toString(),
+            host: "localhost:3000",
+          },
         },
-      })
+      )
 
       // First request should succeed
       expect(authorizeRequest(request1)).toBe(true)
@@ -206,14 +214,148 @@ describe("Cron HMAC Authentication", () => {
       // Replaying the same signature with old timestamp should still work
       // if within 5-minute window, but fail if outside
       const oldTimestamp = Date.now() - 6 * 60 * 1000
-      const replayRequest = new NextRequest(url, {
-        headers: {
-          "x-cron-signature": signature,
-          "x-cron-timestamp": oldTimestamp.toString(),
+      const replayRequest = new NextRequest(
+        "http://0.0.0.0:3000/api/cron/check-secrets",
+        {
+          headers: {
+            "x-cron-signature": signature,
+            "x-cron-timestamp": oldTimestamp.toString(),
+            host: "localhost:3000",
+          },
         },
-      })
+      )
 
       expect(authorizeRequest(replayRequest)).toBe(false)
+    })
+  })
+
+  describe("Adversarial Attack Tests", () => {
+    const timestamp = Date.now()
+
+    it("should reject malformed hex signatures", () => {
+      const publicUrl = "https://localhost:3000/api/cron/check-secrets"
+
+      const invalidSigs = [
+        "g".repeat(64), // invalid hex char
+        "a".repeat(63), // too short
+        "a".repeat(65), // too long
+        "", // empty
+        "a".repeat(32) + ".f" + "a".repeat(30), // special chars
+      ]
+
+      invalidSigs.forEach((sig) => {
+        const request = new NextRequest(
+          "http://0.0.0.0:3000/api/cron/check-secrets",
+          {
+            headers: {
+              "x-cron-signature": sig,
+              "x-cron-timestamp": timestamp.toString(),
+              host: "localhost:3000",
+            },
+          },
+        )
+        expect(authorizeRequest(request)).toBe(false)
+      })
+    })
+
+    it("should reject signature with appended data", () => {
+      const publicUrl = "https://localhost:3000/api/cron/check-secrets"
+      const validSig = generateCronSignature(publicUrl, timestamp, testSecret)
+
+      const request = new NextRequest(
+        "http://0.0.0.0:3000/api/cron/check-secrets",
+        {
+          headers: {
+            "x-cron-signature": validSig + ".f",
+            "x-cron-timestamp": timestamp.toString(),
+            host: "localhost:3000",
+          },
+        },
+      )
+      expect(authorizeRequest(request)).toBe(false)
+    })
+
+    it("should reject signature for different URL path", () => {
+      const originalUrl = "https://localhost:3000/api/cron/check-secrets"
+      const signature = generateCronSignature(
+        originalUrl,
+        timestamp,
+        testSecret,
+      )
+
+      const request = new NextRequest(
+        "http://0.0.0.0:3000/api/cron/process-reminders",
+        {
+          headers: {
+            "x-cron-signature": signature,
+            "x-cron-timestamp": timestamp.toString(),
+            host: "localhost:3000",
+          },
+        },
+      )
+      expect(authorizeRequest(request)).toBe(false)
+    })
+
+    it("should reject expired timestamp (>5 minutes old)", () => {
+      const publicUrl = "https://localhost:3000/api/cron/check-secrets"
+      const oldTimestamp = Date.now() - 6 * 60 * 1000
+      const signature = generateCronSignature(
+        publicUrl,
+        oldTimestamp,
+        testSecret,
+      )
+
+      const request = new NextRequest(
+        "http://0.0.0.0:3000/api/cron/check-secrets",
+        {
+          headers: {
+            "x-cron-signature": signature,
+            "x-cron-timestamp": oldTimestamp.toString(),
+            host: "localhost:3000",
+          },
+        },
+      )
+      expect(authorizeRequest(request)).toBe(false)
+    })
+
+    it("should reject future timestamp", () => {
+      const publicUrl = "https://localhost:3000/api/cron/check-secrets"
+      const futureTimestamp = Date.now() + 10 * 60 * 1000
+      const signature = generateCronSignature(
+        publicUrl,
+        futureTimestamp,
+        testSecret,
+      )
+
+      const request = new NextRequest(
+        "http://0.0.0.0:3000/api/cron/check-secrets",
+        {
+          headers: {
+            "x-cron-signature": signature,
+            "x-cron-timestamp": futureTimestamp.toString(),
+            host: "localhost:3000",
+          },
+        },
+      )
+      expect(authorizeRequest(request)).toBe(false)
+    })
+
+    it("should reject signature with wrong secret", () => {
+      const publicUrl = "https://localhost:3000/api/cron/check-secrets"
+      const wrongSecret = "wrong-secret-key"
+      const signature = generateCronSignature(publicUrl, timestamp, wrongSecret)
+
+      const request = new NextRequest(
+        "http://0.0.0.0:3000/api/cron/check-secrets",
+        {
+          headers: {
+            "x-cron-signature": signature,
+            "x-cron-timestamp": timestamp.toString(),
+            host: "localhost:3000",
+          },
+        },
+      )
+      expect(authorizeRequest(request)).toBe(false)
     })
   })
 })
