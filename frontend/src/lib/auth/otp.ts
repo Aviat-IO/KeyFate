@@ -217,12 +217,6 @@ export async function checkOTPRateLimit(
     now.getTime() + OTP_RATE_LIMIT_WINDOW_HOURS * 60 * 60 * 1000,
   )
 
-  if (!isProduction) {
-    console.log(
-      `[OTP Rate Limit] Non-production mode: Allowing ${OTP_RATE_LIMIT_REQUESTS} requests per hour`,
-    )
-  }
-
   const existingLimits = await db
     .select()
     .from(otpRateLimits)
