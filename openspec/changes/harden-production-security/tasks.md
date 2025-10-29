@@ -97,7 +97,7 @@
 - [x] 2.3.4 Expire idle sessions and require re-authentication
 - [x] 2.3.5 Add re-authentication requirement to server share reveal endpoint
 - [x] 2.3.6 Implement OTP-based re-authentication utility
-- [ ] 2.3.7 Test idle timeout triggers after 24 hours
+- [x] 2.3.7 Test idle timeout triggers after 24 hours
 - [ ] 2.3.8 Test re-authentication required for server share access
 - [ ] 2.3.9 Test active sessions not expired prematurely
 
@@ -109,7 +109,7 @@
 - [x] 2.4.3 Return 500 error if `ADMIN_TOKEN` not configured
 - [x] 2.4.4 Add IP whitelist configuration for admin endpoints
 - [x] 2.4.5 Implement IP whitelist validation middleware
-- [ ] 2.4.6 Add request signing with HMAC for admin operations
+- [x] 2.4.6 Add request signing with HMAC for admin operations
 - [x] 2.4.7 Test admin endpoints reject requests without token
 - [x] 2.4.8 Test admin endpoints reject requests from non-whitelisted IPs
 - [x] 2.4.9 Test admin endpoints accept valid authenticated requests
@@ -128,7 +128,7 @@
 - [x] 3.1.6 Add CSRF protection to server share operations
 - [ ] 3.1.7 Test CSRF validation rejects mismatched origins
 - [ ] 3.1.8 Test CSRF validation accepts same-origin requests
-- [ ] 3.1.9 Add CSRF to remaining authenticated endpoints
+- [x] 3.1.9 Add CSRF to remaining authenticated endpoints
 - [ ] 3.1.10 Document CSRF implementation in security docs
 
 ### 3.2 Rate Limiting
@@ -180,10 +180,10 @@
 
 ### 4.1 Request Tracing
 
-- [ ] 4.1.1 Create request ID middleware in `frontend/src/middleware.ts`
-- [ ] 4.1.2 Generate unique request ID for each request (UUID v4)
-- [ ] 4.1.3 Add request ID to response headers (`X-Request-ID`)
-- [ ] 4.1.4 Include request ID in all log entries
+- [x] 4.1.1 Create request ID middleware in `frontend/src/middleware.ts`
+- [x] 4.1.2 Generate unique request ID for each request (UUID v4)
+- [x] 4.1.3 Add request ID to response headers (`X-Request-ID`)
+- [x] 4.1.4 Include request ID in all log entries
 - [ ] 4.1.5 Propagate request ID to database queries
 - [ ] 4.1.6 Test request ID appears in logs and responses
 - [ ] 4.1.7 Test request ID correlation across distributed operations

@@ -1,6 +1,7 @@
 import { withAuth } from "next-auth/middleware"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
+import { randomUUID } from "crypto"
 
 // Wrap with NextAuth's withAuth for authentication functionality
 export default withAuth(
@@ -9,6 +10,11 @@ export default withAuth(
   ) {
     const { pathname } = request.nextUrl
     const token = request.nextauth.token
+
+    // Generate unique request ID for tracing
+    const requestId = randomUUID()
+    const requestHeaders = new Headers(request.headers)
+    requestHeaders.set("x-request-id", requestId)
 
     // Routes that don't require email verification
     const verificationExemptRoutes = [
@@ -43,12 +49,20 @@ export default withAuth(
       if (!token.emailVerified && !isVerificationExempt) {
         const url = request.nextUrl.clone()
         url.pathname = "/auth/verify-email"
-        return NextResponse.redirect(url)
+        const response = NextResponse.redirect(url)
+        response.headers.set("x-request-id", requestId)
+        return response
       }
     }
 
-    // Allow the request to continue
-    return NextResponse.next()
+    // Allow the request to continue with request ID in response headers
+    const response = NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    })
+    response.headers.set("x-request-id", requestId)
+    return response
   },
   {
     callbacks: {
