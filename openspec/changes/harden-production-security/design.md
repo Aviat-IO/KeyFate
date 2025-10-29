@@ -170,17 +170,16 @@ minutes
 - ⚠️ Users must adapt to 8-digit codes (minor UX impact)
 - ⚠️ 5-minute window may be tight for slow email delivery (monitor bounce rate)
 
-### Decision 4: Structured Logging with Sentry APM
+### Decision 4: Structured Logging with Sensitive Data Redaction
 
 **What:** Implement structured logging with automatic sensitive data redaction
-and Sentry for error tracking
+(APM integration deferred to separate proposal)
 
 **Why:**
 
 - Current logging uses console.log with potential sensitive data exposure
-- Need centralized error tracking for production monitoring
-- Sentry provides automatic error grouping, alerts, and performance monitoring
 - Structured logging enables better debugging and audit trails
+- Automatic redaction prevents accidental sensitive data leaks
 
 **Redaction Strategy:**
 
@@ -191,19 +190,10 @@ and Sentry for error tracking
 - Replace sensitive values with `[REDACTED]` in logs
 - Never log raw request/response bodies without sanitization
 
-**Alternatives considered:**
-
-1. ELK Stack (Elasticsearch, Logstash, Kibana) - Rejected: Over-engineered for
-   current scale
-2. Datadog - Rejected: More expensive than Sentry for similar features
-3. CloudWatch only - Rejected: Limited alerting and error grouping capabilities
-
 **Implementation:**
 
 ```typescript
 // frontend/src/lib/logger.ts
-import * as Sentry from "@sentry/nextjs";
-
 const SENSITIVE_FIELDS = [
   "serverShare",
   "encryptedShare",
@@ -246,17 +236,15 @@ export const logger = {
     );
   },
   error: (message: string, error?: any, data?: any) => {
-    const sanitizedData = sanitize(data);
     console.error(
       JSON.stringify({
         level: "error",
         message,
         error: error?.message,
-        data: sanitizedData,
+        data: sanitize(data),
         timestamp: new Date().toISOString(),
       }),
     );
-    Sentry.captureException(error, { extra: sanitizedData });
   },
   warn: (message: string, data?: any) => {
     console.warn(
@@ -273,11 +261,9 @@ export const logger = {
 
 **Trade-offs:**
 
-- ✅ Centralized monitoring with alerting
-- ✅ Automatic error grouping and performance tracking
 - ✅ Prevents sensitive data leaks
-- ⚠️ Sentry costs scale with event volume (free tier: 5k events/month)
-- ⚠️ Must carefully configure data scrubbing rules
+- ✅ Simple implementation without external dependencies
+- ⚠️ No centralized error tracking (deferred to future APM proposal)
 
 ### Decision 5: Webhook Replay Protection via Database Deduplication
 
@@ -494,25 +480,6 @@ tokens
 - Require CSRF for all user-facing API routes
 - Consider API key authentication for future programmatic access
 
-### Low Risk: Sentry Cost Overruns
-
-**Risk:** High error volume could exceed Sentry free tier limits
-
-**Mitigation:**
-
-1. Set up error rate limiting in Sentry (max 100 events/min)
-2. Configure alert for approaching quota (80% of monthly limit)
-3. Have credit card on file for seamless tier upgrade if needed
-4. Implement client-side error deduplication
-5. Set aggressive sampling for non-critical errors
-
-**Budget Planning:**
-
-- Free tier: 5,000 events/month
-- Paid tier: $26/month for 50,000 events
-- Expected: ~1,000 events/month at current traffic
-- Alert threshold: 4,000 events/month
-
 ## Migration Plan
 
 ### Phase 1: Foundation (Week 1 - Non-Breaking)
@@ -574,14 +541,11 @@ tokens
 
 ### Phase 4: Monitoring & Compliance (Week 2-3 - Non-Breaking)
 
-1. Deploy Sentry integration
-2. Configure error alerts and thresholds
-3. Deploy request ID middleware
-4. Deploy privacy policy acceptance tracking
-5. Deploy GDPR data export/deletion endpoints
-6. Test end-to-end with sample user
+1. Deploy request ID middleware
+2. Deploy privacy policy acceptance tracking
+3. Test end-to-end with sample user
 
-**Rollback:** Disable Sentry, revert privacy policy enforcement
+**Rollback:** Revert privacy policy enforcement
 
 ### Phase 5: Validation & Launch (Week 3)
 
@@ -600,7 +564,6 @@ tokens
 - ✅ Integration test suite passing (>80% coverage)
 - ✅ Security audit passed with no critical/high findings
 - ✅ Load testing successful (<500ms p95, no errors)
-- ✅ Monitoring alerts functional (<5 minute latency)
 
 ## Open Questions
 
@@ -617,8 +580,8 @@ tokens
    if bot traffic becomes issue.
 
 4. **Q:** Should we implement IP-based geolocation for GDPR determination?
-   **A:** Not needed initially. Privacy policy applies globally. Can add
-   regional differences later if needed.
+   **A:** GDPR compliance (data export/deletion) is in a separate proposal
+   (`add-gdpr-compliance`).
 
 5. **Q:** Should we add security headers (CSP, HSTS, X-Frame-Options)? **A:**
    Yes, but as separate follow-up change. Not blocking for launch. Next.js

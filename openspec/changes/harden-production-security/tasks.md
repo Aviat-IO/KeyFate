@@ -178,55 +178,27 @@
 
 ## 4. Monitoring & Compliance (Week 2-3)
 
-### 4.1 APM Integration
+### 4.1 Request Tracing
 
-- [ ] 4.1.1 Create Sentry account and project
-- [ ] 4.1.2 Install `@sentry/nextjs` package
-- [ ] 4.1.3 Configure Sentry in `sentry.client.config.ts`
-- [ ] 4.1.4 Configure Sentry in `sentry.server.config.ts`
-- [ ] 4.1.5 Add error boundary components for client errors
-- [ ] 4.1.6 Add sensitive data scrubbing rules to Sentry config
-- [ ] 4.1.7 Set up alerts for critical errors (>10/hour)
-- [ ] 4.1.8 Set up alerts for failed webhooks
-- [ ] 4.1.9 Set up alerts for authentication failures (>50/hour)
-- [ ] 4.1.10 Test error tracking with sample errors
-- [ ] 4.1.11 Test alert notifications deliver within 5 minutes
+- [ ] 4.1.1 Create request ID middleware in `frontend/src/middleware.ts`
+- [ ] 4.1.2 Generate unique request ID for each request (UUID v4)
+- [ ] 4.1.3 Add request ID to response headers (`X-Request-ID`)
+- [ ] 4.1.4 Include request ID in all log entries
+- [ ] 4.1.5 Propagate request ID to database queries
+- [ ] 4.1.6 Test request ID appears in logs and responses
+- [ ] 4.1.7 Test request ID correlation across distributed operations
 
-### 4.2 Request Tracing
+### 4.2 Privacy Policy Enforcement
 
-- [ ] 4.2.1 Create request ID middleware in `frontend/src/middleware.ts`
-- [ ] 4.2.2 Generate unique request ID for each request (UUID v4)
-- [ ] 4.2.3 Add request ID to response headers (`X-Request-ID`)
-- [ ] 4.2.4 Include request ID in all log entries
-- [ ] 4.2.5 Propagate request ID to database queries
-- [ ] 4.2.6 Test request ID appears in logs and responses
-- [ ] 4.2.7 Test request ID correlation across distributed operations
-
-### 4.3 Privacy Policy Enforcement
-
-- [ ] 4.3.1 Add `privacy_policy_acceptance` table to schema
-- [ ] 4.3.2 Add acceptance checkbox to signup form
-- [ ] 4.3.3 Record acceptance timestamp and IP address
-- [ ] 4.3.4 Block signup without privacy policy acceptance
-- [ ] 4.3.5 Add privacy policy version tracking
-- [ ] 4.3.6 Implement re-acceptance flow for policy updates
-- [ ] 4.3.7 Test signup requires privacy policy acceptance
-- [ ] 4.3.8 Test existing users grandfathered (grace period)
-- [ ] 4.3.9 Test policy update triggers re-acceptance
-
-### 4.4 GDPR Compliance
-
-- [ ] 4.4.1 Implement data export API endpoint (`/api/user/export`)
-- [ ] 4.4.2 Export all user data as JSON (profile, secrets metadata, audit logs)
-- [ ] 4.4.3 Exclude encrypted shares from export (zero-knowledge)
-- [ ] 4.4.4 Implement account deletion endpoint (`/api/user/delete`)
-- [ ] 4.4.5 Cascade delete all user data (secrets, recipients, sessions, logs)
-- [ ] 4.4.6 Add 30-day soft delete grace period
-- [ ] 4.4.7 Document data retention policy (audit logs: indefinite for Pro, 90
-      days for Free)
-- [ ] 4.4.8 Test data export includes all user information
-- [ ] 4.4.9 Test account deletion removes all traces
-- [ ] 4.4.10 Add GDPR disclosure to privacy policy
+- [x] 4.2.1 Add `privacy_policy_acceptance` table to schema
+- [x] 4.2.2 Add acceptance checkbox to signup form
+- [x] 4.2.3 Record acceptance timestamp and IP address
+- [x] 4.2.4 Block signup without privacy policy acceptance
+- [x] 4.2.5 Add privacy policy version tracking
+- [x] 4.2.6 Implement re-acceptance flow for policy updates
+- [ ] 4.2.7 Test signup requires privacy policy acceptance
+- [ ] 4.2.8 Test existing users grandfathered (grace period)
+- [ ] 4.2.9 Test policy update triggers re-acceptance
 
 ## 5. Testing & Validation (Week 3)
 

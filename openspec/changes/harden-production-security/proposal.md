@@ -47,15 +47,12 @@ gain unauthorized administrative access.
 - Track privacy policy acceptance in database with timestamp on signup
 - Add request ID middleware for distributed tracing
 
-### Medium Priority (8 Issues)
+### Medium Priority (6 Issues)
 
 - Centralize tier limit configuration in single source of truth
-- Integrate APM/error tracking (Sentry) with alerts for critical errors
 - Document and test database migration rollback procedures
 - Add integration tests for authentication flows, tier enforcement, encryption,
   check-in system, payment webhooks
-- Implement data retention policy and user data export/deletion features for
-  GDPR compliance
 - Add IP whitelist for cron endpoints with request signing using timestamps
 - Validate encryption key length at application startup
 - Create comprehensive environment variable documentation with validation
@@ -70,9 +67,8 @@ gain unauthorized administrative access.
   sanitization
 - `infrastructure` - Startup validation, health checks, backup strategy,
   connection pooling
-- `monitoring` - Structured logging, request tracing, APM integration, alerting
-- `data-protection` - Privacy policy enforcement, GDPR compliance, data
-  retention
+- `monitoring` - Structured logging, request tracing
+- `data-protection` - Privacy policy enforcement
 
 ### Affected Code
 
@@ -137,7 +133,6 @@ gain unauthorized administrative access.
 
 ### Phase 4: Monitoring & Compliance (Week 2-3)
 
-- APM/Sentry integration
 - Request ID tracing
 - Privacy policy enforcement
 - Integration test suite
@@ -152,7 +147,6 @@ gain unauthorized administrative access.
 ## Dependencies
 
 - Redis or in-memory cache for rate limiting
-- Sentry account or alternative APM service
 - Automated backup infrastructure (Cloud SQL)
 - Test environment for migration validation
 - Security audit tools (OWASP ZAP, Burp Suite)
@@ -193,7 +187,6 @@ gain unauthorized administrative access.
 - Automated backups completing successfully with tested restore procedures
 - Integration test suite covering critical security paths with >80% coverage
 - Privacy policy acceptance tracked for 100% of new signups
-- APM alerting functional with <5 minute notification latency
 - Independent security audit passes with no critical/high findings
 
 ## Related Changes
@@ -204,3 +197,4 @@ gain unauthorized administrative access.
   it)
 - `audit-payment-integration` - Payment security overlaps with webhook replay
   protection
+- `add-gdpr-compliance` - Separate proposal handles GDPR data export/deletion

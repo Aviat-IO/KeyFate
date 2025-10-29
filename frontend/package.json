@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "validate-env": "node ../scripts/validate-env.js",
+    "sync-policies": "tsx scripts/sync-policy-documents.ts local",
+    "sync-policies:staging": "tsx scripts/sync-policy-documents.ts staging",
+    "sync-policies:prod": "tsx scripts/sync-policy-documents.ts production",
     "dev": "npm run validate-env && next dev",
     "build": "next build",
     "build:local": "npm run validate-env && next build",
@@ -21,7 +24,9 @@
     "db:check": "drizzle-kit check",
     "db:drop": "drizzle-kit drop",
     "db:introspect": "drizzle-kit introspect",
-    "db:up": "drizzle-kit up"
+    "db:up": "drizzle-kit up",
+    "db:proxy-staging": "cloud-sql-proxy --port=54321 keyfate-dev:us-central1:keyfate-postgres-staging",
+    "db:proxy-prod": "cloud-sql-proxy --port=54321 keyfate-dev:us-central1:keyfate-postgres-production"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.0",

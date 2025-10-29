@@ -16,6 +16,7 @@ export default function SignInPage() {
   const [errorMessage, setErrorMessage] = useState("")
   const [successMessage, setSuccessMessage] = useState("")
   const [resendCountdown, setResendCountdown] = useState(0)
+  const [acceptedPrivacyPolicy, setAcceptedPrivacyPolicy] = useState(false)
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
   const urlError = searchParams.get("error")
@@ -48,7 +49,10 @@ export default function SignInPage() {
       const response = await fetch("/api/auth/request-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.toLowerCase().trim() }),
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+          acceptedPrivacyPolicy,
+        }),
       })
 
       const data = await response.json()
@@ -233,9 +237,42 @@ export default function SignInPage() {
                 />
               </div>
 
+              <div className="flex items-start space-x-2">
+                <input
+                  id="privacy-policy"
+                  name="privacy-policy"
+                  type="checkbox"
+                  checked={acceptedPrivacyPolicy}
+                  onChange={(e) => setAcceptedPrivacyPolicy(e.target.checked)}
+                  className="border-input focus:ring-primary mt-1 h-4 w-4 rounded"
+                  disabled={isLoading}
+                />
+                <label
+                  htmlFor="privacy-policy"
+                  className="text-muted-foreground text-sm"
+                >
+                  I agree to the{" "}
+                  <Link
+                    href="/terms-of-service"
+                    target="_blank"
+                    className="text-primary hover:underline"
+                  >
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link
+                    href="/privacy-policy"
+                    target="_blank"
+                    className="text-primary hover:underline"
+                  >
+                    Privacy Policy
+                  </Link>
+                </label>
+              </div>
+
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || !acceptedPrivacyPolicy}
                 className="bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-ring group relative flex w-full justify-center rounded-lg border border-transparent px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isLoading ? "Sending code..." : "Continue with Email"}
@@ -333,20 +370,6 @@ export default function SignInPage() {
             </p>
           </div>
         )}
-
-        <p className="text-muted-foreground mt-4 text-center text-xs">
-          By signing in, you agree to our{" "}
-          <Link
-            href="/terms-of-service"
-            className="text-primary hover:underline"
-          >
-            Terms of Service
-          </Link>{" "}
-          and{" "}
-          <Link href="/privacy-policy" className="text-primary hover:underline">
-            Privacy Policy
-          </Link>
-        </p>
       </div>
     </div>
   )
