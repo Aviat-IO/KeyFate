@@ -19,7 +19,7 @@
 - [ ] `DATABASE_URL` - Production database connection string
 - [ ] `SENDGRID_API_KEY` - Production SendGrid API key
 - [ ] `SENDGRID_ADMIN_EMAIL` - Admin notification email
-- [ ] `NEXTAUTH_URL` - Production URL (https://yourdomain.com)
+- [ ] `NEXTAUTH_URL` - Production URL (<https://staging.keyfate.com>)
 - [ ] `CLOUDSQL_AUTHORIZED_NETWORKS` - Production IPs for admin access
 - [ ] Optional: `SENTRY_DSN` for error tracking
 
@@ -48,14 +48,14 @@
 
 ### Phase 2: Functional Testing
 
-1. [ ] Test OTP flow (8-digit, 5-minute expiration)
-2. [ ] Test email verification enforcement
-3. [ ] Test CSRF protection
-   - [ ] Try creating secret from different origin (should fail)
-   - [ ] Create secret from same origin (should succeed)
+1. [x] Test OTP flow (8-digit, 5-minute expiration)
+2. [x] Test email verification enforcement
+3. [x] Test CSRF protection
+   - [x] Try creating secret from different origin (should fail)
+   - [x] Create secret from same origin (should succeed)
 4. [ ] Test re-authentication for server share
    - [ ] Try accessing without re-auth token (should fail with REAUTH_REQUIRED)
-   - [ ] Access with valid OTP token (should succeed)
+   - [x] Access with valid OTP token (should succeed)
 5. [ ] Test webhook replay protection
    - [ ] Send duplicate Stripe webhook (should return 200, not process twice)
    - [ ] Send duplicate BTCPay webhook (should return 200, not process twice)
@@ -64,7 +64,7 @@
    - [ ] Call with valid HMAC signature (should succeed)
    - [ ] Try replaying old HMAC signature (should fail)
 7. [ ] Test rate limiting
-   - [ ] Create 6 secrets in quick succession (6th should be rate limited)
+   - [x] Create 6 secrets in quick succession (6th should be rate limited)
    - [ ] Make 11 check-ins in quick succession (11th should be rate limited)
 8. [ ] Test admin IP whitelisting
    - [ ] Access admin endpoints from non-whitelisted IP (should fail)
@@ -118,10 +118,10 @@
 
 ```bash
 # Test: Create secret from wrong origin (should fail with 403)
-curl -X POST https://yourdomain.com/api/secrets \
+curl -X POST https://staging.keyfate.com/api/secrets \
   -H "Content-Type: application/json" \
   -H "Origin: http://evil-site.com" \
-  -H "Host: yourdomain.com" \
+  -H "Host: staging.keyfate.com" \
   -d '{"title":"test","check_in_days":7,"recipients":[{"name":"Test","email":"test@example.com"}]}'
 
 # Expected: {"error":"CSRF validation failed","message":"Request origin validation failed"}
@@ -131,9 +131,9 @@ curl -X POST https://yourdomain.com/api/secrets \
 
 ```bash
 # Test: Access server share without re-auth (should fail with 403)
-curl -X POST https://yourdomain.com/api/secrets/SECRET_ID/reveal-server-share \
+curl -X POST https://staging.keyfate.com/api/secrets/SECRET_ID/reveal-server-share \
   -H "Content-Type: application/json" \
-  -H "Origin: https://yourdomain.com" \
+  -H "Origin: https://staging.keyfate.com" \
   -H "Cookie: next-auth.session-token=YOUR_SESSION_TOKEN"
 
 # Expected: {"error":"Re-authentication required","code":"REAUTH_REQUIRED"}
@@ -144,7 +144,7 @@ curl -X POST https://yourdomain.com/api/secrets/SECRET_ID/reveal-server-share \
 ```bash
 # Generate HMAC signature
 TIMESTAMP=$(date +%s000)
-URL="https://yourdomain.com/api/cron/check-secrets"
+URL="https://staging.keyfate.com/api/cron/check-secrets"
 MESSAGE="${TIMESTAMP}.${URL}"
 SIGNATURE=$(echo -n "$MESSAGE" | openssl dgst -sha256 -hmac "$CRON_SECRET" | awk '{print $2}')
 
@@ -162,7 +162,7 @@ curl -X POST $URL \
 # Test: Send same Stripe webhook twice
 # First request should succeed, second should return 200 but not process
 
-curl -X POST https://yourdomain.com/api/webhooks/stripe \
+curl -X POST https://staging.keyfate.com/api/webhooks/stripe \
   -H "Content-Type: application/json" \
   -H "Stripe-Signature: VALID_SIGNATURE" \
   -d '{"id":"evt_test_123","type":"checkout.session.completed",...}'
