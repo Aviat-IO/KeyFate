@@ -237,3 +237,9 @@ variable "sendgrid_admin_email" {
   type        = string
 }
 
+variable "cron_secret" {
+  description = "Secret token for authenticating cron job requests"
+  type        = string
+  sensitive   = true
+}
+

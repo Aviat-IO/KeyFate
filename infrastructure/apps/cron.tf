@@ -1,22 +1,7 @@
 locals {}
 
-# Generate a random secret for cron authentication
-resource "random_password" "cron_secret" {
-  length  = 32
-  special = true
-  upper   = true
-  lower   = true
-  numeric = true
-  
-  # Keepers ensure this gets regenerated if infrastructure changes
-  # but don't regenerate on every apply
-  keepers = {
-    # Only regenerate if we explicitly change this value
-    version = "1"
-  }
-}
-
-# Store the cron secret in Secret Manager
+# Store the cron secret from Doppler/tfvars in Secret Manager
+# The CRON_SECRET is managed in Doppler and passed via terraform.tfvars
 resource "google_secret_manager_secret" "cron_secret" {
   secret_id = "cron-authentication-secret-${var.env}"
   project   = module.project.id
@@ -28,7 +13,7 @@ resource "google_secret_manager_secret" "cron_secret" {
 
 resource "google_secret_manager_secret_version" "cron_secret" {
   secret      = google_secret_manager_secret.cron_secret.id
-  secret_data = random_password.cron_secret.result
+  secret_data = var.cron_secret
 }
 
 # Service account for Cloud Scheduler
@@ -78,7 +63,7 @@ resource "google_cloud_scheduler_job" "process_reminders" {
     uri         = "${var.next_public_site_url}/api/cron/process-reminders"
 
     headers = {
-      "Authorization" = "Bearer ${random_password.cron_secret.result}"
+      "Authorization" = "Bearer ${var.cron_secret}"
       "Content-Type"  = "application/json"
     }
 
@@ -126,7 +111,7 @@ resource "google_cloud_scheduler_job" "check_secrets" {
     uri         = "${var.next_public_site_url}/api/cron/check-secrets"
 
     headers = {
-      "Authorization" = "Bearer ${random_password.cron_secret.result}"
+      "Authorization" = "Bearer ${var.cron_secret}"
       "Content-Type"  = "application/json"
     }
 
@@ -153,13 +138,6 @@ resource "google_cloud_scheduler_job" "check_secrets" {
     google_secret_manager_secret_version.cron_secret,
     google_secret_manager_secret_iam_member.scheduler_secret_access
   ]
-  
-  # Force replacement when the secret changes
-  lifecycle {
-    replace_triggered_by = [
-      random_password.cron_secret
-    ]
-  }
 }
 
 # Cloud Scheduler job to process downgrades
@@ -171,10 +149,10 @@ resource "google_cloud_scheduler_job" "process_downgrades" {
 
   http_target {
     http_method = "POST"
-    uri         = "${var.next_public_site_url}/api/cron/process-subscription-downgrades"
+    uri         = "${var.next_public_site_url}/api/cron/check-secrets"
 
     headers = {
-      "Authorization" = "Bearer ${random_password.cron_secret.result}"
+      "Authorization" = "Bearer ${var.cron_secret}"
       "Content-Type"  = "application/json"
     }
 
@@ -201,13 +179,31 @@ resource "google_cloud_scheduler_job" "process_downgrades" {
     google_secret_manager_secret_version.cron_secret,
     google_secret_manager_secret_iam_member.scheduler_secret_access
   ]
-  
-  # Force replacement when the secret changes
-  lifecycle {
-    replace_triggered_by = [
-      random_password.cron_secret
-    ]
+}
+
+    # Using simple Bearer token authentication instead of OIDC
+    # The Authorization header above contains the Bearer token for authentication
+
+    # Empty body for POST request
+    body = base64encode("{}")
   }
+
+  # Retry configuration
+  retry_config {
+    retry_count          = 3
+    max_retry_duration   = "60s"
+    min_backoff_duration = "5s"
+    max_backoff_duration = "30s"
+    max_doublings        = 2
+  }
+
+  # Timeout configuration
+  time_zone = "UTC"
+
+  depends_on = [
+    google_secret_manager_secret_version.cron_secret,
+    google_secret_manager_secret_iam_member.scheduler_secret_access
+  ]
 }
 
 
