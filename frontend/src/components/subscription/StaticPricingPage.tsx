@@ -69,7 +69,7 @@ export function StaticPricingPage({
           title="Free"
           description="Perfect for getting started"
           price="$0"
-          features={TIER_CONFIGS.free.features}
+          features={TIER_CONFIGS.free?.features || []}
           buttonText="Get Started"
           buttonHref="/sign-up"
         />
@@ -80,7 +80,7 @@ export function StaticPricingPage({
           price={proData.price}
           subtext={proData.subtext}
           savingsText={proData.savingsText}
-          features={TIER_CONFIGS.pro.features}
+          features={TIER_CONFIGS.pro?.features || []}
           buttonText="Get Started with Pro"
           stripeLookupKey={proLookupKey || undefined}
           billingPeriod={billingPeriod}

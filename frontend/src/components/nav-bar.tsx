@@ -13,7 +13,8 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
 import { useConfig } from "@/contexts/ConfigContext"
-import { Crown, KeyRound, LogOut, Menu, Settings } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Crown, LogOut, Menu, Settings } from "lucide-react"
 import { signOut, useSession } from "next-auth/react"
 import { useTheme } from "next-themes"
 import Image from "next/image"
@@ -110,11 +111,15 @@ export function NavBar() {
 
             <NavigationMenu className="hidden md:flex">
               <NavigationMenuList>
-                {user && pathname !== "/dashboard" && (
+                {user && (
                   <NavigationMenuItem>
                     <Link href="/dashboard" legacyBehavior passHref>
                       <NavigationMenuLink
-                        className={navigationMenuTriggerStyle()}
+                        className={cn(
+                          navigationMenuTriggerStyle(),
+                          pathname === "/dashboard" &&
+                            "bg-accent text-accent-foreground"
+                        )}
                       >
                         Dashboard
                       </NavigationMenuLink>
@@ -125,9 +130,12 @@ export function NavBar() {
                 <NavigationMenuItem>
                   <Link href="/decrypt" legacyBehavior passHref>
                     <NavigationMenuLink
-                      className={navigationMenuTriggerStyle()}
+                      className={cn(
+                        navigationMenuTriggerStyle(),
+                        pathname === "/decrypt" &&
+                          "bg-accent text-accent-foreground"
+                      )}
                     >
-                      <KeyRound className="mr-2 h-4 w-4" />
                       Recover Secret
                     </NavigationMenuLink>
                   </Link>
@@ -137,7 +145,11 @@ export function NavBar() {
                   <NavigationMenuItem>
                     <Link href="/pricing" legacyBehavior passHref>
                       <NavigationMenuLink
-                        className={navigationMenuTriggerStyle()}
+                        className={cn(
+                          navigationMenuTriggerStyle(),
+                          pathname === "/pricing" &&
+                            "bg-accent text-accent-foreground"
+                        )}
                       >
                         Pricing
                       </NavigationMenuLink>
@@ -190,7 +202,7 @@ export function NavBar() {
                           <NavigationMenuLink asChild>
                             <Link
                               href="/settings"
-                              className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex select-none items-center gap-2 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors"
+                              className={`hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex select-none items-center gap-2 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors ${pathname === "/settings" ? "bg-accent text-accent-foreground" : ""}`}
                             >
                               <Settings className="h-4 w-4" />
                               <span>Settings</span>
@@ -202,7 +214,7 @@ export function NavBar() {
                             <NavigationMenuLink asChild>
                               <Link
                                 href="/pricing"
-                                className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex select-none items-center gap-2 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors"
+                                className={`hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex select-none items-center gap-2 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors ${pathname === "/pricing" ? "bg-accent text-accent-foreground" : ""}`}
                               >
                                 <Crown className="h-4 w-4" />
                                 <span>Upgrade to Pro</span>
@@ -243,7 +255,7 @@ export function NavBar() {
                           <NavigationMenuLink asChild>
                             <Link
                               href="/pricing"
-                              className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground block select-none rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors"
+                              className={`hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground block select-none rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors ${pathname === "/pricing" ? "bg-accent text-accent-foreground" : ""}`}
                             >
                               Pricing
                             </Link>
@@ -252,27 +264,38 @@ export function NavBar() {
                       )}
 
                       {user && (
-                        <li>
-                          <NavigationMenuLink asChild>
-                            <Link
-                              href="/settings"
-                              className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex select-none items-center gap-2 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors"
-                            >
-                              <Settings className="h-4 w-4" />
-                              Settings
-                            </Link>
-                          </NavigationMenuLink>
-                        </li>
+                        <>
+                          <li>
+                            <NavigationMenuLink asChild>
+                              <Link
+                                href="/dashboard"
+                                className={`hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex select-none items-center gap-2 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors ${pathname === "/dashboard" ? "bg-accent text-accent-foreground" : ""}`}
+                              >
+                                Dashboard
+                              </Link>
+                            </NavigationMenuLink>
+                          </li>
+                          <li>
+                            <NavigationMenuLink asChild>
+                              <Link
+                                href="/settings"
+                                className={`hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex select-none items-center gap-2 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors ${pathname === "/settings" ? "bg-accent text-accent-foreground" : ""}`}
+                              >
+                                <Settings className="h-4 w-4" />
+                                Settings
+                              </Link>
+                            </NavigationMenuLink>
+                          </li>
+                        </>
                       )}
 
                       <li>
                         <NavigationMenuLink asChild>
                           <Link
                             href="/decrypt"
-                            className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex select-none items-center gap-2 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors"
+                            className={`hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex select-none items-center gap-2 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors ${pathname === "/decrypt" ? "bg-accent text-accent-foreground" : ""}`}
                             data-testid="mobile-recover-secret"
                           >
-                            <KeyRound className="h-4 w-4" />
                             Recover Secret
                           </Link>
                         </NavigationMenuLink>
@@ -285,7 +308,7 @@ export function NavBar() {
                               <NavigationMenuLink asChild>
                                 <Link
                                   href="/pricing"
-                                  className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex select-none items-center gap-2 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors"
+                                  className={`hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex select-none items-center gap-2 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors ${pathname === "/pricing" ? "bg-accent text-accent-foreground" : ""}`}
                                 >
                                   <Crown className="h-4 w-4" />
                                   Upgrade to Pro

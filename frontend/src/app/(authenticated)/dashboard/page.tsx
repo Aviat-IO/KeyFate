@@ -48,7 +48,7 @@ async function SecretsLoader() {
     }
 
     // Success case
-    const { user, secrets } = result.data
+    const { user, secrets } = result.data!
     console.log("[Dashboard] User authenticated:", user.id)
     console.log(
       "[Dashboard] Secrets loaded:",

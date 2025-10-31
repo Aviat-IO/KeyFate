@@ -264,7 +264,7 @@ class SubscriptionService {
       },
     }
 
-    const config = tierConfig[tierName]
+    const config = tierConfig[tierName as keyof typeof tierConfig]
     if (!config) {
       throw new Error(`Unknown tier: ${tierName}`)
     }
@@ -360,7 +360,7 @@ class SubscriptionService {
       emailService
         .sendPaymentFailedNotification(userId, {
           provider: subscription.provider as SubscriptionProvider,
-          subscriptionId: subscription.providerSubscriptionId,
+          subscriptionId: subscription.providerSubscriptionId || "",
           amount: amountInCents,
           attemptCount,
           nextRetry: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours

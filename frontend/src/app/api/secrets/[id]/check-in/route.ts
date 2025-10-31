@@ -23,7 +23,7 @@ export async function POST(
 
     // Use NextAuth for authentication
     const session = (await getServerSession(
-      authConfig as Parameters<typeof getServerSession>[0],
+      authConfig,
     )) as Session | null
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

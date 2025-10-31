@@ -10,10 +10,7 @@ export async function GET() {
   try {
     let session: Session | null
     try {
-      type GetServerSessionOptions = Parameters<typeof getServerSession>[0]
-      session = (await getServerSession(
-        authConfig as GetServerSessionOptions,
-      )) as Session | null
+      session = (await getServerSession(authConfig)) as Session | null
     } catch (sessionError) {
       console.error("NextAuth session error:", sessionError)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

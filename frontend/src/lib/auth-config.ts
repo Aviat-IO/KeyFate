@@ -2,6 +2,13 @@ import { getDatabase } from "@/lib/db/drizzle"
 import { users, type UserInsert } from "@/lib/db/schema"
 import { logLogin } from "@/lib/services/audit-logger"
 import { eq } from "drizzle-orm"
+import type {
+  AuthOptions,
+  Session,
+  User,
+  Account,
+  Profile,
+} from "next-auth/core/types"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
 import { getBaseUrl, withProductionConfig } from "./auth-config-production"
@@ -228,7 +235,7 @@ providers.push(
   }),
 )
 
-const baseAuthConfig = {
+const baseAuthConfig: AuthOptions = {
   providers,
   pages: {
     signIn: "/auth/signin",
@@ -238,7 +245,7 @@ const baseAuthConfig = {
     /**
      * Ensure OAuth redirects use the correct base URL and prevent open redirects
      */
-    async redirect({ url, baseUrl }) {
+    async redirect({ url, baseUrl }: { url: string; baseUrl: string }) {
       const correctBaseUrl = getBaseUrl()
 
       // Relative URLs are always safe
@@ -277,7 +284,15 @@ const baseAuthConfig = {
      *
      * Security: Prevents unverified Google accounts from accessing the system
      */
-    async signIn({ user, account, profile }) {
+    async signIn({
+      user,
+      account,
+      profile,
+    }: {
+      user: User
+      account: Account | null
+      profile?: Profile
+    }) {
       // Check email verification for OAuth providers
       if (account?.provider === "google") {
         // Validate profile structure first
@@ -287,8 +302,12 @@ const baseAuthConfig = {
         }
 
         // Check for email field presence
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const googleProfile = profile as any
+        const googleProfile = profile as {
+          email?: string
+          email_verified?: boolean | string
+          name?: string
+          picture?: string
+        }
         if (!googleProfile.email) {
           console.warn("[Auth] Google OAuth profile missing email field")
           return false
@@ -393,15 +412,17 @@ const baseAuthConfig = {
     async session({ session, token }) {
       if (session?.user) {
         // Always set the user ID from the token
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ;(session.user as any).id = token.id || token.sub
+        const userWithId = session.user as Session["user"] & {
+          id?: string
+          emailVerified?: Date | null
+        }
+        userWithId.id = (token.id as string) || (token.sub as string)
         // Also ensure email is set
         if (!session.user.email && token.email) {
-          session.user.email = token.email as string
+          session.user.email = token.email
         }
         // Add email verification status to session
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ;(session.user as any).emailVerified = token.emailVerified || null
+        userWithId.emailVerified = (token.emailVerified as Date | null) || null
       }
       return session
     },
@@ -409,8 +430,12 @@ const baseAuthConfig = {
       // For Google OAuth, always look up the user in the database by email
       if (account?.provider === "google" && profile) {
         try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const googleProfile = profile as any
+          const googleProfile = profile as {
+            email?: string
+            email_verified?: boolean | string
+            name?: string
+            picture?: string
+          }
           const normalizedEmail = googleProfile.email?.toLowerCase().trim()
 
           if (normalizedEmail) {
