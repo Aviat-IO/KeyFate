@@ -70,8 +70,10 @@ export function AccountDeletionCard({
           "Check your email to confirm the deletion request. You'll have 30 days to cancel.",
       })
 
-      // Refresh the page
-      window.location.reload()
+      // Delay reload to allow toast to be visible
+      setTimeout(() => {
+        window.location.reload()
+      }, 2000)
     } catch (error) {
       toast({
         title: "Error",

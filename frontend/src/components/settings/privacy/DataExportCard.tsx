@@ -55,8 +55,10 @@ export function DataExportCard({ recentExports }: DataExportCardProps) {
           "Your data export has been queued. You'll receive an email when it's ready.",
       })
 
-      // Refresh the page to show the new export job
-      window.location.reload()
+      // Delay reload to allow toast to be visible
+      setTimeout(() => {
+        window.location.reload()
+      }, 2000)
     } catch (error) {
       toast({
         title: "Error",
