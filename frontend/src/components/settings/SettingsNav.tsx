@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { CreditCard, FileText, User } from "lucide-react"
+import { CreditCard, FileText, User, Shield } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -18,14 +18,19 @@ export function SettingsNav({ isProUser }: SettingsNavProps) {
       label: "General",
       icon: User,
     },
+    {
+      href: "/settings/privacy",
+      label: "Data & Privacy",
+      icon: Shield,
+    },
     ...(isProUser
       ? [
-        {
-          href: "/settings/audit",
-          label: "Audit Logs",
-          icon: FileText,
-        },
-      ]
+          {
+            href: "/settings/audit",
+            label: "Audit Logs",
+            icon: FileText,
+          },
+        ]
       : []),
     {
       href: "/settings/subscription",

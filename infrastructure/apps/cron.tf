@@ -174,6 +174,129 @@ resource "google_cloud_scheduler_job" "process_downgrades" {
   ]
 }
 
+# GDPR: Cloud Scheduler job to process data export requests
+resource "google_cloud_scheduler_job" "process_exports" {
+  name        = "keyfate-process-exports-${var.env}"
+  description = "Process pending GDPR data export requests"
+  schedule    = var.env == "prod" ? "*/10 * * * *" : "0 * * * *" # Every 10 min (prod), every hour (dev)
+  project     = module.project.id
+
+  http_target {
+    http_method = "POST"
+    uri         = "${var.next_public_site_url}/api/cron/process-exports"
+
+    headers = {
+      "Authorization" = "Bearer ${var.cron_secret}"
+      "Content-Type"  = "application/json"
+    }
+
+    # Using simple Bearer token authentication instead of OIDC
+    # The Authorization header above contains the Bearer token for authentication
+
+    # Empty body for POST request
+    body = base64encode("{}")
+  }
+
+  # Retry configuration
+  retry_config {
+    retry_count          = 3
+    max_retry_duration   = "120s" # Longer timeout for export generation
+    min_backoff_duration = "5s"
+    max_backoff_duration = "30s"
+    max_doublings        = 2
+  }
+
+  # Timeout configuration
+  time_zone = "UTC"
+
+  depends_on = [
+    google_secret_manager_secret_version.cron_secret,
+    google_secret_manager_secret_iam_member.scheduler_secret_access
+  ]
+}
+
+# GDPR: Cloud Scheduler job to cleanup expired exports
+resource "google_cloud_scheduler_job" "cleanup_exports" {
+  name        = "keyfate-cleanup-exports-${var.env}"
+  description = "Delete expired GDPR data export files from Cloud Storage"
+  schedule    = "0 3 * * *" # Daily at 3 AM UTC (off-peak)
+  project     = module.project.id
+
+  http_target {
+    http_method = "POST"
+    uri         = "${var.next_public_site_url}/api/cron/cleanup-exports"
+
+    headers = {
+      "Authorization" = "Bearer ${var.cron_secret}"
+      "Content-Type"  = "application/json"
+    }
+
+    # Using simple Bearer token authentication instead of OIDC
+    # The Authorization header above contains the Bearer token for authentication
+
+    # Empty body for POST request
+    body = base64encode("{}")
+  }
+
+  # Retry configuration
+  retry_config {
+    retry_count          = 3
+    max_retry_duration   = "60s"
+    min_backoff_duration = "5s"
+    max_backoff_duration = "30s"
+    max_doublings        = 2
+  }
+
+  # Timeout configuration
+  time_zone = "UTC"
+
+  depends_on = [
+    google_secret_manager_secret_version.cron_secret,
+    google_secret_manager_secret_iam_member.scheduler_secret_access
+  ]
+}
+
+# GDPR: Cloud Scheduler job to execute account deletions
+resource "google_cloud_scheduler_job" "process_deletions" {
+  name        = "keyfate-process-deletions-${var.env}"
+  description = "Execute account deletions past 30-day grace period (GDPR Article 17)"
+  schedule    = "0 4 * * *" # Daily at 4 AM UTC (after cleanup-exports)
+  project     = module.project.id
+
+  http_target {
+    http_method = "POST"
+    uri         = "${var.next_public_site_url}/api/cron/process-deletions"
+
+    headers = {
+      "Authorization" = "Bearer ${var.cron_secret}"
+      "Content-Type"  = "application/json"
+    }
+
+    # Using simple Bearer token authentication instead of OIDC
+    # The Authorization header above contains the Bearer token for authentication
+
+    # Empty body for POST request
+    body = base64encode("{}")
+  }
+
+  # Retry configuration
+  retry_config {
+    retry_count          = 3
+    max_retry_duration   = "120s" # Longer timeout for deletions
+    min_backoff_duration = "5s"
+    max_backoff_duration = "30s"
+    max_doublings        = 2
+  }
+
+  # Timeout configuration
+  time_zone = "UTC"
+
+  depends_on = [
+    google_secret_manager_secret_version.cron_secret,
+    google_secret_manager_secret_iam_member.scheduler_secret_access
+  ]
+}
+
 
 # NOTE: Cloud Run doesn't need to be redeployed when cron_secret changes
 # because it references the secret dynamically via Secret Manager (see frontend.tf line 220-223).

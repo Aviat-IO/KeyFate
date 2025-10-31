@@ -95,6 +95,11 @@ export const auditEventTypeEnum = pgEnum("audit_event_type", [
   "settings_changed",
   "login",
   "subscription_changed",
+  "data_export_requested",
+  "data_export_downloaded",
+  "account_deletion_requested",
+  "account_deletion_confirmed",
+  "account_deletion_cancelled",
 ])
 export const auditEventCategoryEnum = pgEnum("audit_event_category", [
   "secrets",
@@ -108,6 +113,39 @@ export const disclosureStatusEnum = pgEnum("disclosure_status", [
   "sent",
   "failed",
 ])
+
+// Helper function to convert TS enum to pgEnum format
+function enumToPgEnum<T extends Record<string, any>>(
+  myEnum: T,
+): [T[keyof T], ...T[keyof T][]] {
+  return Object.values(myEnum).map((value: any) => `${value}`) as any
+}
+
+// Export Job Status Enum
+export enum ExportJobStatus {
+  PENDING = "pending",
+  PROCESSING = "processing",
+  COMPLETED = "completed",
+  FAILED = "failed",
+}
+
+export const exportJobStatusEnum = pgEnum(
+  "export_job_status",
+  enumToPgEnum(ExportJobStatus),
+)
+
+// Deletion Request Status Enum
+export enum DeletionRequestStatus {
+  PENDING = "pending",
+  CONFIRMED = "confirmed",
+  CANCELLED = "cancelled",
+  COMPLETED = "completed",
+}
+
+export const deletionRequestStatusEnum = pgEnum(
+  "deletion_request_status",
+  enumToPgEnum(DeletionRequestStatus),
+)
 
 // NextAuth.js Tables
 export const users = pgTable("users", {
@@ -560,3 +598,67 @@ export type PasswordResetToken = typeof passwordResetTokens.$inferSelect
 export type PasswordResetTokenInsert = typeof passwordResetTokens.$inferInsert
 export type OTPRateLimit = typeof otpRateLimits.$inferSelect
 export type OTPRateLimitInsert = typeof otpRateLimits.$inferInsert
+
+// GDPR Compliance Tables
+export const dataExportJobs = pgTable(
+  "data_export_jobs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    status: exportJobStatusEnum("status")
+      .notNull()
+      .default(ExportJobStatus.PENDING),
+    fileUrl: text("file_url"),
+    fileSize: integer("file_size"),
+    downloadCount: integer("download_count").notNull().default(0),
+    expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+    completedAt: timestamp("completed_at", { mode: "date" }),
+    errorMessage: text("error_message"),
+  },
+  (table) => ({
+    userStatusIdx: index("idx_export_jobs_user_status").on(
+      table.userId,
+      table.status,
+    ),
+  }),
+)
+
+export const accountDeletionRequests = pgTable(
+  "account_deletion_requests",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    status: deletionRequestStatusEnum("status")
+      .notNull()
+      .default(DeletionRequestStatus.PENDING),
+    confirmationToken: text("confirmation_token").notNull().unique(),
+    confirmationSentAt: timestamp("confirmation_sent_at", { mode: "date" })
+      .defaultNow()
+      .notNull(),
+    confirmedAt: timestamp("confirmed_at", { mode: "date" }),
+    scheduledDeletionAt: timestamp("scheduled_deletion_at", { mode: "date" }),
+    cancelledAt: timestamp("cancelled_at", { mode: "date" }),
+    deletedAt: timestamp("deleted_at", { mode: "date" }),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  },
+  (table) => ({
+    userStatusIdx: index("idx_deletion_requests_user_status").on(
+      table.userId,
+      table.status,
+    ),
+    scheduledIdx: index("idx_deletion_requests_scheduled").on(
+      table.scheduledDeletionAt,
+    ),
+  }),
+)
+
+export type DataExportJob = typeof dataExportJobs.$inferSelect
+export type DataExportJobInsert = typeof dataExportJobs.$inferInsert
+export type AccountDeletionRequest = typeof accountDeletionRequests.$inferSelect
+export type AccountDeletionRequestInsert =
+  typeof accountDeletionRequests.$inferInsert

@@ -672,6 +672,424 @@ KeyFate - Admin Alerts
     )
   }
 
+  // GDPR Email Templates
+  dataExportReady(params: {
+    userName: string
+    downloadUrl: string
+    expiresAt: Date
+  }): EmailTemplate {
+    const subject = "Your Data Export is Ready"
+    const hoursRemaining = Math.floor(
+      (params.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60),
+    )
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${subject}</title>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #2563eb; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; background: #f9fafb; }
+            .warning { background: #fef3c7; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #f59e0b; }
+            .button {
+              display: inline-block;
+              background: #2563eb;
+              color: white;
+              padding: 12px 24px;
+              text-decoration: none;
+              border-radius: 6px;
+              margin: 20px 0;
+            }
+            .footer { padding: 20px; text-align: center; color: #666; font-size: 14px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>📦 Your Data Export is Ready</h1>
+            </div>
+            <div class="content">
+              <h2>Hello ${params.userName},</h2>
+              <p>Your personal data export has been generated and is ready to download.</p>
+              
+              <div class="warning">
+                <strong>⚠️ Important:</strong> This download link will expire in <strong>${hoursRemaining} hours</strong>.
+                You can download the file up to 3 times before it expires.
+              </div>
+
+              <a href="${params.downloadUrl}" class="button">Download My Data</a>
+
+              <h3>What's Included</h3>
+              <ul>
+                <li>Your profile information</li>
+                <li>All secrets and their metadata</li>
+                <li>Check-in history</li>
+                <li>Audit logs</li>
+                <li>Subscription and payment history</li>
+              </ul>
+
+              <p><small>If you didn't request this export, please contact us immediately at ${this.getSupportEmail()}</small></p>
+            </div>
+            <div class="footer">
+              <p>${this.getCompanyName()} - Secure Secret Management</p>
+              <p>© ${new Date().getFullYear()} All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `
+
+    const text = `
+Your Data Export is Ready
+
+Hello ${params.userName},
+
+Your personal data export has been generated and is ready to download.
+
+Download Link: ${params.downloadUrl}
+
+IMPORTANT: This link expires in ${hoursRemaining} hours and can be downloaded up to 3 times.
+
+What's Included:
+- Your profile information
+- All secrets and their metadata
+- Check-in history
+- Audit logs
+- Subscription and payment history
+
+If you didn't request this export, please contact us immediately at ${this.getSupportEmail()}
+
+${this.getCompanyName()} - Secure Secret Management
+© ${new Date().getFullYear()} All rights reserved.
+    `
+
+    return { subject, html, text }
+  }
+
+  accountDeletionConfirmation(params: {
+    userName: string
+    confirmationUrl: string
+    scheduledDate: Date
+  }): EmailTemplate {
+    const subject = "Confirm Your Account Deletion Request"
+    const daysUntilDeletion = Math.floor(
+      (params.scheduledDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+    )
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${subject}</title>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #dc2626; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; background: #f9fafb; }
+            .warning { background: #fee2e2; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #dc2626; }
+            .button {
+              display: inline-block;
+              background: #dc2626;
+              color: white;
+              padding: 12px 24px;
+              text-decoration: none;
+              border-radius: 6px;
+              margin: 20px 0;
+            }
+            .footer { padding: 20px; text-align: center; color: #666; font-size: 14px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>⚠️ Account Deletion Request</h1>
+            </div>
+            <div class="content">
+              <h2>Hello ${params.userName},</h2>
+              <p>We received a request to delete your account and all associated data.</p>
+              
+              <div class="warning">
+                <h3>🛑 This Action is Permanent</h3>
+                <p>Once confirmed, your account will be scheduled for deletion in <strong>${daysUntilDeletion} days</strong>.</p>
+                <p><strong>What will be deleted:</strong></p>
+                <ul>
+                  <li>All your secrets and their encrypted content</li>
+                  <li>All recipients and sharing configurations</li>
+                  <li>Check-in history and audit logs</li>
+                  <li>Your profile and account settings</li>
+                </ul>
+                <p><strong>What will be retained (anonymized):</strong></p>
+                <ul>
+                  <li>Payment records (required for legal/financial compliance)</li>
+                </ul>
+              </div>
+
+              <p>If you're sure you want to proceed, click the button below to confirm:</p>
+
+              <a href="${params.confirmationUrl}" class="button">Confirm Account Deletion</a>
+
+              <p><strong>Changed your mind?</strong> Simply ignore this email or contact support to cancel the deletion.</p>
+
+              <p><small>If you didn't request this deletion, please contact us immediately at ${this.getSupportEmail()}</small></p>
+            </div>
+            <div class="footer">
+              <p>${this.getCompanyName()} - Secure Secret Management</p>
+              <p>© ${new Date().getFullYear()} All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `
+
+    const text = `
+Account Deletion Request
+
+Hello ${params.userName},
+
+We received a request to delete your account and all associated data.
+
+⚠️  THIS ACTION IS PERMANENT
+
+Once confirmed, your account will be scheduled for deletion in ${daysUntilDeletion} days.
+
+What will be deleted:
+- All your secrets and their encrypted content
+- All recipients and sharing configurations
+- Check-in history and audit logs
+- Your profile and account settings
+
+What will be retained (anonymized):
+- Payment records (required for legal/financial compliance)
+
+To confirm the deletion, visit:
+${params.confirmationUrl}
+
+Changed your mind? Simply ignore this email or contact support to cancel the deletion.
+
+If you didn't request this deletion, please contact us immediately at ${this.getSupportEmail()}
+
+${this.getCompanyName()} - Secure Secret Management
+© ${new Date().getFullYear()} All rights reserved.
+    `
+
+    return { subject, html, text }
+  }
+
+  accountDeletionGracePeriod(params: {
+    userName: string
+    daysRemaining: number
+    cancelUrl: string
+  }): EmailTemplate {
+    const subject = `Account Deletion in ${params.daysRemaining} Days`
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${subject}</title>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #f59e0b; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; background: #f9fafb; }
+            .warning { background: #fef3c7; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #f59e0b; }
+            .button {
+              display: inline-block;
+              background: #2563eb;
+              color: white;
+              padding: 12px 24px;
+              text-decoration: none;
+              border-radius: 6px;
+              margin: 20px 0;
+            }
+            .footer { padding: 20px; text-align: center; color: #666; font-size: 14px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>⏰ Account Deletion Reminder</h1>
+            </div>
+            <div class="content">
+              <h2>Hello ${params.userName},</h2>
+              <p>This is a reminder that your account is scheduled for deletion in <strong>${params.daysRemaining} days</strong>.</p>
+              
+              <div class="warning">
+                <p>Your account and all associated data will be permanently deleted unless you cancel this request.</p>
+              </div>
+
+              <p>If you've changed your mind, you can cancel the deletion:</p>
+
+              <a href="${params.cancelUrl}" class="button">Cancel Deletion</a>
+
+              <p>If you take no action, your account will be automatically deleted on the scheduled date.</p>
+            </div>
+            <div class="footer">
+              <p>${this.getCompanyName()} - Secure Secret Management</p>
+              <p>© ${new Date().getFullYear()} All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `
+
+    const text = `
+Account Deletion Reminder
+
+Hello ${params.userName},
+
+This is a reminder that your account is scheduled for deletion in ${params.daysRemaining} days.
+
+Your account and all associated data will be permanently deleted unless you cancel this request.
+
+To cancel the deletion, visit:
+${params.cancelUrl}
+
+If you take no action, your account will be automatically deleted on the scheduled date.
+
+${this.getCompanyName()} - Secure Secret Management
+© ${new Date().getFullYear()} All rights reserved.
+    `
+
+    return { subject, html, text }
+  }
+
+  accountDeletionComplete(params: { userName: string }): EmailTemplate {
+    const subject = "Your Account Has Been Deleted"
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${subject}</title>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #6b7280; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; background: #f9fafb; }
+            .footer { padding: 20px; text-align: center; color: #666; font-size: 14px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Account Deleted</h1>
+            </div>
+            <div class="content">
+              <h2>Hello ${params.userName},</h2>
+              <p>Your account has been permanently deleted as requested.</p>
+              <p>All your data has been removed from our systems in accordance with GDPR regulations.</p>
+              <p>Thank you for using ${this.getCompanyName()}. If you ever need our services again, you're welcome to create a new account.</p>
+              <p>If you have any questions, please contact us at ${this.getSupportEmail()}</p>
+            </div>
+            <div class="footer">
+              <p>${this.getCompanyName()} - Secure Secret Management</p>
+              <p>© ${new Date().getFullYear()} All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `
+
+    const text = `
+Account Deleted
+
+Hello ${params.userName},
+
+Your account has been permanently deleted as requested.
+
+All your data has been removed from our systems in accordance with GDPR regulations.
+
+Thank you for using ${this.getCompanyName()}. If you ever need our services again, you're welcome to create a new account.
+
+If you have any questions, please contact us at ${this.getSupportEmail()}
+
+${this.getCompanyName()} - Secure Secret Management
+© ${new Date().getFullYear()} All rights reserved.
+    `
+
+    return { subject, html, text }
+  }
+
+  accountDeletionCancelled(params: { userName: string }): EmailTemplate {
+    const subject = "Account Deletion Cancelled"
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${subject}</title>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #10b981; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; background: #f9fafb; }
+            .button {
+              display: inline-block;
+              background: #2563eb;
+              color: white;
+              padding: 12px 24px;
+              text-decoration: none;
+              border-radius: 6px;
+              margin: 20px 0;
+            }
+            .footer { padding: 20px; text-align: center; color: #666; font-size: 14px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>✅ Account Deletion Cancelled</h1>
+            </div>
+            <div class="content">
+              <h2>Hello ${params.userName},</h2>
+              <p>Your account deletion request has been cancelled.</p>
+              <p>Your account and all your data remain active and secure.</p>
+              <p>You can continue using ${this.getCompanyName()} as normal.</p>
+              <a href="${process.env.NEXTAUTH_URL || "https://keyfate.com"}/dashboard" class="button">Go to Dashboard</a>
+            </div>
+            <div class="footer">
+              <p>${this.getCompanyName()} - Secure Secret Management</p>
+              <p>© ${new Date().getFullYear()} All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `
+
+    const text = `
+Account Deletion Cancelled
+
+Hello ${params.userName},
+
+Your account deletion request has been cancelled.
+
+Your account and all your data remain active and secure.
+
+You can continue using ${this.getCompanyName()} as normal.
+
+Dashboard: ${process.env.NEXTAUTH_URL || "https://keyfate.com"}/dashboard
+
+${this.getCompanyName()} - Secure Secret Management
+© ${new Date().getFullYear()} All rights reserved.
+    `
+
+    return { subject, html, text }
+  }
+
   private getSeverityColor(severity: string): string {
     const colors = {
       low: "#10b981", // green
