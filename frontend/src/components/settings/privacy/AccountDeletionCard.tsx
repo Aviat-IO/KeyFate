@@ -113,8 +113,10 @@ export function AccountDeletionCard({
         description: "Your account deletion request has been cancelled.",
       })
 
-      // Refresh the page
-      window.location.reload()
+      // Delay reload to allow toast to be visible
+      setTimeout(() => {
+        window.location.reload()
+      }, 2000)
     } catch (error) {
       toast({
         title: "Error",
