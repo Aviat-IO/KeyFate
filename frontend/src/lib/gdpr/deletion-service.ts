@@ -59,13 +59,17 @@ export async function initiateAccountDeletion(userId: string) {
   }
 
   // Send confirmation email
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.NEXTAUTH_URL ||
+    "http://localhost:3000"
   await sendEmail({
     to: user.email,
     subject: "Confirm Your Account Deletion Request",
     html: `
       <p>You have requested to delete your KeyFate account.</p>
       <p>To confirm this request, please click the link below:</p>
-      <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/confirm-deletion?token=${confirmationToken}">Confirm Account Deletion</a></p>
+      <p><a href="${baseUrl}/confirm-deletion?token=${confirmationToken}">Confirm Account Deletion</a></p>
       <p>After confirmation, there will be a ${GRACE_PERIOD_DAYS}-day grace period until ${scheduledDeletionAt.toLocaleDateString()}.</p>
       <p>If you did not request this, please ignore this email.</p>
     `,
@@ -110,6 +114,10 @@ export async function confirmAccountDeletion(token: string) {
 
   if (user) {
     // Send grace period started email
+    const baseUrl =
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.NEXTAUTH_URL ||
+      "http://localhost:3000"
     await sendEmail({
       to: user.email,
       subject: "Your Account Will Be Deleted in 30 Days",
@@ -117,7 +125,7 @@ export async function confirmAccountDeletion(token: string) {
         <p>Your account deletion request has been confirmed.</p>
         <p>Your account will be permanently deleted on ${request.scheduledDeletionAt?.toLocaleDateString()}.</p>
         <p>If you change your mind, you can cancel this request by visiting:</p>
-        <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/settings#data-privacy">Cancel Account Deletion</a></p>
+        <p><a href="${baseUrl}/settings/privacy">Cancel Account Deletion</a></p>
         <p>After the scheduled date, all your data will be permanently removed and cannot be recovered.</p>
       `,
     })
