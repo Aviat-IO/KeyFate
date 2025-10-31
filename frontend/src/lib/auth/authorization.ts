@@ -35,10 +35,7 @@ export interface AuthUser {
  */
 export async function getUserFromSession(): Promise<AuthUser | null> {
   try {
-    type GetServerSessionOptions = Parameters<typeof getServerSession>[0]
-    const session = (await getServerSession(
-      authConfig as GetServerSessionOptions,
-    )) as Session | null
+    const session = (await getServerSession(authConfig)) as Session | null
 
     if (!session?.user?.id || !session?.user?.email) {
       return null

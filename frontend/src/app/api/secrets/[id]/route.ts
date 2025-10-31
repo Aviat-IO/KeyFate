@@ -32,10 +32,7 @@ export async function GET(
     const { id } = await params
 
     // Use NextAuth for authentication
-    type GetServerSessionOptions = Parameters<typeof getServerSession>[0]
-    const session = (await getServerSession(
-      authConfig as GetServerSessionOptions,
-    )) as Session | null
+    const session = (await getServerSession(authConfig)) as Session | null
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
@@ -84,10 +81,7 @@ export async function PUT(
     }
 
     // Use NextAuth for authentication
-    type GetServerSessionOptions = Parameters<typeof getServerSession>[0]
-    const session = (await getServerSession(
-      authConfig as GetServerSessionOptions,
-    )) as Session | null
+    const session = (await getServerSession(authConfig)) as Session | null
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
@@ -196,10 +190,7 @@ export async function DELETE(
     }
 
     // Use NextAuth for authentication
-    type GetServerSessionOptions = Parameters<typeof getServerSession>[0]
-    const session = (await getServerSession(
-      authConfig as GetServerSessionOptions,
-    )) as Session | null
+    const session = (await getServerSession(authConfig)) as Session | null
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }

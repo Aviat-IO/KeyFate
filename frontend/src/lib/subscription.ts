@@ -218,6 +218,9 @@ export async function calculateUserUsage(userId: string) {
 // Get tier limits for enforcement
 export function getTierLimits(tier: SubscriptionTier): TierLimits {
   const config = getTierConfig(tier)
+  if (!config) {
+    throw new Error(`Unknown tier: ${tier}`)
+  }
   return {
     maxSecrets: config.maxSecrets,
     maxRecipientsPerSecret: config.maxRecipientsPerSecret,
@@ -231,6 +234,9 @@ export function isIntervalAllowed(
   intervalDays: number,
 ): boolean {
   const config = getTierConfig(tier)
+  if (!config) {
+    return false
+  }
 
   if (config.customIntervals) {
     // Pro tier allows: 1 day, 3 days, 7 days, 2 weeks, 1 month, 3 months, 6 months, 12 months, 3 years
@@ -248,6 +254,9 @@ export function getAvailableIntervals(
   tier: SubscriptionTier,
 ): Array<{ days: number; label: string }> {
   const config = getTierConfig(tier)
+  if (!config) {
+    return []
+  }
 
   if (config.customIntervals) {
     // Pro tier intervals

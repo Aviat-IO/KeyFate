@@ -36,13 +36,12 @@ export class RobustSecretsService {
           : (columnCheck as { rows?: unknown[] }).rows || []
         console.log(
           "Available columns:",
-          columns.map((r: { column_name?: string }) => r.column_name),
+          (columns as { column_name?: string }[]).map((r) => r.column_name),
         )
 
         // Check if the issue is a missing recipient_name column
-        const hasRecipientName = columns.some(
-          (row: { column_name?: string }) =>
-            row.column_name === "recipient_name",
+        const hasRecipientName = (columns as { column_name?: string }[]).some(
+          (row) => row.column_name === "recipient_name",
         )
 
         if (!hasRecipientName) {

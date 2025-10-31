@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
 import { formatGranularTime } from "@/lib/time-utils"
+import type { Secret } from "@/lib/db/schema"
 import type { SecretWithRecipients } from "@/lib/types/secret-types"
 import { cn } from "@/lib/utils"
 import { Pencil } from "lucide-react"
@@ -110,7 +111,7 @@ export function SecretCard({ secret }: SecretCardProps) {
 
   const { toast } = useToast()
 
-  const handleCheckInSuccess = (updatedSecret: SecretWithRecipients) => {
+  const handleCheckInSuccess = (updatedSecret: Secret) => {
     // Merge updated fields with existing state to preserve all metadata
     setSecretState((prevState) => ({
       ...prevState,
@@ -123,7 +124,7 @@ export function SecretCard({ secret }: SecretCardProps) {
     })
   }
 
-  const handleToggleSuccess = (updatedSecret: SecretWithRecipients) => {
+  const handleToggleSuccess = (updatedSecret: Secret) => {
     // Merge updated fields with existing state to preserve all metadata
     setSecretState((prevState) => ({
       ...prevState,

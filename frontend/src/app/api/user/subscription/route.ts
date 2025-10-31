@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic"
 export async function GET() {
   try {
     const session = (await getServerSession(
-      authConfig as any,
+      authConfig,
     )) as Session | null
 
     if (!session?.user?.id) {

@@ -47,7 +47,7 @@ export async function getDatabase(): Promise<
 
   try {
     // Get connection with retry logic and circuit breaker
-    const client = await connectionManager.getConnection(connectionString, {
+    const client = await connectionManager.getConnection(connectionString!, {
       max: 5, // Conservative pool size for Cloud Run
       idle_timeout: 20, // Close idle connections quickly
       connect_timeout: 10, // Fail fast on connection issues

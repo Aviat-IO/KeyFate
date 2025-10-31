@@ -16,9 +16,7 @@ import { redirect } from "next/navigation"
 import { SettingsPageHeader } from "@/components/settings/SettingsPageHeader"
 
 export default async function AuditLogsRoute() {
-  const session = (await getServerSession(
-    authConfig as Parameters<typeof getServerSession>[0],
-  )) as Session | null
+  const session = (await getServerSession(authConfig)) as Session | null
 
   if (!session?.user?.id) {
     redirect("/sign-in")

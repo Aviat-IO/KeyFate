@@ -115,8 +115,10 @@ export function SssDecryptor({ initialShares = [] }: SssDecryptorProps) {
       setRecoveredSecret(recovered.toString("utf8"))
     } catch (e) {
       console.error("Error combining shares:", e)
+      const errorMessage =
+        e instanceof Error ? e.message : "Invalid shares or threshold not met."
       setError(
-        `Failed to recover secret: ${e.message || "Invalid shares or threshold not met."}. Ensure shares are correct, in hexadecimal format, and you have enough of them.`,
+        `Failed to recover secret: ${errorMessage}. Ensure shares are correct, in hexadecimal format, and you have enough of them.`,
       )
     } finally {
       setIsLoading(false)

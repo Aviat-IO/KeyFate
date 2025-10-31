@@ -27,7 +27,7 @@ import { ZodError } from "zod"
 export const dynamic = "force-dynamic"
 
 export async function POST(request: NextRequest) {
-  let insertData: Record<string, unknown> // Declare here so it's available in catch block
+  let insertData: Record<string, unknown> | undefined // Declare here so it's available in catch block
 
   try {
     const csrfCheck = await requireCSRFProtection(request)
@@ -38,10 +38,7 @@ export async function POST(request: NextRequest) {
     // Use NextAuth for authentication instead of Supabase auth
     let session: Session | null
     try {
-      type GetServerSessionOptions = Parameters<typeof getServerSession>[0]
-      session = (await getServerSession(
-        authConfig as GetServerSessionOptions,
-      )) as Session | null
+      session = (await getServerSession(authConfig)) as Session | null
     } catch (sessionError) {
       console.error("NextAuth session error:", sessionError)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -238,10 +235,10 @@ export async function POST(request: NextRequest) {
 
     const warning = undefined
 
-    const responseBody = {
+    const responseBody: any = {
       secretId: data.id,
       ...data,
-      ...(warning && { warning }),
+      ...(warning ? { warning } : {}),
     }
 
     const res = NextResponse.json(responseBody, { status: 201 })

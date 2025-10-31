@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic"
 export async function POST(_request: NextRequest) {
   try {
     const session = (await getServerSession(
-      authConfig as any,
+      authConfig,
     )) as Session | null
     const user = session?.user
 
