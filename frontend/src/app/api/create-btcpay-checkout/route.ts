@@ -3,6 +3,7 @@ import { requireCSRFProtection, createCSRFErrorResponse } from "@/lib/csrf"
 import { NEXT_PUBLIC_SITE_URL } from "@/lib/env"
 import { getCryptoPaymentProvider } from "@/lib/payment"
 import { Subscription } from "@/lib/payment/interfaces/PaymentProvider"
+import { getAmount } from "@/lib/pricing"
 import type { Session } from "next-auth"
 import { getServerSession } from "next-auth/next"
 import { NextRequest, NextResponse } from "next/server"
@@ -24,7 +25,26 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${NEXT_PUBLIC_SITE_URL}/pricing`)
   }
 
-  return createBTCPayCheckoutSession({ amount, currency, mode, interval })
+  const result = await createBTCPayCheckoutSession({
+    amount,
+    currency,
+    mode,
+    interval,
+  })
+
+  // After auth redirect, we should redirect to the BTCPay URL instead of returning JSON
+  if (redirectAfterAuth === "true") {
+    const json = await result.json()
+    if (json.url) {
+      return NextResponse.redirect(json.url)
+    }
+    // If there's an error, redirect to pricing with error message
+    return NextResponse.redirect(
+      `${NEXT_PUBLIC_SITE_URL}/pricing?error=checkout_failed`,
+    )
+  }
+
+  return result
 }
 
 export async function POST(request: NextRequest) {
@@ -77,13 +97,21 @@ async function createBTCPayCheckoutSession(params: {
 
     const cryptoPaymentProvider = getCryptoPaymentProvider()
 
-    let btcAmount = params.amount
+    // Use environment-specific pricing
+    let actualAmount = params.amount
+    if (params.interval) {
+      actualAmount = getAmount(
+        params.interval === "month" ? "monthly" : "yearly",
+      )
+    }
+
+    let btcAmount = actualAmount
     if (
       params.currency.toUpperCase() !== "BTC" &&
       cryptoPaymentProvider.convertToProviderCurrency
     ) {
       btcAmount = await cryptoPaymentProvider.convertToProviderCurrency(
-        params.amount,
+        actualAmount,
         params.currency.toUpperCase(),
       )
     }
@@ -102,7 +130,7 @@ async function createBTCPayCheckoutSession(params: {
       expiresInMinutes: 60,
       metadata: {
         user_id: (user as any).id,
-        original_amount: String(params.amount),
+        original_amount: String(actualAmount),
         original_currency: params.currency.toUpperCase(),
         ...(params.interval && { billing_interval: params.interval }),
       },
