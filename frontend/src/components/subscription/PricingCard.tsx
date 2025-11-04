@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { getAmount } from "@/lib/pricing"
 import { Check, Crown } from "lucide-react"
 import Link from "next/link"
 import { PaymentMethodSelector } from "./PaymentMethodSelector"
@@ -82,7 +83,9 @@ export function PricingCard({
           billingPeriod ? (
             <PaymentMethodSelector
               lookupKey={stripeLookupKey}
-              amount={billingPeriod === "monthly" ? 9 : 90}
+              amount={getAmount(
+                billingPeriod === "monthly" ? "monthly" : "yearly",
+              )}
               interval={billingPeriod === "monthly" ? "monthly" : "yearly"}
               userTier={userTier}
               userTierDisplayName={userTierDisplayName}
