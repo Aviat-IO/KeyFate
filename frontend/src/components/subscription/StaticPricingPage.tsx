@@ -3,6 +3,7 @@
 import { BillingToggle } from "@/components/subscription/BillingToggle"
 import { PricingCard } from "@/components/subscription/PricingCard"
 import { TIER_CONFIGS, getLookupKey } from "@/constants/tiers"
+import { getPricing, isTestPricing } from "@/lib/pricing"
 import { Check } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
@@ -22,18 +23,22 @@ export function StaticPricingPage({
     "yearly",
   )
 
-  // Static pricing without external dependency
+  // Get environment-specific pricing
+  const pricing = getPricing()
+  const isTest = isTestPricing()
+
+  // Static pricing based on environment
   const STATIC_PRICING = {
     pro: {
       monthly: {
-        price: "$9/month",
+        price: `$${pricing.monthly}/month`,
         subtext: undefined,
         savingsText: undefined,
       },
       yearly: {
-        price: "$7.50/month",
-        subtext: "Billed annually at $90/year",
-        savingsText: "$18 saved (17% off)",
+        price: `$${(pricing.yearly / 12).toFixed(2)}/month`,
+        subtext: `Billed annually at $${pricing.yearly}/year`,
+        savingsText: `$${(pricing.monthly * 12 - pricing.yearly).toFixed(2)} saved (${Math.round((1 - pricing.yearly / (pricing.monthly * 12)) * 100)}% off)`,
       },
     },
   }
@@ -55,6 +60,13 @@ export function StaticPricingPage({
           Secure your digital legacy with KeyFate's dead man's switch service.
           Start free and upgrade when you need more capacity.
         </p>
+        {isTest && (
+          <div className="bg-warning/10 text-warning border-warning mx-auto max-w-md rounded-lg border p-3">
+            <p className="text-sm font-medium">
+              🧪 Test Environment: Using reduced pricing for testing
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Billing Period Toggle */}
