@@ -53,8 +53,8 @@ describe("Pricing Utility", () => {
       const pricing = getPricing()
       const isTest = isTestPricing()
 
-      // Test pricing is $0.50 or $1, production is $9 or $90
-      if (pricing.monthly === 0.5) {
+      // Test pricing is $2 or $5, production is $9 or $90
+      if (pricing.monthly === 2) {
         expect(isTest).toBe(true)
       } else if (pricing.monthly === 9) {
         expect(isTest).toBe(false)
@@ -80,15 +80,15 @@ describe("Pricing Utility", () => {
       expect(yearlySats).toBeGreaterThan(10)
     })
 
-    it("should have test pricing significantly cheaper than production minimums", () => {
-      // Ensure test prices would be < $2 for reasonable testing
+    it("should have test pricing significantly cheaper than production", () => {
+      // Ensure test prices are reasonable for testing but cheaper than production
       const pricing = getPricing()
 
-      // Either we're in test mode (< $2) or production mode (> $5)
-      const isCheapTest = pricing.monthly < 2 && pricing.yearly < 2
-      const isExpensiveProd = pricing.monthly > 5 && pricing.yearly > 5
+      // Either we're in test mode ($2-$5) or production mode ($9-$90)
+      const isReasonableTest = pricing.monthly >= 2 && pricing.monthly < 9
+      const isProduction = pricing.monthly === 9 && pricing.yearly === 90
 
-      expect(isCheapTest || isExpensiveProd).toBe(true)
+      expect(isReasonableTest || isProduction).toBe(true)
     })
   })
 })
