@@ -16,6 +16,13 @@ export async function POST(request: NextRequest) {
     const body = await request.text()
     const signature = request.headers.get("btcpay-sig")
 
+    console.log("📨 BTCPay webhook received:", {
+      hasSignature: !!signature,
+      signaturePrefix: signature?.substring(0, 20),
+      bodyLength: body.length,
+      headers: Object.fromEntries(request.headers.entries()),
+    })
+
     if (!signature) {
       console.error("BTCPay webhook missing signature header")
       return NextResponse.json(
@@ -26,14 +33,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check if webhook secret is configured
+    if (!serverEnv.BTCPAY_WEBHOOK_SECRET) {
+      console.error("❌ BTCPAY_WEBHOOK_SECRET not configured")
+      return NextResponse.json(
+        { error: "Webhook secret not configured" },
+        {
+          status: 500,
+        },
+      )
+    }
+
     const cryptoPaymentProvider = getCryptoPaymentProvider()
 
     // Verify webhook signature
+    console.log("🔐 Verifying BTCPay webhook signature...")
     const event = await cryptoPaymentProvider.verifyWebhookSignature(
       body,
       signature,
       serverEnv.BTCPAY_WEBHOOK_SECRET,
     )
+    console.log("✅ Signature verified successfully")
 
     const alreadyProcessed = await isWebhookProcessed(
       "btcpay",
