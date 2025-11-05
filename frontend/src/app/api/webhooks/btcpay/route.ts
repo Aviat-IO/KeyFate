@@ -20,8 +20,10 @@ export async function POST(request: NextRequest) {
       hasSignature: !!signature,
       signaturePrefix: signature?.substring(0, 20),
       bodyLength: body.length,
-      headers: Object.fromEntries(request.headers.entries()),
     })
+
+    // Log raw payload for debugging
+    console.log("📄 Raw webhook payload:", body)
 
     if (!signature) {
       console.error("BTCPay webhook missing signature header")
@@ -186,17 +188,26 @@ export async function POST(request: NextRequest) {
 function extractUserIdFromBTCPayEvent(event: any): string | null {
   try {
     console.log("🔍 Extracting user_id from BTCPay event...")
+    console.log("🔍 Full event structure:", JSON.stringify(event, null, 2))
 
     // BTCPay webhook structure can vary by event type
     // Try multiple possible locations
-    const eventData = event.data?.object as Record<string, unknown> | undefined
+
+    // Option 1: event.data.object (Stripe-like structure)
+    let eventData = event.data?.object as Record<string, unknown> | undefined
+
+    // Option 2: event.data directly (BTCPay native structure)
+    if (!eventData && event.data) {
+      console.log("📋 Trying event.data directly...")
+      eventData = event.data as Record<string, unknown>
+    }
 
     if (!eventData) {
-      console.log("❌ No event.data.object found")
+      console.log("❌ No event data found in either location")
       return null
     }
 
-    console.log("📋 Event data object keys:", Object.keys(eventData))
+    console.log("📋 Event data keys:", Object.keys(eventData))
 
     // Try to get user_id from metadata
     const metadata = eventData.metadata as Record<string, string> | undefined
@@ -205,11 +216,11 @@ function extractUserIdFromBTCPayEvent(event: any): string | null {
       return metadata.user_id
     }
 
-    console.log("❌ No user_id in metadata:", metadata)
+    console.log("❌ No user_id in metadata")
+    console.log("📋 Metadata contents:", JSON.stringify(metadata, null, 2))
     return null
   } catch (error) {
     console.error("Error extracting user ID from BTCPay event:", error)
-    console.error("Event structure:", JSON.stringify(event, null, 2))
     return null
   }
 }

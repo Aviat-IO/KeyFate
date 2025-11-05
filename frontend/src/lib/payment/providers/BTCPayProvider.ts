@@ -262,6 +262,18 @@ export class BTCPayProvider implements PaymentProvider {
     }
 
     const raw: BTCPayWebhookEventRaw = JSON.parse(payload)
+
+    console.log("📦 Raw BTCPay webhook data:", {
+      deliveryId: raw.deliveryId,
+      type: raw.type,
+      hasData: !!raw.data,
+      dataKeys: raw.data ? Object.keys(raw.data) : [],
+      dataType: typeof raw.data,
+      rawDataSample: raw.data
+        ? JSON.stringify(raw.data).substring(0, 200)
+        : "null",
+    })
+
     return {
       id: raw.deliveryId,
       type: raw.type,
