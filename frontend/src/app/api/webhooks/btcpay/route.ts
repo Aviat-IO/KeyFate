@@ -76,8 +76,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true, duplicate: true })
     }
 
+    // BTCPay webhooks don't include full invoice data, just the ID
+    // We need to fetch the invoice to get metadata
+    const rawEvent = JSON.parse(body)
+    const invoiceId = rawEvent.invoiceId
+
+    console.log("📋 BTCPay webhook invoiceId:", invoiceId)
+
     // Extract user ID from event metadata
-    const userId = extractUserIdFromBTCPayEvent(event)
+    const userId = await extractUserIdFromBTCPayEvent(event, invoiceId)
 
     if (!userId) {
       console.warn("⚠️ No user_id found in BTCPay webhook event metadata")
@@ -185,39 +192,54 @@ export async function POST(request: NextRequest) {
 }
 
 // Helper function to extract user ID from BTCPay webhook event
-function extractUserIdFromBTCPayEvent(event: any): string | null {
+async function extractUserIdFromBTCPayEvent(
+  event: any,
+  invoiceId: string | null,
+): Promise<string | null> {
   try {
     console.log("🔍 Extracting user_id from BTCPay event...")
-    console.log("🔍 Full event structure:", JSON.stringify(event, null, 2))
 
-    // BTCPay webhook structure can vary by event type
-    // Try multiple possible locations
+    // BTCPay webhooks don't include full invoice data in the webhook payload
+    // We need to fetch the invoice using the invoiceId to get metadata
+    if (invoiceId) {
+      console.log("📞 Fetching invoice from BTCPay API:", invoiceId)
+      try {
+        const cryptoPaymentProvider = getCryptoPaymentProvider()
+        const invoice = await (cryptoPaymentProvider as any).getInvoice(
+          invoiceId,
+        )
+        console.log("✅ Invoice fetched successfully")
+        console.log("📋 Invoice metadata:", invoice.metadata)
 
-    // Option 1: event.data.object (Stripe-like structure)
+        if (invoice.metadata?.user_id) {
+          console.log(
+            "✅ Found user_id in invoice metadata:",
+            invoice.metadata.user_id,
+          )
+          return invoice.metadata.user_id
+        }
+      } catch (error) {
+        console.error("❌ Error fetching invoice from BTCPay:", error)
+      }
+    }
+
+    // Fallback: try to extract from event data (for backwards compatibility)
+    console.log("🔍 Trying event.data as fallback...")
     let eventData = event.data?.object as Record<string, unknown> | undefined
 
-    // Option 2: event.data directly (BTCPay native structure)
     if (!eventData && event.data) {
-      console.log("📋 Trying event.data directly...")
       eventData = event.data as Record<string, unknown>
     }
 
-    if (!eventData) {
-      console.log("❌ No event data found in either location")
-      return null
+    if (eventData) {
+      const metadata = eventData.metadata as Record<string, string> | undefined
+      if (metadata?.user_id) {
+        console.log("✅ Found user_id in event metadata:", metadata.user_id)
+        return metadata.user_id
+      }
     }
 
-    console.log("📋 Event data keys:", Object.keys(eventData))
-
-    // Try to get user_id from metadata
-    const metadata = eventData.metadata as Record<string, string> | undefined
-    if (metadata?.user_id) {
-      console.log("✅ Found user_id in metadata:", metadata.user_id)
-      return metadata.user_id
-    }
-
-    console.log("❌ No user_id in metadata")
-    console.log("📋 Metadata contents:", JSON.stringify(metadata, null, 2))
+    console.log("❌ No user_id found in invoice or event")
     return null
   } catch (error) {
     console.error("Error extracting user ID from BTCPay event:", error)

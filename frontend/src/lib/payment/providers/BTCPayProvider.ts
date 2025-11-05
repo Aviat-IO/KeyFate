@@ -490,7 +490,7 @@ export class BTCPayProvider implements PaymentProvider {
     }
   }
 
-  private async getInvoice(invoiceId: string): Promise<BTCPayInvoice> {
+  async getInvoice(invoiceId: string): Promise<BTCPayInvoice> {
     try {
       const response = await fetch(
         `${this.baseUrl}/stores/${this.config.storeId}/invoices/${invoiceId}`,
