@@ -55,6 +55,16 @@ export async function POST(request: NextRequest) {
     )
     console.log("✅ Signature verified successfully")
 
+    // Log event structure for debugging
+    console.log("📦 BTCPay event structure:", {
+      type: event.type,
+      id: event.id,
+      dataKeys: Object.keys(event.data || {}),
+      hasObject: !!(event.data as any)?.object,
+      objectKeys:
+        (event.data as any)?.object && Object.keys((event.data as any).object),
+    })
+
     const alreadyProcessed = await isWebhookProcessed(
       "btcpay",
       event.id || `btcpay-${Date.now()}`,
@@ -68,7 +78,23 @@ export async function POST(request: NextRequest) {
     const userId = extractUserIdFromBTCPayEvent(event)
 
     if (!userId) {
-      console.error("No user_id found in BTCPay webhook event metadata")
+      console.warn("⚠️ No user_id found in BTCPay webhook event metadata")
+      console.log("📋 Event data:", JSON.stringify(event.data, null, 2))
+
+      // For test webhooks, return success but don't process
+      if (event.type.includes("Test") || !event.id) {
+        console.log(
+          "✅ Test webhook received successfully (no user_id required)",
+        )
+        return NextResponse.json({
+          received: true,
+          test: true,
+          message: "Test webhook verified successfully",
+        })
+      }
+
+      // For real webhooks, this is an error
+      console.error("❌ Real webhook missing user_id in metadata")
       await emailService.sendAdminAlert({
         type: "webhook_failure",
         severity: "medium",
@@ -77,10 +103,15 @@ export async function POST(request: NextRequest) {
           eventType: event.type,
           eventId: event.id || "unknown",
           provider: "btcpay",
+          eventData: event.data,
         },
       })
       return NextResponse.json(
-        { error: "No user_id in metadata" },
+        {
+          error: "No user_id in metadata",
+          eventType: event.type,
+          hint: "user_id should be in invoice metadata",
+        },
         { status: 400 },
       )
     }
@@ -154,17 +185,31 @@ export async function POST(request: NextRequest) {
 // Helper function to extract user ID from BTCPay webhook event
 function extractUserIdFromBTCPayEvent(event: any): string | null {
   try {
-    const eventData = event.data.object as Record<string, unknown>
+    console.log("🔍 Extracting user_id from BTCPay event...")
+
+    // BTCPay webhook structure can vary by event type
+    // Try multiple possible locations
+    const eventData = event.data?.object as Record<string, unknown> | undefined
+
+    if (!eventData) {
+      console.log("❌ No event.data.object found")
+      return null
+    }
+
+    console.log("📋 Event data object keys:", Object.keys(eventData))
 
     // Try to get user_id from metadata
     const metadata = eventData.metadata as Record<string, string> | undefined
     if (metadata?.user_id) {
+      console.log("✅ Found user_id in metadata:", metadata.user_id)
       return metadata.user_id
     }
 
+    console.log("❌ No user_id in metadata:", metadata)
     return null
   } catch (error) {
     console.error("Error extracting user ID from BTCPay event:", error)
+    console.error("Event structure:", JSON.stringify(event, null, 2))
     return null
   }
 }
