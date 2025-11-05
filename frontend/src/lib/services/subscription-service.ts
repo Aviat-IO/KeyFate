@@ -641,37 +641,71 @@ class SubscriptionService {
     const invoice = event.data.object
     const metadata = invoice.metadata || {}
 
-    if (metadata.mode === "subscription") {
+    console.log("💰 Bitcoin payment settled:", {
+      userId,
+      invoiceId: invoice.id,
+      amount: invoice.amount,
+      currency: invoice.currency,
+      metadata,
+    })
+
+    // Check if this is a subscription payment by looking for billing_interval
+    const isSubscription = !!metadata.billing_interval
+
+    if (isSubscription) {
+      const billingInterval = metadata.billing_interval as string
+      const tierName = "pro" // BTCPay payments are always for Pro tier
+
+      console.log("🎉 Creating subscription for Bitcoin payment:", {
+        userId,
+        tierName,
+        billingInterval,
+      })
+
       const subscriptionData: CreateSubscriptionData = {
         userId,
         provider: "btcpay",
         providerCustomerId: null,
         providerSubscriptionId: invoice.id,
-        tierName: (metadata.tierName as SubscriptionTier) || "pro",
+        tierName,
         status: "active",
         currentPeriodStart: new Date(),
-        currentPeriodEnd: this.calculateNextBillingDate(
-          metadata.interval || "month",
-        ),
+        currentPeriodEnd: this.calculateNextBillingDate(billingInterval),
       }
 
       const subscription = await this.createSubscription(subscriptionData)
+
+      // Parse amount (BTCPay returns string like "0.10")
+      const amountNumber = parseFloat(invoice.amount) || 0
 
       await this.createPaymentRecord({
         userId,
         subscriptionId: subscription.id,
         provider: "btcpay",
         providerPaymentId: invoice.id,
-        amount: invoice.amount || 0,
-        currency: invoice.currency || "BTC",
+        amount: amountNumber,
+        currency: invoice.currency || "USD",
         status: "succeeded",
         metadata: {
           invoiceId: invoice.id,
           btcpayInvoiceId: invoice.id,
+          billingInterval,
+          originalAmount: metadata.original_amount,
+          originalCurrency: metadata.original_currency,
         },
       })
 
+      console.log("✅ Subscription created successfully:", {
+        subscriptionId: subscription.id,
+        userId,
+        tierName,
+      })
+
       return subscription
+    } else {
+      console.log(
+        "ℹ️ BTCPay payment settled but not a subscription (no billing_interval)",
+      )
     }
   }
 
