@@ -83,24 +83,27 @@ export async function POST(request: NextRequest) {
 
     console.log("📋 BTCPay webhook invoiceId:", invoiceId)
 
+    // Detect test webhooks from BTCPay UI
+    const isTestWebhook =
+      invoiceId?.includes("__test__") ||
+      rawEvent.originalDeliveryId?.includes("__test__") ||
+      event.type.includes("Test")
+
+    if (isTestWebhook) {
+      console.log("✅ Test webhook received and verified successfully")
+      return NextResponse.json({
+        received: true,
+        test: true,
+        message: "Test webhook verified successfully",
+      })
+    }
+
     // Extract user ID from event metadata
     const userId = await extractUserIdFromBTCPayEvent(event, invoiceId)
 
     if (!userId) {
       console.warn("⚠️ No user_id found in BTCPay webhook event metadata")
       console.log("📋 Event data:", JSON.stringify(event.data, null, 2))
-
-      // For test webhooks, return success but don't process
-      if (event.type.includes("Test") || !event.id) {
-        console.log(
-          "✅ Test webhook received successfully (no user_id required)",
-        )
-        return NextResponse.json({
-          received: true,
-          test: true,
-          message: "Test webhook verified successfully",
-        })
-      }
 
       // For real webhooks, this is an error
       console.error("❌ Real webhook missing user_id in metadata")
