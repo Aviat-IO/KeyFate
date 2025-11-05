@@ -3,7 +3,8 @@
  * Development and staging use cheaper test prices to facilitate testing
  *
  * Note: Test prices must be high enough to meet BTCPay Server minimum invoice
- * requirements (~1000 sats minimum for Lightning Network, ~$2 at current rates)
+ * requirements. BTCPay typically requires 10,000-20,000 sats minimum for
+ * Lightning Network invoices (~$10-$20 at current BTC rates)
  */
 
 export interface PricingTier {
@@ -17,8 +18,8 @@ const PRODUCTION_PRICES: PricingTier = {
 }
 
 const TEST_PRICES: PricingTier = {
-  monthly: 2, // $2.00 (~2,000 sats - above BTCPay minimum)
-  yearly: 5, // $5.00 (~5,000 sats - above BTCPay minimum)
+  monthly: 10, // $10.00 (~10,000 sats - above BTCPay/Lightning minimums)
+  yearly: 20, // $20.00 (~20,000 sats - above BTCPay/Lightning minimums)
 }
 
 /**
