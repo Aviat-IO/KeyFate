@@ -244,7 +244,20 @@ export class BTCPayProvider implements PaymentProvider {
       .update(payload, "utf8")
       .digest("hex")
 
+    console.log("🔐 Webhook signature verification:", {
+      signatureFormat: signature.startsWith("sha256=") ? "sha256=" : "raw",
+      actualSignatureLength: actualSignature.length,
+      expectedSignatureLength: expected.length,
+      secretLength: secret.length,
+      payloadLength: payload.length,
+      signaturesMatch: actualSignature === expected,
+    })
+
     if (actualSignature !== expected) {
+      console.error("❌ Signature mismatch:", {
+        received: actualSignature.substring(0, 20) + "...",
+        expected: expected.substring(0, 20) + "...",
+      })
       throw new Error("Invalid webhook signature")
     }
 
