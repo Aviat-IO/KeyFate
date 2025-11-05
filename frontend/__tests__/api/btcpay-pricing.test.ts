@@ -74,14 +74,14 @@ describe("BTCPay Checkout Pricing", () => {
       expect(response.status).toBe(200)
       expect(data).toHaveProperty("url")
 
-      // Verify that the payment provider was called with test pricing ($20)
+      // Verify that the payment provider was called with test pricing ($9)
       const { getCryptoPaymentProvider } = require("@/lib/payment")
       const provider = getCryptoPaymentProvider()
       expect(provider.createCheckoutSession).toHaveBeenCalledWith(
         expect.objectContaining({
           amount: expect.any(Number),
           metadata: expect.objectContaining({
-            original_amount: "20", // Test pricing for yearly
+            original_amount: "9", // Test pricing for yearly
           }),
         }),
       )
@@ -119,7 +119,7 @@ describe("BTCPay Checkout Pricing", () => {
       expect(provider.createCheckoutSession).toHaveBeenCalledWith(
         expect.objectContaining({
           metadata: expect.objectContaining({
-            original_amount: "10", // Test pricing for monthly
+            original_amount: "0.1", // Test pricing for monthly
           }),
         }),
       )
@@ -239,9 +239,9 @@ describe("BTCPay Checkout Pricing", () => {
       const { getCryptoPaymentProvider } = require("@/lib/payment")
       const provider = getCryptoPaymentProvider()
 
-      // Verify conversion was called with test amount ($20) instead of $90
+      // Verify conversion was called with test amount ($9) instead of $90
       expect(provider.convertToProviderCurrency).toHaveBeenCalledWith(
-        20, // Test pricing
+        9, // Test pricing
         "USD",
       )
 
