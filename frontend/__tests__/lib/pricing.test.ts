@@ -53,8 +53,8 @@ describe("Pricing Utility", () => {
       const pricing = getPricing()
       const isTest = isTestPricing()
 
-      // Test pricing is $2 or $5, production is $9 or $90
-      if (pricing.monthly === 2) {
+      // Test pricing is $10 or $20, production is $9 or $90
+      if (pricing.monthly === 10) {
         expect(isTest).toBe(true)
       } else if (pricing.monthly === 9) {
         expect(isTest).toBe(false)
@@ -80,12 +80,13 @@ describe("Pricing Utility", () => {
       expect(yearlySats).toBeGreaterThan(10)
     })
 
-    it("should have test pricing significantly cheaper than production", () => {
-      // Ensure test prices are reasonable for testing but cheaper than production
+    it("should have test pricing at reasonable levels", () => {
+      // Ensure test prices meet BTCPay minimums and production is higher
       const pricing = getPricing()
 
-      // Either we're in test mode ($2-$5) or production mode ($9-$90)
-      const isReasonableTest = pricing.monthly >= 2 && pricing.monthly < 9
+      // Either we're in test mode ($10-$20) or production mode ($9-$90)
+      // Note: Test monthly ($10) is higher than prod monthly ($9) to meet BTCPay minimums
+      const isReasonableTest = pricing.monthly >= 10 && pricing.monthly <= 20
       const isProduction = pricing.monthly === 9 && pricing.yearly === 90
 
       expect(isReasonableTest || isProduction).toBe(true)
