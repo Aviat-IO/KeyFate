@@ -260,8 +260,13 @@ function ShareInstructionsContent() {
                 </li>
                 {!isMinimalShares && (
                   <li>
-                    <strong>Shares 2-{sssSharesTotal - 1} (Backup):</strong>{" "}
-                    Store these securely offline for redundancy.
+                    <strong>
+                      {sssSharesTotal === 3
+                        ? "Share 2 (Backup):"
+                        : `Shares 2-${sssSharesTotal - 1} (Backup):`}
+                    </strong>{" "}
+                    Store {sssSharesTotal === 3 ? "this" : "these"} securely
+                    offline for redundancy.
                   </li>
                 )}
               </ul>
