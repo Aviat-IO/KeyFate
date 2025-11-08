@@ -70,7 +70,7 @@ export function NewSecretForm({
       title: "",
       secretMessageContent: "",
       recipients: [{ name: "", email: "" }],
-      check_in_days: "7",
+      check_in_days: "365",
       sss_shares_total: 3,
       sss_threshold: 2,
     },
@@ -425,8 +425,8 @@ export function NewSecretForm({
                   </FormControl>
                   <FormDescription className="text-xs">
                     {isPaid
-                      ? "You need to check in before this period to prevent disclosure."
-                      : "You need to check in before this period to prevent discolsure. Upgrade to Pro for more interval options."}
+                      ? "How long until your secret is automatically disclosed. Checking in will start the timer over."
+                      : "How long until your secret is automatically disclosed. Checking in will start the timer over. Upgrade to Pro for more interval options."}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
