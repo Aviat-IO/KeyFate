@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { CreditCard } from "lucide-react"
+import { CreditCard, Bitcoin } from "lucide-react"
 import { StripeCheckoutButton } from "./StripeCheckoutButton"
 import { AlreadySubscribedDialog } from "./AlreadySubscribedDialog"
 import { Button } from "@/components/ui/button"
@@ -53,6 +53,7 @@ export function PaymentMethodSelector({
             onClick={handlePaymentClick}
             disabled
           >
+            <Bitcoin className="mr-2 h-4 w-4" />
             Bitcoin (coming soon)
           </Button>
         </div>
@@ -73,6 +74,7 @@ export function PaymentMethodSelector({
       </StripeCheckoutButton>
 
       <Button variant="outline" className="w-full" disabled>
+        <Bitcoin className="mr-2 h-4 w-4" />
         Bitcoin (coming soon)
       </Button>
     </div>
