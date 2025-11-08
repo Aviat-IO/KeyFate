@@ -169,50 +169,52 @@ export function EditSecretForm({
       )}
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* Secret Details Section */}
-          <div className="rounded-lg border p-6">
-            <h2 className="mb-4 text-lg font-semibold">Secret Details</h2>
-            <div className="space-y-6">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Secret Title</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Example: Important Documents Location"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Secret Title</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Example: Important Documents Location"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
 
           {/* Recipients Section */}
-          <div className="rounded-lg border p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Recipients</h2>
+          <div className="space-y-4 border-t pt-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-medium text-muted-foreground">
+                Recipients
+              </h2>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => append({ name: "", email: "", phone: "" })}
                 disabled={loading}
+                className="gap-1.5 h-8 text-xs"
               >
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="h-3 w-3" />
                 Add Recipient
               </Button>
             </div>
-            <div className="space-y-6">
+            <div className="space-y-3">
               {fields.map((field, index) => (
-                <div key={field.id} className="space-y-4 rounded-lg border p-4">
+                <div key={field.id} className="space-y-3 rounded-md border bg-muted/30 p-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-medium">Recipient {index + 1}</h3>
+                    <div className="text-xs font-medium text-muted-foreground">
+                      Recipient {index + 1}
+                    </div>
                     {fields.length > 1 && (
                       <Button
                         type="button"
@@ -220,8 +222,9 @@ export function EditSecretForm({
                         size="sm"
                         onClick={() => remove(index)}
                         disabled={loading}
+                        className="h-7 w-7 p-0"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     )}
                   </div>
@@ -231,9 +234,13 @@ export function EditSecretForm({
                     name={`recipients.${index}.name`}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Name</FormLabel>
+                        <FormLabel className="text-xs">Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Recipient's name" {...field} />
+                          <Input
+                            placeholder="Recipient's name"
+                            {...field}
+                            className="h-9"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -245,13 +252,14 @@ export function EditSecretForm({
                     name={`recipients.${index}.email`}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel className="text-xs">Email</FormLabel>
                         <FormControl>
                           <Input
                             type="email"
                             placeholder="recipient@example.com"
                             {...field}
                             value={field.value || ""}
+                            className="h-9"
                           />
                         </FormControl>
                         <FormMessage />
@@ -264,16 +272,17 @@ export function EditSecretForm({
                     name={`recipients.${index}.phone`}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Phone (optional)</FormLabel>
+                        <FormLabel className="text-xs">Phone (optional)</FormLabel>
                         <FormControl>
                           <Input
                             type="tel"
                             placeholder="+1234567890"
                             {...field}
                             value={field.value || ""}
+                            className="h-9"
                           />
                         </FormControl>
-                        <FormDescription>
+                        <FormDescription className="text-xs">
                           Phone notifications are not yet supported
                         </FormDescription>
                         <FormMessage />
@@ -286,64 +295,64 @@ export function EditSecretForm({
           </div>
 
           {/* Check-in Settings Section */}
-          <div className="rounded-lg border p-6">
-            <h2 className="mb-4 text-lg font-semibold">Check-in Settings</h2>
-            <div className="space-y-6">
-              <FormField
-                control={form.control}
-                name="check_in_days"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Trigger Deadline</FormLabel>
-                    <FormControl>
-                      {isPaid ? (
-                        <Input
-                          type="number"
-                          {...field}
-                          min="2"
-                          max="365"
-                          disabled={loading}
-                          placeholder="Enter custom days"
-                        />
-                      ) : (
-                        <Select
-                          onValueChange={(value) =>
-                            field.onChange(Number(value))
-                          }
-                          defaultValue={
-                            field.value != null
-                              ? String(field.value)
-                              : undefined
-                          }
-                          disabled={loading}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="How often should you check in?" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="2">Daily</SelectItem>
-                            <SelectItem value="7">Weekly</SelectItem>
-                            <SelectItem value="14">Every 2 weeks</SelectItem>
-                            <SelectItem value="30">Monthly</SelectItem>
-                            <SelectItem value="90">Every 3 months</SelectItem>
-                            <SelectItem value="180">Every 6 months</SelectItem>
-                            <SelectItem value="365">Yearly</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    </FormControl>
-                    <FormDescription>
-                      {isPaid
-                        ? "How often you need to check in to keep the secret active. Minimum 2 days."
-                        : "How often you need to check in to keep the secret active. Upgrade to set custom intervals."}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+          <div className="space-y-4 border-t pt-6">
+            <h2 className="text-sm font-medium text-muted-foreground">
+              Check-in Settings
+            </h2>
+            <FormField
+              control={form.control}
+              name="check_in_days"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Trigger Deadline</FormLabel>
+                  <FormControl>
+                    {isPaid ? (
+                      <Input
+                        type="number"
+                        {...field}
+                        min="2"
+                        max="365"
+                        disabled={loading}
+                        placeholder="Enter custom days"
+                      />
+                    ) : (
+                      <Select
+                        onValueChange={(value) =>
+                          field.onChange(Number(value))
+                        }
+                        defaultValue={
+                          field.value != null
+                            ? String(field.value)
+                            : undefined
+                        }
+                        disabled={loading}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="How often should you check in?" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="2">Daily</SelectItem>
+                          <SelectItem value="7">Weekly</SelectItem>
+                          <SelectItem value="14">Every 2 weeks</SelectItem>
+                          <SelectItem value="30">Monthly</SelectItem>
+                          <SelectItem value="90">Every 3 months</SelectItem>
+                          <SelectItem value="180">Every 6 months</SelectItem>
+                          <SelectItem value="365">Yearly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </FormControl>
+                  <FormDescription className="text-xs">
+                    {isPaid
+                      ? "How long until your secret is automatically disclosed. Checking in will start the timer over. Minimum 2 days."
+                      : "How long until your secret is automatically disclosed. Checking in will start the timer over. Upgrade to set custom intervals."}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
 
           {/* Action Buttons */}
