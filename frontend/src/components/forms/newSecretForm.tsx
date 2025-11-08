@@ -212,68 +212,67 @@ export function NewSecretForm({
       )}
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* Secret Details Section */}
-          <div className="rounded-lg border p-6">
-            <h2 className="mb-4 text-lg font-semibold">Secret Details</h2>
-            <div className="space-y-6">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Secret Title</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Example: Grandma's Recipe Book Location"
-                        disabled={isSubmitting}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Secret Title</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Example: Grandma's Recipe Book Location"
+                      disabled={isSubmitting}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                control={form.control}
-                name="secretMessageContent"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Secret Message{" "}
-                      <LockIcon className="ml-1 inline h-4 w-4" />
-                    </FormLabel>
-                    <FormControl>
-                      <Textarea
-                        {...field}
-                        placeholder="Your secret message. This will be securely split into shares after submission."
-                        rows={5}
-                        disabled={isSubmitting}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      This message will be split using Shamir's Secret Sharing.
-                      You'll manage the shares on the next page.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="secretMessageContent"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1">
+                    Secret Message
+                    <LockIcon className="h-3 w-3" />
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      placeholder="Your secret message."
+                      rows={4}
+                      disabled={isSubmitting}
+                    />
+                  </FormControl>
+                  <FormDescription className="text-xs">
+                    This message will be split using Shamir's Secret Sharing.
+                    You'll manage the shares on the next page.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
 
           {/* Recipient Information Section */}
-          <div className="rounded-lg border p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Recipients</h2>
+          <div className="space-y-4 border-t pt-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-medium text-muted-foreground">
+                Recipients
+              </h2>
               {!isPaid && fields.length >= 1 && (
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setShowUpgradeModal(true)}
-                  className="gap-2"
+                  className="gap-1.5 h-8 text-xs"
                 >
                   <Crown className="h-3 w-3" />
                   Add More (Pro)
@@ -284,9 +283,9 @@ export function NewSecretForm({
             {isPaid &&
               maxRecipients > 0 &&
               fields.length >= Math.floor(maxRecipients * 0.75) && (
-                <Alert className="border-muted bg-muted/50 mb-4">
+                <Alert className="border-muted bg-muted/50">
                   <AlertTriangle className="text-muted-foreground h-4 w-4" />
-                  <AlertDescription className="text-muted-foreground">
+                  <AlertDescription className="text-muted-foreground text-sm">
                     {fields.length >= maxRecipients
                       ? `Maximum ${maxRecipients} recipients reached.`
                       : `Using ${fields.length} of ${maxRecipients} recipients.`}
@@ -294,11 +293,11 @@ export function NewSecretForm({
                 </Alert>
               )}
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {fields.map((field, index) => (
-                <div key={field.id} className="space-y-4 rounded-lg border p-4">
+                <div key={field.id} className="space-y-3 rounded-md border bg-muted/30 p-3">
                   <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium">
+                    <div className="text-xs font-medium text-muted-foreground">
                       Recipient {index + 1}
                     </div>
                     {fields.length > 1 && (
@@ -308,48 +307,53 @@ export function NewSecretForm({
                         size="sm"
                         onClick={() => remove(index)}
                         disabled={isSubmitting}
+                        className="h-7 w-7 p-0"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     )}
                   </div>
 
-                  <FormField
-                    control={form.control}
-                    name={`recipients.${index}.name`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="Jane Doe"
-                            disabled={isSubmitting}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField
+                      control={form.control}
+                      name={`recipients.${index}.name`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">Name</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="Jane Doe"
+                              disabled={isSubmitting}
+                              className="h-9"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name={`recipients.${index}.email`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="email"
-                            {...field}
-                            placeholder="recipient@example.com"
-                            disabled={isSubmitting}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={form.control}
+                      name={`recipients.${index}.email`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">Email</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="email"
+                              {...field}
+                              placeholder="recipient@example.com"
+                              disabled={isSubmitting}
+                              className="h-9"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
               ))}
 
@@ -359,15 +363,15 @@ export function NewSecretForm({
                   variant="outline"
                   onClick={() => append({ name: "", email: "" })}
                   disabled={isSubmitting}
-                  className="w-full"
+                  className="w-full h-9 text-sm"
                 >
-                  <Plus className="mr-2 h-4 w-4" />
+                  <Plus className="mr-1.5 h-4 w-4" />
                   Add Recipient ({fields.length} / {maxRecipients})
                 </Button>
               )}
 
               {isPaid && !canAddMore && (
-                <div className="text-muted-foreground py-2 text-center text-sm">
+                <div className="text-muted-foreground py-1.5 text-center text-xs">
                   Maximum {maxRecipients} recipients reached
                 </div>
               )}
@@ -375,69 +379,63 @@ export function NewSecretForm({
           </div>
 
           {/* Check-in Settings Section */}
-          <div className="rounded-lg border p-6">
-            <h2 className="mb-4 text-lg font-semibold">Check-in Settings</h2>
-            <div className="space-y-6">
-              <FormField
-                control={form.control}
-                name="check_in_days"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Trigger Deadline</FormLabel>
-                    <FormControl>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        disabled={isSubmitting}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select frequency" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {isPaid ? (
-                            <>
-                              <SelectItem value="1">1 day</SelectItem>
-                              <SelectItem value="3">3 days</SelectItem>
-                              <SelectItem value="7">1 week</SelectItem>
-                              <SelectItem value="14">2 weeks</SelectItem>
-                              <SelectItem value="30">1 month</SelectItem>
-                              <SelectItem value="90">3 months</SelectItem>
-                              <SelectItem value="180">6 months</SelectItem>
-                              <SelectItem value="365">1 year</SelectItem>
-                              <SelectItem value="1095">3 years</SelectItem>
-                            </>
-                          ) : (
-                            <>
-                              <SelectItem value="7">1 week</SelectItem>
-                              <SelectItem value="30">1 month</SelectItem>
-                              <SelectItem value="365">1 year</SelectItem>
-                            </>
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormDescription>
-                      {isPaid
-                        ? "How often you need to check in to keep the secret active."
-                        : "How often you need to check in to keep the secret active. Upgrade to Pro for more interval options."}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+          <div className="space-y-4 border-t pt-6">
+            <h2 className="text-sm font-medium text-muted-foreground">
+              Check-in Settings
+            </h2>
+            <FormField
+              control={form.control}
+              name="check_in_days"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Trigger Deadline</FormLabel>
+                  <FormControl>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      disabled={isSubmitting}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select frequency" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {isPaid ? (
+                          <>
+                            <SelectItem value="1">1 day</SelectItem>
+                            <SelectItem value="3">3 days</SelectItem>
+                            <SelectItem value="7">1 week</SelectItem>
+                            <SelectItem value="14">2 weeks</SelectItem>
+                            <SelectItem value="30">1 month</SelectItem>
+                            <SelectItem value="90">3 months</SelectItem>
+                            <SelectItem value="180">6 months</SelectItem>
+                            <SelectItem value="365">1 year</SelectItem>
+                            <SelectItem value="1095">3 years</SelectItem>
+                          </>
+                        ) : (
+                          <>
+                            <SelectItem value="7">1 week</SelectItem>
+                            <SelectItem value="30">1 month</SelectItem>
+                            <SelectItem value="365">1 year</SelectItem>
+                          </>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormDescription className="text-xs">
+                    {isPaid
+                      ? "You need to check in before this period to prevent disclosure."
+                      : "You need to check in before this period to prevent discolsure. Upgrade to Pro for more interval options."}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
 
           {/* Advanced Settings Section */}
-          <div className="rounded-lg border p-6">
-            <h2 className="mb-4 text-lg font-semibold">
-              Advanced Settings
-              <span className="text-muted-foreground ml-2 text-sm font-normal">
-                (optional)
-              </span>
-            </h2>
+          <div className="space-y-4 border-t pt-6">
             <Accordion
               type="single"
               collapsible
@@ -445,15 +443,15 @@ export function NewSecretForm({
               defaultValue={fields.length > 1 ? "sss-config" : undefined}
             >
               <AccordionItem value="sss-config" className="border-0">
-                <AccordionTrigger>
-                  Secret Sharing Configuration
+                <AccordionTrigger className="text-sm font-medium text-muted-foreground hover:text-foreground py-0 hover:no-underline">
+                  Advanced Settings (optional)
                 </AccordionTrigger>
-                <AccordionContent className="space-y-4 p-1">
+                <AccordionContent className="space-y-3 pt-4">
                   {fields.length > 1 && (
                     <Alert>
                       <Info className="h-4 w-4" />
-                      <AlertTitle>Multiple Recipients</AlertTitle>
-                      <AlertDescription>
+                      <AlertTitle className="text-sm">Multiple Recipients</AlertTitle>
+                      <AlertDescription className="text-xs">
                         All recipients will receive the SAME share. You must
                         distribute this share to each recipient separately via
                         your own secure channels. With multiple recipients,
@@ -463,9 +461,9 @@ export function NewSecretForm({
                   )}
                   <Alert>
                     <Info className="h-4 w-4" />
-                    <AlertTitle>Secret Sharing Details</AlertTitle>
-                    <AlertDescription>
-                      <ul className="list-disc space-y-1 pl-5">
+                    <AlertTitle className="text-sm">Secret Sharing Details</AlertTitle>
+                    <AlertDescription className="text-xs">
+                      <ul className="list-disc space-y-0.5 pl-5">
                         <li>
                           Your secret message will be split into a number of
                           cryptographic "shares".
