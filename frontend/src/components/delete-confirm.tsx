@@ -36,11 +36,11 @@ export function DeleteConfirm({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <div className="flex items-center gap-3">
-            <div className="bg-destructive/10 flex h-12 w-12 items-center justify-center rounded-full">
+          <div className="flex items-start gap-3">
+            <div className="bg-destructive/10 flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
               <AlertTriangle className="text-destructive h-6 w-6" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <DialogTitle className="text-left">{title}</DialogTitle>
               <DialogDescription className="mt-1 text-left">
                 {description}

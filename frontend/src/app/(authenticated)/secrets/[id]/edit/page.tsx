@@ -45,7 +45,7 @@ export default async function EditSecretPage({ params }: EditSecretPageProps) {
 
     return (
       <div className="mx-auto max-w-3xl py-8 sm:px-4">
-        <h1 className="mb-6 text-3xl font-bold">Edit Secret</h1>
+        <h1 className="mb-8 text-left text-2xl font-bold">Edit Secret</h1>
         <EditSecretForm initialData={initialData} secretId={secret.id} />
       </div>
     )
