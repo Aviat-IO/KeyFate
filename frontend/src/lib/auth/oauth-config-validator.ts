@@ -118,10 +118,7 @@ export function assertValidOAuthConfig(config?: OAuthConfig): void {
     throw new Error(`OAuth configuration invalid:\n${result.errors.join("\n")}`)
   }
 
-  // Log warnings in development
-  if (result.warnings.length > 0 && process.env.NODE_ENV === "development") {
-    console.warn("[OAuth Config] Warnings:", result.warnings)
-  }
+  // Removed verbose development logging
 }
 
 /**
