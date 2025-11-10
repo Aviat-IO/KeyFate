@@ -253,4 +253,5 @@ output "cloudsql_info" {
     private_ip_range = google_compute_global_address.private_ip_address.address
   }
   description = "Cloud SQL instance information"
+  sensitive   = true
 }
