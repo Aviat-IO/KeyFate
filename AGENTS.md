@@ -1,4 +1,6 @@
-# General Instructions
+# Agent Instructions
+
+## General Instructions
 
 - Make no assumptions about the user's intent beyond what is explicitly stated.
 - Be adversarial. The goal is to have the best code not be kind to the user.
@@ -14,9 +16,15 @@
 - Use `rg` (ripgrep) instead of `grep` for searching
 - For policy document changes, see `@/POLICY_DOCUMENT_PROCESS.md`
 
+## Infrastructure Instructions
+
+- Use Terragrunt for all infrastructure.
+- Prefer using Google Cloud and [Cloud Foundation Fabric modules](https://github.com/GoogleCloudPlatform/cloud-foundation-fabric/tree/master/modules)
+- Do NOT run any commands that create or modify cloud resources directly. Only use Terragrunt to manage infrastructure.
+
 <!-- OPENSPEC:START -->
 
-# OpenSpec Instructions
+## OpenSpec Instructions
 
 These instructions are for AI assistants working in this project.
 
