@@ -255,16 +255,18 @@ db-proxy-staging:
 	@echo "🔌 Starting Cloud SQL Proxy for staging..."
 	@echo "📡 Connecting to: keyfate-dev:us-central1:keyfate-postgres-staging"
 	@echo "🌐 Proxy will be available at: localhost:54321"
+	@echo "🔒 Using private IP (no public IP available)"
 	@echo ""
 	@cloud-sql-proxy --port=54321 keyfate-dev:us-central1:keyfate-postgres-staging
 
 # Connect to production Cloud SQL via proxy
 db-proxy-prod:
 	@echo "🔌 Starting Cloud SQL Proxy for production..."
-	@echo "📡 Connecting to: keyfate-dev:us-central1:keyfate-postgres-prod"
+	@echo "📡 Connecting to: keyfate-prod:us-central1:keyfate-postgres-production"
 	@echo "🌐 Proxy will be available at: localhost:54321"
+	@echo "🔒 Using private IP (no public IP available)"
 	@echo ""
-	@cloud-sql-proxy --port=54321 keyfate-dev:us-central1:keyfate-postgres-prod
+	@cloud-sql-proxy --port=54321 keyfate-prod:us-central1:keyfate-postgres-production
 
 # Sync Doppler secrets to terraform.tfvars
 sync-doppler-dev:
