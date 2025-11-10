@@ -170,7 +170,7 @@ module "cloud_run" {
         SENDGRID_ADMIN_EMAIL               = var.sendgrid_admin_email
         # Force revision update when code changes by including hash as env var
         DEPLOYMENT_HASH = local.image_tag
-        # Database connection timeout and pooling settings - optimized for VPC connector
+        # Database connection timeout and pooling settings - optimized for Unix socket connection
         DB_CONNECT_TIMEOUT   = "10"    # 10 seconds connection timeout (fail fast)
         DB_POOL_MAX          = "5"     # Reduced max pool connections to prevent exhaustion
         DB_POOL_MIN          = "1"     # Minimum pool connections
@@ -246,12 +246,6 @@ module "cloud_run" {
   service_config = {
     max_instance_count = var.max_instances
     min_instance_count = var.min_instances
-
-    # VPC connector for private Cloud SQL access
-    vpc_connector_config = {
-      connector = google_vpc_access_connector.vpc_connector.name
-      egress    = "PRIVATE_RANGES_ONLY" # Only route private traffic through VPC
-    }
   }
 
   revision = {
@@ -282,8 +276,7 @@ module "cloud_run" {
     data.google_artifact_registry_repository.frontend_repo,
     module.frontend_service_account,
     module.frontend_secrets,
-    google_secret_manager_secret_version.database_url,
-    google_vpc_access_connector.vpc_connector
+    google_secret_manager_secret_version.database_url
   ]
 }
 
