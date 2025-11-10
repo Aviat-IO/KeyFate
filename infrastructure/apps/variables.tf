@@ -202,22 +202,7 @@ variable "btcpay_webhook_secret" {
   sensitive   = true
 }
 
-variable "cloudsql_enable_public_ip" {
-  description = "Enable public IP for Cloud SQL instance (useful for development)"
-  type        = bool
-  default     = false  # Default to false for security, enable in dev/staging
-}
 
-variable "cloudsql_authorized_networks" {
-  description = "Map of authorized networks for Cloud SQL public IP access"
-  type        = map(string)
-  default     = {}
-  # Example:
-  # {
-  #   "office" = "203.0.113.0/32"
-  #   "home"   = "198.51.100.0/32"
-  # }
-}
 
 # SendGrid configuration
 variable "sendgrid_api_key" {

@@ -69,7 +69,7 @@ module "cloudsql_instance" {
 
   network_config = {
     connectivity = {
-      public_ipv4 = var.cloudsql_enable_public_ip # Controlled via variable
+      public_ipv4 = false # Private-only: Use Cloud SQL Auth Proxy via Cloud Run built-in integration
       psa_config = {
         private_network = module.vpc.self_link
         allocated_ip_ranges = {
@@ -77,7 +77,6 @@ module "cloudsql_instance" {
         }
       }
     }
-    authorized_networks = var.cloudsql_authorized_networks # Controlled via variable
   }
 
   # Cost-optimized backup configuration
@@ -175,17 +174,45 @@ resource "google_secret_manager_secret_iam_member" "database_url_accessor" {
   member    = "serviceAccount:${module.frontend_service_account.email}"
 }
 
-# VPC Access Connector removed - using Unix socket for Cloud SQL connection instead
-# Unix socket is more reliable, lower latency, and has no additional cost
+# VPC Access Connector for Cloud Run to access private Cloud SQL via Cloud SQL Auth Proxy
+resource "google_vpc_access_connector" "vpc_connector" {
+  project       = module.project.id
+  name          = "keyfate-vpc-${var.env}"
+  region        = var.region
+  network       = module.vpc.name
+  ip_cidr_range = "10.1.0.0/28"              # /28 gives 16 IPs, sufficient for Cloud Run connector
+  machine_type  = "f1-micro"                 # Small but reliable instance type
+  min_instances = 2                          # Minimum required by Google Cloud (same for dev and prod)
+  max_instances = var.env == "prod" ? 10 : 5 # Scale up to 10 in prod, 5 in dev/staging
 
-# Firewall rule removed - Unix socket connection doesn't require network rules
+  depends_on = [module.vpc]
+}
+
+# Firewall rule to allow Cloud Run to connect to Cloud SQL via private IP
+resource "google_compute_firewall" "allow_cloudsql" {
+  project     = module.project.id
+  name        = "allow-cloudsql-${var.env}"
+  network     = module.vpc.name
+  description = "Allow Cloud Run to connect to Cloud SQL"
+
+  allow {
+    protocol = "tcp"
+    ports    = ["5432"]
+  }
+
+  source_ranges = [
+    "10.0.0.0/24", # Main subnet
+    "10.1.0.0/28"  # VPC connector subnet
+  ]
+  target_tags = ["cloudsql"]
+}
 
 # Outputs for reference
 output "cloudsql_info" {
   value = {
     instance_name    = module.cloudsql_instance.name
     instance_ip      = module.cloudsql_instance.ip
-    public_ip        = var.cloudsql_enable_public_ip ? try(module.cloudsql_instance.instances.primary.public_ip_address, "Pending") : "Not enabled"
+    public_ip        = "Disabled - using Cloud SQL Auth Proxy"
     database_name    = local.db_name
     database_user    = local.db_user
     connection_name  = module.cloudsql_instance.connection_name
