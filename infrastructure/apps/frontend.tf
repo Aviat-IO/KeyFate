@@ -151,8 +151,6 @@ module "cloud_run" {
         NEXTAUTH_URL_INTERNAL = var.next_public_site_url
         # Older NextAuth versions require this env to trust X-Forwarded-Host
         AUTH_TRUST_HOST = "true"
-        # Admin IP whitelist from Cloud SQL authorized networks
-        CLOUDSQL_AUTHORIZED_NETWORKS = join(",", values(var.cloudsql_authorized_networks))
         # Environment indicator for runtime checks
         NEXT_PUBLIC_ENV = var.env
         # All NEXT_PUBLIC_ variables that the app needs
@@ -246,6 +244,12 @@ module "cloud_run" {
   service_config = {
     max_instance_count = var.max_instances
     min_instance_count = var.min_instances
+
+    # VPC connector for private Cloud SQL access via Cloud SQL Auth Proxy
+    vpc_connector_config = {
+      connector = google_vpc_access_connector.vpc_connector.name
+      egress    = "PRIVATE_RANGES_ONLY" # Only route private traffic through VPC
+    }
   }
 
   revision = {
@@ -277,7 +281,8 @@ module "cloud_run" {
     data.google_artifact_registry_repository.frontend_repo,
     module.frontend_service_account,
     module.frontend_secrets,
-    google_secret_manager_secret_version.database_url
+    google_secret_manager_secret_version.database_url,
+    google_vpc_access_connector.vpc_connector
   ]
 }
 
