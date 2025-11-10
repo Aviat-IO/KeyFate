@@ -129,7 +129,10 @@ module "cloud_run" {
   name       = local.frontend_app_name
   region     = var.region
 
-  service_account = module.frontend_service_account.email
+  service_account_config = {
+    create = false
+    email  = module.frontend_service_account.email
+  }
 
   containers = {
     frontend = {
