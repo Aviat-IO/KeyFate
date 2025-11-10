@@ -141,40 +141,8 @@ resource "google_secret_manager_secret_version" "database_url" {
   secret_data = "postgresql://${local.db_user}:${var.db_password}@/${local.db_name}?host=/cloudsql/${module.cloudsql_instance.connection_name}"
 }
 
-# Additional secret for private IP connection (for VPC-based connections)
-resource "google_secret_manager_secret" "database_url_private" {
-  project   = module.project.id
-  secret_id = "database-url-private"
-
-  replication {
-    auto {}
-  }
-}
-
-resource "google_secret_manager_secret_version" "database_url_private" {
-  secret = google_secret_manager_secret.database_url_private.id
-  # Use private IP for VPC-based connections
-  secret_data = "postgresql://${local.db_user}:${var.db_password}@${module.cloudsql_instance.ip}:5432/${local.db_name}?sslmode=require"
-}
-
-# Additional secret for public IP connection (for development/debugging)
-# Only create if public IP is enabled
-resource "google_secret_manager_secret" "database_url_public" {
-  count     = var.cloudsql_enable_public_ip ? 1 : 0
-  project   = module.project.id
-  secret_id = "database-url-public"
-
-  replication {
-    auto {}
-  }
-}
-
-resource "google_secret_manager_secret_version" "database_url_public" {
-  count  = var.cloudsql_enable_public_ip ? 1 : 0
-  secret = google_secret_manager_secret.database_url_public[0].id
-  # Access the public IP from the instances output
-  secret_data = "postgresql://${local.db_user}:${var.db_password}@${module.cloudsql_instance.instances.primary.public_ip_address}:5432/${local.db_name}?sslmode=require"
-}
+# Alternative connection secrets removed - only using Unix socket connection
+# Unix socket is the recommended method for Cloud Run to Cloud SQL connections
 
 # Cloud SQL Auth Proxy service account (for connection pooling if needed)
 module "cloudsql_proxy_service_account" {
@@ -207,38 +175,10 @@ resource "google_secret_manager_secret_iam_member" "database_url_accessor" {
   member    = "serviceAccount:${module.frontend_service_account.email}"
 }
 
-# VPC Access Connector for Cloud Run to access VPC resources
-resource "google_vpc_access_connector" "vpc_connector" {
-  project       = module.project.id
-  name          = "keyfate-vpc-${var.env}"
-  region        = var.region
-  network       = module.vpc.name
-  ip_cidr_range = "10.1.0.0/28"              # /28 gives 16 IPs, sufficient for Cloud Run connector
-  machine_type  = "f1-micro"                 # Small but reliable instance type
-  min_instances = 2                          # Minimum required by Google Cloud (same for dev and prod)
-  max_instances = var.env == "prod" ? 10 : 5 # Scale up to 10 in prod, 5 in dev/staging
+# VPC Access Connector removed - using Unix socket for Cloud SQL connection instead
+# Unix socket is more reliable, lower latency, and has no additional cost
 
-  depends_on = [module.vpc]
-}
-
-# Firewall rule to allow Cloud Run to connect to Cloud SQL via private IP
-resource "google_compute_firewall" "allow_cloudsql" {
-  project     = module.project.id
-  name        = "allow-cloudsql-${var.env}"
-  network     = module.vpc.name
-  description = "Allow Cloud Run to connect to Cloud SQL"
-
-  allow {
-    protocol = "tcp"
-    ports    = ["5432"]
-  }
-
-  source_ranges = [
-    "10.0.0.0/24", # Main subnet
-    "10.1.0.0/28"  # VPC connector subnet
-  ]
-  target_tags = ["cloudsql"]
-}
+# Firewall rule removed - Unix socket connection doesn't require network rules
 
 # Outputs for reference
 output "cloudsql_info" {
