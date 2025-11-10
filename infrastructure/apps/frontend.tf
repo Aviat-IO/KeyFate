@@ -251,8 +251,9 @@ module "cloud_run" {
   revision = {
     # Force new revision when image changes
     annotations = {
-      "deployment.hash" = local.image_tag
-      "git.commit"      = local.git_commit_hash
+      "deployment.hash"                          = local.image_tag
+      "git.commit"                               = local.git_commit_hash
+      "run.googleapis.com/execution-environment" = "gen2"
     }
   }
 
