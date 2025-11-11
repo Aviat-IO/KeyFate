@@ -1,9 +1,18 @@
 import { defineConfig } from "drizzle-kit"
 import * as dotenv from "dotenv"
+import * as fs from "fs"
 
-// Load environment variables from .env.local (only in local dev, Cloud Run uses Secret Manager)
-// In production, DATABASE_URL is injected by Cloud Run from Secret Manager
-dotenv.config({ path: ".env.local" })
+// Only load .env.local if it exists (local development)
+// In production on Cloud Run, DATABASE_URL comes from Secret Manager
+const envLocalPath = ".env.local"
+if (fs.existsSync(envLocalPath)) {
+  console.log("📄 Loading .env.local for local development")
+  dotenv.config({ path: envLocalPath })
+} else {
+  console.log(
+    "☁️  Running in Cloud Run, using environment variables from Secret Manager",
+  )
+}
 
 // Validate DATABASE_URL is available
 if (!process.env.DATABASE_URL) {
@@ -16,6 +25,8 @@ if (!process.env.DATABASE_URL) {
   )
   throw new Error("DATABASE_URL is required for migrations")
 }
+
+console.log("✅ DATABASE_URL is configured for migrations")
 
 export default defineConfig({
   schema: "./src/lib/db/schema.ts",
