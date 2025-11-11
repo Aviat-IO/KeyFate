@@ -234,3 +234,9 @@ variable "sql_proxy_allowed_users" {
   default     = ""
 }
 
+variable "cloudsql_authorized_networks" {
+  description = "Map of authorized networks allowed to connect to Cloud SQL public IP (e.g., {'home' = '1.2.3.4/32', 'office' = '5.6.7.8/32'})"
+  type        = map(string)
+  default     = {}
+}
+
