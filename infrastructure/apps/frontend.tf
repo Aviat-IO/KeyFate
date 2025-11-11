@@ -241,6 +241,18 @@ module "cloud_run" {
       volume_mounts = {
         cloudsql = "/cloudsql"
       }
+      # Startup probe - allow up to 5 minutes for migrations and server startup
+      # migrations can take 30-60 seconds, plus 10s sleep, plus Next.js startup time
+      startup_probe = {
+        http_get = {
+          path = "/"
+          port = 3000
+        }
+        initial_delay_seconds = 15  # Wait 15s before first probe (migrations starting)
+        timeout_seconds       = 5   # Each probe times out after 5s
+        period_seconds        = 10  # Check every 10s
+        failure_threshold     = 30  # Allow 30 failures = 5 minutes total
+      }
     }
   }
 
