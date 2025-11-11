@@ -228,3 +228,9 @@ variable "cron_secret" {
   sensitive   = true
 }
 
+variable "sql_proxy_allowed_users" {
+  description = "Comma-delimited string of user emails allowed to invoke the Cloud SQL proxy service (e.g., 'user1@example.com,user2@example.com')"
+  type        = string
+  default     = ""
+}
+

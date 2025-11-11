@@ -1,4 +1,4 @@
-.PHONY: install dev stop clean test migrate seed deploy-staging deploy-prod help status reset-db debug-db test-db-connection clean-db ensure-database create-database db-proxy-staging db-proxy-prod
+.PHONY: install dev stop clean test migrate seed deploy-staging deploy-prod help status reset-db debug-db test-db-connection clean-db ensure-database create-database db-proxy-staging db-proxy-prod db-migrate-staging db-migrate-prod db-studio-staging db-studio-prod
 
 # Default target
 help:
@@ -22,6 +22,10 @@ help:
 	@echo "  make test-db-connection - Quick database connection test"
 	@echo "  make db-proxy-staging - Connect to staging Cloud SQL via proxy (port 54321)"
 	@echo "  make db-proxy-prod    - Connect to production Cloud SQL via proxy (port 54321)"
+	@echo "  make db-migrate-staging - Run migrations against staging database"
+	@echo "  make db-migrate-prod  - Run migrations against production database"
+	@echo "  make db-studio-staging - Open Drizzle Studio for staging database"
+	@echo "  make db-studio-prod   - Open Drizzle Studio for production database"
 	@echo "  make sync-doppler-dev - Sync Doppler secrets to dev terraform.tfvars"
 	@echo "  make sync-doppler-prod - Sync Doppler secrets to prod terraform.tfvars"
 	@echo ""
@@ -255,18 +259,62 @@ db-proxy-staging:
 	@echo "🔌 Starting Cloud SQL Proxy for staging..."
 	@echo "📡 Connecting to: keyfate-dev:us-central1:keyfate-postgres-staging"
 	@echo "🌐 Proxy will be available at: localhost:54321"
-	@echo "🔒 Using private IP (no public IP available)"
+	@echo "🔒 Using private IP (requires running from GCP environment)"
 	@echo ""
-	@cloud-sql-proxy --port=54321 keyfate-dev:us-central1:keyfate-postgres-staging
+	@echo "💡 Note: This must be run from Cloud Shell or a GCP VM with VPC access"
+	@echo ""
+	@cloud-sql-proxy --private-ip --port=54321 keyfate-dev:us-central1:keyfate-postgres-staging
 
 # Connect to production Cloud SQL via proxy
 db-proxy-prod:
 	@echo "🔌 Starting Cloud SQL Proxy for production..."
 	@echo "📡 Connecting to: keyfate-prod:us-central1:keyfate-postgres-production"
 	@echo "🌐 Proxy will be available at: localhost:54321"
-	@echo "🔒 Using private IP (no public IP available)"
+	@echo "🔒 Using private IP (requires running from GCP environment)"
 	@echo ""
-	@cloud-sql-proxy --port=54321 keyfate-prod:us-central1:keyfate-postgres-production
+	@echo "💡 Note: This must be run from Cloud Shell or a GCP VM with VPC access"
+	@echo ""
+	@cloud-sql-proxy --private-ip --port=54321 keyfate-prod:us-central1:keyfate-postgres-production
+
+# Run migrations against staging database
+# Requires db-proxy-staging to be running in another terminal
+db-migrate-staging:
+	@echo "📊 Running migrations against staging database..."
+	@echo "⚠️  Ensure 'make db-proxy-staging' is running in another terminal"
+	@echo ""
+	@cd frontend && npm run db:migrate -- --config=drizzle-staging.config.ts
+	@echo "✅ Staging migrations complete"
+
+# Run migrations against production database
+# Requires db-proxy-prod to be running in another terminal
+db-migrate-prod:
+	@echo "📊 Running migrations against production database..."
+	@echo "⚠️  Ensure 'make db-proxy-prod' is running in another terminal"
+	@echo "⚠️  WARNING: This will modify the production database!"
+	@read -p "Are you sure you want to continue? (yes/N): " confirm && [ "$$confirm" = "yes" ]
+	@echo ""
+	@cd frontend && npm run db:migrate -- --config=drizzle-production.config.ts
+	@echo "✅ Production migrations complete"
+
+# Open Drizzle Studio for staging database
+# Requires db-proxy-staging to be running in another terminal
+db-studio-staging:
+	@echo "🎨 Opening Drizzle Studio for staging database..."
+	@echo "⚠️  Ensure 'make db-proxy-staging' is running in another terminal"
+	@echo "🌐 Studio will be available at: https://local.drizzle.studio"
+	@echo ""
+	@cd frontend && npm run db:studio -- --config=drizzle-staging.config.ts
+
+# Open Drizzle Studio for production database
+# Requires db-proxy-prod to be running in another terminal
+db-studio-prod:
+	@echo "🎨 Opening Drizzle Studio for production database..."
+	@echo "⚠️  Ensure 'make db-proxy-prod' is running in another terminal"
+	@echo "⚠️  WARNING: This provides full access to the production database!"
+	@read -p "Are you sure you want to continue? (yes/N): " confirm && [ "$$confirm" = "yes" ]
+	@echo "🌐 Studio will be available at: https://local.drizzle.studio"
+	@echo ""
+	@cd frontend && npm run db:studio -- --config=drizzle-production.config.ts
 
 # Sync Doppler secrets to terraform.tfvars
 sync-doppler-dev:

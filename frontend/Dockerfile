@@ -51,6 +51,18 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Copy migration script, drizzle config, and migrations (from build context, not builder stage)
+COPY --chown=nextjs:nodejs scripts/migrate-and-start.sh /app/scripts/migrate-and-start.sh
+COPY --chown=nextjs:nodejs drizzle.config.ts /app/drizzle.config.ts
+COPY --chown=nextjs:nodejs drizzle /app/drizzle
+
+# Copy node_modules from builder for migration tools (drizzle-kit, postgres driver, etc.)
+# We need the full node_modules because drizzle-kit has many dependencies
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+
+# Ensure script is executable
+USER root
+RUN chmod +x /app/scripts/migrate-and-start.sh
 USER nextjs
 
 EXPOSE 3000
@@ -59,5 +71,5 @@ ENV PORT=3000
 # The Next.js standalone server binds to :: (IPv6) / 0.0.0.0 (IPv4) by default
 # We don't set HOSTNAME as it would interfere with OAuth callback URLs
 
-# Start the standalone server
-CMD ["node", "server.js"]
+# Use migration wrapper script as entrypoint
+CMD ["sh", "/app/scripts/migrate-and-start.sh"]

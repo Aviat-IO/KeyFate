@@ -2,26 +2,26 @@
 
 ## 1. Create Migration Script
 
-- [ ] 1.1 Create `frontend/scripts/migrate-and-start.sh` with migration + server
+- [x] 1.1 Create `frontend/scripts/migrate-and-start.sh` with migration + server
       start logic
-- [ ] 1.2 Add error handling for migration failures
-- [ ] 1.3 Add logging for migration start/success/failure
-- [ ] 1.4 Make script executable (`chmod +x`)
+- [x] 1.2 Add error handling for migration failures
+- [x] 1.3 Add logging for migration start/success/failure
+- [x] 1.4 Make script executable (`chmod +x`)
 
 ## 2. Update Dockerfile
 
-- [ ] 2.1 Copy migration script to container:
+- [x] 2.1 Copy migration script to container:
       `COPY scripts/migrate-and-start.sh /app/scripts/`
-- [ ] 2.2 Set script permissions:
+- [x] 2.2 Set script permissions:
       `RUN chmod +x /app/scripts/migrate-and-start.sh`
-- [ ] 2.3 Update CMD or ENTRYPOINT to use wrapper script
-- [ ] 2.4 Ensure drizzle-kit is available in production dependencies
+- [x] 2.3 Update CMD or ENTRYPOINT to use wrapper script
+- [x] 2.4 Ensure drizzle-kit is available in production dependencies
 
 ## 3. Update Package.json
 
-- [ ] 3.1 Verify `db:migrate` script works in production environment
-- [ ] 3.2 Ensure drizzle-kit is in dependencies (not devDependencies)
-- [ ] 3.3 Add `db:migrate:prod` script if needed with production-specific config
+- [x] 3.1 Verify `db:migrate` script works in production environment
+- [x] 3.2 Ensure drizzle-kit is in dependencies (not devDependencies)
+- [x] 3.3 Add `db:migrate:prod` script if needed with production-specific config
 
 ## 4. Test in Staging
 
