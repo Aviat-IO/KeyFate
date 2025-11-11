@@ -171,6 +171,8 @@ module "cloud_run" {
         SENDGRID_ADMIN_EMAIL               = var.sendgrid_admin_email
         # Force revision update when code changes by including hash as env var
         DEPLOYMENT_HASH = local.image_tag
+        # Temporarily skip migrations to debug DATABASE_URL issue
+        SKIP_MIGRATIONS = "true"
         # Database connection timeout and pooling settings - optimized for Unix socket connection
         DB_CONNECT_TIMEOUT   = "10"    # 10 seconds connection timeout (fail fast)
         DB_POOL_MAX          = "5"     # Reduced max pool connections to prevent exhaustion
