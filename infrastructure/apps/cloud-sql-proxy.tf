@@ -44,10 +44,8 @@ resource "google_cloud_run_v2_service" "sql_proxy" {
       max_instance_count = 5
     }
 
-    vpc_access {
-      connector = google_vpc_access_connector.vpc_connector.id
-      egress    = "ALL_TRAFFIC"
-    }
+    # No VPC connector needed - Cloud Run Gen 2 uses built-in Cloud SQL connector
+    # The proxy connects via private IP through VPC peering configured in cloudsql.tf
 
     containers {
       name  = "cloud-sql-proxy"
@@ -115,7 +113,6 @@ resource "google_cloud_run_v2_service" "sql_proxy" {
   deletion_protection = false
 
   depends_on = [
-    google_vpc_access_connector.vpc_connector,
     google_service_account.sql_proxy,
     google_project_iam_member.sql_proxy_client,
     google_project_iam_member.sql_proxy_instance_user,

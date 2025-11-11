@@ -245,22 +245,19 @@ module "cloud_run" {
   }
 
   service_config = {
-    max_instance_count = var.max_instances
-    min_instance_count = var.min_instances
+    max_instance_count         = var.max_instances
+    min_instance_count         = var.min_instances
+    gen2_execution_environment = true
 
-    # VPC connector for private Cloud SQL access via Cloud SQL Auth Proxy
-    vpc_connector_config = {
-      connector = google_vpc_access_connector.vpc_connector.name
-      egress    = "PRIVATE_RANGES_ONLY" # Only route private traffic through VPC
-    }
+    # No VPC connector needed - Cloud Run Gen 2 uses built-in Cloud SQL connector
+    # with Unix socket mount (configured in volumes below)
   }
 
   revision = {
     # Force new revision when image changes
     annotations = {
-      "deployment.hash"                          = local.image_tag
-      "git.commit"                               = local.git_commit_hash
-      "run.googleapis.com/execution-environment" = "gen2"
+      "deployment.hash" = local.image_tag
+      "git.commit"      = local.git_commit_hash
     }
   }
 
@@ -284,8 +281,7 @@ module "cloud_run" {
     data.google_artifact_registry_repository.frontend_repo,
     module.frontend_service_account,
     module.frontend_secrets,
-    google_secret_manager_secret_version.database_url,
-    google_vpc_access_connector.vpc_connector
+    google_secret_manager_secret_version.database_url
   ]
 }
 

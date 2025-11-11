@@ -68,8 +68,10 @@ module "cloudsql_instance" {
   users = {}
 
   network_config = {
+    # Restrict public IP access to authorized networks only
+    authorized_networks = var.cloudsql_authorized_networks
     connectivity = {
-      public_ipv4 = false # Private-only: Use Cloud SQL Auth Proxy via Cloud Run built-in integration
+      public_ipv4 = true # Enable public IP for Cloud Run built-in Cloud SQL connector
       psa_config = {
         private_network = module.vpc.self_link
         allocated_ip_ranges = {
@@ -174,38 +176,9 @@ resource "google_secret_manager_secret_iam_member" "database_url_accessor" {
   member    = "serviceAccount:${module.frontend_service_account.email}"
 }
 
-# VPC Access Connector for Cloud Run to access private Cloud SQL via Cloud SQL Auth Proxy
-resource "google_vpc_access_connector" "vpc_connector" {
-  project       = module.project.id
-  name          = "keyfate-vpc-${var.env}"
-  region        = var.region
-  network       = module.vpc.name
-  ip_cidr_range = "10.1.0.0/28"              # /28 gives 16 IPs, sufficient for Cloud Run connector
-  machine_type  = "e2-micro"                 # Cost-effective instance type
-  min_instances = 2                          # Minimum required by Google Cloud (same for dev and prod)
-  max_instances = var.env == "prod" ? 10 : 5 # Scale up to 10 in prod, 5 in dev/staging
-
-  depends_on = [module.vpc]
-}
-
-# Firewall rule to allow Cloud Run to connect to Cloud SQL via private IP
-resource "google_compute_firewall" "allow_cloudsql" {
-  project     = module.project.id
-  name        = "allow-cloudsql-${var.env}"
-  network     = module.vpc.name
-  description = "Allow Cloud Run to connect to Cloud SQL"
-
-  allow {
-    protocol = "tcp"
-    ports    = ["5432"]
-  }
-
-  source_ranges = [
-    "10.0.0.0/24", # Main subnet
-    "10.1.0.0/28"  # VPC connector subnet
-  ]
-  target_tags = ["cloudsql"]
-}
+# VPC Access Connector removed - Cloud Run Gen 2 uses built-in Cloud SQL connector
+# with Unix socket mount. No VPC connector needed for Cloud Run to Cloud SQL connections.
+# Cloud SQL instances use VPC peering (configured above) for private IP connectivity.
 
 # Outputs for reference
 output "cloudsql_info" {
