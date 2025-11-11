@@ -25,6 +25,11 @@ const mockEmailService = vi.hoisted(() => ({
 }))
 
 const mockCrypto = vi.hoisted(() => ({
+  default: {
+    randomBytes: vi.fn(() => ({
+      toString: vi.fn(() => "mock-token-abc123"),
+    })),
+  },
   randomBytes: vi.fn(() => ({
     toString: vi.fn(() => "mock-token-abc123"),
   })),

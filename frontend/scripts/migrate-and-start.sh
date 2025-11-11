@@ -8,37 +8,44 @@ if [ -z "$DATABASE_URL" ]; then
   echo "❌ DATABASE_URL environment variable is not set"
   echo "Available DATABASE/DB env vars:"
   env | grep -i 'database\|db_' || echo "None found"
+  echo "All env vars:"
+  env | sort
   exit 1
 fi
 
-echo "✅ DATABASE_URL is set"
+echo "✅ DATABASE_URL is set (first 50 chars): ${DATABASE_URL:0:50}..."
 
-# Cloud Run Gen 2 creates the /cloudsql socket automatically
-# Give it a few seconds to initialize
-echo "⏳ Waiting 10s for Cloud SQL socket to initialize..."
-sleep 10
+# Check if SKIP_MIGRATIONS is set (for debugging)
+if [ "$SKIP_MIGRATIONS" = "true" ]; then
+  echo "⚠️  SKIP_MIGRATIONS is set, skipping database migrations"
+else
+  # Cloud Run Gen 2 creates the /cloudsql socket automatically
+  # Give it a few seconds to initialize
+  echo "⏳ Waiting 10s for Cloud SQL socket to initialize..."
+  sleep 10
 
-# Run migrations with retries (network issues, proxy not ready, etc.)
-MAX_RETRIES=5
-RETRY_COUNT=0
+  # Run migrations with retries (network issues, proxy not ready, etc.)
+  MAX_RETRIES=5
+  RETRY_COUNT=0
 
-while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-  echo "Attempt $((RETRY_COUNT + 1))/$MAX_RETRIES: Running database migrations..."
-  if npm run db:migrate:prod; then
-    echo "✅ Database migrations completed successfully"
-    break
-  else
-    RETRY_COUNT=$((RETRY_COUNT + 1))
-    if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-      WAIT_TIME=$((5 + RETRY_COUNT * 2))
-      echo "⚠️  Migration attempt $RETRY_COUNT failed, retrying in ${WAIT_TIME}s..."
-      sleep $WAIT_TIME
+  while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+    echo "Attempt $((RETRY_COUNT + 1))/$MAX_RETRIES: Running database migrations..."
+    if npm run db:migrate:prod; then
+      echo "✅ Database migrations completed successfully"
+      break
     else
-      echo "❌ Database migration failed after $MAX_RETRIES attempts"
-      exit 1
+      RETRY_COUNT=$((RETRY_COUNT + 1))
+      if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+        WAIT_TIME=$((5 + RETRY_COUNT * 2))
+        echo "⚠️  Migration attempt $RETRY_COUNT failed, retrying in ${WAIT_TIME}s..."
+        sleep $WAIT_TIME
+      else
+        echo "❌ Database migration failed after $MAX_RETRIES attempts"
+        exit 1
+      fi
     fi
-  fi
-done
+  done
+fi
 
 echo "🚀 Starting Next.js server..."
 
