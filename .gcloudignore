@@ -66,6 +66,8 @@ tasks.md
 
 # Scripts and database files (not needed for frontend)
 scripts/
+# Exception: frontend/scripts contains deployment scripts needed for Cloud Build
+!frontend/scripts/
 # Only exclude root-level db directory, not frontend/src/lib/db
 /db/
 memory-bank/
