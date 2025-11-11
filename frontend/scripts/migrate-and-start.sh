@@ -32,5 +32,7 @@ done
 
 echo "🚀 Starting Next.js server..."
 
-# Start the Next.js server
-exec npm start
+# Start the Next.js standalone server
+# In standalone mode, Next.js creates a server.js file that should be used directly
+# This avoids running npm start which tries to validate env vars with scripts that may not exist in standalone
+exec node server.js
