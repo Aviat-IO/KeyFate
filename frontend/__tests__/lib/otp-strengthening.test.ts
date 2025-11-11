@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest"
 import { generateOTP, createOTPToken } from "@/lib/auth/otp"
+import crypto from "crypto"
 
 // Mock database at module level
 vi.mock("@/lib/db/drizzle", () => ({
@@ -19,9 +20,10 @@ describe("OTP Strengthening", () => {
     })
 
     it("should pad OTP with leading zeros when needed", () => {
-      vi.spyOn(crypto, "randomInt").mockReturnValueOnce(123)
+      const spy = vi.spyOn(crypto, "randomInt").mockReturnValueOnce(123)
       const otp = generateOTP()
       expect(otp).toBe("00000123")
+      spy.mockRestore()
     })
 
     it("should generate OTPs in valid range (0-99999999)", () => {
@@ -133,6 +135,7 @@ describe("OTP Strengthening", () => {
       generateOTP()
 
       expect(cryptoSpy).toHaveBeenCalledWith(0, 100000000)
+      cryptoSpy.mockRestore()
     })
 
     it("should not generate predictable patterns", () => {

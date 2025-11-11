@@ -1,13 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { NextRequest } from "next/server"
 
+// Hoist mock functions
+const mockGetServerSession = vi.hoisted(() => vi.fn())
+
 // Mock dependencies
 vi.mock("@/lib/auth-config", () => ({
   authConfig: {},
 }))
 
 vi.mock("next-auth/next", () => ({
-  getServerSession: vi.fn(),
+  getServerSession: mockGetServerSession,
 }))
 
 vi.mock("@/lib/csrf", () => ({
@@ -41,8 +44,7 @@ describe("BTCPay Checkout Pricing", () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    const { getServerSession } = require("next-auth/next")
-    getServerSession.mockResolvedValue(mockSession)
+    mockGetServerSession.mockResolvedValue(mockSession)
   })
 
   describe("Environment-Based Pricing", () => {
@@ -251,8 +253,7 @@ describe("BTCPay Checkout Pricing", () => {
 
   describe("Authorization", () => {
     it("should return 401 if user is not authenticated", async () => {
-      const { getServerSession } = require("next-auth/next")
-      getServerSession.mockResolvedValueOnce(null)
+      mockGetServerSession.mockResolvedValueOnce(null)
 
       const { POST } = await import("@/app/api/create-btcpay-checkout/route")
 
