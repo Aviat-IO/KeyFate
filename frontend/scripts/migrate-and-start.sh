@@ -3,9 +3,19 @@ set -e
 
 echo "🗄️  Starting database migration..."
 
-# Cloud Run Gen 1 creates the /cloudsql socket automatically via annotation
+# Debug: Check if DATABASE_URL is available
+if [ -z "$DATABASE_URL" ]; then
+  echo "❌ DATABASE_URL environment variable is not set"
+  echo "Available DATABASE/DB env vars:"
+  env | grep -i 'database\|db_' || echo "None found"
+  exit 1
+fi
+
+echo "✅ DATABASE_URL is set"
+
+# Cloud Run Gen 2 creates the /cloudsql socket automatically
 # Give it a few seconds to initialize
-echo "⏳ Waiting 10s for Cloud SQL proxy to initialize..."
+echo "⏳ Waiting 10s for Cloud SQL socket to initialize..."
 sleep 10
 
 # Run migrations with retries (network issues, proxy not ready, etc.)
