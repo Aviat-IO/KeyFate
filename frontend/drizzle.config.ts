@@ -44,9 +44,7 @@ const config = defineConfig({
   strict: true,
 })
 
-console.log(
-  "Drizzle config created with URL length:",
-  config.dbCredentials.url?.length,
-)
+// Log the database URL length directly instead of accessing config property
+console.log("Drizzle config created with URL length:", databaseUrl.length)
 
 export default config
