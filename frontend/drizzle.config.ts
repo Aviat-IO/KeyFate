@@ -15,7 +15,12 @@ if (fs.existsSync(envLocalPath)) {
 }
 
 // Validate DATABASE_URL is available
-if (!process.env.DATABASE_URL) {
+const databaseUrl = process.env.DATABASE_URL
+console.log("DATABASE_URL type:", typeof databaseUrl)
+console.log("DATABASE_URL length:", databaseUrl?.length)
+console.log("DATABASE_URL first 80 chars:", databaseUrl?.substring(0, 80))
+
+if (!databaseUrl) {
   console.error("❌ DATABASE_URL environment variable is not set")
   console.error(
     "Available env vars:",
@@ -28,13 +33,20 @@ if (!process.env.DATABASE_URL) {
 
 console.log("✅ DATABASE_URL is configured for migrations")
 
-export default defineConfig({
+const config = defineConfig({
   schema: "./src/lib/db/schema.ts",
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL,
+    url: databaseUrl,
   },
   verbose: true,
   strict: true,
 })
+
+console.log(
+  "Drizzle config created with URL length:",
+  config.dbCredentials.url?.length,
+)
+
+export default config
