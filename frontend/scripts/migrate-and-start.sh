@@ -24,13 +24,19 @@ else
   echo "⏳ Waiting 10s for Cloud SQL socket to initialize..."
   sleep 10
 
+  # Use runtime configuration which reads DATABASE_URL from environment
+  # DATABASE_URL is injected by Cloud Run from Secret Manager with Unix socket connection
+  MIGRATION_CMD="npm run db:migrate:runtime"
+  echo "📝 Using runtime database configuration (DATABASE_URL from Secret Manager)"
+  echo "📝 Environment: ${NEXT_PUBLIC_ENV:-unknown}"
+
   # Run migrations with retries (network issues, proxy not ready, etc.)
   MAX_RETRIES=5
   RETRY_COUNT=0
 
   while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
     echo "Attempt $((RETRY_COUNT + 1))/$MAX_RETRIES: Running database migrations..."
-    if npm run db:migrate:prod; then
+    if $MIGRATION_CMD; then
       echo "✅ Database migrations completed successfully"
       break
     else

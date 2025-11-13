@@ -51,9 +51,12 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy migration script, drizzle config, and migrations (from build context, not builder stage)
+# Copy migration script, drizzle configs (all environments), and migrations (from build context, not builder stage)
 COPY --chown=nextjs:nodejs scripts/migrate-and-start.sh /app/scripts/migrate-and-start.sh
 COPY --chown=nextjs:nodejs drizzle.config.ts /app/drizzle.config.ts
+COPY --chown=nextjs:nodejs drizzle-staging.config.ts /app/drizzle-staging.config.ts
+COPY --chown=nextjs:nodejs drizzle-production.config.ts /app/drizzle-production.config.ts
+COPY --chown=nextjs:nodejs drizzle-runtime.config.ts /app/drizzle-runtime.config.ts
 COPY --chown=nextjs:nodejs drizzle /app/drizzle
 
 # Copy node_modules from builder for migration tools (drizzle-kit, postgres driver, etc.)
