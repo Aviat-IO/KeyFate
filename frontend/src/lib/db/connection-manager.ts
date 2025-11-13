@@ -147,8 +147,9 @@ class ConnectionManager {
         // Format for postgres.js with Unix socket
         enhancedOptions.host = socketPath
         enhancedOptions.database = database
-        enhancedOptions.username = username
-        enhancedOptions.password = password
+        enhancedOptions.username = decodeURIComponent(username)
+        // URL-decode the password since it may contain encoded special characters like %2F, %2B, %3D
+        enhancedOptions.password = decodeURIComponent(password)
         enhancedOptions.ssl = false
         enhancedOptions.max = 3
 

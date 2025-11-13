@@ -139,7 +139,8 @@ resource "google_secret_manager_secret_version" "database_url" {
   # Use Unix socket for reliable connection (avoiding VPC connector issues)
   # Cloud Run v2 with explicit Cloud SQL connection mounts Unix socket at /cloudsql
   # Format: postgresql://username:password@/database?host=/cloudsql/CONNECTION_NAME
-  secret_data = "postgresql://${local.db_user}:${var.db_password}@/${local.db_name}?host=/cloudsql/${module.cloudsql_instance.connection_name}"
+  # URL-encode the password to handle special characters like / + =
+  secret_data = "postgresql://${local.db_user}:${urlencode(var.db_password)}@/${local.db_name}?host=/cloudsql/${module.cloudsql_instance.connection_name}"
 }
 
 # Alternative connection secrets removed - only using Unix socket connection
