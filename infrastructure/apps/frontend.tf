@@ -167,8 +167,8 @@ module "cloud_run" {
         NEXT_PUBLIC_BTCPAY_SERVER_URL      = var.btcpay_server_url
         BTCPAY_SERVER_URL                  = var.btcpay_server_url
         # SendGrid configuration (non-sensitive)
-        SENDGRID_SENDER_NAME               = var.sendgrid_sender_name
-        SENDGRID_ADMIN_EMAIL               = var.sendgrid_admin_email
+        SENDGRID_SENDER_NAME = var.sendgrid_sender_name
+        SENDGRID_ADMIN_EMAIL = var.sendgrid_admin_email
         # Force revision update when code changes by including hash as env var
         DEPLOYMENT_HASH = local.image_tag
         # Database connection timeout and pooling settings - optimized for Unix socket connection
@@ -248,10 +248,10 @@ module "cloud_run" {
           path = "/"
           port = 3000
         }
-        initial_delay_seconds = 15  # Wait 15s before first probe (migrations starting)
-        timeout_seconds       = 5   # Each probe times out after 5s
-        period_seconds        = 10  # Check every 10s
-        failure_threshold     = 30  # Allow 30 failures = 5 minutes total
+        initial_delay_seconds = 15 # Wait 15s before first probe (migrations starting)
+        timeout_seconds       = 5  # Each probe times out after 5s
+        period_seconds        = 10 # Check every 10s
+        failure_threshold     = 30 # Allow 30 failures = 5 minutes total
       }
     }
   }

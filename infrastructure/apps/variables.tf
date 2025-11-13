@@ -43,25 +43,25 @@ variable "frontend_dir" {
 variable "cpu_limit" {
   description = "CPU limit for the container"
   type        = string
-  default     = "1000m"  # 1 vCPU
+  default     = "1000m" # 1 vCPU
 }
 
 variable "memory_limit" {
   description = "Memory limit for the container"
   type        = string
-  default     = "512Mi"  # Cloud Run requires 512Mi minimum with 1 vCPU
+  default     = "512Mi" # Cloud Run requires 512Mi minimum with 1 vCPU
 }
 
 variable "cpu_boost" {
   description = "Enable CPU boost for faster cold starts"
   type        = bool
-  default     = false  # Dev: false, Prod: true
+  default     = false # Dev: false, Prod: true
 }
 
 variable "max_instances" {
   description = "Maximum number of instances"
   type        = number
-  default     = 3  # Dev: 3, Prod: 5
+  default     = 3 # Dev: 3, Prod: 5
 }
 
 variable "min_instances" {
@@ -79,7 +79,7 @@ variable "allow_unauthenticated" {
 variable "deletion_protection" {
   description = "Enable deletion protection"
   type        = bool
-  default     = false  # Dev: false, Prod: true
+  default     = false # Dev: false, Prod: true
 }
 
 # Public environment variables (NEXT_PUBLIC_*)
