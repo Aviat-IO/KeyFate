@@ -1,5 +1,20 @@
 # Task Master AI - Agent Integration Guide
 
+## Database Migration Guide
+**CRITICAL: Always follow the proper migration workflow documented in MIGRATION_GUIDE.md**
+
+When working with database schema changes:
+1. **Never manually create SQL files** - Always use `npm run db:generate`
+2. **Never skip the generate step** - This keeps drizzle-kit metadata in sync
+3. **Always test locally first** - Run `npm run db:migrate` before deploying
+4. **Review the MIGRATION_GUIDE.md** for complete workflow and troubleshooting
+
+See @./MIGRATION_GUIDE.md for detailed instructions on:
+- Proper migration creation workflow
+- Common issues and fixes
+- Emergency rollback procedures
+- Production deployment checklist
+
 ## Essential Commands
 
 ### Core Workflow Commands
