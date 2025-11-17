@@ -50,6 +50,15 @@ class SMTPService {
         subject: options.subject,
         html: options.html,
         text: options.text,
+        headers: {
+          "X-SMTPAPI": JSON.stringify({
+            tracking_settings: {
+              click_tracking: {
+                enable: false,
+              },
+            },
+          }),
+        },
       }
 
       const result = await transporter.sendMail(mailOptions)

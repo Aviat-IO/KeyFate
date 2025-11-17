@@ -1056,9 +1056,9 @@ ${this.getCompanyName()} - Secure Secret Management
             </div>
             <div class="content">
               <h2>Hello ${params.userName},</h2>
-              <p>Your account deletion request has been cancelled.</p>
+              <p>Your ${this.getCompanyName()} account deletion request has been cancelled.</p>
               <p>Your account and all your data remain active and secure.</p>
-              <p>You can continue using ${this.getCompanyName()} as normal.</p>
+              <p>If you did not cancel this request, please contact support immediately at ${this.getSupportEmail()}</p>
               <a href="${process.env.NEXTAUTH_URL || "https://keyfate.com"}/dashboard" class="button">Go to Dashboard</a>
             </div>
             <div class="footer">
@@ -1075,11 +1075,11 @@ Account Deletion Cancelled
 
 Hello ${params.userName},
 
-Your account deletion request has been cancelled.
+Your ${this.getCompanyName()} account deletion request has been cancelled.
 
 Your account and all your data remain active and secure.
 
-You can continue using ${this.getCompanyName()} as normal.
+If you did not cancel this request, please contact support immediately at ${this.getSupportEmail()}
 
 Dashboard: ${process.env.NEXTAUTH_URL || "https://keyfate.com"}/dashboard
 

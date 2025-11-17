@@ -159,7 +159,16 @@ export class SendGridAdapter implements EmailProvider {
       text: data.text,
       from: data.from || `${senderName} <${adminEmail}>`,
       replyTo: data.replyTo,
-      headers: data.headers,
+      headers: {
+        ...data.headers,
+        "X-SMTPAPI": JSON.stringify({
+          tracking_settings: {
+            click_tracking: {
+              enable: false,
+            },
+          },
+        }),
+      },
       priority: data.priority || "normal",
     }
 
