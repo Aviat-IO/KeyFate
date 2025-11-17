@@ -1,14 +1,15 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { Confetti } from "@/components/confetti"
 import { useToast } from "@/hooks/use-toast"
-import confetti from "canvas-confetti"
 import { useSearchParams } from "next/navigation"
 import { useRef, useState } from "react"
 
 export function CheckInClient() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccessful, setIsSuccessful] = useState(false)
+  const [showConfetti, setShowConfetti] = useState(false)
   const searchParams = useSearchParams()
   const { toast } = useToast()
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -60,19 +61,7 @@ export function CheckInClient() {
 
       if (response.ok) {
         setIsSuccessful(true)
-
-        if (buttonRef.current) {
-          const rect = buttonRef.current.getBoundingClientRect()
-          const x = (rect.left + rect.width / 2) / window.innerWidth
-          const y = (rect.top + rect.height / 2) / window.innerHeight
-
-          confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { x, y },
-            colors: ["#10b981", "#34d399", "#6ee7b7", "#a7f3d0"],
-          })
-        }
+        setShowConfetti(true)
 
         toast({
           title: "Check-in successful!",
@@ -99,6 +88,7 @@ export function CheckInClient() {
 
   return (
     <div className="mx-auto py-8 sm:px-4">
+      <Confetti trigger={showConfetti} />
       <div className="mx-auto max-w-md space-y-6 pt-32 text-center">
         <h1 className="text-3xl font-bold">Secret Check-In</h1>
 
