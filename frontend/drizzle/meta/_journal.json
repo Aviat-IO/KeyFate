@@ -120,6 +120,41 @@
       "when": 1761254212815,
       "tag": "0016_motionless_spyke",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1761254212816,
+      "tag": "0017_cool_karnak",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1761254212817,
+      "tag": "0018_production_security_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1761254212818,
+      "tag": "0019_add_policy_documents",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1761254212819,
+      "tag": "0020_gdpr_compliance",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1761254212820,
+      "tag": "0021_add_gdpr_audit_enums",
+      "breakpoints": true
     }
   ]
 }
