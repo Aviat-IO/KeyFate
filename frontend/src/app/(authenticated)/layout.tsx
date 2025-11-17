@@ -28,8 +28,6 @@ export default async function AuthenticatedLayout({
     if (session?.user) {
       console.log("[AuthenticatedLayout] User details:", {
         id: session.user.id,
-        email: session.user.email,
-        name: session.user.name,
       })
     }
 

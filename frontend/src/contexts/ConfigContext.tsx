@@ -56,7 +56,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
           err instanceof Error ? err.message : "Failed to load configuration",
         )
 
-        // Fallback to default values for development
+        // Fallback to default values for dev
         setConfig({
           company: "KeyFate",
           env: "development",
