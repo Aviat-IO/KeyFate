@@ -244,7 +244,16 @@ ${emailData.text || "HTML content provided"}
             emailData.from ||
             `${config.config?.senderName} <${config.config?.adminEmail}>`,
           replyTo: emailData.replyTo,
-          headers: emailData.headers,
+          headers: {
+            ...emailData.headers,
+            "X-SMTPAPI": JSON.stringify({
+              tracking_settings: {
+                click_tracking: {
+                  enable: false,
+                },
+              },
+            }),
+          },
           priority: emailData.priority || "normal",
         }
 
