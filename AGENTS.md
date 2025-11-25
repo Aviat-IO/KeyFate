@@ -16,11 +16,58 @@
 - Use `rg` (ripgrep) instead of `grep` for searching
 - For policy document changes, see `@/POLICY_DOCUMENT_PROCESS.md`
 
+## Database Migrations (Drizzle ORM)
+
+**CRITICAL: Always use `drizzle-kit generate` to create migrations**
+
+### Creating Migrations
+
+```bash
+# CORRECT way to create migrations
+npx drizzle-kit generate --name="description_of_change"
+```
+
+This creates THREE required files:
+
+1. SQL file in `drizzle/NNNN_name.sql`
+2. Snapshot JSON in `drizzle/meta/NNNN_name_snapshot.json`
+3. Updates `drizzle/meta/_journal.json`
+
+### NEVER Do This
+
+❌ Manually create SQL files in `drizzle/` ❌ Edit migration files after
+generation ❌ Skip `drizzle-kit generate` and create SQL directly
+
+### Why This Matters
+
+Drizzle's migration runner requires BOTH the SQL file AND snapshot JSON. Missing
+snapshots cause migrations to be silently skipped, leading to schema drift.
+
+### Workflow
+
+1. Modify `src/lib/db/schema.ts`
+2. Run `npx drizzle-kit generate --name="your_change"`
+3. Review generated SQL in `drizzle/NNNN_*.sql`
+4. Test locally: `npm run db:migrate -- --config=drizzle.config.ts`
+5. Commit ALL three files (SQL, snapshot JSON, _journal.json)
+
+### Resetting Database (Staging Only)
+
+If migrations are broken and staging has no critical data:
+
+```bash
+cd frontend
+./reset-staging-db.sh  # Drops and recreates database
+# Then run migrations fresh
+```
+
 ## Infrastructure Instructions
 
 - Use Terragrunt for all infrastructure.
-- Prefer using Google Cloud and [Cloud Foundation Fabric modules](https://github.com/GoogleCloudPlatform/cloud-foundation-fabric/tree/master/modules)
-- Do NOT run any commands that create or modify cloud resources directly. Only use Terragrunt to manage infrastructure.
+- Prefer using Google Cloud and
+  [Cloud Foundation Fabric modules](https://github.com/GoogleCloudPlatform/cloud-foundation-fabric/tree/master/modules)
+- Do NOT run any commands that create or modify cloud resources directly. Only
+  use Terragrunt to manage infrastructure.
 
 <!-- OPENSPEC:START -->
 
