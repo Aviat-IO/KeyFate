@@ -236,6 +236,44 @@ export const otpRateLimits = pgTable(
   }),
 )
 
+export const accountLockouts = pgTable(
+  "account_lockouts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    email: text("email").notNull().unique(),
+    failedAttempts: integer("failed_attempts").notNull().default(0),
+    lockedUntil: timestamp("locked_until", { mode: "date" }),
+    permanentlyLocked: boolean("permanently_locked").default(false),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+  },
+  (table) => ({
+    emailIdx: index("idx_account_lockouts_email").on(table.email),
+    lockedUntilIdx: index("idx_account_lockouts_locked_until").on(
+      table.lockedUntil,
+    ),
+    permanentlyLockedIdx: index("idx_account_lockouts_permanently_locked").on(
+      table.permanentlyLocked,
+    ),
+  }),
+)
+
+export const csrfTokens = pgTable(
+  "csrf_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    sessionId: text("session_id").notNull(),
+    token: text("token").notNull().unique(),
+    expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  },
+  (table) => ({
+    sessionIdx: index("idx_csrf_tokens_session").on(table.sessionId),
+    tokenIdx: index("idx_csrf_tokens_token").on(table.token),
+    expiresIdx: index("idx_csrf_tokens_expires").on(table.expiresAt),
+  }),
+)
+
 export const policyDocumentTypeEnum = pgEnum("policy_document_type", [
   "privacy_policy",
   "terms_of_service",
@@ -289,6 +327,7 @@ export const secrets = pgTable(
     lastError: text("last_error"),
     retryCount: integer("retry_count").notNull().default(0),
     lastRetryAt: timestamp("last_retry_at"),
+    keyVersion: integer("key_version").default(1),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
@@ -296,6 +335,14 @@ export const secrets = pgTable(
     userStatusIdx: index("secrets_user_status_idx").on(
       table.userId,
       table.status,
+    ),
+    keyVersionIdx: index("idx_secrets_key_version").on(table.keyVersion),
+    statusNextCheckinIdx: index("idx_secrets_status_next_checkin").on(
+      table.status,
+      table.nextCheckIn,
+    ),
+    processingStartedIdx: index("idx_secrets_processing_started").on(
+      table.processingStartedAt,
     ),
   }),
 )
@@ -407,6 +454,15 @@ export const reminderJobs = pgTable(
       table.retryCount,
       table.nextRetryAt,
     ),
+    statusScheduledIdx: index("idx_reminder_jobs_status_scheduled").on(
+      table.status,
+      table.scheduledFor,
+    ),
+    retryLookupIdx: index("idx_reminder_jobs_retry_lookup").on(
+      table.status,
+      table.nextRetryAt,
+      table.retryCount,
+    ),
     uniqueSecretReminder: unique("unique_secret_reminder_scheduled").on(
       table.secretId,
       table.reminderType,
@@ -438,6 +494,9 @@ export const disclosureLog = pgTable(
       table.status,
       table.createdAt,
     ),
+    secretRecipientDisclosedIdx: index(
+      "idx_disclosure_log_secret_recipient",
+    ).on(table.secretId, table.recipientEmail, table.sentAt),
   }),
 )
 
@@ -537,6 +596,11 @@ export const emailFailures = pgTable(
     recipientTypeIdx: index("email_failures_recipient_type_idx").on(
       table.recipient,
       table.emailType,
+      table.createdAt,
+    ),
+    typeRecipientCreatedIdx: index("idx_email_failures_type_recipient").on(
+      table.emailType,
+      table.recipient,
       table.createdAt,
     ),
   }),

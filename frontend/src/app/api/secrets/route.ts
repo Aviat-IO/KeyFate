@@ -22,6 +22,7 @@ import type { Session } from "next-auth"
 import { getServerSession } from "next-auth/next"
 import { NextRequest, NextResponse } from "next/server"
 import { ZodError } from "zod"
+import { APIError, handleAPIError } from "@/lib/errors/api-error"
 
 // Prevent static analysis during build
 export const dynamic = "force-dynamic"
@@ -94,12 +95,13 @@ export async function POST(request: NextRequest) {
       const tierInfo = await getUserTierInfo(session.user.id)
       const tierName = tierInfo?.tier?.tiers?.name ?? "free"
       const maxSecrets = tierInfo?.tier?.tiers?.max_secrets ?? 1
-      return NextResponse.json(
+      throw APIError.businessRule(
+        `Secret limit reached. Your ${tierName} tier allows ${maxSecrets} secret${maxSecrets === 1 ? "" : "s"}. Upgrade to Pro for more.`,
         {
-          error: `Secret limit reached. Your ${tierName} tier allows ${maxSecrets} secret${maxSecrets === 1 ? "" : "s"}. Upgrade to Pro for more.`,
-          code: "TIER_LIMIT_EXCEEDED",
+          tier: tierName,
+          limit: maxSecrets,
+          upgradeUrl: "/pricing",
         },
-        { status: 403 },
       )
     }
 
@@ -110,13 +112,14 @@ export async function POST(request: NextRequest) {
       validatedData = secretSchema.parse(body)
     } catch (error) {
       if (error instanceof ZodError) {
-        const firstError = error.errors[0]
-        return NextResponse.json({ error: firstError.message }, { status: 400 })
+        throw APIError.validation("Invalid secret data", {
+          errors: error.errors.map((err) => ({
+            path: err.path.join("."),
+            message: err.message,
+          })),
+        })
       }
-      return NextResponse.json(
-        { error: "Invalid request data" },
-        { status: 400 },
-      )
+      throw APIError.validation("Invalid request data")
     }
 
     const tierInfo = await getUserTierInfo(session.user.id)
@@ -124,12 +127,13 @@ export async function POST(request: NextRequest) {
     const maxRecipients = tierInfo?.tier?.tiers?.max_recipients_per_secret ?? 1
 
     if (!isIntervalAllowed(userTier, validatedData.check_in_days)) {
-      return NextResponse.json(
+      throw APIError.businessRule(
+        `Check-in interval of ${validatedData.check_in_days} days is not allowed for your tier. Upgrade to Pro for custom intervals.`,
         {
-          error: `Check-in interval of ${validatedData.check_in_days} days is not allowed for your tier. Upgrade to Pro for custom intervals.`,
-          code: "INTERVAL_NOT_ALLOWED",
+          tier: userTier,
+          requestedInterval: validatedData.check_in_days,
+          upgradeUrl: "/pricing",
         },
-        { status: 403 },
       )
     }
 
@@ -245,27 +249,15 @@ export async function POST(request: NextRequest) {
     res.headers.set("Location", `/api/secrets/${data.id}`)
     return res
   } catch (error) {
-    console.error("Error in POST /api/secrets:", error)
-
     // Check if this is a database column error
     if (error instanceof Error && error.message.includes("recipient_name")) {
       console.error("Column mapping error detected:", error.message)
       if (insertData) {
         console.error("Insert data was:", JSON.stringify(insertData, null, 2))
       }
-
-      return NextResponse.json(
-        {
-          error: "Database schema mismatch: recipient_name column issue",
-          details: error.message,
-        },
-        { status: 500 },
-      )
+      throw APIError.database("Database schema mismatch", error)
     }
 
-    return NextResponse.json(
-      { error: "Failed to create secret" },
-      { status: 500 },
-    )
+    return handleAPIError(error)
   }
 }

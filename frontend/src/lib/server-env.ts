@@ -1,3 +1,12 @@
+// Runtime check to prevent client-side bundling
+if (typeof window !== "undefined") {
+  throw new Error(
+    "server-env.ts cannot be imported in client-side code. " +
+      "This file contains sensitive server-only environment variables. " +
+      "Use @/lib/client-env.ts for client-safe environment variables instead.",
+  )
+}
+
 // Delay validation until runtime to avoid build-time errors
 function getStripeSecretKey(): string {
   const key = process.env.STRIPE_SECRET_KEY

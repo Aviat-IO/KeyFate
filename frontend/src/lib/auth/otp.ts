@@ -1,7 +1,12 @@
 import { getDatabase } from "@/lib/db/drizzle"
-import { otpRateLimits, verificationTokens } from "@/lib/db/schema"
+import {
+  accountLockouts,
+  otpRateLimits,
+  verificationTokens,
+} from "@/lib/db/schema"
 import { and, eq, gt, lt } from "drizzle-orm"
 import crypto from "crypto"
+import { logger } from "@/lib/logger"
 
 const OTP_EXPIRATION_MINUTES = 5
 const OTP_MAX_VALIDATION_ATTEMPTS = 5
@@ -27,7 +32,32 @@ interface CreateOTPTokenResult {
 export async function createOTPToken(
   email: string,
   purpose: "authentication" | "email_verification",
+  ipAddress?: string,
 ): Promise<CreateOTPTokenResult> {
+  // Check IP-based rate limit first (5 requests per minute per IP)
+  if (ipAddress) {
+    const { checkRateLimit } = await import("@/lib/rate-limit")
+    const ipRateLimit = await checkRateLimit("ip", ipAddress, 5)
+
+    if (!ipRateLimit.success) {
+      logger.warn("OTP IP rate limit exceeded", { ipAddress, email })
+      return {
+        success: false,
+        error:
+          "Too many OTP requests from this IP address. Please try again later.",
+      }
+    }
+  }
+
+  // Check email-based rate limit
+  const rateLimit = await checkOTPRateLimit(email)
+  if (!rateLimit.allowed) {
+    return {
+      success: false,
+      error: `Too many requests. Try again after ${rateLimit.resetAt?.toISOString()}`,
+    }
+  }
+
   const db = await getDatabase()
 
   for (let attempt = 0; attempt < MAX_COLLISION_RETRIES; attempt++) {
@@ -99,6 +129,35 @@ export async function validateOTPToken(
   const db = await getDatabase()
 
   return await db.transaction(async (tx) => {
+    // Check for account lockout first
+    const lockout = await tx
+      .select()
+      .from(accountLockouts)
+      .where(eq(accountLockouts.email, email))
+      .limit(1)
+
+    if (lockout.length > 0) {
+      const lock = lockout[0]
+
+      if (lock.permanentlyLocked) {
+        logger.warn("Permanently locked account attempted login", { email })
+
+        return {
+          success: false,
+          valid: false,
+          error: "Account locked. Please contact support.",
+        }
+      }
+
+      if (lock.lockedUntil && lock.lockedUntil > new Date()) {
+        return {
+          success: false,
+          valid: false,
+          error: `Account temporarily locked until ${lock.lockedUntil.toISOString()}`,
+        }
+      }
+    }
+
     const now = new Date()
     const validationWindowStart = new Date(
       now.getTime() - OTP_RATE_LIMIT_VALIDATION_WINDOW_MINUTES * 60 * 1000,
@@ -143,6 +202,9 @@ export async function validateOTPToken(
       .for("update")
 
     if (tokens.length === 0) {
+      // Invalid code - track failed attempt
+      await trackFailedAttempt(tx, email)
+
       return {
         success: false,
         valid: false,
@@ -153,6 +215,9 @@ export async function validateOTPToken(
     const token = tokens[0]
 
     if (token.expires && token.expires < new Date()) {
+      // Expired code - track failed attempt
+      await trackFailedAttempt(tx, email)
+
       return {
         success: false,
         valid: false,
@@ -162,6 +227,9 @@ export async function validateOTPToken(
 
     const attemptCount = token.attemptCount ?? 0
     if (attemptCount >= OTP_MAX_VALIDATION_ATTEMPTS) {
+      // Too many attempts on this OTP - track failed attempt
+      await trackFailedAttempt(tx, email)
+
       return {
         success: false,
         valid: false,
@@ -169,6 +237,7 @@ export async function validateOTPToken(
       }
     }
 
+    // Success - expire the token and reset lockout
     await tx
       .update(verificationTokens)
       .set({ expires: new Date() })
@@ -179,11 +248,74 @@ export async function validateOTPToken(
         ),
       )
 
+    // Reset lockout on successful validation
+    if (lockout.length > 0) {
+      await tx.delete(accountLockouts).where(eq(accountLockouts.email, email))
+      logger.info("Account lockout reset after successful login", { email })
+    }
+
     return {
       success: true,
       valid: true,
     }
   })
+}
+
+async function trackFailedAttempt(tx: any, email: string): Promise<void> {
+  const existingLockout = await tx
+    .select()
+    .from(accountLockouts)
+    .where(eq(accountLockouts.email, email))
+    .limit(1)
+
+  const currentAttempts =
+    existingLockout.length > 0 ? existingLockout[0].failedAttempts : 0
+  const newFailedAttempts = currentAttempts + 1
+
+  let lockedUntil: Date | null = null
+  let permanentlyLocked = false
+
+  if (newFailedAttempts >= 20) {
+    // Permanent lockout after 20 failed attempts
+    permanentlyLocked = true
+    logger.warn("Account permanently locked due to excessive failed attempts", {
+      email,
+      failedAttempts: newFailedAttempts,
+    })
+  } else if (newFailedAttempts >= 10) {
+    // 24-hour lockout after 10 failed attempts
+    lockedUntil = new Date(Date.now() + 24 * 60 * 60 * 1000)
+    logger.warn("Account locked for 24 hours", {
+      email,
+      failedAttempts: newFailedAttempts,
+    })
+  } else if (newFailedAttempts >= 5) {
+    // 1-hour lockout after 5 failed attempts
+    lockedUntil = new Date(Date.now() + 60 * 60 * 1000)
+    logger.warn("Account locked for 1 hour", {
+      email,
+      failedAttempts: newFailedAttempts,
+    })
+  }
+
+  if (existingLockout.length > 0) {
+    await tx
+      .update(accountLockouts)
+      .set({
+        failedAttempts: newFailedAttempts,
+        lockedUntil,
+        permanentlyLocked,
+        updatedAt: new Date(),
+      })
+      .where(eq(accountLockouts.email, email))
+  } else {
+    await tx.insert(accountLockouts).values({
+      email,
+      failedAttempts: newFailedAttempts,
+      lockedUntil,
+      permanentlyLocked,
+    })
+  }
 }
 
 export async function invalidateOTPTokens(email: string): Promise<void> {

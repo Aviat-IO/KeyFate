@@ -1,4 +1,5 @@
 import { createHmac } from "crypto"
+import { timingSafeStringEqual } from "@/lib/crypto/timing-safe"
 import {
   BillingPortalSession,
   CheckoutConfig,
@@ -253,7 +254,7 @@ export class BTCPayProvider implements PaymentProvider {
       signaturesMatch: actualSignature === expected,
     })
 
-    if (actualSignature !== expected) {
+    if (!timingSafeStringEqual(actualSignature, expected)) {
       console.error("❌ Signature mismatch:", {
         received: actualSignature.substring(0, 20) + "...",
         expected: expected.substring(0, 20) + "...",

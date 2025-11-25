@@ -18,7 +18,9 @@ const mockDb = {
     values: vi.fn(() => Promise.resolve()),
   })),
   delete: vi.fn(() => ({
-    where: vi.fn(() => Promise.resolve({ rowCount: 0 })),
+    where: vi.fn(() => ({
+      returning: vi.fn(() => Promise.resolve([])),
+    })),
   })),
 }
 
@@ -216,14 +218,52 @@ describe("Webhook Replay Protection", () => {
 
   describe("Webhook Retention", () => {
     it("should cleanup old webhook events", async () => {
+      const mockDeletedEvents = [
+        { id: "1" },
+        { id: "2" },
+        { id: "3" },
+        { id: "4" },
+        { id: "5" },
+      ]
+
       mockDb.delete.mockReturnValueOnce({
-        where: vi.fn(() => Promise.resolve({ rowCount: 5 })),
+        where: vi.fn(() => ({
+          returning: vi.fn(() => Promise.resolve(mockDeletedEvents)),
+        })),
       } as any)
 
       const result = await cleanupOldWebhookEvents(30)
 
       expect(mockDb.delete).toHaveBeenCalled()
-      expect(result).toBeGreaterThanOrEqual(0)
+      expect(result).toBe(5)
+    })
+
+    it("should use lt operator for date comparison", async () => {
+      const whereSpy = vi.fn(() => ({
+        returning: vi.fn(() => Promise.resolve([])),
+      }))
+
+      mockDb.delete.mockReturnValueOnce({
+        where: whereSpy,
+      } as any)
+
+      await cleanupOldWebhookEvents(30)
+
+      expect(whereSpy).toHaveBeenCalled()
+    })
+
+    it("should log deleted count", async () => {
+      const mockDeletedEvents = [{ id: "1" }, { id: "2" }]
+
+      mockDb.delete.mockReturnValueOnce({
+        where: vi.fn(() => ({
+          returning: vi.fn(() => Promise.resolve(mockDeletedEvents)),
+        })),
+      } as any)
+
+      const result = await cleanupOldWebhookEvents(30)
+
+      expect(result).toBe(2)
     })
   })
 })

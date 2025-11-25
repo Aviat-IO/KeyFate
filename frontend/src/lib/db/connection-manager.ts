@@ -25,6 +25,10 @@ class ConnectionManager {
   private lastSuccessfulConnection: Date | null = null
   private circuitBreakerOpen = false
   private circuitBreakerResetTime: Date | null = null
+  private isShuttingDown = false
+  private activeQueries = 0
+  private totalConnections = 0
+  private totalErrors = 0
 
   // Circuit breaker configuration
   private readonly CIRCUIT_BREAKER_THRESHOLD = 3 // Open after 3 failures
@@ -32,19 +36,68 @@ class ConnectionManager {
 
   // Retry configuration
   private readonly retryConfig: RetryConfig = {
-    maxAttempts: 3,
+    maxAttempts: 5,
     initialDelay: 1000,
-    maxDelay: 5000,
+    maxDelay: 16000,
     backoffFactor: 2,
   }
 
-  private constructor() {}
+  private constructor() {
+    this.setupGracefulShutdown()
+  }
 
   static getInstance(): ConnectionManager {
     if (!ConnectionManager.instance) {
       ConnectionManager.instance = new ConnectionManager()
     }
     return ConnectionManager.instance
+  }
+
+  private setupGracefulShutdown(): void {
+    const shutdown = async (signal: string) => {
+      if (this.isShuttingDown) {
+        return
+      }
+
+      console.log(`\n🛑 Received ${signal} - initiating graceful shutdown`)
+      this.isShuttingDown = true
+
+      const shutdownTimeout = setTimeout(() => {
+        console.error("⚠️ Shutdown timeout - forcing exit")
+        process.exit(1)
+      }, 30000) // 30 second timeout
+
+      try {
+        console.log(
+          `⏳ Waiting for ${this.activeQueries} active queries to complete...`,
+        )
+
+        let waitTime = 0
+        const maxWait = 25000 // 25 seconds
+        while (this.activeQueries > 0 && waitTime < maxWait) {
+          await this.delay(100)
+          waitTime += 100
+        }
+
+        if (this.activeQueries > 0) {
+          console.warn(
+            `⚠️ ${this.activeQueries} queries still active after ${maxWait}ms`,
+          )
+        }
+
+        await this.closeConnection()
+        console.log("✅ Graceful shutdown complete")
+        clearTimeout(shutdownTimeout)
+        process.exit(0)
+      } catch (error) {
+        console.error("❌ Error during shutdown:", error)
+        clearTimeout(shutdownTimeout)
+        process.exit(1)
+      }
+    }
+
+    process.on("SIGTERM", () => shutdown("SIGTERM"))
+    process.on("SIGINT", () => shutdown("SIGINT"))
   }
 
   private async delay(ms: number): Promise<void> {
@@ -106,15 +159,23 @@ class ConnectionManager {
       }
     }
 
-    // Enhanced connection options with better defaults
+    // Enhanced connection options with better defaults for production
     const enhancedOptions: ConnectionOptions = {
-      max: 5, // Reduced from 10 to be more conservative
-      idle_timeout: 20, // Reduced from 60 to free connections faster
-      connect_timeout: 10, // Reduced from 30 for faster failure detection
-      max_lifetime: 60 * 5, // Maximum connection lifetime of 5 minutes
+      max: process.env.NODE_ENV === "production" ? 20 : 10, // Higher pool size for production
+      idle_timeout: 30, // 30 seconds idle timeout
+      connect_timeout: 10, // 10 seconds connection timeout
+      max_lifetime: 60 * 30, // Recycle connections every 30 minutes
       connection_timeout: 10000, // 10 second connection timeout
       statement_timeout: 30000, // 30 second statement timeout
+      // Enable keep-alive for long-running connections
+      keep_alive: true,
       ...options,
+      // Add event handlers for monitoring
+      onnotice: (notice: any) => {
+        if (process.env.NODE_ENV === "development") {
+          console.log("📢 PostgreSQL Notice:", notice.message)
+        }
+      },
     }
 
     // Parse connection string to extract details
@@ -184,6 +245,17 @@ class ConnectionManager {
         this.connectionAttempts = 0
         this.lastSuccessfulConnection = new Date()
         this.circuitBreakerOpen = false
+        this.totalConnections++
+
+        // Log pool configuration
+        if (process.env.NODE_ENV === "development") {
+          console.log("📊 Connection pool configured:", {
+            max: enhancedOptions.max,
+            idle_timeout: enhancedOptions.idle_timeout,
+            connect_timeout: enhancedOptions.connect_timeout,
+            max_lifetime: enhancedOptions.max_lifetime,
+          })
+        }
 
         return this.connection
       } catch (error: unknown) {
@@ -201,6 +273,7 @@ class ConnectionManager {
         })
 
         this.connectionAttempts++
+        this.totalErrors++
 
         // Check if we should open circuit breaker
         if (this.connectionAttempts >= this.CIRCUIT_BREAKER_THRESHOLD) {
@@ -264,7 +337,23 @@ class ConnectionManager {
       connectionAttempts: this.connectionAttempts,
       circuitBreakerOpen: this.circuitBreakerOpen,
       circuitBreakerResetTime: this.circuitBreakerResetTime,
+      isShuttingDown: this.isShuttingDown,
+      activeQueries: this.activeQueries,
+      totalConnections: this.totalConnections,
+      totalErrors: this.totalErrors,
+      uptime: this.lastSuccessfulConnection
+        ? Date.now() - this.lastSuccessfulConnection.getTime()
+        : 0,
     }
+  }
+
+  // Track query execution for metrics
+  trackQueryStart(): void {
+    this.activeQueries++
+  }
+
+  trackQueryEnd(): void {
+    this.activeQueries = Math.max(0, this.activeQueries - 1)
   }
 
   // Reset for testing purposes only

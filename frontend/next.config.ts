@@ -22,6 +22,19 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: "standalone",
   poweredByHeader: false,
+
+  // Enable gzip compression for responses
+  compress: true,
+
+  // Request body size limits
+  experimental: {
+    // Maximum request body size: 1MB for API routes (default is 4MB)
+    // This prevents DoS attacks via large request bodies
+    serverActions: {
+      bodySizeLimit: "1mb",
+    },
+  },
+
   env: {
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
     NEXT_PUBLIC_COMPANY: process.env.NEXT_PUBLIC_COMPANY,
@@ -35,6 +48,17 @@ const nextConfig: NextConfig = {
   },
   eslint: {
     ignoreDuringBuilds: true,
+  },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Prevent server-only modules from being bundled in client-side code
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        "@/lib/server-env": false,
+        "@/lib/encryption": false,
+      }
+    }
+    return config
   },
   async headers() {
     return [

@@ -1,6 +1,6 @@
 import { getDatabase } from "@/lib/db/drizzle"
 import { webhookEvents } from "@/lib/db/schema"
-import { eq, and } from "drizzle-orm"
+import { eq, and, lt } from "drizzle-orm"
 import { logger } from "@/lib/logger"
 
 export async function isWebhookProcessed(
@@ -77,14 +77,16 @@ export async function cleanupOldWebhookEvents(
 
     const result = await db
       .delete(webhookEvents)
-      .where(eq(webhookEvents.createdAt, cutoffDate))
+      .where(lt(webhookEvents.createdAt, cutoffDate))
+      .returning({ id: webhookEvents.id })
 
     logger.info("Cleaned up old webhook events", {
       daysToKeep,
       cutoffDate: cutoffDate.toISOString(),
+      deletedCount: result.length,
     })
 
-    return 0
+    return result.length
   } catch (error) {
     logger.error("Failed to cleanup webhook events", error as Error)
     return 0
