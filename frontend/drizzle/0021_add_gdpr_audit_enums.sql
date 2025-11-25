@@ -1,8 +1,0 @@
--- Add GDPR-related audit event types to the enum
--- COMMENTED OUT: Enum additions must be done outside transactions
--- Run these manually after migrations if needed:
--- ALTER TYPE audit_event_type ADD VALUE IF NOT EXISTS 'data_export_requested';
--- ALTER TYPE audit_event_type ADD VALUE IF NOT EXISTS 'data_export_downloaded';
--- ALTER TYPE audit_event_type ADD VALUE IF NOT EXISTS 'account_deletion_requested';
--- ALTER TYPE audit_event_type ADD VALUE IF NOT EXISTS 'account_deletion_confirmed';
--- ALTER TYPE audit_event_type ADD VALUE IF NOT EXISTS 'account_deletion_cancelled';

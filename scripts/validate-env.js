@@ -29,6 +29,20 @@ const required = {
     }
   },
   DATABASE_URL: (val) => {
+    // Allow either DATABASE_URL or component parts (DB_HOST, DB_USER, DB_PASSWORD, DB_NAME)
+    if (!val) {
+      const hasComponents =
+        process.env.DB_HOST &&
+        process.env.DB_USER &&
+        process.env.DB_PASSWORD &&
+        process.env.DB_NAME
+      if (!hasComponents) {
+        throw new Error(
+          "Either DATABASE_URL or all of (DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) must be set",
+        )
+      }
+      return
+    }
     if (!val.startsWith("postgresql://") && !val.startsWith("postgres://")) {
       throw new Error(
         "DATABASE_URL must be a valid PostgreSQL connection string",
@@ -66,7 +80,8 @@ console.log("🔍 Validating environment variables...\n")
 
 for (const [key, validate] of Object.entries(required)) {
   const value = process.env[key]
-  if (!value) {
+  // Special case: DATABASE_URL can be empty if component parts are provided
+  if (!value && key !== "DATABASE_URL") {
     console.error(`❌ FATAL: Required environment variable ${key} is not set`)
     hasErrors = true
     continue
