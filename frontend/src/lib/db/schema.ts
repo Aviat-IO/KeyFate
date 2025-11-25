@@ -721,8 +721,23 @@ export const accountDeletionRequests = pgTable(
   }),
 )
 
+export const rateLimits = pgTable(
+  "rate_limits",
+  {
+    key: text("key").primaryKey(),
+    count: integer("count").notNull().default(0),
+    expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  },
+  (table) => ({
+    expiresIdx: index("idx_rate_limits_expires").on(table.expiresAt),
+  }),
+)
+
 export type DataExportJob = typeof dataExportJobs.$inferSelect
 export type DataExportJobInsert = typeof dataExportJobs.$inferInsert
 export type AccountDeletionRequest = typeof accountDeletionRequests.$inferSelect
 export type AccountDeletionRequestInsert =
   typeof accountDeletionRequests.$inferInsert
+export type RateLimit = typeof rateLimits.$inferSelect
+export type RateLimitInsert = typeof rateLimits.$inferInsert
