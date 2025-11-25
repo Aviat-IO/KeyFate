@@ -132,6 +132,10 @@ export const CRON_CONFIG = {
   MAX_SECRET_RETRIES: 5,
   MAX_CONCURRENT_SECRETS: 20,
   CRON_INTERVAL_MS: 15 * 60 * 1000,
+  // Grace period and missed reminder detection
+  GRACE_PERIOD_DAYS: 7,
+  MISSED_THRESHOLD_HOURS: 2,
+  MISSED_REMINDERS_ALERT_THRESHOLD: 10,
 } as const
 
 export function isApproachingTimeout(startTime: number): boolean {

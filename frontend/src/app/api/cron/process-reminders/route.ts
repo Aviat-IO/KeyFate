@@ -7,7 +7,7 @@ import { logEmailFailure } from "@/lib/email/email-failure-logger"
 import { calculateBackoffDelay } from "@/lib/email/email-retry-service"
 import { sendSecretDisclosureEmail } from "@/lib/email/email-service"
 import { decryptMessage } from "@/lib/encryption"
-import { and, eq, lt, inArray } from "drizzle-orm"
+import { and, eq, lt, inArray, sql } from "drizzle-orm"
 import { NextRequest, NextResponse } from "next/server"
 import {
   sanitizeError,
@@ -106,15 +106,21 @@ async function processOverdueSecret(
       return { success: false, sent: 0, failed: 0 }
     }
 
-    let decryptedContent: string
+    // Use Buffer for secure memory handling of decrypted content
+    let decryptedBuffer: Buffer | null = null
+
     try {
       const ivBuffer = Buffer.from(secret.iv || "", "base64")
       const authTagBuffer = Buffer.from(secret.authTag || "", "base64")
-      decryptedContent = await decryptMessage(
+      const decryptedContent = await decryptMessage(
         secret.serverShare || "",
         ivBuffer,
         authTagBuffer,
+        secret.keyVersion || 1,
       )
+
+      // Store in Buffer instead of string for secure cleanup
+      decryptedBuffer = Buffer.from(decryptedContent, "utf8")
     } catch {
       await db
         .update(secrets)
@@ -200,7 +206,8 @@ async function processOverdueSecret(
                 secretTitle: secret.title,
                 senderName: user.name || user.email,
                 message: `This secret was scheduled for disclosure because the check-in deadline was missed.`,
-                secretContent: decryptedContent,
+                // Convert buffer to string only when needed for email
+                secretContent: decryptedBuffer!.toString("utf8"),
                 disclosureReason: "scheduled",
                 senderLastSeen: secret.lastCheckIn || undefined,
                 secretCreatedAt: secret.createdAt || undefined,
@@ -263,7 +270,16 @@ async function processOverdueSecret(
         }
       }
     } finally {
-      decryptedContent = ""
+      // Securely zero out the buffer
+      if (decryptedBuffer) {
+        decryptedBuffer.fill(0)
+        decryptedBuffer = null
+      }
+
+      // Force garbage collection if available
+      if (global.gc) {
+        global.gc()
+      }
     }
 
     if (timedOut) {
@@ -337,6 +353,10 @@ export async function POST(req: NextRequest) {
     const db = await getDatabase()
 
     const now = new Date()
+
+    // Fetch overdue secrets that are either:
+    // 1. First attempt (retryCount = 0 or lastRetryAt is null), OR
+    // 2. Past their exponential backoff window (lastRetryAt + backoff delay)
     const overdueSecrets = await db
       .select({
         secret: secrets,
@@ -344,11 +364,31 @@ export async function POST(req: NextRequest) {
       })
       .from(secrets)
       .innerJoin(users, eq(secrets.userId, users.id))
-      .where(and(eq(secrets.status, "active"), lt(secrets.nextCheckIn, now)))
+      .where(
+        and(
+          eq(secrets.status, "active"),
+          lt(secrets.nextCheckIn, now),
+          // Include secrets with no retry history OR past backoff window
+          sql`(
+            ${secrets.lastRetryAt} IS NULL 
+            OR ${secrets.retryCount} = 0
+            OR ${secrets.lastRetryAt} < ${now}::timestamp - (
+              INTERVAL '1 minute' * ${CRON_CONFIG.RETRY_BACKOFF_BASE_MINUTES} * 
+              POW(${CRON_CONFIG.RETRY_BACKOFF_EXPONENT}, ${secrets.retryCount})
+            )
+          )`,
+        ),
+      )
 
-    console.log(
-      `[process-reminders] Found ${overdueSecrets.length} overdue secrets`,
-    )
+    if (process.env.NODE_ENV === "development") {
+      console.log(
+        `[process-reminders] Found ${overdueSecrets.length} overdue secrets (with exponential backoff applied)`,
+      )
+    } else {
+      console.log(
+        `[process-reminders] Found ${overdueSecrets.length} overdue secrets`,
+      )
+    }
 
     let processed = 0
     let succeeded = 0
