@@ -1,4 +1,5 @@
 import Stripe from "stripe"
+import { retry, retryPolicies } from "@/lib/api/retry"
 import {
   BillingPortalSession,
   CheckoutConfig,
@@ -40,17 +41,23 @@ export class StripeProvider implements PaymentProvider {
     email: string,
     metadata?: Record<string, string>,
   ): Promise<string> {
-    const customer = await this.stripe.customers.create({
-      email,
-      metadata,
-    })
+    const customer = await retry(
+      () =>
+        this.stripe.customers.create({
+          email,
+          metadata,
+        }),
+      retryPolicies.http,
+    )
     return customer.id
   }
 
   async getCustomer(customerId: string): Promise<Customer> {
-    const customer = (await this.stripe.customers.retrieve(
-      customerId,
-    )) as Stripe.Customer
+    const customer = await retry(
+      () =>
+        this.stripe.customers.retrieve(customerId) as Promise<Stripe.Customer>,
+      retryPolicies.http,
+    )
     return {
       id: customer.id,
       email: customer.email!,

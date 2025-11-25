@@ -3,29 +3,27 @@ import { users, type UserInsert } from "@/lib/db/schema"
 import { validateOTPToken } from "@/lib/auth/otp"
 import { eq } from "drizzle-orm"
 import { NextRequest, NextResponse } from "next/server"
+import { APIError, handleAPIError } from "@/lib/errors/api-error"
+import { validateBody, commonSchemas } from "@/lib/api/validation"
+import { z } from "zod"
+
+const verifyOTPSchema = z.object({
+  email: commonSchemas.email,
+  code: z.string().regex(/^\d{8}$/, "Code must be 8 digits"),
+})
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { email, code } = body
-
-    if (!email || typeof email !== "string") {
-      return NextResponse.json({ error: "Email is required" }, { status: 400 })
+    const bodyResult = await validateBody(request, verifyOTPSchema)
+    if (!bodyResult.success) {
+      return NextResponse.json(bodyResult.error.toJSON(), {
+        status: bodyResult.error.statusCode,
+      })
     }
 
-    if (!code || typeof code !== "string") {
-      return NextResponse.json({ error: "Code is required" }, { status: 400 })
-    }
-
+    const { email, code } = bodyResult.data
     const normalizedEmail = email.toLowerCase().trim()
     const normalizedCode = code.trim()
-
-    if (!/^\d{6}$/.test(normalizedCode)) {
-      return NextResponse.json(
-        { error: "Invalid code format" },
-        { status: 400 },
-      )
-    }
 
     const validationResult = await validateOTPToken(
       normalizedEmail,
@@ -33,12 +31,9 @@ export async function POST(request: NextRequest) {
     )
 
     if (!validationResult.success || !validationResult.valid) {
-      return NextResponse.json(
-        {
-          error: validationResult.error || "Invalid or expired code",
-          valid: false,
-        },
-        { status: 400 },
+      throw APIError.validation(
+        validationResult.error || "Invalid or expired code",
+        { email: normalizedEmail },
       )
     }
 
@@ -85,10 +80,6 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("[OTP] Verify OTP error:", error)
-    return NextResponse.json(
-      { error: "An unexpected error occurred" },
-      { status: 500 },
-    )
+    return handleAPIError(error)
   }
 }

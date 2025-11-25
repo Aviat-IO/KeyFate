@@ -3,25 +3,81 @@
 import { serverEnv } from "@/lib/server-env"
 import crypto from "crypto"
 
-let ENCRYPTION_KEY: Buffer | null = null
+interface EncryptionKeyConfig {
+  key: Buffer
+  version: number
+  createdAt: Date
+}
 
-function getEncryptionKey(): Buffer {
-  if (!ENCRYPTION_KEY) {
-    const ENCRYPTION_KEY_BASE64 = serverEnv.ENCRYPTION_KEY
-    if (!ENCRYPTION_KEY_BASE64) {
-      throw new Error("Invalid encryption key")
-    }
+const ENCRYPTION_KEYS: Map<number, EncryptionKeyConfig> = new Map()
+let CURRENT_KEY_VERSION = 1
 
-    ENCRYPTION_KEY = Buffer.from(ENCRYPTION_KEY_BASE64, "base64")
+function validateKeyEntropy(key: Buffer): void {
+  // Check for sufficient entropy (at least 16 unique bytes)
+  const uniqueBytes = new Set(key)
+  if (uniqueBytes.size < 16) {
+    throw new Error(
+      `Encryption key has insufficient entropy: only ${uniqueBytes.size} unique bytes (minimum 16 required)`,
+    )
+  }
 
-    // Validate key length for AES-256-GCM (must be exactly 32 bytes)
-    if (ENCRYPTION_KEY.length !== 32) {
+  // Verify it's not a common weak key pattern
+  const keyHex = key.toString("hex")
+  const weakPatterns = [
+    /^0+$/, // All zeros
+    /^f+$/i, // All 0xFF
+    /^(.)\1+$/, // Repeating single byte
+  ]
+
+  for (const pattern of weakPatterns) {
+    if (pattern.test(keyHex)) {
       throw new Error(
-        `Invalid key length: expected 32 bytes, got ${ENCRYPTION_KEY.length} bytes. Please generate a new 256-bit key.`,
+        "Encryption key matches weak pattern. Please generate a cryptographically random key.",
       )
     }
   }
-  return ENCRYPTION_KEY
+}
+
+function getEncryptionKey(version?: number): Buffer {
+  const targetVersion = version || CURRENT_KEY_VERSION
+
+  if (!ENCRYPTION_KEYS.has(targetVersion)) {
+    // Try version-specific env var first, then fall back to default
+    const keyEnvVar = `ENCRYPTION_KEY_V${targetVersion}`
+    const ENCRYPTION_KEY_BASE64 =
+      process.env[keyEnvVar] ||
+      (targetVersion === 1 ? serverEnv.ENCRYPTION_KEY : null)
+
+    if (!ENCRYPTION_KEY_BASE64) {
+      throw new Error(
+        `Encryption key version ${targetVersion} not found. Set ${keyEnvVar} environment variable.`,
+      )
+    }
+
+    const key = Buffer.from(ENCRYPTION_KEY_BASE64, "base64")
+
+    // Validate key length for AES-256-GCM (must be exactly 32 bytes)
+    if (key.length !== 32) {
+      throw new Error(
+        `Invalid key length for version ${targetVersion}: expected 32 bytes, got ${key.length} bytes.`,
+      )
+    }
+
+    // Validate key entropy
+    validateKeyEntropy(key)
+
+    ENCRYPTION_KEYS.set(targetVersion, {
+      key,
+      version: targetVersion,
+      createdAt: new Date(),
+    })
+
+    if (process.env.NODE_ENV === "development") {
+      console.log(`✅ Encryption key v${targetVersion} loaded and validated`)
+    }
+  }
+
+  return ENCRYPTION_KEYS.get(targetVersion)!.key
 }
 
 const DB_ENCODING: BufferEncoding = "base64"
@@ -38,9 +94,20 @@ async function generateIV(): Promise<Buffer> {
 export async function encryptMessage(
   message: string,
   iv?: Buffer,
-): Promise<{ encrypted: string; iv: string; authTag: string }> {
+  keyVersion?: number,
+): Promise<{
+  encrypted: string
+  iv: string
+  authTag: string
+  keyVersion: number
+}> {
+  const version = keyVersion || CURRENT_KEY_VERSION
   const ivBuffer = iv ?? (await generateIV())
-  const cipher = crypto.createCipheriv(ALGORITHM, getEncryptionKey(), ivBuffer)
+  const cipher = crypto.createCipheriv(
+    ALGORITHM,
+    getEncryptionKey(version),
+    ivBuffer,
+  )
 
   const encrypted = Buffer.concat([
     cipher.update(Buffer.from(message, MESSAGE_ENCODING)),
@@ -51,6 +118,7 @@ export async function encryptMessage(
     encrypted,
     iv: ivBuffer.toString(DB_ENCODING),
     authTag: cipher.getAuthTag().toString(DB_ENCODING),
+    keyVersion: version,
   }
 }
 
@@ -59,10 +127,14 @@ export async function decryptMessage(
   cipherText: string,
   ivBuffer: Buffer,
   authTag: Buffer,
+  keyVersion?: number,
 ): Promise<string> {
+  // Default to version 1 for backward compatibility with existing data
+  const version = keyVersion || 1
+
   const decipher = crypto.createDecipheriv(
     ALGORITHM,
-    getEncryptionKey(),
+    getEncryptionKey(version),
     ivBuffer,
   )
   decipher.setAuthTag(authTag)

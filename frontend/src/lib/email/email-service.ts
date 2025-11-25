@@ -6,6 +6,7 @@
  */
 
 import nodemailer from "nodemailer"
+import { CircuitBreaker } from "@/lib/circuit-breaker"
 
 // Email service configuration
 interface EmailConfig {
@@ -73,6 +74,13 @@ interface DeliveryStatus {
     details?: string
   }>
 }
+
+// Circuit breaker for email service
+const emailCircuitBreaker = new CircuitBreaker("EmailService", {
+  failureThreshold: 5,
+  timeout: 60000, // 1 minute
+  halfOpenAttempts: 3,
+})
 
 /**
  * Validate email service configuration
@@ -223,53 +231,55 @@ ${emailData.text || "HTML content provided"}
       }
     }
 
-    // Production email sending with retry logic
+    // Production email sending with circuit breaker and retry logic
     let attempts = 0
 
-    const result = await withRetry(
-      async () => {
-        attempts++
-        const transporter = await createTransporter()
+    const result = await emailCircuitBreaker.execute(async () => {
+      return await withRetry(
+        async () => {
+          attempts++
+          const transporter = await createTransporter()
 
-        if (!transporter) {
-          throw new Error("Failed to create email transporter")
-        }
+          if (!transporter) {
+            throw new Error("Failed to create email transporter")
+          }
 
-        const mailOptions = {
-          to: emailData.to,
-          subject: emailData.subject,
-          html: emailData.html,
-          text: emailData.text,
-          from:
-            emailData.from ||
-            `${config.config?.senderName} <${config.config?.adminEmail}>`,
-          replyTo: emailData.replyTo,
-          headers: {
-            ...emailData.headers,
-            "X-SMTPAPI": JSON.stringify({
-              tracking_settings: {
-                click_tracking: {
-                  enable: false,
+          const mailOptions = {
+            to: emailData.to,
+            subject: emailData.subject,
+            html: emailData.html,
+            text: emailData.text,
+            from:
+              emailData.from ||
+              `${config.config?.senderName} <${config.config?.adminEmail}>`,
+            replyTo: emailData.replyTo,
+            headers: {
+              ...emailData.headers,
+              "X-SMTPAPI": JSON.stringify({
+                tracking_settings: {
+                  click_tracking: {
+                    enable: false,
+                  },
                 },
-              },
-            }),
-          },
-          priority: emailData.priority || "normal",
-        }
+              }),
+            },
+            priority: emailData.priority || "normal",
+          }
 
-        const info = await transporter.sendMail(mailOptions)
+          const info = await transporter.sendMail(mailOptions)
 
-        return {
-          success: true,
-          messageId: info.messageId,
-          provider: "sendgrid",
-          attempts,
-          trackingEnabled: emailData.trackDelivery || false,
-        }
-      },
-      maxRetries,
-      retryDelay,
-    )
+          return {
+            success: true,
+            messageId: info.messageId,
+            provider: "sendgrid",
+            attempts,
+            trackingEnabled: emailData.trackDelivery || false,
+          }
+        },
+        maxRetries,
+        retryDelay,
+      )
+    })
 
     return result
   } catch (error) {
@@ -279,7 +289,18 @@ ${emailData.text || "HTML content provided"}
       error instanceof Error ? error.message : "Unknown error"
     const isRetryable =
       !errorMessage.includes("Invalid API key") &&
-      !errorMessage.includes("Authentication failed")
+      !errorMessage.includes("Authentication failed") &&
+      !errorMessage.includes("Circuit breaker is OPEN")
+
+    // Check for circuit breaker open
+    if (errorMessage.includes("Circuit breaker is OPEN")) {
+      return {
+        success: false,
+        error: "Email service temporarily unavailable",
+        retryable: true,
+        retryAfter: 60,
+      }
+    }
 
     // Check for rate limiting
     if (errorMessage.includes("Rate limit") || errorMessage.includes("429")) {
@@ -520,4 +541,18 @@ export async function formatEmailTemplate(
     default:
       throw new Error(`Unknown template type: ${templateType}`)
   }
+}
+
+/**
+ * Get email service circuit breaker status
+ */
+export function getEmailServiceHealth() {
+  return emailCircuitBreaker.getStats()
+}
+
+/**
+ * Reset email service circuit breaker
+ */
+export function resetEmailCircuitBreaker() {
+  emailCircuitBreaker.reset()
 }

@@ -10,6 +10,16 @@ export default withAuth(
     const { pathname } = request.nextUrl
     const token = request.nextauth.token
 
+    // Enforce HTTPS in production
+    if (process.env.NODE_ENV === "production") {
+      const proto = request.headers.get("x-forwarded-proto")
+      if (proto && proto !== "https") {
+        const url = request.nextUrl.clone()
+        url.protocol = "https:"
+        return NextResponse.redirect(url, 301)
+      }
+    }
+
     // Generate unique request ID for tracing (using Web Crypto API for Edge runtime)
     const requestId = crypto.randomUUID()
     const requestHeaders = new Headers(request.headers)

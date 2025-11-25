@@ -8,6 +8,12 @@ import { validatePassword, hashPassword } from "@/lib/auth/password"
 import { getDatabase } from "@/lib/db/drizzle"
 import { users, sessions } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
+import { APIError, handleAPIError } from "@/lib/errors/api-error"
+import {
+  invalidateAllUserSessions,
+  SessionInvalidationReason,
+} from "@/lib/auth/session-management"
+import { logger } from "@/lib/logger"
 
 export const dynamic = "force-dynamic"
 
@@ -17,61 +23,63 @@ export async function POST(request: NextRequest) {
     const { token, password } = body
 
     if (!token || !password) {
-      return NextResponse.json(
-        { error: "Token and password are required" },
-        { status: 400 },
-      )
+      throw APIError.validation("Token and password are required")
     }
 
     const rateLimit = await checkRateLimit("reset-password-attempt", token)
     if (!rateLimit.allowed) {
-      return NextResponse.json(
-        {
-          error: `Too many password reset attempts. Please try again in ${Math.ceil(rateLimit.retryAfter! / 60)} minutes.`,
-        },
-        { status: 429 },
+      throw APIError.rateLimit(
+        `Too many password reset attempts. Please try again in ${Math.ceil(rateLimit.retryAfter! / 60)} minutes.`,
+        rateLimit.retryAfter,
       )
     }
 
     const passwordValidation = validatePassword(password)
     if (!passwordValidation.isValid) {
-      return NextResponse.json(
-        { error: passwordValidation.message },
-        { status: 400 },
-      )
+      throw APIError.validation(passwordValidation.message)
     }
 
     const tokenValidation = await validatePasswordResetToken(token)
     if (!tokenValidation.isValid) {
-      return NextResponse.json(
-        { error: tokenValidation.error || "Invalid or expired token" },
-        { status: 400 },
+      throw APIError.validation(
+        tokenValidation.error || "Invalid or expired token",
       )
     }
 
     const hashedPassword = await hashPassword(password)
     const db = await getDatabase()
 
+    // Update password
     await db
       .update(users)
       .set({ password: hashedPassword, updatedAt: new Date() } as any)
       .where(eq(users.id, tokenValidation.userId!))
 
+    // Delete used token
     await deletePasswordResetToken(token)
 
+    // Invalidate all sessions (logout from all devices)
+    await invalidateAllUserSessions(
+      tokenValidation.userId!,
+      SessionInvalidationReason.PASSWORD_CHANGE,
+    )
+
+    // Also delete session records
     await db
       .delete(sessions)
       .where(eq(sessions.userId, tokenValidation.userId!))
 
-    return NextResponse.json(
-      { success: true, message: "Password reset successfully" },
-      { status: 200 },
-    )
+    logger.info("Password reset successful", {
+      userId: tokenValidation.userId,
+      timestamp: new Date().toISOString(),
+    })
+
+    return NextResponse.json({
+      success: true,
+      message:
+        "Password reset successfully. Please sign in with your new password.",
+    })
   } catch (error) {
-    console.error("Password reset error:", error)
-    return NextResponse.json(
-      { error: "Failed to reset password" },
-      { status: 500 },
-    )
+    return handleAPIError(error)
   }
 }

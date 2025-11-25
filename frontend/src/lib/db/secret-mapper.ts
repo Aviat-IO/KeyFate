@@ -109,6 +109,7 @@ export function mapApiSecretToDrizzleShape(
     lastRetryAt: apiSecret.last_retry_at
       ? new Date(apiSecret.last_retry_at)
       : null,
+    keyVersion: 1,
     createdAt: new Date(apiSecret.created_at),
     updatedAt: new Date(apiSecret.updated_at),
   }

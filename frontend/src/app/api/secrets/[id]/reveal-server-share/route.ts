@@ -10,9 +10,15 @@ import { and, eq } from "drizzle-orm"
 import type { Session } from "next-auth"
 import { getServerSession } from "next-auth/next"
 import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
 
 // Prevent static analysis during build
 export const dynamic = "force-dynamic"
+
+// Validation schema for secret ID
+const secretIdSchema = z.string().uuid({
+  message: "Invalid secret ID format",
+})
 
 export async function POST(
   request: NextRequest,
@@ -20,6 +26,18 @@ export async function POST(
 ) {
   try {
     const { id } = await params
+
+    // Validate UUID format before any processing
+    const validation = secretIdSchema.safeParse(id)
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: "Invalid secret ID format",
+          details: validation.error.flatten().formErrors,
+        },
+        { status: 400 },
+      )
+    }
 
     const csrfCheck = await requireCSRFProtection(request)
     if (!csrfCheck.valid) {
