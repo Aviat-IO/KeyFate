@@ -30,16 +30,10 @@ export function NavBar() {
   const [userTier, setUserTier] = useState<"free" | "pro">("free")
   const [checkingSubscription, setCheckingSubscription] = useState(false)
   const [proModalOpen, setProModalOpen] = useState(false)
-  const [mounted, setMounted] = useState(false)
-
   const user = session?.user as
     | { id?: string; name?: string; email?: string; image?: string }
     | undefined
   const loading = status === "loading"
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   useEffect(() => {
     async function fetchUserTier() {
@@ -77,36 +71,30 @@ export function NavBar() {
               href={user ? "/dashboard" : "/"}
               className="flex items-center"
             >
-              {mounted ? (
-                <Image
-                  src={
-                    resolvedTheme === "dark"
-                      ? "/img/icon-dark.png"
-                      : "/img/icon-light.png"
-                  }
-                  alt={config?.company || "KeyFate"}
-                  width={40}
-                  height={40}
-                  className="h-10 w-10 sm:hidden"
-                  priority
-                />
-              ) : null}
-              {mounted ? (
-                <Image
-                  src={
-                    resolvedTheme === "dark"
-                      ? "/img/logo-dark.png"
-                      : "/img/logo-light.png"
-                  }
-                  alt={config?.company || "KeyFate"}
-                  width={200}
-                  height={40}
-                  className="hidden h-10 w-auto sm:block"
-                  priority
-                />
-              ) : (
-                <div className="h-10 w-[200px]" />
-              )}
+              <Image
+                src={
+                  resolvedTheme === "dark"
+                    ? "/img/icon-dark.png"
+                    : "/img/icon-light.png"
+                }
+                alt={config?.company || "KeyFate"}
+                width={40}
+                height={40}
+                className="h-10 w-10 sm:hidden"
+                priority
+              />
+              <Image
+                src={
+                  resolvedTheme === "dark"
+                    ? "/img/logo-dark.png"
+                    : "/img/logo-light.png"
+                }
+                alt={config?.company || "KeyFate"}
+                width={200}
+                height={40}
+                className="hidden h-10 w-auto sm:block"
+                priority
+              />
             </Link>
 
             <NavigationMenu className="hidden md:flex">
