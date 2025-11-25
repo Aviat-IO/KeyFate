@@ -115,20 +115,6 @@ export function NavBar() {
                   </NavigationMenuItem>
                 )}
 
-                <NavigationMenuItem>
-                  <Link href="/decrypt" legacyBehavior passHref>
-                    <NavigationMenuLink
-                      className={cn(
-                        navigationMenuTriggerStyle(),
-                        pathname === "/decrypt" &&
-                          "bg-accent text-accent-foreground"
-                      )}
-                    >
-                      Recover Secret
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-
                 {!loading && !user && (
                   <NavigationMenuItem>
                     <Link href="/pricing" legacyBehavior passHref>
@@ -149,6 +135,18 @@ export function NavBar() {
           </div>
 
           <div className="flex items-center space-x-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className={cn(
+                "hidden md:flex",
+                pathname === "/decrypt" && "bg-accent text-accent-foreground"
+              )}
+            >
+              <Link href="/decrypt">Recover Secret</Link>
+            </Button>
+
             <ThemeToggle />
 
             {!checkingSubscription && isProUser && (
