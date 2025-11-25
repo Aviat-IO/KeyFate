@@ -18,6 +18,8 @@ import {
 import { sendAdminNotification } from "@/lib/email/admin-notification-service"
 import { logEmailFailure } from "@/lib/email/email-failure-logger"
 import { sendReminderEmail } from "@/lib/email/email-service"
+import { withRequestContext } from "@/lib/request-context"
+import { monitorCronJob } from "@/lib/monitoring/cron-monitor"
 import { randomBytes } from "crypto"
 import { and, desc, eq, gt, isNotNull, isNull, lt, sql } from "drizzle-orm"
 import { NextRequest, NextResponse } from "next/server"
@@ -290,6 +292,71 @@ async function processSecret(
   }
 }
 
+async function handleMissedReminders(
+  db: DatabaseConnection,
+): Promise<{ marked: number }> {
+  const now = new Date()
+
+  // Find reminders that are more than MISSED_THRESHOLD_HOURS overdue but still pending
+  // These are likely missed due to cron outages
+  const missedThresholdMs = CRON_CONFIG.MISSED_THRESHOLD_HOURS * 60 * 60 * 1000
+  const missedDeadline = new Date(now.getTime() - missedThresholdMs)
+
+  // Grace period: only retry reminders within GRACE_PERIOD_DAYS
+  const gracePeriodMs = CRON_CONFIG.GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000
+  const earliestAllowedTime = new Date(now.getTime() - gracePeriodMs)
+
+  try {
+    const result = await db
+      .update(reminderJobs)
+      .set({
+        status: "failed" as const,
+        failedAt: now,
+        error: "Missed due to cron outage - marked for retry",
+        retryCount: 0,
+        nextRetryAt: now, // Retry immediately
+        updatedAt: now,
+      } as any)
+      .where(
+        and(
+          eq(reminderJobs.status, "pending"),
+          lt(reminderJobs.scheduledFor, missedDeadline),
+          gt(reminderJobs.scheduledFor, earliestAllowedTime),
+        ),
+      )
+      .returning({ id: reminderJobs.id })
+
+    const marked = result.length
+
+    if (marked > 0) {
+      console.log(`[check-secrets] Marked ${marked} missed reminders for retry`)
+
+      // Alert if high number of missed reminders (indicates prolonged outage)
+      if (marked > CRON_CONFIG.MISSED_REMINDERS_ALERT_THRESHOLD) {
+        await sendAdminNotification({
+          emailType: "admin_notification",
+          recipient: "system",
+          errorMessage: `High number of missed reminders detected: ${marked}. This may indicate a prolonged system outage.`,
+          timestamp: now,
+        }).catch((error) => {
+          console.error(
+            `[check-secrets] Failed to send admin notification:`,
+            sanitizeError(error),
+          )
+        })
+      }
+    }
+
+    return { marked }
+  } catch (error) {
+    console.error(
+      `[check-secrets] Error marking missed reminders:`,
+      sanitizeError(error),
+    )
+    return { marked: 0 }
+  }
+}
+
 async function processFailedReminders(
   db: DatabaseConnection,
   startTimeMs: number,
@@ -300,6 +367,10 @@ async function processFailedReminders(
   let failed = 0
 
   try {
+    // Add grace period for failed reminders
+    const gracePeriodMs = CRON_CONFIG.GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000
+    const earliestAllowedTime = new Date(now.getTime() - gracePeriodMs)
+
     const failedReminders = await db
       .select({
         reminder: reminderJobs,
@@ -314,6 +385,8 @@ async function processFailedReminders(
           eq(reminderJobs.status, "failed"),
           lt(reminderJobs.retryCount, CRON_CONFIG.MAX_RETRIES),
           lt(reminderJobs.nextRetryAt, now),
+          gt(reminderJobs.scheduledFor, earliestAllowedTime),
+          eq(secrets.status, "active"),
         ),
       )
       .limit(50)
@@ -358,6 +431,11 @@ async function fetchPendingReminders(
 ): Promise<PendingReminderWithDetails[]> {
   const now = new Date()
 
+  // Add grace period: process reminders up to GRACE_PERIOD_DAYS overdue
+  // This handles cases where cron jobs fail due to outages
+  const gracePeriodMs = CRON_CONFIG.GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000
+  const earliestAllowedTime = new Date(now.getTime() - gracePeriodMs)
+
   const results = await db
     .select({
       reminder: reminderJobs,
@@ -371,6 +449,7 @@ async function fetchPendingReminders(
       and(
         eq(reminderJobs.status, "pending"),
         lt(reminderJobs.scheduledFor, now),
+        gt(reminderJobs.scheduledFor, earliestAllowedTime),
         eq(secrets.status, "active"),
         isNotNull(secrets.serverShare),
         isNotNull(secrets.nextCheckIn),
@@ -388,90 +467,112 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const startTime = Date.now()
-  const startDate = new Date()
-  console.log(`[check-secrets] Cron job started at ${startDate.toISOString()}`)
+  const requestId = crypto.randomUUID()
 
-  try {
-    const db = await getDatabase()
-
-    let remindersProcessed = 0
-    let remindersSent = 0
-    let remindersFailed = 0
-    let offset = 0
-    let hasMore = true
-
-    while (hasMore && !isApproachingTimeout(startTime)) {
-      const batchReminders = await fetchPendingReminders(db, offset)
-
-      if (batchReminders.length < CRON_CONFIG.BATCH_SIZE) {
-        hasMore = false
-      }
-
-      for (const { reminder, secret, user } of batchReminders) {
-        if (isApproachingTimeout(startTime)) {
-          console.log(
-            `[check-secrets] Approaching timeout, stopping processing. Processed ${remindersProcessed} reminders`,
-          )
-          break
-        }
-
-        remindersProcessed++
-
-        if (process.env.NODE_ENV === "development") {
-          console.log(
-            `[check-secrets] Processing reminder ${reminder.id} (type: ${reminder.reminderType}) for secret ${secret.id}`,
-          )
-        }
-
-        const result = await processSecret(
-          db,
-          secret,
-          user,
-          reminder.reminderType as ReminderType,
-          reminder.id,
+  return withRequestContext(
+    {
+      requestId,
+      jobName: "check-secrets",
+      startTime: Date.now(),
+    },
+    async () => {
+      return monitorCronJob("check-secrets", async () => {
+        const startTime = Date.now()
+        const startDate = new Date()
+        console.log(
+          `[check-secrets] Cron job started at ${startDate.toISOString()}`,
         )
 
-        if (result.sent) {
-          remindersSent++
-        } else {
-          remindersFailed++
+        try {
+          const db = await getDatabase()
+
+          // First, mark missed reminders for retry
+          const missedStats = await handleMissedReminders(db)
+
+          let remindersProcessed = 0
+          let remindersSent = 0
+          let remindersFailed = 0
+          let offset = 0
+          let hasMore = true
+
+          while (hasMore && !isApproachingTimeout(startTime)) {
+            const batchReminders = await fetchPendingReminders(db, offset)
+
+            if (batchReminders.length < CRON_CONFIG.BATCH_SIZE) {
+              hasMore = false
+            }
+
+            for (const { reminder, secret, user } of batchReminders) {
+              if (isApproachingTimeout(startTime)) {
+                console.log(
+                  `[check-secrets] Approaching timeout, stopping processing. Processed ${remindersProcessed} reminders`,
+                )
+                break
+              }
+
+              remindersProcessed++
+
+              if (process.env.NODE_ENV === "development") {
+                console.log(
+                  `[check-secrets] Processing reminder ${reminder.id} (type: ${reminder.reminderType}) for secret ${secret.id}`,
+                )
+              }
+
+              const result = await processSecret(
+                db,
+                secret,
+                user,
+                reminder.reminderType as ReminderType,
+                reminder.id,
+              )
+
+              if (result.sent) {
+                remindersSent++
+              } else {
+                remindersFailed++
+              }
+            }
+
+            offset += CRON_CONFIG.BATCH_SIZE
+          }
+
+          const retryStats = await processFailedReminders(db, startTime)
+
+          const duration = Date.now() - startTime
+
+          logCronMetrics("check-secrets", {
+            duration,
+            processed: remindersProcessed + retryStats.processed,
+            succeeded: remindersSent + retryStats.sent,
+            failed: remindersFailed + retryStats.failed,
+          })
+
+          return NextResponse.json({
+            remindersProcessed,
+            remindersSent,
+            remindersFailed,
+            retriesProcessed: retryStats.processed,
+            retriesSent: retryStats.sent,
+            retriesFailed: retryStats.failed,
+            missedRemindersMarked: missedStats.marked,
+            duration,
+            timestamp: new Date().toISOString(),
+            processed: remindersProcessed + retryStats.processed,
+            succeeded: remindersSent + retryStats.sent,
+            failed: remindersFailed + retryStats.failed,
+          })
+        } catch (error) {
+          console.error("[check-secrets] Error:", sanitizeError(error))
+
+          const errorDetails = {
+            error: "Database operation failed",
+            message: sanitizeError(error),
+            timestamp: new Date().toISOString(),
+          }
+
+          return NextResponse.json(errorDetails, { status: 500 })
         }
-      }
-
-      offset += CRON_CONFIG.BATCH_SIZE
-    }
-
-    const retryStats = await processFailedReminders(db, startTime)
-
-    const duration = Date.now() - startTime
-
-    logCronMetrics("check-secrets", {
-      duration,
-      processed: remindersProcessed + retryStats.processed,
-      succeeded: remindersSent + retryStats.sent,
-      failed: remindersFailed + retryStats.failed,
-    })
-
-    return NextResponse.json({
-      remindersProcessed,
-      remindersSent,
-      remindersFailed,
-      retriesProcessed: retryStats.processed,
-      retriesSent: retryStats.sent,
-      retriesFailed: retryStats.failed,
-      duration,
-      timestamp: new Date().toISOString(),
-    })
-  } catch (error) {
-    console.error("[check-secrets] Error:", sanitizeError(error))
-
-    const errorDetails = {
-      error: "Database operation failed",
-      message: sanitizeError(error),
-      timestamp: new Date().toISOString(),
-    }
-
-    return NextResponse.json(errorDetails, { status: 500 })
-  }
+      })
+    },
+  )
 }

@@ -144,6 +144,28 @@ describe("reminder-scheduler", () => {
 
       vi.useRealTimers()
     })
+
+    it("should exclude 7_days reminder for exactly 7-day interval", () => {
+      const now = new Date("2025-10-01T00:00:00Z")
+      const nextCheckIn = new Date("2025-10-08T00:00:00Z")
+      const checkInDays = 7
+
+      vi.useFakeTimers()
+      vi.setSystemTime(now)
+
+      const types = getApplicableReminderTypes(nextCheckIn, checkInDays)
+
+      expect(types).toContain("1_hour")
+      expect(types).toContain("12_hours")
+      expect(types).toContain("24_hours")
+      expect(types).toContain("3_days")
+      expect(types).not.toContain("7_days")
+      expect(types).toContain("25_percent")
+      expect(types).toContain("50_percent")
+      expect(types).toHaveLength(6)
+
+      vi.useRealTimers()
+    })
   })
 
   describe("reminder scheduling scenarios", () => {
