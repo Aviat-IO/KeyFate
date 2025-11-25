@@ -261,8 +261,8 @@ module "cloud_run" {
     min_instance_count         = var.min_instances
     gen2_execution_environment = true
 
-    # No VPC connector needed - Cloud Run Gen 2 uses built-in Cloud SQL connector
-    # with Unix socket mount (configured in volumes below)
+    # Direct VPC egress configured in revision.vpc_access block below
+    # Required for Cloud Run to access private IP Cloud SQL instance
   }
 
   revision = {
@@ -270,6 +270,12 @@ module "cloud_run" {
     annotations = {
       "deployment.hash" = local.image_tag
       "git.commit"      = local.git_commit_hash
+    }
+    # VPC access required for private IP Cloud SQL connection
+    vpc_access = {
+      egress  = "PRIVATE_RANGES_ONLY" # Route only private IP ranges through VPC
+      subnet  = "keyfate-subnet-${var.env}"
+      network = "keyfate-vpc-${var.env}"
     }
   }
 
@@ -297,7 +303,7 @@ module "cloud_run" {
   ]
 }
 
-# Automatically update traffic to latest revision after deployment
+# Automatically update traffic to latest revision and ensure Cloud SQL annotation is set
 resource "null_resource" "update_traffic" {
   triggers = {
     # Trigger when the image changes
@@ -310,6 +316,30 @@ resource "null_resource" "update_traffic" {
       set -e
       echo "Waiting for Cloud Run service to be ready..."
       sleep 5
+
+      echo "Ensuring Cloud SQL annotation is set on revision template..."
+      # Export current service config
+      gcloud run services describe ${local.frontend_app_name} \
+        --region=${var.region} \
+        --project=${module.project.id} \
+        --format=export > /tmp/frontend-service-$$$.yaml
+
+      # Update the Cloud SQL annotation in revision template if it's empty
+      if grep -q "run.googleapis.com/cloudsql-instances: ''" /tmp/frontend-service-$$$.yaml; then
+        echo "Fixing empty Cloud SQL annotation..."
+        sed -i.bak "s|run.googleapis.com/cloudsql-instances: ''|run.googleapis.com/cloudsql-instances: ${module.cloudsql_instance.connection_name}|" /tmp/frontend-service-$$$.yaml
+        
+        echo "Applying updated configuration..."
+        gcloud run services replace /tmp/frontend-service-$$$.yaml \
+          --region=${var.region} \
+          --project=${module.project.id} \
+          --quiet || true
+      else
+        echo "Cloud SQL annotation already set correctly"
+      fi
+
+      # Clean up temp file
+      rm -f /tmp/frontend-service-$$$.yaml /tmp/frontend-service-$$$.yaml.bak
 
       echo "Updating traffic to latest revision..."
       gcloud run services update-traffic ${local.frontend_app_name} \

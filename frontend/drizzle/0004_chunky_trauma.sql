@@ -1,7 +1,5 @@
--- Note: 'pro' enum value was added manually to production database outside of transaction
--- This migration file has been modified to remove the enum addition since it's already present
--- For new environments, add the enum value manually before running migrations:
--- ALTER TYPE "public"."subscription_tier" ADD VALUE 'pro' BEFORE 'premium';
+-- Note: 'pro' enum value can be added later if needed
+-- Migration 0009 has been modified to not require it
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "secret_recipients" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,

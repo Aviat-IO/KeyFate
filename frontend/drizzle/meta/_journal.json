@@ -155,6 +155,41 @@
       "when": 1761254212820,
       "tag": "0021_add_gdpr_audit_enums",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1761254212821,
+      "tag": "0022_add_cron_robustness_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1761254212822,
+      "tag": "0030_add_account_lockouts",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1761254212823,
+      "tag": "0031_add_key_version_to_secrets",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1761254212824,
+      "tag": "0032_add_csrf_tokens",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1761254212825,
+      "tag": "0033_add_cron_performance_indexes",
+      "breakpoints": true
     }
   ]
 }

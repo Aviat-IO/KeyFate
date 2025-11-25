@@ -14,7 +14,7 @@ EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;--> statement-breakpoint
 DO $$ BEGIN
- CREATE TYPE "public"."secret_status" AS ENUM('active', 'paused', 'triggered');
+ CREATE TYPE "public"."secret_status" AS ENUM('active', 'paused', 'triggered', 'failed');
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;--> statement-breakpoint
@@ -24,7 +24,7 @@ EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;--> statement-breakpoint
 DO $$ BEGIN
- CREATE TYPE "public"."subscription_tier" AS ENUM('free', 'basic', 'premium', 'enterprise');
+ CREATE TYPE "public"."subscription_tier" AS ENUM('free', 'basic', 'premium', 'enterprise', 'pro');
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;--> statement-breakpoint
