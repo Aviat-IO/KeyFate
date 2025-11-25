@@ -1,6 +1,7 @@
 # KeyFate (Dead Man's Switch)
 
-A secure digital service that automatically triggers an alarm or other emergency response when the user is incapacitated.
+A secure digital service that automatically triggers an alarm or other emergency
+response when the user is incapacitated.
 
 ## 🚀 Quick Start (Local Development)
 
@@ -24,12 +25,16 @@ open http://localhost:3000
 
 For detailed setup instructions, see [INFRASTRUCTURE.md](./INFRASTRUCTURE.md)
 
-**Payment testing:** See [PAYMENT_TESTING.md](./PAYMENT_TESTING.md) for BTCPay Server and Stripe testing
+**Payment testing:** See [PAYMENT_TESTING.md](./PAYMENT_TESTING.md) for BTCPay
+Server and Stripe testing
 
 ## Alternative Setup Options
 
-1. **Deploy Infrastructure:** See [Infrastructure README](infrastructure/README.md) for automated Terragrunt deployment
-2. **Frontend Development:** See [Frontend README](frontend/README.md) for local development setup
+1. **Deploy Infrastructure:** See
+   [Infrastructure README](infrastructure/README.md) for automated Terragrunt
+   deployment
+2. **Frontend Development:** See [Frontend README](frontend/README.md) for local
+   development setup
 
 ## Tech Stack
 
@@ -49,7 +54,9 @@ For detailed setup instructions, see [INFRASTRUCTURE.md](./INFRASTRUCTURE.md)
 
 ## Database Connection
 
-For production environments, the application connects to Google Cloud SQL PostgreSQL instances with SSL encryption enabled by default. Local development uses Docker PostgreSQL containers.
+For production environments, the application connects to Google Cloud SQL
+PostgreSQL instances with SSL encryption enabled by default. Local development
+uses Docker PostgreSQL containers.
 
 ### Running Database Migrations
 
@@ -87,44 +94,95 @@ npm run db:migrate -- --config=drizzle-staging.config.ts
 npm run db:migrate -- --config=drizzle-production.config.ts
 ```
 
-### Drizzle Kit Studio (Database GUI)
+### Connecting to Cloud SQL Database
 
-Drizzle Kit Studio provides a web-based interface to browse and manage your database:
+For secure access to production/staging Cloud SQL databases, use the **bastion
+host** with Identity-Aware Proxy (IAP).
+
+#### Using Bastion Host (Recommended)
+
+The bastion host provides secure access to Cloud SQL via SSH tunnel with Cloud
+SQL Auth Proxy pre-installed:
+
+**Step 1: Create SSH tunnel to bastion**
+
+The Cloud SQL Proxy runs automatically on the bastion host via systemd. Simply
+create an SSH tunnel:
+
+```bash
+# For staging
+gcloud compute ssh --zone=us-central1-a bastion-host --project=keyfate-dev \
+  --tunnel-through-iap \
+  --ssh-flag='-L' --ssh-flag='54321:127.0.0.1:5432'
+
+# For production
+gcloud compute ssh --zone=us-central1-a bastion-host --project=keyfate-prod \
+  --tunnel-through-iap \
+  --ssh-flag='-L' --ssh-flag='54321:127.0.0.1:5432'
+```
+
+This creates an SSH tunnel from your local port 54321 to the bastion's Cloud SQL
+Proxy listening on port 5432.
+
+Leave this terminal running with the tunnel active.
+
+**Step 2: Connect to database**
+
+In a second terminal, connect to the database using the forwarded port:
+
+```bash
+# Connect with psql
+psql "postgresql://keyfate_app:YOUR_PASSWORD@localhost:54321/keyfate"
+
+# Or run migrations
+cd frontend
+npm run db:migrate -- --config=drizzle-staging.config.ts
+
+# Or use Drizzle Studio
+npm run db:studio -- --config=drizzle-staging.config.ts
+```
+
+When done, press Ctrl+C in the first terminal to stop the tunnel and proxy.
+
+#### Using Cloud SQL Proxy Locally (Alternative)
+
+Download and run Cloud SQL Proxy on your local machine (requires appropriate IAM
+permissions):
+
+```bash
+# Install Cloud SQL Proxy v2 (macOS)
+curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.14.2/cloud-sql-proxy.darwin.amd64
+chmod +x cloud-sql-proxy
+
+# Run proxy on port 54321 (get CONNECTION_NAME from terraform outputs)
+# Syntax: cloud-sql-proxy --port PORT CONNECTION_NAME
+./cloud-sql-proxy --port 54321 keyfate-dev:us-central1:keyfate-postgres-staging
+
+# Connect in another terminal
+psql "postgresql://keyfate_app:YOUR_PASSWORD@localhost:54321/keyfate"
+
+# Or run migrations
+cd frontend
+npm run db:migrate -- --config=drizzle-staging.config.ts
+```
+
+#### Using Drizzle Kit Studio
+
+Drizzle Kit Studio provides a web-based interface to browse and manage your
+database:
 
 ```bash
 # For local development (using Docker PostgreSQL)
 cd frontend
-DATABASE_URL="postgresql://keyfate_app:password@localhost:54321/keyfate_dev?sslmode=disable" npm run db:studio
+npm run db:studio
 
-# For Cloud SQL with PRIVATE IP (most common for production)
-# NOTE: Private IPs are only accessible from within the same VPC network.
-# For local development, you'll need to use one of these approaches:
+# For staging (via bastion host SSH tunnel)
+# First set up the tunnel (see bastion instructions above), then:
+npm run db:studio -- --config=drizzle-staging.config.ts
 
-# Option 1: Use Cloud Shell (runs within Google Cloud)
-# Open Cloud Shell at https://console.cloud.google.com
-# Then run (note: database name is 'keyfate'):
-DATABASE_URL="postgresql://keyfate_app:YOUR_PASSWORD@10.2.0.3:5432/keyfate" npm run db:studio
-
-# Option 2: Set up SSH tunnel through a VM in the same VPC
-# First SSH to a VM in the same network:
-gcloud compute ssh YOUR_VM_NAME --zone=us-central1-a -- -L 54321:10.2.0.3:5432
-# Then in another terminal (note: database name is 'keyfate'):
-DATABASE_URL="postgresql://keyfate_app:YOUR_PASSWORD@localhost:54321/keyfate" npm run db:studio
-
-# Option 3: Enable public IP on the Cloud SQL instance (less secure)
-# Go to Cloud Console > SQL > Your Instance > Edit > Connections > Add Network
-# Add your local IP address to authorized networks, then use:
-cloud-sql-proxy --port=54321 keyfate-dev:us-central1:keyfate-postgres-staging
-
-# For Cloud SQL with PUBLIC IP (less common)
-# Note: Database name is 'keyfate' (not environment-specific)
-cloud-sql-proxy --port=54321 keyfate-dev:us-central1:keyfate-postgres-staging
-DATABASE_URL="postgresql://keyfate_app:YOUR_PASSWORD@localhost:54321/keyfate?sslmode=require" npm run db:studio
-
-# Alternative: Direct connection if your IP is whitelisted
-DATABASE_URL="postgresql://keyfate_app:YOUR_PASSWORD@CLOUD_SQL_PUBLIC_IP:5432/keyfate?sslmode=require" npm run db:studio
+# For production (via bastion host SSH tunnel)
+# First set up the tunnel (see bastion instructions above), then:
+npm run db:studio -- --config=drizzle-production.config.ts
 ```
-
-**Note:** If you get "instance does not have IP of type PUBLIC" error, your Cloud SQL instance is using private IP only. Use the private IP options above or enable public IP in the Cloud SQL console.
 
 Studio will open at `https://local.drizzle.studio` by default.

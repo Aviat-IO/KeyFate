@@ -8,7 +8,7 @@ Next.js frontend for the KeyFate dead man's switch platform.
 
 - Node.js 18+
 - pnpm (recommended)
-- Supabase CLI
+- Docker (for local PostgreSQL)
 
 ### Quick Start
 
@@ -18,10 +18,11 @@ Next.js frontend for the KeyFate dead man's switch platform.
    pnpm install
    ```
 
-2. **Start Supabase locally:**
+2. **Start local database:**
 
    ```bash
-   supabase start
+   # From project root
+   make dev
    ```
 
 3. **Run development server:**
@@ -57,8 +58,9 @@ ENCRYPTION_KEY=your-local-encryption-key
 - **Framework:** Next.js 14 (App Router)
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS, Shadcn UI
-- **Authentication:** Supabase Auth
-- **Database:** Supabase (PostgreSQL)
+- **Authentication:** NextAuth.js (Google OAuth)
+- **Database:** PostgreSQL (Cloud SQL in production, Docker locally)
+- **ORM:** Drizzle ORM
 - **Security:** Client-side Shamir's Secret Sharing
 
 ### Key Features
@@ -86,7 +88,55 @@ pnpm build
 
 ### Production Deployment
 
-Production deployment is handled by Terragrunt. See [Infrastructure README](../infrastructure/README.md) for details.
+Production deployment is handled by Terragrunt. See
+[Infrastructure README](../infrastructure/README.md) for details.
+
+### Connecting to Cloud SQL Database
+
+For production/staging database access, use the bastion host:
+
+**Terminal 1: Create SSH tunnel to bastion**
+
+```bash
+# Staging (Cloud SQL Proxy runs automatically on bastion)
+gcloud compute ssh --zone=us-central1-a bastion-host --project=keyfate-dev \
+  --tunnel-through-iap \
+  --ssh-flag='-L' --ssh-flag='54321:127.0.0.1:5432'
+```
+
+**Terminal 2: Use database connection**
+
+```bash
+# Connect with psql
+psql "postgresql://keyfate_app:YOUR_PASSWORD@localhost:54321/keyfate"
+
+# Run migrations
+pnpm db:migrate -- --config=drizzle-staging.config.ts
+
+# Use Drizzle Studio
+pnpm db:studio -- --config=drizzle-staging.config.ts
+```
+
+See main [README.md](../README.md#connecting-to-cloud-sql-database) for detailed
+connection instructions.
+
+### Manual Testing
+
+```bash
+# Run tests
+pnpm test
+
+# Type checking
+pnpm type-check
+
+# Linting
+pnpm lint
+```
+
+### Production Deployment
+
+Production deployment is handled by Terragrunt. See
+[Infrastructure README](../infrastructure/README.md) for details.
 
 ### Manual Testing
 

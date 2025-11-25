@@ -68,10 +68,8 @@ module "cloudsql_instance" {
   users = {}
 
   network_config = {
-    # Restrict public IP access to authorized networks only
-    authorized_networks = var.cloudsql_authorized_networks
     connectivity = {
-      public_ipv4 = true # Enable public IP for Cloud Run built-in Cloud SQL connector
+      public_ipv4 = false # Disable public IP - all connections use private IP via VPC
       psa_config = {
         private_network = module.vpc.self_link
         allocated_ip_ranges = {
@@ -185,8 +183,8 @@ resource "google_secret_manager_secret_iam_member" "database_url_accessor" {
 output "cloudsql_info" {
   value = {
     instance_name    = module.cloudsql_instance.name
-    instance_ip      = module.cloudsql_instance.ip
-    public_ip        = "Disabled - using Cloud SQL Auth Proxy"
+    private_ip       = module.cloudsql_instance.ip
+    public_ip        = "Disabled - private IP only"
     database_name    = local.db_name
     database_user    = local.db_user
     connection_name  = module.cloudsql_instance.connection_name
