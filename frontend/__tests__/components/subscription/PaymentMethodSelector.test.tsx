@@ -17,26 +17,6 @@ vi.mock("@/components/subscription/StripeCheckoutButton", () => ({
   ),
 }))
 
-vi.mock("@/components/subscription/BTCPayCheckoutButton", () => ({
-  BTCPayCheckoutButton: ({
-    children,
-    amount,
-    interval,
-  }: {
-    children: React.ReactNode
-    amount: number
-    interval: string
-  }) => (
-    <button
-      data-testid="btcpay-button"
-      data-amount={amount}
-      data-interval={interval}
-    >
-      {children}
-    </button>
-  ),
-}))
-
 describe("PaymentMethodSelector", () => {
   const defaultProps = {
     amount: 9,
@@ -53,27 +33,29 @@ describe("PaymentMethodSelector", () => {
       render(<PaymentMethodSelector {...defaultProps} userTier="free" />)
 
       expect(screen.getByTestId("stripe-button")).toBeInTheDocument()
-      expect(screen.getByTestId("btcpay-button")).toBeInTheDocument()
+      // Bitcoin button is now a disabled "coming soon" button
+      expect(
+        screen.getByRole("button", { name: /bitcoin \(coming soon\)/i }),
+      ).toBeInTheDocument()
     })
 
     it("renders payment buttons when userTier is undefined", () => {
       render(<PaymentMethodSelector {...defaultProps} />)
 
       expect(screen.getByTestId("stripe-button")).toBeInTheDocument()
-      expect(screen.getByTestId("btcpay-button")).toBeInTheDocument()
+      expect(
+        screen.getByRole("button", { name: /bitcoin \(coming soon\)/i }),
+      ).toBeInTheDocument()
     })
 
     it("passes correct props to StripeCheckoutButton", () => {
       render(<PaymentMethodSelector {...defaultProps} userTier="free" />)
 
       const stripeButton = screen.getByTestId("stripe-button")
-      expect(stripeButton).toHaveAttribute(
-        "data-lookup-key",
-        "test-lookup-key",
-      )
+      expect(stripeButton).toHaveAttribute("data-lookup-key", "test-lookup-key")
     })
 
-    it("passes correct props to BTCPayCheckoutButton for monthly", () => {
+    it("bitcoin button is disabled for free tier users", () => {
       render(
         <PaymentMethodSelector
           {...defaultProps}
@@ -83,24 +65,10 @@ describe("PaymentMethodSelector", () => {
         />,
       )
 
-      const btcpayButton = screen.getByTestId("btcpay-button")
-      expect(btcpayButton).toHaveAttribute("data-amount", "9")
-      expect(btcpayButton).toHaveAttribute("data-interval", "month")
-    })
-
-    it("passes correct props to BTCPayCheckoutButton for yearly", () => {
-      render(
-        <PaymentMethodSelector
-          {...defaultProps}
-          amount={90}
-          interval="yearly"
-          userTier="free"
-        />,
-      )
-
-      const btcpayButton = screen.getByTestId("btcpay-button")
-      expect(btcpayButton).toHaveAttribute("data-amount", "90")
-      expect(btcpayButton).toHaveAttribute("data-interval", "year")
+      const bitcoinButton = screen.getByRole("button", {
+        name: /bitcoin \(coming soon\)/i,
+      })
+      expect(bitcoinButton).toBeDisabled()
     })
   })
 
@@ -156,7 +124,7 @@ describe("PaymentMethodSelector", () => {
       })
     })
 
-    it("shows dialog when Bitcoin button is clicked", async () => {
+    it("bitcoin button is disabled for paid users", async () => {
       render(
         <PaymentMethodSelector
           {...defaultProps}
@@ -166,15 +134,9 @@ describe("PaymentMethodSelector", () => {
       )
 
       const bitcoinButton = screen.getByRole("button", {
-        name: /bitcoin \(lightning\)/i,
+        name: /bitcoin \(coming soon\)/i,
       })
-      fireEvent.click(bitcoinButton)
-
-      await waitFor(() => {
-        expect(
-          screen.getByText("You're Already Subscribed!"),
-        ).toBeInTheDocument()
-      })
+      expect(bitcoinButton).toBeDisabled()
     })
 
     it("displays correct tier name in dialog", async () => {
@@ -203,9 +165,7 @@ describe("PaymentMethodSelector", () => {
       fireEvent.click(cardButton)
 
       await waitFor(() => {
-        expect(
-          screen.getByText(/active pro subscription/i),
-        ).toBeInTheDocument()
+        expect(screen.getByText(/active pro subscription/i)).toBeInTheDocument()
       })
     })
 
@@ -242,9 +202,7 @@ describe("PaymentMethodSelector", () => {
     })
 
     it("prevents default and stops propagation on click", () => {
-      const { container } = render(
-        <PaymentMethodSelector {...defaultProps} userTier="pro" />,
-      )
+      render(<PaymentMethodSelector {...defaultProps} userTier="pro" />)
 
       const cardButton = screen.getByRole("button", { name: /card/i })
 
@@ -253,17 +211,12 @@ describe("PaymentMethodSelector", () => {
         cancelable: true,
       })
 
-      const preventDefaultSpy = vi.spyOn(clickEvent, "preventDefault")
-      const stopPropagationSpy = vi.spyOn(clickEvent, "stopPropagation")
-
       fireEvent(cardButton, clickEvent)
 
       // Note: These will be called by the actual handler, but we can't directly verify
       // the spy calls here due to how React events work. The important thing is that
       // the dialog opens instead of navigating
-      expect(
-        screen.getByText("You're Already Subscribed!"),
-      ).toBeInTheDocument()
+      expect(screen.getByText("You're Already Subscribed!")).toBeInTheDocument()
     })
   })
 
@@ -272,23 +225,19 @@ describe("PaymentMethodSelector", () => {
       render(<PaymentMethodSelector {...defaultProps} userTier="" />)
 
       expect(screen.getByTestId("stripe-button")).toBeInTheDocument()
-      expect(screen.getByTestId("btcpay-button")).toBeInTheDocument()
+      expect(
+        screen.getByRole("button", { name: /bitcoin \(coming soon\)/i }),
+      ).toBeInTheDocument()
     })
 
-    it("renders with all interval values", () => {
+    it("renders stripe button for both interval values", () => {
       const { rerender } = render(
         <PaymentMethodSelector {...defaultProps} interval="monthly" />,
       )
-      expect(screen.getByTestId("btcpay-button")).toHaveAttribute(
-        "data-interval",
-        "month",
-      )
+      expect(screen.getByTestId("stripe-button")).toBeInTheDocument()
 
       rerender(<PaymentMethodSelector {...defaultProps} interval="yearly" />)
-      expect(screen.getByTestId("btcpay-button")).toHaveAttribute(
-        "data-interval",
-        "year",
-      )
+      expect(screen.getByTestId("stripe-button")).toBeInTheDocument()
     })
   })
 })

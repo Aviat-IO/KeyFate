@@ -102,7 +102,8 @@ describe("Logger Sanitization", () => {
       const logOutput = JSON.parse(consoleSpy.mock.calls[0][0])
       expect(logOutput.data.user.id).toBe("123")
       expect(logOutput.data.user.password).toBe("[REDACTED]")
-      expect(logOutput.data.user.email).toBe("test@example.com")
+      // Email is partially masked for privacy
+      expect(logOutput.data.user.email).toBe("t***@example.com")
     })
 
     it("should redact sensitive fields in arrays", () => {
@@ -151,7 +152,8 @@ describe("Logger Sanitization", () => {
 
       const logOutput = JSON.parse(consoleSpy.mock.calls[0][0])
       expect(logOutput.data.userId).toBe("123")
-      expect(logOutput.data.email).toBe("test@example.com")
+      // Email is partially masked for privacy
+      expect(logOutput.data.email).toBe("t***@example.com")
       expect(logOutput.data.status).toBe("active")
     })
 

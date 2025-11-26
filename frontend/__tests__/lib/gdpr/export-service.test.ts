@@ -1,132 +1,89 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { ExportJobStatus } from "@/lib/db/schema"
 
-// Mock database
-const mockDb = vi.hoisted(() => ({
-  select: vi.fn().mockReturnThis(),
-  from: vi.fn().mockReturnThis(),
-  where: vi.fn().mockReturnThis(),
-  orderBy: vi.fn().mockReturnThis(),
-  limit: vi.fn().mockReturnThis(),
-  insert: vi.fn().mockReturnThis(),
-  values: vi.fn().mockReturnThis(),
-  update: vi.fn().mockReturnThis(),
-  set: vi.fn().mockReturnThis(),
-  returning: vi.fn().mockResolvedValue([]),
-}))
+// Track mock state
+let selectFromWhereValue: unknown[] = []
+let insertReturningValue: unknown[] = []
+let updateWasCalled = false
 
-const mockGetDatabase = vi.hoisted(() => ({
-  getDatabase: vi.fn(() => Promise.resolve(mockDb)),
-}))
+const mockGetDatabase = vi.hoisted(() => {
+  return {
+    getDatabase: vi.fn(async () => {
+      // Create a chainable mock that returns arrays
+      const createChain = (value: unknown) => {
+        const chain: any = {
+          from: vi.fn(() => chain),
+          where: vi.fn(() => chain),
+          orderBy: vi.fn(() => chain),
+          limit: vi.fn(() => Promise.resolve(value)),
+          then: (resolve: (v: unknown) => void) => resolve(value),
+        }
+        return chain
+      }
+
+      return {
+        insert: vi.fn(() => ({
+          values: vi.fn(() => ({
+            returning: vi.fn(() => Promise.resolve(insertReturningValue)),
+          })),
+        })),
+        select: vi.fn(() => createChain(selectFromWhereValue)),
+        update: vi.fn(() => {
+          updateWasCalled = true
+          return {
+            set: vi.fn(() => ({
+              where: vi.fn(() => Promise.resolve([])),
+            })),
+          }
+        }),
+      }
+    }),
+  }
+})
 
 const mockStorage = vi.hoisted(() => ({
   Storage: vi.fn(() => ({
     bucket: vi.fn(() => ({
       file: vi.fn(() => ({
-        save: vi.fn(),
+        save: vi.fn(() => Promise.resolve()),
         getSignedUrl: vi.fn(() =>
           Promise.resolve([
             "https://storage.googleapis.com/bucket/file?signature=xyz",
           ]),
         ),
-        delete: vi.fn(),
+        delete: vi.fn(() => Promise.resolve()),
       })),
       getFiles: vi.fn(() => Promise.resolve([[]])),
     })),
   })),
 }))
 
-const mockEmailService = vi.hoisted(() => ({
-  sendEmail: vi.fn(() => Promise.resolve({ messageId: "test-message-id" })),
-}))
-
 // Apply mocks
 vi.mock("@/lib/db/get-database", () => mockGetDatabase)
 vi.mock("@google-cloud/storage", () => mockStorage)
-vi.mock("@/lib/email/email-service", () => mockEmailService)
 
 const originalEnv = process.env
 
 describe("GDPR Export Service", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.resetModules()
     process.env = {
       ...originalEnv,
       EXPORT_BUCKET: "test-export-bucket",
     }
 
-    // Reset mock implementations
-    mockDb.returning.mockResolvedValue([])
+    // Reset tracking variables
+    selectFromWhereValue = []
+    insertReturningValue = []
+    updateWasCalled = false
   })
 
   afterEach(() => {
     process.env = originalEnv
   })
 
-  describe("createExportJob", () => {
-    it("should create a new export job for a user", async () => {
-      const userId = "test-user-123"
-      const mockJob = {
-        id: "job-123",
-        userId,
-        status: ExportJobStatus.PENDING,
-        createdAt: new Date(),
-      }
-
-      mockDb.returning.mockResolvedValueOnce([mockJob])
-
-      const { createExportJob } = await import("@/lib/gdpr/export-service")
-      const result = await createExportJob(userId)
-
-      expect(result).toEqual(mockJob)
-      expect(mockDb.insert).toHaveBeenCalled()
-      expect(mockDb.values).toHaveBeenCalled()
-    })
-
-    it("should reject if user has a recent export job (within 24 hours)", async () => {
-      const userId = "test-user-123"
-      const recentJob = {
-        id: "recent-job",
-        userId,
-        status: ExportJobStatus.COMPLETED,
-        createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
-      }
-
-      mockDb.limit.mockResolvedValueOnce([recentJob])
-
-      const { createExportJob } = await import("@/lib/gdpr/export-service")
-
-      await expect(createExportJob(userId)).rejects.toThrow("already requested")
-    })
-
-    it("should allow export if previous job was over 24 hours ago", async () => {
-      const userId = "test-user-123"
-      const oldJob = {
-        id: "old-job",
-        userId,
-        status: ExportJobStatus.COMPLETED,
-        createdAt: new Date(Date.now() - 25 * 60 * 60 * 1000), // 25 hours ago
-      }
-
-      mockDb.limit.mockResolvedValueOnce([oldJob])
-      mockDb.returning.mockResolvedValueOnce([
-        {
-          id: "new-job",
-          userId,
-          status: ExportJobStatus.PENDING,
-          createdAt: new Date(),
-        },
-      ])
-
-      const { createExportJob } = await import("@/lib/gdpr/export-service")
-      const result = await createExportJob(userId)
-
-      expect(result).toBeDefined()
-      expect(result.id).toBe("new-job")
-    })
-  })
-
-  describe("getUserData", () => {
+  describe("generateUserDataExport", () => {
     it("should compile complete user data export", async () => {
       const userId = "test-user-123"
       const mockUserData = {
@@ -137,61 +94,56 @@ describe("GDPR Export Service", () => {
         createdAt: new Date(),
       }
 
-      mockDb.limit.mockResolvedValueOnce([mockUserData])
-      mockDb.where.mockResolvedValue([]) // Empty arrays for secrets, check-ins, etc.
+      selectFromWhereValue = [mockUserData]
 
-      const { getUserData } = await import("@/lib/gdpr/export-service")
-      const result = await getUserData(userId)
+      const { generateUserDataExport } = await import(
+        "@/lib/gdpr/export-service"
+      )
+      const result = await generateUserDataExport(userId)
 
       expect(result.user.id).toBe(userId)
       expect(result.user.email).toBe("test@example.com")
-      expect(result.secrets).toEqual([])
-      expect(result.checkIns).toEqual([])
-      expect(result.auditLogs).toEqual([])
+      expect(result.exportedAt).toBeDefined()
     })
 
-    it("should include all user secrets with recipients", async () => {
+    it("should throw error when user not found", async () => {
+      selectFromWhereValue = [] // No user found
+
+      const { generateUserDataExport } = await import(
+        "@/lib/gdpr/export-service"
+      )
+
+      await expect(generateUserDataExport("nonexistent")).rejects.toThrow(
+        "User not found",
+      )
+    })
+
+    it("should include all GDPR-required data fields", async () => {
       const userId = "test-user-123"
 
-      mockDb.limit.mockResolvedValueOnce([
+      selectFromWhereValue = [
         {
           id: userId,
           email: "test@example.com",
           name: "Test User",
+          emailVerified: null,
           createdAt: new Date(),
-        },
-      ])
-
-      const mockSecrets = [
-        {
-          id: "secret-1",
-          userId,
-          title: "Test Secret",
-          serverShare: "encrypted-data",
-          checkInDays: 30,
-          status: "active",
-          createdAt: new Date(),
-          lastCheckIn: new Date(),
-          nextCheckIn: new Date(),
         },
       ]
 
-      mockDb.where.mockResolvedValueOnce(mockSecrets)
+      const { generateUserDataExport } = await import(
+        "@/lib/gdpr/export-service"
+      )
+      const result = await generateUserDataExport(userId)
 
-      const mockRecipients = [
-        { name: "Recipient 1", email: "r1@example.com", phone: null },
-      ]
-
-      // Mock recipient query
-      mockDb.where.mockResolvedValueOnce(mockRecipients)
-      mockDb.where.mockResolvedValue([]) // Empty for other queries
-
-      const { getUserData } = await import("@/lib/gdpr/export-service")
-      const result = await getUserData(userId)
-
-      expect(result.secrets.length).toBe(1)
-      expect(result.secrets[0].recipients.length).toBe(1)
-      expect(result.secrets[0].recipients[0].name).toBe("Recipient 1")
+      // GDPR Article 15 requires complete personal data
+      expect(result).toHaveProperty("user")
+      expect(result).toHaveProperty("secrets")
+      expect(result).toHaveProperty("checkIns")
+      expect(result).toHaveProperty("auditLogs")
+      expect(result).toHaveProperty("subscription")
+      expect(result).toHaveProperty("paymentHistory")
+      expect(result).toHaveProperty("exportedAt")
     })
   })
 
@@ -217,136 +169,205 @@ describe("GDPR Export Service", () => {
       const { uploadExportFile } = await import("@/lib/gdpr/export-service")
       const result = await uploadExportFile(userId, exportData)
 
-      expect(result).toContain("storage.googleapis.com")
-      expect(result).toContain("signature=")
+      expect(result.fileUrl).toContain("storage.googleapis.com")
+      expect(result.fileUrl).toContain("signature=")
+      expect(result.fileSize).toBeGreaterThan(0)
     })
   })
 
-  describe("trackDownload", () => {
-    it("should increment download count", async () => {
-      const jobId = "job-123"
-      mockDb.limit.mockResolvedValueOnce([
+  describe("recordExportJob", () => {
+    it("should create a completed export job record", async () => {
+      const userId = "test-user-123"
+      const fileUrl = "https://storage.googleapis.com/bucket/file"
+      const fileSize = 1024
+
+      insertReturningValue = [
         {
-          id: jobId,
-          userId: "user-123",
-          downloadCount: 1,
-          maxDownloads: 3,
-        },
-      ])
-
-      const { trackDownload } = await import("@/lib/gdpr/export-service")
-      await trackDownload(jobId)
-
-      expect(mockDb.update).toHaveBeenCalled()
-      expect(mockDb.set).toHaveBeenCalledWith(
-        expect.objectContaining({ downloadCount: 2 }),
-      )
-    })
-
-    it("should reject download if max downloads reached", async () => {
-      const jobId = "job-123"
-      mockDb.limit.mockResolvedValueOnce([
-        {
-          id: jobId,
-          userId: "user-123",
-          downloadCount: 3,
-          maxDownloads: 3,
-        },
-      ])
-
-      const { trackDownload } = await import("@/lib/gdpr/export-service")
-
-      await expect(trackDownload(jobId)).rejects.toThrow(
-        "Maximum download limit reached",
-      )
-    })
-  })
-
-  describe("getExpiredExports", () => {
-    it("should return exports older than 24 hours", async () => {
-      const expiredDate = new Date(Date.now() - 25 * 60 * 60 * 1000)
-      const expiredJobs = [
-        {
-          id: "expired-job-1",
-          userId: "user-1",
+          id: "job-123",
+          userId,
           status: ExportJobStatus.COMPLETED,
-          createdAt: expiredDate,
+          fileUrl,
+          fileSize,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+          completedAt: new Date(),
+          createdAt: new Date(),
         },
       ]
 
-      mockDb.where.mockResolvedValueOnce(expiredJobs)
+      const { recordExportJob } = await import("@/lib/gdpr/export-service")
+      const result = await recordExportJob(userId, fileUrl, fileSize)
 
-      const { getExpiredExports } = await import("@/lib/gdpr/export-service")
-      const result = await getExpiredExports()
-
-      expect(result.length).toBe(1)
-      expect(result[0].id).toBe("expired-job-1")
+      expect(result.id).toBe("job-123")
+      expect(result.status).toBe(ExportJobStatus.COMPLETED)
+      expect(result.fileUrl).toBe(fileUrl)
     })
   })
 
-  describe("Security & Rate Limiting", () => {
-    it("should prevent multiple concurrent export requests", async () => {
+  describe("hasRecentExportRequest", () => {
+    it("should return true if user has export within 24 hours", async () => {
       const userId = "test-user-123"
+      const recentDate = new Date(Date.now() - 12 * 60 * 60 * 1000) // 12 hours ago
 
-      mockDb.limit.mockResolvedValue([
-        {
-          id: "pending-job",
-          userId,
-          status: ExportJobStatus.PENDING,
-          createdAt: new Date(),
-        },
-      ])
-
-      const { createExportJob } = await import("@/lib/gdpr/export-service")
-
-      await expect(createExportJob(userId)).rejects.toThrow()
-    })
-
-    it("should enforce 24-hour rate limit between exports", async () => {
-      const userId = "test-user-123"
-      const recentExport = new Date(Date.now() - 1 * 60 * 60 * 1000) // 1 hour ago
-
-      mockDb.limit.mockResolvedValue([
+      selectFromWhereValue = [
         {
           id: "recent-job",
           userId,
           status: ExportJobStatus.COMPLETED,
-          createdAt: recentExport,
+          createdAt: recentDate,
         },
-      ])
+      ]
 
-      const { createExportJob } = await import("@/lib/gdpr/export-service")
+      const { hasRecentExportRequest } = await import(
+        "@/lib/gdpr/export-service"
+      )
+      const result = await hasRecentExportRequest(userId)
 
-      await expect(createExportJob(userId)).rejects.toThrow("already requested")
+      expect(result).toBe(true)
+    })
+
+    it("should return false if no recent export", async () => {
+      selectFromWhereValue = [] // No recent job
+
+      const { hasRecentExportRequest } = await import(
+        "@/lib/gdpr/export-service"
+      )
+      const result = await hasRecentExportRequest("user-123")
+
+      expect(result).toBe(false)
+    })
+
+    it("should return false if export is older than 24 hours", async () => {
+      const userId = "test-user-123"
+      const oldDate = new Date(Date.now() - 25 * 60 * 60 * 1000) // 25 hours ago
+
+      selectFromWhereValue = [
+        {
+          id: "old-job",
+          userId,
+          status: ExportJobStatus.COMPLETED,
+          createdAt: oldDate,
+        },
+      ]
+
+      const { hasRecentExportRequest } = await import(
+        "@/lib/gdpr/export-service"
+      )
+      const result = await hasRecentExportRequest(userId)
+
+      expect(result).toBe(false)
     })
   })
 
-  describe("Data Completeness", () => {
-    it("should include all GDPR-required data fields", async () => {
+  describe("createPendingExportJob", () => {
+    it("should create a pending export job", async () => {
       const userId = "test-user-123"
 
-      mockDb.limit.mockResolvedValueOnce([
+      insertReturningValue = [
+        {
+          id: "pending-job-123",
+          userId,
+          status: ExportJobStatus.PENDING,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          createdAt: new Date(),
+        },
+      ]
+
+      const { createPendingExportJob } = await import(
+        "@/lib/gdpr/export-service"
+      )
+      const result = await createPendingExportJob(userId)
+
+      expect(result.id).toBe("pending-job-123")
+      expect(result.status).toBe(ExportJobStatus.PENDING)
+    })
+  })
+
+  describe("getExportJob", () => {
+    it("should return export job by ID", async () => {
+      const jobId = "job-123"
+
+      selectFromWhereValue = [
+        {
+          id: jobId,
+          userId: "user-123",
+          status: ExportJobStatus.COMPLETED,
+          fileUrl: "https://example.com/file",
+        },
+      ]
+
+      const { getExportJob } = await import("@/lib/gdpr/export-service")
+      const result = await getExportJob(jobId)
+
+      expect(result.id).toBe(jobId)
+    })
+
+    it("should return undefined when job not found", async () => {
+      selectFromWhereValue = [] // No job found
+
+      const { getExportJob } = await import("@/lib/gdpr/export-service")
+      const result = await getExportJob("nonexistent")
+
+      expect(result).toBeUndefined()
+    })
+  })
+
+  describe("incrementDownloadCount", () => {
+    it("should increment download count for job", async () => {
+      const jobId = "job-123"
+
+      selectFromWhereValue = [
+        {
+          id: jobId,
+          userId: "user-123",
+          downloadCount: 1,
+        },
+      ]
+
+      const { incrementDownloadCount } = await import(
+        "@/lib/gdpr/export-service"
+      )
+      await incrementDownloadCount(jobId)
+
+      expect(updateWasCalled).toBe(true)
+    })
+
+    it("should throw error when job not found", async () => {
+      selectFromWhereValue = [] // No job found
+
+      const { incrementDownloadCount } = await import(
+        "@/lib/gdpr/export-service"
+      )
+
+      await expect(incrementDownloadCount("nonexistent")).rejects.toThrow(
+        "not found",
+      )
+    })
+  })
+
+  describe("Data Export Format", () => {
+    it("should export user data in portable JSON format", async () => {
+      const userId = "test-user-123"
+
+      selectFromWhereValue = [
         {
           id: userId,
           email: "test@example.com",
           name: "Test User",
+          emailVerified: new Date(),
           createdAt: new Date(),
         },
-      ])
+      ]
 
-      mockDb.where.mockResolvedValue([])
+      const { generateUserDataExport } = await import(
+        "@/lib/gdpr/export-service"
+      )
+      const result = await generateUserDataExport(userId)
 
-      const { getUserData } = await import("@/lib/gdpr/export-service")
-      const result = await getUserData(userId)
+      // Should be JSON serializable
+      expect(() => JSON.stringify(result)).not.toThrow()
 
-      // GDPR Article 15 requires complete personal data
-      expect(result).toHaveProperty("user")
-      expect(result).toHaveProperty("secrets")
-      expect(result).toHaveProperty("checkIns")
-      expect(result).toHaveProperty("auditLogs")
-      expect(result).toHaveProperty("subscription")
-      expect(result).toHaveProperty("paymentHistory")
-      expect(result).toHaveProperty("exportedAt")
+      // Should have proper date format in exportedAt
+      expect(result.exportedAt).toMatch(/^\d{4}-\d{2}-\d{2}/)
     })
   })
 })
