@@ -28,6 +28,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { UpgradeModal } from "@/components/upgrade-modal"
 import { secretFormSchema, type SecretFormValues } from "@/lib/schemas/secret"
+import { useCSRF } from "@/hooks/useCSRF"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Buffer } from "buffer"
 import {
@@ -60,6 +61,7 @@ export function NewSecretForm({
   tierInfo,
 }: NewSecretFormProps) {
   const router = useRouter()
+  const { fetchWithCSRF } = useCSRF()
   const [error, setError] = useState<string | null>(null)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
 
@@ -120,7 +122,7 @@ export function NewSecretForm({
         sss_threshold: data.sss_threshold,
       }
 
-      const response = await fetch("/api/secrets", {
+      const response = await fetchWithCSRF("/api/secrets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -263,7 +265,7 @@ export function NewSecretForm({
           {/* Recipient Information Section */}
           <div className="space-y-4 border-t pt-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-medium text-muted-foreground">
+              <h2 className="text-muted-foreground text-sm font-medium">
                 Recipients
               </h2>
               {!isPaid && fields.length >= 1 && (
@@ -272,7 +274,7 @@ export function NewSecretForm({
                   variant="outline"
                   size="sm"
                   onClick={() => setShowUpgradeModal(true)}
-                  className="gap-1.5 h-8 text-xs"
+                  className="h-8 gap-1.5 text-xs"
                 >
                   <Crown className="h-3 w-3" />
                   Add More (Pro)
@@ -295,9 +297,12 @@ export function NewSecretForm({
 
             <div className="space-y-3">
               {fields.map((field, index) => (
-                <div key={field.id} className="space-y-3 rounded-md border bg-muted/30 p-3">
+                <div
+                  key={field.id}
+                  className="bg-muted/30 space-y-3 rounded-md border p-3"
+                >
                   <div className="flex items-center justify-between">
-                    <div className="text-xs font-medium text-muted-foreground">
+                    <div className="text-muted-foreground text-xs font-medium">
                       Recipient {index + 1}
                     </div>
                     {fields.length > 1 && (
@@ -363,7 +368,7 @@ export function NewSecretForm({
                   variant="outline"
                   onClick={() => append({ name: "", email: "" })}
                   disabled={isSubmitting}
-                  className="w-full h-9 text-sm"
+                  className="h-9 w-full text-sm"
                 >
                   <Plus className="mr-1.5 h-4 w-4" />
                   Add Recipient ({fields.length} / {maxRecipients})
@@ -380,7 +385,7 @@ export function NewSecretForm({
 
           {/* Check-in Settings Section */}
           <div className="space-y-4 border-t pt-6">
-            <h2 className="text-sm font-medium text-muted-foreground">
+            <h2 className="text-muted-foreground text-sm font-medium">
               Check-in Settings
             </h2>
             <FormField
@@ -443,14 +448,16 @@ export function NewSecretForm({
               defaultValue={fields.length > 1 ? "sss-config" : undefined}
             >
               <AccordionItem value="sss-config" className="border-0">
-                <AccordionTrigger className="text-sm font-medium text-muted-foreground hover:text-foreground py-0 hover:no-underline">
+                <AccordionTrigger className="text-muted-foreground hover:text-foreground py-0 text-sm font-medium hover:no-underline">
                   Advanced Settings (optional)
                 </AccordionTrigger>
                 <AccordionContent className="space-y-3 pt-4">
                   {fields.length > 1 && (
                     <Alert>
                       <Info className="h-4 w-4" />
-                      <AlertTitle className="text-sm">Multiple Recipients</AlertTitle>
+                      <AlertTitle className="text-sm">
+                        Multiple Recipients
+                      </AlertTitle>
                       <AlertDescription className="text-xs">
                         All recipients will receive the SAME share. You must
                         distribute this share to each recipient separately via
@@ -461,7 +468,9 @@ export function NewSecretForm({
                   )}
                   <Alert>
                     <Info className="h-4 w-4" />
-                    <AlertTitle className="text-sm">Secret Sharing Details</AlertTitle>
+                    <AlertTitle className="text-sm">
+                      Secret Sharing Details
+                    </AlertTitle>
                     <AlertDescription className="text-xs">
                       <ul className="list-disc space-y-0.5 pl-5">
                         <li>

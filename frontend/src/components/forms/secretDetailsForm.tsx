@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
+import { useCSRF } from "@/hooks/useCSRF"
 import {
   AlertCircle,
   AlertTriangle,
@@ -59,6 +60,7 @@ interface SecretDetailsFormProps {
 
 export function SecretDetailsForm({ secret }: SecretDetailsFormProps) {
   const router = useRouter()
+  const { fetchWithCSRF } = useCSRF()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [serverShare, setServerShare] = useState<string | null>(null)
@@ -73,7 +75,7 @@ export function SecretDetailsForm({ secret }: SecretDetailsFormProps) {
     setError(null)
 
     try {
-      const response = await fetch(
+      const response = await fetchWithCSRF(
         `/api/secrets/${secret.id}/reveal-server-share`,
         {
           method: "POST",
@@ -106,7 +108,7 @@ export function SecretDetailsForm({ secret }: SecretDetailsFormProps) {
     setError(null)
 
     try {
-      const response = await fetch(
+      const response = await fetchWithCSRF(
         `/api/secrets/${secret.id}/delete-server-share`,
         {
           method: "DELETE",

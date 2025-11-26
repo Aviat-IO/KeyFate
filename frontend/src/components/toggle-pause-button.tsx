@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { useCSRF } from "@/hooks/useCSRF"
 import { mapApiSecretToDrizzleShape } from "@/lib/db/secret-mapper"
 import { Secret } from "@/types"
 import { Loader2, PauseIcon, PlayIcon } from "lucide-react"
@@ -17,14 +18,18 @@ export function TogglePauseButton({
   status,
   onToggleSuccess,
 }: TogglePauseButtonProps) {
+  const { fetchWithCSRF } = useCSRF()
   const [isLoading, setIsLoading] = useState(false)
 
   const handleTogglePause = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch(`/api/secrets/${secretId}/toggle-pause`, {
-        method: "POST",
-      })
+      const response = await fetchWithCSRF(
+        `/api/secrets/${secretId}/toggle-pause`,
+        {
+          method: "POST",
+        },
+      )
 
       const data = await response.json()
       if (data.error) throw new Error(data.error)

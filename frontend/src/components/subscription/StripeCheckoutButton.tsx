@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { useCSRF } from "@/hooks/useCSRF"
 import { useSession } from "next-auth/react"
 import { useState } from "react"
 
@@ -15,6 +16,7 @@ export function StripeCheckoutButton({
   children,
   disabled,
 }: StripeCheckoutButtonProps) {
+  const { fetchWithCSRF } = useCSRF()
   const [loading, setLoading] = useState(false)
   const { data: session, status } = useSession()
   const checkingAuth = status === "loading"
@@ -31,7 +33,7 @@ export function StripeCheckoutButton({
       }
 
       // Call our API to create a checkout session with user_id in metadata
-      const response = await fetch("/api/create-checkout-session", {
+      const response = await fetchWithCSRF("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ lookup_key: lookupKey }),
