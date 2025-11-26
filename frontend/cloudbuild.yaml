@@ -1,82 +1,49 @@
 steps:
-  # Pull the latest image for caching (if it exists)
+  # Build using Kaniko for efficient layer caching
+  # Kaniko caches layers in Artifact Registry, avoiding full rebuilds
+  - name: "gcr.io/kaniko-project/executor:latest"
+    id: "build"
+    args:
+      - "--destination=${_IMAGE_URL}"
+      - "--cache=true"
+      - "--cache-ttl=168h"
+      - "--cache-repo=${_CACHE_REPO}"
+      - "--dockerfile=frontend/Dockerfile"
+      - "--context=dir:///workspace/frontend"
+      - "--build-arg=BUILD_ENV=${_BUILD_ENV}"
+      - "--build-arg=NEXTAUTH_URL=${_NEXTAUTH_URL}"
+      - "--build-arg=NEXT_PUBLIC_SITE_URL=${_NEXT_PUBLIC_SITE_URL}"
+      - "--build-arg=NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${_NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}"
+      - "--build-arg=NEXT_PUBLIC_SUPPORT_EMAIL=${_NEXT_PUBLIC_SUPPORT_EMAIL}"
+
+  # Tag and push cache images in parallel for future builds
   - name: "gcr.io/cloud-builders/docker"
+    id: "push-cache-deps"
+    waitFor: ["build"]
     entrypoint: "bash"
     args:
       - "-c"
       - |
-        docker pull ${_IMAGE_URL}-cache-deps || true
-        docker pull ${_IMAGE_URL}-cache-builder || true
-        docker pull ${_IMAGE_URL} || true
-
-  # Build the Docker image with intelligent caching
-  # Step 1: Build dependencies layer (rarely changes)
-  # NOTE: Temporarily disabled cache to fix BuildKit issue
-  - name: "gcr.io/cloud-builders/docker"
-    args:
-      - "build"
-      - "--no-cache" # Temporarily disable cache to fix BuildKit issue
-      - "--target=deps"
-      - "--platform=linux/amd64"
-      - "--build-arg=BUILD_ENV=${_BUILD_ENV}"
-      - "-t=${_IMAGE_URL}-cache-deps"
-      - "-f=frontend/Dockerfile"
-      - "./frontend"
-
-  # Step 2: Build the builder stage (changes when source code changes)
-  - name: "gcr.io/cloud-builders/docker"
-    args:
-      - "build"
-      - "--cache-from=${_IMAGE_URL}-cache-deps"
-      - "--cache-from=${_IMAGE_URL}-cache-builder"
-      - "--target=builder"
-      - "--platform=linux/amd64"
-      - "--build-arg=BUILD_ENV=${_BUILD_ENV}"
-      - "--build-arg=NEXTAUTH_URL=${_NEXTAUTH_URL}"
-      - "--build-arg=NEXT_PUBLIC_SITE_URL=${_NEXT_PUBLIC_SITE_URL}"
-      - "--build-arg=NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${_NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}"
-      - "--build-arg=NEXT_PUBLIC_SUPPORT_EMAIL=${_NEXT_PUBLIC_SUPPORT_EMAIL}"
-      - "-t=${_IMAGE_URL}-cache-builder"
-      - "-f=frontend/Dockerfile"
-      - "./frontend"
-
-  # Step 3: Build the final image
-  - name: "gcr.io/cloud-builders/docker"
-    args:
-      - "build"
-      - "--cache-from=${_IMAGE_URL}-cache-deps"
-      - "--cache-from=${_IMAGE_URL}-cache-builder"
-      - "--cache-from=${_IMAGE_URL}"
-      - "--platform=linux/amd64"
-      - "--build-arg=BUILD_ENV=${_BUILD_ENV}"
-      - "--build-arg=NEXTAUTH_URL=${_NEXTAUTH_URL}"
-      - "--build-arg=NEXT_PUBLIC_SITE_URL=${_NEXT_PUBLIC_SITE_URL}"
-      - "--build-arg=NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${_NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}"
-      - "--build-arg=NEXT_PUBLIC_SUPPORT_EMAIL=${_NEXT_PUBLIC_SUPPORT_EMAIL}"
-      - "-t=${_IMAGE_URL}"
-      - "-f=frontend/Dockerfile"
-      - "./frontend"
-
-  # Push all images for caching
-  - name: "gcr.io/cloud-builders/docker"
-    args:
-      - "push"
-      - "${_IMAGE_URL}-cache-deps"
+        docker pull ${_IMAGE_URL} && \
+        docker tag ${_IMAGE_URL} ${_IMAGE_URL}-cache-deps && \
+        docker push ${_IMAGE_URL}-cache-deps || true
 
   - name: "gcr.io/cloud-builders/docker"
+    id: "push-cache-builder"
+    waitFor: ["build"]
+    entrypoint: "bash"
     args:
-      - "push"
-      - "${_IMAGE_URL}-cache-builder"
-
-  - name: "gcr.io/cloud-builders/docker"
-    args:
-      - "push"
-      - "${_IMAGE_URL}"
+      - "-c"
+      - |
+        docker pull ${_IMAGE_URL} && \
+        docker tag ${_IMAGE_URL} ${_IMAGE_URL}-cache-builder && \
+        docker push ${_IMAGE_URL}-cache-builder || true
 
 # Default substitutions (will be overridden by Terraform)
 substitutions:
   _IMAGE_URL: "${_IMAGE_URL}"
   _BUILD_ENV: "staging"
+  _CACHE_REPO: "${_IMAGE_URL}-cache"
 
 options:
   logging: CLOUD_LOGGING_ONLY
@@ -85,5 +52,5 @@ options:
   # Disk size for build
   diskSizeGb: 50
 
-# Timeout for the entire build (10 minutes should be enough with caching)
+# Timeout for the entire build (with Kaniko caching, should complete faster)
 timeout: "600s"
