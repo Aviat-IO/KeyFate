@@ -1,5 +1,4 @@
 import { authConfig } from "@/lib/auth-config"
-import { ensureUserExists } from "@/lib/auth/user-verification"
 import { requireEmailVerification } from "@/lib/auth/require-email-verification"
 import { requireCSRFProtection, createCSRFErrorResponse } from "@/lib/csrf"
 import { encryptMessage } from "@/lib/encryption"
@@ -49,6 +48,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    // Ensures user exists in DB (creates for OAuth users) and checks email verification
     const emailVerificationError = await requireEmailVerification(session)
     if (emailVerificationError) {
       return emailVerificationError
@@ -71,22 +71,6 @@ export async function POST(request: NextRequest) {
             ...getRateLimitHeaders(rateLimitResult),
           },
         },
-      )
-    }
-
-    // Ensure user exists in database before creating secret
-    try {
-      const userVerification = await ensureUserExists(session)
-      console.log("[Secrets API] User verification result:", {
-        exists: userVerification.exists,
-        created: userVerification.created,
-        userId: session.user.id,
-      })
-    } catch (userError) {
-      console.error("[Secrets API] User verification failed:", userError)
-      return NextResponse.json(
-        { error: "Failed to verify user account" },
-        { status: 500 },
       )
     }
 
