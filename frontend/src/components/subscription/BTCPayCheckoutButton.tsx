@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { useCSRF } from "@/hooks/useCSRF"
 import { Subscription } from "@/lib/payment/interfaces/PaymentProvider"
 import { Bitcoin } from "lucide-react"
 import { useSession } from "next-auth/react"
@@ -23,6 +24,7 @@ export function BTCPayCheckoutButton({
   children,
   disabled,
 }: BTCPayCheckoutButtonProps) {
+  const { fetchWithCSRF } = useCSRF()
   const [loading, setLoading] = useState(false)
   const { data: session, status } = useSession()
   const checkingAuth = status === "loading"
@@ -47,7 +49,7 @@ export function BTCPayCheckoutButton({
         return
       }
 
-      const response = await fetch("/api/create-btcpay-checkout", {
+      const response = await fetchWithCSRF("/api/create-btcpay-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount, currency, mode, interval }),

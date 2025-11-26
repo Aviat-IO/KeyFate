@@ -1,16 +1,18 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { useCSRF } from "@/hooks/useCSRF"
 import { useState } from "react"
 
 export function BillingPortalButton() {
+  const { fetchWithCSRF } = useCSRF()
   const [loading, setLoading] = useState(false)
 
   const handlePortal = async () => {
     setLoading(true)
 
     try {
-      const response = await fetch("/api/create-portal-session", {
+      const response = await fetchWithCSRF("/api/create-portal-session", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

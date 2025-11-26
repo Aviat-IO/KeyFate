@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
+import { useCSRF } from "@/hooks/useCSRF"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { AlertCircle, Plus, Trash2 } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -86,6 +87,7 @@ export function EditSecretForm({
   isPaid = false,
 }: EditSecretFormProps) {
   const router = useRouter()
+  const { fetchWithCSRF } = useCSRF()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
@@ -107,7 +109,7 @@ export function EditSecretForm({
     setError(null)
 
     try {
-      const response = await fetch(`/api/secrets/${secretId}`, {
+      const response = await fetchWithCSRF(`/api/secrets/${secretId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
@@ -135,7 +137,7 @@ export function EditSecretForm({
     setError(null)
 
     try {
-      const response = await fetch(`/api/secrets/${secretId}`, {
+      const response = await fetchWithCSRF(`/api/secrets/${secretId}`, {
         method: "DELETE",
       })
 
@@ -193,7 +195,7 @@ export function EditSecretForm({
           {/* Recipients Section */}
           <div className="space-y-4 border-t pt-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-medium text-muted-foreground">
+              <h2 className="text-muted-foreground text-sm font-medium">
                 Recipients
               </h2>
               <Button
@@ -202,7 +204,7 @@ export function EditSecretForm({
                 size="sm"
                 onClick={() => append({ name: "", email: "", phone: "" })}
                 disabled={loading}
-                className="gap-1.5 h-8 text-xs"
+                className="h-8 gap-1.5 text-xs"
               >
                 <Plus className="h-3 w-3" />
                 Add Recipient
@@ -210,9 +212,12 @@ export function EditSecretForm({
             </div>
             <div className="space-y-3">
               {fields.map((field, index) => (
-                <div key={field.id} className="space-y-3 rounded-md border bg-muted/30 p-3">
+                <div
+                  key={field.id}
+                  className="bg-muted/30 space-y-3 rounded-md border p-3"
+                >
                   <div className="flex items-center justify-between">
-                    <div className="text-xs font-medium text-muted-foreground">
+                    <div className="text-muted-foreground text-xs font-medium">
                       Recipient {index + 1}
                     </div>
                     {fields.length > 1 && (
@@ -272,7 +277,9 @@ export function EditSecretForm({
                     name={`recipients.${index}.phone`}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs">Phone (optional)</FormLabel>
+                        <FormLabel className="text-xs">
+                          Phone (optional)
+                        </FormLabel>
                         <FormControl>
                           <Input
                             type="tel"
@@ -296,7 +303,7 @@ export function EditSecretForm({
 
           {/* Check-in Settings Section */}
           <div className="space-y-4 border-t pt-6">
-            <h2 className="text-sm font-medium text-muted-foreground">
+            <h2 className="text-muted-foreground text-sm font-medium">
               Check-in Settings
             </h2>
             <FormField
@@ -317,13 +324,9 @@ export function EditSecretForm({
                       />
                     ) : (
                       <Select
-                        onValueChange={(value) =>
-                          field.onChange(Number(value))
-                        }
+                        onValueChange={(value) => field.onChange(Number(value))}
                         defaultValue={
-                          field.value != null
-                            ? String(field.value)
-                            : undefined
+                          field.value != null ? String(field.value) : undefined
                         }
                         disabled={loading}
                       >
