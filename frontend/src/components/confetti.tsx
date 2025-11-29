@@ -8,7 +8,12 @@ export function Confetti({ trigger = false }: { trigger?: boolean }) {
     if (trigger) {
       const duration = 3 * 1000
       const animationEnd = Date.now() + duration
-      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 }
+      const defaults = {
+        startVelocity: 30,
+        spread: 360,
+        ticks: 60,
+        zIndex: 9999,
+      }
 
       const randomInRange = (min: number, max: number) => {
         return Math.random() * (max - min) + min
