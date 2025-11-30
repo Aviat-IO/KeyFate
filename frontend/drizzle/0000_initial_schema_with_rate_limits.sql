@@ -1,20 +1,20 @@
-CREATE TYPE "public"."audit_event_category" AS ENUM('secrets', 'authentication', 'subscriptions', 'settings', 'recipients');--> statement-breakpoint
-CREATE TYPE "public"."audit_event_type" AS ENUM('secret_created', 'secret_edited', 'secret_deleted', 'check_in', 'secret_triggered', 'recipient_added', 'recipient_removed', 'settings_changed', 'login', 'subscription_changed', 'data_export_requested', 'data_export_downloaded', 'account_deletion_requested', 'account_deletion_confirmed', 'account_deletion_cancelled');--> statement-breakpoint
-CREATE TYPE "public"."contact_method" AS ENUM('email', 'phone', 'both');--> statement-breakpoint
-CREATE TYPE "public"."deletion_request_status" AS ENUM('pending', 'confirmed', 'cancelled', 'completed');--> statement-breakpoint
-CREATE TYPE "public"."disclosure_status" AS ENUM('pending', 'sent', 'failed');--> statement-breakpoint
-CREATE TYPE "public"."email_failure_provider" AS ENUM('sendgrid', 'console-dev', 'resend');--> statement-breakpoint
-CREATE TYPE "public"."email_failure_type" AS ENUM('reminder', 'disclosure', 'admin_notification', 'verification');--> statement-breakpoint
-CREATE TYPE "public"."export_job_status" AS ENUM('pending', 'processing', 'completed', 'failed');--> statement-breakpoint
-CREATE TYPE "public"."payment_status" AS ENUM('pending', 'processing', 'succeeded', 'failed', 'cancelled', 'refunded');--> statement-breakpoint
-CREATE TYPE "public"."policy_document_type" AS ENUM('privacy_policy', 'terms_of_service');--> statement-breakpoint
-CREATE TYPE "public"."reminder_status" AS ENUM('pending', 'sent', 'failed', 'cancelled');--> statement-breakpoint
-CREATE TYPE "public"."reminder_type" AS ENUM('25_percent', '50_percent', '7_days', '3_days', '24_hours', '12_hours', '1_hour');--> statement-breakpoint
-CREATE TYPE "public"."secret_status" AS ENUM('active', 'paused', 'triggered', 'failed');--> statement-breakpoint
-CREATE TYPE "public"."subscription_status" AS ENUM('active', 'inactive', 'cancelled', 'trial', 'past_due');--> statement-breakpoint
-CREATE TYPE "public"."subscription_tier" AS ENUM('free', 'basic', 'pro', 'premium', 'enterprise');--> statement-breakpoint
-CREATE TYPE "public"."token_purpose" AS ENUM('email_verification', 'authentication');--> statement-breakpoint
-CREATE TYPE "public"."webhook_status" AS ENUM('received', 'processing', 'processed', 'failed', 'retrying');--> statement-breakpoint
+DO $$ BEGIN CREATE TYPE "public"."audit_event_category" AS ENUM('secrets', 'authentication', 'subscriptions', 'settings', 'recipients'); EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
+DO $$ BEGIN CREATE TYPE "public"."audit_event_type" AS ENUM('secret_created', 'secret_edited', 'secret_deleted', 'check_in', 'secret_triggered', 'recipient_added', 'recipient_removed', 'settings_changed', 'login', 'subscription_changed', 'data_export_requested', 'data_export_downloaded', 'account_deletion_requested', 'account_deletion_confirmed', 'account_deletion_cancelled'); EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
+DO $$ BEGIN CREATE TYPE "public"."contact_method" AS ENUM('email', 'phone', 'both'); EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
+DO $$ BEGIN CREATE TYPE "public"."deletion_request_status" AS ENUM('pending', 'confirmed', 'cancelled', 'completed'); EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
+DO $$ BEGIN CREATE TYPE "public"."disclosure_status" AS ENUM('pending', 'sent', 'failed'); EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
+DO $$ BEGIN CREATE TYPE "public"."email_failure_provider" AS ENUM('sendgrid', 'console-dev', 'resend'); EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
+DO $$ BEGIN CREATE TYPE "public"."email_failure_type" AS ENUM('reminder', 'disclosure', 'admin_notification', 'verification'); EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
+DO $$ BEGIN CREATE TYPE "public"."export_job_status" AS ENUM('pending', 'processing', 'completed', 'failed'); EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
+DO $$ BEGIN CREATE TYPE "public"."payment_status" AS ENUM('pending', 'processing', 'succeeded', 'failed', 'cancelled', 'refunded'); EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
+DO $$ BEGIN CREATE TYPE "public"."policy_document_type" AS ENUM('privacy_policy', 'terms_of_service'); EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
+DO $$ BEGIN CREATE TYPE "public"."reminder_status" AS ENUM('pending', 'sent', 'failed', 'cancelled'); EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
+DO $$ BEGIN CREATE TYPE "public"."reminder_type" AS ENUM('25_percent', '50_percent', '7_days', '3_days', '24_hours', '12_hours', '1_hour'); EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
+DO $$ BEGIN CREATE TYPE "public"."secret_status" AS ENUM('active', 'paused', 'triggered', 'failed'); EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
+DO $$ BEGIN CREATE TYPE "public"."subscription_status" AS ENUM('active', 'inactive', 'cancelled', 'trial', 'past_due'); EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
+DO $$ BEGIN CREATE TYPE "public"."subscription_tier" AS ENUM('free', 'basic', 'pro', 'premium', 'enterprise'); EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
+DO $$ BEGIN CREATE TYPE "public"."token_purpose" AS ENUM('email_verification', 'authentication'); EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
+DO $$ BEGIN CREATE TYPE "public"."webhook_status" AS ENUM('received', 'processing', 'processed', 'failed', 'retrying'); EXCEPTION WHEN duplicate_object THEN null; END $$;--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "account_deletion_requests" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" text NOT NULL,
