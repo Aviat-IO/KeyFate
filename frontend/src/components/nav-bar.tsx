@@ -16,7 +16,7 @@ import { useConfig } from "@/contexts/ConfigContext"
 import { cn } from "@/lib/utils"
 import { Crown, LogOut, Menu, Settings } from "lucide-react"
 import { signOut, useSession } from "next-auth/react"
-import { useTheme } from "next-themes"
+
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -26,7 +26,7 @@ export function NavBar() {
   const pathname = usePathname()
   const { data: session, status } = useSession()
   const { config } = useConfig()
-  const { resolvedTheme } = useTheme()
+
   const [userTier, setUserTier] = useState<"free" | "pro">("free")
   const [checkingSubscription, setCheckingSubscription] = useState(false)
   const [proModalOpen, setProModalOpen] = useState(false)
@@ -71,28 +71,38 @@ export function NavBar() {
               href={user ? "/dashboard" : "/"}
               className="flex items-center"
             >
+              {/* Mobile icons */}
               <Image
-                src={
-                  resolvedTheme === "dark"
-                    ? "/img/icon-dark.png"
-                    : "/img/icon-light.png"
-                }
+                src="/img/icon-light.png"
                 alt={config?.company || "KeyFate"}
                 width={40}
                 height={40}
-                className="h-10 w-10 sm:hidden"
+                className="block h-10 w-10 sm:hidden dark:hidden"
                 priority
               />
               <Image
-                src={
-                  resolvedTheme === "dark"
-                    ? "/img/logo-dark.png"
-                    : "/img/logo-light.png"
-                }
+                src="/img/icon-dark.png"
+                alt={config?.company || "KeyFate"}
+                width={40}
+                height={40}
+                className="hidden h-10 w-10 dark:block dark:sm:hidden"
+                priority
+              />
+              {/* Desktop logos */}
+              <Image
+                src="/img/logo-light.png"
                 alt={config?.company || "KeyFate"}
                 width={200}
                 height={40}
-                className="hidden h-10 w-auto sm:block"
+                className="hidden h-10 w-auto sm:block dark:sm:hidden"
+                priority
+              />
+              <Image
+                src="/img/logo-dark.png"
+                alt={config?.company || "KeyFate"}
+                width={200}
+                height={40}
+                className="hidden h-10 w-auto dark:sm:block"
                 priority
               />
             </Link>
@@ -106,7 +116,7 @@ export function NavBar() {
                         className={cn(
                           navigationMenuTriggerStyle(),
                           pathname === "/dashboard" &&
-                            "bg-accent text-accent-foreground"
+                            "bg-accent text-accent-foreground",
                         )}
                       >
                         Dashboard
@@ -122,7 +132,7 @@ export function NavBar() {
                         className={cn(
                           navigationMenuTriggerStyle(),
                           pathname === "/pricing" &&
-                            "bg-accent text-accent-foreground"
+                            "bg-accent text-accent-foreground",
                         )}
                       >
                         Pricing
@@ -141,7 +151,7 @@ export function NavBar() {
               asChild
               className={cn(
                 "hidden md:flex",
-                pathname === "/decrypt" && "bg-accent text-accent-foreground"
+                pathname === "/decrypt" && "bg-accent text-accent-foreground",
               )}
             >
               <Link href="/decrypt">Recover Secret</Link>
