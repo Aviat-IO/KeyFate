@@ -11,6 +11,17 @@ const storage = new Storage()
 const EXPORT_BUCKET = process.env.EXPORT_BUCKET || "keyfate-exports-dev"
 
 /**
+ * GET /api/cron/cleanup-exports
+ * Health check endpoint for monitoring
+ */
+export async function GET(request: NextRequest) {
+  if (!authorizeRequest(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  return NextResponse.json({ status: "ok", job: "cleanup-exports" })
+}
+
+/**
  * POST /api/cron/cleanup-exports
  * Clean up expired export files from storage and database
  */

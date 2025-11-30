@@ -462,6 +462,13 @@ async function fetchPendingReminders(
   return results
 }
 
+export async function GET(req: NextRequest) {
+  if (!authorizeRequest(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  return NextResponse.json({ status: "ok", job: "check-secrets" })
+}
+
 export async function POST(req: NextRequest) {
   if (!authorizeRequest(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
