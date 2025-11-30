@@ -9,6 +9,17 @@ export const dynamic = "force-dynamic"
 export const maxDuration = 300 // 5 minutes
 
 /**
+ * GET /api/cron/process-deletions
+ * Health check endpoint for monitoring
+ */
+export async function GET(request: NextRequest) {
+  if (!authorizeRequest(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  return NextResponse.json({ status: "ok", job: "process-deletions" })
+}
+
+/**
  * POST /api/cron/process-deletions
  * Execute account deletions that are past grace period
  */

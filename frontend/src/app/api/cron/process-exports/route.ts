@@ -13,6 +13,17 @@ export const dynamic = "force-dynamic"
 export const maxDuration = 300 // 5 minutes
 
 /**
+ * GET /api/cron/process-exports
+ * Health check endpoint for monitoring
+ */
+export async function GET(request: NextRequest) {
+  if (!authorizeRequest(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  return NextResponse.json({ status: "ok", job: "process-exports" })
+}
+
+/**
  * POST /api/cron/process-exports
  * Process pending data export jobs
  */

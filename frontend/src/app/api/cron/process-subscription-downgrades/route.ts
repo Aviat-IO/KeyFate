@@ -20,6 +20,16 @@ function authorize(req: NextRequest): boolean {
   return !!cronSecret && token === cronSecret
 }
 
+export async function GET(req: NextRequest) {
+  if (!authorize(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  return NextResponse.json({
+    status: "ok",
+    job: "process-subscription-downgrades",
+  })
+}
+
 export async function POST(req: NextRequest) {
   if (!authorize(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
