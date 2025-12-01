@@ -360,6 +360,7 @@ export async function POST(req: NextRequest) {
     const db = await getDatabase()
 
     const now = new Date()
+    const nowIso = now.toISOString()
 
     // Fetch overdue secrets that are either:
     // 1. First attempt (retryCount = 0 or lastRetryAt is null), OR
@@ -379,7 +380,7 @@ export async function POST(req: NextRequest) {
           sql`(
             ${secrets.lastRetryAt} IS NULL 
             OR ${secrets.retryCount} = 0
-            OR ${secrets.lastRetryAt} < ${now}::timestamp - (
+            OR ${secrets.lastRetryAt} < ${nowIso}::timestamp - (
               INTERVAL '1 minute' * ${CRON_CONFIG.RETRY_BACKOFF_BASE_MINUTES} * 
               POW(${CRON_CONFIG.RETRY_BACKOFF_EXPONENT}, ${secrets.retryCount})
             )
