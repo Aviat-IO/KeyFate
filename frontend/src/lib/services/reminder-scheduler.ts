@@ -62,14 +62,30 @@ export function getApplicableReminderTypes(
   const totalHours = checkInDays * 24
   const applicableTypes: ReminderType[] = []
 
+  // Add fixed-time reminders
   if (totalHours > 1) applicableTypes.push("1_hour")
   if (totalHours > 12) applicableTypes.push("12_hours")
   if (totalHours > 24) applicableTypes.push("24_hours")
   if (checkInDays > 3) applicableTypes.push("3_days")
   if (checkInDays > 7) applicableTypes.push("7_days")
 
-  applicableTypes.push("25_percent")
-  applicableTypes.push("50_percent")
+  // Calculate percentage-based reminder times in hours
+  const percent25Hours = checkInDays * 24 * 0.25
+  const percent50Hours = checkInDays * 24 * 0.5
+
+  // Only add percentage reminders if they don't overlap with fixed-time reminders
+  // Use a 1-hour threshold to avoid near-duplicate emails
+  const fixedHours = [1, 12, 24, 3 * 24, 7 * 24]
+
+  const overlaps25 = fixedHours.some(
+    (h) => Math.abs(percent25Hours - h) < 1 && totalHours > h,
+  )
+  const overlaps50 = fixedHours.some(
+    (h) => Math.abs(percent50Hours - h) < 1 && totalHours > h,
+  )
+
+  if (!overlaps25) applicableTypes.push("25_percent")
+  if (!overlaps50) applicableTypes.push("50_percent")
 
   return applicableTypes
 }
