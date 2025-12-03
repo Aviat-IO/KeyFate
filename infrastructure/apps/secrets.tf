@@ -93,5 +93,14 @@ module "frontend_secrets" {
         "roles/secretmanager.secretAccessor" = ["serviceAccount:${module.frontend_service_account.email}"]
       }
     }
+    turnstile-secret-key = {
+      # Remove regional location to use global automatic replication
+      versions = {
+        current = { enabled = true, data = var.turnstile_secret_key }
+      }
+      iam = {
+        "roles/secretmanager.secretAccessor" = ["serviceAccount:${module.frontend_service_account.email}"]
+      }
+    }
   }
 }

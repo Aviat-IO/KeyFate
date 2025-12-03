@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useState, useEffect, useRef } from "react"
 import { OTPInput } from "@/components/auth/otp-input"
+import { TurnstileWidget, TurnstileRef } from "@/components/auth/turnstile"
 
 type AuthStep = "email" | "otp"
 
@@ -16,10 +17,12 @@ export default function SignInPage() {
   const [errorMessage, setErrorMessage] = useState("")
   const [successMessage, setSuccessMessage] = useState("")
   const [resendCountdown, setResendCountdown] = useState(0)
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
   const urlError = searchParams.get("error")
   const emailInputRef = useRef<HTMLInputElement>(null)
+  const turnstileRef = useRef<TurnstileRef>(null)
 
   useEffect(() => {
     if (resendCountdown > 0) {
@@ -51,6 +54,7 @@ export default function SignInPage() {
         body: JSON.stringify({
           email: email.toLowerCase().trim(),
           acceptedPrivacyPolicy: true,
+          turnstileToken,
         }),
       })
 
@@ -140,7 +144,46 @@ export default function SignInPage() {
 
   const handleResendOTP = async () => {
     if (resendCountdown > 0) return
-    await handleRequestOTP(new Event("submit") as any)
+    // Reset Turnstile for fresh token
+    turnstileRef.current?.reset()
+    setTurnstileToken(null)
+    
+    // Directly call the OTP request logic without faking an event
+    setIsLoading(true)
+    setErrorMessage("")
+    setSuccessMessage("")
+
+    try {
+      const response = await fetch("/api/auth/request-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+          acceptedPrivacyPolicy: true,
+          turnstileToken: turnstileRef.current?.getToken() || null,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccessMessage(`Code sent to ${email}\nCheck your email`)
+        setResendCountdown(60)
+      } else if (response.status === 429) {
+        setErrorMessage(
+          data.resetAt
+            ? `Too many requests. Please try again in ${Math.ceil((new Date(data.resetAt).getTime() - Date.now()) / 60000)} minutes.`
+            : "Too many requests. Please try again later.",
+        )
+      } else {
+        setErrorMessage(data.error || "Failed to send code. Please try again.")
+      }
+    } catch (error) {
+      console.error("Resend OTP error:", error)
+      setErrorMessage("An unexpected error occurred. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleGoogleSignIn = async () => {
@@ -235,6 +278,13 @@ export default function SignInPage() {
                   disabled={isLoading}
                 />
               </div>
+
+              <TurnstileWidget
+                ref={turnstileRef}
+                onSuccess={setTurnstileToken}
+                onError={() => setTurnstileToken(null)}
+                onExpire={() => setTurnstileToken(null)}
+              />
 
               <button
                 type="submit"
