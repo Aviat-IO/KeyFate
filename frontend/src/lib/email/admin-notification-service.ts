@@ -63,6 +63,7 @@ export function calculateSeverity(data: {
 
 /**
  * Format notification email content
+ * Uses clean, professional styling consistent with other system emails
  */
 function formatNotificationContent(
   data: AdminNotificationData,
@@ -70,55 +71,78 @@ function formatNotificationContent(
 ): { subject: string; html: string; text: string } {
   const timestamp = data.timestamp || new Date()
   const retryCount = data.retryCount || 0
+  const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
 
   const subject = data.secretTitle
-    ? `[${severity.toUpperCase()}] Email Delivery Failure - ${data.secretTitle}`
-    : `[${severity.toUpperCase()}] Email Delivery Failure - ${data.emailType}`
+    ? `${companyName} Admin: Email delivery issue - ${data.secretTitle} [${severity}]`
+    : `${companyName} Admin: Email delivery issue - ${data.emailType} [${severity}]`
 
   const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: ${getSeverityColor(severity)}; border-bottom: 2px solid ${getSeverityColor(severity)}; padding-bottom: 10px;">
-        Email Delivery Failure - ${severity.toUpperCase()}
-      </h2>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Admin Alert</title>
+    </head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #374151; margin: 0; padding: 0; background-color: #f3f4f6;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f3f4f6;">
+        <tr>
+          <td align="center" style="padding: 20px;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <tr>
+                <td style="text-align: center; padding: 24px; border-bottom: 1px solid #e5e7eb;">
+                  <div style="font-size: 20px; font-weight: 600; color: #2563eb;">${companyName}</div>
+                  <h1 style="margin: 8px 0 0 0; font-size: 18px; color: #111827;">Email Delivery Issue</h1>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 24px;">
+                  <div style="background: #f9fafb; padding: 16px; border-radius: 6px; margin-bottom: 16px;">
+                    <p style="margin: 0 0 8px 0;"><strong>Severity:</strong> ${severity}</p>
+                    <p style="margin: 0 0 8px 0;"><strong>Type:</strong> ${data.emailType}</p>
+                    ${data.secretTitle ? `<p style="margin: 0 0 8px 0;"><strong>Secret:</strong> ${data.secretTitle}</p>` : ""}
+                    <p style="margin: 0 0 8px 0;"><strong>Recipient:</strong> ${data.recipient}</p>
+                    <p style="margin: 0 0 8px 0;"><strong>Retries:</strong> ${retryCount}</p>
+                    <p style="margin: 0;"><strong>Time:</strong> ${timestamp.toISOString()}</p>
+                  </div>
 
-      <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
-        <p style="margin: 5px 0;"><strong>Severity:</strong> ${severity.toUpperCase()}</p>
-        <p style="margin: 5px 0;"><strong>Email Type:</strong> ${data.emailType}</p>
-        ${data.secretTitle ? `<p style="margin: 5px 0;"><strong>Secret:</strong> ${data.secretTitle}</p>` : ""}
-        <p style="margin: 5px 0;"><strong>Recipient:</strong> ${data.recipient}</p>
-        <p style="margin: 5px 0;"><strong>Retry Count:</strong> ${retryCount}</p>
-        <p style="margin: 5px 0;"><strong>Timestamp:</strong> ${timestamp.toISOString()}</p>
-      </div>
+                  <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 12px 16px; border-radius: 4px; margin-bottom: 16px;">
+                    <p style="margin: 0 0 4px 0; font-weight: 600; color: #991b1b;">Error</p>
+                    <p style="margin: 0; font-family: monospace; font-size: 13px; color: #7f1d1d;">${data.errorMessage}</p>
+                  </div>
 
-      <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;">
-        <p style="margin: 0;"><strong>Error Message:</strong></p>
-        <p style="margin: 10px 0 0 0; font-family: monospace; color: #721c24;">${data.errorMessage}</p>
-      </div>
-
-      ${getSeverityGuidance(severity)}
-
-      <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px;">
-        <p>This is an automated alert from the Dead Man's Switch email monitoring system.</p>
-      </div>
-    </div>
+                  ${getSeverityGuidance(severity)}
+                </td>
+              </tr>
+              <tr>
+                <td style="text-align: center; font-size: 12px; color: #6b7280; padding: 16px 24px; border-top: 1px solid #e5e7eb;">
+                  <p style="margin: 0;">Automated alert from ${companyName} monitoring</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
   `
 
   const text = `
-Email Delivery Failure - ${severity.toUpperCase()}
+${companyName} Admin: Email Delivery Issue [${severity}]
 
-Severity: ${severity.toUpperCase()}
-Email Type: ${data.emailType}
+Severity: ${severity}
+Type: ${data.emailType}
 ${data.secretTitle ? `Secret: ${data.secretTitle}\n` : ""}Recipient: ${data.recipient}
-Retry Count: ${retryCount}
-Timestamp: ${timestamp.toISOString()}
+Retries: ${retryCount}
+Time: ${timestamp.toISOString()}
 
-Error Message:
-${data.errorMessage}
+Error: ${data.errorMessage}
 
 ${getSeverityGuidanceText(severity)}
 
 ---
-This is an automated alert from the Dead Man's Switch email monitoring system.
+Automated alert from ${companyName} monitoring
   `.trim()
 
   return { subject, html, text }
@@ -142,47 +166,48 @@ function getSeverityColor(severity: NotificationSeverity): string {
 
 /**
  * Get guidance HTML based on severity
+ * Uses softer, more professional styling
  */
 function getSeverityGuidance(severity: NotificationSeverity): string {
-  switch (severity) {
-    case "critical":
-      return `
-        <div style="background-color: #dc3545; color: #ffffff; padding: 15px; margin: 20px 0; border-radius: 6px;">
-          <p style="margin: 0; color: #ffffff;"><strong>CRITICAL ACTION REQUIRED</strong></p>
-          <p style="margin: 10px 0 0 0; color: #ffffff;">
-            A disclosure email has failed. The user's secret will not be delivered to the intended recipient.
-            Immediate investigation and manual intervention may be required.
-          </p>
-        </div>
-      `
-    case "high":
-      return `
-        <div style="background-color: #fd7e14; color: #ffffff; padding: 15px; margin: 20px 0; border-radius: 6px;">
-          <p style="margin: 0; color: #ffffff;"><strong>HIGH PRIORITY</strong></p>
-          <p style="margin: 10px 0 0 0; color: #ffffff;">
-            A reminder email has failed multiple times. Check email service configuration and user contact details.
-          </p>
-        </div>
-      `
-    case "medium":
-      return `
-        <div style="background-color: #17a2b8; color: #ffffff; padding: 15px; margin: 20px 0; border-radius: 6px;">
-          <p style="margin: 0; color: #ffffff;"><strong>MEDIUM PRIORITY</strong></p>
-          <p style="margin: 10px 0 0 0; color: #ffffff;">
-            A reminder email has failed. Monitor for additional failures. Automatic retries are in progress.
-          </p>
-        </div>
-      `
-    case "low":
-      return `
-        <div style="background-color: #28a745; color: #ffffff; padding: 15px; margin: 20px 0; border-radius: 6px;">
-          <p style="margin: 0; color: #ffffff;"><strong>LOW PRIORITY</strong></p>
-          <p style="margin: 10px 0 0 0; color: #ffffff;">
-            A verification or admin notification email has failed. No immediate action required.
-          </p>
-        </div>
-      `
+  const configs = {
+    critical: {
+      bg: "#fef2f2",
+      border: "#ef4444",
+      text: "#991b1b",
+      title: "Action needed",
+      message: "A disclosure email has failed. The recipient may not receive their secret. Please investigate promptly.",
+    },
+    high: {
+      bg: "#fff7ed",
+      border: "#f97316",
+      text: "#9a3412",
+      title: "High priority",
+      message: "A reminder email has failed multiple times. Please check email service configuration.",
+    },
+    medium: {
+      bg: "#f0f9ff",
+      border: "#3b82f6",
+      text: "#1e40af",
+      title: "Medium priority",
+      message: "A reminder email has failed. Automatic retries are in progress. Monitor for additional failures.",
+    },
+    low: {
+      bg: "#f0fdf4",
+      border: "#22c55e",
+      text: "#166534",
+      title: "Low priority",
+      message: "A verification or notification email has failed. No immediate action required.",
+    },
   }
+
+  const config = configs[severity]
+
+  return `
+    <div style="background: ${config.bg}; border-left: 4px solid ${config.border}; padding: 12px 16px; border-radius: 4px;">
+      <p style="margin: 0 0 4px 0; font-weight: 600; color: ${config.text};">${config.title}</p>
+      <p style="margin: 0; font-size: 14px; color: ${config.text};">${config.message}</p>
+    </div>
+  `
 }
 
 /**
@@ -191,13 +216,13 @@ function getSeverityGuidance(severity: NotificationSeverity): string {
 function getSeverityGuidanceText(severity: NotificationSeverity): string {
   switch (severity) {
     case "critical":
-      return "CRITICAL ACTION REQUIRED: A disclosure email has failed. The user's secret will not be delivered. Immediate investigation required."
+      return "Action needed: A disclosure email has failed. The recipient may not receive their secret. Please investigate promptly."
     case "high":
-      return "HIGH PRIORITY: A reminder email has failed multiple times. Check email service configuration."
+      return "High priority: A reminder email has failed multiple times. Please check email service configuration."
     case "medium":
-      return "MEDIUM PRIORITY: A reminder email has failed. Monitor for additional failures."
+      return "Medium priority: A reminder email has failed. Automatic retries are in progress."
     case "low":
-      return "LOW PRIORITY: A verification or admin notification email has failed. No immediate action required."
+      return "Low priority: A verification or notification email has failed. No immediate action required."
   }
 }
 

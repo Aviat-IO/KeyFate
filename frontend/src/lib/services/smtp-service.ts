@@ -1,4 +1,8 @@
 import nodemailer from "nodemailer"
+import { SENDGRID_UNSUBSCRIBE_GROUPS, type UnsubscribeGroup } from "@/lib/email/constants"
+
+// Re-export for backwards compatibility
+export { type UnsubscribeGroup } from "@/lib/email/constants"
 
 export interface EmailOptions {
   to: string
@@ -6,6 +10,7 @@ export interface EmailOptions {
   html: string
   text: string
   from?: string
+  unsubscribeGroup?: UnsubscribeGroup
 }
 
 export interface EmailResult {
@@ -41,17 +46,30 @@ class SMTPService {
     try {
       const transporter = await this.getTransporter()
 
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://keyfate.com"
+      const unsubscribeUrl = `${siteUrl}/settings/notifications`
+
       const mailOptions = {
         from:
           options.from ||
           process.env.SENDGRID_ADMIN_EMAIL ||
-          "alerts@keyfate.com",
+          "support@keyfate.com",
         to: options.to,
         subject: options.subject,
         html: options.html,
         text: options.text,
         headers: {
+          // List-Unsubscribe helps deliverability with Gmail/Outlook
+          "List-Unsubscribe": `<${unsubscribeUrl}>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
           "X-SMTPAPI": JSON.stringify({
+            // SendGrid ASM (Advanced Suppression Manager) for unsubscribe groups
+            ...(options.unsubscribeGroup && {
+              asm: {
+                group_id: SENDGRID_UNSUBSCRIBE_GROUPS[options.unsubscribeGroup],
+                groups_to_display: Object.values(SENDGRID_UNSUBSCRIBE_GROUPS),
+              },
+            }),
             tracking_settings: {
               click_tracking: {
                 enable: false,

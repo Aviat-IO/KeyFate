@@ -83,10 +83,12 @@ interface ValidationResult {
 /**
  * Base email template with consistent branding
  * Uses table-based layout for maximum email client compatibility
+ * Designed to avoid spam filters with clean, professional styling
  */
 export function renderBaseTemplate(data: BaseTemplateData): EmailTemplate {
   const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
   const currentYear = new Date().getFullYear()
+  const supportEmail = getSupportEmail()
 
   const html = `
 <!DOCTYPE html>
@@ -97,68 +99,65 @@ export function renderBaseTemplate(data: BaseTemplateData): EmailTemplate {
   <title>${data.title}</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       line-height: 1.6;
-      color: #333;
+      color: #374151;
       margin: 0;
       padding: 0;
-      background-color: #f9f9f9;
+      background-color: #f3f4f6;
     }
     .button {
       display: inline-block;
       padding: 12px 24px;
       background-color: #2563eb;
-      color: #ffffff;
+      color: #ffffff !important;
       text-decoration: none;
       border-radius: 6px;
-      font-weight: bold;
+      font-weight: 600;
       margin: 15px 0;
     }
-    .urgent {
-      background-color: #dc3545;
-      color: #ffffff;
-      border: 2px solid #dc3545;
+    .info-box {
+      background-color: #f0f9ff;
+      border-left: 4px solid #3b82f6;
       padding: 15px;
-      border-radius: 6px;
+      border-radius: 4px;
       margin: 15px 0;
     }
-    .warning {
-      background-color: #fff3cd;
-      border: 1px solid #ffeaa7;
+    .notice-box {
+      background-color: #fefce8;
+      border-left: 4px solid #eab308;
       padding: 15px;
-      border-radius: 6px;
+      border-radius: 4px;
       margin: 15px 0;
     }
   </style>
 </head>
 <body>
-  <!-- Wrapper table for centering and max-width constraint -->
   <!-- cspell:disable-next-line - cellspacing is valid HTML email attribute -->
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f9f9f9; margin: 0; padding: 0;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f3f4f6; margin: 0; padding: 0;">
     <tr>
       <td align="center" style="padding: 20px;">
-        <!-- Main content table with max-width -->
         <!-- cspell:disable-next-line - cellspacing is valid HTML email attribute -->
-        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
           <!-- Header -->
           <tr>
-            <td style="text-align: center; padding: 30px 30px 20px 30px; border-bottom: 2px solid #e0e0e0;">
-              <div style="font-size: 24px; font-weight: bold; color: #2563eb; margin-bottom: 10px;">${companyName}</div>
-              <h1 style="margin: 0; font-size: 28px; color: #333;">${data.title}</h1>
+            <td style="text-align: center; padding: 24px 24px 16px 24px; border-bottom: 1px solid #e5e7eb;">
+              <div style="font-size: 20px; font-weight: 600; color: #2563eb; margin-bottom: 8px;">${companyName}</div>
+              <h1 style="margin: 0; font-size: 22px; color: #111827; font-weight: 600;">${data.title}</h1>
             </td>
           </tr>
           <!-- Content -->
           <tr>
-            <td style="padding: 30px;">
+            <td style="padding: 24px;">
               ${data.content}
             </td>
           </tr>
           <!-- Footer -->
           <tr>
-            <td style="text-align: center; font-size: 12px; color: #666; padding: 20px 30px 30px 30px; border-top: 1px solid #e0e0e0;">
+            <td style="text-align: center; font-size: 12px; color: #6b7280; padding: 16px 24px 24px 24px; border-top: 1px solid #e5e7eb;">
               ${data.footerText || ""}
-              <p style="margin: 10px 0;">&copy; ${currentYear} ${companyName}. All rights reserved.</p>
-              <p style="margin: 10px 0;">This is an automated message. Please do not reply to this email.</p>
+              <p style="margin: 8px 0;">Questions? Contact us at <a href="mailto:${supportEmail}" style="color: #2563eb;">${supportEmail}</a></p>
+              <p style="margin: 8px 0; color: #9ca3af;">&copy; ${currentYear} ${companyName}. All rights reserved.</p>
             </td>
           </tr>
         </table>
@@ -178,8 +177,8 @@ ${data.content
 
 ${data.footerText || ""}
 
+Questions? Contact us at ${supportEmail}
 © ${currentYear} ${companyName}. All rights reserved.
-This is an automated message. Please do not reply to this email.
   `.trim()
 
   return {
@@ -197,38 +196,36 @@ export function renderVerificationTemplate(
 ): EmailTemplate {
   const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
   const userName = data.userName || "there"
-  const supportEmail = data.supportEmail || getSupportEmail()
 
   const content = `
-    <p>Welcome ${userName}!</p>
-    <p>Please click the button below to verify your email address and complete your account setup:</p>
+    <p>Hi ${userName},</p>
+    
+    <p>Thanks for signing up for ${companyName}. Please verify your email address to complete your account setup.</p>
 
-    <div style="text-align: center; margin: 30px 0;">
+    <div style="text-align: center; margin: 24px 0;">
       <a href="${data.verificationUrl}" class="button" style="color: #ffffff; text-decoration: none;">Verify Email Address</a>
     </div>
 
-    <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
-    <p style="word-break: break-all; background: #f5f5f5; padding: 10px; border-radius: 4px;">
-      ${data.verificationUrl}
-    </p>
-
-    <div class="warning">
-      <p><strong>This verification link expires in ${data.expirationHours} hours.</strong></p>
+    <div class="info-box">
+      <p style="margin: 0; color: #1e40af;"><strong>Note:</strong> This link expires in ${data.expirationHours} hours.</p>
     </div>
 
-    <p>If you didn't create an account with ${companyName}, you can safely ignore this email.</p>
+    <p style="font-size: 13px; color: #6b7280;">
+      Or copy this link: <a href="${data.verificationUrl}" style="color: #2563eb; word-break: break-all;">${data.verificationUrl}</a>
+    </p>
 
-    <p>Need help? Contact us at <a href="mailto:${supportEmail}">${supportEmail}</a></p>
+    <p style="font-size: 13px; color: #6b7280; margin-top: 24px;">
+      If you didn't create an account with ${companyName}, you can safely ignore this email.
+    </p>
   `
 
   const baseTemplate = renderBaseTemplate({
-    title: `Verify your email address`,
+    title: "Verify Your Email",
     content,
-    footerText: `If you have any questions, please contact us at ${supportEmail}`,
   })
 
   return {
-    subject: `Verify your email address`,
+    subject: `${companyName}: Please verify your email address`,
     html: baseTemplate.html,
     text: baseTemplate.text,
   }
@@ -268,45 +265,41 @@ function getReminderTypeText(
 export function renderReminderTemplate(
   data: ReminderTemplateData,
 ): EmailTemplate {
+  // Use softer, less spam-triggering labels and colors
   const urgencyConfig = {
-    low: { bgColor: "#2563eb", textColor: "#ffffff", label: "Scheduled" },
-    medium: { bgColor: "#2563eb", textColor: "#ffffff", label: "Important" },
-    high: { bgColor: "#dc3545", textColor: "#ffffff", label: "URGENT" },
-    critical: { bgColor: "#dc3545", textColor: "#ffffff", label: "CRITICAL" },
+    low: { bgColor: "#f0f9ff", textColor: "#1e40af", borderColor: "#3b82f6", label: "Reminder" },
+    medium: { bgColor: "#f0f9ff", textColor: "#1e40af", borderColor: "#3b82f6", label: "Reminder" },
+    high: { bgColor: "#fef3c7", textColor: "#92400e", borderColor: "#f59e0b", label: "Action needed" },
+    critical: { bgColor: "#fef2f2", textColor: "#991b1b", borderColor: "#ef4444", label: "Action needed" },
   }
 
   const urgency = urgencyConfig[data.urgencyLevel || "medium"]
   const timeText = formatTimeRemaining(data.daysRemaining)
   const reminderTypeText = getReminderTypeText(data.reminderType)
 
-  const subject = `${urgency.label}: Check-in required within ${timeText} - ${data.secretTitle}`
+  // Avoid spam trigger words in subject line
+  const subject = `KeyFate: Check-in for "${data.secretTitle}" - ${timeText} remaining`
 
   const content = `
-    <div style="background-color: ${urgency.bgColor}; color: ${urgency.textColor}; padding: 20px; border-radius: 8px; margin: 20px 0;">
-      <h2 style="margin: 0 0 15px 0; color: ${urgency.textColor};">Check-in Reminder</h2>
-      <p style="margin: 0 0 10px 0; font-size: 16px; font-weight: bold; color: ${urgency.textColor};">
-        You need to check in for "${data.secretTitle}" within ${timeText}
-      </p>
-      ${
-        data.urgencyLevel === "critical" || data.urgencyLevel === "high"
-          ? `
-      <p style="margin: 10px 0 0 0; font-size: 15px; color: ${urgency.textColor};"><strong>Time is running out!</strong></p>
-      <p style="margin: 5px 0 0 0; color: ${urgency.textColor};">Please check in immediately to prevent automatic disclosure.</p>
-      `
-          : ""
-      }
-    </div>
-
     <p>Hi ${data.userName},</p>
 
-    <p>This is a ${urgency.label.toLowerCase()} reminder that you need to check in for your secret:</p>
+    <p>This is a scheduled reminder for your KeyFate secret.</p>
+
+    <div style="background: ${urgency.bgColor}; border-left: 4px solid ${urgency.borderColor}; padding: 15px; margin: 20px 0;">
+      <p style="margin: 0 0 10px 0; color: ${urgency.textColor}; font-weight: 600;">
+        ${urgency.label}: Check-in required
+      </p>
+      <p style="margin: 0; color: ${urgency.textColor};">
+        Your secret "${data.secretTitle}" requires a check-in within <strong>${timeText}</strong>.
+      </p>
+    </div>
 
     <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin: 20px 0;">
-      <h3 style="margin: 0 0 10px 0;">${data.secretTitle}</h3>
+      <p style="margin: 0 0 8px 0;"><strong>Secret:</strong> ${data.secretTitle}</p>
       <p style="margin: 0;"><strong>Time remaining:</strong> ${timeText}</p>${
         reminderTypeText
           ? `
-      <p style="margin: 5px 0 0 0; font-size: 13px; color: #666;">Reminder: ${reminderTypeText}</p>`
+      <p style="margin: 8px 0 0 0; font-size: 13px; color: #666;">Reminder type: ${reminderTypeText}</p>`
           : ""
       }
     </div>
@@ -315,12 +308,11 @@ export function renderReminderTemplate(
       <a href="${data.checkInUrl}" class="button" style="color: #ffffff;">Check In Now</a>
     </div>
 
-    <p>If you don't check in on time, your secret will be disclosed to your designated contacts as scheduled.</p>
-
-    <p>You can also copy and paste this link:</p>
-    <p style="word-break: break-all; background: #f5f5f5; padding: 10px; border-radius: 4px;">
-      ${data.checkInUrl}
+    <p style="color: #666; font-size: 14px;">
+      If you don't check in before the deadline, your secret will be shared with your designated contacts as configured.
     </p>
+
+    <p style="font-size: 13px; color: #888;">Direct link: <a href="${data.checkInUrl}" style="color: #2563eb;">${data.checkInUrl}</a></p>
   `
 
   const baseTemplate = renderBaseTemplate({
@@ -342,69 +334,60 @@ export function renderReminderTemplate(
 export function renderDisclosureTemplate(
   data: DisclosureTemplateData,
 ): EmailTemplate {
-  const supportEmail = getSupportEmail()
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://keyfate.com"
   const decryptUrl = `${siteUrl}/decrypt`
   const lastSeenText = data.senderLastSeen
     ? data.senderLastSeen.toLocaleDateString()
-    : "some time ago"
+    : "recently"
 
   const reasonText =
     data.disclosureReason === "manual"
-      ? `${data.senderName} has manually shared this information with you.`
-      : `${data.senderName} has not checked in as scheduled (last seen: ${lastSeenText}).`
+      ? `${data.senderName} has chosen to share this information with you.`
+      : `${data.senderName} has not checked in as scheduled (last activity: ${lastSeenText}).`
 
-  const subject = `Confidential Message from ${data.senderName} - ${data.secretTitle}`
+  const subject = `KeyFate: Message from ${data.senderName} - ${data.secretTitle}`
 
   const content = `
-    <div style="background-color: #fff5f5; border-left: 4px solid #dc3545; padding: 20px; margin: 20px 0;">
-      <h2 style="margin: 0 0 10px 0; color: #dc3545;">Confidential Information</h2>
-      <p style="margin: 0;">This email contains a secret share from ${data.senderName}.</p>
-    </div>
-
     <p>Dear ${data.contactName},</p>
 
-    <p>KeyFate is a secure dead man's switch platform that helps people share sensitive information with trusted recipients in case of emergency. ${data.senderName} trusted you with this confidential information.</p>
+    <p>${data.senderName} has entrusted you with confidential information through KeyFate, a secure information sharing platform.</p>
 
-    <p>${reasonText}</p>
+    <div class="info-box">
+      <p style="margin: 0; color: #1e40af;">${reasonText}</p>
+    </div>
 
-    <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin: 20px 0;">
-      <p style="margin: 0 0 10px 0;"><strong>Secret:</strong> ${data.secretTitle}</p>
+    <div style="background: #f9fafb; padding: 16px; border-radius: 6px; margin: 20px 0;">
+      <p style="margin: 0 0 8px 0;"><strong>Title:</strong> ${data.secretTitle}</p>
       <p style="margin: 0;"><strong>From:</strong> ${data.senderName}</p>
     </div>
 
-    <div style="background: white; border: 2px solid #2563eb; padding: 20px; border-radius: 6px; margin: 20px 0;">
-      <h3 style="margin: 0 0 15px 0; color: #2563eb;">Your Secret Share</h3>
-      <p style="margin: 0 0 15px 0;">This is the <strong>second share</strong> you need to reconstruct the secret.</p>
-      <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; word-break: break-word;">
+    <div style="background: #ffffff; border: 1px solid #e5e7eb; padding: 20px; border-radius: 6px; margin: 20px 0;">
+      <h3 style="margin: 0 0 12px 0; color: #374151; font-size: 16px;">Your Secret Share</h3>
+      <p style="margin: 0 0 12px 0; font-size: 14px; color: #6b7280;">This is the second share needed to reconstruct the complete message.</p>
+      <div style="background: #f3f4f6; padding: 12px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; white-space: pre-wrap; word-break: break-word; color: #374151;">
 ${data.secretContent}
       </div>
     </div>
 
-    <div style="background: #e8f4f8; border-left: 4px solid #2563eb; padding: 15px; margin: 20px 0;">
-      <h4 style="margin: 0 0 10px 0; color: #2563eb;">How to Reconstruct the Secret</h4>
-      <ol style="margin: 10px 0; padding-left: 20px;">
-        <li>You should have already received the <strong>first share</strong> from ${data.senderName}${data.secretCreatedAt ? ` (sent approximately ${data.secretCreatedAt.toLocaleDateString()})` : ""}</li>
-        <li>Copy the share above (the second share)</li>
-        <li>Visit <a href="${decryptUrl}" style="color: #2563eb;">${decryptUrl}</a> and combine both shares using our decryption tool</li>
-        <li>You need 2 shares total to reconstruct the complete secret</li>
+    <div class="info-box">
+      <h4 style="margin: 0 0 8px 0; color: #1e40af; font-size: 14px;">How to Reconstruct</h4>
+      <ol style="margin: 8px 0 0 0; padding-left: 20px; font-size: 14px; color: #374151;">
+        <li>Locate the first share from ${data.senderName}${data.secretCreatedAt ? ` (shared around ${data.secretCreatedAt.toLocaleDateString()})` : ""}</li>
+        <li>Copy the share above</li>
+        <li>Visit <a href="${decryptUrl}" style="color: #2563eb;">${decryptUrl}</a> to combine both shares</li>
       </ol>
     </div>
 
-    <div style="background-color: #fff3cd; padding: 15px; border-radius: 6px; margin: 15px 0;">
-      <p style="margin: 0 0 5px 0; font-weight: bold;">Security Reminder</p>
-      <ul style="margin: 5px 0 0 0; padding-left: 20px;">
-        <li>Store both shares securely</li>
-        <li>Do not share with unauthorized persons</li>
-        <li>Consider keeping an offline backup</li>
-      </ul>
+    <div class="notice-box">
+      <p style="margin: 0; font-size: 13px; color: #92400e;">
+        <strong>Please keep this information secure.</strong> Store both shares safely and do not share with unauthorized parties.
+      </p>
     </div>
   `
 
   const baseTemplate = renderBaseTemplate({
-    title: "Confidential Information Disclosure",
+    title: "Confidential Message",
     content,
-    footerText: `Need help? Contact us at ${supportEmail}`,
   })
 
   return {
@@ -420,43 +403,36 @@ ${data.secretContent}
 export function renderOTPTemplate(data: OTPTemplateData): EmailTemplate {
   const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
   const userName = data.userName || "there"
-  const supportEmail = data.supportEmail || getSupportEmail()
 
   const content = `
     <p>Hi ${userName},</p>
-    <p>Your verification code for signing in to ${companyName} is:</p>
+    
+    <p>Here's your sign-in code for ${companyName}:</p>
 
-    <div style="text-align: center; margin: 30px 0;">
-      <div style="display: inline-block; font-size: 48px; font-weight: bold; letter-spacing: 8px; color: #2563eb; background: #f0f7ff; padding: 20px 30px; border-radius: 8px; border: 2px solid #2563eb;">
+    <div style="text-align: center; margin: 24px 0;">
+      <div style="display: inline-block; font-size: 32px; font-weight: 700; letter-spacing: 6px; color: #1e40af; background: #f0f9ff; padding: 16px 24px; border-radius: 8px; border: 1px solid #bfdbfe;">
         ${data.code}
       </div>
     </div>
 
-    <div class="warning">
-      <p><strong>This code expires in ${data.expirationMinutes} minutes.</strong></p>
-      <p>For security, this code can only be used once.</p>
+    <div class="info-box">
+      <p style="margin: 0; font-size: 14px; color: #1e40af;">
+        This code expires in <strong>${data.expirationMinutes} minutes</strong> and can only be used once.
+      </p>
     </div>
 
-    <div style="background-color: #fff3cd; padding: 15px; border-radius: 6px; margin: 15px 0;">
-      <p style="margin: 0 0 5px 0; font-weight: bold;">Security Notice</p>
-      <ul style="margin: 5px 0 0 0; padding-left: 20px;">
-        <li>Never share this code with anyone</li>
-        <li>KeyFate staff will never ask you for this code</li>
-        <li>If you didn't request this code, please ignore this email</li>
-      </ul>
-    </div>
-
-    <p style="font-size: 12px; color: #666; margin-top: 30px;">Having trouble signing in? Contact us at <a href="mailto:${supportEmail}">${supportEmail}</a></p>
+    <p style="font-size: 13px; color: #6b7280; margin-top: 20px;">
+      If you didn't request this code, you can safely ignore this email. Your account is secure.
+    </p>
   `
 
   const baseTemplate = renderBaseTemplate({
-    title: `Your sign-in code`,
+    title: "Your Sign-in Code",
     content,
-    footerText: `If you didn't request this code, you can safely ignore this email.`,
   })
 
   return {
-    subject: `Your ${companyName} sign-in code: ${data.code}`,
+    subject: `${companyName}: Your sign-in code is ${data.code}`,
     html: baseTemplate.html,
     text: baseTemplate.text,
   }
@@ -470,42 +446,38 @@ export function renderPasswordResetTemplate(
 ): EmailTemplate {
   const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
   const userName = data.userName || "there"
-  const supportEmail = data.supportEmail || getSupportEmail()
 
   const content = `
     <p>Hi ${userName},</p>
-    <p>We received a request to reset your password. Click the button below to create a new password:</p>
+    
+    <p>We received a request to reset your ${companyName} password. Click the button below to create a new password:</p>
 
-    <div style="text-align: center; margin: 30px 0;">
+    <div style="text-align: center; margin: 24px 0;">
       <a href="${data.resetUrl}" class="button" style="color: #ffffff; text-decoration: none;">Reset Password</a>
     </div>
 
-    <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
-    <p style="word-break: break-all; background: #f5f5f5; padding: 10px; border-radius: 4px;">
-      ${data.resetUrl}
+    <div class="info-box">
+      <p style="margin: 0; font-size: 14px; color: #1e40af;">
+        This link expires in <strong>1 hour</strong> and can only be used once.
+      </p>
+    </div>
+
+    <p style="font-size: 13px; color: #6b7280;">
+      Or copy this link: <a href="${data.resetUrl}" style="color: #2563eb; word-break: break-all;">${data.resetUrl}</a>
     </p>
 
-    <div class="warning">
-      <p><strong>This reset link expires in 1 hour.</strong></p>
-      <p>For security, this link can only be used once.</p>
-    </div>
-
-    <div style="background-color: #fff3cd; padding: 15px; border-radius: 6px; margin: 15px 0;">
-      <p style="margin: 0 0 5px 0; font-weight: bold;">Security Notice</p>
-      <p style="margin: 5px 0;">If you didn't request a password reset, you can safely ignore this email. Your password will not be changed.</p>
-    </div>
-
-    <p>Need help? Contact us at <a href="mailto:${supportEmail}">${supportEmail}</a></p>
+    <p style="font-size: 13px; color: #6b7280; margin-top: 20px;">
+      If you didn't request this password reset, you can safely ignore this email. Your password will remain unchanged.
+    </p>
   `
 
   const baseTemplate = renderBaseTemplate({
-    title: `Reset your password`,
+    title: "Reset Your Password",
     content,
-    footerText: `If you have any questions, please contact us at ${supportEmail}`,
   })
 
   return {
-    subject: `Reset your password`,
+    subject: `${companyName}: Reset your password`,
     html: baseTemplate.html,
     text: baseTemplate.text,
   }

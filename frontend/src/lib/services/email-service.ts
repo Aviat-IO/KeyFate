@@ -2,7 +2,7 @@ import { getDatabase } from "@/lib/db/drizzle"
 import { users } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { emailTemplates } from "./email-templates"
-import { smtpService } from "./smtp-service"
+import { smtpService, type UnsubscribeGroup } from "./smtp-service"
 
 export interface SubscriptionConfirmationData {
   provider: "stripe" | "btcpay"
@@ -66,7 +66,7 @@ class EmailService {
         nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
       })
 
-      await this.sendEmailWithRetry(user.email, template)
+      await this.sendEmailWithRetry(user.email, template, "BILLING_SUBSCRIPTION")
     } catch (error) {
       console.error("Failed to send subscription confirmation email:", error)
       await this.logEmailFailure(userId, "subscription_confirmation", error)
@@ -90,7 +90,7 @@ class EmailService {
         nextRetry: data.nextRetry,
       })
 
-      await this.sendEmailWithRetry(user.email, template)
+      await this.sendEmailWithRetry(user.email, template, "BILLING_SUBSCRIPTION")
     } catch (error) {
       console.error("Failed to send payment failed notification:", error)
       await this.logEmailFailure(userId, "payment_failed", error)
@@ -111,7 +111,7 @@ class EmailService {
         userName: user.name || "User",
       })
 
-      await this.sendEmailWithRetry(user.email, template)
+      await this.sendEmailWithRetry(user.email, template, "BILLING_SUBSCRIPTION")
     } catch (error) {
       console.error(
         "Failed to send subscription cancelled notification:",
@@ -135,7 +135,7 @@ class EmailService {
         trialEndDate: data.trialEndDate,
       })
 
-      await this.sendEmailWithRetry(user.email, template)
+      await this.sendEmailWithRetry(user.email, template, "BILLING_SUBSCRIPTION")
     } catch (error) {
       console.error("Failed to send trial will end notification:", error)
       await this.logEmailFailure(userId, "trial_will_end", error)
@@ -164,7 +164,7 @@ class EmailService {
         transactionId: data.transactionId,
       })
 
-      await this.sendEmailWithRetry(user.email, template)
+      await this.sendEmailWithRetry(user.email, template, "BILLING_SUBSCRIPTION")
     } catch (error) {
       console.error("Failed to send Bitcoin payment confirmation:", error)
       await this.logEmailFailure(userId, "bitcoin_payment_confirmation", error)
@@ -193,6 +193,7 @@ class EmailService {
   private async sendEmailWithRetry(
     to: string,
     template: { subject: string; html: string; text: string },
+    unsubscribeGroup?: UnsubscribeGroup,
   ) {
     let lastError: Error | null = null
 
@@ -203,6 +204,7 @@ class EmailService {
           subject: template.subject,
           html: template.html,
           text: template.text,
+          unsubscribeGroup,
         })
 
         if (result.success) {

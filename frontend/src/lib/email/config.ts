@@ -204,14 +204,14 @@ export const EMAIL_TEMPLATE_CONFIG = {
   reminder: {
     subjectPrefix: {
       low: "Reminder",
-      medium: "Important",
-      high: "URGENT",
-      critical: "CRITICAL",
+      medium: "Reminder",
+      high: "Action needed",
+      critical: "Action needed",
     },
     priority: {
       low: "normal" as const,
       medium: "normal" as const,
-      high: "high" as const,
+      high: "normal" as const,
       critical: "high" as const,
     },
   },

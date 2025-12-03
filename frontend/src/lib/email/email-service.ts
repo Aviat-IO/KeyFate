@@ -7,6 +7,10 @@
 
 import nodemailer from "nodemailer"
 import { CircuitBreaker } from "@/lib/circuit-breaker"
+import { SENDGRID_UNSUBSCRIBE_GROUPS, type UnsubscribeGroup } from "./constants"
+
+// Re-export for backwards compatibility
+export { SENDGRID_UNSUBSCRIBE_GROUPS, type UnsubscribeGroup } from "./constants"
 
 // Email service configuration
 interface EmailConfig {
@@ -28,6 +32,7 @@ interface EmailData {
   priority?: "high" | "normal" | "low"
   headers?: Record<string, string>
   trackDelivery?: boolean
+  unsubscribeGroup?: UnsubscribeGroup
 }
 
 // Email sending options
@@ -244,6 +249,9 @@ ${emailData.text || "HTML content provided"}
             throw new Error("Failed to create email transporter")
           }
 
+          const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://keyfate.com"
+          const unsubscribeUrl = `${siteUrl}/settings/notifications`
+
           const mailOptions = {
             to: emailData.to,
             subject: emailData.subject,
@@ -255,7 +263,17 @@ ${emailData.text || "HTML content provided"}
             replyTo: emailData.replyTo,
             headers: {
               ...emailData.headers,
+              // List-Unsubscribe helps deliverability with Gmail/Outlook
+              "List-Unsubscribe": `<${unsubscribeUrl}>`,
+              "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
               "X-SMTPAPI": JSON.stringify({
+                // SendGrid ASM (Advanced Suppression Manager) for unsubscribe groups
+                ...(emailData.unsubscribeGroup && {
+                  asm: {
+                    group_id: SENDGRID_UNSUBSCRIBE_GROUPS[emailData.unsubscribeGroup],
+                    groups_to_display: Object.values(SENDGRID_UNSUBSCRIBE_GROUPS),
+                  },
+                }),
                 tracking_settings: {
                   click_tracking: {
                     enable: false,
@@ -355,6 +373,7 @@ export async function sendOTPEmail(
       text: template.text,
       priority: "high",
       trackDelivery: true,
+      unsubscribeGroup: "ACCOUNT_NOTIFICATIONS",
     },
     { maxRetries, retryDelay },
   )
@@ -399,6 +418,7 @@ export async function sendVerificationEmail(
     html: template.html,
     text: template.text,
     trackDelivery: true,
+    unsubscribeGroup: "ACCOUNT_NOTIFICATIONS",
   })
 
   if (result.success) {
@@ -450,6 +470,7 @@ export async function sendReminderEmail(reminderData: {
         ? "high"
         : "normal",
     trackDelivery: true,
+    unsubscribeGroup: "CHECK_IN_REMINDERS",
   })
 
   if (result.success) {
@@ -492,6 +513,7 @@ export async function sendSecretDisclosureEmail(disclosureData: {
       Importance: "high",
     },
     trackDelivery: true,
+    unsubscribeGroup: "ACCOUNT_NOTIFICATIONS",
   })
 
   if (result.success) {
