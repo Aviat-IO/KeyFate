@@ -1,11 +1,12 @@
 import { checkOTPRateLimit, createOTPToken } from "@/lib/auth/otp"
 import { sendOTPEmail } from "@/lib/email/email-service"
+import { verifyTurnstileToken } from "@/components/auth/turnstile"
 import { NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, acceptedPrivacyPolicy } = body
+    const { email, acceptedPrivacyPolicy, turnstileToken } = body
 
     if (!email || typeof email !== "string") {
       return NextResponse.json({ error: "Email is required" }, { status: 400 })
@@ -20,6 +21,25 @@ export async function POST(request: NextRequest) {
         },
         { status: 400 },
       )
+    }
+
+    // Verify Turnstile token (bot protection)
+    // Only enforce in production when TURNSTILE_SECRET_KEY is set
+    if (process.env.TURNSTILE_SECRET_KEY) {
+      if (!turnstileToken) {
+        return NextResponse.json(
+          { error: "Please complete the security check" },
+          { status: 400 },
+        )
+      }
+
+      const isValidToken = await verifyTurnstileToken(turnstileToken)
+      if (!isValidToken) {
+        return NextResponse.json(
+          { error: "Security verification failed. Please try again." },
+          { status: 400 },
+        )
+      }
     }
 
     const normalizedEmail = email.toLowerCase().trim()

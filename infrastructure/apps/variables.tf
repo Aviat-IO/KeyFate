@@ -240,3 +240,16 @@ variable "cloudsql_authorized_networks" {
   default     = {}
 }
 
+variable "turnstile_site_key" {
+  description = "Cloudflare Turnstile site key (public)"
+  type        = string
+  default     = ""
+}
+
+variable "turnstile_secret_key" {
+  description = "Cloudflare Turnstile secret key (private)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+

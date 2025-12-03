@@ -169,6 +169,8 @@ module "cloud_run" {
         # SendGrid configuration (non-sensitive)
         SENDGRID_SENDER_NAME = var.sendgrid_sender_name
         SENDGRID_ADMIN_EMAIL = var.sendgrid_admin_email
+        # Cloudflare Turnstile (bot protection) - public key only
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY = var.turnstile_site_key
         # Force revision update when code changes by including hash as env var
         DEPLOYMENT_HASH = local.image_tag
         # Database connection timeout and pooling settings - optimized for Unix socket connection
@@ -227,6 +229,10 @@ module "cloud_run" {
         }
         SENDGRID_API_KEY = {
           secret  = "projects/${module.project.number}/secrets/sendgrid-api-key"
+          version = "latest"
+        }
+        TURNSTILE_SECRET_KEY = {
+          secret  = "projects/${module.project.number}/secrets/turnstile-secret-key"
           version = "latest"
         }
       }
