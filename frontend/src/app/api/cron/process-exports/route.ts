@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
           // Send email notification
           await sendEmail({
             to: user.email,
-            subject: "Your Data Export is Ready",
+            subject: "KeyFate: Your Data Export is Ready",
             html: `
               <h2>Your Data Export is Ready</h2>
               <p>Your data export has been completed and is ready for download.</p>
@@ -111,6 +111,7 @@ export async function POST(request: NextRequest) {
               <p><strong>Link expires:</strong> ${job.expiresAt.toLocaleDateString()}</p>
               <p>For security reasons, this link will expire in 24 hours and can only be downloaded 3 times.</p>
             `,
+            unsubscribeGroup: "ACCOUNT_NOTIFICATIONS",
           })
         }
 

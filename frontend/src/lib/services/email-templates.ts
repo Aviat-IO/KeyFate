@@ -51,7 +51,87 @@ interface AdminAlertParams {
   timestamp: Date
 }
 
+/**
+ * Shared base styles for consistent email theming
+ * Designed to be spam-filter friendly with clean, professional styling
+ */
+const BASE_STYLES = `
+  body { 
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; 
+    line-height: 1.6; 
+    color: #374151; 
+    margin: 0;
+    padding: 0;
+    background-color: #f3f4f6;
+  }
+  .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+  .email-wrapper { background-color: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .header { background: #2563eb; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+  .header h1 { margin: 0; font-size: 22px; font-weight: 600; }
+  .content { padding: 24px; }
+  .footer { padding: 16px 24px; text-align: center; color: #6b7280; font-size: 12px; border-top: 1px solid #e5e7eb; }
+  .button {
+    display: inline-block;
+    background: #2563eb;
+    color: white !important;
+    padding: 12px 24px;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 600;
+    margin: 16px 0;
+  }
+  .info-box { 
+    background: #f0f9ff; 
+    border-left: 4px solid #3b82f6; 
+    padding: 12px 16px; 
+    border-radius: 4px; 
+    margin: 16px 0; 
+  }
+  .notice-box { 
+    background: #fefce8; 
+    border-left: 4px solid #eab308; 
+    padding: 12px 16px; 
+    border-radius: 4px; 
+    margin: 16px 0; 
+  }
+  .details { background: #f9fafb; padding: 16px; border-radius: 6px; margin: 16px 0; }
+`
+
 class EmailTemplates {
+  private renderWrapper(title: string, content: string): string {
+    const companyName = this.getCompanyName()
+    const supportEmail = this.getSupportEmail()
+    const currentYear = new Date().getFullYear()
+
+    return `
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${title}</title>
+          <style>${BASE_STYLES}</style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="email-wrapper">
+              <div class="header">
+                <h1>${title}</h1>
+              </div>
+              <div class="content">
+                ${content}
+              </div>
+              <div class="footer">
+                <p>Questions? Contact us at <a href="mailto:${supportEmail}" style="color: #2563eb;">${supportEmail}</a></p>
+                <p style="color: #9ca3af;">&copy; ${currentYear} ${companyName}. All rights reserved.</p>
+              </div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `
+  }
+
   subscriptionConfirmation(
     params: SubscriptionConfirmationParams,
   ): EmailTemplate {
@@ -60,101 +140,51 @@ class EmailTemplates {
     const providerName =
       params.provider === "stripe" ? "Credit Card" : "Bitcoin"
     const companyName = this.getCompanyName()
-    const supportEmail =
-      process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@keyfate.com"
 
-    const subject = `Subscription Confirmed - ${companyName}`
+    const subject = `${companyName}: Your subscription is confirmed`
 
-    const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${subject}</title>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: hsl(13.2143 73.0435% 54.9020%); color: white; padding: 20px; text-align: center; }
-            .content { padding: 20px; background: #f9fafb; }
-            .footer { padding: 20px; text-align: center; color: #666; font-size: 14px; }
-            .button {
-              display: inline-block;
-              background: hsl(13.2143 73.0435% 54.9020%);
-              color: white !important;
-              padding: 12px 24px;
-              text-decoration: none;
-              border-radius: 6px;
-              margin: 20px 0;
-            }
-            .details { background: white; padding: 15px; border-radius: 6px; margin: 15px 0; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>Subscription Confirmed</h1>
-            </div>
-            <div class="content">
-              <h2>Hello ${params.userName}!</h2>
-              <p>Thank you for subscribing to <strong>${companyName} ${this.capitalizeFirst(params.tierName)}</strong>. Your subscription has been successfully activated.</p>
+    const content = `
+      <p>Hi ${params.userName},</p>
+      
+      <p>Thank you for subscribing to <strong>${companyName} ${this.capitalizeFirst(params.tierName)}</strong>. Your subscription is now active.</p>
 
-              <div class="details">
-                <h3>Subscription Details</h3>
-                <ul>
-                  <li><strong>Plan:</strong> ${this.capitalizeFirst(params.tierName)}</li>
-                  <li><strong>Amount:</strong> ${formattedAmount}/${params.interval}</li>
-                  <li><strong>Payment Method:</strong> ${providerName}</li>
-                  <li><strong>Next Billing Date:</strong> ${formattedDate}</li>
-                </ul>
-              </div>
+      <div class="details">
+        <p style="margin: 0 0 8px 0;"><strong>Plan:</strong> ${this.capitalizeFirst(params.tierName)}</p>
+        <p style="margin: 0 0 8px 0;"><strong>Amount:</strong> ${formattedAmount}/${params.interval}</p>
+        <p style="margin: 0 0 8px 0;"><strong>Payment Method:</strong> ${providerName}</p>
+        <p style="margin: 0;"><strong>Next Billing:</strong> ${formattedDate}</p>
+      </div>
 
-              <p>You now have access to all ${this.capitalizeFirst(params.tierName)} features, including:</p>
-              <ul>
-                ${this.getTierFeaturesFromConfig(params.tierName)}
-              </ul>
+      <p>Your ${this.capitalizeFirst(params.tierName)} features include:</p>
+      <ul style="color: #374151;">
+        ${this.getTierFeaturesFromConfig(params.tierName)}
+      </ul>
 
-               <p style="text-align: center;">
-                 <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard" class="button" style="color: white !important;">
-                   Access Your Dashboard
-                 </a>
-               </p>
-
-               <p>If you have any questions, please contact our <a href="mailto:${supportEmail}">support team</a>.</p>
-            </div>
-            <div class="footer">
-              <p>${companyName} - Secure Secret Management</p>
-              <p>© ${new Date().getFullYear()} All rights reserved.</p>
-            </div>
-          </div>
-        </body>
-      </html>
+      <p style="text-align: center;">
+        <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard" class="button">
+          Go to Dashboard
+        </a>
+      </p>
     `
 
     const text = `
-Subscription Confirmed - ${companyName}
+${companyName}: Your subscription is confirmed
 
-Hello ${params.userName}!
+Hi ${params.userName},
 
-Thank you for subscribing to ${companyName} ${this.capitalizeFirst(params.tierName)}. Your subscription has been successfully activated.
+Thank you for subscribing to ${companyName} ${this.capitalizeFirst(params.tierName)}. Your subscription is now active.
 
-Subscription Details:
-- Plan: ${this.capitalizeFirst(params.tierName)}
-- Amount: ${formattedAmount}/${params.interval}
-- Payment Method: ${providerName}
-- Next Billing Date: ${formattedDate}
+Plan: ${this.capitalizeFirst(params.tierName)}
+Amount: ${formattedAmount}/${params.interval}
+Payment Method: ${providerName}
+Next Billing: ${formattedDate}
 
-You now have access to all ${this.capitalizeFirst(params.tierName)} features.
+Dashboard: ${process.env.NEXT_PUBLIC_SITE_URL}/dashboard
 
-Access your dashboard: ${process.env.NEXT_PUBLIC_SITE_URL}/dashboard
+${companyName}
+    `.trim()
 
-If you have any questions, please contact our support team at ${supportEmail}.
-
-${companyName} - Secure Secret Management
-© ${new Date().getFullYear()} All rights reserved.
-    `
-
-    return { subject, html, text }
+    return { subject, html: this.renderWrapper("Subscription Confirmed", content), text }
   }
 
   paymentFailed(params: PaymentFailedParams): EmailTemplate {
@@ -162,274 +192,156 @@ ${companyName} - Secure Secret Management
     const formattedRetry = params.nextRetry.toLocaleString()
     const providerName =
       params.provider === "stripe" ? "Credit Card" : "Bitcoin"
+    const companyName = this.getCompanyName()
 
-    const subject = "Payment Failed - Action Required"
+    const subject = `${companyName}: Payment update needed`
 
-    const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${subject}</title>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #dc2626; color: white; padding: 20px; text-align: center; }
-            .content { padding: 20px; background: #f9fafb; }
-            .footer { padding: 20px; text-align: center; color: #666; font-size: 14px; }
-            .button {
-              display: inline-block;
-              background: #dc2626;
-              color: white;
-              padding: 12px 24px;
-              text-decoration: none;
-              border-radius: 6px;
-              margin: 20px 0;
-            }
-            .warning { background: #fef3c7; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #f59e0b; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>Payment Failed</h1>
-            </div>
-            <div class="content">
-              <h2>Hello ${params.userName},</h2>
-              <p>We were unable to process your payment of <strong>${formattedAmount}</strong> using your ${providerName}.</p>
+    const content = `
+      <p>Hi ${params.userName},</p>
+      
+      <p>We were unable to process your payment of <strong>${formattedAmount}</strong> using your ${providerName}.</p>
 
-              <div class="warning">
-                <h3>Payment Attempt ${params.attemptCount} of ${params.maxAttempts}</h3>
-                <p>We will automatically retry your payment on <strong>${formattedRetry}</strong>.</p>
-                ${
-                  params.attemptCount >= params.maxAttempts
-                    ? "<p><strong>This was our final attempt. Your subscription will be cancelled if payment is not resolved.</strong></p>"
-                    : ""
-                }
-              </div>
+      <div class="notice-box">
+        <p style="margin: 0 0 8px 0; color: #92400e;"><strong>Attempt ${params.attemptCount} of ${params.maxAttempts}</strong></p>
+        <p style="margin: 0; color: #92400e;">We'll retry automatically on ${formattedRetry}.</p>
+        ${
+          params.attemptCount >= params.maxAttempts
+            ? '<p style="margin: 8px 0 0 0; color: #92400e;"><strong>Note:</strong> This was our final automatic attempt.</p>'
+            : ""
+        }
+      </div>
 
-              <p>To resolve this issue:</p>
-              <ul>
-                <li>Check that your payment method has sufficient funds</li>
-                <li>Verify your payment information is up to date</li>
-                <li>Update your payment method in your account settings</li>
-              </ul>
+      <p>To resolve this:</p>
+      <ul style="color: #374151;">
+        <li>Ensure your payment method has sufficient funds</li>
+        <li>Verify your payment details are current</li>
+        <li>Update your payment method if needed</li>
+      </ul>
 
-              <p>
-                <a href="${process.env.NEXT_PUBLIC_SITE_URL}/account/billing" class="button">
-                  Update Payment Method
-                </a>
-              </p>
-
-              <p>If you continue to experience issues, please contact our support team.</p>
-            </div>
-            <div class="footer">
-              <p>KeyFate - Secure Secret Management</p>
-              <p>© ${new Date().getFullYear()} All rights reserved.</p>
-            </div>
-          </div>
-        </body>
-      </html>
+      <p style="text-align: center;">
+        <a href="${process.env.NEXT_PUBLIC_SITE_URL}/settings/subscription" class="button">
+          Update Payment Method
+        </a>
+      </p>
     `
 
     const text = `
-Payment Failed - Action Required
+${companyName}: Payment update needed
 
-Hello ${params.userName},
+Hi ${params.userName},
 
 We were unable to process your payment of ${formattedAmount} using your ${providerName}.
 
-Payment Attempt ${params.attemptCount} of ${params.maxAttempts}
-We will automatically retry your payment on ${formattedRetry}.
+Attempt ${params.attemptCount} of ${params.maxAttempts}
+We'll retry automatically on ${formattedRetry}.
 
-${
-  params.attemptCount >= params.maxAttempts
-    ? "This was our final attempt. Your subscription will be cancelled if payment is not resolved."
-    : ""
-}
+${params.attemptCount >= params.maxAttempts ? "Note: This was our final automatic attempt." : ""}
 
-To resolve this issue:
-- Check that your payment method has sufficient funds
-- Verify your payment information is up to date
-- Update your payment method in your account settings
+To resolve this:
+- Ensure your payment method has sufficient funds
+- Verify your payment details are current
+- Update your payment method if needed
 
-Update your payment method: ${process.env.NEXT_PUBLIC_SITE_URL}/account/billing
+Update payment: ${process.env.NEXT_PUBLIC_SITE_URL}/settings/subscription
 
-If you continue to experience issues, please contact our support team.
+${companyName}
+    `.trim()
 
-KeyFate - Secure Secret Management
-© ${new Date().getFullYear()} All rights reserved.
-    `
-
-    return { subject, html, text }
+    return { subject, html: this.renderWrapper("Payment Update Needed", content), text }
   }
 
   subscriptionCancelled(params: SubscriptionCancelledParams): EmailTemplate {
-    const subject = "Subscription Cancelled"
+    const companyName = this.getCompanyName()
+    const subject = `${companyName}: Your subscription has been cancelled`
 
-    const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${subject}</title>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #6b7280; color: white; padding: 20px; text-align: center; }
-            .content { padding: 20px; background: #f9fafb; }
-            .footer { padding: 20px; text-align: center; color: #666; font-size: 14px; }
-            .button {
-              display: inline-block;
-              background: #2563eb;
-              color: white;
-              padding: 12px 24px;
-              text-decoration: none;
-              border-radius: 6px;
-              margin: 20px 0;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>Subscription Cancelled</h1>
-            </div>
-            <div class="content">
-              <h2>Hello ${params.userName},</h2>
-              <p>Your subscription has been successfully cancelled. We're sorry to see you go!</p>
+    const content = `
+      <p>Hi ${params.userName},</p>
+      
+      <p>Your subscription has been cancelled. We're sorry to see you go.</p>
 
-              <p>Your account will remain active until the end of your current billing period. After that, you'll be moved to our free plan.</p>
+      <div class="info-box">
+        <p style="margin: 0; color: #1e40af;">Your account will remain active until the end of your current billing period, then revert to the free plan.</p>
+      </div>
 
-              <p>What happens next:</p>
-              <ul>
-                <li>You'll continue to have access to premium features until your billing period ends</li>
-                <li>Your secrets will remain secure and accessible</li>
-                <li>You can reactivate your subscription at any time</li>
-              </ul>
+      <p>What happens next:</p>
+      <ul style="color: #374151;">
+        <li>Continue using premium features until your billing period ends</li>
+        <li>Your secrets remain secure and accessible</li>
+        <li>You can resubscribe at any time</li>
+      </ul>
 
-              <p>
-                <a href="${process.env.NEXT_PUBLIC_SITE_URL}/pricing" class="button">
-                  Reactivate Subscription
-                </a>
-              </p>
+      <p style="text-align: center;">
+        <a href="${process.env.NEXT_PUBLIC_SITE_URL}/pricing" class="button">
+          View Plans
+        </a>
+      </p>
 
-              <p>We'd love to hear your feedback about how we can improve our service.</p>
-            </div>
-            <div class="footer">
-              <p>KeyFate - Secure Secret Management</p>
-              <p>© ${new Date().getFullYear()} All rights reserved.</p>
-            </div>
-          </div>
-        </body>
-      </html>
+      <p style="font-size: 13px; color: #6b7280;">
+        We'd appreciate any feedback on how we can improve. Just reply to this email.
+      </p>
     `
 
     const text = `
-Subscription Cancelled
+${companyName}: Your subscription has been cancelled
 
-Hello ${params.userName},
+Hi ${params.userName},
 
-Your subscription has been successfully cancelled. We're sorry to see you go!
+Your subscription has been cancelled. We're sorry to see you go.
 
-Your account will remain active until the end of your current billing period. After that, you'll be moved to our free plan.
+Your account will remain active until the end of your current billing period, then revert to the free plan.
 
 What happens next:
-- You'll continue to have access to premium features until your billing period ends
-- Your secrets will remain secure and accessible
-- You can reactivate your subscription at any time
+- Continue using premium features until your billing period ends
+- Your secrets remain secure and accessible
+- You can resubscribe at any time
 
-Reactivate your subscription: ${process.env.NEXT_PUBLIC_SITE_URL}/pricing
+View plans: ${process.env.NEXT_PUBLIC_SITE_URL}/pricing
 
-We'd love to hear your feedback about how we can improve our service.
+${companyName}
+    `.trim()
 
-KeyFate - Secure Secret Management
-© ${new Date().getFullYear()} All rights reserved.
-    `
-
-    return { subject, html, text }
+    return { subject, html: this.renderWrapper("Subscription Cancelled", content), text }
   }
 
   trialWillEnd(params: TrialWillEndParams): EmailTemplate {
     const formattedDate = params.trialEndDate.toLocaleDateString()
-    const subject = `Trial Ending in ${params.daysRemaining} Days`
+    const companyName = this.getCompanyName()
+    const subject = `${companyName}: Your trial ends in ${params.daysRemaining} days`
 
-    const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${subject}</title>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #f59e0b; color: white; padding: 20px; text-align: center; }
-            .content { padding: 20px; background: #f9fafb; }
-            .footer { padding: 20px; text-align: center; color: #666; font-size: 14px; }
-            .button {
-              display: inline-block;
-              background: #2563eb;
-              color: white;
-              padding: 12px 24px;
-              text-decoration: none;
-              border-radius: 6px;
-              margin: 20px 0;
-            }
-            .highlight { background: #fef3c7; padding: 15px; border-radius: 6px; margin: 15px 0; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>Trial Ending Soon</h1>
-            </div>
-            <div class="content">
-              <h2>Hello ${params.userName},</h2>
-              <p>Your free trial is ending in <strong>${params.daysRemaining} days</strong> on ${formattedDate}.</p>
+    const content = `
+      <p>Hi ${params.userName},</p>
+      
+      <p>Your free trial ends in <strong>${params.daysRemaining} days</strong> (${formattedDate}).</p>
 
-              <div class="highlight">
-                <h3>Don't lose access to your premium features!</h3>
-                <p>Subscribe now to continue enjoying all the benefits of our premium service.</p>
-              </div>
+      <div class="info-box">
+        <p style="margin: 0; color: #1e40af;">Subscribe now to keep access to all your premium features.</p>
+      </div>
 
-              <p>With a premium subscription, you get:</p>
-              <ul>
-                <li>Unlimited secrets storage</li>
-                <li>Advanced encryption options</li>
-                <li>Priority support</li>
-                <li>Custom check-in intervals</li>
-              </ul>
+      <p>Premium benefits include:</p>
+      <ul style="color: #374151;">
+        <li>Unlimited secrets storage</li>
+        <li>Advanced encryption options</li>
+        <li>Priority support</li>
+        <li>Custom check-in intervals</li>
+      </ul>
 
-              <p>
-                <a href="${process.env.NEXT_PUBLIC_SITE_URL}/pricing" class="button">
-                  Choose Your Plan
-                </a>
-              </p>
-
-              <p>Questions? Our support team is here to help!</p>
-            </div>
-            <div class="footer">
-              <p>KeyFate - Secure Secret Management</p>
-              <p>© ${new Date().getFullYear()} All rights reserved.</p>
-            </div>
-          </div>
-        </body>
-      </html>
+      <p style="text-align: center;">
+        <a href="${process.env.NEXT_PUBLIC_SITE_URL}/pricing" class="button">
+          Choose Your Plan
+        </a>
+      </p>
     `
 
     const text = `
-Trial Ending Soon
+${companyName}: Your trial ends in ${params.daysRemaining} days
 
-Hello ${params.userName},
+Hi ${params.userName},
 
-Your free trial is ending in ${params.daysRemaining} days on ${formattedDate}.
+Your free trial ends in ${params.daysRemaining} days (${formattedDate}).
 
-Don't lose access to your premium features! Subscribe now to continue enjoying all the benefits of our premium service.
+Subscribe now to keep access to all your premium features.
 
-With a premium subscription, you get:
+Premium benefits include:
 - Unlimited secrets storage
 - Advanced encryption options
 - Priority support
@@ -437,171 +349,90 @@ With a premium subscription, you get:
 
 Choose your plan: ${process.env.NEXT_PUBLIC_SITE_URL}/pricing
 
-Questions? Our support team is here to help!
+${companyName}
+    `.trim()
 
-KeyFate - Secure Secret Management
-© ${new Date().getFullYear()} All rights reserved.
-    `
-
-    return { subject, html, text }
+    return { subject, html: this.renderWrapper("Trial Ending Soon", content), text }
   }
 
   bitcoinPaymentConfirmation(
     params: BitcoinPaymentConfirmationParams,
   ): EmailTemplate {
-    const subject = "Bitcoin Payment Confirmed"
+    const companyName = this.getCompanyName()
+    const subject = `${companyName}: Bitcoin payment confirmed`
 
-    const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${subject}</title>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #f97316; color: white; padding: 20px; text-align: center; }
-            .content { padding: 20px; background: #f9fafb; }
-            .footer { padding: 20px; text-align: center; color: #666; font-size: 14px; }
-            .bitcoin { background: #fff7ed; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #f97316; }
-            .button {
-              display: inline-block;
-              background: #2563eb;
-              color: white;
-              padding: 12px 24px;
-              text-decoration: none;
-              border-radius: 6px;
-              margin: 20px 0;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>Bitcoin Payment Confirmed</h1>
-            </div>
-            <div class="content">
-              <h2>Hello ${params.userName},</h2>
-              <p>Your Bitcoin payment has been confirmed and your <strong>${this.capitalizeFirst(params.tierName)}</strong> subscription is now active!</p>
+    const content = `
+      <p>Hi ${params.userName},</p>
+      
+      <p>Your Bitcoin payment has been confirmed and your <strong>${this.capitalizeFirst(params.tierName)}</strong> subscription is now active.</p>
 
-              <div class="bitcoin">
-                <h3>Payment Details</h3>
-                <ul>
-                  <li><strong>Amount:</strong> ${params.amount} ${params.currency}</li>
-                  <li><strong>Confirmations:</strong> ${params.confirmations}/6</li>
-                  <li><strong>Plan:</strong> ${this.capitalizeFirst(params.tierName)}</li>
-                  ${params.transactionId ? `<li><strong>Transaction ID:</strong> ${params.transactionId}</li>` : ""}
-                </ul>
-              </div>
+      <div class="details">
+        <p style="margin: 0 0 8px 0;"><strong>Amount:</strong> ${params.amount} ${params.currency}</p>
+        <p style="margin: 0 0 8px 0;"><strong>Confirmations:</strong> ${params.confirmations}/6</p>
+        <p style="margin: 0 0 8px 0;"><strong>Plan:</strong> ${this.capitalizeFirst(params.tierName)}</p>
+        ${params.transactionId ? `<p style="margin: 0; font-size: 12px; color: #6b7280;"><strong>TX:</strong> ${params.transactionId}</p>` : ""}
+      </div>
 
-              <p>Thank you for choosing Bitcoin! Your payment is secure and your subscription is fully activated.</p>
-
-              <p>
-                <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard" class="button">
-                  Access Your Dashboard
-                </a>
-              </p>
-
-              <p>If you have any questions about your Bitcoin payment or subscription, please contact our support team.</p>
-            </div>
-            <div class="footer">
-              <p>KeyFate - Secure Secret Management</p>
-              <p>© ${new Date().getFullYear()} All rights reserved.</p>
-            </div>
-          </div>
-        </body>
-      </html>
+      <p style="text-align: center;">
+        <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard" class="button">
+          Go to Dashboard
+        </a>
+      </p>
     `
 
     const text = `
-Bitcoin Payment Confirmed
+${companyName}: Bitcoin payment confirmed
 
-Hello ${params.userName},
+Hi ${params.userName},
 
-Your Bitcoin payment has been confirmed and your ${this.capitalizeFirst(params.tierName)} subscription is now active!
+Your Bitcoin payment has been confirmed and your ${this.capitalizeFirst(params.tierName)} subscription is now active.
 
-Payment Details:
-- Amount: ${params.amount} ${params.currency}
-- Confirmations: ${params.confirmations}/6
-- Plan: ${this.capitalizeFirst(params.tierName)}
-${params.transactionId ? `- Transaction ID: ${params.transactionId}` : ""}
+Amount: ${params.amount} ${params.currency}
+Confirmations: ${params.confirmations}/6
+Plan: ${this.capitalizeFirst(params.tierName)}
+${params.transactionId ? `TX: ${params.transactionId}` : ""}
 
-Thank you for choosing Bitcoin! Your payment is secure and your subscription is fully activated.
+Dashboard: ${process.env.NEXT_PUBLIC_SITE_URL}/dashboard
 
-Access your dashboard: ${process.env.NEXT_PUBLIC_SITE_URL}/dashboard
+${companyName}
+    `.trim()
 
-If you have any questions about your Bitcoin payment or subscription, please contact our support team.
-
-KeyFate - Secure Secret Management
-© ${new Date().getFullYear()} All rights reserved.
-    `
-
-    return { subject, html, text }
+    return { subject, html: this.renderWrapper("Bitcoin Payment Confirmed", content), text }
   }
 
   adminAlert(params: AdminAlertParams): EmailTemplate {
-    const subject = `Admin Alert: ${params.type} (${params.severity.toUpperCase()})`
-    const severityColor = this.getSeverityColor(params.severity)
+    const companyName = this.getCompanyName()
+    const subject = `${companyName} Admin: ${params.type} [${params.severity}]`
 
-    const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${subject}</title>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: ${severityColor}; color: white; padding: 20px; text-align: center; }
-            .content { padding: 20px; background: #f9fafb; }
-            .details { background: white; padding: 15px; border-radius: 6px; margin: 15px 0; }
-            .footer { padding: 20px; text-align: center; color: #666; font-size: 14px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>Admin Alert</h1>
-              <p>Severity: ${params.severity.toUpperCase()}</p>
-            </div>
-            <div class="content">
-              <h2>${params.type}</h2>
-              <p><strong>Message:</strong> ${params.message}</p>
-              <p><strong>Timestamp:</strong> ${params.timestamp.toISOString()}</p>
+    const content = `
+      <p><strong>Type:</strong> ${params.type}</p>
+      <p><strong>Severity:</strong> ${params.severity}</p>
+      <p><strong>Time:</strong> ${params.timestamp.toISOString()}</p>
+      
+      <div class="info-box">
+        <p style="margin: 0; color: #1e40af;">${params.message}</p>
+      </div>
 
-              <div class="details">
-                <h3>Details</h3>
-                <pre>${JSON.stringify(params.details, null, 2)}</pre>
-              </div>
-
-              <p>Please investigate this alert and take appropriate action.</p>
-            </div>
-            <div class="footer">
-              <p>KeyFate - Admin Alerts</p>
-            </div>
-          </div>
-        </body>
-      </html>
+      <div class="details">
+        <p style="margin: 0 0 8px 0; font-weight: 600;">Details</p>
+        <pre style="margin: 0; font-size: 12px; white-space: pre-wrap; word-break: break-word;">${JSON.stringify(params.details, null, 2)}</pre>
+      </div>
     `
 
     const text = `
-Admin Alert: ${params.type} (${params.severity.toUpperCase()})
+${companyName} Admin: ${params.type} [${params.severity}]
+
+Type: ${params.type}
+Severity: ${params.severity}
+Time: ${params.timestamp.toISOString()}
 
 Message: ${params.message}
-Timestamp: ${params.timestamp.toISOString()}
-Severity: ${params.severity.toUpperCase()}
 
 Details:
 ${JSON.stringify(params.details, null, 2)}
+    `.trim()
 
-Please investigate this alert and take appropriate action.
-
-KeyFate - Admin Alerts
-    `
-
-    return { subject, html, text }
+    return { subject, html: this.renderWrapper(`Admin Alert: ${params.type}`, content), text }
   }
 
   private formatCurrency(cents: number): string {
@@ -678,97 +509,63 @@ KeyFate - Admin Alerts
     downloadUrl: string
     expiresAt: Date
   }): EmailTemplate {
-    const subject = "Your Data Export is Ready"
+    const companyName = this.getCompanyName()
+    const subject = `${companyName}: Your data export is ready`
     const hoursRemaining = Math.floor(
       (params.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60),
     )
 
-    const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${subject}</title>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #2563eb; color: white; padding: 20px; text-align: center; }
-            .content { padding: 20px; background: #f9fafb; }
-            .warning { background: #fef3c7; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #f59e0b; }
-            .button {
-              display: inline-block;
-              background: #2563eb;
-              color: white;
-              padding: 12px 24px;
-              text-decoration: none;
-              border-radius: 6px;
-              margin: 20px 0;
-            }
-            .footer { padding: 20px; text-align: center; color: #666; font-size: 14px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>📦 Your Data Export is Ready</h1>
-            </div>
-            <div class="content">
-              <h2>Hello ${params.userName},</h2>
-              <p>Your personal data export has been generated and is ready to download.</p>
-              
-              <div class="warning">
-                <strong>⚠️ Important:</strong> This download link will expire in <strong>${hoursRemaining} hours</strong>.
-                You can download the file up to 3 times before it expires.
-              </div>
+    const content = `
+      <p>Hi ${params.userName},</p>
+      
+      <p>Your personal data export is ready to download.</p>
 
-              <a href="${params.downloadUrl}" class="button">Download My Data</a>
+      <div class="notice-box">
+        <p style="margin: 0; color: #92400e;">
+          This link expires in <strong>${hoursRemaining} hours</strong> and can be downloaded up to 3 times.
+        </p>
+      </div>
 
-              <h3>What's Included</h3>
-              <ul>
-                <li>Your profile information</li>
-                <li>All secrets and their metadata</li>
-                <li>Check-in history</li>
-                <li>Audit logs</li>
-                <li>Subscription and payment history</li>
-              </ul>
+      <p style="text-align: center;">
+        <a href="${params.downloadUrl}" class="button">Download My Data</a>
+      </p>
 
-              <p><small>If you didn't request this export, please contact us immediately at ${this.getSupportEmail()}</small></p>
-            </div>
-            <div class="footer">
-              <p>${this.getCompanyName()} - Secure Secret Management</p>
-              <p>© ${new Date().getFullYear()} All rights reserved.</p>
-            </div>
-          </div>
-        </body>
-      </html>
+      <p><strong>What's included:</strong></p>
+      <ul style="color: #374151;">
+        <li>Your profile information</li>
+        <li>All secrets and their metadata</li>
+        <li>Check-in history</li>
+        <li>Audit logs</li>
+        <li>Subscription and payment history</li>
+      </ul>
+
+      <p style="font-size: 13px; color: #6b7280;">
+        If you didn't request this export, please contact us at ${this.getSupportEmail()}
+      </p>
     `
 
     const text = `
-Your Data Export is Ready
+${companyName}: Your data export is ready
 
-Hello ${params.userName},
+Hi ${params.userName},
 
-Your personal data export has been generated and is ready to download.
+Your personal data export is ready to download.
 
-Download Link: ${params.downloadUrl}
+Download: ${params.downloadUrl}
 
-IMPORTANT: This link expires in ${hoursRemaining} hours and can be downloaded up to 3 times.
+Note: This link expires in ${hoursRemaining} hours and can be downloaded up to 3 times.
 
-What's Included:
+What's included:
 - Your profile information
 - All secrets and their metadata
 - Check-in history
 - Audit logs
 - Subscription and payment history
 
-If you didn't request this export, please contact us immediately at ${this.getSupportEmail()}
+${companyName}
+    `.trim()
 
-${this.getCompanyName()} - Secure Secret Management
-© ${new Date().getFullYear()} All rights reserved.
-    `
-
-    return { subject, html, text }
+    return { subject, html: this.renderWrapper("Your Data Export is Ready", content), text }
   }
 
   accountDeletionConfirmation(params: {
@@ -776,110 +573,59 @@ ${this.getCompanyName()} - Secure Secret Management
     confirmationUrl: string
     scheduledDate: Date
   }): EmailTemplate {
-    const subject = "Confirm Your Account Deletion Request"
+    const companyName = this.getCompanyName()
+    const subject = `${companyName}: Confirm your account deletion request`
     const daysUntilDeletion = Math.floor(
       (params.scheduledDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
     )
 
-    const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${subject}</title>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #dc2626; color: white; padding: 20px; text-align: center; }
-            .content { padding: 20px; background: #f9fafb; }
-            .warning { background: #fee2e2; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #dc2626; }
-            .button {
-              display: inline-block;
-              background: #dc2626;
-              color: white;
-              padding: 12px 24px;
-              text-decoration: none;
-              border-radius: 6px;
-              margin: 20px 0;
-            }
-            .footer { padding: 20px; text-align: center; color: #666; font-size: 14px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>⚠️ Account Deletion Request</h1>
-            </div>
-            <div class="content">
-              <h2>Hello ${params.userName},</h2>
-              <p>We received a request to delete your account and all associated data.</p>
-              
-              <div class="warning">
-                <h3>🛑 This Action is Permanent</h3>
-                <p>Once confirmed, your account will be scheduled for deletion in <strong>${daysUntilDeletion} days</strong>.</p>
-                <p><strong>What will be deleted:</strong></p>
-                <ul>
-                  <li>All your secrets and their encrypted content</li>
-                  <li>All recipients and sharing configurations</li>
-                  <li>Check-in history and audit logs</li>
-                  <li>Your profile and account settings</li>
-                </ul>
-                <p><strong>What will be retained (anonymized):</strong></p>
-                <ul>
-                  <li>Payment records (required for legal/financial compliance)</li>
-                </ul>
-              </div>
+    const content = `
+      <p>Hi ${params.userName},</p>
+      
+      <p>We received a request to delete your account and all associated data.</p>
 
-              <p>If you're sure you want to proceed, click the button below to confirm:</p>
+      <div class="notice-box">
+        <p style="margin: 0 0 12px 0; color: #92400e; font-weight: 600;">This action is permanent</p>
+        <p style="margin: 0 0 8px 0; color: #92400e;">Once confirmed, your account will be deleted in <strong>${daysUntilDeletion} days</strong>.</p>
+        <p style="margin: 0; color: #92400e; font-size: 13px;">
+          <strong>Will be deleted:</strong> All secrets, recipients, check-in history, audit logs, and account settings.<br>
+          <strong>Will be retained:</strong> Payment records (required for compliance).
+        </p>
+      </div>
 
-              <a href="${params.confirmationUrl}" class="button">Confirm Account Deletion</a>
+      <p>To proceed with deletion:</p>
 
-              <p><strong>Changed your mind?</strong> Simply ignore this email or contact support to cancel the deletion.</p>
+      <p style="text-align: center;">
+        <a href="${params.confirmationUrl}" class="button">Confirm Account Deletion</a>
+      </p>
 
-              <p><small>If you didn't request this deletion, please contact us immediately at ${this.getSupportEmail()}</small></p>
-            </div>
-            <div class="footer">
-              <p>${this.getCompanyName()} - Secure Secret Management</p>
-              <p>© ${new Date().getFullYear()} All rights reserved.</p>
-            </div>
-          </div>
-        </body>
-      </html>
+      <p style="font-size: 13px; color: #6b7280;">
+        <strong>Changed your mind?</strong> Simply ignore this email. Your account will remain active.<br>
+        <strong>Didn't request this?</strong> Contact us at ${this.getSupportEmail()}
+      </p>
     `
 
     const text = `
-Account Deletion Request
+${companyName}: Confirm your account deletion request
 
-Hello ${params.userName},
+Hi ${params.userName},
 
 We received a request to delete your account and all associated data.
 
-⚠️  THIS ACTION IS PERMANENT
+This action is permanent. Once confirmed, your account will be deleted in ${daysUntilDeletion} days.
 
-Once confirmed, your account will be scheduled for deletion in ${daysUntilDeletion} days.
+Will be deleted: All secrets, recipients, check-in history, audit logs, and account settings.
+Will be retained: Payment records (required for compliance).
 
-What will be deleted:
-- All your secrets and their encrypted content
-- All recipients and sharing configurations
-- Check-in history and audit logs
-- Your profile and account settings
+To confirm: ${params.confirmationUrl}
 
-What will be retained (anonymized):
-- Payment records (required for legal/financial compliance)
+Changed your mind? Simply ignore this email.
+Didn't request this? Contact us at ${this.getSupportEmail()}
 
-To confirm the deletion, visit:
-${params.confirmationUrl}
+${companyName}
+    `.trim()
 
-Changed your mind? Simply ignore this email or contact support to cancel the deletion.
-
-If you didn't request this deletion, please contact us immediately at ${this.getSupportEmail()}
-
-${this.getCompanyName()} - Secure Secret Management
-© ${new Date().getFullYear()} All rights reserved.
-    `
-
-    return { subject, html, text }
+    return { subject, html: this.renderWrapper("Account Deletion Request", content), text }
   }
 
   accountDeletionGracePeriod(params: {
@@ -887,207 +633,126 @@ ${this.getCompanyName()} - Secure Secret Management
     daysRemaining: number
     cancelUrl: string
   }): EmailTemplate {
-    const subject = `Account Deletion in ${params.daysRemaining} Days`
+    const companyName = this.getCompanyName()
+    const subject = `${companyName}: Account deletion in ${params.daysRemaining} days`
 
-    const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${subject}</title>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #f59e0b; color: white; padding: 20px; text-align: center; }
-            .content { padding: 20px; background: #f9fafb; }
-            .warning { background: #fef3c7; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #f59e0b; }
-            .button {
-              display: inline-block;
-              background: #2563eb;
-              color: white;
-              padding: 12px 24px;
-              text-decoration: none;
-              border-radius: 6px;
-              margin: 20px 0;
-            }
-            .footer { padding: 20px; text-align: center; color: #666; font-size: 14px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>⏰ Account Deletion Reminder</h1>
-            </div>
-            <div class="content">
-              <h2>Hello ${params.userName},</h2>
-              <p>This is a reminder that your account is scheduled for deletion in <strong>${params.daysRemaining} days</strong>.</p>
-              
-              <div class="warning">
-                <p>Your account and all associated data will be permanently deleted unless you cancel this request.</p>
-              </div>
+    const content = `
+      <p>Hi ${params.userName},</p>
+      
+      <p>This is a reminder that your account is scheduled for deletion in <strong>${params.daysRemaining} days</strong>.</p>
 
-              <p>If you've changed your mind, you can cancel the deletion:</p>
+      <div class="notice-box">
+        <p style="margin: 0; color: #92400e;">
+          Your account and all data will be permanently deleted unless you cancel.
+        </p>
+      </div>
 
-              <a href="${params.cancelUrl}" class="button">Cancel Deletion</a>
+      <p>Changed your mind?</p>
 
-              <p>If you take no action, your account will be automatically deleted on the scheduled date.</p>
-            </div>
-            <div class="footer">
-              <p>${this.getCompanyName()} - Secure Secret Management</p>
-              <p>© ${new Date().getFullYear()} All rights reserved.</p>
-            </div>
-          </div>
-        </body>
-      </html>
+      <p style="text-align: center;">
+        <a href="${params.cancelUrl}" class="button">Cancel Deletion</a>
+      </p>
+
+      <p style="font-size: 13px; color: #6b7280;">
+        If you take no action, deletion will proceed automatically on the scheduled date.
+      </p>
     `
 
     const text = `
-Account Deletion Reminder
+${companyName}: Account deletion in ${params.daysRemaining} days
 
-Hello ${params.userName},
+Hi ${params.userName},
 
 This is a reminder that your account is scheduled for deletion in ${params.daysRemaining} days.
 
-Your account and all associated data will be permanently deleted unless you cancel this request.
+Your account and all data will be permanently deleted unless you cancel.
 
-To cancel the deletion, visit:
-${params.cancelUrl}
+To cancel: ${params.cancelUrl}
 
-If you take no action, your account will be automatically deleted on the scheduled date.
+If you take no action, deletion will proceed automatically.
 
-${this.getCompanyName()} - Secure Secret Management
-© ${new Date().getFullYear()} All rights reserved.
-    `
+${companyName}
+    `.trim()
 
-    return { subject, html, text }
+    return { subject, html: this.renderWrapper("Account Deletion Reminder", content), text }
   }
 
   accountDeletionComplete(params: { userName: string }): EmailTemplate {
-    const subject = "Your Account Has Been Deleted"
+    const companyName = this.getCompanyName()
+    const subject = `${companyName}: Your account has been deleted`
 
-    const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${subject}</title>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #6b7280; color: white; padding: 20px; text-align: center; }
-            .content { padding: 20px; background: #f9fafb; }
-            .footer { padding: 20px; text-align: center; color: #666; font-size: 14px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>Account Deleted</h1>
-            </div>
-            <div class="content">
-              <h2>Hello ${params.userName},</h2>
-              <p>Your account has been permanently deleted as requested.</p>
-              <p>All your data has been removed from our systems in accordance with GDPR regulations.</p>
-              <p>Thank you for using ${this.getCompanyName()}. If you ever need our services again, you're welcome to create a new account.</p>
-              <p>If you have any questions, please contact us at ${this.getSupportEmail()}</p>
-            </div>
-            <div class="footer">
-              <p>${this.getCompanyName()} - Secure Secret Management</p>
-              <p>© ${new Date().getFullYear()} All rights reserved.</p>
-            </div>
-          </div>
-        </body>
-      </html>
+    const content = `
+      <p>Hi ${params.userName},</p>
+      
+      <p>Your account has been permanently deleted as requested.</p>
+
+      <div class="info-box">
+        <p style="margin: 0; color: #1e40af;">
+          All your data has been removed from our systems in accordance with GDPR regulations.
+        </p>
+      </div>
+
+      <p>Thank you for using ${companyName}. If you ever need our services again, you're welcome to create a new account.</p>
     `
 
     const text = `
-Account Deleted
+${companyName}: Your account has been deleted
 
-Hello ${params.userName},
+Hi ${params.userName},
 
 Your account has been permanently deleted as requested.
 
 All your data has been removed from our systems in accordance with GDPR regulations.
 
-Thank you for using ${this.getCompanyName()}. If you ever need our services again, you're welcome to create a new account.
+Thank you for using ${companyName}. If you ever need our services again, you're welcome to create a new account.
 
-If you have any questions, please contact us at ${this.getSupportEmail()}
+${companyName}
+    `.trim()
 
-${this.getCompanyName()} - Secure Secret Management
-© ${new Date().getFullYear()} All rights reserved.
-    `
-
-    return { subject, html, text }
+    return { subject, html: this.renderWrapper("Account Deleted", content), text }
   }
 
   accountDeletionCancelled(params: { userName: string }): EmailTemplate {
-    const subject = "Account Deletion Cancelled"
+    const companyName = this.getCompanyName()
+    const subject = `${companyName}: Account deletion cancelled`
 
-    const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${subject}</title>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #10b981; color: white; padding: 20px; text-align: center; }
-            .content { padding: 20px; background: #f9fafb; }
-            .button {
-              display: inline-block;
-              background: #2563eb;
-              color: white;
-              padding: 12px 24px;
-              text-decoration: none;
-              border-radius: 6px;
-              margin: 20px 0;
-            }
-            .footer { padding: 20px; text-align: center; color: #666; font-size: 14px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>✅ Account Deletion Cancelled</h1>
-            </div>
-            <div class="content">
-              <h2>Hello ${params.userName},</h2>
-              <p>Your ${this.getCompanyName()} account deletion request has been cancelled.</p>
-              <p>Your account and all your data remain active and secure.</p>
-              <p>If you did not cancel this request, please contact support immediately at ${this.getSupportEmail()}</p>
-              <a href="${process.env.NEXTAUTH_URL || "https://keyfate.com"}/dashboard" class="button">Go to Dashboard</a>
-            </div>
-            <div class="footer">
-              <p>${this.getCompanyName()} - Secure Secret Management</p>
-              <p>© ${new Date().getFullYear()} All rights reserved.</p>
-            </div>
-          </div>
-        </body>
-      </html>
+    const content = `
+      <p>Hi ${params.userName},</p>
+      
+      <p>Your account deletion request has been cancelled.</p>
+
+      <div class="info-box">
+        <p style="margin: 0; color: #1e40af;">
+          Your account and all your data remain active and secure.
+        </p>
+      </div>
+
+      <p style="text-align: center;">
+        <a href="${process.env.NEXTAUTH_URL || "https://keyfate.com"}/dashboard" class="button">Go to Dashboard</a>
+      </p>
+
+      <p style="font-size: 13px; color: #6b7280;">
+        If you didn't cancel this request, please contact us at ${this.getSupportEmail()}
+      </p>
     `
 
     const text = `
-Account Deletion Cancelled
+${companyName}: Account deletion cancelled
 
-Hello ${params.userName},
+Hi ${params.userName},
 
-Your ${this.getCompanyName()} account deletion request has been cancelled.
+Your account deletion request has been cancelled.
 
 Your account and all your data remain active and secure.
 
-If you did not cancel this request, please contact support immediately at ${this.getSupportEmail()}
-
 Dashboard: ${process.env.NEXTAUTH_URL || "https://keyfate.com"}/dashboard
 
-${this.getCompanyName()} - Secure Secret Management
-© ${new Date().getFullYear()} All rights reserved.
-    `
+If you didn't cancel this request, please contact us at ${this.getSupportEmail()}
 
-    return { subject, html, text }
+${companyName}
+    `.trim()
+
+    return { subject, html: this.renderWrapper("Account Deletion Cancelled", content), text }
   }
 
   private getSeverityColor(severity: string): string {
