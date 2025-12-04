@@ -107,7 +107,9 @@ describe("reminder-scheduler", () => {
       expect(types).toContain("1_hour")
       expect(types).toContain("12_hours")
       expect(types).toContain("25_percent")
-      expect(types).toContain("50_percent")
+      // 50_percent is excluded because for 1-day interval it's 12 hours,
+      // which overlaps with the fixed 12_hours reminder
+      expect(types).not.toContain("50_percent")
       expect(types).not.toContain("3_days")
       expect(types).not.toContain("7_days")
 

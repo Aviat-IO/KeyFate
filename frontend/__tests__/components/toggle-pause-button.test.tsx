@@ -3,8 +3,23 @@ import { describe, expect, it, vi, beforeEach } from "vitest"
 import { TogglePauseButton } from "@/components/toggle-pause-button"
 import type { Secret } from "@/types"
 
-// Mock fetch
-global.fetch = vi.fn()
+// Mock fetch - needs to handle both CSRF token fetch and actual API call
+const mockFetch = vi.fn()
+global.fetch = mockFetch
+
+function setupFetchMock(apiResponse: any) {
+  mockFetch
+    // First call: CSRF token fetch
+    .mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ csrfToken: "test-csrf-token" }),
+    })
+    // Second call: actual API call
+    .mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(apiResponse),
+    })
+}
 
 const mockSecret: Secret = {
   id: "secret-123",
@@ -44,7 +59,7 @@ describe("TogglePauseButton", () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    ;(global.fetch as any).mockClear()
+    mockFetch.mockClear()
   })
 
   it("should render pause button for active secret", () => {
@@ -108,9 +123,7 @@ describe("TogglePauseButton", () => {
       sss_shares_total: 3,
       sss_threshold: 2,
     }
-    ;(global.fetch as any).mockResolvedValue({
-      json: () => Promise.resolve({ secret: apiResponse }),
-    })
+    setupFetchMock({ secret: apiResponse })
 
     render(
       <TogglePauseButton
@@ -129,12 +142,13 @@ describe("TogglePauseButton", () => {
       expect(button).toBeDisabled()
     })
 
-    // Should call API
-    expect(global.fetch).toHaveBeenCalledWith(
+    // Should call API (second call after CSRF token)
+    expect(mockFetch).toHaveBeenNthCalledWith(
+      2,
       "/api/secrets/secret-123/toggle-pause",
-      {
+      expect.objectContaining({
         method: "POST",
-      },
+      }),
     )
 
     // Should call success callback with camelCase converted secret
@@ -189,9 +203,7 @@ describe("TogglePauseButton", () => {
       sss_shares_total: 3,
       sss_threshold: 2,
     }
-    ;(global.fetch as any).mockResolvedValue({
-      json: () => Promise.resolve({ secret: apiResponse }),
-    })
+    setupFetchMock({ secret: apiResponse })
 
     render(
       <TogglePauseButton
@@ -210,12 +222,13 @@ describe("TogglePauseButton", () => {
       expect(button).toBeDisabled()
     })
 
-    // Should call API
-    expect(global.fetch).toHaveBeenCalledWith(
+    // Should call API (second call after CSRF token)
+    expect(mockFetch).toHaveBeenNthCalledWith(
+      2,
       "/api/secrets/secret-123/toggle-pause",
-      {
+      expect.objectContaining({
         method: "POST",
-      },
+      }),
     )
 
     // Should call success callback with camelCase converted secret
@@ -233,9 +246,15 @@ describe("TogglePauseButton", () => {
   it("should handle API error response", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
 
-    ;(global.fetch as any).mockResolvedValue({
-      json: () => Promise.resolve({ error: "Failed to toggle pause" }),
-    })
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ csrfToken: "test-csrf-token" }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ error: "Failed to toggle pause" }),
+      })
 
     render(
       <TogglePauseButton
@@ -269,7 +288,12 @@ describe("TogglePauseButton", () => {
   it("should handle network error", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
 
-    ;(global.fetch as any).mockRejectedValue(new Error("Network error"))
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ csrfToken: "test-csrf-token" }),
+      })
+      .mockRejectedValueOnce(new Error("Network error"))
 
     render(
       <TogglePauseButton
@@ -301,9 +325,14 @@ describe("TogglePauseButton", () => {
   })
 
   it("should show loading spinner when loading", async () => {
-    ;(global.fetch as any).mockImplementation(
-      () => new Promise((resolve) => setTimeout(resolve, 100)),
-    )
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ csrfToken: "test-csrf-token" }),
+      })
+      .mockImplementationOnce(
+        () => new Promise((resolve) => setTimeout(resolve, 100)),
+      )
 
     render(
       <TogglePauseButton
@@ -331,7 +360,12 @@ describe("TogglePauseButton", () => {
       resolvePromise = resolve
     })
 
-    ;(global.fetch as any).mockReturnValue(promise)
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ csrfToken: "test-csrf-token" }),
+      })
+      .mockReturnValueOnce(promise)
 
     render(
       <TogglePauseButton
@@ -352,8 +386,8 @@ describe("TogglePauseButton", () => {
     // Second click should be ignored
     fireEvent.click(button)
 
-    // Should only call fetch once
-    expect(global.fetch).toHaveBeenCalledTimes(1)
+    // Should only call fetch twice (CSRF + API)
+    expect(mockFetch).toHaveBeenCalledTimes(2)
 
     // Resolve the promise
     await act(async () => {

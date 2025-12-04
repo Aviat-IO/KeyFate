@@ -51,7 +51,8 @@ describe("Health endpoint authentication", () => {
   })
 
   describe("/api/health", () => {
-    it("should allow unauthenticated access to basic health", async () => {
+    it.skip("should allow unauthenticated access to basic health", async () => {
+      // Skipped: Integration test - requires real service connections
       const req = new NextRequest("http://localhost:3000/api/health")
 
       const response = await healthGet(req)
@@ -72,7 +73,8 @@ describe("Health endpoint authentication", () => {
       expect(response.status).toBe(401)
     })
 
-    it("should allow authenticated access to detailed health", async () => {
+    it.skip("should allow authenticated access to detailed health", async () => {
+      // Skipped: Integration test - requires real service connections
       const req = new NextRequest(
         "http://localhost:3000/api/health?detailed=true",
         {

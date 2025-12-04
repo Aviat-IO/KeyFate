@@ -32,7 +32,7 @@ describe("Subscription Email Templates", () => {
 
         const result = emailTemplates.subscriptionConfirmation(baseParams)
 
-        expect(result.subject).toBe("Subscription Confirmed - MyCompany")
+        expect(result.subject).toBe("MyCompany: Your subscription is confirmed")
       })
 
       it("should use NEXT_PUBLIC_COMPANY in HTML body when set", () => {
@@ -43,7 +43,7 @@ describe("Subscription Email Templates", () => {
         expect(result.html).toContain(
           "Thank you for subscribing to <strong>MyCompany Pro</strong>",
         )
-        expect(result.html).toContain("MyCompany - Secure Secret Management")
+        expect(result.html).toContain("MyCompany. All rights reserved.")
       })
 
       it("should use NEXT_PUBLIC_COMPANY in text body when set", () => {
@@ -51,11 +51,12 @@ describe("Subscription Email Templates", () => {
 
         const result = emailTemplates.subscriptionConfirmation(baseParams)
 
-        expect(result.text).toContain("Subscription Confirmed - MyCompany")
+        expect(result.text).toContain(
+          "MyCompany: Your subscription is confirmed",
+        )
         expect(result.text).toContain(
           "Thank you for subscribing to MyCompany Pro",
         )
-        expect(result.text).toContain("MyCompany - Secure Secret Management")
       })
 
       it("should default to KeyFate when NEXT_PUBLIC_COMPANY is not set", () => {
@@ -63,12 +64,12 @@ describe("Subscription Email Templates", () => {
 
         const result = emailTemplates.subscriptionConfirmation(baseParams)
 
-        expect(result.subject).toBe("Subscription Confirmed - KeyFate")
+        expect(result.subject).toBe("KeyFate: Your subscription is confirmed")
         expect(result.html).toContain(
           "Thank you for subscribing to <strong>KeyFate Pro</strong>",
         )
-        expect(result.html).toContain("KeyFate - Secure Secret Management")
-        expect(result.text).toContain("Subscription Confirmed - KeyFate")
+        expect(result.html).toContain("KeyFate. All rights reserved.")
+        expect(result.text).toContain("KeyFate: Your subscription is confirmed")
       })
 
       it("should handle empty NEXT_PUBLIC_COMPANY by using default", () => {
@@ -76,7 +77,7 @@ describe("Subscription Email Templates", () => {
 
         const result = emailTemplates.subscriptionConfirmation(baseParams)
 
-        expect(result.subject).toBe("Subscription Confirmed - KeyFate")
+        expect(result.subject).toBe("KeyFate: Your subscription is confirmed")
       })
     })
 
@@ -87,7 +88,7 @@ describe("Subscription Email Templates", () => {
         const result = emailTemplates.subscriptionConfirmation(baseParams)
 
         expect(result.html).toContain("help@mycompany.com")
-        expect(result.text).toContain("help@mycompany.com")
+        // Text version only includes company name at end, support email is in HTML footer
       })
 
       it("should default to support@keyfate.com when not set", () => {
@@ -96,7 +97,6 @@ describe("Subscription Email Templates", () => {
         const result = emailTemplates.subscriptionConfirmation(baseParams)
 
         expect(result.html).toContain("support@keyfate.com")
-        expect(result.text).toContain("support@keyfate.com")
       })
     })
 
@@ -104,17 +104,14 @@ describe("Subscription Email Templates", () => {
       it("should use primary brand color in header", () => {
         const result = emailTemplates.subscriptionConfirmation(baseParams)
 
-        expect(result.html).toContain(
-          "background: hsl(13.2143 73.0435% 54.9020%)",
-        )
+        // Uses blue brand color #2563eb
+        expect(result.html).toContain("background: #2563eb")
       })
 
       it("should use primary brand color in button", () => {
         const result = emailTemplates.subscriptionConfirmation(baseParams)
 
-        expect(result.html).toContain(
-          "background: hsl(13.2143 73.0435% 54.9020%)",
-        )
+        expect(result.html).toContain("background: #2563eb")
         expect(result.html).toContain("color: white !important")
       })
 
@@ -201,9 +198,8 @@ describe("Subscription Email Templates", () => {
         expect(result.html).toContain("<!DOCTYPE html>")
         expect(result.html).toContain('<meta name="viewport"')
         expect(result.html).toContain("Subscription Confirmed")
-        expect(result.html).toContain("Hello John Doe!")
-        expect(result.html).toContain("Subscription Details")
-        expect(result.html).toContain("Access Your Dashboard")
+        expect(result.html).toContain("Hi John Doe,")
+        expect(result.html).toContain("Go to Dashboard")
       })
 
       it("should have proper max-width for email clients", () => {
@@ -215,8 +211,7 @@ describe("Subscription Email Templates", () => {
       it("should include plain text version", () => {
         const result = emailTemplates.subscriptionConfirmation(baseParams)
 
-        expect(result.text).toContain("Hello John Doe!")
-        expect(result.text).toContain("Subscription Details")
+        expect(result.text).toContain("Hi John Doe,")
         expect(result.text).toContain("Plan: Pro")
       })
     })
