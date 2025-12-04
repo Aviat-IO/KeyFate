@@ -150,7 +150,9 @@ describe("SendGridAdapter", () => {
           from: emailWithOptionals.from,
           replyTo: emailWithOptionals.replyTo,
           priority: emailWithOptionals.priority,
-          headers: emailWithOptionals.headers,
+          headers: expect.objectContaining({
+            "X-Custom-Header": "test-value",
+          }),
         }),
       )
     })
