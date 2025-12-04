@@ -115,10 +115,18 @@ describe("EditSecretForm - Multiple Recipients", () => {
   })
 
   it("should submit with multiple recipients", async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ success: true }),
-    })
+    const mockFetch = vi
+      .fn()
+      // First call: CSRF token fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ csrfToken: "test-csrf-token" }),
+      })
+      // Second call: actual API call
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true }),
+      })
     global.fetch = mockFetch
 
     const initialData = {
@@ -136,7 +144,9 @@ describe("EditSecretForm - Multiple Recipients", () => {
     fireEvent.click(submitButton)
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith(
+      // Second call after CSRF token
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        2,
         "/api/secrets/test-id",
         expect.objectContaining({
           method: "PUT",
@@ -145,7 +155,8 @@ describe("EditSecretForm - Multiple Recipients", () => {
       )
     })
 
-    const requestBody = JSON.parse(mockFetch.mock.calls[0][1].body)
+    // Check the second call (API call), not the first (CSRF)
+    const requestBody = JSON.parse(mockFetch.mock.calls[1][1].body)
     expect(requestBody.recipients).toHaveLength(2)
     expect(requestBody.recipients[0].name).toBe("John Doe")
     expect(requestBody.recipients[1].name).toBe("Jane Smith")

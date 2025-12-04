@@ -4,14 +4,22 @@ import {
   getVerifiedSession,
 } from "@/lib/auth/verification"
 import { NextResponse } from "next/server"
+import { getServerSession } from "next-auth/next"
 
+// Mock both next-auth/next and next-auth to handle different imports
 vi.mock("next-auth/next", () => ({
+  getServerSession: vi.fn(),
+}))
+
+vi.mock("next-auth", () => ({
   getServerSession: vi.fn(),
 }))
 
 vi.mock("@/lib/auth-config", () => ({
   authConfig: {},
 }))
+
+const mockGetServerSession = vi.mocked(getServerSession)
 
 describe("Email Verification Enforcement", () => {
   beforeEach(() => {
@@ -20,8 +28,7 @@ describe("Email Verification Enforcement", () => {
 
   describe("requireEmailVerification", () => {
     it("should return 401 if no session exists", async () => {
-      const { getServerSession } = await import("next-auth/next")
-      vi.mocked(getServerSession).mockResolvedValue(null)
+      mockGetServerSession.mockResolvedValue(null)
 
       const result = await requireEmailVerification()
 
@@ -32,8 +39,7 @@ describe("Email Verification Enforcement", () => {
     })
 
     it("should return 403 if email not verified", async () => {
-      const { getServerSession } = await import("next-auth/next")
-      vi.mocked(getServerSession).mockResolvedValue({
+      mockGetServerSession.mockResolvedValue({
         user: {
           id: "123",
           email: "test@example.com",
@@ -51,8 +57,7 @@ describe("Email Verification Enforcement", () => {
     })
 
     it("should return null if email is verified", async () => {
-      const { getServerSession } = await import("next-auth/next")
-      vi.mocked(getServerSession).mockResolvedValue({
+      mockGetServerSession.mockResolvedValue({
         user: {
           id: "123",
           email: "test@example.com",
@@ -66,8 +71,7 @@ describe("Email Verification Enforcement", () => {
     })
 
     it("should return 401 if user object missing", async () => {
-      const { getServerSession } = await import("next-auth/next")
-      vi.mocked(getServerSession).mockResolvedValue({
+      mockGetServerSession.mockResolvedValue({
         user: null,
       } as any)
 
@@ -82,8 +86,7 @@ describe("Email Verification Enforcement", () => {
 
   describe("getVerifiedSession", () => {
     it("should return null if no session exists", async () => {
-      const { getServerSession } = await import("next-auth")
-      vi.mocked(getServerSession).mockResolvedValue(null)
+      mockGetServerSession.mockResolvedValue(null)
 
       const result = await getVerifiedSession()
 
@@ -91,8 +94,7 @@ describe("Email Verification Enforcement", () => {
     })
 
     it("should return null if email not verified", async () => {
-      const { getServerSession } = await import("next-auth")
-      vi.mocked(getServerSession).mockResolvedValue({
+      mockGetServerSession.mockResolvedValue({
         user: {
           id: "123",
           email: "test@example.com",
@@ -106,7 +108,6 @@ describe("Email Verification Enforcement", () => {
     })
 
     it("should return session if email is verified", async () => {
-      const { getServerSession } = await import("next-auth")
       const mockSession = {
         user: {
           id: "123",
@@ -114,7 +115,7 @@ describe("Email Verification Enforcement", () => {
           emailVerified: new Date(),
         },
       }
-      vi.mocked(getServerSession).mockResolvedValue(mockSession as any)
+      mockGetServerSession.mockResolvedValue(mockSession as any)
 
       const result = await getVerifiedSession()
 
@@ -122,8 +123,7 @@ describe("Email Verification Enforcement", () => {
     })
 
     it("should return null if user object missing", async () => {
-      const { getServerSession } = await import("next-auth")
-      vi.mocked(getServerSession).mockResolvedValue({
+      mockGetServerSession.mockResolvedValue({
         user: null,
       } as any)
 
@@ -133,8 +133,7 @@ describe("Email Verification Enforcement", () => {
     })
 
     it("should return null if user object is undefined", async () => {
-      const { getServerSession } = await import("next-auth")
-      vi.mocked(getServerSession).mockResolvedValue({} as any)
+      mockGetServerSession.mockResolvedValue({} as any)
 
       const result = await getVerifiedSession()
 
@@ -144,8 +143,7 @@ describe("Email Verification Enforcement", () => {
 
   describe("API Endpoint Integration", () => {
     it("should block secret creation for unverified users", async () => {
-      const { getServerSession } = await import("next-auth")
-      vi.mocked(getServerSession).mockResolvedValue({
+      mockGetServerSession.mockResolvedValue({
         user: {
           id: "123",
           email: "test@example.com",
@@ -161,8 +159,7 @@ describe("Email Verification Enforcement", () => {
     })
 
     it("should allow secret creation for verified users", async () => {
-      const { getServerSession } = await import("next-auth")
-      vi.mocked(getServerSession).mockResolvedValue({
+      mockGetServerSession.mockResolvedValue({
         user: {
           id: "123",
           email: "test@example.com",
@@ -176,8 +173,7 @@ describe("Email Verification Enforcement", () => {
     })
 
     it("should provide clear error code for frontend handling", async () => {
-      const { getServerSession } = await import("next-auth/next")
-      vi.mocked(getServerSession).mockResolvedValue({
+      mockGetServerSession.mockResolvedValue({
         user: {
           id: "123",
           email: "test@example.com",
@@ -197,8 +193,7 @@ describe("Email Verification Enforcement", () => {
 
   describe("Security Guarantees", () => {
     it("should not leak user information in error messages", async () => {
-      const { getServerSession } = await import("next-auth")
-      vi.mocked(getServerSession).mockResolvedValue({
+      mockGetServerSession.mockResolvedValue({
         user: {
           id: "123",
           email: "test@example.com",
@@ -216,7 +211,6 @@ describe("Email Verification Enforcement", () => {
     })
 
     it("should enforce verification before any sensitive operations", async () => {
-      const { getServerSession } = await import("next-auth")
       const unverifiedSession = {
         user: {
           id: "123",
@@ -224,7 +218,7 @@ describe("Email Verification Enforcement", () => {
           emailVerified: null,
         },
       }
-      vi.mocked(getServerSession).mockResolvedValue(unverifiedSession as any)
+      mockGetServerSession.mockResolvedValue(unverifiedSession as any)
 
       const verificationResult = await requireEmailVerification()
       const verifiedSession = await getVerifiedSession()
@@ -234,8 +228,7 @@ describe("Email Verification Enforcement", () => {
     })
 
     it("should handle missing emailVerified field as unverified", async () => {
-      const { getServerSession } = await import("next-auth/next")
-      vi.mocked(getServerSession).mockResolvedValue({
+      mockGetServerSession.mockResolvedValue({
         user: {
           id: "123",
           email: "test@example.com",

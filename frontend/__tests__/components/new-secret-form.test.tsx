@@ -80,13 +80,18 @@ describe("NewSecretForm", () => {
   })
 
   it("should show form submission errors in a user-friendly manner", async () => {
-    // Mock fetch to return an error
-    ;(global.fetch as any).mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({
-        error: "Failed to create secret: Database connection error",
-      }),
-    })
+    // Mock fetch to return CSRF token first, then error
+    ;(global.fetch as any)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ csrfToken: "test-csrf-token" }),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({
+          error: "Failed to create secret: Database connection error",
+        }),
+      })
 
     render(<NewSecretForm />)
 

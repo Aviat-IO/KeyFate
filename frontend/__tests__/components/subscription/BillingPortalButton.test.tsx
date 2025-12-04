@@ -2,9 +2,20 @@ import { BillingPortalButton } from "@/components/subscription/BillingPortalButt
 import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-// Mock fetch
-global.fetch = vi.fn()
-const mockFetch = global.fetch as any
+// Mock fetch - needs to handle both CSRF token fetch and actual API call
+const mockFetch = vi.fn()
+global.fetch = mockFetch
+
+function setupFetchMock(apiResponse: any) {
+  mockFetch
+    // First call: CSRF token fetch
+    .mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ csrfToken: "test-csrf-token" }),
+    })
+    // Second call: actual API call
+    .mockResolvedValueOnce(apiResponse)
+}
 
 // Mock window.location
 delete (window as any).location
@@ -13,6 +24,7 @@ window.location = { href: "" } as any
 describe("BillingPortalButton", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockFetch.mockClear()
     window.location.href = ""
   })
 
@@ -31,7 +43,7 @@ describe("BillingPortalButton", () => {
   })
 
   it("should call portal API on button click", async () => {
-    mockFetch.mockResolvedValueOnce({
+    setupFetchMock({
       redirected: true,
       url: "https://billing.stripe.com/session/bps_123",
     })
@@ -42,12 +54,14 @@ describe("BillingPortalButton", () => {
     fireEvent.click(button)
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith("/api/create-portal-session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
+      // Second call after CSRF token fetch
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        2,
+        "/api/create-portal-session",
+        expect.objectContaining({
+          method: "POST",
+        }),
+      )
     })
   })
 
@@ -57,7 +71,15 @@ describe("BillingPortalButton", () => {
     const promise = new Promise((resolve) => {
       resolvePromise = resolve
     })
-    mockFetch.mockReturnValueOnce(promise)
+
+    mockFetch
+      // First call: CSRF token fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ csrfToken: "test-csrf-token" }),
+      })
+      // Second call: actual API call (delayed)
+      .mockReturnValueOnce(promise)
 
     render(<BillingPortalButton />)
 
@@ -84,7 +106,7 @@ describe("BillingPortalButton", () => {
   })
 
   it("should redirect to portal URL on successful response", async () => {
-    mockFetch.mockResolvedValueOnce({
+    setupFetchMock({
       redirected: true,
       url: "https://billing.stripe.com/session/bps_123",
     })
@@ -104,7 +126,7 @@ describe("BillingPortalButton", () => {
   it("should handle non-redirected response gracefully", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
 
-    mockFetch.mockResolvedValueOnce({
+    setupFetchMock({
       redirected: false,
       status: 404,
     })
@@ -125,7 +147,14 @@ describe("BillingPortalButton", () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
     const error = new Error("Network error")
 
-    mockFetch.mockRejectedValueOnce(error)
+    mockFetch
+      // First call: CSRF token fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ csrfToken: "test-csrf-token" }),
+      })
+      // Second call: API error
+      .mockRejectedValueOnce(error)
 
     render(<BillingPortalButton />)
 
@@ -148,7 +177,7 @@ describe("BillingPortalButton", () => {
   it("should handle 401 unauthorized response", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
 
-    mockFetch.mockResolvedValueOnce({
+    setupFetchMock({
       redirected: false,
       status: 401,
     })
@@ -168,7 +197,7 @@ describe("BillingPortalButton", () => {
   it("should handle no subscription found response", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
 
-    mockFetch.mockResolvedValueOnce({
+    setupFetchMock({
       redirected: false,
       status: 404,
     })
@@ -194,7 +223,7 @@ describe("BillingPortalButton", () => {
   })
 
   it("should handle multiple rapid clicks gracefully", async () => {
-    mockFetch.mockResolvedValue({
+    setupFetchMock({
       redirected: true,
       url: "https://billing.stripe.com/session/bps_123",
     })
@@ -208,9 +237,9 @@ describe("BillingPortalButton", () => {
     fireEvent.click(button)
     fireEvent.click(button)
 
-    // Should only make one API call due to loading state
+    // Should only make 2 API calls (CSRF + portal) due to loading state
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledTimes(1)
+      expect(mockFetch).toHaveBeenCalledTimes(2)
     })
   })
 })
