@@ -10,54 +10,31 @@ describe("Reminder Type Display", () => {
     urgencyLevel: "high" as const,
   }
 
-  it("should display '50% reminder' as 'halfway to deadline'", () => {
+  it("should not display reminder type section (removed as redundant)", () => {
     const result = renderReminderTemplate({
       ...baseData,
       reminderType: "50_percent",
     })
 
-    expect(result.html).toContain("Reminder type: halfway to deadline")
+    // Reminder type info box was removed as it duplicated the yellow banner content
+    expect(result.html).not.toContain("Reminder type:")
   })
 
-  it("should display '25% reminder' as '75% time elapsed'", () => {
-    const result = renderReminderTemplate({
-      ...baseData,
-      reminderType: "25_percent",
-    })
-
-    expect(result.html).toContain("Reminder type: 75% time elapsed")
-  })
-
-  it("should display '1_hour' reminder correctly", () => {
-    const result = renderReminderTemplate({
-      ...baseData,
-      reminderType: "1_hour",
-    })
-
-    expect(result.html).toContain("Reminder type: 1 hour before deadline")
-  })
-
-  it("should display '12_hours' reminder correctly", () => {
+  it("should display secret title and time remaining in the urgency banner", () => {
     const result = renderReminderTemplate({
       ...baseData,
       reminderType: "12_hours",
     })
 
-    expect(result.html).toContain("Reminder type: 12 hours before deadline")
+    // The yellow/orange urgency banner contains the essential info
+    expect(result.html).toContain("Test Secret")
+    expect(result.html).toContain("12 hours")
   })
 
-  it("should not display reminder type when not provided (backwards compatible)", () => {
+  it("should include check-in button and link", () => {
     const result = renderReminderTemplate(baseData)
 
-    expect(result.html).not.toContain("Reminder type:")
-  })
-
-  it("should include reminder type in text version", () => {
-    const result = renderReminderTemplate({
-      ...baseData,
-      reminderType: "50_percent",
-    })
-
-    expect(result.text).toContain("halfway to deadline")
+    expect(result.html).toContain("Check In Now")
+    expect(result.html).toContain("https://test.com/check-in?token=abc")
   })
 })
