@@ -16,7 +16,7 @@ describe("Reminder Type Display", () => {
       reminderType: "50_percent",
     })
 
-    expect(result.html).toContain("Reminder: halfway to deadline")
+    expect(result.html).toContain("Reminder type: halfway to deadline")
   })
 
   it("should display '25% reminder' as '75% time elapsed'", () => {
@@ -25,7 +25,7 @@ describe("Reminder Type Display", () => {
       reminderType: "25_percent",
     })
 
-    expect(result.html).toContain("Reminder: 75% time elapsed")
+    expect(result.html).toContain("Reminder type: 75% time elapsed")
   })
 
   it("should display '1_hour' reminder correctly", () => {
@@ -34,7 +34,7 @@ describe("Reminder Type Display", () => {
       reminderType: "1_hour",
     })
 
-    expect(result.html).toContain("Reminder: 1 hour before deadline")
+    expect(result.html).toContain("Reminder type: 1 hour before deadline")
   })
 
   it("should display '12_hours' reminder correctly", () => {
@@ -43,13 +43,13 @@ describe("Reminder Type Display", () => {
       reminderType: "12_hours",
     })
 
-    expect(result.html).toContain("Reminder: 12 hours before deadline")
+    expect(result.html).toContain("Reminder type: 12 hours before deadline")
   })
 
   it("should not display reminder type when not provided (backwards compatible)", () => {
     const result = renderReminderTemplate(baseData)
 
-    expect(result.html).not.toContain("Reminder:")
+    expect(result.html).not.toContain("Reminder type:")
   })
 
   it("should include reminder type in text version", () => {

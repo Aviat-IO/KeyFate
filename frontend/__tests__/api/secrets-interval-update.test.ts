@@ -23,6 +23,15 @@ vi.mock("@/lib/auth-config", () => ({
   authConfig: {},
 }))
 
+vi.mock("@/lib/csrf", () => ({
+  requireCSRFProtection: vi.fn().mockResolvedValue({ valid: true }),
+  createCSRFErrorResponse: vi.fn(),
+}))
+
+vi.mock("@/lib/auth/require-email-verification", () => ({
+  requireEmailVerification: vi.fn().mockResolvedValue(null),
+}))
+
 vi.mock("@/lib/auth/user-verification", () => ({
   ensureUserExists: vi.fn().mockResolvedValue({ exists: true, created: false }),
 }))

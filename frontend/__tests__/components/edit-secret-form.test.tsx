@@ -11,8 +11,20 @@ vi.mock("next/navigation", () => ({
   }),
 }))
 
-// Mock fetch
-global.fetch = vi.fn()
+// Mock fetch - needs to handle both CSRF token fetch and actual API call
+const mockFetch = vi.fn()
+global.fetch = mockFetch
+
+function setupFetchMock(apiResponse: any) {
+  mockFetch
+    // First call: CSRF token fetch
+    .mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ csrfToken: "test-csrf-token" }),
+    })
+    // Second call: actual API call
+    .mockResolvedValueOnce(apiResponse)
+}
 
 // Mock DeleteConfirm component
 vi.mock("@/components/delete-confirm", () => ({
@@ -63,6 +75,7 @@ describe("EditSecretForm", () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mockFetch.mockClear()
   })
 
   it("should show select dropdown for free users", () => {
@@ -115,7 +128,7 @@ describe("EditSecretForm", () => {
 
   it("should handle form submission for free users", async () => {
     // Mock successful response
-    ;(global.fetch as any).mockResolvedValueOnce({
+    setupFetchMock({
       ok: true,
       json: async () => ({ success: true }),
     })
@@ -142,22 +155,25 @@ describe("EditSecretForm", () => {
     const submitButton = screen.getByText("Save Changes")
     fireEvent.click(submitButton)
 
-    // Wait for submission
+    // Wait for submission (second call after CSRF token)
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith("/api/secrets/test-id", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...mockInitialData,
-          check_in_days: 7, // Weekly
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        2,
+        "/api/secrets/test-id",
+        expect.objectContaining({
+          method: "PUT",
+          body: JSON.stringify({
+            ...mockInitialData,
+            check_in_days: 7, // Weekly
+          }),
         }),
-      })
+      )
     })
   })
 
   it("should handle form submission for paid users", async () => {
     // Mock successful response
-    ;(global.fetch as any).mockResolvedValueOnce({
+    setupFetchMock({
       ok: true,
       json: async () => ({ success: true }),
     })
@@ -178,16 +194,19 @@ describe("EditSecretForm", () => {
     const submitButton = screen.getByText("Save Changes")
     fireEvent.click(submitButton)
 
-    // Wait for submission
+    // Wait for submission (second call after CSRF token)
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith("/api/secrets/test-id", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...mockInitialData,
-          check_in_days: 45,
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        2,
+        "/api/secrets/test-id",
+        expect.objectContaining({
+          method: "PUT",
+          body: JSON.stringify({
+            ...mockInitialData,
+            check_in_days: 45,
+          }),
         }),
-      })
+      )
     })
   })
 
@@ -256,7 +275,7 @@ describe("EditSecretForm", () => {
 
   it("should handle successful delete", async () => {
     // Mock successful delete response
-    ;(global.fetch as any).mockResolvedValueOnce({
+    setupFetchMock({
       ok: true,
       json: async () => ({ success: true }),
     })
@@ -270,20 +289,31 @@ describe("EditSecretForm", () => {
     const confirmButton = screen.getByTestId("delete-confirm-button")
     fireEvent.click(confirmButton)
 
-    // Should call DELETE API
+    // Should call DELETE API (second call after CSRF token)
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith("/api/secrets/test-id", {
-        method: "DELETE",
-      })
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        2,
+        "/api/secrets/test-id",
+        expect.objectContaining({
+          method: "DELETE",
+        }),
+      )
     })
   })
 
   it("should handle delete error", async () => {
     // Mock delete error response
-    ;(global.fetch as any).mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({ error: "Failed to delete secret" }),
-    })
+    mockFetch
+      // First call: CSRF token fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ csrfToken: "test-csrf-token" }),
+      })
+      // Second call: delete error
+      .mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ error: "Failed to delete secret" }),
+      })
 
     render(<EditSecretForm initialData={mockInitialData} secretId="test-id" />)
 
@@ -306,19 +336,26 @@ describe("EditSecretForm", () => {
 
   it("should show loading state during delete", async () => {
     // Mock slow delete response
-    ;(global.fetch as any).mockImplementation(
-      () =>
-        new Promise((resolve) =>
-          setTimeout(
-            () =>
-              resolve({
-                ok: true,
-                json: async () => ({ success: true }),
-              }),
-            100,
+    mockFetch
+      // First call: CSRF token fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ csrfToken: "test-csrf-token" }),
+      })
+      // Second call: slow delete
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(
+              () =>
+                resolve({
+                  ok: true,
+                  json: async () => ({ success: true }),
+                }),
+              100,
+            ),
           ),
-        ),
-    )
+      )
 
     render(<EditSecretForm initialData={mockInitialData} secretId="test-id" />)
 
@@ -337,19 +374,26 @@ describe("EditSecretForm", () => {
 
   it("should disable all buttons during delete operation", async () => {
     // Mock slow delete response - make it slower to catch the disabled state
-    ;(global.fetch as any).mockImplementation(
-      () =>
-        new Promise((resolve) =>
-          setTimeout(
-            () =>
-              resolve({
-                ok: true,
-                json: async () => ({ success: true }),
-              }),
-            1000, // Increased from 100ms to 1000ms
+    mockFetch
+      // First call: CSRF token fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ csrfToken: "test-csrf-token" }),
+      })
+      // Second call: slow delete
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(
+              () =>
+                resolve({
+                  ok: true,
+                  json: async () => ({ success: true }),
+                }),
+              1000, // Increased from 100ms to 1000ms
+            ),
           ),
-        ),
-    )
+      )
 
     render(<EditSecretForm initialData={mockInitialData} secretId="test-id" />)
 
@@ -375,7 +419,14 @@ describe("EditSecretForm", () => {
 
   it("should handle network error during delete", async () => {
     // Mock network error
-    ;(global.fetch as any).mockRejectedValueOnce(new Error("Network error"))
+    mockFetch
+      // First call: CSRF token fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ csrfToken: "test-csrf-token" }),
+      })
+      // Second call: network error
+      .mockRejectedValueOnce(new Error("Network error"))
 
     render(<EditSecretForm initialData={mockInitialData} secretId="test-id" />)
 

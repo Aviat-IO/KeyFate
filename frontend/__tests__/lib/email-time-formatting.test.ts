@@ -177,7 +177,8 @@ describe("Email Time Formatting", () => {
       })
 
       expect(result.subject).toContain("1 hour")
-      expect(result.subject).toContain("CRITICAL")
+      // Subject now uses simpler format without urgency indicators
+      expect(result.subject).toContain("remaining")
     })
 
     it("should show minutes when reminder sent slightly before 1 hour deadline", () => {
@@ -203,7 +204,7 @@ describe("Email Time Formatting", () => {
       })
 
       expect(result.subject).toContain("12 hours")
-      expect(result.subject).toContain("URGENT")
+      expect(result.subject).toContain("remaining")
     })
 
     it("should handle 3 day reminder correctly", () => {
@@ -214,7 +215,7 @@ describe("Email Time Formatting", () => {
       })
 
       expect(result.subject).toContain("3 days")
-      expect(result.subject).toContain("Important")
+      expect(result.subject).toContain("remaining")
     })
 
     it("should handle 7 day reminder correctly", () => {
@@ -225,7 +226,7 @@ describe("Email Time Formatting", () => {
       })
 
       expect(result.subject).toContain("7 days")
-      expect(result.subject).toContain("Scheduled")
+      expect(result.subject).toContain("remaining")
     })
   })
 })
