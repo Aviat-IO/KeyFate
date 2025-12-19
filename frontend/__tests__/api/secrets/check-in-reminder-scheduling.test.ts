@@ -13,7 +13,10 @@ import {
 import { eq, and } from "drizzle-orm"
 import { scheduleRemindersForSecret } from "@/lib/services/reminder-scheduler"
 
-describe("Check-In Endpoint - Reminder Rescheduling Integration", () => {
+// Skip these integration tests in CI/unit test runs - they require a real database
+const shouldSkip = !process.env.RUN_INTEGRATION_TESTS
+
+describe.skipIf(shouldSkip)("Check-In Endpoint - Reminder Rescheduling Integration", () => {
   let db: Awaited<ReturnType<typeof getDatabase>>
   let testUserId: string
   let testSecretId: string

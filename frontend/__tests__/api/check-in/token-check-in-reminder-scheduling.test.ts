@@ -14,7 +14,10 @@ import { eq, and } from "drizzle-orm"
 import { scheduleRemindersForSecret } from "@/lib/services/reminder-scheduler"
 import { randomBytes } from "crypto"
 
-describe("Token Check-In - Reminder Scheduling Integration", () => {
+// Skip these integration tests in CI/unit test runs - they require a real database
+const shouldSkip = !process.env.RUN_INTEGRATION_TESTS
+
+describe.skipIf(shouldSkip)("Token Check-In - Reminder Scheduling Integration", () => {
   let db: Awaited<ReturnType<typeof getDatabase>>
   let testUserId: string
   let testSecretId: string
