@@ -111,8 +111,9 @@ export function NavBar() {
               <NavigationMenuList>
                 {user && (
                   <NavigationMenuItem>
-                    <Link href="/dashboard" legacyBehavior passHref>
-                      <NavigationMenuLink
+                    <NavigationMenuLink asChild>
+                      <Link
+                        href="/dashboard"
                         className={cn(
                           navigationMenuTriggerStyle(),
                           pathname === "/dashboard" &&
@@ -120,15 +121,16 @@ export function NavBar() {
                         )}
                       >
                         Dashboard
-                      </NavigationMenuLink>
-                    </Link>
+                      </Link>
+                    </NavigationMenuLink>
                   </NavigationMenuItem>
                 )}
 
                 {!loading && !user && (
                   <NavigationMenuItem>
-                    <Link href="/pricing" legacyBehavior passHref>
-                      <NavigationMenuLink
+                    <NavigationMenuLink asChild>
+                      <Link
+                        href="/pricing"
                         className={cn(
                           navigationMenuTriggerStyle(),
                           pathname === "/pricing" &&
@@ -136,10 +138,25 @@ export function NavBar() {
                         )}
                       >
                         Pricing
-                      </NavigationMenuLink>
-                    </Link>
+                      </Link>
+                    </NavigationMenuLink>
                   </NavigationMenuItem>
                 )}
+
+                <NavigationMenuItem>
+                  <NavigationMenuLink asChild>
+                    <Link
+                      href="/blog"
+                      className={cn(
+                        navigationMenuTriggerStyle(),
+                        pathname?.startsWith("/blog") &&
+                          "bg-accent text-accent-foreground",
+                      )}
+                    >
+                      Blog
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
           </div>
