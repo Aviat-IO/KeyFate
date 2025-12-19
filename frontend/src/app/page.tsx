@@ -457,6 +457,15 @@ export default function Home() {
                 <span>30-day money-back guarantee</span>
               </div>
             </div>
+
+            <div className="mt-8">
+              <Link
+                href="/blog"
+                className="text-muted-foreground hover:text-primary text-sm underline-offset-4 hover:underline"
+              >
+                Learn more on our blog →
+              </Link>
+            </div>
           </div>
         </div>
       </section>

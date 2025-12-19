@@ -94,6 +94,7 @@ export default withAuth(
           "/pricing",
           "/terms-of-service",
           "/privacy-policy",
+          "/blog", // Public blog pages
         ]
 
         // Check if the current path is public

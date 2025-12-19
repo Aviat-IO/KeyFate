@@ -63,7 +63,74 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      typography: {
+        DEFAULT: {
+          css: {
+            maxWidth: "none",
+            color: "hsl(var(--foreground))",
+            a: {
+              color: "hsl(var(--primary))",
+              "&:hover": {
+                color: "hsl(var(--primary))",
+                opacity: 0.8,
+              },
+            },
+            strong: {
+              color: "hsl(var(--foreground))",
+            },
+            h1: {
+              color: "hsl(var(--foreground))",
+            },
+            h2: {
+              color: "hsl(var(--foreground))",
+              marginTop: "2em",
+              marginBottom: "1em",
+            },
+            h3: {
+              color: "hsl(var(--foreground))",
+              marginTop: "1.5em",
+              marginBottom: "0.75em",
+            },
+            h4: {
+              color: "hsl(var(--foreground))",
+            },
+            code: {
+              color: "hsl(var(--foreground))",
+              backgroundColor: "hsl(var(--muted))",
+              padding: "0.25rem 0.375rem",
+              borderRadius: "0.25rem",
+              fontWeight: "400",
+            },
+            "code::before": {
+              content: '""',
+            },
+            "code::after": {
+              content: '""',
+            },
+            pre: {
+              backgroundColor: "hsl(var(--muted))",
+              color: "hsl(var(--foreground))",
+            },
+            blockquote: {
+              borderLeftColor: "hsl(var(--primary))",
+              color: "hsl(var(--muted-foreground))",
+            },
+            hr: {
+              borderColor: "hsl(var(--border))",
+            },
+            "ul > li::marker": {
+              color: "hsl(var(--muted-foreground))",
+            },
+            "ol > li::marker": {
+              color: "hsl(var(--muted-foreground))",
+            },
+          },
+        },
+      },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    require("@tailwindcss/typography"),
+  ],
 } satisfies Config;
