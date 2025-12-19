@@ -1,7 +1,7 @@
 "use client"
 
 import { Turnstile, TurnstileInstance } from "@marsidev/react-turnstile"
-import { useRef, forwardRef, useImperativeHandle } from "react"
+import { useRef, forwardRef, useImperativeHandle, useEffect } from "react"
 
 export interface TurnstileRef {
   reset: () => void
@@ -29,13 +29,16 @@ export const TurnstileWidget = forwardRef<TurnstileRef, TurnstileWidgetProps>(
 
     const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
 
+    // Auto-succeed in development when no site key is configured
+    useEffect(() => {
+      if (!siteKey && process.env.NODE_ENV === "development") {
+        const timeoutId = setTimeout(() => onSuccess("dev-bypass-token"), 100)
+        return () => clearTimeout(timeoutId)
+      }
+    }, [siteKey, onSuccess])
+
     // In development or if no site key, render nothing (allow form submission)
     if (!siteKey) {
-      // Call onSuccess with a dummy token in dev mode
-      if (process.env.NODE_ENV === "development") {
-        // Auto-succeed in development
-        setTimeout(() => onSuccess("dev-bypass-token"), 100)
-      }
       return null
     }
 

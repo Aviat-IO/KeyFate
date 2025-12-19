@@ -46,6 +46,14 @@ export function Footer() {
             >
               Contact
             </a>
+            <a
+              href="https://github.com/Aviat-IO/keyfate"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              GitHub
+            </a>
           </div>
         </div>
       </div>

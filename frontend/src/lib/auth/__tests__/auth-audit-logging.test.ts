@@ -16,7 +16,10 @@ vi.mock("next/headers", () => ({
   })),
 }))
 
-describe("Authentication Audit Logging Integration", () => {
+// Skip these integration tests in CI/unit test runs - they require a real database
+const shouldSkip = !process.env.RUN_INTEGRATION_TESTS
+
+describe.skipIf(shouldSkip)("Authentication Audit Logging Integration", () => {
   let db: Awaited<ReturnType<typeof getDatabase>>
   let testUserId: string
 

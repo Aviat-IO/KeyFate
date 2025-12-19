@@ -10,7 +10,10 @@ import {
   cancelRemindersForSecret,
 } from "@/lib/services/reminder-scheduler"
 
-describe("Toggle Pause - Reminder Scheduling Integration", () => {
+// Skip these integration tests in CI/unit test runs - they require a real database
+const shouldSkip = !process.env.RUN_INTEGRATION_TESTS
+
+describe.skipIf(shouldSkip)("Toggle Pause - Reminder Scheduling Integration", () => {
   let db: Awaited<ReturnType<typeof getDatabase>>
   let testUserId: string
   let testSecretId: string
