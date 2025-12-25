@@ -33,7 +33,7 @@ export default function RootLayout({
               enableSystem
               disableTransitionOnChange
             >
-              <main className="container mx-auto px-4">{children}</main>
+              <main>{children}</main>
               <Toaster />
             </ThemeProvider>
           </ConfigProvider>
