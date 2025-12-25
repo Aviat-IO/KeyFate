@@ -1,7 +1,17 @@
-import { describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { formatGranularTime } from "@/lib/time-utils"
 
 describe("formatGranularTime", () => {
+  beforeEach(() => {
+    // Use fake timers to avoid timing-sensitive test failures
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2025-06-15T12:00:00.000Z"))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   describe("future dates - days", () => {
     it("formats >24 hours as days (plural)", () => {
       const now = new Date()
