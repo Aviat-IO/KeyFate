@@ -39,9 +39,11 @@ export default function Home() {
 
   return (
     <div className="bg-background min-h-screen">
-      <div className="bg-background/90 supports-[backdrop-filter]:bg-background/50 sticky top-0 z-50 border-b backdrop-blur">
+      <nav className="fixed left-0 right-0 top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
         <NavBar />
-      </div>
+      </nav>
+
+      <div className="h-16" />
 
       {/* Hero Section */}
       <section className="container relative mx-auto overflow-hidden px-4 py-32">
