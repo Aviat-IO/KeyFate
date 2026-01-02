@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { ExportRecoveryKitButton } from "@/components/ExportRecoveryKitButton"
 import { authConfig } from "@/lib/auth-config"
 import { getSecret } from "@/lib/db/operations"
 import {
@@ -17,6 +18,7 @@ import {
   Calendar,
   CheckCircle,
   Clock,
+  Download,
   FileText,
   History,
   Mail,
@@ -189,6 +191,39 @@ export default async function ViewSecretPage({ params }: ViewSecretPageProps) {
                   </div>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Download className="h-5 w-5" />
+                Actions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-4">
+                <ExportRecoveryKitButton
+                  secret={{
+                    id: secret.id,
+                    title: secret.title,
+                    checkInDays: secret.checkInDays,
+                    createdAt: secret.createdAt,
+                    recipients: secret.recipients.map((r) => ({
+                      id: r.id,
+                      name: r.name,
+                      email: r.email,
+                      phone: r.phone,
+                    })),
+                  }}
+                  threshold={secret.sssThreshold}
+                  totalShares={secret.sssSharesTotal}
+                />
+              </div>
+              <p className="mt-4 text-sm text-muted-foreground">
+                Export a recovery kit to ensure your secret remains accessible even if KeyFate is unavailable.
+              </p>
             </CardContent>
           </Card>
 
