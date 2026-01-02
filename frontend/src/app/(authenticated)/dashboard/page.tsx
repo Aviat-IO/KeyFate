@@ -225,7 +225,7 @@ async function DashboardHeader() {
 
 export default async function DashboardPage() {
   return (
-    <div className="mx-auto py-8 sm:px-4">
+    <div className="container mx-auto py-8 sm:px-4">
       <UpgradeSuccessDialog />
 
       <Suspense

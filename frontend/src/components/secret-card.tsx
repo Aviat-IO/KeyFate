@@ -375,19 +375,23 @@ export function SecretCard({ secret }: SecretCardProps) {
                 )}
 
                 <Button variant="ghost" size="sm" asChild>
-                  <Link
-                    href={
-                      serverShareDeleted
-                        ? `/secrets/${secretState.id}/view`
-                        : `/secrets/${secretState.id}/edit`
-                    }
-                  >
-                    <Pencil className="mr-1 h-4 w-4" />
-                    <span className="hidden sm:inline">
-                      {serverShareDeleted ? "View" : "Edit"}
-                    </span>
+                  <Link href={`/secrets/${secretState.id}/view`}>
+                    <span className="hidden sm:inline">View</span>
+                    <span className="sm:hidden">View</span>
                   </Link>
                 </Button>
+
+                {!serverShareDeleted && (
+                  <>
+                    <Separator orientation="vertical" className="h-4" />
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link href={`/secrets/${secretState.id}/edit`}>
+                        <Pencil className="mr-1 h-4 w-4" />
+                        <span className="hidden sm:inline">Edit</span>
+                      </Link>
+                    </Button>
+                  </>
+                )}
               </div>
 
               {/* Check-in button - right aligned */}
