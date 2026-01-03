@@ -1,9 +1,5 @@
 import { authConfig } from "@/lib/auth-config"
 import { requireCSRFProtection, createCSRFErrorResponse } from "@/lib/csrf"
-import {
-  requireRecentAuthentication,
-  createReAuthErrorResponse,
-} from "@/lib/auth/re-authentication"
 import { getDatabase } from "@/lib/db/drizzle"
 import { secrets } from "@/lib/db/schema"
 import { decryptMessage } from "@/lib/encryption"
@@ -25,7 +21,7 @@ const secretIdSchema = z.string().uuid({
  * Export Share API
  *
  * Returns the DECRYPTED server share for inclusion in a recovery kit.
- * Requires CSRF protection and recent re-authentication for security.
+ * Requires CSRF protection for security.
  *
  * This is different from reveal-server-share which returns encrypted data.
  * The decryption happens server-side since the encryption key is not available client-side.
@@ -52,11 +48,6 @@ export async function POST(
     const csrfCheck = await requireCSRFProtection(request)
     if (!csrfCheck.valid) {
       return createCSRFErrorResponse()
-    }
-
-    const reAuthCheck = await requireRecentAuthentication(request)
-    if (!reAuthCheck.valid) {
-      return createReAuthErrorResponse(reAuthCheck.userId)
     }
 
     const session = (await getServerSession(authConfig as any)) as Session | null
