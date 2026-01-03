@@ -69,9 +69,6 @@ export function ExportRecoveryKitButton({
         if (response.status === 401) {
           throw new Error("Session expired. Please log in again.")
         }
-        if (response.status === 403) {
-          throw new Error("Re-authentication required. Please verify your identity.")
-        }
         if (response.status === 404) {
           throw new Error("Server share not found or has been deleted.")
         }

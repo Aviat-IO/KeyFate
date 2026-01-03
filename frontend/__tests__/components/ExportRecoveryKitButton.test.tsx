@@ -170,26 +170,6 @@ describe("ExportRecoveryKitButton", () => {
     })
   })
 
-  it("should show specific error for 403 re-auth required", async () => {
-    mockFetch.mockResolvedValue({
-      ok: false,
-      status: 403,
-      json: () => Promise.resolve({}),
-    })
-
-    render(<ExportRecoveryKitButton {...defaultProps} />)
-
-    const button = screen.getByRole("button", { name: /export recovery kit/i })
-    fireEvent.click(button)
-
-    const downloadButton = await screen.findByRole("button", { name: /download kit/i })
-    fireEvent.click(downloadButton)
-
-    await waitFor(() => {
-      expect(screen.getByText(/re-authentication required/i)).toBeInTheDocument()
-    })
-  })
-
   it("should show specific error for 404 not found", async () => {
     mockFetch.mockResolvedValue({
       ok: false,
