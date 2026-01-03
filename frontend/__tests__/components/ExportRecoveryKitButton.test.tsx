@@ -12,6 +12,13 @@ vi.mock("@/lib/export-recovery-kit", () => ({
 const mockFetch = vi.fn()
 global.fetch = mockFetch
 
+// Mock useCSRF hook
+vi.mock("@/hooks/useCSRF", () => ({
+  useCSRF: () => ({
+    fetchWithCSRF: mockFetch,
+  }),
+}))
+
 describe("ExportRecoveryKitButton", () => {
   const mockSecret = {
     id: "test-secret-123",
