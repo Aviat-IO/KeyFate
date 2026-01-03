@@ -16,6 +16,7 @@ import {
   type RecoveryKitData,
   type SecretMetadata,
 } from "@/lib/export-recovery-kit"
+import { useCSRF } from "@/hooks/useCSRF"
 import { AlertCircle, Download, Loader2, ShieldCheck } from "lucide-react"
 import { useCallback, useState } from "react"
 
@@ -47,6 +48,7 @@ export function ExportRecoveryKitButton({
   const [isExporting, setIsExporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const { fetchWithCSRF } = useCSRF()
 
   const handleExport = useCallback(async () => {
     setIsExporting(true)
@@ -54,8 +56,8 @@ export function ExportRecoveryKitButton({
     setSuccess(false)
 
     try {
-      // Fetch decrypted server share from API
-      const response = await fetch(`/api/secrets/${secret.id}/export-share`, {
+      // Fetch decrypted server share from API (with CSRF token)
+      const response = await fetchWithCSRF(`/api/secrets/${secret.id}/export-share`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -121,7 +123,7 @@ export function ExportRecoveryKitButton({
     } finally {
       setIsExporting(false)
     }
-  }, [secret, threshold, totalShares])
+  }, [secret, threshold, totalShares, fetchWithCSRF])
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
