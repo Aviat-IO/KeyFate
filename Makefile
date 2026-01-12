@@ -1,31 +1,34 @@
-.PHONY: install dev stop clean test migrate seed deploy-staging deploy-prod help status reset-db debug-db test-db-connection clean-db ensure-database create-database db-proxy-staging db-proxy-prod db-migrate-staging db-migrate-prod db-studio-staging db-studio-prod
+.PHONY: install dev stop clean test migrate seed deploy-staging deploy-prod help status reset-db debug-db test-db-connection clean-db ensure-database create-database db-tunnel-staging db-tunnel-prod db-migrate-staging db-migrate-prod db-studio-staging db-studio-prod
 
 # Default target
 help:
 	@echo "🚀 Dead Man's Switch - Local Development Infrastructure"
 	@echo ""
 	@echo "Available commands:"
+	@echo ""
+	@echo "Local Development:"
 	@echo "  make install          - Complete local environment setup"
 	@echo "  make dev              - Start full local development stack"
 	@echo "  make stop             - Stop all local services"
 	@echo "  make clean            - Clean up containers and volumes"
 	@echo "  make test             - Run infrastructure tests"
-	@echo "  make migrate          - Run database migrations"
+	@echo "  make migrate          - Run database migrations (local)"
 	@echo "  make seed             - Seed database with development data"
 	@echo "  make reset-db         - Reset database (migrate + seed)"
 	@echo "  make clean-db         - Remove database volumes and start fresh"
-	@echo "  make ensure-database  - Ensure keyfate_dev database exists"
+	@echo "  make status           - Show status of all services"
+	@echo ""
+	@echo "Remote Database Access (via bastion host):"
+	@echo "  make db-tunnel-staging  - SSH tunnel to staging DB (run in Terminal 1)"
+	@echo "  make db-tunnel-prod     - SSH tunnel to production DB (run in Terminal 1)"
+	@echo "  make db-studio-staging  - Open Drizzle Studio for staging (run in Terminal 2)"
+	@echo "  make db-studio-prod     - Open Drizzle Studio for production (run in Terminal 2)"
+	@echo "  make db-migrate-staging - Run migrations against staging"
+	@echo "  make db-migrate-prod    - Run migrations against production"
+	@echo ""
+	@echo "Deployment:"
 	@echo "  make deploy-staging   - Deploy to staging environment"
 	@echo "  make deploy-prod      - Deploy to production environment"
-	@echo "  make status           - Show status of all services"
-	@echo "  make debug-db         - Debug database connectivity issues"
-	@echo "  make test-db-connection - Quick database connection test"
-	@echo "  make db-proxy-staging - Connect to staging Cloud SQL via proxy (port 54321)"
-	@echo "  make db-proxy-prod    - Connect to production Cloud SQL via proxy (port 54321)"
-	@echo "  make db-migrate-staging - Run migrations against staging database"
-	@echo "  make db-migrate-prod  - Run migrations against production database"
-	@echo "  make db-studio-staging - Open Drizzle Studio for staging database"
-	@echo "  make db-studio-prod   - Open Drizzle Studio for production database"
 	@echo "  make sync-doppler-dev - Sync Doppler secrets to dev terraform.tfvars"
 	@echo "  make sync-doppler-prod - Sync Doppler secrets to prod terraform.tfvars"
 	@echo ""
@@ -254,42 +257,51 @@ ensure-database:
 create-database:
 	@docker-compose exec -T postgres psql -U postgres -c "CREATE DATABASE keyfate_dev;" 2>/dev/null || echo "Database already exists or creation failed"
 
-# Connect to staging Cloud SQL via proxy
-db-proxy-staging:
-	@echo "🔌 Starting Cloud SQL Proxy for staging..."
-	@echo "📡 Connecting to: keyfate-dev:us-central1:keyfate-postgres-staging"
-	@echo "🌐 Proxy will be available at: localhost:54321"
-	@echo "🔒 Using private IP (requires running from GCP environment)"
+# SSH tunnel to staging database via bastion host
+# Run this in Terminal 1, then use db-studio-staging or db-migrate-staging in Terminal 2
+db-tunnel-staging:
+	@echo "🔌 Opening SSH tunnel to staging database via bastion host..."
+	@echo "📡 Project: keyfate-dev"
+	@echo "🌐 Database will be available at: localhost:54321"
 	@echo ""
-	@echo "💡 Note: This must be run from Cloud Shell or a GCP VM with VPC access"
+	@echo "💡 Keep this terminal open, then run in another terminal:"
+	@echo "   make db-studio-staging   # To open Drizzle Studio"
+	@echo "   make db-migrate-staging  # To run migrations"
 	@echo ""
-	@cloud-sql-proxy --private-ip --port=54321 keyfate-dev:us-central1:keyfate-postgres-staging
+	gcloud compute ssh bastion-host --zone=us-central1-a --project=keyfate-dev \
+		--tunnel-through-iap \
+		--ssh-flag='-L' --ssh-flag='54321:127.0.0.1:5432'
 
-# Connect to production Cloud SQL via proxy
-db-proxy-prod:
-	@echo "🔌 Starting Cloud SQL Proxy for production..."
-	@echo "📡 Connecting to: keyfate-prod:us-central1:keyfate-postgres-production"
-	@echo "🌐 Proxy will be available at: localhost:54321"
-	@echo "🔒 Using private IP (requires running from GCP environment)"
+# SSH tunnel to production database via bastion host
+# Run this in Terminal 1, then use db-studio-prod or db-migrate-prod in Terminal 2
+db-tunnel-prod:
+	@echo "🔌 Opening SSH tunnel to production database via bastion host..."
+	@echo "📡 Project: keyfate-prod"
+	@echo "🌐 Database will be available at: localhost:54321"
+	@echo "⚠️  WARNING: This connects to the PRODUCTION database!"
 	@echo ""
-	@echo "💡 Note: This must be run from Cloud Shell or a GCP VM with VPC access"
+	@echo "💡 Keep this terminal open, then run in another terminal:"
+	@echo "   make db-studio-prod   # To open Drizzle Studio"
+	@echo "   make db-migrate-prod  # To run migrations"
 	@echo ""
-	@cloud-sql-proxy --private-ip --port=54321 keyfate-prod:us-central1:keyfate-postgres-production
+	gcloud compute ssh bastion-host --zone=us-central1-a --project=keyfate-prod \
+		--tunnel-through-iap \
+		--ssh-flag='-L' --ssh-flag='54321:127.0.0.1:5432'
 
 # Run migrations against staging database
-# Requires db-proxy-staging to be running in another terminal
+# Requires db-tunnel-staging to be running in another terminal
 db-migrate-staging:
 	@echo "📊 Running migrations against staging database..."
-	@echo "⚠️  Ensure 'make db-proxy-staging' is running in another terminal"
+	@echo "⚠️  Ensure 'make db-tunnel-staging' is running in another terminal"
 	@echo ""
 	@cd frontend && npm run db:migrate -- --config=drizzle-staging.config.ts
 	@echo "✅ Staging migrations complete"
 
 # Run migrations against production database
-# Requires db-proxy-prod to be running in another terminal
+# Requires db-tunnel-prod to be running in another terminal
 db-migrate-prod:
 	@echo "📊 Running migrations against production database..."
-	@echo "⚠️  Ensure 'make db-proxy-prod' is running in another terminal"
+	@echo "⚠️  Ensure 'make db-tunnel-prod' is running in another terminal"
 	@echo "⚠️  WARNING: This will modify the production database!"
 	@read -p "Are you sure you want to continue? (yes/N): " confirm && [ "$$confirm" = "yes" ]
 	@echo ""
@@ -297,19 +309,19 @@ db-migrate-prod:
 	@echo "✅ Production migrations complete"
 
 # Open Drizzle Studio for staging database
-# Requires db-proxy-staging to be running in another terminal
+# Requires db-tunnel-staging to be running in another terminal
 db-studio-staging:
 	@echo "🎨 Opening Drizzle Studio for staging database..."
-	@echo "⚠️  Ensure 'make db-proxy-staging' is running in another terminal"
+	@echo "⚠️  Ensure 'make db-tunnel-staging' is running in another terminal"
 	@echo "🌐 Studio will be available at: https://local.drizzle.studio"
 	@echo ""
 	@cd frontend && npm run db:studio -- --config=drizzle-staging.config.ts
 
 # Open Drizzle Studio for production database
-# Requires db-proxy-prod to be running in another terminal
+# Requires db-tunnel-prod to be running in another terminal
 db-studio-prod:
 	@echo "🎨 Opening Drizzle Studio for production database..."
-	@echo "⚠️  Ensure 'make db-proxy-prod' is running in another terminal"
+	@echo "⚠️  Ensure 'make db-tunnel-prod' is running in another terminal"
 	@echo "⚠️  WARNING: This provides full access to the production database!"
 	@read -p "Are you sure you want to continue? (yes/N): " confirm && [ "$$confirm" = "yes" ]
 	@echo "🌐 Studio will be available at: https://local.drizzle.studio"
