@@ -7,6 +7,9 @@ import {
   isWebhookProcessed,
   recordWebhookEvent,
 } from "@/lib/webhooks/deduplication"
+import { getDatabase } from "@/lib/db/drizzle"
+import { userSubscriptions } from "@/lib/db/schema"
+import { eq, or } from "drizzle-orm"
 import { NextRequest, NextResponse } from "next/server"
 
 // Prevent static analysis during build
@@ -228,6 +231,47 @@ async function extractUserIdFromEvent(
         }
       } else {
         console.log("  ⚠️  No subscription ID found in invoice event")
+      }
+    }
+
+    // Fallback: Look up user by subscription ID or customer ID in our database
+    const subscriptionId = eventData.id as string | undefined
+    const customerId = eventData.customer as string | undefined
+
+    if (subscriptionId || customerId) {
+      console.log(
+        `  🔄 Falling back to database lookup (subscriptionId: ${subscriptionId}, customerId: ${customerId})`,
+      )
+      try {
+        const db = await getDatabase()
+        const conditions = []
+
+        if (subscriptionId && event.type.startsWith("customer.subscription.")) {
+          conditions.push(
+            eq(userSubscriptions.providerSubscriptionId, subscriptionId),
+          )
+        }
+        if (customerId) {
+          conditions.push(eq(userSubscriptions.providerCustomerId, customerId))
+        }
+
+        if (conditions.length > 0) {
+          const [subscription] = await db
+            .select({ userId: userSubscriptions.userId })
+            .from(userSubscriptions)
+            .where(conditions.length === 1 ? conditions[0] : or(...conditions))
+            .limit(1)
+
+          if (subscription?.userId) {
+            console.log(
+              "  ✅ Found user_id via database lookup:",
+              subscription.userId,
+            )
+            return subscription.userId
+          }
+        }
+      } catch (dbError) {
+        console.error("  ❌ Database lookup failed:", dbError)
       }
     }
 
