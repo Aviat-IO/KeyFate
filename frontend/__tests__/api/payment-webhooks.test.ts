@@ -1,6 +1,11 @@
 import { NextRequest } from "next/server"
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest"
 
+// Create a configurable mock for database lookups - exported so tests can modify
+const mockDbState = {
+  lookupResult: [] as { userId: string }[],
+}
+
 // Mock modules
 vi.mock("@/lib/db/drizzle", () => ({
   db: {
@@ -22,18 +27,7 @@ vi.mock("@/lib/db/drizzle", () => ({
       }),
     }),
   },
-  getDatabase: vi.fn().mockResolvedValue({
-    select: vi.fn().mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([]),
-        }),
-      }),
-    }),
-    insert: vi.fn().mockReturnValue({
-      values: vi.fn().mockResolvedValue([{ id: "test-id" }]),
-    }),
-  }),
+  getDatabase: vi.fn(),
 }))
 
 vi.mock("@/lib/server-env", () => ({
@@ -76,8 +70,16 @@ vi.mock("@/lib/services/email-service", () => ({
   emailService: mockEmailService,
 }))
 
+// Mock webhook deduplication
+vi.mock("@/lib/webhooks/deduplication", () => ({
+  isWebhookProcessed: vi.fn().mockResolvedValue(false),
+  recordWebhookEvent: vi.fn().mockResolvedValue(undefined),
+}))
+
 describe("Payment Webhook Integration Tests", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    // Reset modules to ensure fresh imports
+    vi.resetModules()
     vi.clearAllMocks()
     // Reset all mocks to successful defaults
     mockStripeProvider.verifyWebhookSignature.mockResolvedValue({})
@@ -85,6 +87,29 @@ describe("Payment Webhook Integration Tests", () => {
     mockSubscriptionService.handleStripeWebhook.mockResolvedValue(undefined)
     mockSubscriptionService.handleBTCPayWebhook.mockResolvedValue(undefined)
     mockEmailService.sendAdminAlert.mockResolvedValue(undefined)
+    // Reset database lookup to return nothing by default
+    mockDbState.lookupResult = []
+
+    // Setup database mock with current state
+    const { getDatabase } = await import("@/lib/db/drizzle")
+    vi.mocked(getDatabase).mockImplementation(() =>
+      Promise.resolve({
+        select: vi.fn().mockReturnValue({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              limit: vi
+                .fn()
+                .mockImplementation(() =>
+                  Promise.resolve(mockDbState.lookupResult),
+                ),
+            }),
+          }),
+        }),
+        insert: vi.fn().mockReturnValue({
+          values: vi.fn().mockResolvedValue([{ id: "test-id" }]),
+        }),
+      } as any),
+    )
   })
 
   afterEach(() => {
@@ -264,6 +289,195 @@ describe("Payment Webhook Integration Tests", () => {
 
       // Assert
       expect(response.status).toBe(401)
+    })
+
+    it("should fall back to database lookup when metadata is empty", async () => {
+      // Arrange - webhook with empty metadata (common when cancelled via Stripe dashboard)
+      const webhookEvent = {
+        type: "customer.subscription.deleted",
+        id: "evt_test_no_metadata",
+        data: {
+          object: {
+            id: "sub_test456",
+            customer: "cus_test456",
+            status: "canceled",
+            metadata: {}, // Empty metadata - the bug scenario
+          },
+        },
+      }
+
+      // Mock database to return user by subscription ID
+      mockDbState.lookupResult = [{ userId: "user456" }]
+
+      mockStripeProvider.verifyWebhookSignature.mockResolvedValue(webhookEvent)
+
+      const request = new NextRequest(
+        "http://localhost:3000/api/webhooks/stripe",
+        {
+          method: "POST",
+          body: JSON.stringify(webhookEvent),
+          headers: {
+            "stripe-signature": "test-signature",
+            "content-type": "application/json",
+          },
+        },
+      )
+
+      // Act
+      const { POST } = await import("@/app/api/webhooks/stripe/route")
+      const response = await POST(request)
+
+      // Assert
+      expect(response.status).toBe(200)
+      expect(mockSubscriptionService.handleStripeWebhook).toHaveBeenCalledWith(
+        webhookEvent,
+        "user456",
+      )
+      // Should NOT send admin alert since we found the user
+      expect(mockEmailService.sendAdminAlert).not.toHaveBeenCalled()
+    })
+
+    it("should fall back to customer ID lookup when subscription ID not found", async () => {
+      // Arrange - webhook with empty metadata, lookup by customer ID
+      const webhookEvent = {
+        type: "customer.subscription.updated",
+        id: "evt_test_customer_lookup",
+        data: {
+          object: {
+            id: "sub_unknown",
+            customer: "cus_known789",
+            status: "active",
+            metadata: {},
+          },
+        },
+      }
+
+      // Mock database to return user by customer ID
+      mockDbState.lookupResult = [{ userId: "user789" }]
+
+      mockStripeProvider.verifyWebhookSignature.mockResolvedValue(webhookEvent)
+
+      const request = new NextRequest(
+        "http://localhost:3000/api/webhooks/stripe",
+        {
+          method: "POST",
+          body: JSON.stringify(webhookEvent),
+          headers: {
+            "stripe-signature": "test-signature",
+            "content-type": "application/json",
+          },
+        },
+      )
+
+      // Act
+      const { POST } = await import("@/app/api/webhooks/stripe/route")
+      const response = await POST(request)
+
+      // Assert
+      expect(response.status).toBe(200)
+      expect(mockSubscriptionService.handleStripeWebhook).toHaveBeenCalledWith(
+        webhookEvent,
+        "user789",
+      )
+    })
+
+    it("should send admin alert when user cannot be found by any method", async () => {
+      // Arrange - webhook with empty metadata and no matching database record
+      const webhookEvent = {
+        type: "customer.subscription.deleted",
+        id: "evt_test_orphan",
+        data: {
+          object: {
+            id: "sub_orphan",
+            customer: "cus_orphan",
+            status: "canceled",
+            metadata: {},
+          },
+        },
+      }
+
+      // Mock database to return nothing
+      mockDbState.lookupResult = []
+
+      mockStripeProvider.verifyWebhookSignature.mockResolvedValue(webhookEvent)
+
+      const request = new NextRequest(
+        "http://localhost:3000/api/webhooks/stripe",
+        {
+          method: "POST",
+          body: JSON.stringify(webhookEvent),
+          headers: {
+            "stripe-signature": "test-signature",
+            "content-type": "application/json",
+          },
+        },
+      )
+
+      // Act
+      const { POST } = await import("@/app/api/webhooks/stripe/route")
+      const response = await POST(request)
+
+      // Assert
+      expect(response.status).toBe(400)
+      const data = await response.json()
+      expect(data.error).toBe("No user_id in metadata")
+
+      // Should send admin alert
+      expect(mockEmailService.sendAdminAlert).toHaveBeenCalledWith({
+        type: "webhook_failure",
+        severity: "medium",
+        message: "Stripe webhook missing user_id",
+        details: expect.objectContaining({
+          eventType: "customer.subscription.deleted",
+          eventId: "evt_test_orphan",
+          provider: "stripe",
+        }),
+      })
+    })
+
+    it("should prefer metadata user_id over database lookup", async () => {
+      // Arrange - webhook with metadata (should use metadata, not database)
+      const webhookEvent = {
+        type: "customer.subscription.created",
+        id: "evt_test_with_metadata",
+        data: {
+          object: {
+            id: "sub_test_meta",
+            customer: "cus_test_meta",
+            status: "active",
+            metadata: { user_id: "user_from_metadata" },
+          },
+        },
+      }
+
+      // Mock database to return a different user (should NOT be used)
+      mockDbState.lookupResult = [{ userId: "user_from_database" }]
+
+      mockStripeProvider.verifyWebhookSignature.mockResolvedValue(webhookEvent)
+
+      const request = new NextRequest(
+        "http://localhost:3000/api/webhooks/stripe",
+        {
+          method: "POST",
+          body: JSON.stringify(webhookEvent),
+          headers: {
+            "stripe-signature": "test-signature",
+            "content-type": "application/json",
+          },
+        },
+      )
+
+      // Act
+      const { POST } = await import("@/app/api/webhooks/stripe/route")
+      const response = await POST(request)
+
+      // Assert
+      expect(response.status).toBe(200)
+      // Should use metadata user_id, not database lookup
+      expect(mockSubscriptionService.handleStripeWebhook).toHaveBeenCalledWith(
+        webhookEvent,
+        "user_from_metadata",
+      )
     })
   })
 
