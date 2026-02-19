@@ -54,3 +54,4 @@ reset_databases.sh
 # Drizzle
 frontend/drizzle-staging.config.ts
 frontend/drizzle-production.config.ts
+MARKETING_GUIDE.md
