@@ -1,0 +1,42 @@
+# KeyFate
+
+> KeyFate is a zero-knowledge dead man's switch service that automatically delivers encrypted secrets to trusted recipients if you become unavailable. Built with Shamir's Secret Sharing and AES-256 client-side encryption.
+
+## Key Facts
+- Zero-knowledge architecture — KeyFate cannot read your secrets
+- Uses Shamir's Secret Sharing to split secrets into encrypted pieces
+- Client-side AES-256 encryption — secrets never leave your device unencrypted
+- Check-in based trigger system (daily to yearly intervals)
+- Free tier: 1 secret, 1 recipient
+- Pro tier: $9/month or $90/year — 10 secrets, 5 recipients each, custom intervals
+- Accepts credit card (Stripe) and Bitcoin (BTCPay Server)
+
+## Use Cases
+- Cryptocurrency key inheritance
+- Digital estate planning
+- Journalist source protection
+- Password/credential backup for family
+- Business continuity planning
+
+## How It Works
+1. You create a secret and designate recipients
+2. Your secret is split into 3 pieces using Shamir's Secret Sharing (in your browser)
+3. You keep 1 piece, your recipient gets 1 piece, KeyFate stores 1 piece (encrypted, unreadable)
+4. You check in on your chosen schedule
+5. If you miss check-ins, KeyFate releases its piece to your recipient
+6. Recipient combines 2 pieces to reconstruct the secret
+
+## Docs
+- [Documentation](https://keyfate.com/faq)
+- [Blog](https://keyfate.com/blog)
+- [Pricing](https://keyfate.com/pricing)
+- [Privacy Policy](https://keyfate.com/privacy-policy)
+- [Terms of Service](https://keyfate.com/terms-of-service)
+
+## Security
+- All cryptographic operations happen client-side in the browser
+- Shamir's Secret Sharing (threshold: 2-of-3)
+- AES-256-GCM encryption
+- Zero-knowledge: server stores only 1 of 3 shares, encrypted
+- No plaintext secrets ever transmitted or stored server-side
+- Open-source cryptographic implementation

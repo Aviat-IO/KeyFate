@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Disallow: /profile
+Disallow: /check-in
+Disallow: /decrypt
+Disallow: /confirm-deletion
+Disallow: /test-checkout
+Disallow: /test-env
+Disallow: /auth/
+Disallow: /api/
+
+Sitemap: https://keyfate.com/sitemap.xml
+
+# LLMs
+# See https://llmstxt.org
+# AI-readable site description
+Allow: /llms.txt
