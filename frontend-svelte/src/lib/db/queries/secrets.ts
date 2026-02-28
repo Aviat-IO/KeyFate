@@ -24,6 +24,7 @@ export async function getSecretWithRecipients(
               'name', ${secretRecipients.name},
               'email', ${secretRecipients.email},
               'phone', ${secretRecipients.phone},
+              'nostrPubkey', ${secretRecipients.nostrPubkey},
               'createdAt', ${secretRecipients.createdAt},
               'updatedAt', ${secretRecipients.updatedAt}
             )
@@ -65,6 +66,7 @@ export async function getAllSecretsWithRecipients(
               'name', ${secretRecipients.name},
               'email', ${secretRecipients.email},
               'phone', ${secretRecipients.phone},
+              'nostrPubkey', ${secretRecipients.nostrPubkey},
               'createdAt', ${secretRecipients.createdAt},
               'updatedAt', ${secretRecipients.updatedAt}
             )
