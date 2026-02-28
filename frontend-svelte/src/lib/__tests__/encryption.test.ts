@@ -27,7 +27,7 @@ vi.mock("$lib/server-env", () => ({
 }))
 
 // Set the env var too since encryption.ts also checks process.env
-vi.stubEnv("ENCRYPTION_KEY", TEST_KEY_BASE64)
+process.env.ENCRYPTION_KEY = TEST_KEY_BASE64
 
 describe("Encryption Functions", () => {
   beforeEach(() => {

@@ -27,6 +27,11 @@ COPY --from=builder /app/drizzle.config.ts ./
 COPY migrate-and-start.sh ./
 RUN chmod +x migrate-and-start.sh
 
+# Create exports directory for GDPR data exports
+RUN mkdir -p /tmp/keyfate-exports
+
+# Railway sets PORT dynamically; default to 3000
+ENV PORT=3000
 EXPOSE 3000
 
 CMD ["./migrate-and-start.sh"]

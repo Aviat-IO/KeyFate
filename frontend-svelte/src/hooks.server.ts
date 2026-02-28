@@ -1,6 +1,7 @@
-import { redirect, type Handle } from "@sveltejs/kit"
+import { redirect, type Handle, type ServerInit } from "@sveltejs/kit"
 import { sequence } from "@sveltejs/kit/hooks"
 import { handle as authHandle } from "./auth"
+import { startScheduler } from "$lib/cron/scheduler"
 
 /**
  * Middleware handle: HTTPS enforcement, request ID, email verification redirect,
@@ -74,3 +75,7 @@ const middlewareHandle: Handle = async ({ event, resolve }) => {
 
 // Auth handle first (populates event.locals.auth), then our middleware
 export const handle: Handle = sequence(authHandle, middlewareHandle)
+
+export const init: ServerInit = async () => {
+  startScheduler()
+}
