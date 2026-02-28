@@ -1,0 +1,103 @@
+import { and, desc, eq, lt } from "drizzle-orm"
+import { secrets, users, type SecretUpdate } from "./schema"
+import { connectionManager } from "./connection-manager"
+import { getDatabase } from "./get-database"
+import type { PostgresJsDatabase } from "drizzle-orm/postgres-js"
+import type * as schema from "./schema"
+
+// Re-export the standardized database getter
+export { getDatabase, getDatabase as getDb }
+
+// DEPRECATED: This proxy-based db export is kept for backward compatibility
+// but should not be used in new code. Use getDatabase() instead.
+// This proxy will throw an error if the database is not initialized.
+const dbInstance: PostgresJsDatabase<typeof schema> | null = null
+
+type DatabaseProxy = PostgresJsDatabase<typeof schema>
+
+export const db = new Proxy({} as DatabaseProxy, {
+  get(target, prop, receiver) {
+    if (!dbInstance) {
+      throw new Error(
+        "Database not initialized. Please use getDatabase() instead of direct db access.",
+      )
+    }
+    return Reflect.get(dbInstance, prop, receiver)
+  },
+})
+
+// Removed automatic pre-initialization to prevent build-time errors
+// Database will be initialized on first use via getDatabase()
+
+// Export tables for use in auth configuration
+export { users }
+
+// Enhanced database service functions with error handling and retries
+export const secretsService = {
+  async create(data: typeof secrets.$inferInsert) {
+    const database = await getDatabase()
+    const [result] = await database.insert(secrets).values(data).returning()
+    return result
+  },
+
+  async getById(id: string, userId: string) {
+    const database = await getDatabase()
+    const [result] = await database
+      .select()
+      .from(secrets)
+      .where(and(eq(secrets.id, id), eq(secrets.userId, userId)))
+
+    return result
+  },
+
+  async getAllByUser(userId: string) {
+    const database = await getDatabase()
+    return await database
+      .select()
+      .from(secrets)
+      .where(eq(secrets.userId, userId))
+      .orderBy(desc(secrets.createdAt))
+  },
+
+  async update(id: string, userId: string, data: SecretUpdate) {
+    const database = await getDatabase()
+    const [result] = await database
+      .update(secrets)
+      .set(data)
+      .where(and(eq(secrets.id, id), eq(secrets.userId, userId)))
+      .returning()
+
+    return result
+  },
+
+  async delete(id: string, userId: string) {
+    const database = await getDatabase()
+    await database
+      .delete(secrets)
+      .where(and(eq(secrets.id, id), eq(secrets.userId, userId)))
+  },
+
+  async getOverdue() {
+    const database = await getDatabase()
+    const now = new Date()
+    return await database
+      .select()
+      .from(secrets)
+      .where(and(eq(secrets.status, "active"), lt(secrets.nextCheckIn, now)))
+  },
+
+  // Health check method for monitoring
+  async healthCheck(): Promise<boolean> {
+    try {
+      const database = await getDatabase()
+      await database.select().from(secrets).limit(1)
+      return true
+    } catch (error) {
+      console.error("Database health check failed:", error)
+      return false
+    }
+  },
+}
+
+// Export connection manager for monitoring
+export { connectionManager }
