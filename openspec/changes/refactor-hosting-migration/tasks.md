@@ -9,7 +9,7 @@
 - [x] 1.5 Configure Railway to use the Dockerfile for builds (root dir =
       frontend-svelte)
 - [ ] 1.6 Configure custom domain (keyfate.com) DNS to Railway
-- [ ] 1.7 Add PostgreSQL plugin to Railway production environment
+- [x] 1.7 Add PostgreSQL plugin to Railway production environment
 
 ## 2. Cron Jobs
 
@@ -29,7 +29,7 @@
 - [ ] 3.3 Seed required initial data (policy documents) on staging
 - [ ] 3.4 Configure database backups (Railway provides daily snapshots on paid
       plans)
-- [ ] 3.5 Run Drizzle migrations on production PostgreSQL
+- [x] 3.5 Run Drizzle migrations on production PostgreSQL
 
 ## 4. CI/CD Update
 
@@ -56,7 +56,8 @@
 - [x] 5.9 Update health endpoint to use Railway env vars instead of GCP/Vercel
 - [x] 5.10 Remove databaseProvider from /api/config (GCP-specific)
 - [x] 5.11 Remove NEXT_PUBLIC_ fallbacks from /api/config endpoint
-- [ ] 5.12 Remove old Next.js `frontend/` directory from repo
+- [ ] 5.12 Remove old Next.js `frontend/` directory from repo (keeping for
+      reference during SvelteKit feature parity work)
 
 ## 6. Verification (Staging)
 
@@ -67,8 +68,8 @@
 - [x] 6.5 Fix Auth.js basePath 500 error (removed dual @auth/core versions)
 - [x] 6.6 Verify auth login works on staging
 - [ ] 6.7 Verify all cron jobs execute on schedule
-- [ ] 6.8 Verify health endpoints respond
-- [ ] 6.9 Update Google OAuth callback URLs to Railway staging domain
+- [x] 6.8 Verify health endpoints respond
+- [x] 6.9 Update Google OAuth callback URLs to Railway staging domain
 - [ ] 6.10 Verify Stripe webhooks work with Railway URL
 - [ ] 6.11 Verify BTCPay webhooks work with Railway URL
 - [ ] 6.12 Verify SendGrid sender authentication
@@ -76,9 +77,9 @@
 
 ## 7. Production Deploy
 
-- [ ] 7.1 Add PostgreSQL plugin to production environment
-- [ ] 7.2 Deploy to production on Railway
-- [ ] 7.3 Run Drizzle migrations on production
+- [x] 7.1 Add PostgreSQL plugin to production environment
+- [x] 7.2 Deploy to production on Railway
+- [x] 7.3 Run Drizzle migrations on production
 - [ ] 7.4 Update DNS (keyfate.com) to point to Railway
 - [ ] 7.5 Update Google OAuth callback URLs to production domain
 - [ ] 7.6 Update Stripe webhook URL to production
