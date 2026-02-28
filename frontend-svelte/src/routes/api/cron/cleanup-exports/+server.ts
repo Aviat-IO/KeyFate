@@ -5,15 +5,8 @@ import { adaptRequestEvent } from "$lib/cron/adapt-request"
 import { getDatabase } from "$lib/db/get-database"
 import { dataExportJobs } from "$lib/db/schema"
 import { lt, eq } from "drizzle-orm"
-import { Storage } from "@google-cloud/storage"
+import { deleteExportFile } from "$lib/gdpr/export-service"
 
-const storage = new Storage()
-const EXPORT_BUCKET = process.env.EXPORT_BUCKET || "keyfate-exports-dev"
-
-/**
- * GET /api/cron/cleanup-exports
- * Health check endpoint for monitoring
- */
 export const GET: RequestHandler = async (event) => {
   const req = adaptRequestEvent(event)
   if (!authorizeRequest(req)) {
@@ -22,10 +15,6 @@ export const GET: RequestHandler = async (event) => {
   return json({ status: "ok", job: "cleanup-exports" })
 }
 
-/**
- * POST /api/cron/cleanup-exports
- * Clean up expired export files from storage and database
- */
 export const POST: RequestHandler = async (event) => {
   try {
     const req = adaptRequestEvent(event)
@@ -37,7 +26,6 @@ export const POST: RequestHandler = async (event) => {
 
     const db = await getDatabase()
 
-    // Find expired export jobs
     const expiredJobs = await db
       .select()
       .from(dataExportJobs)
@@ -57,25 +45,13 @@ export const POST: RequestHandler = async (event) => {
     let deletedCount = 0
     let errorCount = 0
 
-    // Delete files from Cloud Storage and database records
     for (const job of expiredJobs) {
       try {
-        // Extract file path from signed URL
         if (job.fileUrl) {
-          const url = new URL(job.fileUrl)
-          const filePath = url.pathname.split(`/${EXPORT_BUCKET}/`)[1]
-
-          if (filePath) {
-            const file = storage.bucket(EXPORT_BUCKET).file(filePath)
-            await file.delete().catch((err: any) => {
-              // Ignore if file doesn't exist
-              if (err.code !== 404) throw err
-            })
-            console.log(`[CRON] Deleted file: ${filePath}`)
-          }
+          await deleteExportFile(job.fileUrl)
+          console.log(`[CRON] Deleted export file for job ${job.id}`)
         }
 
-        // Delete database record
         await db.delete(dataExportJobs).where(eq(dataExportJobs.id, job.id))
 
         deletedCount++

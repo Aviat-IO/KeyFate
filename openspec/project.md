@@ -2,88 +2,103 @@
 
 ## Purpose
 
-KeyFate is a secure dead man's switch platform using client-side Shamir's Secret Sharing. Users create secrets (e.g., private keys, sensitive info) that are disclosed to a chosen recipient if the user fails to check in. Secret creation and recovery happen 100% client-side, ensuring we never have access to users' original secrets. Designed for personal use (journalists, estate planning, crypto holders), with future B2B potential.
+KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
+Sharing. Users create secrets (e.g., private keys, sensitive info) that are
+disclosed to a chosen recipient if the user fails to check in. Secret creation
+and recovery happen 100% client-side, ensuring we never have access to users'
+original secrets. Designed for personal use (journalists, estate planning,
+crypto holders), with future B2B potential.
 
 ## Tech Stack
 
 ### Frontend
 
-- **Framework:** Next.js 15 (App Router)
+- **Framework:** SvelteKit 5 (Svelte 5 with runes)
 - **Language:** TypeScript 5.7
-- **Styling:** Tailwind CSS, Shadcn UI
-- **UI Components:** Radix UI primitives
-- **Icons:** Lucide React, Remix Icon
-- **Forms:** React Hook Form with Zod validation
-- **State Management:** React hooks, nuqs for URL search parameters
+- **Styling:** Tailwind CSS 4 (Vite plugin with v3-compat bridge via `@config`)
+- **UI Components:** shadcn-svelte (21 components)
+- **Icons:** Lucide Svelte
+- **Forms:** Native Svelte 5 runes (`$state`, `$derived`, `$effect`, `$props`)
+- **State Management:** Svelte 5 runes, SvelteKit load functions
 
 ### Backend & Infrastructure
 
+- **Runtime:** Bun
 - **Database:** PostgreSQL 16
 - **ORM:** Drizzle ORM
-- **Authentication:** NextAuth.js v4 with Google OAuth
+- **Authentication:** Auth.js v5 (`@auth/sveltekit`) with Google OAuth +
+  Credentials providers
 - **Encryption:** AES-256-GCM, Shamir's Secret Sharing
 - **Email:** Nodemailer (SendGrid, Resend)
 - **Payment Processing:** Stripe and BTCPay Server
+- **Validation:** Zod v4
 
 ### Development & Testing
 
-- **Testing Framework:** Vitest with React Testing Library
+- **Testing Framework:** Vitest with @testing-library/svelte
 - **Test Environment:** jsdom
-- **Package Manager:** pnpm
-- **Build Tool:** Next.js with Turbopack
+- **Package Manager:** Bun
+- **Build Tool:** Vite (via SvelteKit)
 - **Container Orchestration:** Docker Compose
-- **Linting:** ESLint with Next.js config
-- **Formatting:** Prettier with Tailwind plugin
+- **Linting:** ESLint with Svelte config
+- **Formatting:** Prettier with Svelte and Tailwind plugins
 
 ### Deployment
 
-- **Cloud Platform:** Google Cloud Platform
-- **Compute:** Cloud Run
-- **Database:** Cloud SQL (PostgreSQL with private IP)
-- **Infrastructure as Code:** Terraform, Terragrunt
-- **CI/CD:** Custom scripts, Makefile automation
+- **Hosting:** Railway (target; migrating from GCP)
+- **Adapter:** adapter-node (SvelteKit)
+- **Container:** Docker (multi-stage Bun build, ~559MB image)
+- **Database:** Railway PostgreSQL (target; migrating from Cloud SQL)
+- **CI/CD:** GitHub Actions
+- **Infrastructure as Code:** Terragrunt (GCP legacy, to be removed)
 
 ## Project Conventions
 
 ### Code Style
 
 - Use TypeScript strictly with no implicit any
-- Prefer functional components with TypeScript interfaces
+- Use Svelte 5 runes: `$state`, `$derived`, `$effect`, `$props`
+- Use `onclick` not `on:click` (Svelte 5 event syntax)
 - Use named exports over default exports
-- Server components by default; use `'use client'` only for Web API access
 - Keep components modular and reusable
 - NO comments unless explicitly requested
-- Use Prettier for formatting with Tailwind plugin
-- Follow Next.js App Router conventions
+- Use Prettier for formatting with Svelte and Tailwind plugins
+- Follow SvelteKit file-based routing conventions
 
 ### Naming Conventions
 
-- Components: PascalCase (e.g., `SecretForm.tsx`)
+- Components: PascalCase (e.g., `SecretCard.svelte`)
 - Functions/variables: camelCase
 - Constants: UPPER_SNAKE_CASE
 - Files: kebab-case for utilities, PascalCase for components
 - Database tables: snake_case
 - Environment variables: UPPER_SNAKE_CASE with prefix patterns
+- SvelteKit routes: lowercase with brackets for params (e.g., `[id]`)
 
 ### Architecture Patterns
 
-- **Modular Components:** Reusable UI components in `components/ui/`
-- **Server-First:** Prefer server components, minimize client-side JavaScript
-- **API Routes:** RESTful patterns in `app/api/`
+- **Modular Components:** Reusable UI components in `src/lib/components/ui/`
+- **Server-First:** SvelteKit load functions for data fetching, minimal
+  client-side JS
+- **API Routes:** RESTful patterns in `src/routes/api/` using `+server.ts`
+- **Page Data:** `+page.server.ts` load functions for authenticated data
 - **Database Access:** Drizzle ORM with type-safe queries
 - **Security by Design:** Client-side encryption, zero-knowledge architecture
 - **Threshold Security:** Shamir's Secret Sharing with minimum 2-of-3 shares
-- **Environment Separation:** Development, staging, production with dedicated databases
+- **Environment Separation:** Development, staging, production with dedicated
+  databases
+- **Auth Pattern:** `event.locals.auth()` for session access, `requireSession()`
+  helper for API routes
 
 ### Testing Strategy
 
 - All code should be testable and have unit tests
 - Use Vitest for unit and integration tests
-- React Testing Library for component tests
+- @testing-library/svelte for component tests
 - Test environment: jsdom with fake timers
 - Test coverage tracking with Vitest
 - Mock external services (email, payment) in tests
-- Infrastructure validation scripts for deployment
+- Mock `$env` modules in test setup
 - Test database connections before migrations
 
 ### Git Workflow
@@ -101,24 +116,37 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 ### Security Model
 
 - **Zero-Knowledge Architecture:** Original secrets never leave user's device
-- **Shamir's Secret Sharing:** Secrets split using configurable threshold schemes
+- **Shamir's Secret Sharing:** Secrets split using configurable threshold
+  schemes
   - Free tier: Fixed 2-of-3 (2 shares required from 3 total)
   - Pro tier: Configurable 2-of-N up to 7 shares (e.g., 3-of-5, 4-of-7)
-- **Server Storage:** Only one encrypted share stored (insufficient to reconstruct)
-- **Mathematical Guarantee:** Impossible to reconstruct secrets from server alone
+- **Server Storage:** Only one encrypted share stored (insufficient to
+  reconstruct)
+- **Mathematical Guarantee:** Impossible to reconstruct secrets from server
+  alone
 - **Client-Side Encryption:** All secret processing happens in browser
 - **AES-256-GCM:** Industry-standard encryption for stored shares
-- **Audit Logging:** Pro users have comprehensive activity logs stored indefinitely
+- **Audit Logging:** Pro users have comprehensive activity logs stored
+  indefinitely
 
 ### Business Model
 
-- **Free Tier:** 1 secret, 1 recipient (email only), limited check-in intervals (1 week, 1 month, 1 year only), 2-of-3 Shamir threshold (fixed), no message templates, no audit logs, community support
-- **Pro Tier:** 10 secrets, 5 recipients per secret (email only), flexible custom intervals (1 day to 3 years), configurable Shamir threshold (2-of-N up to 7 shares), 7 message templates, comprehensive audit logs, priority email support (support@keyfate.com)
-- **Downgrade Policy:** Users who downgrade keep existing secrets but cannot create new ones if over limit (grandfathering)
+- **Free Tier:** 1 secret, 1 recipient (email only), limited check-in intervals
+  (1 week, 1 month, 1 year only), 2-of-3 Shamir threshold (fixed), no message
+  templates, no audit logs, community support
+- **Pro Tier:** 10 secrets, 5 recipients per secret (email only), flexible
+  custom intervals (1 day to 3 years), configurable Shamir threshold (2-of-N up
+  to 7 shares), 7 message templates, comprehensive audit logs, priority email
+  support (support@keyfate.com)
+- **Downgrade Policy:** Users who downgrade keep existing secrets but cannot
+  create new ones if over limit (grandfathering)
 - **Subscription Management:** Stripe and BTCPay Server integration
 - **Contact Methods:** Email only (SMS/phone deferred to future)
-- **Pro Features Constant:** All Pro features defined in `frontend/src/constants/pro-features.ts` with title, description, and optional features list
-- **Future Plans:** SMS notifications, B2B features, Nostr integration
+- **Pro Features Constant:** All Pro features defined in
+  `frontend-svelte/src/constants/pro-features.ts` with title, description, and
+  optional features list
+- **Future Plans:** SMS notifications, B2B features, Nostr integration, Bitcoin
+  CSV timelocks for trustless disclosure
 
 ### Check-In System
 
@@ -143,33 +171,41 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 ### Technical Constraints
 
 - PostgreSQL 16 required for database features
-- Private IP for Cloud SQL in production
-- Node.js 18+ required
+- Bun runtime required
 - TypeScript strict mode enabled
-- Next.js 15 App Router patterns only
-- All authentication through NextAuth.js
-- Database migrations via Drizzle ORM only
+- SvelteKit 5 with Svelte 5 runes only (no legacy `$:` or `export let`)
+- All authentication through Auth.js (`@auth/sveltekit`)
+- Database migrations via Drizzle ORM only (`drizzle-kit generate`)
+- SvelteKit adapter-node for deployment
 
 ### Business Constraints
 
-- **Free tier limits:** 
-  - 1 secret (active or paused), 1 recipient (email only), 3 check-in intervals (7d, 30d, 365d)
+- **Free tier limits:**
+  - 1 secret (active or paused), 1 recipient (email only), 3 check-in intervals
+    (7d, 30d, 365d)
   - Fixed 2-of-3 Shamir threshold (no configuration)
   - No message templates, no audit logs, community support only
-- **Pro tier limits:** 
-  - 10 secrets (active or paused), 5 recipients per secret (email only), 9 custom intervals (1d to 3y)
+- **Pro tier limits:**
+  - 10 secrets (active or paused), 5 recipients per secret (email only), 9
+    custom intervals (1d to 3y)
   - Configurable Shamir threshold: 2-of-N up to 7 shares
-  - 7 message templates (Bitcoin Wallet, Password Manager, Estate Documents, Safe Deposit Box, Cryptocurrency Exchange, Cloud Storage, Social Media)
+  - 7 message templates (Bitcoin Wallet, Password Manager, Estate Documents,
+    Safe Deposit Box, Cryptocurrency Exchange, Cloud Storage, Social Media)
   - Comprehensive audit logs (stored indefinitely)
   - Priority email support: support@keyfate.com
-- **Tier enforcement:** Must be validated server-side in all API endpoints (not just UI)
-- **Secret limit counting:** Count secrets with `status = 'active'` OR `status = 'paused'` (only exclude `triggered` and deleted secrets)
-- **Downgrade handling:** Grandfather existing secrets, prevent new secret creation if over new limit
+- **Tier enforcement:** Must be validated server-side in all API endpoints (not
+  just UI)
+- **Secret limit counting:** Count secrets with `status = 'active'` OR
+  `status = 'paused'` (only exclude `triggered` and deleted secrets)
+- **Downgrade handling:** Grandfather existing secrets, prevent new secret
+  creation if over new limit
 - **Usage tracking:** Calculate on-demand from database for accuracy
 - **Payment processing:** Stripe and BTCPay Server
 - **Contact methods:** Email only until SMS feature is implemented
-- **UI Components:** ShadCN UI with theme defined in `frontend/src/app/globals.css`
-- **Pro Features Reference:** All Pro features centralized in `frontend/src/constants/pro-features.ts`
+- **UI Components:** shadcn-svelte with theme defined in
+  `frontend-svelte/src/app.css`
+- **Pro Features Reference:** All Pro features centralized in
+  `frontend-svelte/src/constants/pro-features.ts`
 
 ## External Dependencies
 
@@ -179,19 +215,19 @@ KeyFate is a secure dead man's switch platform using client-side Shamir's Secret
 - **SendGrid/Resend:** Email delivery service
 - **Stripe:** Credit card payment processing and subscription management
 - **BTCPay Server:** Bitcoin payment processing (self-hosted)
-- **Google Cloud SQL:** Managed PostgreSQL database
-- **Google Cloud Run:** Container hosting
-- **Google Secret Manager:** Secure key storage
+- **Railway PostgreSQL:** Managed PostgreSQL database (target)
 
 ### Optional Services
 
 - **Redis:** Session caching (optional)
 - **SMS Provider:** Future feature for notifications (not currently implemented)
-- **Nostr Network:** Future integration for censorship-resistant disclosure
+- **Nostr Network:** Future integration for censorship-resistant share storage
+- **Bitcoin Network:** Future integration for CSV timelock-based trustless
+  disclosure
 
 ### Development Tools
 
 - **Docker:** Local service orchestration
-- **Cloud SQL Proxy:** Local database access
-- **Terraform/Terragrunt:** Infrastructure provisioning
+- **Bun:** Runtime and package manager
 - **Drizzle Kit Studio:** Database GUI
+- **GitHub Actions:** CI/CD pipeline

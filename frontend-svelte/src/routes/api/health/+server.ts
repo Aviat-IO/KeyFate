@@ -138,13 +138,10 @@ export const GET: RequestHandler = async (event) => {
       checks,
       ...(detailed && {
         environment: process.env.NODE_ENV || "unknown",
-        region:
-          process.env.VERCEL_REGION ||
-          process.env.GOOGLE_CLOUD_REGION ||
-          "unknown",
+        region: process.env.RAILWAY_REGION || "unknown",
         version: {
-          deploymentHash: process.env.DEPLOYMENT_HASH || "unknown",
-          gitCommit: process.env.VERCEL_GIT_COMMIT_SHA || "unknown",
+          deploymentHash: process.env.RAILWAY_DEPLOYMENT_ID || process.env.DEPLOYMENT_HASH || "unknown",
+          gitCommit: process.env.RAILWAY_GIT_COMMIT_SHA || "unknown",
         },
         database: {
           connected: dbStats.connected,

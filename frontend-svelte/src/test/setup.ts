@@ -67,17 +67,14 @@ vi.mock("$lib/request-context", () => ({
   ),
 }))
 
-// Mock environment variables for modules that use process.env directly
-vi.stubEnv(
-  "DATABASE_URL",
+// Set environment variables for modules that use process.env directly
+process.env.DATABASE_URL =
   process.env.DATABASE_URL ||
-    "postgresql://postgres:dev_password_change_in_prod@localhost:5432/keyfate_dev",
-)
-vi.stubEnv("NODE_ENV", "test")
-vi.stubEnv(
-  "ENCRYPTION_KEY",
-  Buffer.from("test-encryption-key-32-bytes-long").toString("base64"),
-)
+  "postgresql://postgres:dev_password_change_in_prod@localhost:5432/keyfate_dev"
+process.env.NODE_ENV = "test"
+process.env.ENCRYPTION_KEY = Buffer.from(
+  "test-encryption-key-32-bytes-long",
+).toString("base64")
 
 // Global test utilities
 global.ResizeObserver = vi.fn().mockImplementation(() => ({

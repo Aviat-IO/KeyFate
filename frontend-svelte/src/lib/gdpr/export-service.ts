@@ -11,10 +11,10 @@ import {
   ExportJobStatus,
 } from "$lib/db/schema"
 import { eq, and, desc } from "drizzle-orm"
-import { Storage } from "@google-cloud/storage"
+import { mkdir, writeFile, unlink } from "node:fs/promises"
+import { join } from "node:path"
 
-const storage = new Storage()
-const EXPORT_BUCKET = process.env.EXPORT_BUCKET || "keyfate-exports-dev"
+const EXPORT_DIR = process.env.EXPORT_DIR || "/tmp/keyfate-exports"
 const EXPORT_EXPIRY_HOURS = 24
 
 export interface UserDataExport {
@@ -67,21 +67,16 @@ export interface UserDataExport {
   }>
 }
 
-/**
- * Generate a complete export of all user data
- */
 export async function generateUserDataExport(
   userId: string,
 ): Promise<UserDataExport> {
   const db = await getDatabase()
-  // Fetch user profile
   const [user] = await db.select().from(users).where(eq(users.id, userId))
 
   if (!user) {
     throw new Error("User not found")
   }
 
-  // Fetch all secrets with recipients and server shares
   const userSecrets = await db
     .select()
     .from(secrets)
@@ -89,7 +84,6 @@ export async function generateUserDataExport(
 
   const secretsWithDetails = await Promise.all(
     userSecrets.map(async (secret) => {
-      // Get recipients for this secret
       const recipients = await db
         .select()
         .from(secretRecipients)
@@ -113,27 +107,23 @@ export async function generateUserDataExport(
     }),
   )
 
-  // Fetch check-in history
   const userCheckIns = await db
     .select()
     .from(checkinHistory)
     .where(eq(checkinHistory.userId, userId))
     .orderBy(desc(checkinHistory.checkedInAt))
 
-  // Fetch audit logs
   const userAuditLogs = await db
     .select()
     .from(auditLogs)
     .where(eq(auditLogs.userId, userId))
     .orderBy(desc(auditLogs.createdAt))
 
-  // Fetch subscription info
   const [subscription] = await db
     .select()
     .from(userSubscriptions)
     .where(eq(userSubscriptions.userId, userId))
 
-  // Fetch payment history (metadata only, no card details)
   const payments = await db
     .select()
     .from(paymentHistory)
@@ -153,7 +143,7 @@ export async function generateUserDataExport(
     checkIns: userCheckIns.map((c) => ({
       secretId: c.secretId,
       timestamp: c.checkedInAt,
-      ipAddress: null, // Not stored in schema
+      ipAddress: null,
     })),
     auditLogs: userAuditLogs.map((log) => ({
       eventType: log.eventType,
@@ -179,44 +169,45 @@ export async function generateUserDataExport(
   }
 }
 
-/**
- * Upload export file to Cloud Storage and return signed URL
- */
 export async function uploadExportFile(
   userId: string,
   exportData: UserDataExport,
 ): Promise<{ fileUrl: string; fileSize: number }> {
-  const fileName = `exports/${userId}/${Date.now()}.json`
-  const file = storage.bucket(EXPORT_BUCKET).file(fileName)
+  const userDir = join(EXPORT_DIR, userId)
+  await mkdir(userDir, { recursive: true })
 
+  const fileName = `${Date.now()}.json`
+  const filePath = join(userDir, fileName)
   const jsonContent = JSON.stringify(exportData, null, 2)
   const fileSize = Buffer.byteLength(jsonContent, "utf8")
 
-  // Upload file
-  await file.save(jsonContent, {
-    contentType: "application/json",
-    metadata: {
-      userId,
-      exportedAt: exportData.exportedAt,
-    },
-  })
+  await writeFile(filePath, jsonContent, "utf8")
 
-  // Generate signed URL with 24-hour expiration
-  const [signedUrl] = await file.getSignedUrl({
-    version: "v4",
-    action: "read",
-    expires: Date.now() + EXPORT_EXPIRY_HOURS * 60 * 60 * 1000,
-  })
+  const siteUrl = process.env.PUBLIC_SITE_URL || process.env.NEXTAUTH_URL || "http://localhost:3000"
+  const fileUrl = `${siteUrl}/api/user/export-data/download?user=${userId}&file=${fileName}`
 
   return {
-    fileUrl: signedUrl,
+    fileUrl,
     fileSize,
   }
 }
 
-/**
- * Record export job in database
- */
+export async function deleteExportFile(fileUrl: string): Promise<void> {
+  try {
+    const url = new URL(fileUrl)
+    const params = new URLSearchParams(url.search)
+    const userId = params.get("user")
+    const fileName = params.get("file")
+
+    if (userId && fileName) {
+      const filePath = join(EXPORT_DIR, userId, fileName)
+      await unlink(filePath).catch(() => {})
+    }
+  } catch {
+    // File may already be deleted
+  }
+}
+
 export async function recordExportJob(
   userId: string,
   fileUrl: string,
@@ -240,9 +231,6 @@ export async function recordExportJob(
   return job
 }
 
-/**
- * Check if user has a recent export request (within 24 hours)
- */
 export async function hasRecentExportRequest(userId: string): Promise<boolean> {
   const db = await getDatabase()
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
@@ -253,7 +241,6 @@ export async function hasRecentExportRequest(userId: string): Promise<boolean> {
     .where(
       and(
         eq(dataExportJobs.userId, userId),
-        // Check if created within last 24 hours
       ),
     )
     .orderBy(desc(dataExportJobs.createdAt))
@@ -262,12 +249,9 @@ export async function hasRecentExportRequest(userId: string): Promise<boolean> {
   return recentJob ? recentJob.createdAt > oneDayAgo : false
 }
 
-/**
- * Create a pending export job
- */
 export async function createPendingExportJob(userId: string) {
   const db = await getDatabase()
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 
   const [job] = await db
     .insert(dataExportJobs)
@@ -281,9 +265,6 @@ export async function createPendingExportJob(userId: string) {
   return job
 }
 
-/**
- * Get export job by ID
- */
 export async function getExportJob(jobId: string) {
   const db = await getDatabase()
   const [job] = await db
@@ -294,13 +275,9 @@ export async function getExportJob(jobId: string) {
   return job
 }
 
-/**
- * Increment download count for export job
- */
 export async function incrementDownloadCount(jobId: string) {
   const db = await getDatabase()
 
-  // Get current count
   const [job] = await db
     .select()
     .from(dataExportJobs)
@@ -310,7 +287,6 @@ export async function incrementDownloadCount(jobId: string) {
     throw new Error("Export job not found")
   }
 
-  // Increment count
   await db
     .update(dataExportJobs)
     .set({

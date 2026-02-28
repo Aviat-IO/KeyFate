@@ -84,8 +84,8 @@ describe("Health Endpoint (SvelteKit)", () => {
     vi.clearAllMocks()
 
     // Default mock: healthy state
-    vi.mocked(checkDatabaseConnection).mockResolvedValue(true)
-    vi.mocked(getDatabaseStats).mockReturnValue({
+    ;(checkDatabaseConnection as ReturnType<typeof vi.fn>).mockResolvedValue(true)
+    ;(getDatabaseStats as ReturnType<typeof vi.fn>).mockReturnValue({
       connected: true,
       activeQueries: 0,
       totalConnections: 1,
@@ -93,20 +93,17 @@ describe("Health Endpoint (SvelteKit)", () => {
       circuitBreakerOpen: false,
       isShuttingDown: false,
     } as any)
-    vi.mocked(getEmailServiceHealth).mockReturnValue({
+    ;(getEmailServiceHealth as ReturnType<typeof vi.fn>).mockReturnValue({
       state: "closed",
       failures: 0,
     } as any)
 
     // Mock fetch for email/stripe/btcpay checks
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({ ok: true, status: 200 }),
-    )
+    globalThis.fetch = vi.fn().mockResolvedValue({ ok: true, status: 200 }) as any
 
     // Mock process.env for health checks
-    vi.stubEnv("SENDGRID_API_KEY", "SG.test-key")
-    vi.stubEnv("ENCRYPTION_KEY", Buffer.from("a".repeat(32)).toString("base64"))
+    process.env.SENDGRID_API_KEY = "SG.test-key"
+    process.env.ENCRYPTION_KEY = Buffer.from("a".repeat(32)).toString("base64")
   })
 
   describe("Basic Health Check (non-detailed)", () => {
@@ -137,7 +134,7 @@ describe("Health Endpoint (SvelteKit)", () => {
     })
 
     it("should return degraded when database is unhealthy", async () => {
-      vi.mocked(checkDatabaseConnection).mockResolvedValue(false)
+      ;(checkDatabaseConnection as ReturnType<typeof vi.fn>).mockResolvedValue(false)
 
       const { GET } = await import("../+server")
 
@@ -151,10 +148,7 @@ describe("Health Endpoint (SvelteKit)", () => {
 
     it("should return degraded when email is unhealthy", async () => {
       // Mock fetch to fail for email check
-      vi.stubGlobal(
-        "fetch",
-        vi.fn().mockResolvedValue({ ok: false, status: 401 }),
-      )
+      globalThis.fetch = vi.fn().mockResolvedValue({ ok: false, status: 401 }) as any
 
       const { GET } = await import("../+server")
 
@@ -169,7 +163,7 @@ describe("Health Endpoint (SvelteKit)", () => {
 
   describe("Error Handling", () => {
     it("should return 500 on unexpected error", async () => {
-      vi.mocked(checkDatabaseConnection).mockRejectedValue(
+      ;(checkDatabaseConnection as ReturnType<typeof vi.fn>).mockRejectedValue(
         new Error("Unexpected failure"),
       )
 

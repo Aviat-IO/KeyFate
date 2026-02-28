@@ -44,9 +44,8 @@ describe("Subscription Tier Management", () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.restoreAllMocks()
     mockDb = createMockDb()
-    vi.mocked(getDatabase).mockResolvedValue(mockDb as any)
+    ;(getDatabase as ReturnType<typeof vi.fn>).mockResolvedValue(mockDb as any)
   })
 
   describe("getUserTierInfo", () => {
@@ -74,7 +73,7 @@ describe("Subscription Tier Management", () => {
     })
 
     it("should handle database errors gracefully", async () => {
-      vi.mocked(getDatabase).mockRejectedValue(new Error("Database error"))
+      ;(getDatabase as ReturnType<typeof vi.fn>).mockRejectedValue(new Error("Database error"))
 
       const result = await getUserTierInfo("user-123")
 
@@ -102,7 +101,7 @@ describe("Subscription Tier Management", () => {
     })
 
     it("should return false on error", async () => {
-      vi.mocked(getDatabase).mockRejectedValue(new Error("Database error"))
+      ;(getDatabase as ReturnType<typeof vi.fn>).mockRejectedValue(new Error("Database error"))
 
       const result = await canUserCreateSecret("user-123")
 
@@ -112,7 +111,7 @@ describe("Subscription Tier Management", () => {
 
   describe("calculateUserUsage", () => {
     it("should return zeros on error", async () => {
-      vi.mocked(getDatabase).mockRejectedValue(new Error("Database error"))
+      ;(getDatabase as ReturnType<typeof vi.fn>).mockRejectedValue(new Error("Database error"))
 
       const result = await calculateUserUsage("user-123")
 
