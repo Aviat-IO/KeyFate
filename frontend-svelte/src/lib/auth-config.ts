@@ -1,13 +1,26 @@
 /**
- * Auth configuration placeholder for SvelteKit
+ * Auth configuration for SvelteKit (Auth.js / @auth/sveltekit)
  *
- * TODO: Section 3 of migration will replace this with proper SvelteKit auth
- * (e.g., Auth.js / Lucia / custom auth).
- *
- * This stub exists so that files copied in Section 2 can reference authConfig
- * without breaking the build. The actual auth integration will be implemented
- * in the auth migration phase.
+ * The primary auth setup lives in src/auth.ts (SvelteKitAuth handle).
+ * This module re-exports session helpers for use in API routes and
+ * server load functions, and provides the authConfig object that
+ * other modules may reference.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const authConfig: any = {}
+export { getSession, requireSession } from "$lib/server/auth"
+
+/**
+ * Auth configuration constants.
+ * These mirror the values used in src/auth.ts for reference.
+ */
+export const authConfig = {
+  session: {
+    strategy: "jwt" as const,
+    maxAge: 24 * 60 * 60, // 24 hours
+    updateAge: 60 * 60, // 1 hour
+  },
+  pages: {
+    signIn: "/auth/signin",
+    error: "/auth/signin",
+  },
+} as const
