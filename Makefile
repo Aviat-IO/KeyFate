@@ -51,8 +51,7 @@ install:
 	@echo "✅ Directories created"
 	@echo ""
 	@echo "Step 4: Installing dependencies..."
-	@npm install
-	@echo "ℹ️  Frontend dependencies already installed (skipping npm install)"
+	@cd frontend-svelte && bun install
 	@echo "✅ Dependencies ready"
 	@echo ""
 	@echo "Step 5: Building Docker containers..."
@@ -65,7 +64,7 @@ install:
 	@echo "🎉 Local development environment installation complete!"
 	@echo ""
 	@echo "Next steps:"
-	@echo "  1. Copy .env.local.example to .env.local and configure your settings"
+	@echo "  1. Copy frontend-svelte/.env.example to frontend-svelte/.env.local and configure your settings"
 	@echo "  2. Run 'make dev' to start the development environment"
 	@echo ""
 
@@ -92,10 +91,10 @@ dev:
 	@$(MAKE) migrate
 	@echo ""
 	@echo "Step 3: Starting frontend development server..."
-	@echo "🌐 Frontend will be available at: http://localhost:3000"
+	@echo "🌐 Frontend will be available at: http://localhost:5173"
 	@echo "🗄️  Database will be available at: localhost:5432"
 	@echo ""
-	@cd frontend && npm run dev
+	@cd frontend-svelte && bun run dev
 
 # Stop all local services
 stop:
@@ -118,7 +117,7 @@ test:
 # Run database migrations
 migrate:
 	@echo "📊 Running database migrations..."
-	@cd frontend && npm run db:migrate
+	@cd frontend-svelte && bunx drizzle-kit migrate
 	@echo "✅ Migrations complete"
 
 # Seed database with development data
@@ -213,7 +212,7 @@ check-database-ready:
 setup-env-files:
 	@echo "Setting up environment files..."
 	@if [ ! -f .env.local ]; then cp .env.local.example .env.local 2>/dev/null || echo "# Local environment variables" > .env.local; fi
-	@if [ ! -f frontend/.env.local ]; then cp frontend/.env.local.example frontend/.env.local 2>/dev/null || cp frontend/.env.development frontend/.env.local; fi
+	@if [ ! -f frontend-svelte/.env.local ]; then cp frontend-svelte/.env.example frontend-svelte/.env.local 2>/dev/null || echo "# Local environment variables" > frontend-svelte/.env.local; fi
 	@echo "✅ Environment files ready"
 
 setup-database:
@@ -294,7 +293,7 @@ db-migrate-staging:
 	@echo "📊 Running migrations against staging database..."
 	@echo "⚠️  Ensure 'make db-tunnel-staging' is running in another terminal"
 	@echo ""
-	@cd frontend && npm run db:migrate -- --config=drizzle-staging.config.ts
+	@cd frontend-svelte && bunx drizzle-kit migrate --config=drizzle-staging.config.ts
 	@echo "✅ Staging migrations complete"
 
 # Run migrations against production database
@@ -305,7 +304,7 @@ db-migrate-prod:
 	@echo "⚠️  WARNING: This will modify the production database!"
 	@read -p "Are you sure you want to continue? (yes/N): " confirm && [ "$$confirm" = "yes" ]
 	@echo ""
-	@cd frontend && npm run db:migrate -- --config=drizzle-production.config.ts
+	@cd frontend-svelte && bunx drizzle-kit migrate --config=drizzle-production.config.ts
 	@echo "✅ Production migrations complete"
 
 # Open Drizzle Studio for staging database
@@ -315,7 +314,7 @@ db-studio-staging:
 	@echo "⚠️  Ensure 'make db-tunnel-staging' is running in another terminal"
 	@echo "🌐 Studio will be available at: https://local.drizzle.studio"
 	@echo ""
-	@cd frontend && npm run db:studio -- --config=drizzle-staging.config.ts
+	@cd frontend-svelte && bunx drizzle-kit studio --config=drizzle-staging.config.ts
 
 # Open Drizzle Studio for production database
 # Requires db-tunnel-prod to be running in another terminal
@@ -326,7 +325,7 @@ db-studio-prod:
 	@read -p "Are you sure you want to continue? (yes/N): " confirm && [ "$$confirm" = "yes" ]
 	@echo "🌐 Studio will be available at: https://local.drizzle.studio"
 	@echo ""
-	@cd frontend && npm run db:studio -- --config=drizzle-production.config.ts
+	@cd frontend-svelte && bunx drizzle-kit studio --config=drizzle-production.config.ts
 
 # Sync Doppler secrets to terraform.tfvars
 sync-doppler-dev:
