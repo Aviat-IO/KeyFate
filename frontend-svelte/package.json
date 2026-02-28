@@ -54,6 +54,7 @@
     "vitest": "^4.0.18"
   },
   "dependencies": {
+    "@google-cloud/storage": "^7.19.0",
     "@neondatabase/serverless": "^1.0.2",
     "@tailwindcss/typography": "^0.5.19",
     "bcryptjs": "^3.0.3",
