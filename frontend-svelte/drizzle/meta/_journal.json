@@ -8,6 +8,20 @@
       "when": 1764047448839,
       "tag": "0000_initial_schema_with_rate_limits",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1772260286588,
+      "tag": "0001_add_nostr_pubkey",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772260662835,
+      "tag": "0002_add_bitcoin_utxos",
+      "breakpoints": true
     }
   ]
 }

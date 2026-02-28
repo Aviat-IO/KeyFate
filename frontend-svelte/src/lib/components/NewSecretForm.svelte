@@ -9,7 +9,9 @@
   import { Textarea } from '$lib/components/ui/textarea';
   import UpgradeModal from '$lib/components/UpgradeModal.svelte';
   import ThresholdSelector from '$lib/components/ThresholdSelector.svelte';
-  import { AlertCircle, AlertTriangle, Crown, Info, Lock, Plus, Trash2 } from '@lucide/svelte';
+  import { Checkbox } from '$lib/components/ui/checkbox';
+  import NostrPubkeyInput from '$lib/components/NostrPubkeyInput.svelte';
+  import { AlertCircle, AlertTriangle, Bitcoin, Crown, Info, Lock, Plus, Radio, Trash2 } from '@lucide/svelte';
   import { Buffer } from 'buffer';
   import sss from 'shamirs-secret-sharing';
 
@@ -33,10 +35,16 @@
   // Form state
   let title = $state('');
   let secretMessageContent = $state('');
-  let recipients = $state<Array<{ name: string; email: string }>>([{ name: '', email: '' }]);
+  let recipients = $state<Array<{ name: string; email: string; nostrPubkey: string }>>([
+    { name: '', email: '', nostrPubkey: '' }
+  ]);
   let checkInDays = $state('365');
   let sssSharesTotal = $state(3);
   let sssThreshold = $state(2);
+
+  // Bitcoin & Nostr settings (Pro only)
+  let enableNostrShares = $state(false);
+  let enableBitcoinTimelock = $state(false);
 
   const maxRecipients = isPaid ? 5 : 1;
   let canAddMore = $derived(recipients.length < maxRecipients);
@@ -46,11 +54,11 @@
   const isAtLimit = tierInfo && !tierInfo.canCreate;
 
   function addRecipient() {
-    recipients = [...recipients, { name: '', email: '' }];
+    recipients = [...recipients, { name: '', email: '', nostrPubkey: '' }];
   }
 
   function removeRecipient(index: number) {
-    recipients = recipients.filter((_, i) => i !== index);
+    recipients = recipients.filter((_, i) => i !== index) as typeof recipients;
   }
 
   async function handleSubmit(e: SubmitEvent) {
@@ -89,10 +97,19 @@
       const payload = {
         title,
         server_share: serverSharePlainHex,
-        recipients,
+        recipients: recipients.map((r) => ({ name: r.name, email: r.email })),
         check_in_days: parseInt(checkInDays, 10),
         sss_shares_total: sssSharesTotal,
-        sss_threshold: sssThreshold
+        sss_threshold: sssThreshold,
+        enable_nostr_shares: enableNostrShares,
+        enable_bitcoin_timelock: enableBitcoinTimelock,
+        ...(enableNostrShares
+          ? {
+              recipient_nostr_pubkeys: recipients
+                .filter((r) => r.nostrPubkey)
+                .map((r) => ({ email: r.email, npub: r.nostrPubkey }))
+            }
+          : {})
       };
 
       const response = await fetch('/api/secrets', {
@@ -307,6 +324,92 @@
       </p>
     </div>
   </div>
+
+  <!-- Bitcoin & Nostr Settings (Pro) -->
+  {#if isPaid}
+    <div class="space-y-4 border-t pt-6">
+      <Accordion.Root type="single">
+        <Accordion.Item value="bitcoin-nostr" class="border-0">
+          <Accordion.Trigger
+            class="text-muted-foreground hover:text-foreground py-0 text-sm font-medium hover:no-underline"
+          >
+            <span class="flex items-center gap-1.5">
+              <Bitcoin class="h-3.5 w-3.5" />
+              Bitcoin & Nostr (optional)
+            </span>
+          </Accordion.Trigger>
+          <Accordion.Content class="space-y-4 pt-4">
+            <Alert.Root>
+              <Info class="h-4 w-4" />
+              <Alert.Description class="text-xs">
+                These features are optional and can be configured later from the secret detail page.
+              </Alert.Description>
+            </Alert.Root>
+
+            <!-- Nostr share publishing toggle -->
+            <div class="flex items-start gap-3 rounded-md border p-3">
+              <Checkbox
+                id="enable-nostr"
+                bind:checked={enableNostrShares}
+                disabled={isSubmitting}
+              />
+              <div class="space-y-1">
+                <Label for="enable-nostr" class="flex items-center gap-1.5 text-sm font-medium">
+                  <Radio class="h-3.5 w-3.5" />
+                  Enable Nostr Share Publishing
+                </Label>
+                <p class="text-muted-foreground text-xs">
+                  Deliver encrypted shares to recipients via Nostr direct messages (NIP-17).
+                </p>
+              </div>
+            </div>
+
+            {#if enableNostrShares}
+              <div class="space-y-3 pl-6">
+                {#each recipients as recipient, index}
+                  <div class="bg-muted/30 rounded-md border p-3">
+                    <p class="text-muted-foreground mb-2 text-xs font-medium">
+                      {recipient.name || `Recipient ${index + 1}`} — Nostr Pubkey
+                    </p>
+                    <NostrPubkeyInput bind:value={recipient.nostrPubkey} />
+                  </div>
+                {/each}
+              </div>
+            {/if}
+
+            <!-- Bitcoin timelock toggle -->
+            <div class="flex items-start gap-3 rounded-md border p-3">
+              <Checkbox
+                id="enable-bitcoin"
+                bind:checked={enableBitcoinTimelock}
+                disabled={isSubmitting}
+              />
+              <div class="space-y-1">
+                <Label for="enable-bitcoin" class="flex items-center gap-1.5 text-sm font-medium">
+                  <Bitcoin class="h-3.5 w-3.5" />
+                  Enable Bitcoin Timelock
+                </Label>
+                <p class="text-muted-foreground text-xs">
+                  Lock BTC with a CSV timelock as an additional dead man's switch mechanism. Can be
+                  configured after secret creation.
+                </p>
+              </div>
+            </div>
+
+            {#if enableBitcoinTimelock}
+              <Alert.Root>
+                <Info class="h-4 w-4" />
+                <Alert.Description class="text-xs">
+                  Bitcoin timelock will be configured on the secret detail page after creation. You'll
+                  set the lock amount and fee priority there.
+                </Alert.Description>
+              </Alert.Root>
+            {/if}
+          </Accordion.Content>
+        </Accordion.Item>
+      </Accordion.Root>
+    </div>
+  {/if}
 
   <!-- Advanced Settings -->
   <div class="space-y-4 border-t pt-6">

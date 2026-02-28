@@ -2,6 +2,7 @@
   import { Button } from '$lib/components/ui/button';
   import * as Dialog from '$lib/components/ui/dialog';
   import { AlertCircle, Download, Loader2, ShieldCheck } from '@lucide/svelte';
+  import { DEFAULT_RELAYS } from '$lib/nostr/relay-config';
 
   let {
     secret,
@@ -74,8 +75,56 @@
         }
       }
 
+      // Fetch Bitcoin status (non-blocking — include if available)
+      let bitcoinData: Record<string, unknown> | undefined;
+      try {
+        const btcRes = await fetch(`/api/secrets/${secret.id}/bitcoin-status`);
+        if (btcRes.ok) {
+          const btcStatus = await btcRes.json();
+          if (btcStatus.enabled && btcStatus.utxo) {
+            bitcoinData = {
+              enabled: true,
+              preSignedRecipientTx: btcStatus.utxo.preSignedRecipientTx ?? null,
+              timelockBlocks: btcStatus.utxo.ttlBlocks,
+              timelockDays: Math.round(btcStatus.utxo.ttlBlocks / 144),
+              utxoTxId: btcStatus.utxo.txId,
+              utxoOutputIndex: btcStatus.utxo.outputIndex,
+              amountSats: btcStatus.utxo.amountSats
+            };
+          }
+        }
+      } catch {
+        // Bitcoin data is optional — continue without it
+      }
+
+      // Nostr data: include relay list and passphrase bundle if stored locally
+      let nostrData: Record<string, unknown> | undefined;
+      const nostrStoredData = localStorage.getItem(`keyfate:nostrData:${secret.id}`);
+      if (nostrStoredData) {
+        try {
+          const parsed = JSON.parse(nostrStoredData);
+          nostrData = {
+            enabled: true,
+            eventIds: parsed.eventIds ?? [],
+            relays: [...DEFAULT_RELAYS],
+            encryptedKPassphrase: parsed.encryptedKPassphrase ?? null
+          };
+        } catch {
+          // Nostr data is optional
+        }
+      }
+      if (!nostrData) {
+        // Include relay list even without stored event IDs
+        nostrData = {
+          enabled: false,
+          eventIds: [],
+          relays: [...DEFAULT_RELAYS],
+          encryptedKPassphrase: null
+        };
+      }
+
       // Build and download recovery kit
-      const kitData = {
+      const kitData: Record<string, unknown> = {
         metadata: {
           id: secret.id,
           title: secret.title,
@@ -90,7 +139,14 @@
           exportedAt: new Date().toISOString()
         },
         serverShare,
-        userManagedShares
+        userManagedShares,
+        ...(bitcoinData ? { bitcoin: bitcoinData } : {}),
+        nostr: nostrData,
+        recoveryInstructions:
+          'Visit https://keyfate.com/recover to use this recovery kit. ' +
+          'If KeyFate is unreachable, use the Bitcoin pre-signed transaction or ' +
+          'the passphrase to recover the symmetric key K, then decrypt each share ' +
+          'with ChaCha20-Poly1305 and combine using Shamir Secret Sharing.'
       };
 
       const blob = new Blob([JSON.stringify(kitData, null, 2)], { type: 'application/json' });
@@ -144,7 +200,9 @@
           <li>&bull; Standalone recovery tool (works offline)</li>
           <li>&bull; Server share (decrypted)</li>
           <li>&bull; Your user-managed shares (if available)</li>
-          <li>&bull; Secret metadata and instructions</li>
+          <li>&bull; Bitcoin transaction data and timelock info (if enabled)</li>
+          <li>&bull; Nostr relay list and encrypted key bundle</li>
+          <li>&bull; Secret metadata and recovery instructions</li>
         </ul>
       </div>
 

@@ -7,6 +7,7 @@
   import * as Dialog from '$lib/components/ui/dialog';
   import { Separator } from '$lib/components/ui/separator';
   import { Textarea } from '$lib/components/ui/textarea';
+  import BitcoinStatus from '$lib/components/BitcoinStatus.svelte';
   import { toast } from 'svelte-sonner';
   import {
     AlertCircle,
@@ -52,6 +53,26 @@
   let showDeleteDialog = $state(false);
   let showRevealDialog = $state(false);
   let serverShareDeleted = $state(!secret.server_share);
+  let hasBitcoin = $state(false);
+  let bitcoinChecked = $state(false);
+
+  async function checkBitcoinStatus() {
+    try {
+      const response = await fetch(`/api/secrets/${secret.id}/bitcoin-status`);
+      if (response.ok) {
+        const data = await response.json();
+        hasBitcoin = data.status !== 'none';
+      }
+    } catch {
+      // Bitcoin status endpoint may not exist yet — silently ignore
+    } finally {
+      bitcoinChecked = true;
+    }
+  }
+
+  $effect(() => {
+    checkBitcoinStatus();
+  });
 
   async function handleRevealServerShare() {
     loading = true;
@@ -227,6 +248,12 @@
           {/if}
         </div>
       </div>
+
+      <!-- Bitcoin Timelock Status -->
+      {#if bitcoinChecked && hasBitcoin}
+        <Separator />
+        <BitcoinStatus secretId={secret.id} />
+      {/if}
 
       <Separator />
 
