@@ -4,14 +4,18 @@ import * as schema from "./schema"
 
 // Database connection configuration
 // Skip database setup during build phase
+// In SvelteKit/Vite builds, BUILDING is set by the adapter
 const isBuildTime =
   process.env.NODE_ENV === undefined ||
-  process.env.NEXT_PHASE === "phase-production-build"
+  process.env.NEXT_PHASE === "phase-production-build" ||
+  typeof (globalThis as Record<string, unknown>).__SVELTEKIT_BUILDING !== "undefined" ||
+  process.env.BUILDING === "true"
 
 const connectionString = process.env.DATABASE_URL
 
 if (!connectionString && !isBuildTime) {
-  throw new Error("DATABASE_URL environment variable is not set")
+  // Defer the error to runtime — don't throw at module load during build
+  console.warn("DATABASE_URL environment variable is not set")
 }
 
 // Parse connection string for Cloud SQL Unix socket support
