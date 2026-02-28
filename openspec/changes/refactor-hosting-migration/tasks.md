@@ -1,13 +1,15 @@
 ## 1. Railway Setup
 
-- [ ] 1.1 Create Railway account and project
-- [ ] 1.2 Create Railway service from GitHub repo (connect to
+- [x] 1.1 Create Railway account and project
+- [x] 1.2 Create Railway service from GitHub repo (connect to
       `refactor/rearchitect-sveltekit-nostr-bitcoin` branch)
-- [ ] 1.3 Add PostgreSQL plugin to Railway project
-- [ ] 1.4 Configure environment variables in Railway (port from Doppler/GCP
-      Secret Manager)
-- [ ] 1.5 Configure Railway to use the Dockerfile for builds
+- [x] 1.3 Add PostgreSQL plugin to Railway project (staging)
+- [x] 1.4 Configure environment variables in Railway (migrated from GCP Secret
+      Manager + Cloud Run env vars to both staging and production)
+- [x] 1.5 Configure Railway to use the Dockerfile for builds (root dir =
+      frontend-svelte)
 - [ ] 1.6 Configure custom domain (keyfate.com) DNS to Railway
+- [ ] 1.7 Add PostgreSQL plugin to Railway production environment
 
 ## 2. Cron Jobs
 
@@ -22,13 +24,12 @@
 
 ## 3. Database Migration
 
-- [ ] 3.1 Export schema from current Cloud SQL (or just run fresh migrations on
-      Railway PG)
-- [ ] 3.2 Run Drizzle migrations against Railway PostgreSQL
-- [ ] 3.3 Verify all tables created correctly
-- [ ] 3.4 Seed any required initial data (subscription tiers, policy documents)
-- [ ] 3.5 Configure database backups (Railway provides daily snapshots on paid
+- [x] 3.1 Run fresh Drizzle migrations on Railway PostgreSQL (staging)
+- [x] 3.2 Verify all tables created correctly (staging)
+- [ ] 3.3 Seed required initial data (policy documents) on staging
+- [ ] 3.4 Configure database backups (Railway provides daily snapshots on paid
       plans)
+- [ ] 3.5 Run Drizzle migrations on production PostgreSQL
 
 ## 4. CI/CD Update
 
@@ -55,28 +56,42 @@
 - [x] 5.9 Update health endpoint to use Railway env vars instead of GCP/Vercel
 - [x] 5.10 Remove databaseProvider from /api/config (GCP-specific)
 - [x] 5.11 Remove NEXT_PUBLIC_ fallbacks from /api/config endpoint
+- [ ] 5.12 Remove old Next.js `frontend/` directory from repo
 
-## 6. Verification
+## 6. Verification (Staging)
 
 - [x] 6.1 Verify app builds successfully (bun run build)
-- [x] 6.2 Verify all tests pass (103 tests across 8 files)
-- [ ] 6.3 Verify app deploys and starts on Railway
-- [ ] 6.4 Verify database connectivity on Railway
-- [ ] 6.5 Verify all cron jobs execute on schedule
-- [ ] 6.6 Verify Stripe webhooks work with Railway URL
-- [ ] 6.7 Verify BTCPay webhooks work with Railway URL
-- [ ] 6.8 Verify Google OAuth callback URL updated
-- [ ] 6.9 Verify SendGrid sender authentication
-- [ ] 6.10 Verify health endpoints respond
-- [ ] 6.11 Run full smoke test of auth, secret CRUD, check-in, payment flows
+- [x] 6.2 Verify all tests pass (303 tests across 14 files)
+- [x] 6.3 Verify app deploys and starts on Railway (staging)
+- [x] 6.4 Verify database connectivity on Railway (staging - migrations ran)
+- [x] 6.5 Fix Auth.js basePath 500 error (removed dual @auth/core versions)
+- [x] 6.6 Verify auth login works on staging
+- [ ] 6.7 Verify all cron jobs execute on schedule
+- [ ] 6.8 Verify health endpoints respond
+- [ ] 6.9 Update Google OAuth callback URLs to Railway staging domain
+- [ ] 6.10 Verify Stripe webhooks work with Railway URL
+- [ ] 6.11 Verify BTCPay webhooks work with Railway URL
+- [ ] 6.12 Verify SendGrid sender authentication
+- [ ] 6.13 Run full smoke test of secret CRUD, check-in, payment flows
 
-## 7. GCP Teardown (After Railway Verified)
+## 7. Production Deploy
 
-- [ ] 7.1 Disable Cloud Scheduler jobs
-- [ ] 7.2 Delete Cloud Run services
-- [ ] 7.3 Delete Cloud SQL instances (DESTRUCTIVE - only after Railway is
+- [ ] 7.1 Add PostgreSQL plugin to production environment
+- [ ] 7.2 Deploy to production on Railway
+- [ ] 7.3 Run Drizzle migrations on production
+- [ ] 7.4 Update DNS (keyfate.com) to point to Railway
+- [ ] 7.5 Update Google OAuth callback URLs to production domain
+- [ ] 7.6 Update Stripe webhook URL to production
+- [ ] 7.7 Update BTCPay webhook URL to production
+- [ ] 7.8 Verify production auth, secrets, payments work end-to-end
+
+## 8. GCP Teardown (After Railway Production Verified)
+
+- [ ] 8.1 Disable Cloud Scheduler jobs
+- [ ] 8.2 Delete Cloud Run services
+- [ ] 8.3 Delete Cloud SQL instances (DESTRUCTIVE - only after Railway is
       verified)
-- [ ] 7.4 Delete Bastion VMs
-- [ ] 7.5 Delete Artifact Registry repositories
-- [ ] 7.6 Remove VPC and networking resources
-- [ ] 7.7 Verify GCP billing drops to $0
+- [ ] 8.4 Delete Bastion VMs
+- [ ] 8.5 Delete Artifact Registry repositories
+- [ ] 8.6 Remove VPC and networking resources
+- [ ] 8.7 Verify GCP billing drops to $0
