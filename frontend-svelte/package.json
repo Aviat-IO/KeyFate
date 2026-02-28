@@ -56,7 +56,6 @@
     "vitest": "^4.0.18"
   },
   "dependencies": {
-    "@auth/core": "^0.34.3",
     "@auth/sveltekit": "^1.11.1",
     "@neondatabase/serverless": "^1.0.2",
     "@noble/ciphers": "^2.1.1",
