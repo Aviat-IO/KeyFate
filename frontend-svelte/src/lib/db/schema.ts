@@ -113,6 +113,12 @@ export const disclosureStatusEnum = pgEnum("disclosure_status", [
   "sent",
   "failed",
 ])
+export const bitcoinUtxoStatusEnum = pgEnum("bitcoin_utxo_status", [
+  "pending", // tx broadcast, waiting for confirmation
+  "confirmed", // confirmed on chain
+  "spent", // spent (refreshed or triggered)
+  "expired", // CSV timelock expired, recipient can spend
+])
 
 // Helper function to convert TS enum to pgEnum format
 function enumToPgEnum<T extends Record<string, any>>(
@@ -355,6 +361,7 @@ export const secretRecipients = pgTable("secret_recipients", {
   name: text("name").notNull(),
   email: text("email"),
   phone: text("phone"),
+  nostrPubkey: text("nostr_pubkey"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
@@ -734,6 +741,36 @@ export const rateLimits = pgTable(
   }),
 )
 
+// Bitcoin UTXO tracking for CSV timelock dead man's switch
+export const bitcoinUtxos = pgTable(
+  "bitcoin_utxos",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    secretId: uuid("secret_id")
+      .notNull()
+      .references(() => secrets.id, { onDelete: "cascade" }),
+    txId: text("tx_id").notNull(),
+    outputIndex: integer("output_index").notNull(),
+    amountSats: integer("amount_sats").notNull(),
+    timelockScript: text("timelock_script").notNull(), // hex-encoded
+    ownerPubkey: text("owner_pubkey").notNull(), // hex
+    recipientPubkey: text("recipient_pubkey").notNull(), // hex
+    ttlBlocks: integer("ttl_blocks").notNull(),
+    status: bitcoinUtxoStatusEnum("status").notNull().default("pending"),
+    preSignedRecipientTx: text("pre_signed_recipient_tx"), // hex-encoded pre-signed tx
+    confirmedAt: timestamp("confirmed_at"),
+    spentAt: timestamp("spent_at"),
+    spentByTxId: text("spent_by_tx_id"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    secretIdx: index("idx_bitcoin_utxos_secret").on(table.secretId),
+    statusIdx: index("idx_bitcoin_utxos_status").on(table.status),
+    txIdx: index("idx_bitcoin_utxos_tx").on(table.txId, table.outputIndex),
+  }),
+)
+
 export type DataExportJob = typeof dataExportJobs.$inferSelect
 export type DataExportJobInsert = typeof dataExportJobs.$inferInsert
 export type AccountDeletionRequest = typeof accountDeletionRequests.$inferSelect
@@ -741,3 +778,6 @@ export type AccountDeletionRequestInsert =
   typeof accountDeletionRequests.$inferInsert
 export type RateLimit = typeof rateLimits.$inferSelect
 export type RateLimitInsert = typeof rateLimits.$inferInsert
+export type BitcoinUtxo = typeof bitcoinUtxos.$inferSelect
+export type BitcoinUtxoInsert = typeof bitcoinUtxos.$inferInsert
+export type BitcoinUtxoUpdate = Partial<Omit<BitcoinUtxo, "id" | "createdAt">>

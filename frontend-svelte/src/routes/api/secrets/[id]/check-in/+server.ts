@@ -8,6 +8,8 @@ import { mapDrizzleSecretToApiShape } from "$lib/db/secret-mapper"
 import { getSecretWithRecipients } from "$lib/db/queries/secrets"
 import { logCheckIn } from "$lib/services/audit-logger"
 import { scheduleRemindersForSecret } from "$lib/services/reminder-scheduler"
+import { getActiveUtxo, refreshBitcoin } from "$lib/services/bitcoin-service"
+import { hex } from "@scure/base"
 
 export const POST: RequestHandler = async (event) => {
   try {
@@ -32,6 +34,14 @@ export const POST: RequestHandler = async (event) => {
         { error: "Failed to verify user account" },
         { status: 500 },
       )
+    }
+
+    // Parse optional body (may contain Bitcoin refresh params)
+    let body: Record<string, unknown> = {}
+    try {
+      body = await event.request.json()
+    } catch {
+      // No body or invalid JSON is fine — check-in doesn't require a body
     }
 
     const secret = await secretsService.getById(id, session.user.id)
@@ -77,6 +87,24 @@ export const POST: RequestHandler = async (event) => {
 
     await scheduleRemindersForSecret(id, nextCheckIn, secret.checkInDays)
 
+    // Optionally refresh Bitcoin UTXO if one exists and params are provided
+    let bitcoinRefreshResult = null
+    if (body.ownerPrivkey && body.feeRateSatsPerVbyte && body.network) {
+      try {
+        const activeUtxo = await getActiveUtxo(id)
+        if (activeUtxo) {
+          bitcoinRefreshResult = await refreshBitcoin(id, session.user.id, {
+            ownerPrivkey: hex.decode(body.ownerPrivkey),
+            feeRateSatsPerVbyte: body.feeRateSatsPerVbyte,
+            network: body.network,
+          })
+        }
+      } catch (btcError) {
+        console.warn("[Check-in API] Bitcoin refresh failed (non-fatal):", btcError)
+        // Bitcoin refresh failure is non-fatal; the server check-in still succeeds
+      }
+    }
+
     // Get the updated secret with recipients
     const updatedSecretWithRecipients = await getSecretWithRecipients(
       id,
@@ -94,6 +122,7 @@ export const POST: RequestHandler = async (event) => {
       success: true,
       secret: mapped,
       next_check_in: mapped.next_check_in,
+      ...(bitcoinRefreshResult ? { bitcoinRefresh: bitcoinRefreshResult } : {}),
     })
   } catch (error) {
     console.error("Error in POST /api/secrets/[id]/check-in:", error)

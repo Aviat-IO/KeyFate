@@ -1,0 +1,1 @@
+ALTER TABLE "secret_recipients" ADD COLUMN "nostr_pubkey" text;
