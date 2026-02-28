@@ -1,1 +1,0 @@
-import{a as t,f as a}from"../chunks/EtgZSITn.js";import"../chunks/VPiKurZ6.js";import{n as e}from"../chunks/DD-oyJii.js";var p=a("<h1>KeyFate</h1> <p>SvelteKit migration in progress.</p>",1);function f(o){var r=p();e(2),t(o,r)}export{f as component};
