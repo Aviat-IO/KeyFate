@@ -50,7 +50,7 @@ function generateHMACHeaders(
   cronSecret: string,
 ): Record<string, string> {
   const timestamp = Date.now()
-  const host = `localhost:${process.env.PORT || 3000}`
+  const host = `127.0.0.1:${process.env.PORT || 3000}`
   const url = `http://${host}${endpoint}`
   const message = `${timestamp}.${url}`
   const signature = crypto
@@ -74,7 +74,7 @@ async function invokeCronEndpoint(job: CronJob): Promise<void> {
   }
 
   const port = process.env.PORT || 3000
-  const url = `http://localhost:${port}${job.endpoint}`
+  const url = `http://127.0.0.1:${port}${job.endpoint}`
 
   try {
     const headers = generateHMACHeaders(job.endpoint, cronSecret)
