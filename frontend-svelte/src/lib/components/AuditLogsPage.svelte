@@ -19,9 +19,7 @@
     details: Record<string, unknown> | null;
   }
 
-  let { initialLogs = [] }: { initialLogs?: AuditLog[] } = $props();
-
-  let logs = $state<AuditLog[]>(initialLogs);
+  let logs = $state<AuditLog[]>([]);
   let loading = $state(false);
   let currentPage = $state(1);
   let totalPages = $state(1);
@@ -109,7 +107,7 @@
       <div class="flex flex-wrap gap-4">
         <Select.Root type="single" bind:value={eventTypeFilter}>
           <Select.Trigger class="w-[200px]">
-            <Select.Value placeholder="Event Type" />
+            <span>{eventTypeFilter ? formatEventType(eventTypeFilter) : 'All Events'}</span>
           </Select.Trigger>
           <Select.Content>
             <Select.Item value="">All Events</Select.Item>
@@ -128,7 +126,7 @@
 
         <Select.Root type="single" bind:value={categoryFilter}>
           <Select.Trigger class="w-[200px]">
-            <Select.Value placeholder="Category" />
+            <span>{categoryFilter ? categoryFilter.charAt(0).toUpperCase() + categoryFilter.slice(1) : 'All Categories'}</span>
           </Select.Trigger>
           <Select.Content>
             <Select.Item value="">All Categories</Select.Item>

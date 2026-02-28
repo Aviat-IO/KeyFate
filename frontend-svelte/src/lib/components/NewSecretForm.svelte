@@ -9,9 +9,20 @@
   import { Textarea } from '$lib/components/ui/textarea';
   import UpgradeModal from '$lib/components/UpgradeModal.svelte';
   import ThresholdSelector from '$lib/components/ThresholdSelector.svelte';
+  import MessageTemplateSelector from '$lib/components/MessageTemplateSelector.svelte';
   import { Checkbox } from '$lib/components/ui/checkbox';
   import NostrPubkeyInput from '$lib/components/NostrPubkeyInput.svelte';
-  import { AlertCircle, AlertTriangle, Bitcoin, Crown, Info, Lock, Plus, Radio, Trash2 } from '@lucide/svelte';
+  import {
+    AlertCircle,
+    AlertTriangle,
+    Bitcoin,
+    Crown,
+    Info,
+    Lock,
+    Plus,
+    Radio,
+    Trash2
+  } from '@lucide/svelte';
   import { Buffer } from 'buffer';
   import sss from 'shamirs-secret-sharing';
 
@@ -46,12 +57,37 @@
   let enableNostrShares = $state(false);
   let enableBitcoinTimelock = $state(false);
 
-  const maxRecipients = isPaid ? 5 : 1;
+  // Validation errors
+  let fieldErrors = $state<Record<string, string>>({});
+
+  let maxRecipients = $derived(isPaid ? (tierInfo?.recipientsLimit ?? 5) : 1);
   let canAddMore = $derived(recipients.length < maxRecipients);
 
-  const percentageUsed = tierInfo ? (tierInfo.secretsUsed / tierInfo.secretsLimit) * 100 : 0;
-  const showWarning = tierInfo && percentageUsed >= 75 && tierInfo.canCreate;
-  const isAtLimit = tierInfo && !tierInfo.canCreate;
+  let percentageUsed = $derived(
+    tierInfo ? (tierInfo.secretsUsed / tierInfo.secretsLimit) * 100 : 0
+  );
+  let showWarning = $derived(tierInfo && percentageUsed >= 75 && tierInfo.canCreate);
+  let isAtLimit = $derived(tierInfo && !tierInfo.canCreate);
+
+  const CHECK_IN_OPTIONS: Array<{ value: string; label: string; paidOnly: boolean }> = [
+    { value: '1', label: '1 day', paidOnly: true },
+    { value: '3', label: '3 days', paidOnly: true },
+    { value: '7', label: '1 week', paidOnly: false },
+    { value: '14', label: '2 weeks', paidOnly: true },
+    { value: '30', label: '1 month', paidOnly: false },
+    { value: '90', label: '3 months', paidOnly: true },
+    { value: '180', label: '6 months', paidOnly: true },
+    { value: '365', label: '1 year', paidOnly: false },
+    { value: '1095', label: '3 years', paidOnly: true }
+  ];
+
+  let availableOptions = $derived(
+    CHECK_IN_OPTIONS.filter((opt) => isPaid || !opt.paidOnly)
+  );
+
+  let selectedCheckInLabel = $derived(
+    CHECK_IN_OPTIONS.find((opt) => opt.value === checkInDays)?.label ?? 'Select frequency'
+  );
 
   function addRecipient() {
     recipients = [...recipients, { name: '', email: '', nostrPubkey: '' }];
@@ -61,16 +97,65 @@
     recipients = recipients.filter((_, i) => i !== index) as typeof recipients;
   }
 
+  function handleTemplateSelect(content: string) {
+    secretMessageContent = content;
+  }
+
+  function isValidEmail(email: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  function validate(): boolean {
+    const errors: Record<string, string> = {};
+
+    if (!title.trim()) {
+      errors.title = 'Title is required';
+    }
+
+    if (!secretMessageContent.trim()) {
+      errors.secretMessageContent = 'Secret message is required';
+    }
+
+    if (recipients.length === 0) {
+      errors.recipients = 'At least one recipient is required';
+    }
+
+    for (let i = 0; i < recipients.length; i++) {
+      const r = recipients[i];
+      if (!r.name.trim()) {
+        errors[`recipient_${i}_name`] = 'Name is required';
+      }
+      if (!r.email.trim()) {
+        errors[`recipient_${i}_email`] = 'Email is required';
+      } else if (!isValidEmail(r.email)) {
+        errors[`recipient_${i}_email`] = 'Invalid email address';
+      }
+    }
+
+    if (sssSharesTotal < 3) {
+      errors.sssSharesTotal = 'Minimum 3 shares required';
+    }
+    if (sssThreshold < 2) {
+      errors.sssThreshold = 'Minimum threshold is 2';
+    }
+    if (sssThreshold > sssSharesTotal) {
+      errors.sssThreshold = 'Threshold cannot exceed total shares';
+    }
+
+    fieldErrors = errors;
+    return Object.keys(errors).length === 0;
+  }
+
   async function handleSubmit(e: SubmitEvent) {
     e.preventDefault();
     error = null;
     isSubmitting = true;
 
     try {
-      // Validate
-      if (!title.trim()) throw new Error('Title is required');
-      if (!secretMessageContent.trim()) throw new Error('Secret message is required');
-      if (recipients.length === 0) throw new Error('At least one recipient is required');
+      if (!validate()) {
+        isSubmitting = false;
+        return;
+      }
 
       // SSS split client-side
       const secretBuffer = Buffer.from(secretMessageContent, 'utf8');
@@ -126,6 +211,10 @@
       if (!response.ok) throw new Error(result.error || 'Failed to create secret via API');
       if (!result.secretId) throw new Error('API did not return a secret ID.');
 
+      if (result.warning) {
+        error = result.warning;
+      }
+
       // Store shares in localStorage with 2 hour expiry
       const expiresAt = Date.now() + 2 * 60 * 60 * 1000;
       localStorage.setItem(
@@ -166,7 +255,7 @@
     <Alert.Title>Secret Limit Reached</Alert.Title>
     <Alert.Description>
       You've used all {tierInfo?.secretsLimit} of your {isPaid ? 'Pro' : 'Free'} tier secrets.
-      {#if !isPaid}Upgrade to Pro to create up to 10 secrets.{/if}
+      {#if !isPaid}{' '}Upgrade to Pro to create up to 10 secrets.{/if}
     </Alert.Description>
   </Alert.Root>
 {/if}
@@ -176,8 +265,10 @@
     <AlertTriangle class="text-muted-foreground h-4 w-4" />
     <Alert.Title class="text-foreground">Approaching Limit</Alert.Title>
     <Alert.Description class="text-muted-foreground">
-      You're using {tierInfo?.secretsUsed} of {tierInfo?.secretsLimit} secrets ({Math.round(percentageUsed)}%).
-      {#if !isPaid}Consider upgrading to Pro for 10 secrets.{/if}
+      You're using {tierInfo?.secretsUsed} of {tierInfo?.secretsLimit} secrets ({Math.round(
+        percentageUsed
+      )}%).
+      {#if !isPaid}{' '}Consider upgrading to Pro for 10 secrets.{/if}
     </Alert.Description>
   </Alert.Root>
 {/if}
@@ -193,6 +284,9 @@
         placeholder="Example: Grandma's Recipe Book Location"
         disabled={isSubmitting}
       />
+      {#if fieldErrors.title}
+        <p class="text-destructive text-xs">{fieldErrors.title}</p>
+      {/if}
     </div>
 
     <div class="space-y-2">
@@ -207,10 +301,20 @@
         rows={4}
         disabled={isSubmitting}
       />
-      <p class="text-muted-foreground text-xs">
-        This message will be split using Shamir's Secret Sharing. You'll manage the shares on the
-        next page.
-      </p>
+      <div class="flex items-center justify-between">
+        <p class="text-muted-foreground text-xs">
+          This message will be split using Shamir's Secret Sharing. You'll manage the shares on the
+          next page.
+        </p>
+      </div>
+      {#if fieldErrors.secretMessageContent}
+        <p class="text-destructive text-xs">{fieldErrors.secretMessageContent}</p>
+      {/if}
+      <MessageTemplateSelector
+        onSelectTemplate={handleTemplateSelect}
+        isPro={isPaid}
+        onUpgradeClick={() => (showUpgradeModal = true)}
+      />
     </div>
   </div>
 
@@ -231,6 +335,21 @@
         </Button>
       {/if}
     </div>
+
+    {#if fieldErrors.recipients}
+      <p class="text-destructive text-xs">{fieldErrors.recipients}</p>
+    {/if}
+
+    {#if isPaid && maxRecipients > 0 && recipients.length >= Math.floor(maxRecipients * 0.75)}
+      <Alert.Root class="border-muted bg-muted/50">
+        <AlertTriangle class="text-muted-foreground h-4 w-4" />
+        <Alert.Description class="text-muted-foreground text-sm">
+          {recipients.length >= maxRecipients
+            ? `Maximum ${maxRecipients} recipients reached.`
+            : `Using ${recipients.length} of ${maxRecipients} recipients.`}
+        </Alert.Description>
+      </Alert.Root>
+    {/if}
 
     <div class="space-y-3">
       {#each recipients as recipient, index}
@@ -260,6 +379,9 @@
                 disabled={isSubmitting}
                 class="h-9"
               />
+              {#if fieldErrors[`recipient_${index}_name`]}
+                <p class="text-destructive text-xs">{fieldErrors[`recipient_${index}_name`]}</p>
+              {/if}
             </div>
             <div class="space-y-1">
               <Label class="text-xs">Email</Label>
@@ -270,6 +392,9 @@
                 disabled={isSubmitting}
                 class="h-9"
               />
+              {#if fieldErrors[`recipient_${index}_email`]}
+                <p class="text-destructive text-xs">{fieldErrors[`recipient_${index}_email`]}</p>
+              {/if}
             </div>
           </div>
         </div>
@@ -287,6 +412,12 @@
           Add Recipient ({recipients.length} / {maxRecipients})
         </Button>
       {/if}
+
+      {#if isPaid && !canAddMore}
+        <div class="text-muted-foreground py-1.5 text-center text-xs">
+          Maximum {maxRecipients} recipients reached
+        </div>
+      {/if}
     </div>
   </div>
 
@@ -297,24 +428,12 @@
       <Label for="checkInDays">Trigger Deadline</Label>
       <Select.Root type="single" bind:value={checkInDays}>
         <Select.Trigger>
-          <span>{checkInDays ? `${checkInDays} days` : 'Select frequency'}</span>
+          <span>{selectedCheckInLabel}</span>
         </Select.Trigger>
         <Select.Content>
-          {#if isPaid}
-            <Select.Item value="1">1 day</Select.Item>
-            <Select.Item value="3">3 days</Select.Item>
-            <Select.Item value="7">1 week</Select.Item>
-            <Select.Item value="14">2 weeks</Select.Item>
-            <Select.Item value="30">1 month</Select.Item>
-            <Select.Item value="90">3 months</Select.Item>
-            <Select.Item value="180">6 months</Select.Item>
-            <Select.Item value="365">1 year</Select.Item>
-            <Select.Item value="1095">3 years</Select.Item>
-          {:else}
-            <Select.Item value="7">1 week</Select.Item>
-            <Select.Item value="30">1 month</Select.Item>
-            <Select.Item value="365">1 year</Select.Item>
-          {/if}
+          {#each availableOptions as option}
+            <Select.Item value={option.value}>{option.label}</Select.Item>
+          {/each}
         </Select.Content>
       </Select.Root>
       <p class="text-muted-foreground text-xs">
@@ -400,8 +519,8 @@
               <Alert.Root>
                 <Info class="h-4 w-4" />
                 <Alert.Description class="text-xs">
-                  Bitcoin timelock will be configured on the secret detail page after creation. You'll
-                  set the lock amount and fee priority there.
+                  Bitcoin timelock will be configured on the secret detail page after creation.
+                  You'll set the lock amount and fee priority there.
                 </Alert.Description>
               </Alert.Root>
             {/if}
@@ -413,7 +532,7 @@
 
   <!-- Advanced Settings -->
   <div class="space-y-4 border-t pt-6">
-    <Accordion.Root type="single">
+    <Accordion.Root type="single" value={recipients.length > 1 ? 'sss-config' : undefined}>
       <Accordion.Item value="sss-config" class="border-0">
         <Accordion.Trigger
           class="text-muted-foreground hover:text-foreground py-0 text-sm font-medium hover:no-underline"
@@ -427,7 +546,8 @@
               <Alert.Title class="text-sm">Multiple Recipients</Alert.Title>
               <Alert.Description class="text-xs">
                 All recipients will receive the SAME share. You must distribute this share to each
-                recipient separately via your own secure channels.
+                recipient separately via your own secure channels. With multiple recipients, consider
+                your threshold carefully.
               </Alert.Description>
             </Alert.Root>
           {/if}
@@ -436,9 +556,17 @@
             <Alert.Title class="text-sm">Secret Sharing Details</Alert.Title>
             <Alert.Description class="text-xs">
               <ul class="list-disc space-y-0.5 pl-5">
-                <li>Your secret message will be split into cryptographic "shares".</li>
-                <li>A minimum number of shares (threshold) will be required to reconstruct.</li>
-                <li>KeyFate will securely store one share. You will manage the others.</li>
+                <li>
+                  Your secret message will be split into a number of cryptographic "shares".
+                </li>
+                <li>
+                  A minimum number of shares (threshold) will be required to reconstruct the
+                  original message.
+                </li>
+                <li>
+                  KeyFate will securely store one share (encrypted again by our server). You will
+                  manage the others on the next page.
+                </li>
               </ul>
             </Alert.Description>
           </Alert.Root>
@@ -448,6 +576,8 @@
             isPro={isPaid}
             {isSubmitting}
             onUpgradeClick={() => (showUpgradeModal = true)}
+            sharesTotalError={fieldErrors.sssSharesTotal}
+            thresholdError={fieldErrors.sssThreshold}
           />
         </Accordion.Content>
       </Accordion.Item>

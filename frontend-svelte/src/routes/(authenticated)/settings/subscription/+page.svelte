@@ -1,18 +1,24 @@
 <script lang="ts">
-  // Stub: SubscriptionManagement component will be ported separately
-  let { data } = $props();
+	import SubscriptionManager from '$lib/components/SubscriptionManager.svelte';
+
+	let { data } = $props();
 </script>
 
 <svelte:head>
-  <title>Subscription - KeyFate</title>
+	<title>Subscription - KeyFate</title>
 </svelte:head>
 
 <div class="space-y-6">
-  <div>
-    <h2 class="text-2xl font-bold tracking-tight">Subscription</h2>
-    <p class="text-muted-foreground">Manage your subscription and billing</p>
-  </div>
+	<div>
+		<h2 class="text-2xl font-bold tracking-tight">Subscription</h2>
+		<p class="text-muted-foreground">Manage your subscription and billing</p>
+	</div>
 
-  <!-- Stub: SubscriptionManagement component will be rendered here -->
-  <p class="text-muted-foreground">The SubscriptionManagement component is being ported.</p>
+	{#if data.tierInfo}
+		<SubscriptionManager tierInfo={data.tierInfo} />
+	{:else}
+		<div class="border-destructive bg-destructive/10 rounded-lg border p-4">
+			<p class="text-destructive text-sm">Error loading subscription information</p>
+		</div>
+	{/if}
 </div>

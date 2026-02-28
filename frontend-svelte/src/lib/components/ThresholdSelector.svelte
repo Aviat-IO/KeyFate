@@ -23,7 +23,7 @@
     thresholdError?: string;
   } = $props();
 
-  const maxShares = getMaxShares(isPro ? 'pro' : 'free');
+  let maxShares = $derived(getMaxShares(isPro ? 'pro' : 'free'));
 </script>
 
 {#if !isPro}

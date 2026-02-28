@@ -62,7 +62,7 @@
     )
   );
 
-  let canCheckIn = $derived(() => {
+  let canCheckIn = $derived.by(() => {
     if (!secretState.lastCheckIn) return true;
     const lastCheckIn = new Date(secretState.lastCheckIn);
     const fifteenMinutesAgo = new Date();
@@ -216,7 +216,7 @@
         </div>
 
         <div>
-          {#if !serverShareDeleted && secretState.status === 'active' && canCheckIn()}
+          {#if !serverShareDeleted && secretState.status === 'active' && canCheckIn}
             <CheckInButton
               secretId={secretState.id}
               onCheckInSuccess={handleCheckInSuccess}
