@@ -30,7 +30,7 @@
   }
 
   const menuItemClass =
-    'flex select-none items-center gap-2 rounded-md px-3 py-2 text-xs font-medium uppercase tracking-wider leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground';
+    'flex select-none items-center gap-2 rounded-md px-3 py-2 text-xs font-medium leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground';
 
   function isActive(path: string, exact = true) {
     return exact ? pathname === path : pathname.startsWith(path);
@@ -80,7 +80,7 @@
           {#if user}
             <a
               href="/dashboard"
-              class="rounded-md px-3 py-2 text-xs font-medium uppercase tracking-wider transition-colors hover:bg-accent hover:text-accent-foreground {isActive(
+              class="rounded-md px-3 py-2 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground {isActive(
                 '/dashboard'
               )
                 ? 'bg-accent text-accent-foreground'
@@ -93,7 +93,7 @@
           {#if !user}
             <a
               href="/pricing"
-              class="rounded-md px-3 py-2 text-xs font-medium uppercase tracking-wider transition-colors hover:bg-accent hover:text-accent-foreground {isActive(
+              class="rounded-md px-3 py-2 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground {isActive(
                 '/pricing'
               )
                 ? 'bg-accent text-accent-foreground'
@@ -105,7 +105,7 @@
 
           <a
             href="/blog"
-            class="rounded-md px-3 py-2 text-xs font-medium uppercase tracking-wider transition-colors hover:bg-accent hover:text-accent-foreground {isActive(
+            class="rounded-md px-3 py-2 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground {isActive(
               '/blog',
               false
             )
@@ -122,7 +122,7 @@
           variant="ghost"
           size="sm"
           href="/decrypt"
-          class="hidden uppercase tracking-wide md:flex {isActive('/decrypt')
+          class="hidden md:flex {isActive('/decrypt')
             ? 'bg-accent text-accent-foreground'
             : ''}"
         >
@@ -135,7 +135,7 @@
           <Button
             variant="outline"
             size="sm"
-            class="border-primary text-primary hover:bg-primary hover:text-primary-foreground hidden uppercase tracking-wide md:flex"
+            class="border-primary text-primary hover:bg-primary hover:text-primary-foreground hidden md:flex"
           >
             <Crown class="h-4 w-4" />
             Pro
@@ -143,10 +143,10 @@
         {/if}
 
         {#if !user}
-          <Button variant="ghost" size="sm" href="/auth/signin" class="hidden uppercase tracking-wide md:flex">
+          <Button variant="ghost" size="sm" href="/auth/signin" class="hidden md:flex">
             Sign In
           </Button>
-          <Button variant="default" size="sm" href="/auth/signin" class="uppercase tracking-wide">Sign Up</Button>
+          <Button variant="default" size="sm" href="/auth/signin" class="">Sign Up</Button>
         {/if}
 
         {#if user}
@@ -155,7 +155,7 @@
             <Button
               variant="ghost"
               size="sm"
-              class="uppercase tracking-wide"
+              class=""
               onclick={() => (mobileMenuOpen = !mobileMenuOpen)}
             >
               Account

@@ -21,11 +21,11 @@
         height="32"
         class="hidden h-8 w-8 dark:block"
       />
-      <span class="font-space font-bold uppercase tracking-wider">KeyFate</span>
+      <span class="font-space font-bold">KeyFate</span>
     </div>
 
     <div
-      class="flex flex-wrap items-center justify-center gap-8 text-xs uppercase tracking-wider text-muted-foreground"
+      class="flex flex-wrap items-center justify-center gap-8 text-xs text-muted-foreground"
     >
       <a href="/faq" class="transition-colors hover:text-foreground">FAQ</a>
       <a href="/pricing" class="transition-colors hover:text-foreground">Pricing</a>
@@ -48,6 +48,6 @@
       </a>
     </div>
 
-    <p class="text-xs uppercase tracking-wider text-muted-foreground/50">Zero-knowledge security. Open source.</p>
+    <p class="text-xs text-muted-foreground/50">Zero-knowledge security. Open source.</p>
   </div>
 </footer>

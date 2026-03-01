@@ -204,7 +204,7 @@
               {#if recipient.email}
                 {@const mailto = createMailto(recipient, userManagedShares[0])}
                 {#if mailto}
-                  <Button variant="outline" size="sm" href={mailto} class="uppercase tracking-wide font-semibold">
+                  <Button variant="outline" size="sm" href={mailto} class="font-semibold">
                     <Send class="mr-2 h-4 w-4" />
                     Email Share
                   </Button>
@@ -286,7 +286,7 @@
             onclick={handleProceed}
             disabled={!confirmedSent || userManagedShares.length === 0}
             size="lg"
-            class="w-full uppercase tracking-wide font-semibold md:w-auto"
+            class="w-full font-semibold md:w-auto"
           >
             {confirmedSent ? 'Proceed to Dashboard' : 'Confirm Shares Distributed to Proceed'}
           </Button>

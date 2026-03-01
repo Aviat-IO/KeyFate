@@ -40,10 +40,10 @@
       </div>
     </Dialog.Header>
     <Dialog.Footer class="gap-2 sm:justify-start">
-      <Button type="button" variant="outline" onclick={() => onOpenChange(false)} disabled={loading} class="uppercase tracking-wide">
+      <Button type="button" variant="outline" onclick={() => onOpenChange(false)} disabled={loading} class="">
         {cancelText}
       </Button>
-      <Button type="button" variant="destructive" onclick={onConfirm} disabled={loading} class="uppercase tracking-wide">
+      <Button type="button" variant="destructive" onclick={onConfirm} disabled={loading} class="">
         {loading ? 'Deleting...' : confirmText}
       </Button>
     </Dialog.Footer>

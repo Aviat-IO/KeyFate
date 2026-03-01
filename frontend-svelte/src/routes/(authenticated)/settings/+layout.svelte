@@ -21,7 +21,7 @@
         {#each navItems as item}
           <a
             href={item.href}
-            class="px-3 py-2 text-xs font-medium uppercase tracking-wider transition-colors hover:text-foreground {pathname ===
+            class="px-3 py-2 text-xs font-medium transition-colors hover:text-foreground {pathname ===
             item.href
               ? 'text-foreground border-l-2 border-foreground'
               : 'text-muted-foreground'}"

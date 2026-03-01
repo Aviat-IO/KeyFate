@@ -145,11 +145,11 @@
     <Input type="date" placeholder="End Date" bind:value={endDateStr} class="w-[200px]" />
 
     <div class="ml-auto flex gap-2">
-      <Button variant="outline" size="sm" onclick={() => handleExport('csv')} class="uppercase tracking-wide font-semibold">
+      <Button variant="outline" size="sm" onclick={() => handleExport('csv')} class="font-semibold">
         <Download class="mr-2 h-4 w-4" />
         Export CSV
       </Button>
-      <Button variant="outline" size="sm" onclick={() => handleExport('json')} class="uppercase tracking-wide font-semibold">
+      <Button variant="outline" size="sm" onclick={() => handleExport('json')} class="font-semibold">
         <Download class="mr-2 h-4 w-4" />
         Export JSON
       </Button>
@@ -161,11 +161,11 @@
     <Table.Root>
       <Table.Header>
         <Table.Row>
-          <Table.Head class="text-xs text-muted-foreground uppercase tracking-wider">Event</Table.Head>
-          <Table.Head class="text-xs text-muted-foreground uppercase tracking-wider">Category</Table.Head>
-          <Table.Head class="text-xs text-muted-foreground uppercase tracking-wider">Resource</Table.Head>
-          <Table.Head class="text-xs text-muted-foreground uppercase tracking-wider">Date</Table.Head>
-          <Table.Head class="text-xs text-muted-foreground uppercase tracking-wider">IP Address</Table.Head>
+          <Table.Head class="text-xs text-muted-foregroundr">Event</Table.Head>
+          <Table.Head class="text-xs text-muted-foregroundr">Category</Table.Head>
+          <Table.Head class="text-xs text-muted-foregroundr">Resource</Table.Head>
+          <Table.Head class="text-xs text-muted-foregroundr">Date</Table.Head>
+          <Table.Head class="text-xs text-muted-foregroundr">IP Address</Table.Head>
         </Table.Row>
       </Table.Header>
       <Table.Body>
@@ -213,7 +213,7 @@
 
   <!-- Pagination -->
   <div class="flex items-center justify-between">
-    <div class="text-xs text-muted-foreground uppercase tracking-wider">
+    <div class="text-xs text-muted-foregroundr">
       Page {currentPage} of {totalPages}
     </div>
     <div class="flex gap-2">
@@ -222,7 +222,7 @@
         size="sm"
         onclick={() => (currentPage = Math.max(1, currentPage - 1))}
         disabled={currentPage === 1 || loading}
-        class="uppercase tracking-wide font-semibold"
+        class="font-semibold"
       >
         Previous
       </Button>
@@ -231,7 +231,7 @@
         size="sm"
         onclick={() => (currentPage = Math.min(totalPages, currentPage + 1))}
         disabled={currentPage === totalPages || loading}
-        class="uppercase tracking-wide font-semibold"
+        class="font-semibold"
       >
         Next
       </Button>

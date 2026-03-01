@@ -45,7 +45,7 @@
         </div>
         <p class="text-muted-foreground mb-4 text-sm">Get the exact same tool that powers this website</p>
         <div>
-          <p class="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-2">Clone the repository</p>
+          <p class="text-xs text-muted-foregroundr font-medium mb-2">Clone the repository</p>
           <div class="bg-muted relative rounded-lg border">
             <code class="bg-background block overflow-x-auto whitespace-pre-line rounded p-4 font-mono text-sm">git clone https://github.com/accolver/dead-mans-switch.git</code>
             <Button variant="ghost" size="icon" class="absolute right-2 top-2 h-8 w-8" onclick={() => handleCopy('clone', 'git clone https://github.com/accolver/dead-mans-switch.git')}>
@@ -62,7 +62,7 @@
         </div>
         <p class="text-muted-foreground mb-4 text-sm">Use the same shamirs-secret-sharing library we use</p>
         <div>
-          <p class="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-2">Install the library</p>
+          <p class="text-xs text-muted-foregroundr font-medium mb-2">Install the library</p>
           <div class="bg-muted relative rounded-lg border">
             <code class="bg-background block overflow-x-auto whitespace-pre-line rounded p-4 font-mono text-sm">npm install shamirs-secret-sharing</code>
             <Button variant="ghost" size="icon" class="absolute right-2 top-2 h-8 w-8" onclick={() => handleCopy('install', 'npm install shamirs-secret-sharing')}>

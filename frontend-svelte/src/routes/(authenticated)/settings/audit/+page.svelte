@@ -39,8 +39,8 @@
 				<li>Settings updates</li>
 			</ul>
 			<div class="flex gap-4 pt-2">
-				<Button href="/pricing" class="uppercase tracking-wide font-semibold">Upgrade to Pro</Button>
-				<Button variant="outline" href="/dashboard" class="uppercase tracking-wide font-semibold">Back to Dashboard</Button>
+				<Button href="/pricing" class="font-semibold">Upgrade to Pro</Button>
+				<Button variant="outline" href="/dashboard" class="font-semibold">Back to Dashboard</Button>
 			</div>
 		</div>
 	{:else}

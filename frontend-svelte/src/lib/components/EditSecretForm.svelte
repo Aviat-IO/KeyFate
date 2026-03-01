@@ -117,7 +117,7 @@
 <form onsubmit={handleSubmit} class="space-y-8">
   <div class="space-y-4">
     <div class="space-y-2">
-      <Label for="title" class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Secret Title</Label>
+      <Label for="title" class="text-xs font-medium text-muted-foreground">Secret Title</Label>
       <Input id="title" bind:value={title} placeholder="Example: Important Documents Location" />
     </div>
   </div>
@@ -142,7 +142,7 @@
       {#each recipients as recipient, index}
         <div class="space-y-3 rounded-md border border-border/50 p-4">
           <div class="flex items-center justify-between">
-            <div class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Recipient {index + 1}</div>
+            <div class="text-xs font-medium text-muted-foreground">Recipient {index + 1}</div>
             {#if recipients.length > 1}
               <Button
                 type="button"
@@ -158,12 +158,12 @@
           </div>
 
           <div class="space-y-2">
-            <Label class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Name</Label>
+            <Label class="text-xs font-medium text-muted-foreground">Name</Label>
             <Input bind:value={recipient.name} placeholder="Recipient's name" class="h-9" />
           </div>
 
           <div class="space-y-2">
-            <Label class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Email</Label>
+            <Label class="text-xs font-medium text-muted-foreground">Email</Label>
             <Input
               type="email"
               bind:value={recipient.email}
@@ -173,7 +173,7 @@
           </div>
 
           <div class="space-y-2">
-            <Label class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Phone (optional)</Label>
+            <Label class="text-xs font-medium text-muted-foreground">Phone (optional)</Label>
             <Input type="tel" bind:value={recipient.phone} placeholder="+1234567890" class="h-9" />
             <p class="text-muted-foreground text-xs">Phone notifications are not yet supported</p>
           </div>
@@ -186,7 +186,7 @@
   <div class="space-y-4 pt-8">
     <h2 class="font-space text-lg font-bold tracking-tight">Check-in Settings</h2>
     <div class="space-y-2">
-      <Label for="checkInDays" class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Trigger Deadline</Label>
+      <Label for="checkInDays" class="text-xs font-medium text-muted-foreground">Trigger Deadline</Label>
       {#if isPaid}
         <Input
           id="checkInDays"
@@ -228,7 +228,7 @@
       variant="destructive"
       onclick={() => (showDeleteModal = true)}
       disabled={loading || deleteLoading}
-      class="w-full sm:w-auto uppercase tracking-wide font-semibold"
+      class="w-full sm:w-auto font-semibold"
     >
       Delete Secret
     </Button>
@@ -238,12 +238,12 @@
         variant="outline"
         onclick={() => history.back()}
         disabled={loading || deleteLoading}
-        class="w-full sm:w-auto uppercase tracking-wide font-semibold"
+        class="w-full sm:w-auto font-semibold"
         data-testid="form-cancel-button"
       >
         Cancel
       </Button>
-      <Button type="submit" disabled={loading || deleteLoading} class="w-full sm:w-auto uppercase tracking-wide font-semibold">
+      <Button type="submit" disabled={loading || deleteLoading} class="w-full sm:w-auto font-semibold">
         {loading ? 'Saving...' : 'Save Changes'}
       </Button>
     </div>

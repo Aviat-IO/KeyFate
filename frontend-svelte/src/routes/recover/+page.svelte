@@ -764,13 +764,13 @@
             <h3 class="font-space text-sm font-medium">Extracted OP_RETURN Data</h3>
             <div class="bg-muted space-y-2 rounded-lg p-3">
               <div>
-                <p class="text-xs text-muted-foreground uppercase tracking-wider font-medium">Symmetric Key K</p>
+                <p class="text-xs text-muted-foregroundr font-medium">Symmetric Key K</p>
                 <p class="font-mono text-xs break-all">
                   {bytesToHex(parsedOpReturn.symmetricKeyK)}
                 </p>
               </div>
               <div>
-                <p class="text-xs text-muted-foreground uppercase tracking-wider font-medium">Nostr Event ID</p>
+                <p class="text-xs text-muted-foregroundr font-medium">Nostr Event ID</p>
                 <p class="font-mono text-xs break-all">
                   {parsedOpReturn.nostrEventId}
                 </p>

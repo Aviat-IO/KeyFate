@@ -14,15 +14,15 @@
 
   <div class="space-y-6">
     <div>
-      <span class="text-xs text-muted-foreground uppercase tracking-wider font-medium">Name</span>
+      <span class="text-xs text-muted-foregroundr font-medium">Name</span>
       <p class="text-base text-foreground mt-1">{data.user.name}</p>
     </div>
     <div>
-      <span class="text-xs text-muted-foreground uppercase tracking-wider font-medium">Email</span>
+      <span class="text-xs text-muted-foregroundr font-medium">Email</span>
       <p class="text-base text-foreground mt-1">{data.user.email}</p>
     </div>
     <div>
-      <span class="text-xs text-muted-foreground uppercase tracking-wider font-medium">Joined</span>
+      <span class="text-xs text-muted-foregroundr font-medium">Joined</span>
       <p class="text-base text-foreground mt-1">{data.user.joinDate}</p>
     </div>
   </div>

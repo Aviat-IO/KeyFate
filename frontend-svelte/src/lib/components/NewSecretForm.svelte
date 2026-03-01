@@ -277,7 +277,7 @@
   <!-- Secret Details -->
   <div class="space-y-4">
     <div class="space-y-2">
-      <Label for="title" class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Secret Title</Label>
+      <Label for="title" class="text-xs font-medium text-muted-foreground">Secret Title</Label>
       <Input
         id="title"
         bind:value={title}
@@ -290,7 +290,7 @@
     </div>
 
     <div class="space-y-2">
-      <Label for="secretMessage" class="flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <Label for="secretMessage" class="flex items-center gap-1 text-xs font-medium text-muted-foreground">
         Secret Message
         <Lock class="h-3 w-3" />
       </Label>
@@ -355,7 +355,7 @@
       {#each recipients as recipient, index}
         <div class="space-y-3 rounded-md border border-border/50 p-4">
           <div class="flex items-center justify-between">
-            <div class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Recipient {index + 1}</div>
+            <div class="text-xs font-medium text-muted-foreground">Recipient {index + 1}</div>
             {#if recipients.length > 1}
               <Button
                 type="button"
@@ -372,7 +372,7 @@
 
           <div class="grid grid-cols-2 gap-3">
             <div class="space-y-1">
-              <Label class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Name</Label>
+              <Label class="text-xs font-medium text-muted-foreground">Name</Label>
               <Input
                 bind:value={recipient.name}
                 placeholder="Jane Doe"
@@ -384,7 +384,7 @@
               {/if}
             </div>
             <div class="space-y-1">
-              <Label class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Email</Label>
+              <Label class="text-xs font-medium text-muted-foreground">Email</Label>
               <Input
                 type="email"
                 bind:value={recipient.email}
@@ -425,7 +425,7 @@
   <div class="space-y-4 pt-8">
     <h2 class="font-space text-lg font-bold tracking-tight">Check-in Settings</h2>
     <div class="space-y-2">
-      <Label for="checkInDays" class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Trigger Deadline</Label>
+      <Label for="checkInDays" class="text-xs font-medium text-muted-foreground">Trigger Deadline</Label>
       <Select.Root type="single" bind:value={checkInDays}>
         <Select.Trigger>
           <span>{selectedCheckInLabel}</span>
@@ -584,7 +584,7 @@
     </Accordion.Root>
   </div>
 
-  <Button type="submit" disabled={isSubmitting || !!isAtLimit} class="w-full uppercase tracking-wide font-semibold">
+  <Button type="submit" disabled={isSubmitting || !!isAtLimit} class="w-full font-semibold">
     {isSubmitting
       ? 'Processing & Encrypting...'
       : isAtLimit

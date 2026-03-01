@@ -47,7 +47,7 @@
   <Card.Content class="space-y-4">
     <div>
       <div class="mb-2 flex items-center justify-between text-sm">
-        <span class="text-xs text-muted-foreground uppercase tracking-wider font-medium">Secrets Used</span>
+        <span class="text-xs text-muted-foregroundr font-medium">Secrets Used</span>
         <span class="font-medium">{secretsUsed} of {secretsLimit}</span>
       </div>
       <Progress value={percentageUsed} class="h-2" />
@@ -67,14 +67,14 @@
 
     {#if tier === 'free'}
       <div class="space-y-2">
-        <div class="text-xs text-muted-foreground uppercase tracking-wider font-medium">Upgrade to Pro for:</div>
+        <div class="text-xs text-muted-foregroundr font-medium">Upgrade to Pro for:</div>
         <ul class="ml-4 space-y-1 text-sm">
           <li>• 10 secrets (vs 1)</li>
           <li>• 5 recipients per secret</li>
           <li>• Custom check-in intervals</li>
           <li>• Message templates</li>
         </ul>
-        <Button href="/pricing" class="mt-4 w-full uppercase tracking-wide">
+        <Button href="/pricing" class="mt-4 w-full">
           <Crown class="mr-2 h-4 w-4" />
           Upgrade to Pro
         </Button>
