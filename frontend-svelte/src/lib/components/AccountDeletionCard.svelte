@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
-	import * as Card from '$lib/components/ui/card';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import { AlertTriangle, Trash2, LoaderCircle, Clock, CircleX } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
@@ -122,19 +121,20 @@
 	}
 </script>
 
-<Card.Root class="border-destructive/50">
-	<Card.Header>
-		<Card.Title class="text-destructive flex items-center gap-2">
+<div class="border-t border-border pt-8 space-y-6">
+	<div>
+		<h3 class="font-space text-lg font-bold tracking-tight text-destructive flex items-center gap-2">
 			<AlertTriangle class="h-5 w-5" />
 			Delete Account
-		</Card.Title>
-		<Card.Description>
+		</h3>
+		<p class="text-sm text-muted-foreground mt-1">
 			Permanently delete your account and all associated data. This action cannot be undone.
-		</Card.Description>
-	</Card.Header>
-	<Card.Content class="space-y-4">
+		</p>
+	</div>
+
+	<div class="space-y-6">
 		{#if activeDeletionRequest}
-			<div class="border-destructive/50 bg-destructive/10 rounded-lg border p-4">
+			<div class="border-destructive/50 rounded-lg border p-4">
 				<div class="mb-3 flex items-center gap-2">
 					{#if activeDeletionRequest.status === 'pending'}
 						<Badge variant="secondary" class="gap-1">
@@ -177,7 +177,7 @@
 					size="sm"
 					onclick={handleCancelDeletion}
 					disabled={isCancelling}
-					class="mt-4"
+					class="mt-4 uppercase tracking-wide font-semibold"
 				>
 					{#if isCancelling}
 						<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
@@ -189,10 +189,10 @@
 				</Button>
 			</div>
 		{:else}
-			<div class="space-y-4">
+			<div class="space-y-6">
 				<div class="space-y-2">
-					<h4 class="text-sm font-medium">What happens when you delete your account:</h4>
-					<ul class="text-muted-foreground ml-4 list-disc space-y-1 text-sm">
+					<span class="text-xs text-muted-foreground uppercase tracking-wider font-medium">What happens when you delete your account</span>
+					<ul class="text-muted-foreground ml-4 list-disc space-y-1 text-sm mt-2">
 						<li>All your secrets and check-in data will be permanently deleted</li>
 						<li>Your audit logs and activity history will be removed</li>
 						<li>Any pending data exports will be cancelled</li>
@@ -203,7 +203,7 @@
 
 				<AlertDialog.Root bind:open={alertOpen}>
 					<AlertDialog.Trigger
-						class="bg-destructive text-destructive-foreground hover:bg-destructive/90 inline-flex w-full items-center justify-center rounded-md px-4 py-2 text-sm font-medium sm:w-auto"
+						class="bg-destructive text-destructive-foreground hover:bg-destructive/90 inline-flex w-full items-center justify-center rounded-md px-4 py-2 text-sm uppercase tracking-wide font-semibold sm:w-auto"
 					>
 						<Trash2 class="mr-2 h-4 w-4" />
 						Delete My Account
@@ -229,7 +229,7 @@
 							<AlertDialog.Action
 								onclick={handleRequestDeletion}
 								disabled={isDeleting}
-								class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+								class="bg-destructive text-destructive-foreground hover:bg-destructive/90 uppercase tracking-wide font-semibold"
 							>
 								{#if isDeleting}
 									<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
@@ -243,5 +243,5 @@
 				</AlertDialog.Root>
 			</div>
 		{/if}
-	</Card.Content>
-</Card.Root>
+	</div>
+</div>

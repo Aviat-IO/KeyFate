@@ -3,9 +3,9 @@
   import * as Alert from '$lib/components/ui/alert';
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
-  import * as Card from '$lib/components/ui/card';
+
   import * as Dialog from '$lib/components/ui/dialog';
-  import { Separator } from '$lib/components/ui/separator';
+
   import { Textarea } from '$lib/components/ui/textarea';
   import BitcoinStatus from '$lib/components/BitcoinStatus.svelte';
   import { toast } from 'svelte-sonner';
@@ -155,29 +155,27 @@
     </Alert.Root>
   {/if}
 
-  <Card.Root>
-    <Card.Header>
-      <div class="flex items-center justify-between">
-        <Card.Title class="text-xl">{secret.title}</Card.Title>
-        <Badge variant={secret.status === 'active' ? 'default' : 'secondary'}>
-          {secret.status}
-        </Badge>
-      </div>
-    </Card.Header>
-    <Card.Content class="space-y-6">
+  <div>
+    <div class="mb-8 flex items-center justify-between">
+      <h2 class="font-space text-2xl font-light tracking-tight">{secret.title}</h2>
+      <Badge variant={secret.status === 'active' ? 'default' : 'secondary'}>
+        {secret.status}
+      </Badge>
+    </div>
+    <div class="space-y-8">
       <!-- SSS Info -->
-      <div class="bg-muted/50 rounded-lg p-4">
-        <h3 class="mb-3 flex items-center font-medium">
+      <div>
+        <h3 class="font-space mb-3 flex items-center text-lg font-bold tracking-tight">
           <Shield class="mr-2 h-4 w-4" />
           Secret Configuration
         </h3>
         <div class="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <span class="text-muted-foreground">Total Shares:</span>
+            <span class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Total Shares</span>
             <span class="ml-2 font-medium">{secret.sss_shares_total}</span>
           </div>
           <div>
-            <span class="text-muted-foreground">Threshold:</span>
+            <span class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Threshold</span>
             <span class="ml-2 font-medium">{secret.sss_threshold}</span>
           </div>
         </div>
@@ -187,11 +185,11 @@
         </p>
       </div>
 
-      <Separator />
+
 
       <!-- Recipients -->
       <div>
-        <h3 class="mb-3 flex items-center font-medium">
+        <h3 class="font-space mb-3 flex items-center text-lg font-bold tracking-tight">
           <User class="mr-2 h-4 w-4" />
           Recipients ({secret.recipients.length})
         </h3>
@@ -221,11 +219,11 @@
         </div>
       </div>
 
-      <Separator />
+
 
       <!-- Check-in Info -->
       <div>
-        <h3 class="mb-3 flex items-center font-medium">
+        <h3 class="font-space mb-3 flex items-center text-lg font-bold tracking-tight">
           <Clock class="mr-2 h-4 w-4" />
           Check-in Schedule
         </h3>
@@ -251,15 +249,15 @@
 
       <!-- Bitcoin Timelock Status -->
       {#if bitcoinChecked && hasBitcoin}
-        <Separator />
+  
         <BitcoinStatus secretId={secret.id} />
       {/if}
 
-      <Separator />
+
 
       <!-- Server Share Management -->
       <div>
-        <h3 class="mb-3 flex items-center font-medium">
+        <h3 class="font-space mb-3 flex items-center text-lg font-bold tracking-tight">
           <Shield class="mr-2 h-4 w-4" />
           Server Share Management
         </h3>
@@ -352,7 +350,7 @@
       <!-- Revealed Server Share -->
       {#if serverShare}
         <div>
-          <h3 class="text-destructive mb-3 flex items-center font-medium">
+          <h3 class="font-space text-destructive mb-3 flex items-center text-lg font-bold tracking-tight">
             <Eye class="mr-2 h-4 w-4" />
             Revealed Server Share
           </h3>
@@ -365,7 +363,7 @@
         </div>
       {/if}
 
-      <Separator />
+
 
       <div class="text-muted-foreground text-xs">
         <div class="flex items-center">
@@ -373,10 +371,10 @@
           Created {format(secret.created_at)}
         </div>
       </div>
-    </Card.Content>
-  </Card.Root>
+    </div>
+  </div>
 
   <div class="flex justify-end space-x-4">
-    <Button variant="outline" onclick={() => goto('/dashboard')}>Back to Dashboard</Button>
+    <Button variant="outline" onclick={() => goto('/dashboard')} class="uppercase tracking-wide font-semibold">Back to Dashboard</Button>
   </div>
 </div>

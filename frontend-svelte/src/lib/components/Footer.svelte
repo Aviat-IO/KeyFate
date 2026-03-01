@@ -2,9 +2,9 @@
   const supportEmail = 'support@keyfate.com';
 </script>
 
-<footer class="border-t border-border/50 bg-background px-6 py-12">
+<footer class="mt-16 border-t border-border/50 bg-background px-6 py-12">
   <div
-    class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 md:flex-row"
+    class="mx-auto flex max-w-5xl flex-col items-center justify-between gap-6 md:flex-row"
   >
     <div class="flex items-center gap-2">
       <img
@@ -21,11 +21,11 @@
         height="32"
         class="hidden h-8 w-8 dark:block"
       />
-      <span class="font-semibold">KeyFate</span>
+      <span class="font-space font-bold uppercase tracking-wider">KeyFate</span>
     </div>
 
     <div
-      class="flex flex-wrap items-center justify-center gap-8 text-sm text-foreground/60"
+      class="flex flex-wrap items-center justify-center gap-8 text-xs uppercase tracking-wider text-muted-foreground"
     >
       <a href="/faq" class="transition-colors hover:text-foreground">FAQ</a>
       <a href="/pricing" class="transition-colors hover:text-foreground">Pricing</a>
@@ -48,6 +48,6 @@
       </a>
     </div>
 
-    <p class="text-sm text-foreground/50">Zero-knowledge security. Open source.</p>
+    <p class="text-xs uppercase tracking-wider text-muted-foreground/50">Zero-knowledge security. Open source.</p>
   </div>
 </footer>

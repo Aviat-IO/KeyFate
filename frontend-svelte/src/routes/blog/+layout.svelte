@@ -13,6 +13,8 @@
   >
     <NavBar {session} />
   </div>
-  {@render children()}
+  <main class="mx-auto max-w-5xl px-6 py-12">
+    {@render children()}
+  </main>
   <Footer />
 </div>

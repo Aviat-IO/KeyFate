@@ -1,6 +1,5 @@
 <script lang="ts">
   import { Button } from '$lib/components/ui/button';
-  import * as Card from '$lib/components/ui/card';
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
   import { Separator } from '$lib/components/ui/separator';
@@ -414,13 +413,10 @@
 </svelte:head>
 
 <div class="bg-background min-h-screen">
-  <div class="mx-auto max-w-3xl px-4 py-8 sm:py-12">
+  <div class="mx-auto max-w-3xl px-6 py-12">
     <!-- Header -->
-    <div class="mb-8 text-center">
-      <div class="bg-primary/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
-        <Shield class="text-primary h-8 w-8" />
-      </div>
-      <h1 class="text-3xl font-bold tracking-tight">Recover Your Shares</h1>
+    <div class="mb-12">
+      <h1 class="font-space text-3xl font-light tracking-tight">Recover Your Shares</h1>
       <p class="text-muted-foreground mt-2 text-sm">
         Decrypt your secret shares using one of three recovery methods.
         This page works entirely in your browser — no data is sent to any server.
@@ -446,28 +442,22 @@
 
     <!-- Step 1: Choose recovery method -->
     {#if currentStep === 'choose'}
-      <div class="grid gap-4 sm:grid-cols-3">
+      <div class="grid gap-6 sm:grid-cols-3">
         <button
           type="button"
           onclick={() => selectMethod('nostr')}
           class="group text-left"
         >
-          <Card.Card class="h-full transition-shadow hover:shadow-md">
-            <Card.CardHeader>
-              <div class="bg-primary/10 mb-2 flex h-10 w-10 items-center justify-center rounded-lg">
-                <Search class="text-primary h-5 w-5" />
-              </div>
-              <Card.CardTitle class="text-lg">Recover via Nostr</Card.CardTitle>
-              <Card.CardDescription>
-                Search Nostr relays for gift-wrapped events using your nsec key.
-              </Card.CardDescription>
-            </Card.CardHeader>
-            <Card.CardContent>
-              <p class="text-muted-foreground text-xs">
-                Requires your Nostr private key (nsec). Events are decrypted locally.
-              </p>
-            </Card.CardContent>
-          </Card.Card>
+          <div class="space-y-3 p-4 rounded-lg border border-border hover:border-primary/50 transition-colors">
+            <Search class="text-primary h-5 w-5" />
+            <h3 class="font-space text-lg font-bold tracking-tight">Recover via Nostr</h3>
+            <p class="text-muted-foreground text-sm">
+              Search Nostr relays for gift-wrapped events using your nsec key.
+            </p>
+            <p class="text-muted-foreground text-xs">
+              Requires your Nostr private key (nsec). Events are decrypted locally.
+            </p>
+          </div>
         </button>
 
         <button
@@ -475,22 +465,16 @@
           onclick={() => selectMethod('bitcoin')}
           class="group text-left"
         >
-          <Card.Card class="h-full transition-shadow hover:shadow-md">
-            <Card.CardHeader>
-              <div class="bg-primary/10 mb-2 flex h-10 w-10 items-center justify-center rounded-lg">
-                <Bitcoin class="text-primary h-5 w-5" />
-              </div>
-              <Card.CardTitle class="text-lg">Recover via Bitcoin</Card.CardTitle>
-              <Card.CardDescription>
-                Extract the symmetric key from a pre-signed Bitcoin transaction.
-              </Card.CardDescription>
-            </Card.CardHeader>
-            <Card.CardContent>
-              <p class="text-muted-foreground text-xs">
-                Requires the pre-signed transaction hex from your recovery kit.
-              </p>
-            </Card.CardContent>
-          </Card.Card>
+          <div class="space-y-3 p-4 rounded-lg border border-border hover:border-primary/50 transition-colors">
+            <Bitcoin class="text-primary h-5 w-5" />
+            <h3 class="font-space text-lg font-bold tracking-tight">Recover via Bitcoin</h3>
+            <p class="text-muted-foreground text-sm">
+              Extract the symmetric key from a pre-signed Bitcoin transaction.
+            </p>
+            <p class="text-muted-foreground text-xs">
+              Requires the pre-signed transaction hex from your recovery kit.
+            </p>
+          </div>
         </button>
 
         <button
@@ -498,22 +482,16 @@
           onclick={() => selectMethod('passphrase')}
           class="group text-left"
         >
-          <Card.Card class="h-full transition-shadow hover:shadow-md">
-            <Card.CardHeader>
-              <div class="bg-primary/10 mb-2 flex h-10 w-10 items-center justify-center rounded-lg">
-                <KeyRound class="text-primary h-5 w-5" />
-              </div>
-              <Card.CardTitle class="text-lg">Recover via Passphrase</Card.CardTitle>
-              <Card.CardDescription>
-                Use a passphrase to derive the decryption key from your recovery kit.
-              </Card.CardDescription>
-            </Card.CardHeader>
-            <Card.CardContent>
-              <p class="text-muted-foreground text-xs">
-                Requires the passphrase and encrypted key bundle from your recovery kit.
-              </p>
-            </Card.CardContent>
-          </Card.Card>
+          <div class="space-y-3 p-4 rounded-lg border border-border hover:border-primary/50 transition-colors">
+            <KeyRound class="text-primary h-5 w-5" />
+            <h3 class="font-space text-lg font-bold tracking-tight">Recover via Passphrase</h3>
+            <p class="text-muted-foreground text-sm">
+              Use a passphrase to derive the decryption key from your recovery kit.
+            </p>
+            <p class="text-muted-foreground text-xs">
+              Requires the passphrase and encrypted key bundle from your recovery kit.
+            </p>
+          </div>
         </button>
       </div>
 
@@ -529,426 +507,420 @@
 
     <!-- Step 2a: Nostr Recovery -->
     {#if currentStep === 'recover' && selectedMethod === 'nostr'}
-      <Card.Card>
-        <Card.CardHeader>
-          <Card.CardTitle>Recover via Nostr</Card.CardTitle>
-          <Card.CardDescription>
+      <div class="space-y-6">
+        <div>
+          <h2 class="font-space text-xl font-bold tracking-tight">Recover via Nostr</h2>
+          <p class="text-muted-foreground mt-1 text-sm">
             Enter your Nostr private key to search for gift-wrapped share events.
-          </Card.CardDescription>
-        </Card.CardHeader>
-        <Card.CardContent class="space-y-6">
-          <!-- nsec input -->
-          <div class="space-y-2">
-            <Label for="nsec-input">Nostr Private Key (nsec)</Label>
-            <Alert.Alert variant="destructive" class="mb-2">
-              <AlertTriangle class="h-4 w-4" />
-              <Alert.AlertDescription class="text-xs">
-                Your nsec is your Nostr identity. Never share it. It is only used locally
-                to decrypt events and is never sent anywhere.
-              </Alert.AlertDescription>
-            </Alert.Alert>
-            <div class="relative">
-              <Textarea
-                id="nsec-input"
-                placeholder="nsec1..."
-                bind:value={nsecInput}
-                class="font-mono text-sm pr-10"
-                rows={2}
-                autocomplete="off"
-                spellcheck={false}
-                style={nsecVisible ? '' : '-webkit-text-security: disc; text-security: disc;'}
-              />
+          </p>
+        </div>
+
+        <!-- nsec input -->
+        <div class="space-y-2">
+          <Label for="nsec-input">Nostr Private Key (nsec)</Label>
+          <Alert.Alert variant="destructive" class="mb-2">
+            <AlertTriangle class="h-4 w-4" />
+            <Alert.AlertDescription class="text-xs">
+              Your nsec is your Nostr identity. Never share it. It is only used locally
+              to decrypt events and is never sent anywhere.
+            </Alert.AlertDescription>
+          </Alert.Alert>
+          <div class="relative">
+            <Textarea
+              id="nsec-input"
+              placeholder="nsec1..."
+              bind:value={nsecInput}
+              class="font-mono text-sm pr-10"
+              rows={2}
+              autocomplete="off"
+              spellcheck={false}
+              style={nsecVisible ? '' : '-webkit-text-security: disc; text-security: disc;'}
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              class="absolute right-1 top-1 h-8 w-8 p-0"
+              onclick={() => (nsecVisible = !nsecVisible)}
+              aria-label={nsecVisible ? 'Hide private key' : 'Show private key'}
+            >
+              {#if nsecVisible}
+                <EyeOff class="h-4 w-4" />
+              {:else}
+                <Eye class="h-4 w-4" />
+              {/if}
+            </Button>
+          </div>
+          {#if nsecInput.trim() && !nsecValid}
+            <p class="text-destructive text-xs">Invalid nsec format</p>
+          {/if}
+        </div>
+
+        <!-- Search button -->
+        <Button onclick={searchRelays} disabled={!canSearchRelays} class="w-full">
+          {#if searchingRelays}
+            <Loader2 class="mr-2 h-4 w-4 animate-spin" />
+            Searching relays...
+          {:else}
+            <Search class="mr-2 h-4 w-4" />
+            Search Relays
+          {/if}
+        </Button>
+
+        <!-- Found events -->
+        {#if foundEvents.length > 0}
+          <Separator />
+          <div class="space-y-3">
+            <h3 class="font-space text-sm font-medium">
+              Found {foundEvents.length} event{foundEvents.length !== 1 ? 's' : ''}
+            </h3>
+            <div class="space-y-2">
+              {#each foundEvents as gw, i}
+                <button
+                  type="button"
+                  onclick={() => toggleEventSelection(i)}
+                  class="border-border hover:bg-accent w-full rounded-lg border p-3 text-left transition-colors {selectedEventIndices.has(i) ? 'bg-accent border-primary' : ''}"
+                >
+                  <div class="flex items-center justify-between">
+                    <div class="space-y-1">
+                      <p class="text-xs font-medium">
+                        Event {i + 1}
+                      </p>
+                      <p class="text-muted-foreground font-mono text-xs">
+                        From: {truncateHex(gw.senderPubkey)}
+                      </p>
+                      <p class="text-muted-foreground text-xs">
+                        {formatTimestamp(gw.createdAt)}
+                      </p>
+                    </div>
+                    <div class="flex h-5 w-5 items-center justify-center rounded border {selectedEventIndices.has(i) ? 'bg-primary border-primary' : 'border-muted-foreground'}">
+                      {#if selectedEventIndices.has(i)}
+                        <CheckCircle class="text-primary-foreground h-3 w-3" />
+                      {/if}
+                    </div>
+                  </div>
+                </button>
+              {/each}
+            </div>
+
+            <Button
+              onclick={unwrapSelectedEvents}
+              disabled={!hasSelectedEvents || unwrapping}
+              class="w-full"
+            >
+              {#if unwrapping}
+                <Loader2 class="mr-2 h-4 w-4 animate-spin" />
+                Unwrapping...
+              {:else}
+                Unwrap Selected Events ({selectedEventIndices.size})
+              {/if}
+            </Button>
+          </div>
+        {/if}
+
+        <!-- Unwrapped shares - need K to decrypt -->
+        {#if unwrappedShares.length > 0}
+          <Separator />
+          <div class="space-y-4">
+            <h3 class="font-space text-sm font-medium">
+              Unwrapped {unwrappedShares.length} share{unwrappedShares.length !== 1 ? 's' : ''}
+            </h3>
+            <p class="text-muted-foreground text-xs">
+              Shares are still encrypted with the symmetric key K.
+              Choose how to recover K:
+            </p>
+
+            <div class="grid gap-2 sm:grid-cols-2">
               <Button
-                variant="ghost"
-                size="sm"
-                class="absolute right-1 top-1 h-8 w-8 p-0"
-                onclick={() => (nsecVisible = !nsecVisible)}
-                aria-label={nsecVisible ? 'Hide private key' : 'Show private key'}
+                variant={kRecoveryMethod === 'passphrase' ? 'default' : 'outline'}
+                onclick={() => (kRecoveryMethod = 'passphrase')}
               >
-                {#if nsecVisible}
-                  <EyeOff class="h-4 w-4" />
-                {:else}
-                  <Eye class="h-4 w-4" />
-                {/if}
+                <KeyRound class="mr-2 h-4 w-4" />
+                Via Passphrase
+              </Button>
+              <Button
+                variant={kRecoveryMethod === 'opreturn' ? 'default' : 'outline'}
+                onclick={() => (kRecoveryMethod = 'opreturn')}
+              >
+                <Bitcoin class="mr-2 h-4 w-4" />
+                Via OP_RETURN
               </Button>
             </div>
-            {#if nsecInput.trim() && !nsecValid}
-              <p class="text-destructive text-xs">Invalid nsec format</p>
-            {/if}
-          </div>
 
-          <!-- Search button -->
-          <Button onclick={searchRelays} disabled={!canSearchRelays} class="w-full">
-            {#if searchingRelays}
-              <Loader2 class="mr-2 h-4 w-4 animate-spin" />
-              Searching relays...
-            {:else}
-              <Search class="mr-2 h-4 w-4" />
-              Search Relays
-            {/if}
-          </Button>
-
-          <!-- Found events -->
-          {#if foundEvents.length > 0}
-            <Separator />
-            <div class="space-y-3">
-              <h3 class="text-sm font-medium">
-                Found {foundEvents.length} event{foundEvents.length !== 1 ? 's' : ''}
-              </h3>
-              <div class="space-y-2">
-                {#each foundEvents as gw, i}
-                  <button
-                    type="button"
-                    onclick={() => toggleEventSelection(i)}
-                    class="border-border hover:bg-accent w-full rounded-lg border p-3 text-left transition-colors {selectedEventIndices.has(i) ? 'bg-accent border-primary' : ''}"
-                  >
-                    <div class="flex items-center justify-between">
-                      <div class="space-y-1">
-                        <p class="text-xs font-medium">
-                          Event {i + 1}
-                        </p>
-                        <p class="text-muted-foreground font-mono text-xs">
-                          From: {truncateHex(gw.senderPubkey)}
-                        </p>
-                        <p class="text-muted-foreground text-xs">
-                          {formatTimestamp(gw.createdAt)}
-                        </p>
-                      </div>
-                      <div class="flex h-5 w-5 items-center justify-center rounded border {selectedEventIndices.has(i) ? 'bg-primary border-primary' : 'border-muted-foreground'}">
-                        {#if selectedEventIndices.has(i)}
-                          <CheckCircle class="text-primary-foreground h-3 w-3" />
-                        {/if}
-                      </div>
-                    </div>
-                  </button>
-                {/each}
+            {#if kRecoveryMethod === 'passphrase'}
+              <div class="space-y-3">
+                <div class="space-y-2">
+                  <Label for="k-passphrase">Passphrase</Label>
+                  <Input
+                    id="k-passphrase"
+                    type="password"
+                    bind:value={kPassphrase}
+                    placeholder="Enter your recovery passphrase"
+                  />
+                </div>
+                <div class="space-y-2">
+                  <Label for="k-bundle">Encrypted K Bundle (JSON)</Label>
+                  <Textarea
+                    id="k-bundle"
+                    bind:value={kBundleJson}
+                    placeholder={'{"ciphertext":"...","nonce":"...","salt":"..."}'}
+                    class="font-mono text-xs"
+                    rows={3}
+                  />
+                </div>
+                <div class="space-y-2">
+                  <Label for="share-nonce">Share Nonce (hex)</Label>
+                  <Input
+                    id="share-nonce"
+                    bind:value={nonceHex}
+                    placeholder="12-byte nonce in hex (24 chars)"
+                    class="font-mono text-xs"
+                  />
+                </div>
               </div>
+            {/if}
 
+            {#if kRecoveryMethod === 'opreturn'}
+              <div class="space-y-3">
+                <div class="space-y-2">
+                  <Label for="k-opreturn">OP_RETURN Data (hex, 32 bytes)</Label>
+                  <Input
+                    id="k-opreturn"
+                    bind:value={kOpReturnHex}
+                    placeholder="64 hex characters (32 bytes)"
+                    class="font-mono text-xs"
+                  />
+                </div>
+                <div class="space-y-2">
+                  <Label for="share-nonce-op">Share Nonce (hex)</Label>
+                  <Input
+                    id="share-nonce-op"
+                    bind:value={nonceHex}
+                    placeholder="12-byte nonce in hex (24 chars)"
+                    class="font-mono text-xs"
+                  />
+                </div>
+              </div>
+            {/if}
+
+            {#if kRecoveryMethod}
               <Button
-                onclick={unwrapSelectedEvents}
-                disabled={!hasSelectedEvents || unwrapping}
+                onclick={decryptSharesWithK}
+                disabled={recoveringK}
                 class="w-full"
               >
-                {#if unwrapping}
+                {#if recoveringK}
                   <Loader2 class="mr-2 h-4 w-4 animate-spin" />
-                  Unwrapping...
+                  Recovering key...
                 {:else}
-                  Unwrap Selected Events ({selectedEventIndices.size})
+                  <ArrowRight class="mr-2 h-4 w-4" />
+                  Decrypt Shares
                 {/if}
               </Button>
-            </div>
-          {/if}
-
-          <!-- Unwrapped shares - need K to decrypt -->
-          {#if unwrappedShares.length > 0}
-            <Separator />
-            <div class="space-y-4">
-              <h3 class="text-sm font-medium">
-                Unwrapped {unwrappedShares.length} share{unwrappedShares.length !== 1 ? 's' : ''}
-              </h3>
-              <p class="text-muted-foreground text-xs">
-                Shares are still encrypted with the symmetric key K.
-                Choose how to recover K:
-              </p>
-
-              <div class="grid gap-2 sm:grid-cols-2">
-                <Button
-                  variant={kRecoveryMethod === 'passphrase' ? 'default' : 'outline'}
-                  onclick={() => (kRecoveryMethod = 'passphrase')}
-                >
-                  <KeyRound class="mr-2 h-4 w-4" />
-                  Via Passphrase
-                </Button>
-                <Button
-                  variant={kRecoveryMethod === 'opreturn' ? 'default' : 'outline'}
-                  onclick={() => (kRecoveryMethod = 'opreturn')}
-                >
-                  <Bitcoin class="mr-2 h-4 w-4" />
-                  Via OP_RETURN
-                </Button>
-              </div>
-
-              {#if kRecoveryMethod === 'passphrase'}
-                <div class="space-y-3">
-                  <div class="space-y-2">
-                    <Label for="k-passphrase">Passphrase</Label>
-                    <Input
-                      id="k-passphrase"
-                      type="password"
-                      bind:value={kPassphrase}
-                      placeholder="Enter your recovery passphrase"
-                    />
-                  </div>
-                  <div class="space-y-2">
-                    <Label for="k-bundle">Encrypted K Bundle (JSON)</Label>
-                    <Textarea
-                      id="k-bundle"
-                      bind:value={kBundleJson}
-                      placeholder={'{"ciphertext":"...","nonce":"...","salt":"..."}'}
-                      class="font-mono text-xs"
-                      rows={3}
-                    />
-                  </div>
-                  <div class="space-y-2">
-                    <Label for="share-nonce">Share Nonce (hex)</Label>
-                    <Input
-                      id="share-nonce"
-                      bind:value={nonceHex}
-                      placeholder="12-byte nonce in hex (24 chars)"
-                      class="font-mono text-xs"
-                    />
-                  </div>
-                </div>
-              {/if}
-
-              {#if kRecoveryMethod === 'opreturn'}
-                <div class="space-y-3">
-                  <div class="space-y-2">
-                    <Label for="k-opreturn">OP_RETURN Data (hex, 32 bytes)</Label>
-                    <Input
-                      id="k-opreturn"
-                      bind:value={kOpReturnHex}
-                      placeholder="64 hex characters (32 bytes)"
-                      class="font-mono text-xs"
-                    />
-                  </div>
-                  <div class="space-y-2">
-                    <Label for="share-nonce-op">Share Nonce (hex)</Label>
-                    <Input
-                      id="share-nonce-op"
-                      bind:value={nonceHex}
-                      placeholder="12-byte nonce in hex (24 chars)"
-                      class="font-mono text-xs"
-                    />
-                  </div>
-                </div>
-              {/if}
-
-              {#if kRecoveryMethod}
-                <Button
-                  onclick={decryptSharesWithK}
-                  disabled={recoveringK}
-                  class="w-full"
-                >
-                  {#if recoveringK}
-                    <Loader2 class="mr-2 h-4 w-4 animate-spin" />
-                    Recovering key...
-                  {:else}
-                    <ArrowRight class="mr-2 h-4 w-4" />
-                    Decrypt Shares
-                  {/if}
-                </Button>
-              {/if}
-            </div>
-          {/if}
-        </Card.CardContent>
-      </Card.Card>
+            {/if}
+          </div>
+        {/if}
+      </div>
     {/if}
 
     <!-- Step 2b: Bitcoin Recovery -->
     {#if currentStep === 'recover' && selectedMethod === 'bitcoin'}
-      <Card.Card>
-        <Card.CardHeader>
-          <Card.CardTitle>Recover via Bitcoin</Card.CardTitle>
-          <Card.CardDescription>
+      <div class="space-y-6">
+        <div>
+          <h2 class="font-space text-xl font-bold tracking-tight">Recover via Bitcoin</h2>
+          <p class="text-muted-foreground mt-1 text-sm">
             Paste the pre-signed transaction hex to extract the symmetric key and Nostr event pointer.
-          </Card.CardDescription>
-        </Card.CardHeader>
-        <Card.CardContent class="space-y-6">
-          <div class="space-y-2">
-            <Label for="tx-hex">Transaction Hex</Label>
-            <Textarea
-              id="tx-hex"
-              bind:value={txHexInput}
-              placeholder="Paste the raw transaction hex from your recovery kit..."
-              class="font-mono text-xs"
-              rows={4}
-              spellcheck={false}
-            />
-          </div>
+          </p>
+        </div>
 
-          <Button
-            onclick={parseBitcoinTx}
-            disabled={!txHexInput.trim() || parsingTx}
-            class="w-full"
-          >
-            {#if parsingTx}
-              <Loader2 class="mr-2 h-4 w-4 animate-spin" />
-              Parsing transaction...
-            {:else}
-              <Bitcoin class="mr-2 h-4 w-4" />
-              Parse Transaction
-            {/if}
-          </Button>
+        <div class="space-y-2">
+          <Label for="tx-hex">Transaction Hex</Label>
+          <Textarea
+            id="tx-hex"
+            bind:value={txHexInput}
+            placeholder="Paste the raw transaction hex from your recovery kit..."
+            class="font-mono text-xs"
+            rows={4}
+            spellcheck={false}
+          />
+        </div>
 
-          {#if parsedOpReturn}
-            <Separator />
-            <div class="space-y-3">
-              <h3 class="text-sm font-medium">Extracted OP_RETURN Data</h3>
-              <div class="bg-muted space-y-2 rounded-lg p-3">
-                <div>
-                  <p class="text-muted-foreground text-xs font-medium">Symmetric Key K</p>
-                  <p class="font-mono text-xs break-all">
-                    {bytesToHex(parsedOpReturn.symmetricKeyK)}
-                  </p>
-                </div>
-                <div>
-                  <p class="text-muted-foreground text-xs font-medium">Nostr Event ID</p>
-                  <p class="font-mono text-xs break-all">
-                    {parsedOpReturn.nostrEventId}
-                  </p>
-                </div>
-              </div>
-
-              <Button
-                onclick={fetchAndDecryptFromBitcoin}
-                disabled={fetchingNostrEvent}
-                class="w-full"
-              >
-                {#if fetchingNostrEvent}
-                  <Loader2 class="mr-2 h-4 w-4 animate-spin" />
-                  Fetching from Nostr...
-                {:else}
-                  <ArrowRight class="mr-2 h-4 w-4" />
-                  Fetch & Decrypt Share
-                {/if}
-              </Button>
-            </div>
+        <Button
+          onclick={parseBitcoinTx}
+          disabled={!txHexInput.trim() || parsingTx}
+          class="w-full"
+        >
+          {#if parsingTx}
+            <Loader2 class="mr-2 h-4 w-4 animate-spin" />
+            Parsing transaction...
+          {:else}
+            <Bitcoin class="mr-2 h-4 w-4" />
+            Parse Transaction
           {/if}
-        </Card.CardContent>
-      </Card.Card>
+        </Button>
+
+        {#if parsedOpReturn}
+          <Separator />
+          <div class="space-y-3">
+            <h3 class="font-space text-sm font-medium">Extracted OP_RETURN Data</h3>
+            <div class="bg-muted space-y-2 rounded-lg p-3">
+              <div>
+                <p class="text-xs text-muted-foreground uppercase tracking-wider font-medium">Symmetric Key K</p>
+                <p class="font-mono text-xs break-all">
+                  {bytesToHex(parsedOpReturn.symmetricKeyK)}
+                </p>
+              </div>
+              <div>
+                <p class="text-xs text-muted-foreground uppercase tracking-wider font-medium">Nostr Event ID</p>
+                <p class="font-mono text-xs break-all">
+                  {parsedOpReturn.nostrEventId}
+                </p>
+              </div>
+            </div>
+
+            <Button
+              onclick={fetchAndDecryptFromBitcoin}
+              disabled={fetchingNostrEvent}
+              class="w-full"
+            >
+              {#if fetchingNostrEvent}
+                <Loader2 class="mr-2 h-4 w-4 animate-spin" />
+                Fetching from Nostr...
+              {:else}
+                <ArrowRight class="mr-2 h-4 w-4" />
+                Fetch & Decrypt Share
+              {/if}
+            </Button>
+          </div>
+        {/if}
+      </div>
     {/if}
 
     <!-- Step 2c: Passphrase Recovery -->
     {#if currentStep === 'recover' && selectedMethod === 'passphrase'}
-      <Card.Card>
-        <Card.CardHeader>
-          <Card.CardTitle>Recover via Passphrase</Card.CardTitle>
-          <Card.CardDescription>
+      <div class="space-y-6">
+        <div>
+          <h2 class="font-space text-xl font-bold tracking-tight">Recover via Passphrase</h2>
+          <p class="text-muted-foreground mt-1 text-sm">
             Enter your passphrase and the encrypted data from your recovery kit.
-          </Card.CardDescription>
-        </Card.CardHeader>
-        <Card.CardContent class="space-y-6">
-          <div class="space-y-2">
-            <Label for="passphrase">Passphrase</Label>
-            <Input
-              id="passphrase"
-              type="password"
-              bind:value={passphraseInput}
-              placeholder="Enter your recovery passphrase"
-            />
-          </div>
+          </p>
+        </div>
 
-          <div class="space-y-2">
-            <Label for="bundle-json">Encrypted K Bundle (JSON)</Label>
-            <Textarea
-              id="bundle-json"
-              bind:value={bundleJsonInput}
-              placeholder={'{"ciphertext":"...","nonce":"...","salt":"..."}'}
-              class="font-mono text-xs"
-              rows={3}
-              spellcheck={false}
-            />
-            <p class="text-muted-foreground text-xs">
-              From your recovery kit — contains the encrypted symmetric key.
-            </p>
-          </div>
+        <div class="space-y-2">
+          <Label for="passphrase">Passphrase</Label>
+          <Input
+            id="passphrase"
+            type="password"
+            bind:value={passphraseInput}
+            placeholder="Enter your recovery passphrase"
+          />
+        </div>
 
-          <Separator />
+        <div class="space-y-2">
+          <Label for="bundle-json">Encrypted K Bundle (JSON)</Label>
+          <Textarea
+            id="bundle-json"
+            bind:value={bundleJsonInput}
+            placeholder={'{"ciphertext":"...","nonce":"...","salt":"..."}'}
+            class="font-mono text-xs"
+            rows={3}
+            spellcheck={false}
+          />
+          <p class="text-muted-foreground text-xs">
+            From your recovery kit — contains the encrypted symmetric key.
+          </p>
+        </div>
 
-          <div class="space-y-2">
-            <Label for="share-data">Encrypted Share (hex)</Label>
-            <Textarea
-              id="share-data"
-              bind:value={shareDataInput}
-              placeholder="Hex-encoded encrypted share data"
-              class="font-mono text-xs"
-              rows={3}
-              spellcheck={false}
-            />
-          </div>
+        <Separator />
 
-          <div class="space-y-2">
-            <Label for="share-nonce-pp">Share Nonce (hex)</Label>
-            <Input
-              id="share-nonce-pp"
-              bind:value={shareNonceInput}
-              placeholder="24 hex characters (12 bytes)"
-              class="font-mono text-xs"
-            />
-          </div>
+        <div class="space-y-2">
+          <Label for="share-data">Encrypted Share (hex)</Label>
+          <Textarea
+            id="share-data"
+            bind:value={shareDataInput}
+            placeholder="Hex-encoded encrypted share data"
+            class="font-mono text-xs"
+            rows={3}
+            spellcheck={false}
+          />
+        </div>
 
-          <Button
-            onclick={recoverWithPassphrase}
-            disabled={recoveringPassphrase || !passphraseInput || !bundleJsonInput || !shareDataInput || !shareNonceInput}
-            class="w-full"
-          >
-            {#if recoveringPassphrase}
-              <Loader2 class="mr-2 h-4 w-4 animate-spin" />
-              Recovering...
-            {:else}
-              <KeyRound class="mr-2 h-4 w-4" />
-              Decrypt Share
-            {/if}
-          </Button>
-        </Card.CardContent>
-      </Card.Card>
+        <div class="space-y-2">
+          <Label for="share-nonce-pp">Share Nonce (hex)</Label>
+          <Input
+            id="share-nonce-pp"
+            bind:value={shareNonceInput}
+            placeholder="24 hex characters (12 bytes)"
+            class="font-mono text-xs"
+          />
+        </div>
+
+        <Button
+          onclick={recoverWithPassphrase}
+          disabled={recoveringPassphrase || !passphraseInput || !bundleJsonInput || !shareDataInput || !shareNonceInput}
+          class="w-full"
+        >
+          {#if recoveringPassphrase}
+            <Loader2 class="mr-2 h-4 w-4 animate-spin" />
+            Recovering...
+          {:else}
+            <KeyRound class="mr-2 h-4 w-4" />
+            Decrypt Share
+          {/if}
+        </Button>
+      </div>
     {/if}
 
     <!-- Step 3: Results -->
     {#if currentStep === 'result'}
-      <Card.Card>
-        <Card.CardHeader>
-          <div class="flex items-center gap-2">
-            <CheckCircle class="text-green-500 h-5 w-5" />
-            <Card.CardTitle>Recovered Shares</Card.CardTitle>
-          </div>
-          <Card.CardDescription>
-            {decryptedShares.length} share{decryptedShares.length !== 1 ? 's' : ''} decrypted successfully.
-          </Card.CardDescription>
-        </Card.CardHeader>
-        <Card.CardContent class="space-y-4">
-          {#each decryptedShares as result, i}
-            <div class="bg-muted rounded-lg p-4">
-              <div class="mb-2 flex items-center justify-between">
-                <h4 class="text-sm font-medium">
-                  {#if result.shareIndex > 0}
-                    Share {result.shareIndex} of {result.totalShares}
-                  {:else}
-                    Share {i + 1}
-                  {/if}
-                </h4>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onclick={() => copyToClipboard(result.share)}
-                >
-                  <Copy class="mr-1 h-3 w-3" />
-                  Copy
-                </Button>
-              </div>
-              <pre class="bg-background overflow-x-auto rounded border p-3 font-mono text-xs break-all whitespace-pre-wrap">{result.share}</pre>
-              {#if result.threshold > 0}
-                <p class="text-muted-foreground mt-2 text-xs">
-                  Requires {result.threshold} of {result.totalShares} shares to reconstruct the secret.
-                  {#if result.secretId !== 'manual' && result.secretId !== 'unknown'}
-                    Secret ID: {result.secretId}
-                  {/if}
-                </p>
-              {/if}
-            </div>
-          {/each}
+      <div class="space-y-6">
+        <div class="flex items-center gap-2">
+          <CheckCircle class="text-primary h-5 w-5" />
+          <h2 class="font-space text-xl font-bold tracking-tight">Recovered Shares</h2>
+        </div>
+        <p class="text-muted-foreground text-sm">
+          {decryptedShares.length} share{decryptedShares.length !== 1 ? 's' : ''} decrypted successfully.
+        </p>
 
-          <Alert.Alert class="mt-4">
-            <AlertTriangle class="h-4 w-4" />
-            <Alert.AlertTitle>Next Steps</Alert.AlertTitle>
-            <Alert.AlertDescription>
-              To reconstruct the original secret, you need at least the threshold number of shares.
-              Combine them using a Shamir's Secret Sharing reconstruction tool.
-            </Alert.AlertDescription>
-          </Alert.Alert>
-        </Card.CardContent>
-      </Card.Card>
+        {#each decryptedShares as result, i}
+          <div class="bg-muted rounded-lg p-4">
+            <div class="mb-2 flex items-center justify-between">
+              <h4 class="text-sm font-medium">
+                {#if result.shareIndex > 0}
+                  Share {result.shareIndex} of {result.totalShares}
+                {:else}
+                  Share {i + 1}
+                {/if}
+              </h4>
+              <Button
+                variant="ghost"
+                size="sm"
+                onclick={() => copyToClipboard(result.share)}
+              >
+                <Copy class="mr-1 h-3 w-3" />
+                Copy
+              </Button>
+            </div>
+            <pre class="bg-background overflow-x-auto rounded border p-3 font-mono text-xs break-all whitespace-pre-wrap">{result.share}</pre>
+            {#if result.threshold > 0}
+              <p class="text-muted-foreground mt-2 text-xs">
+                Requires {result.threshold} of {result.totalShares} shares to reconstruct the secret.
+                {#if result.secretId !== 'manual' && result.secretId !== 'unknown'}
+                  Secret ID: {result.secretId}
+                {/if}
+              </p>
+            {/if}
+          </div>
+        {/each}
+
+        <Alert.Alert class="mt-4">
+          <AlertTriangle class="h-4 w-4" />
+          <Alert.AlertTitle>Next Steps</Alert.AlertTitle>
+          <Alert.AlertDescription>
+            To reconstruct the original secret, you need at least the threshold number of shares.
+            Combine them using a Shamir's Secret Sharing reconstruction tool.
+          </Alert.AlertDescription>
+        </Alert.Alert>
+      </div>
     {/if}
   </div>
 </div>

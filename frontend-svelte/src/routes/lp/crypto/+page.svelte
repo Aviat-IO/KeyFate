@@ -168,22 +168,22 @@
             <tr class="border-b">
               <td class="px-4 py-3 font-medium">{row.feature}</td>
               <td class="bg-primary/5 border-primary/20 border-x px-4 py-3">
-                {#if row.keyfate === true}<CheckCircle class="h-4 w-4 text-green-500" />{:else}<XCircle class="h-4 w-4 text-red-500" />{/if}
+                {#if row.keyfate === true}<CheckCircle class="h-4 w-4 text-primary" />{:else}<XCircle class="h-4 w-4 text-destructive" />{/if}
               </td>
               <td class="px-4 py-3">
-                {#if row.paper === true}<CheckCircle class="h-4 w-4 text-green-500" />{:else}<XCircle class="h-4 w-4 text-red-500" />{/if}
+                {#if row.paper === true}<CheckCircle class="h-4 w-4 text-primary" />{:else}<XCircle class="h-4 w-4 text-destructive" />{/if}
               </td>
               <td class="px-4 py-3">
-                {#if row.hw === true}<CheckCircle class="h-4 w-4 text-green-500" />{:else}<XCircle class="h-4 w-4 text-red-500" />{/if}
+                {#if row.hw === true}<CheckCircle class="h-4 w-4 text-primary" />{:else}<XCircle class="h-4 w-4 text-destructive" />{/if}
               </td>
               <td class="px-4 py-3">
-                {#if typeof row.lawyer === 'string'}<span class="text-yellow-500">{row.lawyer}</span>{:else if row.lawyer}<CheckCircle class="h-4 w-4 text-green-500" />{:else}<XCircle class="h-4 w-4 text-red-500" />{/if}
+                {#if typeof row.lawyer === 'string'}<span class="text-muted-foreground">{row.lawyer}</span>{:else if row.lawyer}<CheckCircle class="h-4 w-4 text-primary" />{:else}<XCircle class="h-4 w-4 text-destructive" />{/if}
               </td>
             </tr>
           {/each}
           <tr>
             <td class="px-4 py-3 font-medium">Cost</td>
-            <td class="bg-primary/5 border-primary/20 border-x px-4 py-3 font-medium text-green-500">Free plan available</td>
+            <td class="bg-primary/5 border-primary/20 border-x px-4 py-3 font-medium text-primary">Free plan available</td>
             <td class="px-4 py-3">Free (risky)</td>
             <td class="px-4 py-3">$50-200 device</td>
             <td class="px-4 py-3">$200+/hr</td>

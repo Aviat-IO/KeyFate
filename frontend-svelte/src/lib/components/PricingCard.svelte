@@ -1,7 +1,6 @@
 <script lang="ts">
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
-  import * as Card from '$lib/components/ui/card';
   import { getAmount } from '$lib/pricing';
   import { Check, Crown } from '@lucide/svelte';
   import PaymentMethodSelector from '$lib/components/PaymentMethodSelector.svelte';
@@ -40,21 +39,21 @@
   } = $props();
 </script>
 
-<Card.Root class="{isPopular ? 'border-primary' : ''} {className} flex flex-col">
-  <Card.Header class="pb-8 text-center">
+<div class="flex flex-col {className}">
+  <div class="pb-8 text-center">
     <div class="flex min-h-[40px] items-center justify-center space-x-2">
       {#if isPopular}
-        <Crown class="text-primary h-6 w-6" />
+        <Crown class="text-primary h-5 w-5" />
       {/if}
-      <Card.Title class="text-2xl">{title}</Card.Title>
+      <h3 class="font-space text-xl font-bold uppercase tracking-wider">{title}</h3>
       {#if isPopular}
-        <Badge class="bg-accent/50 text-accent-foreground dark:bg-accent dark:text-accent-foreground">
+        <Badge variant="outline" class="text-xs uppercase tracking-wider">
           Most Popular
         </Badge>
       {/if}
     </div>
-    <div class="space-y-2 md:min-h-[120px]">
-      <div class="text-foreground text-4xl font-bold">{price}</div>
+    <div class="mt-4 space-y-2 md:min-h-[120px]">
+      <div class="font-space text-4xl font-light tracking-tight">{price}</div>
       {#if subtext}
         <p class="text-muted-foreground text-sm">{subtext}</p>
       {/if}
@@ -62,17 +61,17 @@
         <p class="text-success text-sm font-medium">{savingsText}</p>
       {/if}
       {#if description}
-        <p class="text-muted-foreground">{description}</p>
+        <p class="text-muted-foreground text-sm">{description}</p>
       {/if}
     </div>
-  </Card.Header>
+  </div>
 
-  <Card.Content class="flex flex-1 flex-col space-y-6">
+  <div class="flex flex-1 flex-col space-y-6">
     <ul class="flex-1 space-y-3">
       {#each features as feature}
         <li class="flex items-start space-x-3">
-          <Check class="text-success mt-0.5 h-5 w-5 flex-shrink-0" />
-          <span class="text-foreground text-sm">{feature}</span>
+          <Check class="text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0" />
+          <span class="text-sm text-muted-foreground">{feature}</span>
         </li>
       {/each}
     </ul>
@@ -95,13 +94,13 @@
         </div>
       {/if}
     {:else if buttonHref}
-      <Button class="w-full" variant={isPopular ? 'default' : 'outline'} href={buttonHref}>
+      <Button class="w-full uppercase tracking-wide font-semibold" variant={isPopular ? 'default' : 'outline'} href={buttonHref}>
         {buttonText}
       </Button>
     {:else}
-      <Button class="w-full" variant={isPopular ? 'default' : 'outline'} disabled>
+      <Button class="w-full uppercase tracking-wide font-semibold" variant={isPopular ? 'default' : 'outline'} disabled>
         {buttonText}
       </Button>
     {/if}
-  </Card.Content>
-</Card.Root>
+  </div>
+</div>

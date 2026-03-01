@@ -273,11 +273,11 @@
   </Alert.Root>
 {/if}
 
-<form onsubmit={handleSubmit} class="space-y-6">
+<form onsubmit={handleSubmit} class="space-y-8">
   <!-- Secret Details -->
   <div class="space-y-4">
     <div class="space-y-2">
-      <Label for="title">Secret Title</Label>
+      <Label for="title" class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Secret Title</Label>
       <Input
         id="title"
         bind:value={title}
@@ -290,7 +290,7 @@
     </div>
 
     <div class="space-y-2">
-      <Label for="secretMessage" class="flex items-center gap-1">
+      <Label for="secretMessage" class="flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
         Secret Message
         <Lock class="h-3 w-3" />
       </Label>
@@ -319,9 +319,9 @@
   </div>
 
   <!-- Recipients -->
-  <div class="space-y-4 border-t pt-6">
+  <div class="space-y-4 pt-8">
     <div class="flex items-center justify-between">
-      <h2 class="text-muted-foreground text-sm font-medium">Recipients</h2>
+      <h2 class="font-space text-lg font-bold tracking-tight">Recipients</h2>
       {#if !isPaid && recipients.length >= 1}
         <Button
           type="button"
@@ -353,9 +353,9 @@
 
     <div class="space-y-3">
       {#each recipients as recipient, index}
-        <div class="bg-muted/30 space-y-3 rounded-md border p-3">
+        <div class="space-y-3 rounded-md border border-border/50 p-4">
           <div class="flex items-center justify-between">
-            <div class="text-muted-foreground text-xs font-medium">Recipient {index + 1}</div>
+            <div class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Recipient {index + 1}</div>
             {#if recipients.length > 1}
               <Button
                 type="button"
@@ -372,7 +372,7 @@
 
           <div class="grid grid-cols-2 gap-3">
             <div class="space-y-1">
-              <Label class="text-xs">Name</Label>
+              <Label class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Name</Label>
               <Input
                 bind:value={recipient.name}
                 placeholder="Jane Doe"
@@ -384,7 +384,7 @@
               {/if}
             </div>
             <div class="space-y-1">
-              <Label class="text-xs">Email</Label>
+              <Label class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Email</Label>
               <Input
                 type="email"
                 bind:value={recipient.email}
@@ -422,10 +422,10 @@
   </div>
 
   <!-- Check-in Settings -->
-  <div class="space-y-4 border-t pt-6">
-    <h2 class="text-muted-foreground text-sm font-medium">Check-in Settings</h2>
+  <div class="space-y-4 pt-8">
+    <h2 class="font-space text-lg font-bold tracking-tight">Check-in Settings</h2>
     <div class="space-y-2">
-      <Label for="checkInDays">Trigger Deadline</Label>
+      <Label for="checkInDays" class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Trigger Deadline</Label>
       <Select.Root type="single" bind:value={checkInDays}>
         <Select.Trigger>
           <span>{selectedCheckInLabel}</span>
@@ -446,7 +446,7 @@
 
   <!-- Bitcoin & Nostr Settings (Pro) -->
   {#if isPaid}
-    <div class="space-y-4 border-t pt-6">
+    <div class="space-y-4 pt-8">
       <Accordion.Root type="single">
         <Accordion.Item value="bitcoin-nostr" class="border-0">
           <Accordion.Trigger
@@ -531,7 +531,7 @@
   {/if}
 
   <!-- Advanced Settings -->
-  <div class="space-y-4 border-t pt-6">
+  <div class="space-y-4 pt-8">
     <Accordion.Root type="single" value={recipients.length > 1 ? 'sss-config' : undefined}>
       <Accordion.Item value="sss-config" class="border-0">
         <Accordion.Trigger
@@ -584,7 +584,7 @@
     </Accordion.Root>
   </div>
 
-  <Button type="submit" disabled={isSubmitting || !!isAtLimit} class="w-full">
+  <Button type="submit" disabled={isSubmitting || !!isAtLimit} class="w-full uppercase tracking-wide font-semibold">
     {isSubmitting
       ? 'Processing & Encrypting...'
       : isAtLimit

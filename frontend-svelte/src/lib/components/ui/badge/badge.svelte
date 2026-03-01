@@ -14,9 +14,9 @@
 				outline: "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
 			},
 		},
-		defaultVariants: {
-			variant: "default",
-		},
+	defaultVariants: {
+		variant: "outline",
+	},
 	});
 
 	export type BadgeVariant = VariantProps<typeof badgeVariants>["variant"];
@@ -30,7 +30,7 @@
 		ref = $bindable(null),
 		href,
 		class: className,
-		variant = "default",
+		variant = "outline",
 		children,
 		...restProps
 	}: WithElementRef<HTMLAnchorAttributes> & {

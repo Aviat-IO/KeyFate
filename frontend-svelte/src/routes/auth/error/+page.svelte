@@ -40,43 +40,41 @@
   <title>Authentication Error - KeyFate</title>
 </svelte:head>
 
-<div
-  class="from-background to-secondary flex min-h-screen items-center justify-center bg-gradient-to-br px-4"
->
-  <div class="w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-lg dark:bg-card">
+<div class="bg-background flex min-h-screen items-center justify-center px-6">
+  <div class="w-full max-w-md space-y-8">
     <div class="text-center">
-      <div class="bg-destructive/10 mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full">
-        <AlertCircle class="text-destructive h-12 w-12" />
+      <div class="bg-destructive/10 mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full">
+        <AlertCircle class="text-destructive h-10 w-10" />
       </div>
 
-      <h1 class="text-foreground mb-4 text-3xl font-bold">Authentication Error</h1>
+      <h1 class="font-space mb-4 text-3xl font-light tracking-tight">Authentication Error</h1>
 
-      <div class="bg-destructive/10 border-destructive mb-6 rounded-lg border p-4">
-        <p class="text-destructive-foreground text-sm">{getErrorMessage()}</p>
+      <div class="bg-destructive/10 border-destructive/30 mb-8 rounded-lg border p-4">
+        <p class="text-sm">{getErrorMessage()}</p>
         {#if error}
-          <p class="text-destructive mt-2 text-xs">Error code: {error}</p>
+          <p class="text-muted-foreground mt-2 text-xs">Error code: {error}</p>
         {/if}
       </div>
 
       <div class="space-y-3">
         <a
           href="/sign-in"
-          class="from-primary to-primary hover:from-primary hover:to-primary focus:ring-primary block w-full rounded-lg border border-transparent bg-gradient-to-r px-4 py-2 text-sm font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2"
+          class="bg-primary text-primary-foreground hover:bg-primary/90 block w-full rounded-lg px-4 py-2 text-sm font-semibold uppercase tracking-wide shadow-sm"
         >
           Try signing in again
         </a>
 
         <a
           href="/"
-          class="border-input text-foreground hover:bg-muted/50 focus:ring-primary block w-full rounded-lg border bg-white px-4 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 dark:bg-card"
+          class="border-input text-foreground hover:bg-muted/50 bg-background block w-full rounded-lg border px-4 py-2 text-sm font-semibold uppercase tracking-wide shadow-sm"
         >
           Return to home
         </a>
       </div>
 
-      <p class="text-muted-foreground mt-6 text-xs">
+      <p class="text-muted-foreground mt-8 text-xs">
         If this error persists, please
-        <a href="/support" class="text-primary hover:text-primary">contact support</a>
+        <a href="/support" class="text-primary hover:text-primary/80">contact support</a>
       </p>
     </div>
   </div>

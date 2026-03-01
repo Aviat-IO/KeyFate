@@ -42,7 +42,7 @@ export const TIER_CONFIGS: Partial<Record<SubscriptionTier, TierConfig>> = {
       "Configurable security (2-of-N up to 7 shares)",
       "Message templates for common scenarios",
       "Comprehensive audit logs",
-      `Priority email support (${process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@keyfate.com"})`,
+      "Priority email support (support@keyfate.com)",
     ],
     price: {
       monthly: 9.0,

@@ -32,10 +32,10 @@
   );
 </script>
 
-<Card.Root>
+<Card.Root class="border-0 shadow-none bg-transparent">
   <Card.Header>
     <div class="flex items-center justify-between">
-      <Card.Title class="text-lg">Your Plan</Card.Title>
+      <Card.Title class="font-space text-lg">Your Plan</Card.Title>
       <Badge variant={tier === 'pro' ? 'default' : 'outline'} class="gap-1">
         {#if tier === 'pro'}
           <Crown class="h-3 w-3" />
@@ -47,7 +47,7 @@
   <Card.Content class="space-y-4">
     <div>
       <div class="mb-2 flex items-center justify-between text-sm">
-        <span class="text-muted-foreground">Secrets Used</span>
+        <span class="text-xs text-muted-foreground uppercase tracking-wider font-medium">Secrets Used</span>
         <span class="font-medium">{secretsUsed} of {secretsLimit}</span>
       </div>
       <Progress value={percentageUsed} class="h-2" />
@@ -67,14 +67,14 @@
 
     {#if tier === 'free'}
       <div class="space-y-2">
-        <div class="text-muted-foreground text-sm">Upgrade to Pro for:</div>
+        <div class="text-xs text-muted-foreground uppercase tracking-wider font-medium">Upgrade to Pro for:</div>
         <ul class="ml-4 space-y-1 text-sm">
           <li>• 10 secrets (vs 1)</li>
           <li>• 5 recipients per secret</li>
           <li>• Custom check-in intervals</li>
           <li>• Message templates</li>
         </ul>
-        <Button href="/pricing" class="mt-4 w-full">
+        <Button href="/pricing" class="mt-4 w-full uppercase tracking-wide">
           <Crown class="mr-2 h-4 w-4" />
           Upgrade to Pro
         </Button>

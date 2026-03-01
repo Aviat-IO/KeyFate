@@ -43,12 +43,12 @@
 	<title>Profile Settings - KeyFate</title>
 </svelte:head>
 
-<div class="container mx-auto max-w-2xl py-8">
-	<h1 class="mb-8 text-3xl font-bold">Profile Settings</h1>
+<div class="mx-auto max-w-3xl px-6 py-12">
+	<h1 class="font-space mb-8 text-3xl font-light tracking-tight">Profile Settings</h1>
 
-	<div class="space-y-8">
+	<div class="space-y-12">
 		<div>
-			<h2 class="mb-4 text-xl font-semibold">Contact Methods</h2>
+			<h2 class="font-space mb-4 text-xl font-bold tracking-tight">Contact Methods</h2>
 			<p class="text-muted-foreground mb-6">
 				Configure how we can reach you for notifications and alerts.
 			</p>

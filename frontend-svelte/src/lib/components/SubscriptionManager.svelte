@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
-	import * as Card from '$lib/components/ui/card';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { TIER_CONFIGS } from '$lib/constants/tiers';
 	import { AlertTriangle, Crown } from '@lucide/svelte';
@@ -86,17 +85,17 @@
 	}
 </script>
 
-<Card.Root>
-	<Card.Header>
+<div class="space-y-8">
+	<div>
 		<div class="flex items-center justify-between">
 			<div>
-				<Card.Title class="flex items-center gap-2">
+				<h3 class="font-space text-lg font-bold tracking-tight flex items-center gap-2">
 					Current Plan
 					{#if isProUser && !scheduledDowngradeAt}
 						<Crown class="text-primary h-5 w-5" />
 					{/if}
-				</Card.Title>
-				<Card.Description>Your subscription details</Card.Description>
+				</h3>
+				<p class="text-sm text-muted-foreground mt-1">Your subscription details</p>
 			</div>
 			<div class="flex items-center gap-2">
 				<Badge variant={isProUser ? 'default' : 'secondary'}>
@@ -110,27 +109,28 @@
 				{/if}
 			</div>
 		</div>
-	</Card.Header>
-	<Card.Content class="space-y-4">
+	</div>
+
+	<div class="space-y-6">
 		{#if isProUser && subscription}
 			<div>
-				<span class="text-muted-foreground block text-sm font-medium">Status</span>
-				<p class="text-lg capitalize">
+				<span class="text-xs text-muted-foreground uppercase tracking-wider font-medium block">Status</span>
+				<p class="text-sm text-foreground mt-1 capitalize">
 					{'status' in subscription ? String(subscription.status) : 'Active'}
 				</p>
 			</div>
 			{#if currentPeriodEnd}
 				<div>
-					<span class="text-muted-foreground block text-sm font-medium">Current Period Ends</span>
-					<p class="text-lg">{formatDate(currentPeriodEnd)}</p>
+					<span class="text-xs text-muted-foreground uppercase tracking-wider font-medium block">Current Period Ends</span>
+					<p class="text-sm text-foreground mt-1">{formatDate(currentPeriodEnd)}</p>
 				</div>
 			{/if}
 		{/if}
 
 		{#if !isProUser}
 			<div>
-				<span class="text-muted-foreground block text-sm font-medium">Limits</span>
-				<ul class="mt-2 space-y-1 text-lg">
+				<span class="text-xs text-muted-foreground uppercase tracking-wider font-medium block">Limits</span>
+				<ul class="mt-2 space-y-1 text-sm text-foreground">
 					<li>• 1 secret</li>
 					<li>• 1 recipient per secret</li>
 					<li>• Limited check-in intervals</li>
@@ -139,11 +139,11 @@
 		{/if}
 
 		{#if scheduledDowngradeAt}
-			<div class="border-destructive bg-destructive/10 rounded-lg border p-4">
+			<div class="border-destructive/50 rounded-lg border p-4">
 				<div class="flex gap-2">
 					<AlertTriangle class="text-destructive mt-0.5 h-5 w-5 flex-shrink-0" />
 					<div class="flex-1">
-						<p class="text-destructive font-medium">Downgrade Scheduled</p>
+						<p class="text-destructive font-medium text-sm">Downgrade Scheduled</p>
 						<p class="text-muted-foreground text-sm">
 							Your subscription will end on {formatDate(scheduledDowngradeAt)}. You'll be
 							downgraded to the Free plan at that time.
@@ -154,29 +154,30 @@
 		{/if}
 
 		{#if error}
-			<div class="border-destructive bg-destructive/10 rounded-lg border p-4">
+			<div class="border-destructive/50 rounded-lg border p-4">
 				<p class="text-destructive text-sm">{error}</p>
 			</div>
 		{/if}
-	</Card.Content>
-</Card.Root>
+	</div>
+</div>
 
-<Card.Root>
-	<Card.Header>
-		<Card.Title>Manage Subscription</Card.Title>
-		<Card.Description>
+<div class="border-t border-border pt-8 space-y-4">
+	<div>
+		<h3 class="font-space text-lg font-bold tracking-tight">Manage Subscription</h3>
+		<p class="text-sm text-muted-foreground mt-1">
 			{isProUser ? 'Change your subscription plan' : 'Upgrade to unlock more features'}
-		</Card.Description>
-	</Card.Header>
-	<Card.Content class="space-y-4">
+		</p>
+	</div>
+
+	<div>
 		{#if !isProUser}
-			<Button href="/pricing" class="w-full">Upgrade to Pro</Button>
+			<Button href="/pricing" class="w-full uppercase tracking-wide font-semibold">Upgrade to Pro</Button>
 		{:else if scheduledDowngradeAt}
 			<Button
 				variant="outline"
 				onclick={() => (showCancelDialog = true)}
 				disabled={isLoading}
-				class="w-full"
+				class="w-full uppercase tracking-wide font-semibold"
 			>
 				{isLoading ? 'Processing...' : 'Cancel Scheduled Downgrade'}
 			</Button>
@@ -185,13 +186,13 @@
 				variant="destructive"
 				onclick={() => (showDowngradeDialog = true)}
 				disabled={isLoading}
-				class="w-full"
+				class="w-full uppercase tracking-wide font-semibold"
 			>
 				{isLoading ? 'Processing...' : 'Downgrade to Free'}
 			</Button>
 		{/if}
-	</Card.Content>
-</Card.Root>
+	</div>
+</div>
 
 <Dialog.Root bind:open={showDowngradeDialog}>
 	<Dialog.Content>

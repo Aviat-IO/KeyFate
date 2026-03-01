@@ -6,14 +6,14 @@
   <title>{data.company} - Privacy Policy</title>
 </svelte:head>
 
-<div class="container mx-auto max-w-4xl px-4 py-8">
-  <h1 class="mb-8 text-3xl font-bold">Privacy Policy</h1>
+<div class="mx-auto max-w-3xl px-6 py-12">
+  <h1 class="font-space mb-8 text-3xl font-light tracking-tight">Privacy Policy</h1>
 
   <div class="prose prose-gray dark:prose-invert max-w-none space-y-6">
     <p class="text-muted-foreground text-sm"><strong>Effective Date:</strong> January 2, 2025</p>
 
     <section>
-      <h2 class="mb-4 text-2xl font-semibold">1. Introduction</h2>
+      <h2 class="font-space mb-4 text-xl font-bold tracking-tight">1. Introduction</h2>
       <p>
         {data.parentCompany} ("we," "our," or "us") operates {data.company}, a secure dead man's
         switch platform. This Privacy Policy explains how we collect, use, disclose, and safeguard
@@ -27,7 +27,7 @@
     </section>
 
     <section>
-      <h2 class="mb-4 text-2xl font-semibold">2. Information We Collect</h2>
+      <h2 class="font-space mb-4 text-xl font-bold tracking-tight">2. Information We Collect</h2>
       <h3 class="mb-2 text-xl font-medium">2.1 Information You Provide</h3>
       <ul class="list-disc space-y-1 pl-6">
         <li><strong>Account Information:</strong> Email address, name (via Google OAuth)</li>
@@ -45,7 +45,7 @@
     </section>
 
     <section>
-      <h2 class="mb-4 text-2xl font-semibold">3. How We Use Your Information</h2>
+      <h2 class="font-space mb-4 text-xl font-bold tracking-tight">3. How We Use Your Information</h2>
       <ul class="list-disc space-y-1 pl-6">
         <li>Provide and maintain the {data.company} service</li>
         <li>Send check-in reminders via email</li>
@@ -55,7 +55,7 @@
     </section>
 
     <section>
-      <h2 class="mb-4 text-2xl font-semibold">4. Data Security</h2>
+      <h2 class="font-space mb-4 text-xl font-bold tracking-tight">4. Data Security</h2>
       <ul class="list-disc space-y-1 pl-6">
         <li><strong>100% Client-Side Secret Processing</strong></li>
         <li><strong>Shamir's Secret Sharing</strong></li>
@@ -65,7 +65,7 @@
     </section>
 
     <section>
-      <h2 class="mb-4 text-2xl font-semibold">5. Your Rights</h2>
+      <h2 class="font-space mb-4 text-xl font-bold tracking-tight">5. Your Rights</h2>
       <ul class="list-disc space-y-1 pl-6">
         <li>Access and update your account information</li>
         <li>Delete your account and associated data</li>
@@ -79,7 +79,7 @@
     </section>
 
     <section>
-      <h2 class="mb-4 text-2xl font-semibold">6. Contact Information</h2>
+      <h2 class="font-space mb-4 text-xl font-bold tracking-tight">6. Contact Information</h2>
       <div class="bg-muted rounded-lg p-4">
         <p><strong>{data.parentCompany}</strong></p>
         <p>Provo, Utah, United States</p>
