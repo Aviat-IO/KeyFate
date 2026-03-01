@@ -13,12 +13,32 @@
   let userTier = $state<'free' | 'pro'>('free');
   let mobileMenuOpen = $state(false);
 
+  // Cache subscription status to avoid re-fetching on every navigation.
+  // Module-scoped cache shared across all NavBar instances.
+  const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+  let cachedTier: { value: 'free' | 'pro'; fetchedAt: number; userId: string } | null = null;
+
   $effect(() => {
     if (!user?.id) return;
+
+    // Use cached value if fresh and for the same user
+    if (
+      cachedTier &&
+      cachedTier.userId === user.id &&
+      Date.now() - cachedTier.fetchedAt < CACHE_TTL_MS
+    ) {
+      userTier = cachedTier.value;
+      return;
+    }
+
     fetch('/api/user/subscription')
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (data) userTier = data.tier?.name === 'pro' ? 'pro' : 'free';
+        if (data) {
+          const tier = data.tier?.name === 'pro' ? 'pro' as const : 'free' as const;
+          userTier = tier;
+          cachedTier = { value: tier, fetchedAt: Date.now(), userId: user!.id! };
+        }
       })
       .catch(() => {});
   });
@@ -30,7 +50,7 @@
   }
 
   const menuItemClass =
-    'flex select-none items-center gap-2 rounded-md px-3 py-2 text-xs font-medium leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground';
+    'flex select-none items-center gap-2 rounded-md px-3 py-2 text-sm font-medium leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground';
 
   function isActive(path: string, exact = true) {
     return exact ? pathname === path : pathname.startsWith(path);
@@ -80,7 +100,7 @@
           {#if user}
             <a
               href="/dashboard"
-              class="rounded-md px-3 py-2 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground {isActive(
+              class="rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground {isActive(
                 '/dashboard'
               )
                 ? 'bg-accent text-accent-foreground'
@@ -93,7 +113,7 @@
           {#if !user}
             <a
               href="/pricing"
-              class="rounded-md px-3 py-2 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground {isActive(
+              class="rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground {isActive(
                 '/pricing'
               )
                 ? 'bg-accent text-accent-foreground'
@@ -105,7 +125,7 @@
 
           <a
             href="/blog"
-            class="rounded-md px-3 py-2 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground {isActive(
+            class="rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground {isActive(
               '/blog',
               false
             )
