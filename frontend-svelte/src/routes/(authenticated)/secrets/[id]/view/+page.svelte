@@ -8,6 +8,11 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Table from '$lib/components/ui/table';
 	import { formatGranularTime } from '$lib/time-utils';
+	import { hex } from '@scure/base';
+	import { refreshBitcoinClient } from '$lib/bitcoin/client-operations';
+	import { getStoredKeypair, getBitcoinMeta } from '$lib/bitcoin/client-wallet';
+	import BitcoinSetup from '$lib/components/BitcoinSetup.svelte';
+	import BitcoinStatus from '$lib/components/BitcoinStatus.svelte';
 	import {
 		AlertCircle,
 		ArrowLeft,
@@ -31,6 +36,7 @@
 	let deleteLoading = $state(false);
 	let showDeleteModal = $state(false);
 	let actionError = $state<string | null>(null);
+	let bitcoinRefreshWarning = $state<string | null>(null);
 
 	let isTriggered = $derived(
 		data.secret.triggeredAt !== null || data.secret.status === 'triggered'
@@ -81,10 +87,132 @@
 		data.secret.serverShare ? 'Stored securely' : 'Deleted / not available'
 	);
 
+	let hasBitcoin = $state(false);
+	let bitcoinChecked = $state(false);
+	let bitcoinStatusData = $state<{
+		enabled: boolean;
+		utxo: {
+			id: string;
+			txId: string;
+			outputIndex: number;
+			amountSats: number;
+			ttlBlocks: number;
+			status: string;
+			timelockScript: string;
+			ownerPubkey: string;
+			recipientPubkey: string;
+		} | null;
+		network: 'mainnet' | 'testnet' | null;
+	} | null>(null);
+
+	async function checkBitcoinStatus() {
+		try {
+			const response = await fetch(`/api/secrets/${data.secret.id}/bitcoin-status`);
+			if (response.ok) {
+				const statusData = await response.json();
+				bitcoinStatusData = statusData;
+				hasBitcoin = statusData.enabled === true;
+			}
+		} catch {
+			// Bitcoin status endpoint may not be available — silently ignore
+		} finally {
+			bitcoinChecked = true;
+		}
+	}
+
+	$effect(() => {
+		checkBitcoinStatus();
+	});
+
+	/**
+	 * Attempt client-side Bitcoin UTXO refresh.
+	 * Returns true if refresh succeeded or was skipped (no Bitcoin active).
+	 * Returns false if refresh failed (caller should warn but not block check-in).
+	 */
+	async function attemptBitcoinRefresh(): Promise<boolean> {
+		if (!bitcoinStatusData?.enabled || !bitcoinStatusData.utxo || !bitcoinStatusData.network) {
+			return true; // No Bitcoin to refresh
+		}
+
+		const utxo = bitcoinStatusData.utxo;
+		if (utxo.status !== 'confirmed' && utxo.status !== 'pending') {
+			return true; // UTXO not in refreshable state
+		}
+
+		const ownerKeypair = getStoredKeypair(data.secret.id, 'owner');
+		const recipientKeypair = getStoredKeypair(data.secret.id, 'recipient');
+		const meta = getBitcoinMeta(data.secret.id);
+
+		if (!ownerKeypair || !recipientKeypair || !meta) {
+			bitcoinRefreshWarning = 'Bitcoin UTXO was not refreshed: keypairs or metadata not found in this browser session.';
+			return false;
+		}
+
+		try {
+			const result = await refreshBitcoinClient({
+				ownerKeypair,
+				recipientPubkey: hex.decode(utxo.recipientPubkey),
+				currentUtxo: {
+					txId: utxo.txId,
+					outputIndex: utxo.outputIndex,
+					amountSats: utxo.amountSats,
+				},
+				currentScript: hex.decode(utxo.timelockScript),
+				ttlBlocks: utxo.ttlBlocks,
+				feeRateSatsPerVbyte: 10,
+				symmetricKeyK: hex.decode(meta.symmetricKeyK),
+				nostrEventId: meta.nostrEventId,
+				recipientPrivkey: recipientKeypair.privkey,
+				recipientAddress: meta.recipientAddress,
+				network: bitcoinStatusData.network,
+			});
+
+			// Store results on server
+			const csrfRes = await fetch('/api/csrf-token');
+			const { token: csrfToken } = await csrfRes.json();
+
+			const storeResponse = await fetch(`/api/secrets/${data.secret.id}/store-bitcoin-refresh`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'x-csrf-token': csrfToken
+				},
+				body: JSON.stringify({
+					newTxId: result.newTxId,
+					newOutputIndex: result.newOutputIndex,
+					newAmountSats: result.newAmountSats,
+					newTimelockScript: hex.encode(result.newTimelockScript),
+					ttlBlocks: utxo.ttlBlocks,
+					preSignedRecipientTx: result.preSignedRecipientTx,
+					network: bitcoinStatusData.network,
+				})
+			});
+
+			if (!storeResponse.ok) {
+				const errData = await storeResponse.json().catch(() => ({}));
+				throw new Error(errData.error || 'Failed to store Bitcoin refresh');
+			}
+
+			return true;
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Unknown error';
+			bitcoinRefreshWarning = `Bitcoin UTXO refresh failed: ${message}. The regular check-in still succeeded.`;
+			return false;
+		}
+	}
+
 	async function handleCheckIn() {
 		checkInLoading = true;
 		actionError = null;
+		bitcoinRefreshWarning = null;
 		try {
+			// Step 1: If Bitcoin is active, refresh the UTXO client-side first
+			if (hasBitcoin) {
+				await attemptBitcoinRefresh();
+				// Bitcoin refresh failure is non-fatal — we still proceed with check-in
+			}
+
+			// Step 2: Perform the regular server-side check-in
 			const csrfRes = await fetch('/api/csrf-token');
 			const { token: csrfToken } = await csrfRes.json();
 
@@ -101,6 +229,8 @@
 				throw new Error(errData.error || 'Failed to check in');
 			}
 
+			// Refresh Bitcoin status display after successful check-in
+			await checkBitcoinStatus();
 			await invalidateAll();
 		} catch (err) {
 			actionError = err instanceof Error ? err.message : 'Failed to check in';
@@ -295,6 +425,15 @@
 		</div>
 	{/if}
 
+	{#if bitcoinRefreshWarning}
+		<div class="border-warning/50 bg-warning/10 mt-4 rounded-lg border p-4">
+			<div class="flex items-center gap-2">
+				<AlertCircle class="text-warning h-4 w-4 shrink-0" />
+				<p class="text-warning text-sm">{bitcoinRefreshWarning}</p>
+			</div>
+		</div>
+	{/if}
+
 	<!-- Details section -->
 	<div class="mt-16 space-y-16">
 		<!-- Secret metadata — single consolidated section -->
@@ -370,6 +509,23 @@
 				{/each}
 			</div>
 		</section>
+
+		<!-- Bitcoin Timelock -->
+		{#if bitcoinChecked}
+			<section>
+				{#if hasBitcoin}
+					<BitcoinStatus secretId={data.secret.id} />
+				{:else if !isTriggered}
+					<BitcoinSetup
+						secretId={data.secret.id}
+						checkInDays={data.secret.checkInDays}
+						onSetupComplete={() => {
+							hasBitcoin = true;
+						}}
+					/>
+				{/if}
+			</section>
+		{/if}
 
 		<!-- Check-in History -->
 		<section>

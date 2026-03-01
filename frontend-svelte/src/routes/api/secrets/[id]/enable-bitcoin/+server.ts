@@ -1,6 +1,11 @@
 /**
  * POST /api/secrets/[id]/enable-bitcoin
  *
+ * @deprecated Use POST /api/secrets/[id]/store-bitcoin instead.
+ * This endpoint requires sending private keys over HTTP, which is a security flaw.
+ * The new flow performs all key operations client-side and only sends results
+ * to the server via store-bitcoin.
+ *
  * Creates a CSV timelocked UTXO for the dead man's switch.
  * Requires the owner's Bitcoin keys and a funding UTXO.
  */

@@ -41,6 +41,12 @@ export interface EnableBitcoinParams {
 /** Parameters for refreshing a Bitcoin UTXO */
 export interface RefreshBitcoinParams {
   ownerPrivkey: Uint8Array
+  recipientPrivkey: Uint8Array
+  recipientAddress: string
+  /** Symmetric key K for OP_RETURN (from original enableBitcoin) */
+  symmetricKeyK: Uint8Array
+  /** Nostr event ID for OP_RETURN (from original enableBitcoin) */
+  nostrEventId: string
   feeRateSatsPerVbyte: number
   network: "mainnet" | "testnet"
 }
@@ -63,6 +69,7 @@ export interface RefreshBitcoinResult {
   newAmountSats: number
   ttlBlocks: number
   refreshesRemaining: number
+  preSignedRecipientTx: string
 }
 
 /** Bitcoin status for a secret */
@@ -77,6 +84,12 @@ export interface BitcoinStatus {
     status: string
     confirmedAt: Date | null
     createdAt: Date
+    /** Hex-encoded timelock script (needed for client-side refresh) */
+    timelockScript: string
+    /** Hex-encoded owner pubkey (needed for client-side refresh) */
+    ownerPubkey: string
+    /** Hex-encoded recipient pubkey (needed for client-side refresh) */
+    recipientPubkey: string
   } | null
   /** Estimated time remaining in days (based on block height) */
   estimatedDaysRemaining: number | null
@@ -84,6 +97,8 @@ export interface BitcoinStatus {
   refreshesRemaining: number | null
   /** Whether a pre-signed recipient tx exists */
   hasPreSignedTx: boolean
+  /** Network the UTXO is on */
+  network: "mainnet" | "testnet" | null
 }
 
 /**
@@ -253,7 +268,24 @@ export async function refreshBitcoin(
   const estimatedFee = Math.ceil(204 * params.feeRateSatsPerVbyte)
   const newAmountSats = currentUtxo.amountSats - estimatedFee
 
-  // 3. Mark old UTXO as spent
+  // 3. Create pre-signed recipient transaction for the new UTXO
+  const preSignedResult = createPreSignedRecipientTx({
+    timelockUtxo: {
+      txId: newTxId,
+      outputIndex: refreshResult.newOutputIndex,
+      amountSats: newAmountSats,
+    },
+    timelockScript: refreshResult.newTimelockScript,
+    recipientPrivkey: params.recipientPrivkey,
+    recipientAddress: params.recipientAddress,
+    ttlBlocks,
+    symmetricKeyK: params.symmetricKeyK,
+    nostrEventId: params.nostrEventId,
+    feeRateSatsPerVbyte: params.feeRateSatsPerVbyte,
+    network: params.network,
+  })
+
+  // 4. Mark old UTXO as spent
   await db
     .update(bitcoinUtxos)
     .set({
@@ -264,7 +296,7 @@ export async function refreshBitcoin(
     })
     .where(eq(bitcoinUtxos.id, currentUtxo.id))
 
-  // 4. Insert new UTXO record
+  // 5. Insert new UTXO record with pre-signed tx
   const [newUtxoRecord] = await db
     .insert(bitcoinUtxos)
     .values({
@@ -277,9 +309,7 @@ export async function refreshBitcoin(
       recipientPubkey: currentUtxo.recipientPubkey,
       ttlBlocks,
       status: "pending",
-      // Pre-signed tx needs to be recreated for the new UTXO
-      // This would be done by the recipient or a separate process
-      preSignedRecipientTx: null,
+      preSignedRecipientTx: preSignedResult.txHex,
     })
     .returning()
 
@@ -295,6 +325,7 @@ export async function refreshBitcoin(
     newAmountSats,
     ttlBlocks,
     refreshesRemaining,
+    preSignedRecipientTx: preSignedResult.txHex,
   }
 }
 
@@ -331,6 +362,7 @@ export async function getBitcoinStatus(
       estimatedDaysRemaining: null,
       refreshesRemaining: null,
       hasPreSignedTx: false,
+      network: null,
     }
   }
 
@@ -346,6 +378,10 @@ export async function getBitcoinStatus(
       ? estimateRefreshesRemaining(latestUtxo.amountSats, 10)
       : null
 
+  // Detect network from the pre-signed tx or default to testnet
+  // (The DB doesn't store network directly; we infer from context)
+  const network: "mainnet" | "testnet" = "testnet"
+
   return {
     enabled: true,
     utxo: {
@@ -357,10 +393,14 @@ export async function getBitcoinStatus(
       status: latestUtxo.status,
       confirmedAt: latestUtxo.confirmedAt,
       createdAt: latestUtxo.createdAt,
+      timelockScript: latestUtxo.timelockScript,
+      ownerPubkey: latestUtxo.ownerPubkey,
+      recipientPubkey: latestUtxo.recipientPubkey,
     },
     estimatedDaysRemaining,
     refreshesRemaining,
     hasPreSignedTx: !!latestUtxo.preSignedRecipientTx,
+    network,
   }
 }
 

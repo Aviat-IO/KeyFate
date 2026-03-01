@@ -140,6 +140,16 @@ export const secretSchema = z
       .number()
       .min(2, "Invalid SSS shares total or threshold parameters.")
       .max(7),
+    enable_nostr_shares: z.boolean().optional(),
+    enable_bitcoin_timelock: z.boolean().optional(),
+    recipient_nostr_pubkeys: z
+      .array(
+        z.object({
+          email: z.string().email().optional().or(z.literal("")),
+          npub: z.string().min(1),
+        }),
+      )
+      .optional(),
   })
   .refine(
     (data) => {

@@ -1215,6 +1215,105 @@ describe("Bitcoin CSV Timelock - Integration", () => {
     expect(newAmount).toBeGreaterThan(90000) // Fee should be small at 5 sat/vbyte
   })
 
+  it("full lifecycle: create → pre-sign → refresh → re-create pre-signed tx", async () => {
+    const { createTimelockUTXO, createPreSignedRecipientTx } = await import(
+      "$lib/bitcoin/transaction"
+    )
+    const { refreshTimelockUTXO } = await import("$lib/bitcoin/refresh")
+
+    const p2wpkh = btc.p2wpkh(owner.pubkey, btc.TEST_NETWORK)
+    const recipientP2wpkh = btc.p2wpkh(recipient.pubkey, btc.TEST_NETWORK)
+    const symmetricKeyK = new Uint8Array(32).fill(0xcc)
+    const nostrEventId = "dd".repeat(32)
+
+    // Step 1: Create initial timelock UTXO
+    const initial = createTimelockUTXO({
+      ownerPrivkey: owner.privkey,
+      ownerPubkey: owner.pubkey,
+      recipientPubkey: recipient.pubkey,
+      ttlBlocks: 4320,
+      amountSats: 100000,
+      feeRateSatsPerVbyte: 5,
+      fundingUtxo: {
+        txId: "c".repeat(64),
+        outputIndex: 0,
+        amountSats: 200000,
+        scriptPubKey: hex.encode(p2wpkh.script),
+      },
+      network: "testnet",
+    })
+
+    // Step 2: Create initial pre-signed recipient tx
+    const preSigned1 = createPreSignedRecipientTx({
+      timelockUtxo: {
+        txId: initial.txId,
+        outputIndex: initial.outputIndex,
+        amountSats: 100000,
+      },
+      timelockScript: initial.timelockScript,
+      recipientPrivkey: recipient.privkey,
+      recipientAddress: recipientP2wpkh.address!,
+      ttlBlocks: 4320,
+      symmetricKeyK,
+      nostrEventId,
+      feeRateSatsPerVbyte: 5,
+      network: "testnet",
+    })
+    expect(preSigned1.txHex).toBeTruthy()
+
+    // Step 3: Owner checks in (refresh)
+    const refreshed = refreshTimelockUTXO({
+      currentUtxo: {
+        txId: initial.txId,
+        outputIndex: initial.outputIndex,
+        amountSats: 100000,
+      },
+      currentScript: initial.timelockScript,
+      ownerPrivkey: owner.privkey,
+      ownerPubkey: owner.pubkey,
+      recipientPubkey: recipient.pubkey,
+      ttlBlocks: 4320,
+      feeRateSatsPerVbyte: 5,
+      network: "testnet",
+    })
+
+    const rawRefresh = btc.RawTx.decode(hex.decode(refreshed.txHex))
+    const newAmount = Number(rawRefresh.outputs[0].amount)
+
+    // Step 4: Recreate pre-signed tx for the NEW UTXO (this is the critical fix)
+    const preSigned2 = createPreSignedRecipientTx({
+      timelockUtxo: {
+        txId: refreshed.newTxId,
+        outputIndex: refreshed.newOutputIndex,
+        amountSats: newAmount,
+      },
+      timelockScript: refreshed.newTimelockScript,
+      recipientPrivkey: recipient.privkey,
+      recipientAddress: recipientP2wpkh.address!,
+      ttlBlocks: 4320,
+      symmetricKeyK,
+      nostrEventId,
+      feeRateSatsPerVbyte: 5,
+      network: "testnet",
+    })
+
+    // Pre-signed tx must exist after refresh
+    expect(preSigned2.txHex).toBeTruthy()
+    // Must be different from the original (different UTXO input)
+    expect(preSigned2.txHex).not.toBe(preSigned1.txHex)
+
+    // Verify the new pre-signed tx structure
+    const rawPreSigned = btc.RawTx.decode(hex.decode(preSigned2.txHex))
+    // Should have 2 outputs: OP_RETURN + recipient
+    expect(rawPreSigned.outputs.length).toBe(2)
+    // First output should be OP_RETURN (amount = 0)
+    expect(rawPreSigned.outputs[0].amount).toBe(0n)
+    // Input should have CSV sequence
+    expect(rawPreSigned.inputs[0].sequence).toBe(4320)
+    // Should have witness data
+    expect(rawPreSigned.witnesses[0].length).toBe(3)
+  })
+
   it("multiple sequential refreshes", async () => {
     const { refreshTimelockUTXO, estimateRefreshesRemaining } = await import(
       "$lib/bitcoin/refresh"

@@ -89,14 +89,26 @@ export const POST: RequestHandler = async (event) => {
 
     // Optionally refresh Bitcoin UTXO if one exists and params are provided
     let bitcoinRefreshResult = null
-    if (body.ownerPrivkey && body.feeRateSatsPerVbyte && body.network) {
+    if (
+      body.ownerPrivkey &&
+      body.recipientPrivkey &&
+      body.recipientAddress &&
+      body.symmetricKeyK &&
+      body.nostrEventId &&
+      body.feeRateSatsPerVbyte &&
+      body.network
+    ) {
       try {
         const activeUtxo = await getActiveUtxo(id)
         if (activeUtxo) {
           bitcoinRefreshResult = await refreshBitcoin(id, session.user.id, {
-            ownerPrivkey: hex.decode(body.ownerPrivkey),
-            feeRateSatsPerVbyte: body.feeRateSatsPerVbyte,
-            network: body.network,
+            ownerPrivkey: hex.decode(body.ownerPrivkey as string),
+            recipientPrivkey: hex.decode(body.recipientPrivkey as string),
+            recipientAddress: body.recipientAddress as string,
+            symmetricKeyK: hex.decode(body.symmetricKeyK as string),
+            nostrEventId: body.nostrEventId as string,
+            feeRateSatsPerVbyte: body.feeRateSatsPerVbyte as number,
+            network: body.network as "mainnet" | "testnet",
           })
         }
       } catch (btcError) {

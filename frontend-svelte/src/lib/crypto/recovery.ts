@@ -15,17 +15,31 @@ import {
   decryptWithDerivedKey,
 } from "./passphrase"
 import type { Nip44Ops, EncryptedKPassphrase } from "./double-encrypt"
+import {
+  getConversationKey,
+  encrypt as nip44Encrypt,
+  decrypt as nip44Decrypt,
+} from "$lib/nostr/encryption"
 
 /**
- * Default NIP-44 stub matching the one in double-encrypt.ts.
- * Replace with real NIP-44 implementation when available.
+ * Default NIP-44 operations using the real nostr-tools NIP-44 v2 implementation.
  */
 const defaultNip44Ops: Nip44Ops = {
-  encrypt(plaintext: string): string {
-    return btoa(plaintext)
+  encrypt(
+    plaintext: string,
+    senderPrivkey: Uint8Array,
+    recipientPubkey: string,
+  ): string {
+    const convKey = getConversationKey(senderPrivkey, recipientPubkey)
+    return nip44Encrypt(plaintext, convKey)
   },
-  decrypt(ciphertext: string): string {
-    return atob(ciphertext)
+  decrypt(
+    ciphertext: string,
+    recipientPrivkey: Uint8Array,
+    senderPubkey: string,
+  ): string {
+    const convKey = getConversationKey(recipientPrivkey, senderPubkey)
+    return nip44Decrypt(ciphertext, convKey)
   },
 }
 

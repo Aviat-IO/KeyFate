@@ -6,6 +6,9 @@
   import { Separator } from '$lib/components/ui/separator';
   import { toast } from 'svelte-sonner';
   import { AlertTriangle, Bitcoin, Clock, Loader2, RefreshCw } from '@lucide/svelte';
+  import { hex } from '@scure/base';
+  import { refreshBitcoinClient } from '$lib/bitcoin/client-operations';
+  import { getStoredKeypair, getBitcoinMeta } from '$lib/bitcoin/client-wallet';
 
   let {
     secretId,
@@ -15,15 +18,27 @@
     onRefresh?: () => void;
   } = $props();
 
+  interface BitcoinUtxoData {
+    id: string;
+    txId: string;
+    outputIndex: number;
+    amountSats: number;
+    ttlBlocks: number;
+    status: string;
+    confirmedAt: string | null;
+    createdAt: string;
+    timelockScript: string;
+    ownerPubkey: string;
+    recipientPubkey: string;
+  }
+
   interface BitcoinStatusData {
-    status: 'pending' | 'confirmed' | 'expired' | 'none';
-    amount?: number;
-    txid?: string;
-    csvBlocks?: number;
-    blocksRemaining?: number;
-    currentBlock?: number;
-    expiresAtBlock?: number;
-    confirmedAt?: string;
+    enabled: boolean;
+    utxo: BitcoinUtxoData | null;
+    estimatedDaysRemaining: number | null;
+    refreshesRemaining: number | null;
+    hasPreSignedTx: boolean;
+    network: 'mainnet' | 'testnet' | null;
   }
 
   let statusData = $state<BitcoinStatusData | null>(null);
@@ -32,34 +47,41 @@
   let error = $state<string | null>(null);
 
   let statusVariant = $derived<'default' | 'secondary' | 'destructive' | 'outline'>(
-    statusData?.status === 'confirmed'
+    statusData?.utxo?.status === 'confirmed'
       ? 'default'
-      : statusData?.status === 'pending'
+      : statusData?.utxo?.status === 'pending'
         ? 'secondary'
-        : statusData?.status === 'expired'
+        : statusData?.utxo?.status === 'expired'
           ? 'destructive'
           : 'outline'
   );
 
   let statusLabel = $derived(
-    statusData?.status === 'confirmed'
+    statusData?.utxo?.status === 'confirmed'
       ? 'Confirmed'
-      : statusData?.status === 'pending'
+      : statusData?.utxo?.status === 'pending'
         ? 'Pending'
-        : statusData?.status === 'expired'
+        : statusData?.utxo?.status === 'expired'
           ? 'Expired'
           : 'Not Set Up'
   );
 
   let estimatedTimeRemaining = $derived.by(() => {
-    if (!statusData?.blocksRemaining || statusData.blocksRemaining <= 0) return null;
-    const minutes = statusData.blocksRemaining * 10;
-    if (minutes < 60) return `~${minutes} minutes`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `~${hours} hour${hours !== 1 ? 's' : ''}`;
-    const days = Math.floor(hours / 24);
-    return `~${days} day${days !== 1 ? 's' : ''}`;
+    if (!statusData?.estimatedDaysRemaining || statusData.estimatedDaysRemaining <= 0) return null;
+    const days = statusData.estimatedDaysRemaining;
+    if (days < 1) {
+      const hours = Math.round(days * 24);
+      if (hours < 1) return `~${Math.round(days * 24 * 60)} minutes`;
+      return `~${hours} hour${hours !== 1 ? 's' : ''}`;
+    }
+    return `~${Math.round(days)} day${Math.round(days) !== 1 ? 's' : ''}`;
   });
+
+  let canRefresh = $derived(
+    statusData?.enabled &&
+    statusData?.utxo &&
+    (statusData.utxo.status === 'confirmed' || statusData.utxo.status === 'pending')
+  );
 
   async function fetchStatus() {
     try {
@@ -78,22 +100,87 @@
   }
 
   async function handleRefresh() {
+    if (!statusData?.utxo || !statusData.network) {
+      toast.error('No active UTXO to refresh');
+      return;
+    }
+
+    // Load keypairs from sessionStorage
+    const ownerKeypair = getStoredKeypair(secretId, 'owner');
+    const recipientKeypair = getStoredKeypair(secretId, 'recipient');
+
+    if (!ownerKeypair) {
+      toast.error('Owner keypair not found in session', {
+        description: 'Bitcoin keys are only available in the browser session where they were created. You may need to re-enable Bitcoin for this secret.'
+      });
+      return;
+    }
+
+    if (!recipientKeypair) {
+      toast.error('Recipient keypair not found in session', {
+        description: 'Bitcoin keys are only available in the browser session where they were created. You may need to re-enable Bitcoin for this secret.'
+      });
+      return;
+    }
+
     refreshing = true;
     try {
+      const utxo = statusData.utxo;
+      const network = statusData.network;
+
+      // We need symmetricKeyK and nostrEventId for the OP_RETURN in the pre-signed tx.
+      // These are stored in sessionStorage alongside the keypairs.
+      const storedMeta = getBitcoinMeta(secretId);
+      if (!storedMeta) {
+        toast.error('Bitcoin metadata not found in session', {
+          description: 'The symmetric key and Nostr event ID are required for refresh. These are only available in the session where Bitcoin was initially set up.'
+        });
+        return;
+      }
+
+      // Perform client-side refresh
+      const result = await refreshBitcoinClient({
+        ownerKeypair,
+        recipientPubkey: hex.decode(utxo.recipientPubkey),
+        currentUtxo: {
+          txId: utxo.txId,
+          outputIndex: utxo.outputIndex,
+          amountSats: utxo.amountSats,
+        },
+        currentScript: hex.decode(utxo.timelockScript),
+        ttlBlocks: utxo.ttlBlocks,
+        feeRateSatsPerVbyte: 10, // Default fee rate
+        symmetricKeyK: hex.decode(storedMeta.symmetricKeyK),
+        nostrEventId: storedMeta.nostrEventId,
+        recipientPrivkey: recipientKeypair.privkey,
+        recipientAddress: storedMeta.recipientAddress,
+        network,
+      });
+
+      // Store results on server
       const csrfRes = await fetch('/api/csrf-token');
       const { token: csrfToken } = await csrfRes.json();
 
-      const response = await fetch(`/api/secrets/${secretId}/refresh-bitcoin`, {
+      const storeResponse = await fetch(`/api/secrets/${secretId}/store-bitcoin-refresh`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-csrf-token': csrfToken
-        }
+        },
+        body: JSON.stringify({
+          newTxId: result.newTxId,
+          newOutputIndex: result.newOutputIndex,
+          newAmountSats: result.newAmountSats,
+          newTimelockScript: hex.encode(result.newTimelockScript),
+          ttlBlocks: utxo.ttlBlocks,
+          preSignedRecipientTx: result.preSignedRecipientTx,
+          network,
+        })
       });
 
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || 'Failed to refresh Bitcoin UTXO');
+      if (!storeResponse.ok) {
+        const data = await storeResponse.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to store refresh results');
       }
 
       toast.success('Bitcoin UTXO refreshed (check-in)');
@@ -119,7 +206,7 @@
         <Bitcoin class="h-5 w-5" />
         Bitcoin Timelock
       </Card.Title>
-      {#if statusData}
+      {#if statusData?.utxo}
         <Badge variant={statusVariant}>{statusLabel}</Badge>
       {/if}
     </div>
@@ -136,61 +223,45 @@
         <AlertTriangle class="h-4 w-4" />
         <Alert.Description>{error}</Alert.Description>
       </Alert.Root>
-    {:else if statusData?.status === 'none'}
+    {:else if !statusData?.enabled}
       <p class="text-muted-foreground text-sm">
         No Bitcoin timelock configured for this secret.
       </p>
-    {:else if statusData}
+    {:else if statusData?.utxo}
       <div class="space-y-3 text-sm">
-        {#if statusData.amount}
+        <div class="flex justify-between">
+          <span class="text-muted-foreground">Amount locked</span>
+          <span class="font-medium">{statusData.utxo.amountSats.toLocaleString()} sats</span>
+        </div>
+
+        <div class="flex justify-between">
+          <span class="text-muted-foreground">Transaction</span>
+          <span class="max-w-[200px] truncate font-mono text-xs">{statusData.utxo.txId}</span>
+        </div>
+
+        <div class="flex justify-between">
+          <span class="text-muted-foreground">CSV delay</span>
+          <span>{statusData.utxo.ttlBlocks.toLocaleString()} blocks</span>
+        </div>
+
+        {#if statusData.refreshesRemaining != null}
           <div class="flex justify-between">
-            <span class="text-muted-foreground">Amount locked</span>
-            <span class="font-medium">{statusData.amount.toLocaleString()} sats</span>
+            <span class="text-muted-foreground">Refreshes remaining</span>
+            <span>{statusData.refreshesRemaining}</span>
           </div>
         {/if}
 
-        {#if statusData.txid}
-          <div class="flex justify-between">
-            <span class="text-muted-foreground">Transaction</span>
-            <span class="max-w-[200px] truncate font-mono text-xs">{statusData.txid}</span>
-          </div>
-        {/if}
-
-        {#if statusData.csvBlocks}
-          <div class="flex justify-between">
-            <span class="text-muted-foreground">CSV delay</span>
-            <span>{statusData.csvBlocks.toLocaleString()} blocks</span>
-          </div>
-        {/if}
-
-        {#if statusData.currentBlock}
-          <div class="flex justify-between">
-            <span class="text-muted-foreground">Current block</span>
-            <span>{statusData.currentBlock.toLocaleString()}</span>
-          </div>
-        {/if}
-
-        {#if statusData.expiresAtBlock}
-          <div class="flex justify-between">
-            <span class="text-muted-foreground">Expires at block</span>
-            <span>{statusData.expiresAtBlock.toLocaleString()}</span>
-          </div>
-        {/if}
-
-        {#if statusData.blocksRemaining != null && statusData.blocksRemaining > 0}
+        {#if estimatedTimeRemaining}
           <Separator />
           <div class="flex items-center gap-2">
             <Clock class="text-muted-foreground h-4 w-4" />
             <div>
-              <span class="font-medium">{statusData.blocksRemaining.toLocaleString()} blocks remaining</span>
-              {#if estimatedTimeRemaining}
-                <span class="text-muted-foreground ml-1">({estimatedTimeRemaining})</span>
-              {/if}
+              <span class="font-medium">Time remaining: {estimatedTimeRemaining}</span>
             </div>
           </div>
         {/if}
 
-        {#if statusData.status === 'expired'}
+        {#if statusData.utxo.status === 'expired'}
           <Alert.Root variant="destructive" class="mt-2">
             <AlertTriangle class="h-4 w-4" />
             <Alert.Description class="text-xs">
@@ -201,7 +272,7 @@
       </div>
     {/if}
   </Card.Content>
-  {#if statusData && statusData.status !== 'none'}
+  {#if canRefresh}
     <Card.Footer>
       <Button
         variant="outline"

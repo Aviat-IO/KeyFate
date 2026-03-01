@@ -72,12 +72,13 @@ describe("Cron Scheduler", () => {
     const { startScheduler } = await import("$lib/cron/scheduler")
     await startScheduler()
 
-    expect(cron.default.schedule).toHaveBeenCalledTimes(7)
+    expect(cron.default.schedule).toHaveBeenCalledTimes(8)
 
     const scheduleArgs = (cron.default.schedule as ReturnType<typeof vi.fn>).mock.calls
     const schedules = scheduleArgs.map((args: string[]) => args[0])
 
     expect(schedules.filter((s: string) => s === "*/15 * * * *")).toHaveLength(2)
+    expect(schedules.filter((s: string) => s === "*/10 * * * *")).toHaveLength(1)
     expect(schedules.filter((s: string) => s.startsWith("0 "))).toHaveLength(5)
 
     globalThis.fetch = originalFetch
