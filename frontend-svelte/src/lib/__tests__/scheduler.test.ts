@@ -64,9 +64,13 @@ describe("Cron Scheduler", () => {
 
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {})
 
+    // Mock fetch so waitForServer resolves immediately
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = vi.fn().mockResolvedValue({ ok: true }) as typeof fetch
+
     const cron = await import("node-cron")
     const { startScheduler } = await import("$lib/cron/scheduler")
-    startScheduler()
+    await startScheduler()
 
     expect(cron.default.schedule).toHaveBeenCalledTimes(7)
 
@@ -76,6 +80,7 @@ describe("Cron Scheduler", () => {
     expect(schedules.filter((s: string) => s === "*/15 * * * *")).toHaveLength(2)
     expect(schedules.filter((s: string) => s.startsWith("0 "))).toHaveLength(5)
 
+    globalThis.fetch = originalFetch
     consoleSpy.mockRestore()
   })
 
@@ -85,16 +90,21 @@ describe("Cron Scheduler", () => {
 
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {})
 
+    // Mock fetch so waitForServer resolves immediately
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = vi.fn().mockResolvedValue({ ok: true }) as typeof fetch
+
     const { startScheduler, stopScheduler } = await import(
       "$lib/cron/scheduler"
     )
-    startScheduler()
+    await startScheduler()
     stopScheduler()
 
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining("stopped"),
     )
 
+    globalThis.fetch = originalFetch
     consoleSpy.mockRestore()
   })
 })
