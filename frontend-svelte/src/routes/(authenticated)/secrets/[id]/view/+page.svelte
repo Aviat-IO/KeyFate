@@ -44,6 +44,13 @@
 		return 'unknown';
 	});
 
+	let statusColorClass = $derived.by(() => {
+		if (isTriggered) return 'border-muted-foreground/50 text-muted-foreground';
+		if (data.secret.status === 'paused') return 'border-warning/50 bg-warning/10 text-warning';
+		if (data.secret.status === 'active') return 'border-success/50 bg-success/10 text-success';
+		return 'border-muted-foreground/50 text-muted-foreground';
+	});
+
 	let countdownText = $derived.by(() => {
 		if (isTriggered) return 'Sent';
 		if (serverShareDeleted) return '—';
@@ -176,7 +183,7 @@
 		<h1 class="font-space text-3xl font-light tracking-tight md:text-4xl">
 			{data.secret.title}
 		</h1>
-		<Badge variant="outline" class="shrink-0 text-xs uppercase tracking-wider">
+		<Badge variant="outline" class="shrink-0 text-xs uppercase tracking-wider {statusColorClass}">
 			{statusLabel}
 		</Badge>
 	</div>
@@ -296,7 +303,7 @@
 
 			<div class="grid grid-cols-2 gap-x-12 gap-y-8 md:grid-cols-4">
 				<DataLabel label="Status">
-					<Badge variant="outline" class="text-xs uppercase tracking-wider">
+					<Badge variant="outline" class="text-xs uppercase tracking-wider {statusColorClass}">
 						{statusLabel}
 					</Badge>
 				</DataLabel>
