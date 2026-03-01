@@ -65,6 +65,7 @@ const publishNostrSchema = z.object({
     .max(10, "Maximum 10 shares per request"),
   threshold: z.number().int().min(2).max(7),
   totalShares: z.number().int().min(3).max(7),
+  passphrase: z.string().min(8, "Passphrase must be at least 8 characters").max(256).optional(),
 })
 
 export const POST: RequestHandler = async (event) => {
@@ -138,6 +139,7 @@ export const POST: RequestHandler = async (event) => {
       senderSecretKey,
       threshold,
       totalShares,
+      passphrase: parsed.data.passphrase,
     })
 
     // Convert Uint8Array plaintextK values to hex strings for JSON serialization
@@ -145,6 +147,15 @@ export const POST: RequestHandler = async (event) => {
       recipientId: p.recipientId,
       nostrEventId: p.nostrEventId,
       plaintextK: hex.encode(p.plaintextK),
+      ...(p.encryptedKPassphrase
+        ? {
+            encryptedKPassphrase: {
+              ciphertext: hex.encode(p.encryptedKPassphrase.ciphertext),
+              nonce: hex.encode(p.encryptedKPassphrase.nonce),
+              salt: hex.encode(p.encryptedKPassphrase.salt),
+            },
+          }
+        : {}),
     }))
 
     return json(

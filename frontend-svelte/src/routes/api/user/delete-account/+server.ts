@@ -17,7 +17,6 @@ export const DELETE: RequestHandler = async (event) => {
     const session = await requireSession(event)
     const userId = session.user.id
 
-    // Check for OTP re-authentication token
     const reauthToken = event.request.headers.get("x-reauth-token")
 
     if (!reauthToken) {
@@ -30,9 +29,26 @@ export const DELETE: RequestHandler = async (event) => {
       )
     }
 
-    // TODO: Verify OTP re-authentication token
-    // For now, we'll validate that it exists
-    // In production, this should verify against a recent OTP validation
+    // Verify OTP re-authentication token against the user's email
+    const userEmail = session.user.email
+    if (!userEmail) {
+      return json(
+        { error: "Email not found for user account" },
+        { status: 400 },
+      )
+    }
+
+    const { validateOTPToken } = await import("$lib/auth/otp")
+    const otpValidation = await validateOTPToken(userEmail, reauthToken)
+    if (!otpValidation.success || !otpValidation.valid) {
+      return json(
+        {
+          error: otpValidation.error || "Invalid or expired re-authentication token",
+          code: "REAUTH_INVALID",
+        },
+        { status: 403 },
+      )
+    }
 
     // Check for existing active deletion request
     const existingRequest = await getActiveDeletionRequest(userId)

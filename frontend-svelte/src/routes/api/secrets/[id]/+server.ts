@@ -141,7 +141,7 @@ export const PUT: RequestHandler = async (event) => {
       title: validatedData.title,
       recipientCount: validatedData.recipients.length,
       checkInDays: validatedData.check_in_days,
-    })
+    }, event)
 
     const updatedSecret = await getSecretWithRecipients(id, session.user.id)
     return json(updatedSecret)
@@ -204,7 +204,7 @@ export const DELETE: RequestHandler = async (event) => {
 
     await logSecretDeleted(userId, id, {
       title: secret.title,
-    })
+    }, event)
 
     return json({ success: true })
   } catch (error) {

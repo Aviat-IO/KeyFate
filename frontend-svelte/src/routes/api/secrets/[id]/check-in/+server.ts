@@ -1,15 +1,13 @@
 import { json } from "@sveltejs/kit"
 import type { RequestHandler } from "./$types"
 import { ensureUserExists } from "$lib/auth/user-verification"
-import { getDatabase, secretsService } from "$lib/db/drizzle"
-import type { SecretUpdate } from "$lib/db/schema"
-import { checkinHistory } from "$lib/db/schema"
+import { getDatabase } from "$lib/db/drizzle"
+import { checkinHistory, secrets } from "$lib/db/schema"
+import { and, eq } from "drizzle-orm"
 import { mapDrizzleSecretToApiShape } from "$lib/db/secret-mapper"
 import { getSecretWithRecipients } from "$lib/db/queries/secrets"
 import { logCheckIn } from "$lib/services/audit-logger"
 import { scheduleRemindersForSecret } from "$lib/services/reminder-scheduler"
-import { getActiveUtxo, refreshBitcoin } from "$lib/services/bitcoin-service"
-import { hex } from "@scure/base"
 
 export const POST: RequestHandler = async (event) => {
   try {
@@ -36,86 +34,55 @@ export const POST: RequestHandler = async (event) => {
       )
     }
 
-    // Parse optional body (may contain Bitcoin refresh params)
-    let body: Record<string, unknown> = {}
-    try {
-      body = await event.request.json()
-    } catch {
-      // No body or invalid JSON is fine — check-in doesn't require a body
-    }
+    const database = await getDatabase()
 
-    const secret = await secretsService.getById(id, session.user.id)
+    // Use transaction with SELECT FOR UPDATE to prevent TOCTOU race
+    const result = await database.transaction(async (tx) => {
+      // Lock the secret row to prevent concurrent check-ins
+      const [secret] = await tx
+        .select()
+        .from(secrets)
+        .where(and(eq(secrets.id, id), eq(secrets.userId, session.user.id)))
+        .for("update")
 
-    if (!secret) {
+      if (!secret) {
+        return null
+      }
+
+      const now = new Date()
+      const nextCheckIn = new Date(
+        now.getTime() + secret.checkInDays * 24 * 60 * 60 * 1000,
+      )
+
+      // Update the secret with new check-in times
+      const [updatedSecret] = await tx
+        .update(secrets)
+        .set({ lastCheckIn: now, nextCheckIn, updatedAt: now })
+        .where(and(eq(secrets.id, id), eq(secrets.userId, session.user.id)))
+        .returning()
+
+      // Record check-in history
+      await tx.insert(checkinHistory).values({
+        secretId: id,
+        userId: session.user.id,
+        checkedInAt: now,
+        nextCheckIn: nextCheckIn,
+      })
+
+      return { secret: updatedSecret, nextCheckIn, checkInDays: secret.checkInDays }
+    })
+
+    if (!result) {
       return json({ error: "Secret not found" }, { status: 404 })
     }
 
-    // Calculate next check-in using milliseconds to avoid DST issues
-    const now = new Date()
-    const nextCheckIn = new Date(
-      now.getTime() + secret.checkInDays * 24 * 60 * 60 * 1000,
-    )
-
-    // Update the secret with new check-in times
-    const updatePayload = { lastCheckIn: now, nextCheckIn } as SecretUpdate
-    const updatedSecret = await secretsService.update(
-      id,
-      session.user.id,
-      updatePayload,
-    )
-
-    if (!updatedSecret) {
-      return json(
-        { error: "Failed to update secret" },
-        { status: 500 },
-      )
-    }
-
-    // Record check-in history
-    const database = await getDatabase()
-    await database.insert(checkinHistory).values({
-      secretId: id,
-      userId: session.user.id,
-      checkedInAt: now,
-      nextCheckIn: nextCheckIn,
-    })
-
+    // Non-critical side effects outside the transaction
     await logCheckIn(session.user.id, id, {
-      nextCheckIn: nextCheckIn.toISOString(),
-      checkInDays: secret.checkInDays,
-    })
+      nextCheckIn: result.nextCheckIn.toISOString(),
+      checkInDays: result.checkInDays,
+    }, event)
 
-    await scheduleRemindersForSecret(id, nextCheckIn, secret.checkInDays)
-
-    // Optionally refresh Bitcoin UTXO if one exists and params are provided
-    let bitcoinRefreshResult = null
-    if (
-      body.ownerPrivkey &&
-      body.recipientPrivkey &&
-      body.recipientAddress &&
-      body.symmetricKeyK &&
-      body.nostrEventId &&
-      body.feeRateSatsPerVbyte &&
-      body.network
-    ) {
-      try {
-        const activeUtxo = await getActiveUtxo(id)
-        if (activeUtxo) {
-          bitcoinRefreshResult = await refreshBitcoin(id, session.user.id, {
-            ownerPrivkey: hex.decode(body.ownerPrivkey as string),
-            recipientPrivkey: hex.decode(body.recipientPrivkey as string),
-            recipientAddress: body.recipientAddress as string,
-            symmetricKeyK: hex.decode(body.symmetricKeyK as string),
-            nostrEventId: body.nostrEventId as string,
-            feeRateSatsPerVbyte: body.feeRateSatsPerVbyte as number,
-            network: body.network as "mainnet" | "testnet",
-          })
-        }
-      } catch (btcError) {
-        console.warn("[Check-in API] Bitcoin refresh failed (non-fatal):", btcError)
-        // Bitcoin refresh failure is non-fatal; the server check-in still succeeds
-      }
-    }
+    await scheduleRemindersForSecret(id, result.nextCheckIn, result.checkInDays)
 
     // Get the updated secret with recipients
     const updatedSecretWithRecipients = await getSecretWithRecipients(
@@ -134,7 +101,6 @@ export const POST: RequestHandler = async (event) => {
       success: true,
       secret: mapped,
       next_check_in: mapped.next_check_in,
-      ...(bitcoinRefreshResult ? { bitcoinRefresh: bitcoinRefreshResult } : {}),
     })
   } catch (error) {
     console.error("Error in POST /api/secrets/[id]/check-in:", error)

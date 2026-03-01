@@ -483,8 +483,7 @@ export const disclosureLog = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     secretId: uuid("secret_id")
-      .notNull()
-      .references(() => secrets.id, { onDelete: "cascade" }),
+      .references(() => secrets.id, { onDelete: "set null" }),
     recipientEmail: text("recipient_email").notNull(),
     recipientName: text("recipient_name"),
     status: disclosureStatusEnum("status").notNull().default("pending"),
@@ -618,8 +617,7 @@ export const auditLogs = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: text("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
+      .references(() => users.id, { onDelete: "set null" }),
     eventType: auditEventTypeEnum("event_type").notNull(),
     eventCategory: auditEventCategoryEnum("event_category").notNull(),
     resourceType: text("resource_type"),

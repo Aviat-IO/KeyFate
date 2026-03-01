@@ -1,15 +1,18 @@
 import { json } from "@sveltejs/kit"
 import type { RequestHandler } from "./$types"
 import { decryptMessage } from "$lib/encryption"
+import { requireSession } from "$lib/server/auth"
 
 /**
  * POST /api/decrypt
  *
  * Decrypt a message using server-side decryption.
- * No auth required - public decryption endpoint.
+ * Requires authentication.
  */
 export const POST: RequestHandler = async (event) => {
   try {
+    await requireSession(event)
+
     const { encryptedMessage, iv, authTag } = await event.request.json()
 
     if (!encryptedMessage || !iv) {

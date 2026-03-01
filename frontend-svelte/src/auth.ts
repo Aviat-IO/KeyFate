@@ -2,8 +2,8 @@ import { SvelteKitAuth } from "@auth/sveltekit"
 import Google from "@auth/sveltekit/providers/google"
 import Credentials from "@auth/sveltekit/providers/credentials"
 import { getDatabase } from "$lib/db/drizzle"
-import { users, type UserInsert } from "$lib/db/schema"
-import { eq } from "drizzle-orm"
+import { users, verificationTokens, type UserInsert } from "$lib/db/schema"
+import { and, eq, gt } from "drizzle-orm"
 import { validatePassword } from "$lib/auth/password"
 import { authenticateUser } from "$lib/auth/users"
 import { validateOTPToken } from "$lib/auth/otp"
@@ -45,6 +45,24 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
         if (credentials?.verificationToken && credentials?.userId) {
           try {
             const db = await getDatabase()
+
+            // Validate the verification token against the database
+            const tokenResult = await db
+              .select()
+              .from(verificationTokens)
+              .where(
+                and(
+                  eq(verificationTokens.token, credentials.verificationToken as string),
+                  gt(verificationTokens.expires, new Date()),
+                ),
+              )
+              .limit(1)
+
+            if (tokenResult.length === 0) {
+              console.warn("[Auth] Invalid or expired verification token for userId:", credentials.userId)
+              return null
+            }
+
             const userResult = await db
               .select()
               .from(users)
@@ -53,6 +71,17 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 
             const user = userResult[0]
             if (user && user.emailVerified) {
+              // Expire the token after use (single-use)
+              await db
+                .update(verificationTokens)
+                .set({ expires: new Date() })
+                .where(
+                  and(
+                    eq(verificationTokens.token, credentials.verificationToken as string),
+                    eq(verificationTokens.identifier, user.email!),
+                  ),
+                )
+
               return {
                 id: user.id,
                 email: user.email,

@@ -222,6 +222,64 @@
         JSON.stringify({ shares: userManagedShares, expiresAt })
       );
 
+      // If Nostr shares are enabled, publish them and store the result for the recovery kit
+      if (enableNostrShares && result.recipients?.some((r: { nostrPubkey: string | null }) => r.nostrPubkey)) {
+        try {
+          // Build share payloads for recipients that have nostr pubkeys
+          const nostrRecipients = result.recipients.filter(
+            (r: { nostrPubkey: string | null }) => r.nostrPubkey
+          );
+          const nostrShares = nostrRecipients.map(
+            (r: { id: string }, idx: number) => ({
+              share: userManagedShares[0],
+              shareIndex: idx + 1,
+              recipientId: r.id
+            })
+          );
+
+          const publishRes = await fetch(`/api/secrets/${result.secretId}/publish-nostr`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-csrf-token': csrfToken
+            },
+            body: JSON.stringify({
+              shares: nostrShares,
+              threshold: sssThreshold,
+              totalShares: sssSharesTotal
+            })
+          });
+
+          if (publishRes.ok) {
+            const publishData = await publishRes.json();
+            if (publishData.published?.length > 0) {
+              // Take the first encryptedKPassphrase if any share has one
+              const firstWithPassphrase = publishData.published.find(
+                (p: { encryptedKPassphrase?: unknown }) => p.encryptedKPassphrase
+              );
+
+              localStorage.setItem(
+                `keyfate:nostrData:${result.secretId}`,
+                JSON.stringify({
+                  eventIds: publishData.published.map((p: { nostrEventId: string }) => p.nostrEventId),
+                  plaintextKs: publishData.published.map(
+                    (p: { recipientId: string; plaintextK: string }) => ({
+                      recipientId: p.recipientId,
+                      plaintextK: p.plaintextK
+                    })
+                  ),
+                  encryptedKPassphrase: firstWithPassphrase?.encryptedKPassphrase ?? null,
+                  publishedAt: new Date().toISOString()
+                })
+              );
+            }
+          }
+        } catch (nostrErr) {
+          // Nostr publishing failure is non-fatal — the secret was already created
+          console.error('Nostr publish failed (non-fatal):', nostrErr);
+        }
+      }
+
       const queryParams = new URLSearchParams({
         secretId: result.secretId,
         sss_shares_total: sssSharesTotal.toString(),

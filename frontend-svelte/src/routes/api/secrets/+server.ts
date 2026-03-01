@@ -238,7 +238,7 @@ export const POST: RequestHandler = async (event) => {
       title: validatedData.title,
       recipientCount: validatedData.recipients.length,
       checkInDays: validatedData.check_in_days,
-    })
+    }, event)
 
     await scheduleRemindersForSecret(
       data.secret.id,
