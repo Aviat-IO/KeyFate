@@ -28,16 +28,17 @@
   );
 </script>
 
-<div class="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-4 lg:gap-6 xl:grid-cols-3">
+<!-- Unboxed vertical list — secrets separated by thin dividers -->
+<div class="divide-y divide-border/50">
   {#each sortedActiveSecrets as secret (secret.id)}
     <SecretCard {secret} />
   {/each}
 </div>
 
 {#if sentSecrets.length > 0}
-  <div class="mt-12">
-    <h2 class="mb-6 text-2xl font-bold">Sent Secrets</h2>
-    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-4 lg:gap-6 xl:grid-cols-3">
+  <div class="mt-16">
+    <h2 class="font-space text-2xl font-light tracking-tight">Sent Secrets</h2>
+    <div class="mt-4 divide-y divide-border/50">
       {#each sortedSentSecrets as secret (secret.id)}
         <SecretCard {secret} />
       {/each}
