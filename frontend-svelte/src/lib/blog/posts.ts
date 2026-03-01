@@ -15,41 +15,43 @@ export const blogPosts: BlogPost[] = [
     content: `
 ## What Is a Dead Man's Switch?
 
-A dead man's switch is a mechanism that triggers an action when the operator becomes incapacitated. Originally used in trains and industrial equipment to stop machinery if the operator lost consciousness, this concept has been adapted for digital security with powerful implications for protecting sensitive information.
+A dead man's switch triggers an action when the person controlling it stops responding. The name comes from railroad engineering: train operators held a lever that kept the brakes off. Let go—because you passed out, had a heart attack, or fell—and the brakes engaged automatically. No decision required. The absence of action *was* the trigger.
 
-In the digital world, a dead man's switch releases pre-configured information to designated recipients when you fail to "check in" within a set time period. This ensures critical information reaches the right people if something happens to you—without exposing that information during your lifetime.
+The same principle now protects digital secrets. You store encrypted information, check in on a schedule, and designate recipients. Keep checking in and nothing happens. Stop checking in—because of death, imprisonment, incapacity, or anything else—and the system delivers your information to the people you chose.
 
-## How Does a Digital Dead Man's Switch Work?
+## How It Works
 
-The concept is elegantly simple. You store sensitive information such as passwords, cryptocurrency keys, or important documents in an encrypted form. You then set a check-in schedule—this might be daily, weekly, or monthly depending on your needs. You designate recipients who should receive the information if something happens to you.
+You encrypt sensitive information: passwords, cryptocurrency seed phrases, legal documents, messages. You set a check-in schedule—daily, weekly, monthly. You pick recipients.
 
-As long as you continue checking in regularly to confirm you're okay, nothing happens. But if you miss your check-ins—perhaps due to incapacity, imprisonment, or death—the system automatically releases your stored information to your designated recipients.
+The system sends reminders when a check-in is due. Miss the check-in and the grace period starts. Miss the grace period too, and your encrypted information goes out. The process is irreversible by design.
 
-This creates a failsafe that protects your information during normal times while ensuring it's not lost if you become unavailable.
+During your lifetime, nobody has access. Not the service, not the recipients, not anyone. After the trigger, the right people get what they need.
 
-## Who Needs a Dead Man's Switch?
+## Who Needs One?
 
 ### Cryptocurrency Holders
 
-If you hold significant cryptocurrency, your private keys and recovery phrases represent real wealth that could vanish if something happens to you. Unlike bank accounts that can be accessed through legal processes, cryptocurrency with lost keys is gone forever. A dead man's switch ensures your loved ones can access these assets when needed, without exposing the keys during your lifetime when they could be stolen or misused.
+Private keys and seed phrases are bearer instruments. Lose them and the coins are gone—no recovery process, no customer service, no court order that helps. An estimated 3.7 million Bitcoin are already permanently inaccessible, much of it belonging to people who died without sharing access.
+
+A dead man's switch delivers your recovery information to your heirs when it's actually needed, without exposing it while you're alive.
 
 ### Journalists and Activists
 
-Investigative journalists and activists working on sensitive stories often possess information that powerful entities want suppressed. A dead man's switch serves as an "insurance policy"—if they're compromised, the information releases automatically. This creates a strong deterrent against silencing while ensuring important stories aren't buried.
+If you hold information that powerful people want suppressed, a dead man's switch is insurance. Silence the journalist, trigger the release. The switch's existence alone acts as a deterrent—anyone considering retaliation knows the information comes out regardless.
 
-### Estate Planning
+### Everyone With a Digital Life
 
-Traditional estate planning consistently overlooks digital assets. Passwords for email, social media, cloud storage, and financial accounts are rarely documented in wills. A digital dead man's switch bridges this gap, ensuring your digital life can be properly handled by those you trust without the delays and publicity of probate court.
+Your email, bank accounts, social media, subscriptions, cloud storage, password manager—none of it transfers automatically when you die. Wills become public record and take months to execute. A dead man's switch delivers credentials privately and immediately to the people who need them.
 
-## Security Considerations
+## What to Look For
 
-When choosing a dead man's switch service, encryption matters most. Your data should be encrypted end-to-end, meaning the service provider cannot read your secrets. Look for zero-knowledge architecture where even the company running the service mathematically cannot access your information.
+**Zero-knowledge architecture.** The service should be structurally unable to read your data. Not "we promise we won't look"—rather, the system is built so decryption without your keys is mathematically impossible.
 
-Threshold security adds another layer of protection. Rather than storing your complete secret in one place, services like KeyFate split your secret into multiple pieces using Shamir's Secret Sharing. No single piece—not even the piece the service holds—can reconstruct your secret. This eliminates single points of failure and ensures that even a complete server breach wouldn't expose your information.
+**Threshold cryptography.** KeyFate splits your secret into shares using Shamir's Secret Sharing. No single share—including the one KeyFate stores—reveals anything about the original. A server breach yields encrypted fragments that are individually useless.
 
-## Conclusion
+**Censorship-resistant delivery.** KeyFate publishes encrypted shares to Nostr relays, a decentralized network with no single point of failure. If KeyFate disappears, the shares are still out there on independent relays, retrievable by your recipients.
 
-A dead man's switch is an essential tool for anyone with valuable digital assets or sensitive information. Whether you're a crypto holder protecting generational wealth, a journalist safeguarding sources, or simply someone who wants peace of mind about their digital legacy, this technology provides a reliable way to ensure your information reaches the right people at the right time—and not before.
+**Bitcoin timelocks.** For the highest level of trustlessness, KeyFate can lock the decryption key behind a Bitcoin CSV (CheckSequenceVerify) timelock. The key becomes spendable—and thus recoverable—only after a specified number of blocks, with no human in the loop.
     `.trim(),
   },
   {
@@ -63,45 +65,47 @@ A dead man's switch is an essential tool for anyone with valuable digital assets
     tags: ["cryptocurrency", "bitcoin", "inheritance", "estate planning", "private keys"],
     readingTime: "8 min read",
     content: `
-## The Cryptocurrency Inheritance Problem
+## The Problem
 
-An estimated 3-4 million Bitcoin may be permanently inaccessible due to forgotten passwords, lost keys, and deceased holders who never shared access information with family members. This represents hundreds of billions of dollars in wealth that has effectively vanished from the economy.
+Roughly 3.7 million Bitcoin are permanently inaccessible. Forgotten passwords, lost hard drives, dead holders who never shared keys. Hundreds of billions of dollars, visible on the blockchain, owned by no one.
 
-Unlike traditional bank accounts, cryptocurrency cannot be recovered through legal processes or court orders. There's no customer service number to call, no "forgot password" option, and no judge who can order access restored. If you hold the only copy of your private keys, those assets die with you.
+This isn't like a frozen bank account. There's no recovery form. No customer service. No court order that unlocks a private key. If you hold the only copy, your crypto dies with you.
 
-## Why Traditional Methods Fail
+## Why the Obvious Solutions Don't Work
 
-Many cryptocurrency holders attempt to solve this problem using familiar approaches, but each has significant drawbacks.
+**Safe deposit boxes.** They get sealed during probate—sometimes for months. Your heirs can't access the keys when they need them. And anyone at the bank with access to the box could copy your seed phrase before your family even knows you're gone.
 
-**Bank safe deposit boxes** seem logical, but they create timing problems. Upon death, boxes are typically sealed pending probate, and access can take months to obtain. Cryptocurrency markets move fast, and your heirs might need access before legal processes complete. There's also the risk that keys could be discovered by bank employees or others before your intended heirs.
+**Writing keys into a will.** Wills become public record after death. Your 24-word seed phrase, entered into court records, is visible to anyone who bothers to look.
 
-**Including crypto information in legal documents** introduces different risks. Wills become public record after death, potentially exposing your keys to anyone who looks. Legal staff handling your documents may have access to sensitive information, and documents can be misplaced or misfiled during the legal process.
+**Handing keys to family.** Now your spouse has immediate access to your funds. Relationships change. Devices get hacked. People make mistakes. Premature access is a security failure, even if nothing bad happens.
 
-**Sharing keys directly with family members** introduces immediate security risks. They could access funds prematurely—whether through temptation, relationship changes, or simple curiosity. Their devices might be compromised by malware, or the keys could be lost, stolen, or forgotten before they're actually needed.
+Each approach trades one risk for another. None solves the core tension: your keys need to stay private while you're alive and become available after you're gone.
 
-## The Solution: Threshold Security
+## Threshold Cryptography
 
-Modern cryptographic techniques like Shamir's Secret Sharing solve this problem elegantly. Your key is split into multiple pieces called "shares," and no single share reveals anything about the original key. Multiple shares must be combined to reconstruct the key, and you control who holds each share and how many are needed.
+Shamir's Secret Sharing resolves this tension mathematically. Your seed phrase gets split into shares—say, three of them. Each share alone contains zero information about the original. Not partial information. *Zero.* This is provable, not just claimed.
 
-Consider a 2-of-3 scheme as an example. You split your crypto recovery phrase into 3 shares. You keep one share as a backup. Your spouse receives one share via the dead man's switch. The service stores one encrypted share, released only when you miss check-ins.
+Set a threshold of 2-of-3. Give one share to your spouse. Store one with KeyFate, encrypted and released only when you miss check-ins. Keep one yourself as backup.
 
-If something happens to you, your spouse combines their share with the released share to access your crypto. But no single party—not your spouse, not the service, not even you with just one share—can access the funds alone. This provides security during your lifetime and access when it's truly needed.
+If something happens to you: your spouse's share plus KeyFate's released share reconstructs the seed. But neither party alone can do anything. KeyFate can't access your crypto. Your spouse can't access your crypto. A complete server breach reveals one encrypted share—useless by itself.
 
-## Best Practices for Cryptocurrency Inheritance
+## The Censorship-Resistant Layer
 
-**Document everything clearly.** Your recipients need to understand what they're receiving. Include which cryptocurrency you hold, the amounts and approximate values, which wallet or exchange holds each asset, and step-by-step recovery instructions. Assume your heirs may not be technically sophisticated.
+KeyFate goes further than just splitting and storing. Encrypted shares are published to Nostr relays—a decentralized network of independent servers with no central point of failure. If KeyFate disappears tomorrow, your shares persist on those relays, retrievable by your recipients using their Nostr keys.
 
-**Test the process before relying on it.** Verify your shares can be combined correctly. Walk through the recovery steps yourself. If possible, practice with a trusted person who might help your heirs, identifying any confusing points while you can still clarify.
+For the decryption key itself, you can use a Bitcoin CSV timelock. The key is locked in a Bitcoin transaction that becomes spendable only after a specified number of blocks (~388 days maximum). When the timelock expires, the key is published on-chain via OP_RETURN. No human decision needed. No trusted party required. The Bitcoin network itself enforces the timing.
 
-**Update your arrangements regularly.** Cryptocurrency holdings change. Update your dead man's switch when you acquire significant new holdings, change wallets or exchanges, or need to change recipients. Review everything at least annually.
+This means your crypto inheritance plan doesn't depend on any single company, server, or jurisdiction staying operational.
 
-**Consider using multiple layers for large holdings.** Multiple secrets for different assets, different check-in schedules for different accounts, and hardware wallet backups in secure locations all add redundancy. The more valuable your holdings, the more protection makes sense.
+## What to Actually Do
 
-## Conclusion
+**Inventory your holdings.** Every wallet, every exchange account, every seed phrase. Note approximate values and where each asset lives.
 
-Cryptocurrency inheritance requires deliberate planning that goes beyond traditional estate approaches. A dead man's switch with threshold security provides the ideal balance: your assets remain secure during your lifetime, with no single person able to access them, but your heirs can reconstruct access when genuinely needed.
+**Write recovery instructions for non-technical people.** Your heirs may never have used a hardware wallet. Explain what they're receiving, what software to download, and what the recovery steps look like. Warn them about scams—crypto attracts fraud.
 
-Don't let your crypto become another statistic in the billions of lost Bitcoin. Take action today to protect your digital wealth for future generations.
+**Test the process.** Reconstruct your seed from shares. Walk through recovery on a fresh device. If anything confuses you, it'll be worse for your heirs under stress.
+
+**Update regularly.** New wallets, changed holdings, different family circumstances. Review at least annually.
     `.trim(),
   },
   {
@@ -117,49 +121,58 @@ Don't let your crypto become another statistic in the billions of lost Bitcoin. 
     content: `
 ## What Is Shamir's Secret Sharing?
 
-Shamir's Secret Sharing (SSS) is a cryptographic algorithm invented by Adi Shamir in 1979. It allows you to split a secret into multiple pieces called "shares" with a remarkable property: a minimum number of shares (the "threshold") must be combined to reconstruct the secret, but any fewer shares reveal absolutely nothing about the original.
+Adi Shamir published the algorithm in 1979. (He's the "S" in RSA.) The idea: split a secret into multiple shares where any *threshold* number of shares reconstructs the original, but fewer shares reveal nothing. Not partial information—literally zero bits of knowledge about the secret.
 
-This isn't just "splitting" like cutting a piece of paper into fragments where each piece shows part of the message. With Shamir's algorithm, having one share—or even threshold-minus-one shares—gives you exactly zero information about the secret. It's mathematically guaranteed security.
+This is different from cutting a document into pieces, where each piece shows a fragment. With Shamir's scheme, holding one share is mathematically equivalent to holding nothing. You can't get "close" to the secret. You either have enough shares or you have zero information.
 
-## How It Works (Simplified)
+## The Intuition
 
-The algorithm uses polynomial interpolation, but the underlying intuition is surprisingly accessible.
+Think about points on a graph.
 
-Imagine your secret is a point on a line. If you know just one point, there are infinite lines that could pass through it—you have no idea which line contains your secret. But if you know two points, there's exactly one line through both, and you can find any point on that line, including the secret.
+One point doesn't define a line—infinite lines pass through any single point. Two points define exactly one line. If the secret is the y-intercept of that line, one point tells you nothing about where the line crosses the y-axis. Two points tell you everything.
 
-Shamir's Secret Sharing extends this concept. A 2-of-n scheme uses a line (degree 1 polynomial), so any two points determine it. A 3-of-n scheme uses a parabola (degree 2 polynomial), requiring three points. A k-of-n scheme uses a degree (k-1) polynomial, requiring exactly k points.
+That's a 2-of-n scheme. For 3-of-n, use a parabola instead of a line—three points pin it down, two don't. For k-of-n, use a degree-(k-1) polynomial. The secret is always the y-intercept.
 
-When creating shares, your secret becomes the y-intercept of a random polynomial. You generate points on this polynomial to serve as shares. Any k points can reconstruct the polynomial and find the y-intercept, but fewer than k points could correspond to any y-intercept—there's no way to narrow it down.
+Shamir's trick: generate a random polynomial of the right degree with your secret as the constant term, then hand out points on that curve as shares. The randomness means each share looks arbitrary. Below the threshold, every possible secret is equally consistent with the shares you hold.
 
-## Why This Matters for Security
+## Why This Beats Simple Splitting
 
-Unlike password splitting or simple encoding schemes, Shamir's Secret Sharing provides mathematical guarantees. Having k-1 shares gives you exactly zero bits of information about the secret. There's no "partial recovery" or "getting close"—you either have enough shares to reconstruct perfectly, or you have nothing. The security is provable, not just hoped for.
+People sometimes split a password in half—give "CorrectHorse" to one person and "BatteryStaple" to another. This is much weaker than it seems.
 
-This creates robust protection against various failure modes. If you lose one share, you can still recover with the remaining shares (assuming you have at least the threshold number). If one share is stolen, the attacker can't reconstruct anything. If one party holding a share is compromised, your secret remains safe.
+Each half leaks partial information. "CorrectHorse" dramatically narrows the search space. And if either half is lost, the password is unrecoverable.
 
-You also gain flexible trust distribution. You decide how many total shares to create, how many are needed to reconstruct, and who holds each share. A 2-of-3 scheme means any two parties can reconstruct, but no single party can. A 3-of-5 scheme requires collaboration among three parties while tolerating the loss of two shares.
+With Shamir's shares, losing one share of a 2-of-3 setup still leaves two shares—enough to reconstruct. Stealing one share gets you nothing. And you're not locked into a fixed split—you can create 2-of-3, 3-of-5, 4-of-7, whatever fits your trust model.
 
-## Real-World Applications
+## How KeyFate Uses It
 
-Cryptocurrency users split wallet recovery phrases so that they hold one share normally, a trusted family member holds another, and a secure service holds a third that's released only when triggered by a dead man's switch. No single party can access the funds, but any two can reconstruct the key.
+When you store a secret with KeyFate, the splitting happens in your browser before anything leaves your device:
 
-Corporations use SSS to protect encryption keys for sensitive data, administrator credentials that would be devastating if leaked, and critical passwords that must survive employee turnover.
+1. Your secret is encoded as the constant term of a random polynomial
+2. Shares are generated as points on that polynomial
+3. Each share is then encrypted with ChaCha20-Poly1305
+4. Encrypted shares are distributed: one to KeyFate's server, others to your recipients via Nostr relays
 
-Individuals protect password manager master passwords, two-factor authentication recovery codes, and important documents and instructions that should only be accessible under specific circumstances.
+KeyFate holds one encrypted share. Your recipients each hold one. No single party has enough to reconstruct—not KeyFate, not any individual recipient, not an attacker who compromises the server.
 
-## Implementation Considerations
+When the dead man's switch triggers, shares are released. Recipients combine the threshold number and recover the secret. The math guarantees correctness—if the shares are valid, reconstruction is exact.
 
-When choosing your threshold, 2-of-3 is simple and good for most personal use cases. It tolerates one lost or compromised share while requiring collaboration for reconstruction. 3-of-5 provides more robustness for larger holdings or situations where shares might be more distributed. Higher thresholds suit enterprise or high-value assets where you want multiple parties involved in any reconstruction.
+## Choosing a Threshold
 
-Each share should be stored separately from other shares, in a secure location appropriate to its importance, with clear instructions for how and when to use it. Never store multiple shares together—that defeats the purpose of splitting.
+**2-of-3** works for most personal use. You, your spouse, and KeyFate each hold a share. Any two reconstruct. One share can be lost without consequence. This is what we recommend for individual crypto holders and estate planning.
 
-Always test that shares can be combined correctly before relying on the system. Mathematical errors in share generation or transcription errors in recording shares could make reconstruction impossible. Verify your setup works while you still have all the pieces.
+**3-of-5** adds redundancy for higher-value scenarios. You can lose two shares and still recover. Useful when shares are geographically distributed or held by people who might become unreachable.
 
-## Conclusion
+Higher thresholds make sense for organizations or extremely high-value assets where you want multiple parties to actively collaborate before reconstruction happens.
 
-Shamir's Secret Sharing provides mathematically proven security for splitting secrets. Whether you're protecting cryptocurrency keys, passwords, or sensitive documents, SSS ensures that your information remains secure even if some shares are lost or compromised—while still allowing reconstruction when the right parties come together.
+## Practical Advice
 
-Understanding this technology helps you make informed decisions about protecting your most valuable digital assets with confidence in the underlying mathematics.
+Store shares separately. Two shares in the same location defeats the purpose.
+
+Test reconstruction before you depend on it. Generate your shares, combine the threshold number, verify the original comes back. Do this while you still have access to everything.
+
+Label shares clearly but don't label them with what they protect. "Share 2 of 3 — contact [trusted person] for additional shares" is useful. "Share for Bitcoin wallet containing 50 BTC" is dangerous.
+
+Update when circumstances change—new holdings, different family situation, changed trust relationships. Shamir's scheme is cheap to redo.
     `.trim(),
   },
   {
@@ -173,41 +186,55 @@ Understanding this technology helps you make informed decisions about protecting
     tags: ["estate planning", "digital assets", "passwords", "checklist"],
     readingTime: "5 min read",
     content: `
-## Why Digital Estate Planning Matters
+## Why This Matters
 
-The average person has over 100 online accounts. When you pass away, your digital life doesn't automatically transfer to your heirs. Without proper planning, important accounts, precious memories, and valuable assets can be lost forever—or continue charging fees indefinitely while your family struggles to gain access.
+The average person has over 100 online accounts. When you die, exactly zero of them transfer automatically to your heirs. Subscriptions keep charging. Photos stay locked behind passwords nobody knows. Cryptocurrency vanishes. Email—the master key to resetting every other account—sits behind a login your family can't crack.
 
-## The Complete Digital Estate Inventory
+This is the checklist you need to build before any of that happens.
 
-Your digital estate planning should begin with a comprehensive inventory. This isn't just a list—it's the roadmap your heirs will need to navigate your digital life.
+## The Inventory
 
-**Financial accounts** form the critical foundation. This includes online banking credentials, investment account access for services like Fidelity or Vanguard, retirement account portals for 401k and IRA access, credit card online accounts, and payment apps like PayPal and Venmo. Your heirs will need these to understand your financial picture and settle your estate.
+### Financial Accounts
 
-**Cryptocurrency and digital assets** require special attention because they can't be recovered through traditional legal processes. Document your exchange account credentials, wallet recovery phrases (typically 12 or 24 words), hardware wallet PINs and physical locations, and any NFT or DeFi protocol access information.
+Online banking, investment accounts (Fidelity, Vanguard, Schwab), retirement portals, credit card logins, payment apps (PayPal, Venmo, Zelle). Your heirs need these to understand what exists and settle your estate.
 
-**Email and communication accounts** often serve as the keys to everything else—password recovery for most services goes through email. Include your primary email credentials, secondary accounts, work email access procedures, and messaging apps you use regularly.
+### Cryptocurrency
 
-**Social media accounts** hold years of memories and connections. Document access for platforms like Facebook, Instagram, Twitter/X, LinkedIn, and any others where you maintain a presence. Many platforms offer legacy settings you should configure in advance.
+Exchange accounts with login credentials. Self-custody wallet seed phrases (12 or 24 words). Hardware wallet PINs and physical locations. DeFi positions and NFT holdings.
 
-**Cloud storage** may contain irreplaceable photos, documents, and files. Include access information for Google Drive, iCloud, Dropbox, OneDrive, and any photo storage services you use.
+Crypto deserves special attention: unlike bank accounts, there's no legal process that recovers a lost private key. Document everything, and use <a href="/blog/shamirs-secret-sharing-explained">Shamir's Secret Sharing</a> to protect seed phrases.
 
-**Subscriptions and services** continue charging after death unless cancelled. Document streaming services, software subscriptions, domain registrations, web hosting accounts, and any recurring services tied to your payment methods.
+### Email
 
-**Important documents** should include your password manager master password (this may be the most important single credential), two-factor authentication backup codes, any encrypted file passwords, and locations of digital copies of important documents.
+Email is the skeleton key. Password recovery for almost every service routes through it. Document your primary and secondary email credentials, and any app-specific passwords for services like Gmail.
 
-**Smart home and devices** require unlock codes, system credentials, and access information. Include phone and tablet passcodes, computer passwords, smart home system access, and security camera credentials.
+### Social Media
 
-## How to Store This Information Securely
+Facebook, Instagram, Twitter/X, LinkedIn, YouTube. Configure legacy settings now (Facebook Legacy Contact, Google Inactive Account Manager). Note which accounts should be memorialized, deleted, or downloaded.
 
-A dead man's switch service provides the ideal solution for digital estate information. You store everything encrypted, designate trusted recipients, and the information releases only when triggered by missed check-ins. This keeps your credentials secure during your lifetime while ensuring access when needed.
+### Cloud Storage
 
-Never store sensitive credentials in plain text—whether in documents, emails, or notes. Use encryption for all sensitive data. Update your information regularly, reviewing and refreshing every 6-12 months as accounts and passwords change.
+Google Drive, iCloud, Dropbox, OneDrive, photo services. Some of this is irreplaceable—family photos, personal writing, legal documents. Make sure someone can get in.
 
-Test your system periodically to ensure recipients understand what they'll receive and how to use it. Include clear instructions with each piece of information, explaining not just the credentials but what each account is for and what your heirs should do with access.
+### Subscriptions
 
-## Conclusion
+Streaming, software, domains, hosting, gym memberships, meal kits. These keep billing after death. Your heirs need a list so they can cancel.
 
-Digital estate planning isn't optional in the modern world—anyone with online accounts needs a plan. Start with this inventory framework, organize your information systematically, and use secure tools like a dead man's switch to ensure your digital legacy is protected and accessible to those you trust.
+### The Master Keys
+
+Your password manager master password is probably your single most important credential. Also document 2FA backup codes, recovery keys, encrypted file passwords, and the physical location of any hardware security keys.
+
+### Devices
+
+Phone and tablet passcodes. Computer login passwords. Smart home admin credentials. Router password. Security camera access.
+
+## How to Store It
+
+Don't put credentials in a Word doc on your desktop. Don't email them to yourself. Don't write them in your will (it becomes public record).
+
+Use a dead man's switch. Store everything encrypted, designate recipients, set your check-in schedule. The information stays locked while you're alive and releases automatically when needed. KeyFate encrypts on your device before anything reaches the server, splits secrets with Shamir's Secret Sharing, and distributes shares via Nostr relays for censorship-resistant delivery.
+
+Review every 6-12 months. Accounts change. Passwords get updated. New services appear. An outdated inventory is worse than useless—it gives false confidence.
     `.trim(),
   },
   {
@@ -221,45 +248,60 @@ Digital estate planning isn't optional in the modern world—anyone with online 
     tags: ["journalism", "source protection", "security", "whistleblowers"],
     readingTime: "6 min read",
     content: `
-## The Journalist's Dilemma
+## The Problem
 
-Investigative journalists face a unique challenge that most professionals never encounter. They gather sensitive information that powerful entities want suppressed, creating two competing needs that seem impossible to reconcile: they must protect sources and information during their investigation, yet they must also ensure that information survives and reaches the public if something happens to them.
+You're holding information that someone powerful wants buried. You need to protect it *and* ensure it comes out if you can't publish it yourself. These two requirements pull in opposite directions: secrecy demands keeping information locked down; resilience demands distributing it.
 
-A dead man's switch addresses both needs elegantly, providing protection during normal operations while creating a failsafe that activates only when necessary.
+A dead man's switch resolves the contradiction. Information stays encrypted and inaccessible while you're working. If you're silenced, it releases automatically. The switch's very existence serves as a deterrent—taking action against you triggers exactly the outcome the adversary wants to prevent.
 
-## How Journalists Use Dead Man's Switches
+## The Insurance Policy Effect
 
-The most powerful application is what might be called the "insurance policy" effect. When powerful interests know a journalist has a dead man's switch configured, it creates a strong deterrent against silencing them. Taking action against the journalist would trigger the automatic release of the very information they want suppressed—possibly to multiple recipients, news organizations, or the public directly.
+This is the core value for journalists. Once your adversary knows (or suspects) a dead man's switch exists, the calculus changes. Silence the journalist, and the encrypted dossier goes to five newsrooms simultaneously. There's no person to pressure, no server to seize, no decision to intercept. The release is mechanical.
 
-This works because the information is already prepared and secured, release is automatic if the journalist is compromised, and there's no single person who can be pressured to stop the release. The dead man's switch removes the decision from human hands entirely.
+KeyFate strengthens this by distributing encrypted shares across Nostr relays—a decentralized network of independent servers. There's no single company to compel, no jurisdiction that covers every relay, no takedown request that works. If KeyFate itself were shut down, the shares already published to relays remain retrievable.
 
-For source protection, journalists can include verification protocols and safety procedures that activate only if they become unavailable. This might include instructions for trusted colleagues on how to verify the journalist's wellbeing, protocols for protecting source identities under various scenarios, and contact information for legal resources or press freedom organizations.
+## What to Store
 
-Story continuation becomes possible when a dead man's switch holds research materials, evidence, source information (appropriately encrypted), and even publication-ready drafts. If the journalist is compromised, trusted colleagues or news organizations receive everything needed to complete and publish the story.
+**For source protection:** encrypted communication protocols, safety verification procedures, contact information for press freedom legal teams, instructions for trusted colleagues about verifying your status.
 
-## Setting Up a Journalist's Dead Man's Switch
+**For story continuation:** current investigation status, evidence locations, key documents (encrypted), publication-ready drafts if they exist, contact information for sources who've consented to be contacted by your colleagues.
 
-The contents should address multiple scenarios. For immediate source protection, include encrypted communication channel information, established safety protocols, and emergency legal contacts. For story continuation, document the current investigation status, key evidence locations, trusted colleagues who can continue the work, and any existing publication arrangements.
+**For personal safety:** emergency contacts, legal representation details, relevant embassy information for international assignments.
 
-Check-in frequency deserves careful thought. Journalists on dangerous assignments might need daily check-ins, while those doing longer-term investigations might use weekly intervals. Consider travel schedules, communication blackout scenarios, and the time-sensitivity of your information. Build in appropriate grace periods—you don't want a missed check-in during a flight to trigger release.
+Never store source identities in plaintext anywhere. Encrypt them separately. Consider whether identifying information should be in the dead man's switch at all, or whether you should store only enough for a colleague to continue the work without exposing the source.
 
-Recipient selection is critical. Consider trusted colleagues at your publication who understand the story, independent journalists who could verify and publish if needed, legal representatives who can protect sources, and press freedom organizations as a backup. Multiple recipients provide redundancy and reduce the pressure any single person might face.
+## Check-In Frequency
 
-## Security Best Practices
+This matters more for journalists than for most users.
 
-Operational security should be second nature. Use encrypted communications for all sensitive work, maintain separation between devices used for sensitive versus routine work, conduct regular security audits of your practices, and always assume your devices could be compromised.
+**Daily check-ins** for active dangerous assignments—conflict zones, surveillance-heavy environments, investigations into organized crime.
 
-For the dead man's switch itself, use a platform with zero-knowledge architecture so even the service provider cannot access your information. Encrypt everything before uploading. Use strong, unique authentication. Have backup access methods in case your primary device is taken.
+**Weekly check-ins** for ongoing investigations that don't involve immediate physical risk.
 
-When handling source communications, never store source identities unencrypted anywhere. Use secure drop systems for initial contact. Establish verification protocols so sources can confirm they're communicating with the right person. Plan explicitly for worst-case scenarios—if you're detained, what happens?
+Build in grace periods that account for travel, communication blackouts, and the realities of field work. A 24-hour check-in with a 48-hour grace period gives you three days before release—enough to survive a missed connection without triggering a false alarm.
 
-## Legal Considerations
+## Choosing Recipients
 
-The legal landscape varies significantly by jurisdiction. Shield laws may protect some information from compelled disclosure, but dead man's switches may have their own legal implications. Consult with media lawyers familiar with your jurisdiction when possible. Document everything carefully—good records support legal defenses.
+Multiple recipients, different roles:
 
-## Conclusion
+- A trusted colleague at your publication who understands the story
+- An independent journalist outside your organization
+- A press freedom legal team (Reporters Committee, CPJ, RSF)
+- A secure document archive as a final backstop
 
-A dead man's switch isn't paranoia—it's preparation. For journalists working on sensitive stories, it provides peace of mind that their work won't be lost and their sources won't be exposed if something goes wrong. The best protection is one you hope you never need to use, and a well-configured dead man's switch provides exactly that kind of insurance.
+No single recipient should be the only path. Pressure on one person shouldn't be able to stop publication.
+
+## Operational Security
+
+Assume your devices are compromised. Use separate devices for sensitive work. Encrypt communications end-to-end. Don't reuse passwords. Use a password manager with a strong master passphrase stored in its own dead man's switch entry.
+
+For the switch itself, choose a service with zero-knowledge architecture—where the provider structurally cannot read your data. KeyFate encrypts everything on your device with ChaCha20-Poly1305 before it ever reaches a server, and the server only holds one encrypted share of a Shamir split. A complete server seizure yields nothing usable.
+
+## Legal Realities
+
+Shield laws vary by jurisdiction. Some protect against compelled disclosure of sources; most don't explicitly address dead man's switches. Consult a media lawyer. Document your reasoning for configuring the switch—courts are more sympathetic to journalists acting in good faith.
+
+The decentralized delivery via Nostr relays matters here. A court order directed at KeyFate can't recall shares already published to independent relays across multiple jurisdictions.
     `.trim(),
   },
   {
@@ -273,59 +315,61 @@ A dead man's switch isn't paranoia—it's preparation. For journalists working o
     tags: ["bitcoin", "inheritance", "hodl", "private keys", "cold storage"],
     readingTime: "9 min read",
     content: `
-## The Bitcoin Inheritance Challenge
+## The Self-Custody Paradox
 
-Bitcoin's greatest strength—self-custody without intermediaries—becomes its most significant weakness when the holder dies. Unlike bank accounts that can be accessed through probate, Bitcoin with lost keys is gone forever. No court order, no legal process, no amount of documentation can recover cryptocurrency when the private keys are lost.
+Bitcoin's killer feature—no intermediary can freeze, seize, or deny access to your coins—becomes a lethal bug when you die. The network doesn't know you're dead. It doesn't care. It verifies cryptographic signatures, not death certificates.
 
-An estimated 3-4 million BTC, worth hundreds of billions of dollars, are already permanently inaccessible. Much of this represents holders who passed away without sharing access with family—wealth that effectively vanished from the world because of a planning gap that's entirely preventable.
+No keys, no coins. This is absolute. An estimated 3.7 million BTC are permanently inaccessible. Hundreds of billions of dollars, sitting on-chain, owned by nobody.
 
-## Why Bitcoin Inheritance Is Different
+Your seed phrase needs to stay secret while you're alive (to prevent theft) and become available after you're gone (to enable inheritance). Every approach to Bitcoin inheritance is really about resolving this tension.
 
-Traditional asset inheritance operates through established legal channels. Banks freeze accounts then release funds to estates. Brokerages honor beneficiary designations. Courts can order access to accounts. The legal system has centuries of precedent for handling these transfers.
+## The Strategies
 
-Bitcoin operates outside this framework entirely. There's no central authority that can grant access. The "forgot password" option doesn't exist. Mathematical certainty governs everything: without the keys, the coins are inaccessible to anyone, forever.
+### Shamir's Secret Sharing + Dead Man's Switch
 
-This creates what might be called the self-custody paradox. Private keys must stay private to protect against theft, but heirs need them eventually. Hardware wallets protect against hackers but not against loss of access information. Seed phrases enable recovery, but only for those who possess them.
+This is what we recommend for most holders. Your 24-word seed phrase is split into shares using <a href="/blog/shamirs-secret-sharing-explained">Shamir's Secret Sharing</a>. Each share alone reveals nothing—not partial information, literally zero knowledge about the seed.
 
-## Bitcoin Inheritance Strategies
+A 2-of-3 setup: your spouse holds one share, KeyFate holds one (encrypted, released when you miss check-ins), you keep a backup. Any two shares reconstruct the seed. No single party can access your Bitcoin.
 
-**Shamir's Secret Sharing** offers the most robust solution for most hodlers. Your 24-word seed phrase is mathematically split into shares where each share alone reveals absolutely nothing about your seed. A minimum number of shares (the threshold) must be combined to reconstruct the phrase. You distribute shares to family members, estate attorneys, and secure services like KeyFate.
+KeyFate adds two layers beyond basic secret sharing:
 
-A typical 2-of-3 setup might have your spouse holding one share, a secure dead man's switch service holding another (released when you miss check-ins), and an estate attorney holding the third in a sealed envelope. If something happens to you, any two parties can reconstruct your seed. But no single party—not even the service—can access your Bitcoin alone.
+**Nostr relay distribution.** Encrypted shares are published to a decentralized network of relays. If KeyFate shuts down, the shares persist. Your recipients retrieve them using their Nostr keys.
 
-**Multisig wallets** provide an alternative approach where the wallet itself requires multiple keys to spend. In a 2-of-3 multisig, you might hold one key, your spouse holds another, and a backup exists with an attorney. This approach offers strong security but requires more technical sophistication from heirs and involves complexity in setup and ongoing management.
+**Bitcoin CSV timelocks.** The encryption key can be locked behind a Bitcoin transaction that becomes spendable only after a set number of blocks (~388 days maximum). When the timelock expires, the key is published on-chain via OP_RETURN. No human judgment required. The Bitcoin network enforces the timing.
 
-**Dead man's switch with secret sharing** combines the best of automated release with threshold security. You store your seed phrase (or shares of it) encrypted within a service like KeyFate. If you miss check-ins, recipients automatically receive what they need to reconstruct access. This requires no technical knowledge from heirs and provides clear instructions along with the cryptographic shares.
+### Multisig Wallets
 
-## Step-by-Step Implementation
+The wallet itself requires multiple keys to spend—2-of-3, 3-of-5, etc. You hold one key, your spouse holds another, a backup sits with an attorney.
 
-Begin by documenting your holdings clearly. Create an inventory of your total BTC holdings across all wallets, noting which are hardware wallets, software wallets, or exchange accounts. Include physical locations for hardware wallets and approximate values that you update periodically.
+This works but demands technical sophistication from everyone involved. Your heirs need to understand multisig coordination. The wallet software must still exist and be compatible years later. Setup and ongoing management are more complex than secret sharing.
 
-Choose your strategy based on your situation. For most individual hodlers, Shamir's Secret Sharing offers the best balance—simple enough for non-technical heirs to understand, secure enough for significant holdings, and flexible enough to accommodate various family structures and trust relationships.
+For most families, multisig is overkill. It solves a different problem (protecting against unauthorized spending right now) rather than the inheritance problem (delivering access after death).
 
-Set up your secure storage with geographic distribution in mind. Each share should be stored in a different location, documented separately from the shares themselves. A share in a home safe, another in a bank vault, and a third held by a dead man's switch service provides good distribution.
+### Paper Backup
 
-Create comprehensive instructions for your heirs. They need to understand what they're receiving (shares, not the actual seed), how to combine shares when the time comes, where to find additional shares, and who to contact for help if they encounter problems. Write for someone who may not understand cryptocurrency at all.
+Write your seed phrase on paper, put it in a safe. Simple, and dangerously brittle. Anyone who finds the paper has your Bitcoin. The safe deposit box gets sealed during probate. Paper burns, floods, and fades. A single point of failure for what might be your most valuable asset.
 
-Test your recovery process before relying on it. Gather your threshold number of shares and verify they actually reconstruct the correct seed phrase. Walk through the entire process with at least one technically-capable person who might help your heirs. Document any points of confusion while you can still address them.
+## Implementation
 
-Maintain and update your arrangements over time. Verify share locations remain secure. Update instructions as your wallet configurations change. Review recipient designations as family situations evolve. Confirm that any services you rely on remain operational.
+**1. Inventory your holdings.** Every wallet (hardware, software, exchange), every seed phrase. Note approximate values.
 
-## Common Mistakes to Avoid
+**2. Write instructions for non-technical people.** "You will receive a set of Shamir shares. Here's how to combine them. Here's what wallet software to download. Here's what the recovery process looks like." Warn about scams—crypto attracts fraud targeting bereaved families.
 
-Never store seed phrases in plain text—not in email, cloud storage, a text file on your computer, or a safe deposit box without additional encryption. These locations either lack security or create access timing problems.
+**3. Set up the dead man's switch.** <a href="/sign-in">Create a KeyFate account</a>, store your seed phrase, configure your check-in schedule and recipients. The splitting and encryption happen in your browser.
 
-Avoid over-complicating your setup. Your heirs may not be technically sophisticated. Instructions should be clear and complete. The process shouldn't require expert knowledge. Include a clear path to get help if they need it.
+**4. Test recovery.** Combine your threshold shares. Verify the seed phrase reconstructs correctly. Walk through the full recovery on a fresh device. If anything confuses you, simplify it.
 
-Don't forget to update your arrangements when life changes. Holdings change, family situations evolve, storage locations may become compromised. Review everything when holdings significantly change, after major family events, when you move or change storage locations, or when service providers change their policies.
+**5. Maintain it.** New wallets, changed holdings, different family circumstances—review annually and after major life events.
 
-Always test your setup. An untested backup is not a backup. Verify shares actually work together, instructions are understandable by someone who hasn't been thinking about this daily, and recipients know what to do when the time comes.
+## Common Mistakes
 
-## Conclusion
+**Storing seeds in plaintext.** Email, cloud storage, text files, unencrypted safe deposit boxes. Don't.
 
-Bitcoin inheritance doesn't have to be a gamble. With proper planning using Shamir's Secret Sharing and a reliable dead man's switch, you can ensure your digital wealth passes to your intended heirs without exposing it to risk during your lifetime.
+**Over-engineering.** Complex setups that you understand but your spouse won't. Your heirs may have zero crypto experience. The recovery process should be followable by someone who's never used a wallet.
 
-The key is starting now—before it's too late. Your future family will thank you for the foresight that protected both the assets and their access to them.
+**Never testing.** An untested backup is not a backup. If you haven't verified reconstruction works, you don't know that it does.
+
+**Not updating.** Holdings change. Relationships change. Storage locations get compromised. A plan from three years ago may not reflect your current situation.
     `.trim(),
   },
   {
@@ -339,55 +383,48 @@ The key is starting now—before it's too late. Your future family will thank yo
     tags: ["password manager", "master password", "security", "1password", "bitwarden"],
     readingTime: "6 min read",
     content: `
-## The Master Password Problem
+## The Single Point of Failure
 
-Password managers are essential security tools that let you use unique, complex passwords for every site without memorizing hundreds of credentials. Security experts universally recommend them, and most security-conscious people rely on them daily.
+Password managers solve the "too many passwords" problem. You memorize one master password; the manager handles the rest. Security experts recommend this, and they're right.
 
-But this creates a profound single point of failure: your master password. If you forget it, you lose access to everything. If you die without sharing it, your family loses access to your entire digital life—email, banking, social media, and every other account you've accumulated.
+But your master password is now the key to everything. Email. Banking. Social media. Cloud storage. Work accounts. Every credential you've accumulated over years of digital life, behind a single door. Forget the master password and you're locked out. Die without sharing it and your family is locked out—of everything, simultaneously.
 
-## Why Master Password Protection Matters
+## What's Actually at Stake
 
-Consider what's typically behind a password manager. Your email account credentials control password recovery for almost every other service. Financial account logins provide access to banking, investments, and credit cards. Social media access contains years of memories and connections. Work and business accounts may have professional and financial implications. Secure notes might contain crucial information that exists nowhere else.
+Your email credentials alone are devastating to lose. Password recovery for almost every other service routes through email. Lose email access and the cascade begins—every account that depends on "forgot password" becomes unreachable.
 
-Losing access to all of this simultaneously would be catastrophic for your family during an already difficult time. They'd face a cascade of locked accounts, with no way to access needed information or even close unnecessary services.
+Behind the password manager you likely also have: financial account logins, 2FA recovery codes, secure notes with information stored nowhere else, and credentials for accounts your family doesn't even know exist.
 
-The challenge is balancing competing needs. Your master password must be strong enough that it can't be guessed or cracked, memorable enough that you won't forget it yourself, accessible enough that trusted people can get it when genuinely needed, yet secure enough that it remains protected during your lifetime.
+## The Approach That Works
 
-## Strategies for Master Password Protection
+Split your master password using Shamir's Secret Sharing. KeyFate handles this automatically:
 
-**Shamir's Secret Sharing** provides the most elegant solution. Write down your master password, then use a service like KeyFate to split it into shares. Keep one share yourself, give one share to your spouse, and store one share with the service for release only when triggered by missed check-ins. No single person can access your vault alone, loss of one share doesn't lock everyone out, and the security is mathematical rather than trust-based.
+1. You enter your master password as a secret
+2. It's split into shares on your device (nothing leaves your browser in plaintext)
+3. Shares are distributed—one encrypted on KeyFate's server, one to your designated recipient via Nostr relays
+4. If you miss check-ins, shares are released and your recipient can reconstruct the password
 
-**Encrypted emergency kits** offer another approach. Most password managers provide an "Emergency Kit" or similar document. Download it, encrypt it with a password known to trusted family members, store the encrypted file in multiple locations, and include the decryption password in your dead man's switch. This adds a layer of protection while still enabling access.
+No single party can access your vault. KeyFate can't. Your spouse can't. A complete server breach yields one encrypted share—useless alone.
 
-**Built-in emergency access features** exist in some password managers but have limitations. 1Password offers Emergency Kit and Trusted Contact features. Bitwarden provides Emergency Access with a waiting period. LastPass includes Emergency Access designation. However, these often require the person you're granting access to also use that service, waiting periods may be too long in emergencies, and features vary significantly by service and plan level.
+## Password Manager Specifics
 
-## Password Manager-Specific Considerations
+**1Password:** You need both the master password *and* the 34-character Secret Key. The Emergency Kit PDF contains both. Store it encrypted in your dead man's switch. Family accounts have organizer recovery; individual accounts don't.
 
-For **1Password** users, you need to protect both your master password and your 34-character Secret Key. The Emergency Kit PDF contains both elements. Family and team accounts have recovery options through organizers, but individual accounts require the user to maintain access to both authentication factors.
+**Bitwarden:** Offers built-in Emergency Access with a configurable waiting period. Useful as a backup, but it's vault export rather than live access. Store the master password and any 2FA recovery codes in your switch.
 
-**Bitwarden** offers Emergency Access that can grant trusted users access after a configurable waiting period. This works even without a premium subscription, though it's limited to vault export rather than full access. Store your master password and any two-step login recovery codes in your dead man's switch.
+**Dashlane:** No master password recovery at all. If you don't plan ahead, access is permanently lost. Non-negotiable to have a dead man's switch for Dashlane users.
 
-**Dashlane** notably doesn't have master password recovery—account recovery must be set up in advance or access is permanently lost. This makes planning even more critical for Dashlane users.
+**LastPass:** Has Emergency Access. After their 2022 breach, understand what's stored where and how it's encrypted before relying on their infrastructure alone.
 
-**LastPass** provides Emergency Access for trusted contacts, with account recovery options varying by plan level. Recent security incidents make understanding their current architecture particularly important.
+## Practical Details
 
-## Best Practices
+**Use a passphrase, not a password.** "correct-horse-battery-staple-mountain" is both stronger and easier to write down accurately than "P@ssw0rd123!". Length beats complexity.
 
-Use a passphrase rather than a password. Instead of something like "P@ssw0rd123!" use a phrase like "correct-horse-battery-staple-mountain"—longer passphrases are easier to remember, easier to write down accurately, and often more secure than complex short passwords.
+**Document the full process.** Your heirs need: where to download the password manager app, which email address is the login, whether there's a Secret Key or 2FA, and what to do if something doesn't work.
 
-Document the full recovery process, not just the password. Your heirs need to know where to download the password manager, which email address to use for login, whether additional authentication factors are required, and what to do if something doesn't work.
+**Test every 6-12 months.** Verify the master password is still current. Confirm recovery methods still work. Make sure your recipient knows what they'll receive.
 
-Test access periodically—at least every 6-12 months. Verify your master password still works, check that recovery methods remain valid, update any changed information, and ensure recipients still understand the process.
-
-Keep your master password separate from your Emergency Kit. Store them in different locations, never together, and always encrypted.
-
-Plan for two-factor authentication if you use it on your password manager. Document recovery codes, consider setting up backup authenticators, and include all 2FA information in your dead man's switch.
-
-## Conclusion
-
-Your password manager master password is arguably your most important credential. Protecting it properly requires balancing security during your lifetime with accessibility for your heirs when needed.
-
-Using a dead man's switch with Shamir's Secret Sharing provides the ideal solution: your vault stays secure while you're alive, but your trusted family can access it when circumstances require. Take 30 minutes today to set this up. Your family will thank you.
+**Plan for 2FA.** If your password manager has two-factor authentication enabled (it should), the recovery codes need to be in your dead man's switch too. Otherwise your heirs hit a second locked door after cracking the first.
     `.trim(),
   },
   {
@@ -401,61 +438,52 @@ Using a dead man's switch with Shamir's Secret Sharing provides the ideal soluti
     tags: ["check-in", "dead mans switch", "security", "best practices"],
     readingTime: "5 min read",
     content: `
-## Why Check-In Frequency Matters
+## The Tradeoff
 
-Your check-in schedule determines two critical factors: how long before your secrets are released if something happens to you, and how often you need to remember to confirm your wellbeing. Get the balance wrong in either direction and you create problems—either releasing secrets too quickly and causing false alarms, or releasing them so slowly that the protection becomes meaningless.
+Check-in frequency controls two things: how quickly your secrets release if something happens to you, and how much mental overhead you tolerate in daily life. Too short and you'll accidentally trigger a release during a camping trip. Too long and your heirs wait months for access they need now.
 
-## Understanding Check-In Trade-offs
+## Short Intervals (Daily to Weekly)
 
-**Shorter intervals** from daily to weekly provide faster response if something actually happens to you. This matters for high-stakes information where time-sensitivity is crucial, and provides more peace of mind to recipients who know they won't wait long if something goes wrong. However, shorter intervals are easy to miss during busy periods, travel, or illness. They require more mental overhead to maintain consistently.
+Fast response when it matters. If you're a journalist in a conflict zone or holding keys to high-value crypto, you want the gap between incapacity and release to be short.
 
-This approach works best for journalists on dangerous assignments, holders of very high-value cryptocurrency, or any situation requiring rapid response to potential compromise.
+The cost: daily or weekly check-ins become a persistent task. Miss one during a busy week, a hospital stay, or a spotty-connectivity trip, and you're relying on grace periods to prevent a false trigger.
 
-**Medium intervals** from weekly to monthly offer reasonable response time while being much easier to maintain long-term. Missing a check-in because you're on vacation doesn't trigger an unwanted release. The mental burden is manageable.
+**Best for:** journalists on dangerous assignments, very high-value crypto, situations where hours matter.
 
-Most personal use cases, general estate planning, and moderate-value asset protection fit well with medium intervals. This is the sweet spot for most users.
+## Medium Intervals (Weekly to Monthly)
 
-**Longer intervals** from monthly to yearly require minimal attention and won't accidentally trigger during normal life events. You can essentially set them and forget them.
+The right default for most people. A weekly or bi-weekly check-in is easy to build into a routine—Sunday evening, first Monday of the month. Missing one isn't catastrophic because the grace period covers normal life disruptions.
 
-The tradeoff is significant delay before secrets are released—potentially too slow for urgent situations, and easy to forget about entirely. This suits stable estate planning situations, information that isn't time-sensitive, or backup systems that complement shorter-interval primary systems.
+**Best for:** typical crypto holders, password manager protection, general estate planning, business continuity.
 
-## Matching Intervals to Use Cases
+## Long Intervals (Monthly to Yearly)
 
-**For cryptocurrency**, weekly to monthly intervals typically make sense. Crypto markets move fast, and keys need to reach heirs reasonably quickly, but daily check-ins are burdensome for most holders. Larger holdings may warrant shorter intervals, but also consider the technical ability of your heirs—they may need time to understand what they're receiving and find appropriate help.
+Low maintenance. You check in quarterly or annually, and the system mostly stays out of your way. But the delay before release can be significant—potentially too slow for time-sensitive information.
 
-**For estate planning**, monthly to quarterly intervals work well. Estate matters typically don't require immediate action, and your heirs will need time to process emotionally regardless of when they receive information. Longer intervals reduce maintenance burden while still ensuring eventual access.
+**Best for:** stable estate documents, backup systems layered behind shorter-interval primary switches, information that isn't time-sensitive.
 
-**For journalists and activists**, daily to weekly intervals provide appropriate protection. Time-sensitive information may lose value if delayed, and safety situations require rapid response. Consider backup check-in methods for dangerous situations and multiple secrets with different intervals for different sensitivity levels.
+## Match the Interval to the Secret
 
-**For business continuity**, weekly to bi-weekly intervals balance competing needs. Business operations may need reasonably quick access to accounts and credentials, but not so fast that a vacation triggers unnecessary alarm. Coordinate with business partners and consider different intervals for different types of access.
+You don't need one interval for everything. Use different schedules for different secrets:
 
-## Building a Check-In Routine
+- **Daily/weekly:** active investigation materials, high-value crypto keys
+- **Weekly/bi-weekly:** password manager master password, primary account credentials
+- **Monthly:** general account inventory, subscription lists
+- **Quarterly/yearly:** estate planning documents, long-term storage
 
-Link check-ins to existing routines rather than trying to remember them independently. Sunday evening planning sessions, first Monday of each month, quarterly business reviews, or annual birthday reminders all provide natural anchors.
+## Building the Habit
 
-Use multiple reminder systems rather than relying on memory alone. Calendar events with alerts, phone reminders, email notifications from the service, and even physical calendar notes all help. Redundancy matters here.
+Attach check-ins to existing routines. "Every Sunday when I review my week" or "first of each month when I pay bills" sticks better than an arbitrary reminder.
 
-Plan explicitly for exceptions because life happens. Before planned absences like vacations, check in early. If you'll be hospitalized or in an area without connectivity, either check in early or have a trusted person who can check in on your behalf. Use longer intervals as a safety net against unexpected disruptions.
+Set up redundant notifications: calendar event, email from KeyFate, phone alarm. Forgetting is the most common failure mode—make it hard to forget.
 
-## Multiple Secrets, Multiple Intervals
+Before a vacation or planned absence, check in early. If you'll be unreachable for longer than your interval, either extend the interval temporarily or check in before you go.
 
-Different information can have different intervals based on its nature and urgency. You might use daily check-ins for time-sensitive information like current investigation details for journalists, weekly check-ins for cryptocurrency access and primary password manager credentials, monthly check-ins for general account information and digital estate inventory, and yearly check-ins for long-term estate planning documents that rarely change.
+## Grace Periods and False Triggers
 
-This layered approach provides rapid response for critical information while reducing maintenance burden for less time-sensitive materials.
+Missing one check-in doesn't immediately trigger release. KeyFate sends escalating reminders—gentle nudge, then urgent, then final warning. The grace period between missed check-in and actual release gives you a buffer.
 
-## Handling Accidental Triggers
-
-Even with good intentions, you might miss a check-in. Most services provide safeguards. Grace periods give you time between a missed check-in and actual release—typically 12-48 hours—to correct mistakes or handle emergencies.
-
-Notification escalation sends progressive alerts as your deadline approaches. You might receive a gentle reminder at 50% of your interval, another at 75%, an urgent reminder at 90%, and a final warning before release. This gives multiple opportunities to prevent accidental triggers.
-
-Pause features let you temporarily suspend check-ins for planned extended absences, preventing accidental triggers during known events while still maintaining an ultimate timeout for safety.
-
-## Conclusion
-
-The right check-in interval depends on your specific situation. Start with a moderate interval—weekly to monthly—and adjust based on how often you naturally remember to check in, how quickly your heirs would genuinely need access, and how burdensome maintenance feels in practice.
-
-Remember that a dead man's switch that triggers accidentally or waits too long to trigger doesn't serve its purpose. Finding the right balance for your life is essential to effective protection.
+If you're worried about false triggers: start with a longer interval and shorten it once you've built the habit. A monthly check-in with a 2-week grace period gives you 6 weeks of silence before release—plenty of margin while you're getting comfortable.
     `.trim(),
   },
   {
@@ -469,63 +497,53 @@ Remember that a dead man's switch that triggers accidentally or waits too long t
     tags: ["2fa", "two-factor authentication", "recovery", "security", "backup codes"],
     readingTime: "7 min read",
     content: `
-## The 2FA Recovery Problem
+## The Problem You Created by Being Secure
 
-Two-factor authentication dramatically improves account security by requiring something you know (password) plus something you have (phone, security key). This is excellent protection against remote attackers who might steal or guess your password.
+Two-factor authentication is excellent security. Something you know (password) plus something you have (phone, security key). Remote attackers who steal your password still can't get in.
 
-But 2FA also creates new failure modes that didn't exist before. A lost or broken phone can lock you out of every account. A deleted authenticator app takes all your codes with it. Being locked out of your recovery email creates cascading failures. And death without sharing 2FA access leaves heirs permanently locked out of important accounts.
+But 2FA creates failure modes that didn't exist before. Phone breaks? You're locked out of every account that uses your authenticator app. Die without sharing 2FA access? Your heirs hit a wall that passwords alone can't solve—even if they have every credential you own.
 
-Without proper planning, the same 2FA that protects your accounts can lock you—or your heirs—out permanently.
+The same lock that keeps attackers out keeps your family out. Planning for this is non-optional.
 
-## Understanding 2FA Types
+## The 2FA Types and Their Failure Modes
 
-**Authenticator apps** like Google Authenticator, Authy, and Microsoft Authenticator generate time-based codes (TOTP) that change every 30 seconds. The challenge is that these codes are device-specific. Most authenticator apps don't sync across devices by default, meaning losing your phone means losing access unless you have backup codes.
+**Authenticator apps** (Google Authenticator, Authy, Microsoft Authenticator) generate time-based codes on your device. Lose the device, lose the codes. Google Authenticator doesn't sync by default—this is a common disaster.
 
-**SMS text message codes** are tied to your phone number rather than your device. The challenge here is different: you need access to that phone number, and number changes or SIM swap attacks create vulnerabilities. SMS is generally considered less secure than app-based authentication.
+**SMS codes** are tied to your phone number, not your device. SIM swaps can steal them. Phone number changes break them. Less secure than app-based 2FA, but at least they survive a broken phone if you keep the number active.
 
-**Hardware security keys** like YubiKey or Google Titan require physical possession of the device to authenticate. These are very secure but create their own challenge: the physical key can be lost or damaged, and must be physically present to use.
+**Hardware keys** (YubiKey, Google Titan) require physical possession. Very secure. Also very lost-able. And your heirs need to know where it is and what it's for.
 
-**Backup codes** are pre-generated one-time codes provided when you set up 2FA. Each code works once. The challenge is that people often lose these, forget where they stored them, or run out without generating new ones.
+**Backup codes** are one-time recovery codes generated when you set up 2FA. Most people save them once and forget where. Or use them all and don't generate new ones.
 
-## Organizing Your 2FA Recovery
+## What to Do
 
-Start by auditing every account where you've enabled 2FA. This likely includes email accounts, financial services, social media, work accounts, your password manager, and cryptocurrency exchanges. For each account, document what type of 2FA you use and what recovery methods exist.
+**Audit your 2FA accounts.** Every service where you've enabled 2FA: email, banking, social media, crypto exchanges, password manager. Note the 2FA type and what recovery options exist.
 
-Secure your backup codes properly. Every account with 2FA should provide backup codes, and these should be stored in your password manager, in an encrypted document, and in your dead man's switch. Never store backup codes in plain text files, email drafts, or easily accessible notes.
+**Save backup codes in three places.** Your password manager, an encrypted document, and your dead man's switch. Never in plaintext files, email drafts, or sticky notes.
 
-Set up multiple recovery options wherever possible. Most accounts allow recovery email addresses, phone numbers, security questions, or trusted contacts. Configure at least two recovery methods for every important account so that a single point of failure doesn't lock you out.
+**Use Authy over Google Authenticator.** Authy syncs across devices with encrypted cloud backup. Losing your phone doesn't mean losing everything. The tradeoff: you must secure your Authy backup password. Put it in your dead man's switch.
 
-Consider using Authy instead of Google Authenticator. Authy syncs across devices and provides encrypted cloud backup, so losing your phone doesn't mean losing all your 2FA codes. The tradeoff is that you must secure your Authy account carefully—include the backup password in your dead man's switch.
+**Configure multiple recovery methods.** Recovery email, recovery phone number, trusted contacts. At least two paths into every important account. One failure shouldn't cascade.
 
-Create a comprehensive recovery document that includes, for each important account: the account name and URL, 2FA type used, backup code locations, recovery email and phone, and any special instructions. Store this encrypted in your dead man's switch.
+**Document the full picture for your heirs.** They need: account credentials + backup codes + access to recovery email/phone + your phone's PIN (to access the authenticator app) + hardware key locations. Store all of this encrypted in your dead man's switch.
 
-## Recovery Planning for Heirs
+## Service-Specific Notes
 
-Your heirs need more than just your passwords—they need account credentials plus backup codes or recovery methods plus access to recovery email and phone plus instructions for navigating authentication.
+**Google:** 10 backup codes. Print them. Set up Inactive Account Manager to auto-share data after inactivity. Recovery phone + recovery email as backups.
 
-Consider common scenarios they might face. If your authenticator app was on your phone, that phone may be locked or destroyed. Backup codes stored separately become essential. If you used a hardware key and they don't know where it is, documenting the physical location matters. If your SMS 2FA goes to a phone number that gets disconnected, having alternative recovery methods configured in advance prevents permanent lockout.
+**Apple ID:** Uses trusted phone numbers + optional recovery key. Set up Account Recovery Contact (iOS 15+) for family access.
 
-## Service-Specific Considerations
+**Crypto exchanges:** Policies vary wildly. Document the exact recovery process, what documentation your heirs need, and customer support contact info. This is worth an hour of research per exchange—the stakes are high.
 
-**Google accounts** provide 10 backup codes that you should print and store securely. Recovery phone numbers and recovery email addresses provide alternatives, and the Inactive Account Manager can be configured to grant access after inactivity.
+## The Emergency Kit
 
-**Apple ID** uses trusted phone numbers and an optional recovery key. Setting up an Account Recovery Contact (iOS 15+) specifically enables family access in emergency situations.
+Build an encrypted document with everything someone needs to navigate your 2FA:
 
-**Cryptocurrency exchanges** vary widely in their recovery policies. Document the exact recovery process for each exchange you use, what documentation heirs will need, and customer support procedures. This information could make the difference between recovered assets and permanent loss.
+For each account: name, URL, login email, password manager reference, 2FA type, backup codes, recovery contacts.
 
-## Creating a 2FA Emergency Kit
+General info: password manager master password, authenticator app backup password, phone PIN, computer passwords, hardware key locations.
 
-Compile a comprehensive encrypted document containing all the information someone would need to access your 2FA-protected accounts. For each account, include the account name, URL, username, password reference, 2FA type, all backup codes, recovery contacts, and any special notes.
-
-Also include general recovery information: your password manager master password, authenticator app backup password if applicable, phone PIN or passcode, computer passwords, and locations of any hardware security keys.
-
-Store this document encrypted in your dead man's switch, with appropriate recipients designated for different circumstances.
-
-## Conclusion
-
-Two-factor authentication protects your accounts but requires thoughtful recovery planning. Take time now to audit your 2FA-protected accounts, save backup codes in secure locations, configure multiple recovery methods, document everything for your heirs, and store critical recovery information in a dead man's switch.
-
-The goal isn't just protecting yourself from lockout—it's ensuring trusted access can continue when you're no longer able to provide it.
+Store this in your dead man's switch. KeyFate encrypts it on your device before it ever leaves your browser, splits it into shares, and delivers the shares to your recipients when the switch triggers. Your heirs get everything they need in one package.
     `.trim(),
   },
   {
@@ -539,67 +557,56 @@ The goal isn't just protecting yourself from lockout—it's ensuring trusted acc
     tags: ["zero knowledge", "encryption", "security", "privacy", "architecture"],
     readingTime: "6 min read",
     content: `
-## What Is Zero-Knowledge Security?
+## What It Actually Means
 
-Zero-knowledge architecture means a service provider mathematically cannot access, read, or decrypt your data—even if they wanted to, even if compelled by law, even if their servers are completely compromised.
+"Zero-knowledge" means the service provider cannot access your data. Not "won't"—*can't*. The system is built so that decryption without your keys is mathematically impossible.
 
-This isn't just a policy promise where a company says "we won't look at your data." It's a technical guarantee where the system is designed so they can't look at your data. The difference is profound: policies can change, employees can be bribed or coerced, and companies can be acquired. Mathematics doesn't negotiate.
+This is different from a privacy policy that says "we don't look at your data." Policies change. Employees get bribed. Companies get acquired. Court orders compel disclosure. A policy is a promise from people. Zero-knowledge is a constraint from mathematics. Mathematics doesn't negotiate.
 
-## Why Zero-Knowledge Matters
+## How Traditional Security Fails
 
-Traditional security works differently. You send your secret to a service, the service encrypts and stores it, but the service holds the decryption key. Your secret is protected by their policies and their security practices. You're trusting that their employees are honest, their systems are secure, and their policies won't change.
+In a standard setup: you send data to a service, the service encrypts it, the service holds the encryption key. Your secret is now protected by their operational security, their employee integrity, their resistance to legal pressure, and their continued existence as the same company with the same policies.
 
-Zero-knowledge architecture inverts this model. You encrypt your secret before sending it. The service stores only encrypted data that they cannot decrypt. You or your designated recipients hold the keys. Your secret is protected by mathematics, not trust.
+Data breaches expose both encrypted data and keys. Insider threats bypass access controls. Government orders compel decryption. Acquisitions change everything about how your data gets handled.
 
-Even well-intentioned companies using traditional security can fail. Data breaches can expose stored data along with encryption keys. Insider threats mean employees with access might misuse it. Government compulsion can force companies to decrypt user data. Company changes through acquisition or policy shifts can alter how your data is treated.
+You're trusting people you've never met to protect your most sensitive information indefinitely. This is a bad bet for anything that truly matters.
 
-With traditional security, you're trusting people. With zero-knowledge, you're trusting mathematics. People fail; mathematics doesn't.
+## How Zero-Knowledge Works
 
-## How Zero-Knowledge Works in Practice
+**Client-side encryption.** Your data is encrypted in your browser with a key you control. The encrypted result—ciphertext—travels to the server. The server stores ciphertext. At no point does the server see, process, or have the ability to decrypt your plaintext data.
 
-**Client-side encryption** means your data is encrypted in your browser before it ever leaves your device. You enter your secret, your browser encrypts it with a key you control, and only the encrypted result travels to the server. The server never sees plaintext data at any point.
+**No key escrow.** The encryption keys never leave your device. There's no "forgot password" that magically restores access. If you lose the key, the data is gone—the same math that protects you from the service protects the data from anyone without the key.
 
-**Key management** in a true zero-knowledge system keeps encryption keys under your control. Keys are never transmitted to the server. Only you—or people you explicitly designate as key holders—can decrypt the data.
+**Threshold splitting.** KeyFate goes further: your secret is split into shares using Shamir's Secret Sharing before encryption. KeyFate stores one encrypted share. Your recipients get others. No single share—including KeyFate's—reveals anything about the original.
 
-**Threshold schemes** like Shamir's Secret Sharing add another dimension. Your secret is split into shares, and no single share—including whatever the service holds—can reconstruct the original. Even complete server compromise yields only useless partial information.
+## The Dead Man's Switch Challenge
 
-## Zero-Knowledge vs. End-to-End Encryption
+Zero-knowledge and dead man's switches seem contradictory. The switch needs to release your secret when you're not around to authorize it. Doesn't that require the service to have access?
 
-These terms are related but distinct. End-to-end encryption means data is encrypted in transit and at rest, but the provider may or may not have access to keys. The focus is protecting data between points.
+No. KeyFate holds one share of a Shamir split. Recipients hold other shares. The switch triggers the release of KeyFate's share—but that share alone is useless. Only when combined with recipient shares does reconstruction become possible.
 
-Zero-knowledge is more stringent: the provider mathematically cannot access data because keys never leave client control. There are no backdoors, no account recovery that bypasses encryption, no way for the service to help if you lose your keys.
+KeyFate adds a censorship-resistant layer on top: encrypted shares are published to Nostr relays (a decentralized network of independent servers). Even if KeyFate is compromised, shut down, or legally compelled, the shares on Nostr relays persist and remain retrievable.
 
-Many services marketed as "encrypted" still have key access for account recovery. If a company can reset your password and you regain full access to your data, they have your keys. That's not zero-knowledge.
+For the decryption key, the Bitcoin CSV timelock option removes human trust entirely. The key is locked in a Bitcoin transaction that becomes spendable after a specified block count. When it unlocks, the key is published on-chain. No KeyFate involvement needed.
 
-## Zero-Knowledge in Dead Man's Switches
+The result: a zero-knowledge system that releases secrets without any party having unauthorized access at any point in the process.
 
-Dead man's switches present an interesting challenge for zero-knowledge architecture. The service must keep secrets inaccessible during normal operation, release secrets to recipients when triggered, and do this without the original owner present to authorize release.
+## The Litmus Test
 
-This seems to require the service having access to your secrets. How can it be zero-knowledge?
+Ask any service that claims "zero-knowledge" these questions:
 
-KeyFate solves this using threshold cryptography. Your secret is split into shares—say, three shares. Each share alone reveals nothing. The service stores only one encrypted share. You keep one share. Recipients get one share via the dead man's switch.
+- **What happens if I forget my password?** If they can help you recover without your key material, they have your keys.
+- **Can customer support access my data?** If yes, it's not zero-knowledge.
+- **What would you provide if served with a court order?** If the answer is anything other than "ciphertext we can't decrypt," they have access.
+- **Can you read my data if your servers are fully compromised?** If the breach exposes usable data, the architecture isn't zero-knowledge.
 
-The result is that KeyFate cannot reconstruct your secret because they only have one share and need two. Recipients can't access prematurely because they only have one share. When the switch triggers, the service's share combines with the recipient's share to enable reconstruction.
+Many services marketed as "encrypted" fail these tests. End-to-end encryption is necessary but not sufficient—if the provider holds key escrow or recovery mechanisms, they have a copy of your keys.
 
-This isn't "we promise not to look." It's "reconstruction is mathematically impossible without the threshold number of shares." Even a complete server breach would yield only encrypted shares that are individually useless.
+## The Tradeoff
 
-## What This Means for You
+Zero-knowledge puts responsibility on you. Lost keys mean lost data. There's no safety net. This is the price of mathematical guarantees. KeyFate mitigates this through Shamir's threshold scheme (losing one share doesn't lose the secret) and decentralized distribution via Nostr (shares survive even if KeyFate doesn't). But ultimately, your secrets are only as safe as your management of the shares and key material.
 
-With zero-knowledge architecture, you don't have to trust the service provider. Their employees can't read your secrets. A database breach doesn't expose your data. Court orders can't force decryption because they can't decrypt. New management can't change the mathematics.
-
-You do have responsibility, though. Zero-knowledge means lost keys equal lost access—there's no recovery without your keys or shares. You must manage your shares carefully and ensure recipients are properly configured. The same mathematics that protects your data from the service also protects it from anyone without the required key material.
-
-## Evaluating Zero-Knowledge Claims
-
-Not all "zero-knowledge" claims are equal. Look for technical transparency: published architecture documentation, open-source cryptographic code, third-party security audits, and clear explanations of key management.
-
-Ask critical questions: What happens if you forget your password? Can customer support access your data? What would the company provide if legally compelled? If the answers suggest the company can help you recover without your participation, they have your keys, and it's not true zero-knowledge.
-
-## Conclusion
-
-Zero-knowledge security represents a fundamentally different approach to protecting sensitive information. Instead of trusting promises, you trust mathematics. For information as sensitive as cryptocurrency keys, passwords, and personal secrets, this level of protection isn't optional—it's essential.
-
-When choosing a dead man's switch service, verify their zero-knowledge claims carefully. Your secrets deserve mathematical guarantees, not just policy promises.
+That tradeoff—responsibility for actual security—is better than the alternative: trusting someone else's promise and hoping it holds.
     `.trim(),
   },
   {
@@ -613,67 +620,58 @@ When choosing a dead man's switch service, verify their zero-knowledge claims ca
     tags: ["digital will", "dead mans switch", "estate planning", "comparison"],
     readingTime: "6 min read",
     content: `
-## Two Approaches to Digital Legacy
+## Different Tools for Different Assets
 
-As digital assets become more valuable and more central to our lives, two distinct solutions have emerged for passing them on. Digital wills are legal documents that address digital assets through the traditional estate planning system. Dead man's switches are automated systems that release information based on check-in activity. Understanding their differences helps you choose the right approach—or, for comprehensive protection, use both together.
+A digital will is a legal document. It goes through probate, becomes public record, takes weeks to months, and gives your executor court authority to compel companies to comply.
 
-## What Is a Digital Will?
+A dead man's switch is an automated release mechanism. It's triggered by missed check-ins, delivers encrypted information to designated recipients, operates outside the legal system, and is completely private.
 
-A digital will extends traditional estate planning to cover your digital life. It typically includes an inventory of digital assets, instructions for how each should be handled, designation of a digital executor, and sometimes access credentials.
+Most people with significant digital assets need both.
 
-The process works through legal channels. You create the document with an attorney, list your digital assets and wishes, and upon death, the executor follows your instructions with court authority to compel companies to comply.
+## Where a Digital Will Works
 
-Digital wills offer important advantages. They provide a legal framework for access that companies must respect. Courts can order account access. The will becomes part of comprehensive estate planning. Most major service providers recognize executor authority.
+Traditional accounts with established death policies: email, social media, banking, investment accounts. Companies recognize executor authority backed by court orders. The legal framework handles transfer of accounts that belong to centralized services.
 
-However, digital wills have significant limitations. They become public record through probate, potentially exposing sensitive information. Execution can take months as legal processes unfold. Access depends on what companies will actually honor, which varies. Some digital assets—particularly cryptocurrency—are dangerous to include in documents that become public.
+A digital will also serves as the official record of your wishes—which accounts to memorialize, which to delete, who handles what.
 
-## What Is a Dead Man's Switch?
+## Where a Digital Will Fails
 
-A dead man's switch operates outside the legal system entirely. You store encrypted secrets, set a check-in schedule, designate recipients, and if you miss check-ins, the system automatically releases your information to recipients.
+**Cryptocurrency.** Your 24-word seed phrase in a document that becomes public record during probate is catastrophically bad security. Anyone who accesses court filings can see it. Attorneys handling the estate can see it. And the probate timeline—weeks to months—is far too slow for volatile markets.
 
-The advantages are substantial for certain use cases. Release is immediate when triggered, with no legal processes required. The system works for any type of information. Nothing becomes public record. Cryptocurrency keys can be handled safely.
+**Passwords.** Same public record problem. Your password manager master password in a probate filing is a gift to identity thieves.
 
-The limitations differ from those of digital wills. A dead man's switch grants no legal authority to access accounts held by companies. It requires you to maintain regular check-ins. Accidental triggers are possible if you miss check-ins unexpectedly. The system depends on the service's reliability.
+**Time-sensitive information.** Probate moves at legal speed, not crisis speed. If your family needs access now, "the court will process this in 6-8 weeks" doesn't help.
 
-## Key Differences
+## Where a Dead Man's Switch Works
 
-**Trigger mechanisms** differ fundamentally. Digital wills are triggered by death certificates and require legal process with human verification. Dead man's switches are triggered by missed check-ins through an automatic process that doesn't technically require death—any incapacity works.
+Anything that needs to stay private and arrive fast. Cryptocurrency seed phrases (protected with Shamir's Secret Sharing, so no single party has the whole key). Password manager access. Account credentials. Business continuity information. Personal messages.
 
-**Timeline** varies dramatically. Digital wills take weeks to months for probate, with additional time for execution, and companies may delay or refuse requests. Dead man's switches release information within hours to days after trigger, immediately available to recipients with no external dependencies.
+KeyFate's implementation adds censorship resistance: encrypted shares distributed via Nostr relays survive even if KeyFate itself is unavailable. Bitcoin CSV timelocks can release decryption keys automatically, with no human in the loop.
 
-**Privacy** differs completely. Digital wills become public record through probate, accessible to courts, attorneys, and potentially anyone who looks. Dead man's switches remain private between you and recipients with no public disclosure or legal oversight.
+## Where a Dead Man's Switch Falls Short
 
-**Legal authority** points in opposite directions. Digital wills grant courts the power to order account access, companies recognize executor authority, and executors have legal protection. Dead man's switches grant no legal authority—recipients simply act on information provided, working around rather than through company policies.
+No legal authority. If your heirs need a court order to compel a company to hand over an account, a dead man's switch can't provide that. It delivers information, not legal standing.
 
-## Which Do You Need?
+Requires maintenance—you have to keep checking in. An abandoned switch eventually triggers. (This is a feature in the incapacity case, but it means the system needs active engagement.)
 
-Use a digital will for traditional digital accounts like social media and email where companies have established processes, accounts that recognize legal executors, official record of digital asset wishes, and integration with your overall estate plan.
+## Using Both Together
 
-Use a dead man's switch for cryptocurrency and private keys that must never become public, passwords and credentials for immediate access, time-sensitive information that can't wait for legal processes, and anything that must stay private.
+Your digital will handles the legal framework:
+- Names a digital executor
+- Lists accounts and assets
+- References the existence of your dead man's switch
+- Provides general instructions
 
-Use both for comprehensive digital estate planning, maximum flexibility across different asset types, redundant protection, and situations where some assets need legal processes while others need immediate private release.
+Your dead man's switch handles the sensitive material:
+- Crypto seed phrases (Shamir-split, encrypted)
+- Password manager master password
+- 2FA backup codes
+- Detailed recovery instructions
+- Personal messages to recipients
 
-## How They Work Together
+Your will might say: "I maintain a dead man's switch with KeyFate. Recipients [names] will receive access to my cryptocurrency and credentials. My executor should coordinate with these recipients for complete estate settlement."
 
-A recommended approach uses each tool for what it does best. Your digital will lists accounts and assets, names a digital executor, references the existence of your dead man's switch, and provides general instructions within the legal framework.
-
-Your dead man's switch stores actual credentials, includes cryptocurrency access, provides detailed how-to guides, and designates specific recipients for immediate access needs.
-
-For example, your digital will might say: "I have a dead man's switch account with KeyFate. My designated recipients are [names]. They will receive access to my cryptocurrency and password manager upon my incapacity or death. My digital executor should work with these recipients to settle my digital estate."
-
-Meanwhile, your dead man's switch contains your Bitcoin wallet recovery phrase protected via Shamir's Secret Sharing, your password manager master password, detailed instructions for each recipient, and a list of accounts with specific guidance for handling each.
-
-## Cryptocurrency: Why Dead Man's Switch Wins
-
-For cryptocurrency specifically, dead man's switches are clearly superior. The problems with crypto in wills are severe: recovery phrases become public record during probate, legal processes are far too slow for volatile markets, attorneys may not understand cryptocurrency security, and probate potentially exposes keys to many people.
-
-Dead man's switches solve these problems. Keys never become public. Release happens immediately when needed. Shamir's Secret Sharing protects keys with mathematical guarantees. Recipients are chosen specifically for capability and trustworthiness.
-
-## Conclusion
-
-Digital wills and dead man's switches serve different purposes, and most people with significant digital assets should use both. A digital will provides legal framework and handles traditional accounts appropriately. A dead man's switch provides credentials, cryptocurrency access, and private information that requires immediate, private release.
-
-This combination ensures your digital legacy is handled properly, privately, and promptly—regardless of what types of assets you leave behind.
+The will provides authority. The switch provides access. Together they cover everything.
     `.trim(),
   },
   {
@@ -687,75 +685,60 @@ This combination ensures your digital legacy is handled properly, privately, and
     tags: ["cold storage", "hardware wallet", "ledger", "trezor", "inheritance"],
     readingTime: "8 min read",
     content: `
-## The Cold Storage Challenge
+## The Problem with Cold Storage Inheritance
 
-Cold storage—keeping cryptocurrency offline in hardware wallets—represents the gold standard for security against hackers and online threats. But this security creates unique inheritance challenges. Physical devices can be lost, damaged, or destroyed. PIN codes can be forgotten or never shared. Seed phrases must be perfectly preserved for decades. And your heirs may not understand the technology at all.
+Cold storage is the gold standard for protecting crypto from online threats. Hardware wallets keep your keys offline, air-gapped from the internet. Excellent security while you're alive.
 
-## Understanding What Heirs Need
+Terrible for inheritance. The device can be lost, broken, or destroyed. The PIN dies with you if you never shared it. The seed phrase—the actual key to everything—has to survive decades and reach the right person at the right time.
 
-To access your cold storage cryptocurrency, heirs typically need one of two things. With the hardware wallet itself, they need physical possession of the device, the PIN code to unlock it, and knowledge of how to use it. Without the hardware wallet, they need your seed phrase (recovery phrase), knowledge of derivation paths (usually standard), and access to compatible wallet software.
+## What Your Heirs Actually Need
 
-The seed phrase is ultimately the key. With it, your crypto can be recovered even if the physical device is lost, destroyed, or unavailable. Without it, even possessing the hardware wallet becomes useless if the PIN is unknown.
+With the hardware wallet: the physical device, the PIN, and enough knowledge to use it.
 
-## Securing Your Seed Phrase for Inheritance
+Without the hardware wallet: the 24-word seed phrase and a compatible wallet app. The seed phrase is what matters. With it, everything is recoverable from any device. Without it, even having the hardware wallet is useless if the PIN is unknown.
 
-**Shamir's Secret Sharing** provides the most robust approach for most users. Your 24-word seed phrase is mathematically split into shares where each share alone reveals nothing about your seed. Combining a threshold number of shares reconstructs the phrase. You distribute shares to different people and locations.
+## Protecting the Seed Phrase
 
-A typical 2-of-3 setup might store one share with KeyFate (encrypted, released when triggered by missed check-ins), give one share to your spouse, and keep one share in your own secure location. This eliminates single points of failure—no single party can access your crypto, but any two can reconstruct access.
+### Shamir's Secret Sharing (Recommended)
 
-**Metal backup with separate instructions** offers a physical approach. Stamp seed words into metal plates that resist fire and water damage. Store the metal backup in a secure location like a home safe or bank vault. Create a separate instructions document explaining what the seed is and how to use it. Reference the location in your dead man's switch.
+Split the seed phrase into shares. 2-of-3 is the most common setup: one share with your spouse, one encrypted on KeyFate's server (released when you miss check-ins), one as your backup.
 
-The risk is that physical security becomes critical, single copies create single points of failure, and documentation must be kept current as your wallet setup evolves.
+Each share individually reveals zero information about the seed. Any two reconstruct it. KeyFate publishes encrypted shares to Nostr relays for censorship-resistant delivery—if KeyFate disappears, the shares remain retrievable from independent relay servers.
 
-**Encrypted digital backup** stores an encrypted copy of your seed in cloud storage or email, with the encryption password shared via dead man's switch. This is convenient but introduces digital storage risks and adds complexity through multiple security layers.
+### Metal Backup
 
-## Hardware Wallet Specific Considerations
+Stamp seed words into steel or titanium plates. Survives fire and flood. Store in a home safe or bank vault. The problem: it's a single point of failure, and anyone who finds it has your crypto. Consider this as one component alongside a Shamir setup, not a standalone solution.
 
-**Ledger devices** require documenting the device location, PIN code, 24-word recovery phrase, and any passphrase (25th word) if used. Ledger offers a "Ledger Recovery" service that sends encrypted shares to third parties, but this is controversial in the cryptocurrency community. Using Shamir's Secret Sharing for the seed phrase instead keeps you in control.
+## Device-Specific Notes
 
-**Trezor devices** require similar documentation. Notably, Trezor Model T supports native Shamir backup directly on the device—you can create shares as part of initial setup and distribute them to trusted parties. This is an excellent feature that simplifies the inheritance planning process.
+**Ledger:** Document the device location, PIN, 24-word seed, and any passphrase (25th word). Ledger offers their own "Ledger Recovery" service—it's controversial because it sends key material to third parties. Shamir's Secret Sharing through KeyFate keeps you in control without trusting Ledger's partners.
 
-**Coldcard devices** add complexity with features like Brick Me PIN (which destroys the device if entered) and duress wallets. Document these features clearly so heirs don't accidentally trigger destructive functions. Include your PIN, seed phrase, and clear explanations of any advanced features you've enabled.
+**Trezor:** Model T and newer support native Shamir backup (SLIP-39) on-device during setup. If your Trezor already generated Shamir shares, document how many exist and where each one is stored. Make sure your dead man's switch includes the locations and instructions for combining them.
 
-## Creating Comprehensive Instructions
+**Coldcard:** Has dangerous features like Brick Me PIN (destroys the device) and duress wallets. Document these explicitly so your heirs don't accidentally destroy the device. Clear warnings, in large text, at the top of your instructions.
 
-Your heirs need guidance written for people who may not understand cryptocurrency at all. Start with basic information: what cryptocurrency you hold, approximate value (or where to check current value), which hardware wallet(s) you use, and physical locations of devices.
+## Writing Instructions
 
-Access instructions should cover PIN codes, step-by-step device usage, what software or apps to use with the device, and where to find the seed phrase backup if the device is unavailable.
+Write for someone who has never touched a hardware wallet. Your heirs may be smart, capable people who have zero cryptocurrency experience.
 
-Recovery instructions explain how to recover funds without the hardware wallet—which wallet software to download, where to get it safely, and the step-by-step recovery process. Include explicit warning signs of scams, since cryptocurrency attracts fraud.
+Include: what crypto you hold and approximate value, which devices you use and where they are, PINs, step-by-step usage instructions, seed phrase backup location (or Shamir share details), wallet software to download and where to get it safely, and—critically—scam warnings. Crypto attracts fraud targeting bereaved families. "Never enter seed phrases on websites. Be suspicious of anyone offering to help who wasn't designated in advance."
 
-Security warnings should be prominent. Never enter seed phrases on websites. Be extremely cautious of anyone offering to "help" who wasn't designated in advance. Verify software authenticity before downloading. When in doubt, stop and seek help from designated trusted contacts.
+## What Goes in the Dead Man's Switch
 
-## What to Include in Your Dead Man's Switch
+- Seed phrase access (Shamir shares with instructions for obtaining additional shares)
+- Hardware wallet details: device location, PIN, passphrase if applicable
+- Recovery guide for accessing funds without the hardware wallet
+- Approximate values and holdings summary
+- Contact information for any designated helpers
+- Security warnings
 
-For cold storage protection, your dead man's switch should contain seed phrase access (either the complete phrase or a Shamir share with instructions for obtaining other shares), hardware details including device location, PIN code, and any passphrase, a comprehensive recovery guide, approximate value information, and security reminders.
+## Testing
 
-The goal is that recipients receive everything they need to access your cryptocurrency or know exactly where to find the remaining pieces.
+Gather your threshold shares. Combine them. Verify the seed phrase comes back correctly. Recover to a new wallet on a fresh device and confirm balances appear.
 
-## Common Mistakes to Avoid
+Have someone else read your instructions and explain the steps back to you. If they're confused, your heirs will be worse off—they'll be confused and grieving.
 
-**Storing seed phrase only in a safe deposit box** creates timing problems. The box may be sealed upon death, and access can take months to obtain. Use Shamir's Secret Sharing instead, where one share can be in a bank vault but other shares provide faster access paths.
-
-**Giving the hardware wallet to an heir** grants them immediate access to your funds. Instead, keep the device and provide seed phrase access through your dead man's switch when actually needed.
-
-**Not testing recovery** leaves you unsure whether your instructions actually work. Test the complete recovery process yourself. Walk through it with a technically capable person who might help your heirs. Document confusion points while you can address them.
-
-**Assuming heirs understand crypto** leads to instructions that skip crucial steps. Write for complete beginners who may never have used cryptocurrency.
-
-**Single points of failure** mean one lost seed phrase equals permanent loss. Multiple shares in multiple locations with threshold recovery protect against this.
-
-## Testing Your Plan
-
-Before relying on your setup, verify it works. Gather your threshold number of shares and confirm they reconstruct the correct seed phrase. Use the seed phrase to actually recover to a new wallet and verify expected balances appear. Have a trusted person review your instructions and explain the steps back to you—if they're confused, your heirs will be too.
-
-Verify all information in your dead man's switch is current, recipients are correctly configured, and instructions reference your actual current devices and storage locations.
-
-## Conclusion
-
-Cold storage is the most secure way to hold cryptocurrency during your lifetime, but it requires careful inheritance planning to ensure that security doesn't become a barrier for your heirs. The combination of Shamir's Secret Sharing and a dead man's switch provides security during your lifetime with no single party having full access, reliable automatic transfer when triggered, redundancy through threshold schemes that tolerate lost shares, and privacy without probate or public disclosure.
-
-Take time to set this up properly. Your heirs will thank you for the foresight—and the crypto.
+Update annually or after any significant change in holdings, devices, or family situation.
     `.trim(),
   },
   {
@@ -769,71 +752,47 @@ Take time to set this up properly. Your heirs will thank you for the foresight�
     tags: ["subscriptions", "estate planning", "digital accounts", "family"],
     readingTime: "5 min read",
     content: `
-## The Hidden Cost of Digital Subscriptions
+## Subscriptions Don't Know You're Dead
 
-The average person maintains 12 or more paid subscriptions. When they pass away, credit cards continue getting charged month after month. Services keep running unused while families struggle to even identify what exists, let alone gain access to cancel.
+The average person carries 12+ paid subscriptions. Netflix, Spotify, Adobe, gym memberships, cloud storage, meal kits, news sites, SaaS tools. When you die, they keep charging. Month after month, the credit card bills pile up while your family doesn't even know which services exist, let alone how to cancel them.
 
-This creates both financial drain and emotional burden during an already difficult time. Subscriptions are designed to be "set and forget"—convenient during life but problematic for estate settlement.
+This is a solvable problem, but only if you plan for it.
 
-## Common Subscription Categories to Check
+## Where to Look
 
-Families should systematically search for streaming services like Netflix, Hulu, Disney+, Spotify, and Audible. Software subscriptions often include Microsoft 365, Adobe Creative Cloud, password managers, and cloud storage services like Dropbox, Google One, and iCloud+.
+**Streaming and media:** Netflix, Hulu, Disney+, Spotify, Audible, YouTube Premium, Apple TV+.
 
-Fitness and health subscriptions might include gym memberships, Peloton subscriptions, meditation apps like Headspace or Calm, and health tracking services. News and publications span from major newspapers like the New York Times to magazine subscriptions and newsletter services like Substack.
+**Software:** Microsoft 365, Adobe Creative Cloud, password managers, cloud storage (Dropbox, Google One, iCloud+).
 
-Home and utility subscriptions cover Ring and Nest services, smart home subscriptions, meal kit deliveries, and pet supply services. Professional services might include LinkedIn Premium, domain registrations, web hosting, and professional organization dues.
+**Health and fitness:** Gym memberships, Peloton, meditation apps (Headspace, Calm), health trackers.
 
-## Finding Unknown Subscriptions
+**News:** Newspaper subscriptions, Substack newsletters, magazine services.
 
-The most effective approach is reviewing payment method statements. Check credit card statements, debit card statements, PayPal, Apple Pay and Google Pay, and bank accounts for direct debits. Look for recurring charges appearing month after month.
+**Home:** Ring, Nest, smart home services, meal kits, pet supply services.
 
-Email accounts often contain subscription evidence. Search for terms like "subscription," "recurring," "membership," "renewal," "billing," "payment," and "thank you for your payment."
+**Professional:** LinkedIn Premium, domains, hosting, professional organizations.
 
-App store subscriptions are easily overlooked. Check Apple App Store subscriptions in Settings under Apple ID, and Google Play Store subscriptions in the Play Store app. These often include services people signed up for through their phones and forgot about.
+**App store:** Check Apple Settings > Apple ID > Subscriptions, and Google Play Store > Subscriptions. People forget about these constantly.
 
-Password managers, if accessible, contain logins for subscription services that may not appear in other searches.
+## Finding the Ones You Forgot
 
-## Canceling Without Password Access
+Pull credit card and bank statements for the last 3 months. Look for recurring charges. Search email for "subscription," "renewal," "billing," and "receipt." Check the password manager—every login is a potential subscription.
 
-Many cancellations can be accomplished through official channels without account access. Most companies will cancel subscriptions when presented with a death certificate copy, proof of relationship or executor status, and account identification like the email address or name on account.
+## Canceling Without Access
 
-If official channels fail, work with credit card companies. Cancel the credit card being charged, dispute charges as unauthorized after the death date, and work with the bank to block recurring charges from specific merchants.
+Death certificate + proof of relationship gets you surprisingly far. Most companies will cancel when presented with these documents plus account identification (email or name on account).
 
-Major platforms have specific processes. Apple can assist with subscription access and cancellation when contacted with death certificate. Google's Inactive Account Manager, if previously configured, helps; otherwise submit a request with documentation. Amazon customer service can freeze Prime and other subscriptions with proper documentation.
+When official channels fail: cancel the credit card being charged. Dispute post-death charges with the card issuer. Banks can block recurring charges from specific merchants.
 
-## Preventing Future Problems
+Apple, Google, and Amazon all have documented processes for death-related account actions. They're slow, but they work.
 
-For your own planning, maintain a subscription inventory that includes service name, cost and billing frequency, payment method used, login credentials or password manager reference, and cancellation contact information. Update this list regularly and store it in your dead man's switch.
+## The Prevention Plan
 
-Encourage family members to use password managers with inheritance features, maintain their own subscription lists, set up inactive account features where available, and share access information with at least one trusted person.
+Maintain a subscription inventory. For each: service name, cost, billing frequency, payment method, how to cancel. Store it in your dead man's switch along with your password manager credentials and email access.
 
-## What to Include in a Dead Man's Switch
+Include notes on what to keep (shared family accounts, cloud storage with irreplaceable data), what to cancel immediately (anything purely personal), and what's hard to cancel (gym memberships, services without online cancellation).
 
-For subscription management, store a complete inventory of known subscriptions, approximate monthly and annual costs, and payment methods used. Include access information for email accounts (needed to find additional subscriptions), password manager master password, and credit card online portals.
-
-Add instructions noting which subscriptions family members should maintain (shared accounts), which to cancel immediately to stop charges, and contact information for subscriptions that are difficult to cancel.
-
-## Priority Order for Cancellation
-
-When settling a digital estate, immediately address high-cost subscriptions, services approaching renewal dates, and services that clearly aren't used. These prevent unnecessary charges.
-
-Handle lower-cost services, services with prepaid terms, and services family members might use during transition when convenient.
-
-Keep some services temporarily active, including family-shared accounts, cloud storage containing important data not yet retrieved, and email accounts needed for other service cancellations.
-
-## Working with Credit Card Companies
-
-Notify all card issuers of the death promptly. Request a freeze on new charges and document recurring charges for estate records.
-
-Post-death charges can often be disputed. Services should not continue charging after death notification, and most card companies will reverse charges made after proper notification. Keep records of all communication attempts with services.
-
-Some card companies can provide helpful information including lists of all recurring merchants, scheduled upcoming charges, and historical recurring patterns.
-
-## Conclusion
-
-Digital subscriptions create ongoing financial obligations that don't stop at death. Proper planning—maintaining a subscription inventory and providing access through a dead man's switch—saves families significant stress and money during an already difficult time.
-
-Take an hour today to inventory your own subscriptions. Your family will appreciate it.
+Update the list when you add or remove subscriptions. A stale inventory is better than nothing, but a current one is better.
     `.trim(),
   },
   {
@@ -847,59 +806,45 @@ Take an hour today to inventory your own subscriptions. Your family will appreci
     tags: ["social media", "facebook", "instagram", "digital legacy", "memorialization"],
     readingTime: "6 min read",
     content: `
-## The Social Media Legacy Question
+## What Happens to Your Accounts
 
-Social media accounts contain years of memories, connections, and personal expression. When someone dies, families face difficult choices. Should they delete everything permanently? Memorialize the account as a place for remembrance? Try to maintain or transfer it for ongoing use?
+When you die, your social media accounts keep existing. Friends still tag you in memories. The algorithm still surfaces your old posts. Your profile picture still appears in search results. Nothing happens automatically.
 
-Each platform offers different options, and there's no universally "right" answer—it depends on the deceased's wishes and family preferences.
+Your family eventually faces a decision: memorialize, delete, or try to take over the account. Each platform handles this differently, and none of it is intuitive to figure out while grieving.
 
-## Platform-by-Platform Guide
+## Platform by Platform
 
-**Facebook and Instagram** (both owned by Meta) offer the most developed options. Accounts can be memorialized, showing "Remembering" before the name while keeping content visible according to existing privacy settings. Accounts can be deleted permanently. Or data can be downloaded before deletion.
+**Facebook / Instagram (Meta).** Most developed options. Accounts can be memorialized ("Remembering" added before the name, content preserved). Accounts can be deleted permanently. Data can be downloaded.
 
-If a Legacy Contact was designated beforehand, that person can write a pinned tribute post, update profile and cover photos, respond to friend requests, request account deletion, and download photos and posts if permitted. Legacy Contacts cannot log into the account, read messages, remove friends, or change past posts.
+If you designated a Legacy Contact, they can write a pinned tribute post, update profile/cover photos, respond to friend requests, request deletion, and download content. They *cannot* log in, read messages, or change past posts.
 
-To request memorialization, visit Facebook's Memorialization Request page and provide proof of death through obituary or death certificate. Processing typically takes days to weeks.
+Set this up now: Settings > General > Memorialization Settings.
 
-**Twitter/X** offers only deactivation—there's no memorialization feature. Contact Twitter Support with death certificate and proof of relationship. The account deactivates within 30 days, then permanently deletes 30 days later. Content cannot be preserved on the platform, so download data beforehand if possible.
+**Twitter/X.** No memorialization. Only deactivation, which leads to permanent deletion after 30 days. Download data before requesting deactivation—once it's gone, it's gone.
 
-**LinkedIn** can memorialize accounts with an "In Loving Memory" banner, removing the profile from searches while preserving content for connections. Alternatively, accounts can be closed completely. Use LinkedIn's deceased member form with proof of death.
+**LinkedIn.** Can add "In Loving Memory" banner and remove from search, or close the account entirely. Use their deceased member form.
 
-**YouTube** can close channels, transfer management to another person, or provide specific video downloads. If Inactive Account Manager was configured, designated people receive access after inactivity. Without prior setup, contact YouTube with death certificate to request data download or account closure.
+**YouTube / Google.** Inactive Account Manager (set up at myaccount.google.com) auto-shares data after an inactivity period you configure. Without it, contact YouTube with death certificate for data download or closure.
 
-**TikTok** and **Pinterest** primarily offer account deletion rather than memorialization. Contact each platform with death certificate and relationship proof.
+**TikTok / Pinterest.** Deletion only, no memorialization. Contact with death certificate.
 
-## Pre-Planning Your Social Media Legacy
+## What to Do Now
 
-Take advantage of platform features now. Facebook's Legacy Contact settings are in Settings > General > Memorialization Settings. Choose a trusted person, select what they can do, and optionally request deletion instead of memorialization.
+**Configure legacy features.** Facebook Legacy Contact, Google Inactive Account Manager. Takes 10 minutes each.
 
-Google's Inactive Account Manager covers YouTube and other Google services. In myaccount.google.com under Data & Privacy, set up the manager, choose trusted contacts, set timeout period (3-18 months), and choose what to share or delete.
+**Decide your preferences.** Which accounts memorialized? Which deleted? Any content to preserve or remove? Write it down.
 
-In your dead man's switch, store a list of all social media accounts, your wishes for each (memorialize, delete, or specific instructions), account credentials if heirs should have direct access, and names of people to notify.
+**Store instructions in your dead man's switch.** List all social media accounts, your wishes for each, credentials where relevant, and who should handle the decisions.
 
-Communicate your preferences clearly. Which accounts should be memorialized as lasting tributes? Which should be deleted immediately? Is there specific content to preserve or remove? Who should handle social media decisions?
+**Download your own data periodically.** Most platforms offer export features. Your family can't download after deletion, and some platforms restrict downloads for non-account-holders.
 
-## Practical Considerations
+## For Families
 
-Before any deletion, consider downloading content including photos and videos, posts and memories, messages where accessible, and contact lists. Most platforms offer data download features—use them before making irreversible decisions.
+You often don't need passwords. Memorialization, deletion, and data requests go through official platform channels with death certificate and relationship proof.
 
-Shared or business accounts need special consideration. Clarify ownership in advance, document access credentials, establish succession plans, and consider platform-specific business tools.
+Don't rush. Friends may want time to post memories and tributes on a memorialized account. Deletion is permanent. Download data first.
 
-If a deceased person's account is being misused, report to the platform immediately with death certificate and request expedited action. Consider legal options if harassment persists.
-
-## What Families Should Know
-
-You may not need passwords for many actions. Memorialization requests, account deletion, and data requests can often be handled through official platform channels using death certificates, obituaries, news articles, and relationship documentation.
-
-Timing matters for family decisions. Waiting allows friends to pay respects through comments and shared memories. Immediate deletion is permanent and irreversible. Downloading data must happen before deletion. Memorialized accounts provide ongoing memorial space.
-
-There's genuinely no "right" answer. Some families find comfort in preserved accounts they can visit. Others prefer clean digital closure. Respect the deceased's known wishes, and consider family consensus for matters they didn't address.
-
-## Conclusion
-
-Social media accounts represent a significant part of modern digital legacy. The best approach combines pre-planning through legacy contact setup and documented wishes, clear instructions stored in a dead man's switch, access backup through credentials for accounts that matter, and flexibility for heirs to make final decisions with guidance.
-
-Don't leave your family guessing about your digital wishes. Take 30 minutes to configure legacy settings and document your preferences.
+There's no universally right answer. Some families find comfort in a preserved profile. Others want clean closure. If the person didn't leave instructions, make the decision together.
     `.trim(),
   },
   {
@@ -913,63 +858,47 @@ Don't leave your family guessing about your digital wishes. Take 30 minutes to c
     tags: ["email", "executor", "estate planning", "legal", "gmail", "outlook"],
     readingTime: "7 min read",
     content: `
-## Why Executors Need Email Access
+## Why Email Is the First Domino
 
-A deceased person's email often contains the keys to their entire digital estate. Financial account information, bill pay and subscription details, important documents and contracts, business communications, and personal correspondence all live in email. Perhaps most importantly, email provides account recovery options for countless other services.
+Email is the skeleton key to a digital estate. Password recovery for almost every service routes through it. Financial statements, subscription confirmations, legal documents, business correspondence—it all lives in the inbox.
 
-For executors, email access is often the critical first step to understanding and settling the complete digital estate.
+For executors, getting into email is often the critical first step. Without it, you're locked out of everything else.
 
-## Legal Framework
+## The Legal Landscape
 
-The Revised Uniform Fiduciary Access to Digital Assets Act (RUFADEA) provides the primary legal framework for digital asset access in the United States. It establishes a priority system for determining who gets access and requirements for when service providers must disclose information.
+The Revised Uniform Fiduciary Access to Digital Assets Act (RUFADEA) governs digital asset access in most US states. Priority order: the user's own settings (like "delete on death") come first, then will provisions, then provider terms of service, then state default rules.
 
-RUFADEA has been adopted in most US states, though with variations. The priority of authority places the user's documented wishes first (including online tool settings), followed by will or trust provisions addressing digital assets, then service provider terms of service, and finally state default rules.
+Key takeaway: if the deceased configured their account to auto-delete, that usually trumps executor authority. User settings win.
 
-For executors, this means user settings can trump executor authority. If the deceased configured their account to "delete on death," that generally stands. Without explicit user direction, executor rights depend on state law and provider policies.
+## What Each Provider Will (and Won't) Do
 
-## Provider-Specific Policies
+**Gmail / Google.** Best case: Inactive Account Manager was set up, and you get automatic data access after inactivity. Without it: submit Google's deceased user form with death certificate, your ID, and proof of legal authority. Expect weeks to months. They may provide data export but won't give you login access or reset the password.
 
-**Gmail and Google** work best when Inactive Account Manager was previously configured, providing automatic access after an inactivity period with content shared according to user settings. Without prior setup, submit a request through Google's deceased user form with death certificate, your ID, and proof of legal authority. Google reviews requests over weeks to months and may provide data export of content but will not provide login access or password reset.
+**Outlook / Microsoft.** No equivalent to Inactive Account Manager. Submit Next of Kin form with death certificate. May provide data on DVD. Takes months. No live access.
 
-**Outlook and Microsoft** have no equivalent to Inactive Account Manager. The next-of-kin request process requires completing Microsoft's Next of Kin form with death certificate and proof of relationship. Microsoft reviews requests and may provide data on DVD in bulk export format. This can take months, and live account access is generally not granted.
+**Yahoo.** Will close the account. Will *not* release content to families. Court orders produce inconsistent results. Yahoo is the worst major provider for this.
 
-**Yahoo Mail** has the most restrictive policy. Contact Yahoo with death certificate and they will close the account, but Yahoo does not release content to families. Even court orders may have inconsistent results.
+**iCloud / Apple.** If Digital Legacy was configured: Legacy Contacts get access codes for most iCloud data (3-year window after death). Without it: submit documentation and hope. Data access possible; live account access isn't.
 
-**Apple iCloud Mail** works well if Digital Legacy was configured, with Legacy Contacts receiving access codes for most iCloud data (limited to 3 years after death). Without prior setup, request through Apple's deceased person process with documentation—Apple may provide data access but not live account access.
+**ProtonMail.** Zero-knowledge encryption means ProtonMail literally cannot access email content. Without the password, emails are permanently inaccessible. This is intentional.
 
-**ProtonMail** presents a unique situation due to zero-knowledge encryption. ProtonMail cannot access email content themselves, so family requests are handled case-by-case with limited options. Without the password, emails may be permanently inaccessible—this is by design as a privacy feature.
+## Practical Steps
 
-## Practical Steps for Executors
+**1. Check for pre-planning.** Password manager access, Google/Apple legacy settings, dead man's switch accounts, physical notes, estate documents.
 
-First, check for pre-planning. Look for passwords in estate documents, password manager access, legacy contact designations with Google or Apple, dead man's switch accounts, and written instructions in safe or files.
+**2. Try password recovery.** Recovery email (might lead to an accessible account), phone number recovery (if you have their phone), security questions. Document your legal authority before attempting access.
 
-Attempt standard password recovery where legally appropriate. Try recovery email addresses which may lead to accessible accounts. Use phone number recovery if you have their phone. Try security questions if answers might be known. Document your legal authority before attempting access.
+**3. Contact the provider.** Certified death certificate, your ID, proof of executor status, specific request (data download, account closure). Be prepared for weeks of waiting, possible denial, and the need for follow-up.
 
-Contact providers with proper documentation including certified death certificate, your identification, proof of executor or administrator status, and specific request (content download, account closure, etc.). Expect weeks to months for resolution, possible denial or limited response, and need for follow-up.
+**4. Escalate if needed.** Estate attorney, court orders. Consider cost-benefit—some content isn't worth the legal fight.
 
-If providers don't cooperate, consider legal action. Consult an estate attorney about options. Court orders may compel disclosure. Conduct cost-benefit analysis since some content may not be worth pursuing.
+## The Better Path: Plan Ahead
 
-## What You Can Do With Access
+All of this is avoidable. A dead man's switch delivers email credentials directly to the executor, bypassing provider processes entirely. Works for every email provider, including zero-knowledge services like ProtonMail where the provider themselves can't help.
 
-Once email access is obtained, search for bank and investment accounts, insurance policies, creditors and obligations, and tax documents. Use email to reset passwords on other accounts and take over subscriptions that should continue. Notify contacts of death if appropriate. Download and document important information for estate records.
+Set up Google Inactive Account Manager. Set up Apple Digital Legacy. Store your email password in a dead man's switch. Use a password manager with emergency access features.
 
-## Preventing Access Problems
-
-For your own planning now, set up legacy features like Google Inactive Account Manager and Apple Digital Legacy. Document your wishes in estate documents. Consider a dead man's switch for password access. Use a password manager with inheritance features or emergency access.
-
-If you're an executor planning ahead, discuss digital assets with the person now while they can configure access. Help them set up legacy features. Know where access information would be stored. Understand which email providers they use.
-
-## Alternative Approaches
-
-A dead man's switch provides a cleaner solution than fighting with providers. The deceased stores their email password in the switch, which releases to executor or family when triggered. This provides direct access without provider approval and works across all email providers.
-
-Shared password manager features from services like Bitwarden and 1Password offer emergency access and family sharing options that can be configured in advance.
-
-## Conclusion
-
-Email access is crucial for estate settlement but legally and practically complex. The best approach combines pre-planning through legacy features and documented wishes, legal understanding of rights under state law, provider knowledge of what each service will and won't do, and backup plans like dead man's switches for guaranteed access.
-
-If you're an executor facing access challenges, start with provider-specific processes but be prepared for delays and limitations. If you're planning your own estate, make access easy for your executor—they'll have enough challenges without fighting for your email.
+If you're an executor, have this conversation with the person *now*—while they can still configure access. Once they're gone, your options narrow dramatically.
     `.trim(),
   },
   {
@@ -983,149 +912,134 @@ If you're an executor facing access challenges, start with provider-specific pro
     tags: ["freelancer", "business", "solopreneur", "continuity", "digital assets"],
     readingTime: "6 min read",
     content: `
-## The Freelancer Vulnerability
+## You Are a Single Point of Failure
 
-Freelancers and solopreneurs face unique vulnerabilities that traditional employees don't encounter. Critical business knowledge exists only in your head. Client relationships depend entirely on your personal availability. Digital assets—websites, social media, business accounts—have no automatic succession. There's no HR department, no business partner, no organizational structure to manage transitions.
+As a freelancer, everything lives in your head and on your devices. Client relationships, project context, account credentials, financial records. There's no HR department, no backup team, no institutional memory. If you're incapacitated tomorrow, your business doesn't pause—it collapses. Clients get stranded. Projects miss deadlines. Years of work becomes inaccessible.
 
-If you become incapacitated, your business doesn't just pause—it can collapse entirely, leaving clients stranded and years of work inaccessible.
+## What Needs Protection
 
-## Critical Digital Assets for Freelancers
+**Client assets:** Contact info, project files, work in progress, communication history, contracts, any login credentials to client systems.
 
-Client-related assets form the foundation of your business value. This includes contact information for current and past clients, project files and work in progress, communication history documenting decisions and approvals, contract documents, and any login credentials to client systems you've been given.
+**Business operations:** Website and domain access, social media accounts, email, payment processing (Stripe, PayPal), invoicing platform, cloud storage.
 
-Business operations assets keep your business running. Your website and domain access, social media accounts, email accounts, payment processing credentials for Stripe or PayPal, invoicing platform access, and cloud storage containing business files all fall into this category.
+**Financial:** Business bank accounts, tax records, outstanding invoices, recurring payments, crypto received as payment.
 
-Financial assets require protection for both business continuity and estate purposes. Business bank accounts, tax records and documents, expense tracking, revenue records, and any cryptocurrency received as payment need documentation.
+**Intellectual property:** Code repositories, design files, written content, photography, proprietary methodologies.
 
-Intellectual property may have significant value. Code repositories, design files, written content, photography and video assets, and proprietary processes or methodologies you've developed should all be considered.
+## The Five Steps
 
-## Building a Business Continuity Plan
+**1. Pick your backup person.** A fellow freelancer (reciprocal arrangements work well), a spouse with some business knowledge, or a professional fiduciary. They need to understand enough to communicate with clients professionally and wind things down—or keep them going.
 
-**Step 1: Identify a trusted person** who could handle your business if needed. This might be a business partner, a spouse or family member with some business knowledge, a fellow freelancer (potentially in a reciprocal arrangement), or a professional fiduciary. They need to understand your business basics, know how to communicate with clients professionally, be authorized to access accounts, and have clear instructions for various scenarios.
+**2. Document operations.** Active clients with contacts and project status. All account credentials. Financial records location. Active deadlines. Subcontractor arrangements. Write it for someone who's never seen your business from the inside.
 
-**Step 2: Document everything** in a comprehensive business operations document. For client management, include your current client list with contacts, active projects with status, ongoing retainer arrangements, and communication preferences for key clients.
+**3. Set up a dead man's switch.** Store the documentation, credentials, and instructions encrypted in KeyFate. Set a check-in schedule. If you miss check-ins, your backup person gets everything they need.
 
-Account access documentation should cover all business account logins, payment processor access, social media credentials, domain registrar and hosting provider access. Financial documentation includes bank account information, invoice locations, outstanding receivables, and recurring payments.
+**4. Write client communication templates.** Your backup person shouldn't have to draft these under stress:
 
-Work in progress documentation helps someone continue or properly hand off your work: active project files, delivery deadlines, client expectations, and any subcontractor arrangements.
+For temporary absence: "I'm [Name], helping manage [Freelancer]'s business while they're unavailable. Your project is important. Here's the current status..."
 
-**Step 3: Set up secure access** through a dead man's switch that stores account credentials and business documentation, triggers release if you're incapacitated, and notifies designated business contacts.
+For permanent absence: "I'm writing with difficult news about [Freelancer]. I'm helping wind down their business affairs. Regarding your project..."
 
-**Step 4: Create client communication templates** that your trusted person can use. For temporary incapacity: "Hi [Client], I'm [Name], helping manage [Freelancer]'s business while they're unavailable. Your project is important, and I'm ensuring continuity. Here's the current status and next steps..." For permanent incapacity or death: "Hi [Client], I'm writing with difficult news about [Freelancer]. I'm helping wind down their business affairs. Regarding your project..."
+**5. Legal basics.** LLC (protects personal assets), operating agreement addressing incapacity, power of attorney for business matters, professional liability insurance.
 
-**Step 5: Address legal preparation** including business formation (LLC protects personal assets), operating agreement addressing incapacity if you have an LLC, power of attorney for business matters, and professional liability insurance with death/disability provisions.
+## By Freelance Type
 
-## Special Considerations by Freelance Type
+**Developers:** Code repos, server access, API keys, client environment credentials, deployment docs. Use a password manager. Keep architecture documentation current.
 
-**Developers and technical freelancers** should ensure code repositories, server and hosting access, API keys and credentials, client environment access, and custom system documentation are all accessible. Use a password manager religiously, document all client systems access, keep architecture documentation current, and ensure backup deployment knowledge exists somewhere.
+**Designers:** Figma/Adobe files in organized cloud storage. Document license transferability. Store source files, not just exports. Note client brand asset locations.
 
-**Designers and creatives** need to address design files in Figma or Adobe, stock and font licenses, client brand assets, and work-in-progress files. Keep files in cloud storage with clear organization, document software license transferability, maintain consistent file naming, and store source files rather than just exports.
+**Writers:** CMS access, drafts organized by client/project, editorial calendars, published work archives. Document ghostwriting and confidentiality arrangements.
 
-**Writers and content creators** should document content management system access, drafts and research, editorial calendars, published work archives, and any ghostwriting attribution arrangements. Keep writing organized by client and project, document confidentiality agreements, store research with relevant drafts, and maintain backups of published work.
+**Consultants:** Client engagement history, deliverable archives, methodology documentation, key relationship contacts.
 
-**Consultants** need to preserve client engagement history, deliverable archives, methodology documentation, industry relationship contacts, and proposal templates. Document your consulting methodology, keep engagement summaries, maintain relationship notes for key contacts, and archive significant deliverables.
+## The Reciprocal Arrangement
 
-## Reciprocal Arrangements with Fellow Freelancers
+Find a trusted peer in your field. Each of you sets up a dead man's switch with the other as recipient. Cross-train on basic processes. Agree to handle each other's clients if something happens.
 
-Consider partnering with a trusted peer in your field. Each person configures dead man's switch access for the other, you cross-train on basic processes, you agree to help each other's clients if needed, and you potentially refer business for continuation rather than just wind-down.
+This gives you someone who actually understands freelance work, can communicate professionally with your clients, and might continue the business rather than just shut it down. The mutual benefit keeps both parties engaged in maintaining the arrangement.
 
-This provides someone who genuinely understands freelance business, professional handling of client relationships, possible business continuation rather than just termination, and mutual benefit that motivates both parties to maintain the arrangement.
+## Structuring Your Dead Man's Switch
 
-To set this up, find a trusted peer, create mutual dead man's switch entries, exchange basic business documentation, discuss client handling preferences, and review and update quarterly.
+**Tier 1 (short check-in):** Active clients, urgent deadlines, essential credentials, backup person instructions.
 
-## What to Include in Your Dead Man's Switch
+**Tier 2 (longer check-in):** Complete client database, all credentials, financial records, full documentation.
 
-Structure your information in tiers based on urgency. Tier 1 with short check-in intervals covers current active clients and contacts, urgent project deadlines, essential account credentials, and instructions for your trusted person.
-
-Tier 2 with longer intervals includes your complete client database, all account credentials, financial records access, and complete business documentation.
-
-Tier 3 for business wind-down covers long-term client handling, business asset disposition, intellectual property instructions, and final communications to send.
-
-## Conclusion
-
-As a freelancer, you are your business. Protecting your digital assets isn't just about personal security—it's about respecting client relationships and ensuring your work retains value beyond your personal availability.
-
-Take time this week to identify your critical digital assets, find your trusted business person, set up secure access through a dead man's switch, and create basic documentation. Your clients, your family, and your professional legacy will all benefit from this preparation.
+**Tier 3 (business wind-down):** Long-term disposition of assets, IP instructions, final communications to send.
     `.trim(),
   },
   {
     slug: "aes-256-encryption-explained",
-    title: "AES-256 Encryption: What It Is and Why It Matters",
+    title: "Encryption at KeyFate: AES-256, ChaCha20, and Why We Use Both",
     description:
-      "Understand AES-256 encryption in plain language. Learn why this military-grade encryption standard protects your most sensitive information.",
+      "How KeyFate uses ChaCha20-Poly1305 and AES-256-GCM together to protect your secrets. A plain-language explanation of the encryption behind the dead man's switch.",
     publishedAt: "2024-10-10",
     author: "KeyFate Team",
     category: "Technology",
-    tags: ["aes-256", "encryption", "security", "cryptography", "technology"],
-    readingTime: "5 min read",
+    tags: ["encryption", "chacha20", "aes-256", "security", "cryptography", "technology"],
+    readingTime: "6 min read",
     content: `
-## What Is AES-256?
+## Two Ciphers, One Job
 
-AES stands for Advanced Encryption Standard, and the "256" refers to the key length: 256 bits. In practical terms, AES-256 is a method for scrambling information so that only someone with the correct key can unscramble it.
+KeyFate doesn't rely on a single encryption algorithm. Your secrets are protected by two different ciphers working together:
 
-It's often called "military-grade" encryption because the US government uses it to protect classified information, it's approved for TOP SECRET data, and it's the standard for sensitive commercial applications worldwide.
+- **ChaCha20-Poly1305** encrypts secret shares during the double-encryption process—the primary layer that protects data at rest and in transit.
+- **AES-256-GCM** handles passphrase-based key derivation via PBKDF2, used when a recipient recovers a secret with a passphrase rather than a Bitcoin timelock.
 
-## How Strong Is AES-256?
+Both are 256-bit symmetric ciphers. Both are considered unbreakable with current (and foreseeable) technology. They serve different roles because they have different strengths.
 
-A 256-bit key has 2^256 possible combinations. That's approximately 1.16 × 10^77 possibilities—a number so large it's difficult to conceptualize. There are more possible AES-256 keys than there are atoms in the observable universe.
+## Why ChaCha20-Poly1305?
 
-For a brute force attack trying every possible key, current computers would take billions of years. All computers on Earth working together would still take billions of years. Even theoretical future quantum computers would still take millions of years.
+AES-256 is the more famous name. It's the NIST standard, approved for classified government data, and embedded in virtually every TLS connection on the internet. So why does KeyFate's primary encryption layer use ChaCha20 instead?
 
-For all practical purposes, properly implemented AES-256 encrypted data cannot be decrypted without the key.
+**Performance without hardware acceleration.** AES is fast on processors with AES-NI instructions—which covers most modern desktops and servers. But on devices without that hardware support (older phones, embedded systems, some ARM chips), AES slows down significantly. ChaCha20 is fast everywhere because it uses only simple arithmetic operations: addition, rotation, and XOR. No special hardware needed.
 
-## How AES Encryption Works
+**Simpler, which means fewer implementation mistakes.** AES is a substitution-permutation network with lookup tables (S-boxes) that can leak timing information if the implementation isn't careful. Constant-time AES is achievable but requires discipline. ChaCha20's design naturally resists timing side-channel attacks because it doesn't use data-dependent table lookups.
 
-The basic process is straightforward in concept. For encryption, your data (plaintext) goes in, the AES algorithm scrambles it using your key, and encrypted data (ciphertext) comes out looking like random noise. For decryption, ciphertext goes in, AES unscrambles it using the same key, and your original data comes out.
+**Poly1305 authentication is built in.** Like AES-GCM, ChaCha20-Poly1305 is an AEAD (Authenticated Encryption with Associated Data) cipher—it encrypts and authenticates in one operation. Tampered ciphertext is rejected before decryption. You get integrity and confidentiality together.
 
-AES operates as a block cipher, splitting data into 128-bit chunks and applying multiple transformation rounds—14 rounds for AES-256. Each round further scrambles the data through a series of mathematical operations.
+Google chose ChaCha20-Poly1305 for TLS on Android for exactly these reasons. It's the default cipher in WireGuard. It's not exotic—it's battle-tested at enormous scale.
 
-The key determines exactly how data is scrambled, and only the matching key can reverse the process. Different keys produce completely different outputs, with no pattern or relationship between similar keys.
+## Where AES-256-GCM Fits
 
-## AES Modes of Operation
+KeyFate uses AES-256-GCM specifically for the passphrase recovery path. When a recipient recovers a secret using a passphrase (rather than a Bitcoin CSV timelock), the key derivation uses PBKDF2 to stretch the passphrase into a 256-bit key, then encrypts with AES-256-GCM.
 
-AES can be implemented in different modes. GCM (Galois/Counter Mode) provides both encryption and authentication, detecting if encrypted data has been tampered with. It's the standard for modern secure communications and is what KeyFate uses.
+This is a deliberate choice: the passphrase path involves the Web Crypto API, which has native, audited AES-GCM support in every browser. Using the platform's built-in implementation minimizes the chance of subtle bugs in a security-critical path.
 
-CBC (Cipher Block Chaining) is an older mode where each block depends on the previous block. It's still secure when properly implemented but requires careful initialization.
+## How Strong Is 256-Bit Encryption?
 
-Mode matters because poor implementation can weaken even strong encryption. GCM is preferred because it provides built-in integrity checking, can be parallelized for speed, and has been well-analyzed and proven secure.
+Both ciphers use 256-bit keys. A 256-bit key space has 2^256 possible values—roughly 1.16 x 10^77 combinations. For perspective, there are approximately 10^80 atoms in the observable universe. You'd run out of atoms before you ran out of keys to try.
 
-## What AES Encryption Protects Against
+Brute-forcing a 256-bit key is not a matter of "we need faster computers." It's a thermodynamic impossibility. Even a hypothetical computer that could test keys at the Landauer limit (the minimum energy to flip a bit) would require more energy than the sun produces to enumerate the key space.
 
-In **data breaches**, if attackers steal encrypted data, they get meaningless ciphertext. Without the key, the data is useless even to sophisticated attackers with massive computing resources.
+Quantum computers change the math for *asymmetric* cryptography (RSA, elliptic curves), but symmetric ciphers are affected less severely. Grover's algorithm halves the effective key length, meaning AES-256 and ChaCha20-256 would have 128-bit equivalent security against a quantum attacker. 128-bit security is still far beyond brute-force range. This is one reason KeyFate's censorship-resistant recovery layer uses symmetric encryption rather than relying solely on public-key cryptography.
 
-Against **insider threats**, people with access to stored data see only encrypted content and cannot read it without keys, requiring additional system access beyond just database access.
+## What Encryption Protects Against
 
-For data **interception**, captured data appears as random noise and cannot be modified without detection when using GCM mode, protecting against man-in-the-middle attacks.
+**Server breaches.** If someone compromises KeyFate's database, they get ciphertext—random-looking bytes that reveal nothing without the key. Combined with Shamir's Secret Sharing, even the ciphertext they'd find represents only one share of a split secret. Useless twice over.
 
-## What AES Encryption Doesn't Protect Against
+**Insider threats.** KeyFate operates a zero-knowledge architecture. The encryption keys never reach our servers. We store encrypted shares and literally cannot decrypt them. This isn't a policy; it's a structural impossibility.
 
-**Poor key management** undermines even the strongest encryption. Weak passwords create weak keys. Stolen keys mean stolen data. Keys shared with too many people increase exposure risk.
+**Network interception.** Data is encrypted client-side before leaving your browser, then travels over TLS. An attacker who intercepts the traffic gets TLS-encrypted ciphertext wrapping application-layer ciphertext. Two layers of noise.
 
-**Implementation flaws** can compromise security through software bugs, weak random number generation, insecure key storage, or side-channel attacks that leak information through timing or power consumption.
+## What Encryption Doesn't Protect Against
 
-**Endpoint compromise** bypasses encryption entirely. If attackers control your device, they can capture data before encryption or after decryption. Malware can intercept plaintext, and social engineering can trick you into revealing keys.
+**Compromised endpoints.** If malware controls your device, it can capture your secret before encryption happens. No cipher helps if the attacker is sitting between you and your keyboard.
 
-## How KeyFate Uses AES-256
+**Bad key management.** A weak passphrase produces a weak derived key. "password123" run through PBKDF2 is still guessable. Use a strong passphrase or, better yet, the Bitcoin timelock recovery path which doesn't depend on passphrase strength at all.
 
-KeyFate implements client-side encryption, meaning your browser encrypts data before sending it to servers. Encryption happens on your device, and keys never leave your control.
+**Social engineering.** Someone who convinces you to hand over your shares has your secret. Encryption protects data, not judgment.
 
-Combined with Shamir's Secret Sharing, your secret is first split into shares, then each share is independently encrypted, creating multiple layers of protection.
+## KeyFate's Encryption Stack
 
-Using GCM mode provides authenticated encryption with built-in tamper detection, following modern security standards.
+Putting it all together, here's what happens when you store a secret with KeyFate:
 
-## Key Takeaways
+1. Your secret is split into shares using Shamir's Secret Sharing on your device
+2. Each share is encrypted with ChaCha20-Poly1305 using a per-share random key
+3. The encryption key K is itself protected—either locked behind a Bitcoin CSV timelock (published via OP_RETURN when the timelock expires) or encrypted with AES-256-GCM using a PBKDF2-derived key from a passphrase
+4. Encrypted shares are distributed: one to KeyFate's server, others to your designated recipients via Nostr relays
+5. KeyFate never sees plaintext data, plaintext keys, or enough shares to reconstruct anything
 
-AES-256 is extremely secure. There's no practical way to break properly implemented AES-256. It's trusted by governments and major organizations worldwide and represents the industry standard for sensitive data protection.
-
-Implementation quality matters as much as the algorithm. Strong encryption can be weakened by poor implementation. Look for GCM mode, client-side encryption, and proper key management. Trust proven, audited implementations over custom solutions.
-
-Encryption is one component of a complete security system. Key management, access control, and operational security all contribute. Multiple layers provide better protection than any single measure.
-
-## Conclusion
-
-AES-256 encryption provides a mathematical guarantee that your data cannot be accessed without the key. When properly implemented—as in KeyFate's client-side encryption combined with Shamir's Secret Sharing—it creates protection that no amount of computing power can overcome.
-
-Understanding this technology helps you make informed decisions about protecting your most sensitive information. When you see "AES-256 encryption," you can be confident your data has the strongest practical protection currently available.
+The result: your secret is protected by proven mathematics at every layer, distributed across independent systems, and recoverable only when the right conditions are met—without trusting any single party, including us.
     `.trim(),
   },
   {
@@ -1181,7 +1095,9 @@ This approach preserves your sovereignty during your lifetime. No one—not even
 
 ## Why KeyFate Is Purpose-Built for This
 
-KeyFate combines a dead man's switch with <a href="/blog/shamirs-secret-sharing-explained">Shamir's Secret Sharing</a> and <a href="/blog/aes-256-encryption-explained">AES-256 encryption</a>. Your seed phrase isn't stored anywhere as a complete secret. It's split into cryptographic shares, encrypted, and distributed so that no single party—including KeyFate—can reconstruct it.
+KeyFate combines a dead man's switch with <a href="/blog/shamirs-secret-sharing-explained">Shamir's Secret Sharing</a> and <a href="/blog/aes-256-encryption-explained">ChaCha20-Poly1305 encryption</a>. Your seed phrase isn't stored anywhere as a complete secret. It's split into cryptographic shares, encrypted on your device, and distributed so that no single party—including KeyFate—can reconstruct it.
+
+Encrypted shares are published to Nostr relays—a decentralized network of independent servers. If KeyFate disappears, your shares persist on those relays, retrievable by your recipients. For maximum trustlessness, the decryption key can be locked behind a Bitcoin CSV timelock that releases automatically after a set number of blocks, with no human in the loop.
 
 When the switch triggers, shares are delivered to your recipients. They combine them to recover the original. The math guarantees that fewer shares than the threshold reveal nothing.
 
@@ -1191,6 +1107,7 @@ This means:
 <li>A rogue employee learns nothing</li>
 <li>Your recipients can't access anything prematurely</li>
 <li>Your heirs get clear, complete access when it matters</li>
+<li>The system works even if KeyFate stops existing</li>
 </ul>
 
 The check-in process is simple—confirm you're okay on your chosen schedule. Daily, weekly, monthly. If life gets busy, you get reminders with a grace period before anything triggers.
@@ -1201,7 +1118,7 @@ The check-in process is simple—confirm you're okay on your chosen schedule. Da
 
 <strong>Step 2:</strong> Decide who should inherit what. This doesn't need to match your legal will—Bitcoin transfers aren't governed by probate.
 
-<strong>Step 3:</strong> Set up a dead man's switch. <a href="/auth/signin">Create a KeyFate account</a>, store your recovery information, and configure your check-in schedule and recipients.
+<strong>Step 3:</strong> Set up a dead man's switch. <a href="/sign-in">Create a KeyFate account</a>, store your recovery information, and configure your check-in schedule and recipients.
 
 <strong>Step 4:</strong> Tell your recipients they've been designated. They don't need to know what they'll receive—just that they'll get a message from KeyFate if something happens to you.
 
@@ -1257,7 +1174,7 @@ Once the grace period expires without a check-in, the system executes. Encrypted
 
 ### Security Architecture
 
-A well-designed dead man's switch doesn't just store your secrets on a server. Services like KeyFate use <a href="/blog/shamirs-secret-sharing-explained">Shamir's Secret Sharing</a> to split secrets into shares, <a href="/blog/aes-256-encryption-explained">AES-256 encryption</a> for each share, and zero-knowledge architecture so the service itself can't read your data. This means even if the service is compromised, your secrets remain protected.
+A well-designed dead man's switch doesn't just store your secrets on a server. KeyFate uses <a href="/blog/shamirs-secret-sharing-explained">Shamir's Secret Sharing</a> to split secrets into shares, <a href="/blog/aes-256-encryption-explained">ChaCha20-Poly1305 encryption</a> for each share, and zero-knowledge architecture so the service itself can't read your data. Encrypted shares are distributed via Nostr relays—a decentralized network that ensures delivery even if KeyFate itself goes offline. This means even if the service is compromised or disappears, your secrets remain protected and deliverable.
 
 ## Use Cases
 
@@ -1301,11 +1218,13 @@ A dead man's switch is a time-locked vault. Nobody gets access until the trigger
 
 ## KeyFate's Approach
 
-KeyFate was built specifically for this problem. Client-side encryption ensures your data is encrypted before it ever leaves your device. <a href="/blog/zero-knowledge-security-explained">Zero-knowledge architecture</a> means KeyFate's servers store only encrypted shares—never your complete secret.
+KeyFate was built specifically for this problem. Client-side encryption ensures your data is encrypted with ChaCha20-Poly1305 before it ever leaves your device. <a href="/blog/zero-knowledge-security-explained">Zero-knowledge architecture</a> means KeyFate's servers store only encrypted shares—never your complete secret.
 
-Flexible check-in schedules with grace periods prevent false triggers while maintaining security. And the combination of Shamir's Secret Sharing with AES-256 encryption means that even a complete server compromise reveals nothing.
+Encrypted shares are distributed via Nostr relays for censorship-resistant delivery. For the highest level of trustlessness, the decryption key can be locked behind a Bitcoin CSV timelock—released automatically on-chain after a specified block count, with no human involvement.
 
-<a href="/auth/signin">Set up your dead man's switch</a> in minutes. Check our <a href="/pricing">pricing page</a> for plan details.
+Flexible check-in schedules with grace periods prevent false triggers while maintaining security. A complete server compromise reveals nothing usable, and the decentralized distribution means the system works even if KeyFate goes offline.
+
+<a href="/sign-in">Set up your dead man's switch</a> in minutes. Check our <a href="/pricing">pricing page</a> for plan details.
     `.trim(),
   },
   {
@@ -1377,15 +1296,18 @@ Your <a href="/blog/password-manager-master-password-protection">password manage
 
 ## How KeyFate Uses Shamir's Secret Sharing
 
-KeyFate applies Shamir's Secret Sharing at the core of its <a href="/blog/zero-knowledge-security-explained">zero-knowledge security</a> architecture. When you store a secret with KeyFate, it's split into shares on your device—before anything is sent to the server.
+KeyFate applies Shamir's Secret Sharing at the core of its <a href="/blog/zero-knowledge-security-explained">zero-knowledge security</a> architecture. When you store a secret with KeyFate, it's split into shares on your device—before anything is sent to the server. Each share is encrypted with ChaCha20-Poly1305.
 
-KeyFate stores one share (encrypted). Your designated recipients each receive their shares when the dead man's switch triggers. The threshold is set so that KeyFate's share alone is useless, and your recipients' shares alone are useless. Only when combined after the switch triggers can the secret be reconstructed.
+KeyFate stores one encrypted share. Your designated recipients receive their shares when the dead man's switch triggers—delivered via Nostr relays, a decentralized network of independent servers. The threshold is set so that KeyFate's share alone is useless, and your recipients' shares alone are useless. Only when combined after the switch triggers can the secret be reconstructed.
+
+For maximum trustlessness, the decryption key can be locked behind a Bitcoin CSV timelock. The key becomes available on-chain after a specified number of blocks, with no human decision required.
 
 This means:
 <ul>
 <li>KeyFate can never read your secrets, even if compelled by a court order</li>
 <li>A server breach reveals only encrypted, incomplete shares</li>
 <li>Your recipients can't access anything before the switch triggers</li>
+<li>If KeyFate disappears, shares persist on Nostr relays</li>
 <li>The system is mathematically provable, not just "we promise"</li>
 </ul>
 
@@ -1395,7 +1317,7 @@ You don't need to understand the math to benefit from it. KeyFate handles the cr
 
 If you want to go deeper into the technical details, check out our <a href="/blog/shamirs-secret-sharing-explained">in-depth technical article on Shamir's Secret Sharing</a>.
 
-Ready to protect your secrets with proven cryptography? <a href="/auth/signin">Create your KeyFate account</a> and see how it works. View our <a href="/pricing">pricing plans</a> to find the right fit.
+Ready to protect your secrets with proven cryptography? <a href="/sign-in">Create your KeyFate account</a> and see how it works. View our <a href="/pricing">pricing plans</a> to find the right fit.
     `.trim(),
   },
   {
@@ -1475,9 +1397,9 @@ Set up a wallet requiring multiple keys to spend. Distribute keys among trusted 
 
 ### Option 3: Dead Man's Switch with Threshold Cryptography
 
-Store your recovery information in an encrypted <a href="/blog/what-is-a-dead-mans-switch">dead man's switch</a> that uses <a href="/blog/shamirs-secret-sharing-explained">Shamir's Secret Sharing</a> to eliminate single points of failure.
+Store your recovery information in an encrypted <a href="/blog/what-is-a-dead-mans-switch">dead man's switch</a> that uses <a href="/blog/shamirs-secret-sharing-explained">Shamir's Secret Sharing</a> to eliminate single points of failure. KeyFate distributes encrypted shares via Nostr relays (censorship-resistant, survives even if KeyFate goes offline) and can lock the decryption key behind a Bitcoin CSV timelock for fully trustless, automated release.
 
-<strong>Pros:</strong> No premature access. No single point of failure. Activates automatically. No technical knowledge required from heirs. <strong>Cons:</strong> Requires regular check-ins.
+<strong>Pros:</strong> No premature access. No single point of failure. Activates automatically. No technical knowledge required from heirs. Works even if the service provider disappears. <strong>Cons:</strong> Requires regular check-ins.
 
 ## What You Should Do
 
@@ -1487,7 +1409,7 @@ Store your recovery information in an encrypted <a href="/blog/what-is-a-dead-ma
 
 <strong>If you hold significant amounts:</strong> Use multiple layers. A dead man's switch for your seed phrases, documented exchange accounts for custodied assets, and clear instructions for your executor about what exists and where.
 
-Don't become a statistic. <a href="/auth/signin">Set up a KeyFate dead man's switch</a> and make sure your crypto survives you. It takes fifteen minutes and costs less than a single transaction fee. See <a href="/pricing">pricing details here</a>.
+Don't become a statistic. <a href="/sign-in">Set up a KeyFate dead man's switch</a> and make sure your crypto survives you. It takes fifteen minutes and costs less than a single transaction fee. See <a href="/pricing">pricing details here</a>.
     `.trim(),
   },
   {
@@ -1553,7 +1475,7 @@ If you can't export your secrets in a standard format and import them into a com
 
 ## What to Look For in a Secret Management Approach
 
-<strong>Client-side encryption.</strong> If secrets are encrypted on your device before reaching the server, the vendor holds only ciphertext. You control the keys. This fundamentally limits the vendor's power over your data, and it's the approach KeyFate uses with <a href="/blog/aes-256-encryption-explained">AES-256 encryption</a>.
+<strong>Client-side encryption.</strong> If secrets are encrypted on your device before reaching the server, the vendor holds only ciphertext. You control the keys. This fundamentally limits the vendor's power over your data, and it's the approach KeyFate uses with <a href="/blog/aes-256-encryption-explained">ChaCha20-Poly1305 and AES-256-GCM encryption</a>.
 
 <strong>Open standards.</strong> <a href="/blog/shamirs-secret-sharing-explained">Shamir's Secret Sharing</a> is a published, well-understood algorithm. AES-256 is a public standard. When your security relies on open mathematics rather than proprietary black boxes, you're not dependent on any single implementation.
 
@@ -1565,11 +1487,15 @@ If you can't export your secrets in a standard format and import them into a com
 
 KeyFate is designed around the principle that your secrets should never depend on KeyFate's existence.
 
-<strong>Client-side encryption</strong> means your secrets are encrypted before they reach our servers. If KeyFate disappeared tomorrow, you'd still hold your encryption keys locally.
+<strong>Client-side encryption</strong> with ChaCha20-Poly1305 means your secrets are encrypted before they reach our servers. If KeyFate disappeared tomorrow, you'd still hold your encryption keys locally.
 
 <strong>Shamir's Secret Sharing</strong> using standard, published algorithms means the shares we distribute can be reconstructed with any correct implementation of the algorithm—not just our software.
 
-<strong>Zero-knowledge architecture</strong> means we literally cannot hold your secrets hostage. We never have them in a usable form. Your data, encrypted with your keys, split using open mathematics.
+<strong>Nostr relay distribution</strong> means encrypted shares are published to a decentralized network of independent servers. KeyFate shutting down doesn't destroy your shares—they persist on relays across multiple jurisdictions, retrievable by your recipients.
+
+<strong>Bitcoin CSV timelocks</strong> for decryption key release use the Bitcoin blockchain itself as a trustless timer. No KeyFate involvement required for key release when the timelock expires.
+
+<strong>Zero-knowledge architecture</strong> means we literally cannot hold your secrets hostage. We never have them in a usable form. Your data, encrypted with your keys, split using open mathematics, distributed across infrastructure we don't control.
 
 This isn't a competitive moat—it's a deliberate design choice. The best security tools are the ones you could walk away from at any time and still maintain access to your own data.
 
@@ -1586,7 +1512,7 @@ Ask these questions about your current secret management:
 
 If the answer to any of these is "no" or "I don't know," you have a vendor lock-in problem. And that problem will only get worse as you add more secrets and integrations.
 
-Take control of your secrets. <a href="/auth/signin">Try KeyFate</a> and experience secret management built on open standards, client-side encryption, and zero vendor lock-in. <a href="/pricing">View pricing</a> to get started.
+Take control of your secrets. <a href="/sign-in">Try KeyFate</a> and experience secret management built on open standards, client-side encryption, and zero vendor lock-in. <a href="/pricing">View pricing</a> to get started.
     `.trim(),
   },
 ]
