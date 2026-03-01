@@ -38,3 +38,20 @@ export {
   getAllFeeRates,
   type FeePriority,
 } from "./fee-estimation.js"
+
+export {
+  generateBitcoinKeypair,
+  storeKeypair,
+  getStoredKeypair,
+  clearKeypairs,
+  type BitcoinKeypair,
+} from "./client-wallet.js"
+
+export {
+  enableBitcoinClient,
+  refreshBitcoinClient,
+  type EnableBitcoinClientParams,
+  type EnableBitcoinClientResult,
+  type RefreshBitcoinClientParams,
+  type RefreshBitcoinClientResult,
+} from "./client-operations.js"

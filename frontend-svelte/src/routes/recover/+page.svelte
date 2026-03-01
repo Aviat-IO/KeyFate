@@ -39,6 +39,9 @@
   import { publicKeyFromSecret } from '$lib/nostr/keypair';
   import { DEFAULT_RELAYS } from '$lib/nostr/relay-config';
   import { recoverKFromOpReturn, decryptShare } from '$lib/crypto/recovery';
+  import SSSDecryptor from '$lib/components/SSSDecryptor.svelte';
+  import RecoveryMethodSelector from '$lib/components/RecoveryMethodSelector.svelte';
+  import RecoveryGuide from '$lib/components/RecoveryGuide.svelte';
 
   // ─── State ───────────────────────────────────────────────────────────────
 
@@ -47,6 +50,11 @@
 
   let currentStep = $state<Step>('choose');
   let selectedMethod = $state<RecoveryMethod | null>(null);
+  let chooserSelection = $state<RecoveryMethod>('nostr');
+
+  // Accumulated shares for Shamir reconstruction
+  let recoveredShares = $state<string[]>([]);
+  let showReconstruct = $state(false);
 
   // Nostr recovery state
   let nsecInput = $state('');
@@ -104,6 +112,7 @@
     } else if (currentStep === 'recover') {
       currentStep = 'choose';
       selectedMethod = null;
+      chooserSelection = 'nostr';
       resetState();
     }
   }
@@ -274,6 +283,13 @@
 
       if (results.length > 0) {
         decryptedShares = results;
+        // Accumulate decrypted share hex values for Shamir reconstruction
+        for (const r of results) {
+          if (r.share && !recoveredShares.includes(r.share)) {
+            recoveredShares = [...recoveredShares, r.share];
+          }
+        }
+        showReconstruct = false;
         currentStep = 'result';
         toast.success(`Decrypted ${results.length} share(s)`);
       }
@@ -343,6 +359,11 @@
             secretId: payload.secretId ?? 'unknown',
           },
         ];
+        // Accumulate for Shamir reconstruction
+        if (plaintext && !recoveredShares.includes(plaintext)) {
+          recoveredShares = [...recoveredShares, plaintext];
+        }
+        showReconstruct = false;
         currentStep = 'result';
         toast.success('Share decrypted successfully');
       } finally {
@@ -384,6 +405,11 @@
           secretId: 'manual',
         },
       ];
+      // Accumulate for Shamir reconstruction
+      if (plaintext && !recoveredShares.includes(plaintext)) {
+        recoveredShares = [...recoveredShares, plaintext];
+      }
+      showReconstruct = false;
       currentStep = 'result';
       toast.success('Share decrypted successfully');
     } catch (e) {
@@ -392,6 +418,18 @@
     } finally {
       recoveringPassphrase = false;
     }
+  }
+
+  function recoverAnotherShare() {
+    // Reset the wizard to the beginning but keep accumulated shares
+    currentStep = 'choose';
+    selectedMethod = null;
+    chooserSelection = 'nostr';
+    resetState();
+  }
+
+  function startReconstruction() {
+    showReconstruct = true;
   }
 
   function formatTimestamp(ts: number): string {
@@ -442,58 +480,17 @@
 
     <!-- Step 1: Choose recovery method -->
     {#if currentStep === 'choose'}
-      <div class="grid gap-6 sm:grid-cols-3">
-        <button
-          type="button"
-          onclick={() => selectMethod('nostr')}
-          class="group text-left"
-        >
-          <div class="space-y-3 p-4 rounded-lg border border-border hover:border-primary/50 transition-colors">
-            <Search class="text-primary h-5 w-5" />
-            <h3 class="font-space text-lg font-bold tracking-tight">Recover via Nostr</h3>
-            <p class="text-muted-foreground text-sm">
-              Search Nostr relays for gift-wrapped events using your nsec key.
-            </p>
-            <p class="text-muted-foreground text-xs">
-              Requires your Nostr private key (nsec). Events are decrypted locally.
-            </p>
-          </div>
-        </button>
+      <RecoveryMethodSelector
+        bind:selected={chooserSelection}
+        availableMethods={['nostr', 'bitcoin', 'passphrase']}
+      />
 
-        <button
-          type="button"
-          onclick={() => selectMethod('bitcoin')}
-          class="group text-left"
-        >
-          <div class="space-y-3 p-4 rounded-lg border border-border hover:border-primary/50 transition-colors">
-            <Bitcoin class="text-primary h-5 w-5" />
-            <h3 class="font-space text-lg font-bold tracking-tight">Recover via Bitcoin</h3>
-            <p class="text-muted-foreground text-sm">
-              Extract the symmetric key from a pre-signed Bitcoin transaction.
-            </p>
-            <p class="text-muted-foreground text-xs">
-              Requires the pre-signed transaction hex from your recovery kit.
-            </p>
-          </div>
-        </button>
+      <Button onclick={() => selectMethod(chooserSelection)} class="mt-6 w-full">
+        <ArrowRight class="mr-2 h-4 w-4" />
+        Continue
+      </Button>
 
-        <button
-          type="button"
-          onclick={() => selectMethod('passphrase')}
-          class="group text-left"
-        >
-          <div class="space-y-3 p-4 rounded-lg border border-border hover:border-primary/50 transition-colors">
-            <KeyRound class="text-primary h-5 w-5" />
-            <h3 class="font-space text-lg font-bold tracking-tight">Recover via Passphrase</h3>
-            <p class="text-muted-foreground text-sm">
-              Use a passphrase to derive the decryption key from your recovery kit.
-            </p>
-            <p class="text-muted-foreground text-xs">
-              Requires the passphrase and encrypted key bundle from your recovery kit.
-            </p>
-          </div>
-        </button>
-      </div>
+      <RecoveryGuide class="mt-6" />
 
       <Alert.Alert class="mt-6">
         <Lock class="h-4 w-4" />
@@ -912,14 +909,57 @@
           </div>
         {/each}
 
-        <Alert.Alert class="mt-4">
-          <AlertTriangle class="h-4 w-4" />
-          <Alert.AlertTitle>Next Steps</Alert.AlertTitle>
-          <Alert.AlertDescription>
-            To reconstruct the original secret, you need at least the threshold number of shares.
-            Combine them using a Shamir's Secret Sharing reconstruction tool.
-          </Alert.AlertDescription>
-        </Alert.Alert>
+        <!-- Reconstruct Secret Section -->
+        <Separator />
+        <div class="space-y-4">
+          <h3 class="font-space text-lg font-bold tracking-tight">Reconstruct Secret</h3>
+          <p class="text-muted-foreground text-sm">
+            {recoveredShares.length} share{recoveredShares.length !== 1 ? 's' : ''} recovered so far.
+            You need at least 2 shares to reconstruct the original secret.
+          </p>
+
+          {#if !showReconstruct}
+            <div class="flex flex-col gap-3 sm:flex-row">
+              <Button
+                variant="outline"
+                onclick={recoverAnotherShare}
+                class="flex-1"
+              >
+                <ArrowLeft class="mr-2 h-4 w-4" />
+                Recover Another Share
+              </Button>
+              <Button
+                onclick={startReconstruction}
+                disabled={recoveredShares.length < 2}
+                class="flex-1"
+              >
+                <Shield class="mr-2 h-4 w-4" />
+                Reconstruct Secret
+              </Button>
+            </div>
+
+            {#if recoveredShares.length < 2}
+              <Alert.Alert>
+                <AlertTriangle class="h-4 w-4" />
+                <Alert.AlertTitle>More shares needed</Alert.AlertTitle>
+                <Alert.AlertDescription>
+                  You need at least 2 shares to reconstruct the secret. Use "Recover Another Share"
+                  to decrypt additional shares using a different recovery method or key.
+                </Alert.AlertDescription>
+              </Alert.Alert>
+            {/if}
+          {:else}
+            <Button
+              variant="ghost"
+              onclick={() => (showReconstruct = false)}
+              class="mb-2"
+            >
+              <ArrowLeft class="mr-2 h-4 w-4" />
+              Back to shares
+            </Button>
+            <SSSDecryptor initialShares={recoveredShares} />
+          {/if}
+        </div>
       </div>
     {/if}
   </div>

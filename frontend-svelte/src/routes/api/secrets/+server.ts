@@ -20,6 +20,7 @@ import { APIError, handleAPIError } from "$lib/errors/api-error"
 import { ZodError } from "zod"
 import { getAllSecretsWithRecipients } from "$lib/db/queries/secrets"
 import { mapDrizzleSecretToApiShape } from "$lib/db/secret-mapper"
+import { npubToHex, isValidNpub } from "$lib/nostr/keypair"
 
 export const GET: RequestHandler = async (event) => {
   try {
@@ -201,35 +202,61 @@ export const POST: RequestHandler = async (event) => {
         .values(insertData as any)
         .returning()
 
-      // Insert recipients - this MUST succeed or the entire transaction rolls back
-      await tx.insert(secretRecipients).values(
-        validatedData.recipients.map((recipient) => ({
-          secretId: newSecret.id,
-          name: recipient.name,
-          email: recipient.email,
-        })),
-      )
+      // Build a lookup of email -> hex nostr pubkey from the optional recipient_nostr_pubkeys
+      const nostrPubkeyByEmail = new Map<string, string>()
+      if (validatedData.recipient_nostr_pubkeys) {
+        for (const entry of validatedData.recipient_nostr_pubkeys) {
+          if (entry.email && entry.npub && isValidNpub(entry.npub)) {
+            try {
+              nostrPubkeyByEmail.set(entry.email, npubToHex(entry.npub))
+            } catch {
+              // Skip invalid npubs silently
+            }
+          }
+        }
+      }
 
-      return newSecret
+      // Insert recipients - this MUST succeed or the entire transaction rolls back
+      const insertedRecipients = await tx
+        .insert(secretRecipients)
+        .values(
+          validatedData.recipients.map((recipient) => ({
+            secretId: newSecret.id,
+            name: recipient.name,
+            email: recipient.email,
+            nostrPubkey: recipient.email
+              ? (nostrPubkeyByEmail.get(recipient.email) ?? null)
+              : null,
+          })),
+        )
+        .returning()
+
+      return { secret: newSecret, recipients: insertedRecipients }
     })
 
-    await logSecretCreated(session.user.id, data.id, {
+    await logSecretCreated(session.user.id, data.secret.id, {
       title: validatedData.title,
       recipientCount: validatedData.recipients.length,
       checkInDays: validatedData.check_in_days,
     })
 
     await scheduleRemindersForSecret(
-      data.id,
-      data.nextCheckIn!,
+      data.secret.id,
+      data.secret.nextCheckIn!,
       validatedData.check_in_days,
     )
 
     const warning = undefined
 
     const responseBody: any = {
-      secretId: data.id,
-      ...data,
+      secretId: data.secret.id,
+      ...data.secret,
+      recipients: data.recipients.map((r) => ({
+        id: r.id,
+        name: r.name,
+        email: r.email,
+        nostrPubkey: r.nostrPubkey,
+      })),
       ...(warning ? { warning } : {}),
     }
 
@@ -237,7 +264,7 @@ export const POST: RequestHandler = async (event) => {
       status: 201,
       headers: {
         "Content-Type": "application/json",
-        Location: `/api/secrets/${data.id}`,
+        Location: `/api/secrets/${data.secret.id}`,
       },
     })
   } catch (error) {

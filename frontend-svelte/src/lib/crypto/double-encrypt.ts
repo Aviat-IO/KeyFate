@@ -15,6 +15,11 @@ import {
   deriveKeyFromPassphrase,
   encryptWithDerivedKey,
 } from "./passphrase"
+import {
+  getConversationKey,
+  encrypt as nip44Encrypt,
+  decrypt as nip44Decrypt,
+} from "$lib/nostr/encryption"
 
 /**
  * Interface for NIP-44 encryption operations.
@@ -55,24 +60,24 @@ export interface DoubleEncryptResult {
 }
 
 /**
- * Default NIP-44 stub that encodes K as hex in a simple wrapper.
- * Replace with real NIP-44 implementation when available.
+ * Default NIP-44 operations using the real nostr-tools NIP-44 v2 implementation.
  */
 const defaultNip44Ops: Nip44Ops = {
   encrypt(
     plaintext: string,
-    _senderPrivkey: Uint8Array,
-    _recipientPubkey: string,
+    senderPrivkey: Uint8Array,
+    recipientPubkey: string,
   ): string {
-    // Stub: base64-encode the plaintext. Real impl uses NIP-44 ECDH + ChaCha.
-    return btoa(plaintext)
+    const convKey = getConversationKey(senderPrivkey, recipientPubkey)
+    return nip44Encrypt(plaintext, convKey)
   },
   decrypt(
     ciphertext: string,
-    _recipientPrivkey: Uint8Array,
-    _senderPubkey: string,
+    recipientPrivkey: Uint8Array,
+    senderPubkey: string,
   ): string {
-    return atob(ciphertext)
+    const convKey = getConversationKey(recipientPrivkey, senderPubkey)
+    return nip44Decrypt(ciphertext, convKey)
   },
 }
 

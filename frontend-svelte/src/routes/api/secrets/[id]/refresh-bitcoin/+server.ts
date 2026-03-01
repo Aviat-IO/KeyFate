@@ -1,6 +1,11 @@
 /**
  * POST /api/secrets/[id]/refresh-bitcoin
  *
+ * @deprecated Use POST /api/secrets/[id]/store-bitcoin-refresh instead.
+ * This endpoint requires sending private keys over HTTP, which is a security flaw.
+ * The new flow performs all key operations client-side and only sends results
+ * to the server via store-bitcoin-refresh.
+ *
  * Refreshes the Bitcoin UTXO (check-in). Spends the current UTXO
  * via the owner path and creates a new one with a fresh timelock.
  */
@@ -27,6 +32,30 @@ export const POST: RequestHandler = async (event) => {
         { status: 400 },
       )
     }
+    if (!body.recipientPrivkey) {
+      return json(
+        { error: "Missing required field: recipientPrivkey" },
+        { status: 400 },
+      )
+    }
+    if (!body.recipientAddress || typeof body.recipientAddress !== "string") {
+      return json(
+        { error: "Missing required field: recipientAddress" },
+        { status: 400 },
+      )
+    }
+    if (!body.symmetricKeyK) {
+      return json(
+        { error: "Missing required field: symmetricKeyK" },
+        { status: 400 },
+      )
+    }
+    if (!body.nostrEventId || typeof body.nostrEventId !== "string") {
+      return json(
+        { error: "Missing required field: nostrEventId" },
+        { status: 400 },
+      )
+    }
     if (!body.feeRateSatsPerVbyte || typeof body.feeRateSatsPerVbyte !== "number") {
       return json(
         { error: "Missing or invalid feeRateSatsPerVbyte" },
@@ -42,6 +71,10 @@ export const POST: RequestHandler = async (event) => {
 
     const result = await refreshBitcoin(secretId, session.user.id, {
       ownerPrivkey: hex.decode(body.ownerPrivkey),
+      recipientPrivkey: hex.decode(body.recipientPrivkey),
+      recipientAddress: body.recipientAddress,
+      symmetricKeyK: hex.decode(body.symmetricKeyK),
+      nostrEventId: body.nostrEventId,
       feeRateSatsPerVbyte: body.feeRateSatsPerVbyte,
       network: body.network,
     })

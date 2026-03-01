@@ -39,6 +39,11 @@ const CRON_JOBS: CronJob[] = [
     endpoint: "/api/cron/cleanup-tokens",
   },
   {
+    name: "confirm-utxos",
+    schedule: "*/10 * * * *",
+    endpoint: "/api/cron/confirm-utxos",
+  },
+  {
     name: "cleanup-exports",
     schedule: "0 6 * * *",
     endpoint: "/api/cron/cleanup-exports",
