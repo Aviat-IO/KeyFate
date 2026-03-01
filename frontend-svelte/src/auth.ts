@@ -16,6 +16,9 @@ import { logLogin } from "$lib/services/audit-logger"
 
 export const { handle, signIn, signOut } = SvelteKitAuth({
   trustHost: true,
+  pages: {
+    signIn: "/sign-in",
+  },
   providers: [
     Google({
       authorization: {

@@ -109,7 +109,25 @@ async function invokeCronEndpoint(job: CronJob): Promise<void> {
 
 const scheduledTasks: cron.ScheduledTask[] = []
 
-export function startScheduler(): void {
+async function waitForServer(
+  port: number | string,
+  maxAttempts = 30,
+): Promise<boolean> {
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      const res = await fetch(`http://127.0.0.1:${port}/api/health`, {
+        signal: AbortSignal.timeout(2000),
+      })
+      if (res.ok) return true
+    } catch {
+      // Server not ready yet
+    }
+    await new Promise((r) => setTimeout(r, 1000))
+  }
+  return false
+}
+
+export function startScheduler(): Promise<void> | void {
   const enabled = process.env.CRON_ENABLED !== "false"
   if (!enabled) {
     console.log("[scheduler] Cron scheduler disabled (CRON_ENABLED=false)")
@@ -121,17 +139,32 @@ export function startScheduler(): void {
     return
   }
 
-  console.log(`[scheduler] Starting cron scheduler with ${CRON_JOBS.length} jobs`)
+  const port = process.env.PORT || 3000
 
-  for (const job of CRON_JOBS) {
-    const task = cron.schedule(job.schedule, () => {
-      invokeCronEndpoint(job).catch((err) => {
-        console.error(`[scheduler] Unhandled error in ${job.name}:`, err)
+  // Wait for the HTTP server to be ready before scheduling cron jobs
+  return waitForServer(port).then((ready) => {
+    if (!ready) {
+      console.error(
+        "[scheduler] Server did not become ready after 30s, starting scheduler anyway",
+      )
+    } else {
+      console.log("[scheduler] Server is ready, starting cron scheduler")
+    }
+
+    console.log(
+      `[scheduler] Starting cron scheduler with ${CRON_JOBS.length} jobs`,
+    )
+
+    for (const job of CRON_JOBS) {
+      const task = cron.schedule(job.schedule, () => {
+        invokeCronEndpoint(job).catch((err) => {
+          console.error(`[scheduler] Unhandled error in ${job.name}:`, err)
+        })
       })
-    })
-    scheduledTasks.push(task)
-    console.log(`[scheduler] Registered: ${job.name} (${job.schedule})`)
-  }
+      scheduledTasks.push(task)
+      console.log(`[scheduler] Registered: ${job.name} (${job.schedule})`)
+    }
+  })
 }
 
 export function stopScheduler(): void {
