@@ -155,4 +155,9 @@
 	body {
 		@apply bg-background text-foreground;
 	}
+
+	/* Override sonner's hardcoded description color (#3f3f3f) with our semantic muted-foreground */
+	[data-sonner-toast][data-styled='true'] [data-description] {
+		color: hsl(var(--muted-foreground)) !important;
+	}
 }
