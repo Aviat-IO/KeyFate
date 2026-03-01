@@ -60,7 +60,7 @@ export const PUT: RequestHandler = async (event) => {
   try {
     const id = event.params.id
 
-    const csrfCheck = await requireCSRFProtection(event.request as any)
+    const csrfCheck = await requireCSRFProtection(event)
     if (!csrfCheck.valid) {
       return createCSRFErrorResponse()
     }
@@ -162,7 +162,7 @@ export const DELETE: RequestHandler = async (event) => {
   try {
     const id = event.params.id
 
-    const csrfCheck = await requireCSRFProtection(event.request as any)
+    const csrfCheck = await requireCSRFProtection(event)
     if (!csrfCheck.valid) {
       return createCSRFErrorResponse()
     }
