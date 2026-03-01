@@ -10,6 +10,95 @@ import * as btc from "@scure/btc-signer"
 import { hex } from "@scure/base"
 import { secp256k1 } from "@noble/curves/secp256k1.js"
 
+// Override any vi.mock("$lib/bitcoin/broadcast") from other test files.
+// Bun's test runner shares the module cache, so confirm-utxos.test.ts's mock
+// would replace the real module. This mock provides the real fetch-based
+// implementations for broadcastTransaction and getUTXOStatus.
+vi.mock("$lib/bitcoin/broadcast", () => {
+  // Inline the real implementations since vi.importActual is not available in Bun
+  async function broadcastTransaction(
+    txHex: string,
+    network: "mainnet" | "testnet" = "mainnet",
+  ): Promise<string> {
+    const endpoints =
+      network === "testnet"
+        ? [
+            { name: "mempool.space", url: "https://mempool.space/testnet/api/tx" },
+            { name: "blockstream.info", url: "https://blockstream.info/testnet/api/tx" },
+          ]
+        : [
+            { name: "mempool.space", url: "https://mempool.space/api/tx" },
+            { name: "blockstream.info", url: "https://blockstream.info/api/tx" },
+          ]
+    const errors: string[] = []
+    for (const endpoint of endpoints) {
+      try {
+        const response = await fetch(endpoint.url, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: txHex,
+        })
+        if (response.ok) return (await response.text()).trim()
+        const errorText = await response.text()
+        errors.push(`${endpoint.name}: HTTP ${response.status} - ${errorText}`)
+      } catch (err) {
+        errors.push(`${endpoint.name}: ${err instanceof Error ? err.message : String(err)}`)
+      }
+    }
+    throw new Error(`Failed to broadcast transaction via all endpoints:\n${errors.join("\n")}`)
+  }
+
+  async function getUTXOStatus(
+    txId: string,
+    outputIndex: number,
+    network: "mainnet" | "testnet" = "mainnet",
+  ) {
+    const endpoints =
+      network === "testnet"
+        ? { mempool: "https://mempool.space/testnet/api", blockstream: "https://blockstream.info/testnet/api" }
+        : { mempool: "https://mempool.space/api", blockstream: "https://blockstream.info/api" }
+    const errors: string[] = []
+
+    try {
+      const txResponse = await fetch(`${endpoints.mempool}/tx/${txId}`)
+      if (txResponse.ok) {
+        const txData = (await txResponse.json()) as { status?: { confirmed?: boolean; block_height?: number } }
+        const confirmed = txData.status?.confirmed ?? false
+        const blockHeight = txData.status?.block_height
+        const outspendResponse = await fetch(`${endpoints.mempool}/tx/${txId}/outspend/${outputIndex}`)
+        if (outspendResponse.ok) {
+          const outspendData = (await outspendResponse.json()) as { spent?: boolean; txid?: string }
+          return { confirmed, blockHeight, spent: outspendData.spent ?? false, spentByTxId: outspendData.txid }
+        }
+      }
+      errors.push(`mempool.space: HTTP ${txResponse.status}`)
+    } catch (err) {
+      errors.push(`mempool.space: ${err instanceof Error ? err.message : String(err)}`)
+    }
+
+    try {
+      const txResponse = await fetch(`${endpoints.blockstream}/tx/${txId}`)
+      if (txResponse.ok) {
+        const txData = (await txResponse.json()) as { status?: { confirmed?: boolean; block_height?: number } }
+        const confirmed = txData.status?.confirmed ?? false
+        const blockHeight = txData.status?.block_height
+        const outspendResponse = await fetch(`${endpoints.blockstream}/tx/${txId}/outspend/${outputIndex}`)
+        if (outspendResponse.ok) {
+          const outspendData = (await outspendResponse.json()) as { spent?: boolean; txid?: string }
+          return { confirmed, blockHeight, spent: outspendData.spent ?? false, spentByTxId: outspendData.txid }
+        }
+      }
+      errors.push(`blockstream.info: HTTP ${txResponse.status}`)
+    } catch (err) {
+      errors.push(`blockstream.info: ${err instanceof Error ? err.message : String(err)}`)
+    }
+
+    throw new Error(`Failed to get UTXO status from all endpoints:\n${errors.join("\n")}`)
+  }
+
+  return { broadcastTransaction, getUTXOStatus }
+})
+
 // ─── Test key pairs ───────────────────────────────────────────────────────────
 
 function makeKeyPair(seed: number) {

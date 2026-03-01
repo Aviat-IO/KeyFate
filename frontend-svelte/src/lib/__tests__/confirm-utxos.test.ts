@@ -26,21 +26,17 @@ vi.mock("$lib/db/drizzle", () => ({
   getDatabase: vi.fn().mockResolvedValue(mockDb),
 }))
 
-// Mock getUTXOStatus
+// Mock getUTXOStatus — include all exports to avoid breaking bitcoin.test.ts
+// in Bun's shared module cache
 const mockGetUTXOStatus = vi.fn()
 vi.mock("$lib/bitcoin/broadcast", () => ({
   getUTXOStatus: (...args: unknown[]) => mockGetUTXOStatus(...args),
+  broadcastTransaction: vi.fn(),
 }))
 
-// Mock logger
-vi.mock("$lib/logger", () => ({
-  logger: {
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-    debug: vi.fn(),
-  },
-}))
+// Note: $lib/logger is NOT mocked here to avoid polluting logger.test.ts
+// in Bun's shared module cache. The real logger runs (writes to console)
+// but this test doesn't assert on logger calls.
 
 // Helper to create a mock UTXO record
 function makePendingUtxo(overrides: Record<string, unknown> = {}) {
@@ -68,6 +64,9 @@ function makePendingUtxo(overrides: Record<string, unknown> = {}) {
 describe("confirm-utxos cron logic", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Reset mockGetUTXOStatus implementation to prevent leaking mockResolvedValue
+    // defaults to other test files in Bun's shared module cache
+    mockGetUTXOStatus.mockReset()
     mockDb.select.mockReturnValue(mockSelectChain)
     mockDb.update.mockReturnValue(mockUpdateChain)
     mockSelectChain.from.mockReturnThis()
