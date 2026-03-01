@@ -1,27 +1,27 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
+	import DataLabel from '$lib/components/DataLabel.svelte';
 	import DeleteConfirm from '$lib/components/DeleteConfirm.svelte';
 	import ExportRecoveryKitButton from '$lib/components/ExportRecoveryKitButton.svelte';
+	import Keyline from '$lib/components/Keyline.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Table from '$lib/components/ui/table';
+	import { formatGranularTime } from '$lib/time-utils';
 	import {
 		AlertCircle,
 		ArrowLeft,
 		Calendar,
 		CheckCircle,
-		Clock,
 		Download,
-		Edit,
-		FileText,
 		History,
+		Loader2,
 		Mail,
 		Pause,
+		Pencil,
 		Phone,
 		Play,
-		Shield,
-		Trash2,
-		User
+		Trash2
 	} from '@lucide/svelte';
 
 	let { data } = $props();
@@ -32,35 +32,42 @@
 	let showDeleteModal = $state(false);
 	let actionError = $state<string | null>(null);
 
-	let statusInfo = $derived.by(() => {
-		const secret = data.secret;
-		if (secret.triggeredAt || secret.status === 'triggered') {
-			return {
-				icon: AlertCircle,
-				colorClass: 'bg-destructive/10 text-destructive',
-				label: 'sent'
-			};
-		}
-		switch (secret.status) {
-			case 'active':
-				return {
-					icon: CheckCircle,
-					colorClass: 'bg-accent text-accent-foreground',
-					label: 'active'
-				};
-			case 'paused':
-				return {
-					icon: Pause,
-					colorClass: 'bg-muted text-muted-foreground',
-					label: 'paused'
-				};
-			default:
-				return {
-					icon: AlertCircle,
-					colorClass: 'bg-muted text-muted-foreground',
-					label: 'unknown'
-				};
-		}
+	let isTriggered = $derived(
+		data.secret.triggeredAt !== null || data.secret.status === 'triggered'
+	);
+	let serverShareDeleted = $derived(!data.secret.serverShare);
+
+	let statusLabel = $derived.by(() => {
+		if (isTriggered) return 'sent';
+		if (data.secret.status === 'paused') return 'paused';
+		if (data.secret.status === 'active') return 'active';
+		return 'unknown';
+	});
+
+	let countdownText = $derived.by(() => {
+		if (isTriggered) return 'Sent';
+		if (serverShareDeleted) return '—';
+		if (data.secret.status === 'paused') return 'Paused';
+		return formatGranularTime(data.secret.nextCheckIn || new Date().toISOString());
+	});
+
+	let keylineProgress = $derived.by(() => {
+		if (isTriggered || serverShareDeleted || data.secret.status === 'paused') return 0;
+		const now = new Date();
+		const nextCheckIn = data.secret.nextCheckIn ? new Date(data.secret.nextCheckIn) : now;
+		const intervalMs = data.secret.checkInDays * 24 * 60 * 60 * 1000;
+		const startMs = nextCheckIn.getTime() - intervalMs;
+		const elapsed = now.getTime() - startMs;
+		return Math.max(0, Math.min(100, (elapsed / intervalMs) * 100));
+	});
+
+	let canCheckIn = $derived.by(() => {
+		if (isTriggered || data.secret.status === 'paused' || serverShareDeleted) return false;
+		if (!data.secret.lastCheckIn) return true;
+		const lastCheckIn = new Date(data.secret.lastCheckIn);
+		const fifteenMinutesAgo = new Date();
+		fifteenMinutesAgo.setMinutes(fifteenMinutesAgo.getMinutes() - 15);
+		return lastCheckIn < fifteenMinutesAgo;
 	});
 
 	let serverShareStatus = $derived(
@@ -156,143 +163,61 @@
 </svelte:head>
 
 <div class="mx-auto max-w-5xl px-6 py-12">
-	<!-- Header -->
-	<div class="mb-12 flex items-center gap-4">
-		<a href="/dashboard">
-			<Button variant="ghost" size="icon">
-				<ArrowLeft class="h-4 w-4" />
-			</Button>
-		</a>
-		<div class="flex-1">
-			<h1 class="font-space text-3xl font-light tracking-tight">
-				{data.secret.title}
-			</h1>
-		</div>
-		<a href="/secrets/{data.secret.id}/edit">
-			<Button variant="outline" size="sm" class="uppercase tracking-wide text-sm font-semibold">
-				<Edit class="mr-2 h-4 w-4" />
-				Edit
-			</Button>
+	<!-- Back link -->
+	<div class="mb-8">
+		<a href="/dashboard" class="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm transition-colors">
+			<ArrowLeft class="h-4 w-4" />
+			Dashboard
 		</a>
 	</div>
 
-	{#if actionError}
-		<div class="border-destructive/50 bg-destructive/10 mb-12 rounded-lg border p-4">
-			<div class="flex items-center gap-2">
-				<AlertCircle class="text-destructive h-4 w-4" />
-				<p class="text-destructive text-sm">{actionError}</p>
-			</div>
-		</div>
+	<!-- Header: title + status -->
+	<div class="flex items-start justify-between gap-4">
+		<h1 class="font-space text-3xl font-light tracking-tight md:text-4xl">
+			{data.secret.title}
+		</h1>
+		<Badge variant="outline" class="shrink-0 text-xs uppercase tracking-wider">
+			{statusLabel}
+		</Badge>
+	</div>
+
+	<!-- Massive countdown -->
+	<div
+		class="font-space text-foreground -ml-1 mt-4 text-[3.5rem] font-light leading-none tracking-tighter sm:text-[5rem] md:text-[6rem]"
+	>
+		{countdownText}
+	</div>
+
+	<!-- Keyline -->
+	{#if !isTriggered && !serverShareDeleted && data.secret.status !== 'paused'}
+		<Keyline progress={keylineProgress} />
+	{:else}
+		<div class="my-8 h-[2px] w-full bg-muted"></div>
 	{/if}
 
-	<div class="space-y-12">
-		<!-- Secret Information -->
-		<section>
-			<h2 class="font-space text-xl font-bold tracking-tight mb-6">Secret Information</h2>
-			<div class="flex flex-col md:flex-row justify-between gap-8">
-				<div class="flex-1 space-y-4">
-					<div>
-						<p class="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-1">
-							Recipients ({data.secret.recipients.length})
-						</p>
-						<div class="space-y-2">
-							{#each data.secret.recipients as recipient (recipient.id)}
-								<div class="flex items-center gap-2 text-sm text-foreground">
-									<span class="font-medium">{recipient.name}</span>
-									<span class="text-muted-foreground">&bull;</span>
-									{#if recipient.email}
-										<span class="text-muted-foreground flex items-center gap-1">
-											<Mail class="h-3 w-3" />
-											{recipient.email}
-										</span>
-									{/if}
-									{#if recipient.phone}
-										<span class="text-muted-foreground flex items-center gap-1">
-											<Phone class="h-3 w-3" />
-											{recipient.phone}
-										</span>
-									{/if}
-								</div>
-							{/each}
-						</div>
-					</div>
-				</div>
-
-				<div class="flex-1 space-y-4">
-					<div>
-						<p class="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-1">Server Share</p>
-						<p class="text-sm text-foreground">{serverShareStatus}</p>
-					</div>
-
-					<div>
-						<p class="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-1">Created</p>
-						<p class="text-sm text-foreground">
-							{new Date(data.secret.createdAt).toLocaleDateString()}
-						</p>
-					</div>
-				</div>
-			</div>
-		</section>
-
-		<!-- Status and Settings -->
-		<section>
-			<h2 class="font-space text-xl font-bold tracking-tight mb-6">Status & Settings</h2>
-			<div class="flex flex-col md:flex-row justify-between gap-8">
-				<div class="flex-1 space-y-4">
-					<div>
-						<p class="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-1">Status</p>
-						<Badge variant="outline" class={statusInfo.colorClass}>
-							{statusInfo.label}
-						</Badge>
-					</div>
-
-					<div>
-						<p class="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-1">Check-in Interval</p>
-						<p class="text-sm text-foreground">{data.secret.checkInDays} days</p>
-					</div>
-				</div>
-
-				<div class="flex-1 space-y-4">
-					{#if data.secret.nextCheckIn}
-						<div>
-							<p class="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-1">Next Check-in</p>
-							<p class="text-sm text-foreground">
-								{new Date(data.secret.nextCheckIn).toLocaleDateString()} at {new Date(
-									data.secret.nextCheckIn
-								).toLocaleTimeString()}
-							</p>
-						</div>
-					{/if}
-
-					{#if data.secret.lastCheckIn}
-						<div>
-							<p class="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-1">Last Check-in</p>
-							<p class="text-sm text-foreground">
-								{new Date(data.secret.lastCheckIn).toLocaleDateString()} at {new Date(
-									data.secret.lastCheckIn
-								).toLocaleTimeString()}
-							</p>
-						</div>
-					{/if}
-				</div>
-			</div>
-		</section>
-
-		<!-- Actions -->
-		<section>
-			<h2 class="font-space text-xl font-bold tracking-tight mb-6">Actions</h2>
-			<div class="flex flex-wrap gap-3">
-				{#if data.secret.status !== 'triggered'}
+	<!-- Actions bar — consolidated at the top, logically grouped -->
+	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+		<!-- Primary actions -->
+		<div class="flex flex-wrap items-center gap-2">
+			{#if !isTriggered}
+				{#if canCheckIn}
 					<Button
-						variant="outline"
+						variant="default"
 						onclick={handleCheckIn}
-						disabled={checkInLoading || data.secret.status === 'paused'}
+						disabled={checkInLoading}
 						class="uppercase tracking-wide text-sm font-semibold"
 					>
-						<CheckCircle class="mr-2 h-4 w-4" />
-						{checkInLoading ? 'Checking in...' : 'Check In'}
+						{#if checkInLoading}
+							<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+							Checking in...
+						{:else}
+							<CheckCircle class="mr-2 h-4 w-4" />
+							Check In
+						{/if}
 					</Button>
+				{/if}
 
+				{#if !serverShareDeleted}
 					<Button
 						variant="outline"
 						onclick={handleTogglePause}
@@ -307,50 +232,147 @@
 							{pauseLoading ? 'Pausing...' : 'Pause'}
 						{/if}
 					</Button>
+
+					<Button
+						variant="outline"
+						size="default"
+						href={`/secrets/${data.secret.id}/edit`}
+						class="uppercase tracking-wide text-sm font-semibold"
+					>
+						<Pencil class="mr-2 h-4 w-4" />
+						Edit
+					</Button>
 				{/if}
+			{/if}
+		</div>
 
-				<ExportRecoveryKitButton
-					secret={{
-						id: data.secret.id,
-						title: data.secret.title,
-						checkInDays: data.secret.checkInDays,
-						createdAt: data.secret.createdAt,
-						recipients: data.secret.recipients.map((r) => ({
-							id: r.id,
-							name: r.name,
-							email: r.email,
-							phone: r.phone
-						}))
-					}}
-					threshold={data.secret.sssThreshold}
-					totalShares={data.secret.sssSharesTotal}
-				/>
+		<!-- Secondary actions -->
+		<div class="flex flex-wrap items-center gap-2">
+			<ExportRecoveryKitButton
+				secret={{
+					id: data.secret.id,
+					title: data.secret.title,
+					checkInDays: data.secret.checkInDays,
+					createdAt: data.secret.createdAt,
+					recipients: data.secret.recipients.map((r) => ({
+						id: r.id,
+						name: r.name,
+						email: r.email,
+						phone: r.phone
+					}))
+				}}
+				threshold={data.secret.sssThreshold}
+				totalShares={data.secret.sssSharesTotal}
+			/>
 
+			{#if !isTriggered}
 				<Button
-					variant="destructive"
+					variant="ghost"
 					onclick={() => (showDeleteModal = true)}
 					disabled={deleteLoading}
-					class="uppercase tracking-wide text-sm font-semibold"
+					class="text-destructive hover:text-destructive uppercase tracking-wide text-sm font-semibold"
 				>
 					<Trash2 class="mr-2 h-4 w-4" />
 					Delete
 				</Button>
+			{/if}
+		</div>
+	</div>
+
+	{#if actionError}
+		<div class="border-destructive/50 bg-destructive/10 mt-6 rounded-lg border p-4">
+			<div class="flex items-center gap-2">
+				<AlertCircle class="text-destructive h-4 w-4 shrink-0" />
+				<p class="text-destructive text-sm">{actionError}</p>
 			</div>
-			<p class="text-muted-foreground mt-4 text-sm">
-				Export a recovery kit to ensure your secret remains accessible even if KeyFate is
-				unavailable.
-			</p>
+		</div>
+	{/if}
+
+	<!-- Details section -->
+	<div class="mt-16 space-y-16">
+		<!-- Secret metadata — single consolidated section -->
+		<section>
+			<h2 class="font-space text-xl font-semibold tracking-tight mb-8">Details</h2>
+
+			<div class="grid grid-cols-2 gap-x-12 gap-y-8 md:grid-cols-4">
+				<DataLabel label="Status">
+					<Badge variant="outline" class="text-xs uppercase tracking-wider">
+						{statusLabel}
+					</Badge>
+				</DataLabel>
+
+				<DataLabel label="Check-in Interval" value="{data.secret.checkInDays} days" />
+
+				{#if data.secret.nextCheckIn}
+					<DataLabel label="Next Check-in">
+						{new Date(data.secret.nextCheckIn).toLocaleDateString(undefined, {
+							month: 'short',
+							day: 'numeric',
+							year: 'numeric'
+						})}
+					</DataLabel>
+				{/if}
+
+				{#if data.secret.lastCheckIn}
+					<DataLabel label="Last Check-in">
+						{new Date(data.secret.lastCheckIn).toLocaleDateString(undefined, {
+							month: 'short',
+							day: 'numeric',
+							year: 'numeric'
+						})}
+					</DataLabel>
+				{/if}
+
+				<DataLabel label="Server Share" value={serverShareStatus} />
+
+				<DataLabel label="Created">
+					{new Date(data.secret.createdAt).toLocaleDateString(undefined, {
+						month: 'short',
+						day: 'numeric',
+						year: 'numeric'
+					})}
+				</DataLabel>
+
+				<DataLabel label="Shares" value="{data.secret.sssThreshold} of {data.secret.sssSharesTotal} required" />
+			</div>
+		</section>
+
+		<!-- Recipients -->
+		<section>
+			<h2 class="font-space text-xl font-semibold tracking-tight mb-8">
+				Recipients ({data.secret.recipients.length})
+			</h2>
+
+			<div class="space-y-4">
+				{#each data.secret.recipients as recipient (recipient.id)}
+					<div class="flex items-center gap-4 text-sm">
+						<span class="font-medium text-foreground">{recipient.name}</span>
+						{#if recipient.email}
+							<span class="text-muted-foreground flex items-center gap-1.5">
+								<Mail class="h-3.5 w-3.5" />
+								{recipient.email}
+							</span>
+						{/if}
+						{#if recipient.phone}
+							<span class="text-muted-foreground flex items-center gap-1.5">
+								<Phone class="h-3.5 w-3.5" />
+								{recipient.phone}
+							</span>
+						{/if}
+					</div>
+				{/each}
+			</div>
 		</section>
 
 		<!-- Check-in History -->
 		<section>
-			<h2 class="font-space text-xl font-bold tracking-tight mb-6">Check-in History</h2>
+			<h2 class="font-space text-xl font-semibold tracking-tight mb-8">Check-in History</h2>
 			{#if data.checkInHistory.length > 0}
 				<Table.Root>
 					<Table.Header>
 						<Table.Row>
 							<Table.Head class="text-xs text-muted-foreground uppercase tracking-wider">Check-in Date</Table.Head>
-							<Table.Head class="text-xs text-muted-foreground uppercase tracking-wider">Next Check-in Date</Table.Head>
+							<Table.Head class="text-xs text-muted-foreground uppercase tracking-wider">Next Check-in</Table.Head>
 						</Table.Row>
 					</Table.Header>
 					<Table.Body>
@@ -359,15 +381,24 @@
 								<Table.Cell>
 									<div class="flex items-center gap-2">
 										<CheckCircle class="text-accent-foreground h-4 w-4" />
-										{new Date(checkIn.checkedInAt).toLocaleDateString()} at {new Date(
-											checkIn.checkedInAt
-										).toLocaleTimeString()}
+										{new Date(checkIn.checkedInAt).toLocaleDateString(undefined, {
+											month: 'short',
+											day: 'numeric',
+											year: 'numeric'
+										})} at {new Date(checkIn.checkedInAt).toLocaleTimeString(undefined, {
+											hour: '2-digit',
+											minute: '2-digit'
+										})}
 									</div>
 								</Table.Cell>
 								<Table.Cell>
 									<div class="flex items-center gap-2">
 										<Calendar class="text-muted-foreground h-4 w-4" />
-										{new Date(checkIn.nextCheckIn).toLocaleDateString()}
+										{new Date(checkIn.nextCheckIn).toLocaleDateString(undefined, {
+											month: 'short',
+											day: 'numeric',
+											year: 'numeric'
+										})}
 									</div>
 								</Table.Cell>
 							</Table.Row>
@@ -377,7 +408,7 @@
 			{:else}
 				<div class="py-8 text-center">
 					<History class="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-					<p class="text-muted-foreground">No check-in history available.</p>
+					<p class="text-muted-foreground text-sm">No check-in history available.</p>
 				</div>
 			{/if}
 		</section>
