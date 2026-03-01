@@ -7,6 +7,7 @@
 
 import nodemailer from "nodemailer"
 import { CircuitBreaker } from "$lib/circuit-breaker"
+import { logger } from "$lib/logger"
 import { SENDGRID_UNSUBSCRIBE_GROUPS, type UnsubscribeGroup } from "./constants"
 
 // Re-export for backwards compatibility
@@ -301,7 +302,7 @@ ${emailData.text || "HTML content provided"}
 
     return result
   } catch (error) {
-    console.error("[EmailService] Error sending email:", error)
+    logger.error("Error sending email", error instanceof Error ? error : undefined)
 
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error"
@@ -578,3 +579,262 @@ export function getEmailServiceHealth() {
 export function resetEmailCircuitBreaker() {
   emailCircuitBreaker.reset()
 }
+
+// ============================================================================
+// Billing & Subscription Email Service
+// (Merged from $lib/services/email-service.ts)
+// ============================================================================
+
+export interface SubscriptionConfirmationData {
+  provider: "stripe" | "btcpay"
+  tierName: string
+  amount: number
+  interval: string
+}
+
+export interface PaymentFailedData {
+  provider: "stripe" | "btcpay"
+  subscriptionId: string
+  amount: number
+  attemptCount: number
+  nextRetry: Date
+}
+
+export interface TrialWillEndData {
+  daysRemaining: number
+  trialEndDate: Date
+}
+
+export interface BitcoinPaymentData {
+  invoiceId: string
+  amount: number
+  currency: string
+  tierName: string
+  confirmations: number
+  transactionId?: string
+}
+
+export interface AdminAlertData {
+  type: string
+  severity: "low" | "medium" | "high" | "critical"
+  message: string
+  details: Record<string, unknown>
+}
+
+async function getUserById(userId: string) {
+  try {
+    const { getDatabase } = await import("$lib/db/drizzle")
+    const { users } = await import("$lib/db/schema")
+    const { eq } = await import("drizzle-orm")
+    const db = await getDatabase()
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1)
+    return user || null
+  } catch (error) {
+    logger.error("Failed to get user by ID", error instanceof Error ? error : undefined)
+    return null
+  }
+}
+
+class BillingEmailService {
+  async sendSubscriptionConfirmation(
+    userId: string,
+    data: SubscriptionConfirmationData,
+  ) {
+    try {
+      const user = await getUserById(userId)
+      if (!user) {
+        logger.warn("User not found for subscription confirmation email", { userId })
+        return
+      }
+
+      const { renderSubscriptionConfirmationTemplate } = await import(
+        "./templates"
+      )
+      const template = renderSubscriptionConfirmationTemplate({
+        userName: user.name || "User",
+        tierName: data.tierName,
+        provider: data.provider,
+        amount: data.amount,
+        interval: data.interval,
+        nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      })
+
+      await sendEmail(
+        {
+          to: user.email,
+          subject: template.subject,
+          html: template.html,
+          text: template.text,
+          unsubscribeGroup: "BILLING_SUBSCRIPTION",
+        },
+        { maxRetries: 3, retryDelay: 1000 },
+      )
+    } catch (error) {
+      logger.error("Failed to send subscription confirmation email", error instanceof Error ? error : undefined)
+    }
+  }
+
+  async sendPaymentFailedNotification(userId: string, data: PaymentFailedData) {
+    try {
+      const user = await getUserById(userId)
+      if (!user) {
+        logger.warn("User not found for payment failed notification", { userId })
+        return
+      }
+
+      const { renderPaymentFailedTemplate } = await import("./templates")
+      const template = renderPaymentFailedTemplate({
+        userName: user.name || "User",
+        amount: data.amount,
+        provider: data.provider,
+        attemptCount: data.attemptCount,
+        maxAttempts: 3,
+        nextRetry: data.nextRetry,
+      })
+
+      await sendEmail(
+        {
+          to: user.email,
+          subject: template.subject,
+          html: template.html,
+          text: template.text,
+          unsubscribeGroup: "BILLING_SUBSCRIPTION",
+        },
+        { maxRetries: 3, retryDelay: 1000 },
+      )
+    } catch (error) {
+      logger.error("Failed to send payment failed notification", error instanceof Error ? error : undefined)
+    }
+  }
+
+  async sendSubscriptionCancelledNotification(userId: string) {
+    try {
+      const user = await getUserById(userId)
+      if (!user) {
+        logger.warn("User not found for subscription cancelled notification", { userId })
+        return
+      }
+
+      const { renderSubscriptionCancelledTemplate } = await import(
+        "./templates"
+      )
+      const template = renderSubscriptionCancelledTemplate({
+        userName: user.name || "User",
+      })
+
+      await sendEmail(
+        {
+          to: user.email,
+          subject: template.subject,
+          html: template.html,
+          text: template.text,
+          unsubscribeGroup: "BILLING_SUBSCRIPTION",
+        },
+        { maxRetries: 3, retryDelay: 1000 },
+      )
+    } catch (error) {
+      logger.error("Failed to send subscription cancelled notification", error instanceof Error ? error : undefined)
+    }
+  }
+
+  async sendTrialWillEndNotification(userId: string, data: TrialWillEndData) {
+    try {
+      const user = await getUserById(userId)
+      if (!user) {
+        logger.warn("User not found for trial will end notification", { userId })
+        return
+      }
+
+      const { renderTrialWillEndTemplate } = await import("./templates")
+      const template = renderTrialWillEndTemplate({
+        userName: user.name || "User",
+        daysRemaining: data.daysRemaining,
+        trialEndDate: data.trialEndDate,
+      })
+
+      await sendEmail(
+        {
+          to: user.email,
+          subject: template.subject,
+          html: template.html,
+          text: template.text,
+          unsubscribeGroup: "BILLING_SUBSCRIPTION",
+        },
+        { maxRetries: 3, retryDelay: 1000 },
+      )
+    } catch (error) {
+      logger.error("Failed to send trial will end notification", error instanceof Error ? error : undefined)
+    }
+  }
+
+  async sendBitcoinPaymentConfirmation(
+    userId: string,
+    data: BitcoinPaymentData,
+  ) {
+    try {
+      const user = await getUserById(userId)
+      if (!user) {
+        logger.warn("User not found for Bitcoin payment confirmation", { userId })
+        return
+      }
+
+      const { renderBitcoinPaymentConfirmationTemplate } = await import(
+        "./templates"
+      )
+      const template = renderBitcoinPaymentConfirmationTemplate({
+        userName: user.name || "User",
+        amount: data.amount,
+        currency: data.currency,
+        tierName: data.tierName,
+        confirmations: data.confirmations,
+        transactionId: data.transactionId,
+      })
+
+      await sendEmail(
+        {
+          to: user.email,
+          subject: template.subject,
+          html: template.html,
+          text: template.text,
+          unsubscribeGroup: "BILLING_SUBSCRIPTION",
+        },
+        { maxRetries: 3, retryDelay: 1000 },
+      )
+    } catch (error) {
+      logger.error("Failed to send Bitcoin payment confirmation", error instanceof Error ? error : undefined)
+    }
+  }
+
+  async sendAdminAlert(data: AdminAlertData) {
+    try {
+      const adminEmail = process.env.SENDGRID_ADMIN_EMAIL || "support@aviat.io"
+
+      const { renderAdminAlertTemplate } = await import("./templates")
+      const template = renderAdminAlertTemplate({
+        type: data.type,
+        severity: data.severity,
+        message: data.message,
+        details: data.details,
+        timestamp: new Date(),
+      })
+
+      await sendEmail(
+        {
+          to: adminEmail,
+          subject: template.subject,
+          html: template.html,
+          text: template.text,
+        },
+        { maxRetries: 3, retryDelay: 1000 },
+      )
+    } catch (error) {
+      logger.error("Failed to send admin alert", error instanceof Error ? error : undefined)
+    }
+  }
+}
+
+export const emailService = new BillingEmailService()

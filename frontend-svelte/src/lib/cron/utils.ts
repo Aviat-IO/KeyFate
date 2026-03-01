@@ -1,5 +1,5 @@
 import { timingSafeEqual } from "crypto"
-import type { NextRequest } from "$lib/compat/next-server"
+
 
 export function sanitizeError(error: unknown, secretId?: string): string {
   const message = error instanceof Error ? error.message : String(error)
@@ -29,12 +29,12 @@ export function sanitizeError(error: unknown, secretId?: string): string {
   return sanitized
 }
 
-export function authorizeRequest(req: NextRequest): boolean {
+export function authorizeRequest(req: Request, url: URL): boolean {
   const signature = req.headers.get("x-cron-signature")
   const timestamp = req.headers.get("x-cron-timestamp")
 
   if (signature && timestamp) {
-    return verifyHMACSignature(req, signature, timestamp)
+    return verifyHMACSignature(req, url, signature, timestamp)
   }
 
   const header =
@@ -65,7 +65,8 @@ export function authorizeRequest(req: NextRequest): boolean {
 }
 
 function verifyHMACSignature(
-  req: NextRequest,
+  req: Request,
+  url: URL,
   signature: string,
   timestamp: string,
 ): boolean {
@@ -94,12 +95,12 @@ function verifyHMACSignature(
   }
 
   // Construct the URL from the Host header and pathname to match what clients send
-  const host = req.headers.get("host") || req.nextUrl.host
-  const pathname = req.nextUrl.pathname
+  const host = req.headers.get("host") || url.host
+  const pathname = url.pathname
   const protocol = req.headers.get("x-forwarded-proto") || "https"
-  const url = `${protocol}://${host}${pathname}`
+  const fullUrl = `${protocol}://${host}${pathname}`
 
-  const message = `${timestampMs}.${url}`
+  const message = `${timestampMs}.${fullUrl}`
   const expectedSignature = crypto
     .createHmac("sha256", cronSecret)
     .update(message)

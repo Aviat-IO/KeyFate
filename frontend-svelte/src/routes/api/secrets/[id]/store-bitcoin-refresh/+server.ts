@@ -10,7 +10,7 @@
 import { json } from "@sveltejs/kit"
 import type { RequestHandler } from "./$types"
 import { eq, and, desc } from "drizzle-orm"
-import { getDatabase } from "$lib/db/get-database"
+import { getDatabase } from "$lib/db/drizzle"
 import { bitcoinUtxos, secrets } from "$lib/db/schema"
 import { requireCSRFProtection, createCSRFErrorResponse } from "$lib/csrf"
 
@@ -163,8 +163,6 @@ export const POST: RequestHandler = async (event) => {
     })
   } catch (error) {
     console.error("Error in POST /api/secrets/[id]/store-bitcoin-refresh:", error)
-    const message =
-      error instanceof Error ? error.message : "Internal server error"
-    return json({ error: message }, { status: 500 })
+    return json({ error: "Internal server error" }, { status: 500 })
   }
 }

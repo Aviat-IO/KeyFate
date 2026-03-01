@@ -20,6 +20,10 @@
   });
 </script>
 
+<svelte:head>
+  <title>Verify Email | KeyFate</title>
+</svelte:head>
+
 <div class="flex min-h-screen items-center justify-center">
   <div class="text-center">
     <h2 class="text-center text-3xl font-bold tracking-tight">

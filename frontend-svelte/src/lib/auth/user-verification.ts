@@ -9,7 +9,7 @@
 import { getDatabase } from "$lib/db/drizzle"
 import { users } from "$lib/db/schema"
 import { eq } from "drizzle-orm"
-import type { Session } from "$lib/compat/next-auth"
+import type { Session } from "@auth/sveltekit"
 
 export interface UserVerificationResult {
   exists: boolean

@@ -1,15 +1,14 @@
 import { json } from "@sveltejs/kit"
 import type { RequestHandler } from "./$types"
+import { logger } from "$lib/logger"
 import { authorizeRequest } from "$lib/cron/utils"
-import { adaptRequestEvent } from "$lib/cron/adapt-request"
-import { getDatabase } from "$lib/db/get-database"
+import { getDatabase } from "$lib/db/drizzle"
 import { dataExportJobs } from "$lib/db/schema"
 import { lt, eq } from "drizzle-orm"
 import { deleteExportFile } from "$lib/gdpr/export-service"
 
 export const GET: RequestHandler = async (event) => {
-  const req = adaptRequestEvent(event)
-  if (!authorizeRequest(req)) {
+  if (!authorizeRequest(event.request, event.url)) {
     return json({ error: "Unauthorized" }, { status: 401 })
   }
   return json({ status: "ok", job: "cleanup-exports" })
@@ -17,12 +16,11 @@ export const GET: RequestHandler = async (event) => {
 
 export const POST: RequestHandler = async (event) => {
   try {
-    const req = adaptRequestEvent(event)
-    if (!authorizeRequest(req)) {
+    if (!authorizeRequest(event.request, event.url)) {
       return json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    console.log("[CRON] Cleaning up expired exports...")
+    logger.info("Cleaning up expired exports")
 
     const db = await getDatabase()
 
@@ -32,7 +30,7 @@ export const POST: RequestHandler = async (event) => {
       .where(lt(dataExportJobs.expiresAt, new Date()))
 
     if (expiredJobs.length === 0) {
-      console.log("[CRON] No expired exports found")
+      logger.info("No expired exports found")
       return json({
         success: true,
         cleaned: 0,
@@ -40,7 +38,7 @@ export const POST: RequestHandler = async (event) => {
       })
     }
 
-    console.log(`[CRON] Found ${expiredJobs.length} expired exports`)
+    logger.info("Found expired exports", { count: expiredJobs.length })
 
     let deletedCount = 0
     let errorCount = 0
@@ -49,22 +47,20 @@ export const POST: RequestHandler = async (event) => {
       try {
         if (job.fileUrl) {
           await deleteExportFile(job.fileUrl)
-          console.log(`[CRON] Deleted export file for job ${job.id}`)
+          logger.info("Deleted export file", { jobId: job.id })
         }
 
         await db.delete(dataExportJobs).where(eq(dataExportJobs.id, job.id))
 
         deletedCount++
-        console.log(`[CRON] Cleaned up export job ${job.id}`)
+        logger.info("Cleaned up export job", { jobId: job.id })
       } catch (error) {
-        console.error(`[CRON] Error cleaning up export job ${job.id}:`, error)
+        logger.error("Error cleaning up export job", error instanceof Error ? error : undefined, { jobId: job.id })
         errorCount++
       }
     }
 
-    console.log(
-      `[CRON] Cleanup complete: ${deletedCount} deleted, ${errorCount} errors`,
-    )
+    logger.info("Cleanup complete", { deletedCount, errorCount })
 
     return json({
       success: true,
@@ -72,7 +68,7 @@ export const POST: RequestHandler = async (event) => {
       errors: errorCount,
     })
   } catch (error) {
-    console.error("[CRON] Error in cleanup-exports:", error)
+    logger.error("Error in cleanup-exports", error instanceof Error ? error : undefined)
     return json(
       { error: "Failed to cleanup exports" },
       { status: 500 },

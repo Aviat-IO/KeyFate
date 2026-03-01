@@ -1,12 +1,12 @@
 import { and, desc, eq, lt } from "drizzle-orm"
 import { secrets, users, type SecretUpdate } from "./schema"
 import { connectionManager } from "./connection-manager"
-import { getDatabase } from "./get-database"
+import { getDatabase, getDatabaseStats, closeDatabaseConnection } from "./get-database"
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js"
 import type * as schema from "./schema"
 
-// Re-export the standardized database getter
-export { getDatabase, getDatabase as getDb }
+// Re-export the standardized database getter and utilities
+export { getDatabase, getDatabase as getDb, getDatabaseStats, closeDatabaseConnection }
 
 // DEPRECATED: This proxy-based db export is kept for backward compatibility
 // but should not be used in new code. Use getDatabase() instead.

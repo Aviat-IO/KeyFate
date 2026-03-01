@@ -1,74 +1,19 @@
 import { json } from "@sveltejs/kit"
 import type { RequestHandler } from "./$types"
 import { checkDatabaseConnection } from "$lib/db/connection"
-import { getDatabaseStats } from "$lib/db/get-database"
+import { getDatabaseStats } from "$lib/db/drizzle"
 import { logger } from "$lib/logger"
 import { getEmailServiceHealth } from "$lib/email/email-service"
 import { authorizeRequest } from "$lib/cron/utils"
 
-async function checkEmailService(): Promise<boolean> {
-  try {
-    const apiKey = process.env.SENDGRID_API_KEY
-    if (!apiKey) return false
-
-    const response = await fetch("https://api.sendgrid.com/v3/user/profile", {
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-      },
-      signal: AbortSignal.timeout(5000),
-    })
-
-    return response.ok
-  } catch (error) {
-    logger.warn("Email service health check failed", {
-      error: error instanceof Error ? error.message : String(error),
-    })
-    return false
-  }
-}
-
-async function checkStripeService(): Promise<boolean> {
-  try {
-    const apiKey = process.env.STRIPE_SECRET_KEY
-    if (!apiKey) return false
-
-    const response = await fetch("https://api.stripe.com/v1/balance", {
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-      },
-      signal: AbortSignal.timeout(5000),
-    })
-
-    return response.ok
-  } catch (error) {
-    logger.warn("Stripe service health check failed", {
-      error: error instanceof Error ? error.message : String(error),
-    })
-    return false
-  }
-}
-
-async function checkBTCPayService(): Promise<boolean> {
-  try {
-    const serverUrl = process.env.BTCPAY_SERVER_URL
-    const apiKey = process.env.BTCPAY_API_KEY
-
-    if (!serverUrl || !apiKey) return false
-
-    const response = await fetch(`${serverUrl}/api/v1/server/info`, {
-      headers: {
-        Authorization: `token ${apiKey}`,
-      },
-      signal: AbortSignal.timeout(5000),
-    })
-
-    return response.ok
-  } catch (error) {
-    logger.warn("BTCPay service health check failed", {
-      error: error instanceof Error ? error.message : String(error),
-    })
-    return false
-  }
+/**
+ * Check that the email service is configured (API key present).
+ * Does NOT call the SendGrid API — external service checks should not
+ * run on every health probe as they slow down probes and can cause
+ * false negatives when the external service is temporarily unreachable.
+ */
+function checkEmailConfigured(): boolean {
+  return !!process.env.SENDGRID_API_KEY
 }
 
 function checkEncryptionKey(): boolean {
@@ -86,47 +31,37 @@ function checkEncryptionKey(): boolean {
 /**
  * GET /api/health
  *
- * Comprehensive health check endpoint.
+ * Health check endpoint. Verifies server is running and database is reachable.
+ * Does NOT call external services (SendGrid, Stripe, BTCPay) — those checks
+ * slow down probes and cause false negatives.
  * Detailed metrics require CRON_SECRET authorization.
  */
 export const GET: RequestHandler = async (event) => {
   const detailed = event.url.searchParams.get("detailed") === "true"
 
   // Require authentication for detailed metrics (contains internal config)
-  if (detailed && !authorizeRequest(event.request as any)) {
+  if (detailed && !authorizeRequest(event.request, event.url)) {
     return json({ error: "Unauthorized" }, { status: 401 })
   }
 
   try {
-    // Check core services in parallel
-    const [dbConnected, emailHealthy, stripeHealthy, btcpayHealthy] =
-      await Promise.all([
-        checkDatabaseConnection(),
-        checkEmailService(),
-        detailed ? checkStripeService() : Promise.resolve(true),
-        detailed ? checkBTCPayService() : Promise.resolve(true),
-      ])
-
+    // Core checks: server running + database reachable + config present.
+    // External service calls (SendGrid, Stripe, BTCPay) are intentionally
+    // excluded — they slow down probes and cause false negatives when the
+    // external service is temporarily unreachable.
+    const dbConnected = await checkDatabaseConnection()
+    const emailConfigured = checkEmailConfigured()
     const encryptionKeyValid = checkEncryptionKey()
 
     const checks = {
       database: dbConnected ? "healthy" : "unhealthy",
-      email: emailHealthy ? "healthy" : "unhealthy",
+      email: emailConfigured ? "configured" : "unconfigured",
       encryption: encryptionKeyValid ? "healthy" : "unhealthy",
-      ...(detailed && {
-        stripe: stripeHealthy ? "healthy" : "unhealthy",
-        btcpay: btcpayHealthy ? "healthy" : "unhealthy",
-      }),
     }
 
     // Core services required for basic operation
-    const coreHealthy = dbConnected && emailHealthy && encryptionKeyValid
-
-    // Payment services are optional - don't fail health check if unavailable
-    const allHealthy = detailed
-      ? coreHealthy && stripeHealthy && btcpayHealthy
-      : coreHealthy
-
+    const coreHealthy = dbConnected && emailConfigured && encryptionKeyValid
+    const allHealthy = coreHealthy
     const anyUnhealthy = !coreHealthy
 
     const dbStats = getDatabaseStats()
@@ -167,7 +102,7 @@ export const GET: RequestHandler = async (event) => {
       {
         status: "error",
         timestamp: new Date().toISOString(),
-        error: error instanceof Error ? error.message : "Unknown error",
+        // Error details intentionally omitted from client response (logged above)
       },
       { status: 500 },
     )

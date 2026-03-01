@@ -12,6 +12,10 @@
   });
 </script>
 
+<svelte:head>
+  <title>Sign In | KeyFate</title>
+</svelte:head>
+
 <div class="flex min-h-screen items-center justify-center">
   <div>Redirecting to sign in...</div>
 </div>

@@ -5,7 +5,7 @@
  * for all API endpoints.
  */
 
-import { NextResponse } from "$lib/compat/next-server"
+import { json } from "@sveltejs/kit"
 import { logger } from "$lib/logger"
 
 /**
@@ -265,7 +265,7 @@ export class APIError extends Error {
 /**
  * Handle API errors consistently across all endpoints
  */
-export function handleAPIError(error: unknown): NextResponse {
+export function handleAPIError(error: unknown): Response {
   // Already an APIError - use its structure
   if (error instanceof APIError) {
     logger.warn(`API error: ${error.code}`, {
@@ -276,9 +276,7 @@ export function handleAPIError(error: unknown): NextResponse {
       details: error.details,
     })
 
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    }
+    const headers: Record<string, string> = {}
 
     // Add Retry-After header for rate limit errors
     if (
@@ -288,7 +286,7 @@ export function handleAPIError(error: unknown): NextResponse {
       headers["Retry-After"] = String(error.details.retryAfter)
     }
 
-    return NextResponse.json(error.toJSON(), {
+    return json(error.toJSON(), {
       status: error.statusCode,
       headers,
     })
@@ -308,7 +306,7 @@ export function handleAPIError(error: unknown): NextResponse {
       error,
     )
 
-    return NextResponse.json(apiError.toJSON(), {
+    return json(apiError.toJSON(), {
       status: apiError.statusCode,
     })
   }
@@ -319,7 +317,7 @@ export function handleAPIError(error: unknown): NextResponse {
   })
 
   const apiError = APIError.internal("An unexpected error occurred")
-  return NextResponse.json(apiError.toJSON(), {
+  return json(apiError.toJSON(), {
     status: apiError.statusCode,
   })
 }
@@ -328,9 +326,9 @@ export function handleAPIError(error: unknown): NextResponse {
  * Wrap async API handler with error handling
  */
 export function withErrorHandling<T extends unknown[]>(
-  handler: (...args: T) => Promise<NextResponse>,
-): (...args: T) => Promise<NextResponse> {
-  return async (...args: T): Promise<NextResponse> => {
+  handler: (...args: T) => Promise<Response>,
+): (...args: T) => Promise<Response> {
+  return async (...args: T): Promise<Response> => {
     try {
       return await handler(...args)
     } catch (error) {

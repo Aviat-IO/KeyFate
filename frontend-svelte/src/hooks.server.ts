@@ -61,7 +61,7 @@ const middlewareHandle: Handle = async ({ event, resolve }) => {
       (route) => pathname === route || pathname.startsWith(`${route}/`),
     )
 
-    const emailVerified = (session.user as any).emailVerified
+    const emailVerified = (session.user as { emailVerified?: Date | null }).emailVerified
     if (!emailVerified && !isVerificationExempt) {
       throw redirect(303, "/auth/verify-email")
     }

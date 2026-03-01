@@ -36,12 +36,12 @@ export const POST: RequestHandler = async (event) => {
       return createCSRFErrorResponse()
     }
 
-    const reAuthCheck = await requireRecentAuthentication(event.request as any)
+    const session = await event.locals.auth()
+
+    const reAuthCheck = await requireRecentAuthentication(event.request, session)
     if (!reAuthCheck.valid) {
       return createReAuthErrorResponse(reAuthCheck.userId)
     }
-
-    const session = await event.locals.auth()
     if (!session?.user?.id) {
       return json({ error: "Unauthorized" }, { status: 401 })
     }

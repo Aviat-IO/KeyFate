@@ -42,11 +42,11 @@ export const GET: RequestHandler = async (event) => {
     const conditions = [eq(auditLogs.userId, session.user.id)]
 
     if (eventType) {
-      conditions.push(eq(auditLogs.eventType, eventType as any))
+      conditions.push(eq(auditLogs.eventType, eventType as typeof auditLogs.eventType.enumValues[number]))
     }
 
     if (eventCategory) {
-      conditions.push(eq(auditLogs.eventCategory, eventCategory as any))
+      conditions.push(eq(auditLogs.eventCategory, eventCategory as typeof auditLogs.eventCategory.enumValues[number]))
     }
 
     if (startDate) {
@@ -85,7 +85,7 @@ export const GET: RequestHandler = async (event) => {
   }
 }
 
-function convertToCSV(logs: any[]): string {
+function convertToCSV(logs: Record<string, unknown>[]): string {
   if (logs.length === 0) return ""
 
   const headers = [

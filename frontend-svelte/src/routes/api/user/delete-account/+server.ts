@@ -5,7 +5,7 @@ import {
   initiateAccountDeletion,
   getActiveDeletionRequest,
 } from "$lib/gdpr/deletion-service"
-import { getDatabase } from "$lib/db/get-database"
+import { getDatabase } from "$lib/db/drizzle"
 import { auditLogs } from "$lib/db/schema"
 
 /**

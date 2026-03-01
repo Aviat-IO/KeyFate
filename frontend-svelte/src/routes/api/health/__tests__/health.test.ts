@@ -14,7 +14,7 @@ vi.mock("$lib/db/connection", () => ({
   checkDatabaseConnection: vi.fn(),
 }))
 
-vi.mock("$lib/db/get-database", () => ({
+vi.mock("$lib/db/drizzle", () => ({
   getDatabaseStats: vi.fn(),
 }))
 
@@ -41,7 +41,7 @@ vi.mock("@sveltejs/kit", () => ({
 }))
 
 import { checkDatabaseConnection } from "$lib/db/connection"
-import { getDatabaseStats } from "$lib/db/get-database"
+import { getDatabaseStats } from "$lib/db/drizzle"
 import { getEmailServiceHealth } from "$lib/email/email-service"
 
 /**
@@ -93,9 +93,6 @@ describe("Health Endpoint (SvelteKit)", () => {
       failures: 0,
     } as any)
 
-    // Mock fetch for email/stripe/btcpay checks
-    globalThis.fetch = vi.fn().mockResolvedValue({ ok: true, status: 200 }) as any
-
     // Mock process.env for health checks
     process.env.SENDGRID_API_KEY = "SG.test-key"
     process.env.ENCRYPTION_KEY = Buffer.from("a".repeat(32)).toString("base64")
@@ -141,9 +138,9 @@ describe("Health Endpoint (SvelteKit)", () => {
       expect(data.checks.database).toBe("unhealthy")
     })
 
-    it("should return degraded when email is unhealthy", async () => {
-      // Mock fetch to fail for email check
-      globalThis.fetch = vi.fn().mockResolvedValue({ ok: false, status: 401 }) as any
+    it("should return degraded when email is unconfigured", async () => {
+      // Remove SendGrid API key to simulate unconfigured email
+      delete process.env.SENDGRID_API_KEY
 
       const { GET } = await import("../+server")
 
@@ -152,7 +149,7 @@ describe("Health Endpoint (SvelteKit)", () => {
       const data = await response.json()
 
       expect(response.status).toBe(503)
-      expect(data.checks.email).toBe("unhealthy")
+      expect(data.checks.email).toBe("unconfigured")
     })
   })
 
@@ -170,7 +167,8 @@ describe("Health Endpoint (SvelteKit)", () => {
 
       expect(response.status).toBe(500)
       expect(data.status).toBe("error")
-      expect(data.error).toBe("Unexpected failure")
+      // Error details are intentionally not leaked to clients
+      expect(data.error).toBeUndefined()
     })
   })
 
@@ -187,7 +185,7 @@ describe("Health Endpoint (SvelteKit)", () => {
         timestamp: expect.any(String),
         checks: {
           database: expect.stringMatching(/^(healthy|unhealthy)$/),
-          email: expect.stringMatching(/^(healthy|unhealthy)$/),
+          email: expect.stringMatching(/^(configured|unconfigured)$/),
           encryption: expect.stringMatching(/^(healthy|unhealthy)$/),
         },
       })

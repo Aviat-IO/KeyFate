@@ -301,9 +301,9 @@ export async function monitorCronJob<T>(
     const resultMetadata =
       typeof result === "object" && result !== null
         ? {
-            processed: (result as any).processed,
-            succeeded: (result as any).succeeded || (result as any).sent,
-            failed: (result as any).failed,
+            processed: (result as Record<string, unknown>).processed as number | undefined,
+            succeeded: ((result as Record<string, unknown>).succeeded || (result as Record<string, unknown>).sent) as number | undefined,
+            failed: (result as Record<string, unknown>).failed as number | undefined,
           }
         : {}
 

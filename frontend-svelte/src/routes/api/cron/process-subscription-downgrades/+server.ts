@@ -1,5 +1,6 @@
 import { json } from "@sveltejs/kit"
 import type { RequestHandler } from "./$types"
+import { logger } from "$lib/logger"
 import { getDatabase } from "$lib/db/drizzle"
 import { userSubscriptions } from "$lib/db/schema"
 import { subscriptionService } from "$lib/services/subscription-service"
@@ -35,9 +36,7 @@ export const POST: RequestHandler = async (event) => {
   }
 
   const startTime = new Date()
-  console.log(
-    `[process-downgrades] Cron job started at ${startTime.toISOString()}`,
-  )
+  logger.info("Cron job started", { startedAt: startTime.toISOString() })
 
   try {
     const db = await getDatabase()
@@ -59,9 +58,7 @@ export const POST: RequestHandler = async (event) => {
       )
       .limit(100)
 
-    console.log(
-      `[process-downgrades] Found ${eligibleSubscriptions.length} eligible downgrades`,
-    )
+    logger.info("Found eligible downgrades", { count: eligibleSubscriptions.length })
 
     let downgradesProcessed = 0
     let downgradesSuccessful = 0
@@ -72,16 +69,12 @@ export const POST: RequestHandler = async (event) => {
       downgradesProcessed++
 
       try {
-        console.log(
-          `[process-downgrades] Processing downgrade for user ${subscription.userId}`,
-        )
+        logger.info("Processing downgrade", { userId: subscription.userId })
 
         await subscriptionService.executeScheduledDowngrade(subscription.userId)
 
         downgradesSuccessful++
-        console.log(
-          `[process-downgrades] Successfully downgraded user ${subscription.userId}`,
-        )
+        logger.info("Successfully downgraded user", { userId: subscription.userId })
       } catch (error) {
         downgradesFailed++
         const errorMessage =
@@ -90,19 +83,21 @@ export const POST: RequestHandler = async (event) => {
           userId: subscription.userId,
           error: errorMessage,
         })
-        console.error(
-          `[process-downgrades] Failed to downgrade user ${subscription.userId}:`,
-          error,
-        )
+        logger.error("Failed to downgrade user", error instanceof Error ? error : undefined, {
+          userId: subscription.userId,
+        })
       }
     }
 
     const endTime = new Date()
     const duration = endTime.getTime() - startTime.getTime()
 
-    console.log(
-      `[process-downgrades] Cron job completed in ${duration}ms. Processed: ${downgradesProcessed}, Successful: ${downgradesSuccessful}, Failed: ${downgradesFailed}`,
-    )
+    logger.info("Cron job completed", {
+      durationMs: duration,
+      processed: downgradesProcessed,
+      successful: downgradesSuccessful,
+      failed: downgradesFailed,
+    })
 
     return json({
       downgradesProcessed,
@@ -113,7 +108,7 @@ export const POST: RequestHandler = async (event) => {
       durationMs: duration,
     })
   } catch (error) {
-    console.error("[process-downgrades] Fatal error:", error)
+    logger.error("process-downgrades fatal error", error instanceof Error ? error : undefined)
 
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error"

@@ -1,7 +1,7 @@
 import { json, redirect } from "@sveltejs/kit"
 import type { RequestHandler } from "./$types"
 import { requireCSRFProtection, createCSRFErrorResponse } from "$lib/csrf"
-import { NEXT_PUBLIC_SITE_URL } from "$lib/env"
+import { SITE_URL } from "$lib/env"
 import { getCryptoPaymentProvider } from "$lib/payment"
 import type { Subscription } from "$lib/payment/interfaces/PaymentProvider"
 import { getAmount } from "$lib/pricing"
@@ -25,7 +25,7 @@ export const GET: RequestHandler = async (event) => {
   const redirectAfterAuth = event.url.searchParams.get("redirect_after_auth")
 
   if (!amount || !redirectAfterAuth) {
-    return redirect(303, `${NEXT_PUBLIC_SITE_URL}/pricing`)
+    return redirect(303, `${SITE_URL}/pricing`)
   }
 
   const result = await createBTCPayCheckoutSession(event, {
@@ -44,7 +44,7 @@ export const GET: RequestHandler = async (event) => {
     // If there's an error, redirect to pricing with error message
     return redirect(
       303,
-      `${NEXT_PUBLIC_SITE_URL}/pricing?error=checkout_failed`,
+      `${SITE_URL}/pricing?error=checkout_failed`,
     )
   }
 
@@ -128,8 +128,8 @@ async function createBTCPayCheckoutSession(
       amount: btcAmount,
       currency: "BTC",
       mode: params.mode,
-      successUrl: `${NEXT_PUBLIC_SITE_URL}/dashboard?success=true&provider=btcpay&session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${NEXT_PUBLIC_SITE_URL}/pricing?canceled=true&provider=btcpay`,
+      successUrl: `${SITE_URL}/dashboard?success=true&provider=btcpay&session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${SITE_URL}/pricing?canceled=true&provider=btcpay`,
       expiresInMinutes: 60,
       metadata: {
         user_id: user.id,

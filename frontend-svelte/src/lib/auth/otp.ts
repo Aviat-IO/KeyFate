@@ -99,7 +99,7 @@ export async function createOTPToken(
         expires,
         purpose,
         attemptCount: 0,
-      } as any)
+      })
       .returning()
 
     if (result.length > 0) {
@@ -261,7 +261,7 @@ export async function validateOTPToken(
   })
 }
 
-async function trackFailedAttempt(tx: any, email: string): Promise<void> {
+async function trackFailedAttempt(tx: Parameters<Parameters<Awaited<ReturnType<typeof getDatabase>>["transaction"]>[0]>[0], email: string): Promise<void> {
   const existingLockout = await tx
     .select()
     .from(accountLockouts)
@@ -363,7 +363,7 @@ export async function checkOTPRateLimit(
       requestCount: 1,
       windowStart: now,
       windowEnd,
-    } as any)
+    })
 
     return {
       allowed: true,
@@ -381,7 +381,7 @@ export async function checkOTPRateLimit(
         windowStart: now,
         windowEnd,
         updatedAt: now,
-      } as any)
+      })
       .where(eq(otpRateLimits.id, limit.id))
 
     return {
@@ -403,7 +403,7 @@ export async function checkOTPRateLimit(
     .set({
       requestCount: limit.requestCount + 1,
       updatedAt: now,
-    } as any)
+    })
     .where(eq(otpRateLimits.id, limit.id))
 
   return {

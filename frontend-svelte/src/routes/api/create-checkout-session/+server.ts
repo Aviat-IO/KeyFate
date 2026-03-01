@@ -2,7 +2,7 @@ import { json, redirect } from "@sveltejs/kit"
 import type { RequestHandler } from "./$types"
 import { requireSession } from "$lib/server/auth"
 import { requireCSRFProtection, createCSRFErrorResponse } from "$lib/csrf"
-import { NEXT_PUBLIC_SITE_URL } from "$lib/env"
+import { SITE_URL } from "$lib/env"
 import { getFiatPaymentProvider } from "$lib/payment"
 
 /**
@@ -16,7 +16,7 @@ export const GET: RequestHandler = async (event) => {
   const redirectAfterAuth = event.url.searchParams.get("redirect_after_auth")
 
   if (!lookupKey || !redirectAfterAuth) {
-    return redirect(303, `${NEXT_PUBLIC_SITE_URL}/pricing`)
+    return redirect(303, `${SITE_URL}/pricing`)
   }
 
   // This is a post-authentication redirect, create checkout session and redirect
@@ -96,8 +96,8 @@ async function createCheckoutSession(
       customerId,
       priceId: price.id,
       mode: "subscription" as const,
-      successUrl: `${NEXT_PUBLIC_SITE_URL}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${NEXT_PUBLIC_SITE_URL}/pricing?canceled=true`,
+      successUrl: `${SITE_URL}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${SITE_URL}/pricing?canceled=true`,
       billingAddressCollection: "auto" as const,
       automaticTax: { enabled: false },
       locale: "en" as const,

@@ -1,6 +1,13 @@
 /**
- * Rate limiting service for email verification operations
- * Implements in-memory rate limiting with configurable limits per operation type
+ * Rate limiting service for email verification operations.
+ * Implements in-memory rate limiting with configurable limits per operation type.
+ *
+ * NOTE: This uses an in-memory Map, so all rate limit state is lost on server
+ * restart. For a single-server Railway deployment this is acceptable — the
+ * worst case is that a restart resets the counters, briefly allowing a burst
+ * of requests. A DB-backed alternative exists in `$lib/rate-limit-db.ts` and
+ * is used by the general `$lib/rate-limit.ts` module. If abuse becomes an
+ * issue, migrate these operations to the DB-backed rate limiter.
  */
 
 interface RateLimitResult {

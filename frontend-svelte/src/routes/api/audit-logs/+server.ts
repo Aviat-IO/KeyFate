@@ -49,11 +49,11 @@ export const GET: RequestHandler = async (event) => {
     const conditions = [eq(auditLogs.userId, session.user.id)]
 
     if (eventType) {
-      conditions.push(eq(auditLogs.eventType, eventType as any))
+      conditions.push(eq(auditLogs.eventType, eventType as typeof auditLogs.eventType.enumValues[number]))
     }
 
     if (eventCategory) {
-      conditions.push(eq(auditLogs.eventCategory, eventCategory as any))
+      conditions.push(eq(auditLogs.eventCategory, eventCategory as typeof auditLogs.eventCategory.enumValues[number]))
     }
 
     if (resourceId) {
@@ -100,11 +100,9 @@ export const GET: RequestHandler = async (event) => {
       .where(and(...conditions))
 
     // Return standardized paginated response
-    // handleAPIError returns a compat NextResponse, convert to SvelteKit json
     const response = buildOffsetPaginatedResponse(logs, totalCount, pagination)
     return json(response)
   } catch (error) {
-    // handleAPIError returns a compat NextResponse; extract and re-wrap
     if (error instanceof APIError) {
       return json(error.toJSON(), { status: error.statusCode })
     }

@@ -41,6 +41,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>Check In | KeyFate</title>
+</svelte:head>
+
 <div class="mx-auto py-8 sm:px-4">
   {#if !token}
     <div class="mx-auto max-w-md pt-16 text-center">

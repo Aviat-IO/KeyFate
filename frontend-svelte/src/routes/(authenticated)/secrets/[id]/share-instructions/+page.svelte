@@ -64,7 +64,7 @@
 
     if (Date.now() > parsed.expiresAt) {
       localStorage.removeItem(`keyfate:userManagedShares:${id}`);
-      error = 'Your shares have expired (over 2 hours old). Please re-create the secret.';
+      error = 'Your shares have expired (over 24 hours old). Please re-create the secret.';
       return;
     }
 

@@ -1,7 +1,7 @@
 import { json, redirect } from "@sveltejs/kit"
 import type { RequestHandler } from "./$types"
 import { requireCSRFProtection, createCSRFErrorResponse } from "$lib/csrf"
-import { NEXT_PUBLIC_SITE_URL } from "$lib/env"
+import { SITE_URL } from "$lib/env"
 import { getFiatPaymentProvider } from "$lib/payment"
 
 /**
@@ -29,7 +29,7 @@ export const POST: RequestHandler = async (event) => {
     // Create billing portal session using user email to resolve customer
     const portalSession = await fiatPaymentProvider.createBillingPortalSession!(
       user.email,
-      `${NEXT_PUBLIC_SITE_URL}/profile`,
+      `${SITE_URL}/profile`,
     )
 
     return redirect(303, portalSession.url)
