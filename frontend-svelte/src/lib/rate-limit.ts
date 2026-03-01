@@ -13,10 +13,11 @@ const RATE_LIMIT_WINDOWS = {
   checkIn: 60 * 60 * 1000, // 1 hour
   secretCreation: 60 * 60 * 1000, // 1 hour
   otp: 60 * 60 * 1000, // 1 hour
+  registration: 60 * 60 * 1000, // 1 hour
 }
 
 export async function checkRateLimit(
-  type: "ip" | "user" | "checkIn" | "secretCreation" | "otp",
+  type: "ip" | "user" | "checkIn" | "secretCreation" | "otp" | "registration",
   identifier: string,
   limit: number,
 ): Promise<RateLimitResult> {

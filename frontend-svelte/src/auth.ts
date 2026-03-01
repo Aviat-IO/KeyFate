@@ -305,6 +305,14 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
     },
 
     async jwt({ token, user, account, profile }) {
+      // TODO(#37): Session invalidation gap — this callback does not compare
+      // token.iat against the user's updatedAt field. When a user changes their
+      // password or revokes sessions, existing JWTs remain valid until they
+      // expire naturally. To fix: fetch user.updatedAt from DB and reject
+      // tokens where token.iat < user.updatedAt (converted to epoch seconds).
+      // This needs careful testing to avoid breaking active sessions during
+      // normal profile updates that also touch updatedAt.
+
       // Google OAuth: look up user in DB by email to get our internal user ID
       if (account?.provider === "google" && profile) {
         try {

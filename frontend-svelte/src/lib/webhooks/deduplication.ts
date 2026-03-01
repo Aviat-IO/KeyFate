@@ -44,14 +44,14 @@ export async function recordWebhookEvent(
       provider,
       eventId,
       eventType,
-      payload: payload as any,
+      payload: payload as Record<string, unknown>,
       status: "processed",
       processedAt: new Date(),
-    } as any)
+    })
 
     return true
   } catch (error) {
-    if ((error as any).code === "23505") {
+    if (error instanceof Error && "code" in error && (error as Error & { code: string }).code === "23505") {
       logger.info("Webhook already processed (duplicate)", {
         provider,
         eventId,

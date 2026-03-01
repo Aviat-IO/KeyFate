@@ -342,6 +342,7 @@
       <button
         onclick={handleGoogleSignIn}
         disabled={isLoading}
+        aria-label="Sign in with Google"
         class="border-border text-foreground hover:bg-secondary focus:ring-ring flex w-full items-center justify-center rounded-lg border px-4 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <svg class="mr-2 h-5 w-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

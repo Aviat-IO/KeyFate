@@ -1,8 +1,8 @@
 import { json } from "@sveltejs/kit"
 import type { RequestHandler } from "./$types"
+import { logger } from "$lib/logger"
 import { authorizeRequest } from "$lib/cron/utils"
-import { adaptRequestEvent } from "$lib/cron/adapt-request"
-import { getDatabase } from "$lib/db/get-database"
+import { getDatabase } from "$lib/db/drizzle"
 import { dataExportJobs, users, ExportJobStatus } from "$lib/db/schema"
 import { eq } from "drizzle-orm"
 import {
@@ -16,8 +16,7 @@ import { sendEmail } from "$lib/email/email-service"
  * Health check endpoint for monitoring
  */
 export const GET: RequestHandler = async (event) => {
-  const req = adaptRequestEvent(event)
-  if (!authorizeRequest(req)) {
+  if (!authorizeRequest(event.request, event.url)) {
     return json({ error: "Unauthorized" }, { status: 401 })
   }
   return json({ status: "ok", job: "process-exports" })
@@ -29,12 +28,11 @@ export const GET: RequestHandler = async (event) => {
  */
 export const POST: RequestHandler = async (event) => {
   try {
-    const req = adaptRequestEvent(event)
-    if (!authorizeRequest(req)) {
+    if (!authorizeRequest(event.request, event.url)) {
       return json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    console.log("[CRON] Processing data export jobs...")
+    logger.info("Processing data export jobs")
 
     const db = await getDatabase()
 
@@ -46,7 +44,7 @@ export const POST: RequestHandler = async (event) => {
       .limit(10) // Process max 10 per run
 
     if (pendingJobs.length === 0) {
-      console.log("[CRON] No pending export jobs found")
+      logger.info("No pending export jobs found")
       return json({
         success: true,
         processed: 0,
@@ -54,7 +52,7 @@ export const POST: RequestHandler = async (event) => {
       })
     }
 
-    console.log(`[CRON] Found ${pendingJobs.length} pending export jobs`)
+    logger.info("Found pending export jobs", { count: pendingJobs.length })
 
     let successCount = 0
     let failureCount = 0
@@ -62,9 +60,7 @@ export const POST: RequestHandler = async (event) => {
     // Process each job
     for (const job of pendingJobs) {
       try {
-        console.log(
-          `[CRON] Processing export job ${job.id} for user ${job.userId}`,
-        )
+        logger.info("Processing export job", { jobId: job.id, userId: job.userId })
 
         // Update status to processing
         await db
@@ -116,9 +112,9 @@ export const POST: RequestHandler = async (event) => {
         }
 
         successCount++
-        console.log(`[CRON] Export job ${job.id} completed successfully`)
+        logger.info("Export job completed successfully", { jobId: job.id })
       } catch (error) {
-        console.error(`[CRON] Error processing export job ${job.id}:`, error)
+        logger.error("Error processing export job", error instanceof Error ? error : undefined, { jobId: job.id })
 
         // Mark job as failed
         await db
@@ -134,9 +130,7 @@ export const POST: RequestHandler = async (event) => {
       }
     }
 
-    console.log(
-      `[CRON] Export processing complete: ${successCount} success, ${failureCount} failures`,
-    )
+    logger.info("Export processing complete", { successCount, failureCount })
 
     return json({
       success: true,
@@ -145,7 +139,7 @@ export const POST: RequestHandler = async (event) => {
       failureCount,
     })
   } catch (error) {
-    console.error("[CRON] Error in process-exports:", error)
+    logger.error("Error in process-exports", error instanceof Error ? error : undefined)
     return json(
       { error: "Failed to process exports" },
       { status: 500 },

@@ -1,4 +1,4 @@
-import { getDatabase } from "$lib/db/get-database"
+import { getDatabase } from "$lib/db/drizzle"
 import { secrets, secretRecipients } from "$lib/db/schema"
 import { eq, and, sql } from "drizzle-orm"
 import type {

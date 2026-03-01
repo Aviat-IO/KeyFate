@@ -5,11 +5,10 @@ import { csrfTokens } from "$lib/db/schema"
 import { lt } from "drizzle-orm"
 import { logger } from "$lib/logger"
 import { authorizeRequest } from "$lib/cron/utils"
-import { adaptRequestEvent } from "$lib/cron/adapt-request"
+
 
 export const GET: RequestHandler = async (event) => {
-  const req = adaptRequestEvent(event)
-  if (!authorizeRequest(req)) {
+  if (!authorizeRequest(event.request, event.url)) {
     return json({ error: "Unauthorized" }, { status: 401 })
   }
   return json({ status: "ok", job: "cleanup-tokens" })
@@ -17,8 +16,7 @@ export const GET: RequestHandler = async (event) => {
 
 export const POST: RequestHandler = async (event) => {
   try {
-    const req = adaptRequestEvent(event)
-    if (!authorizeRequest(req)) {
+    if (!authorizeRequest(event.request, event.url)) {
       return json({ error: "Unauthorized" }, { status: 401 })
     }
 

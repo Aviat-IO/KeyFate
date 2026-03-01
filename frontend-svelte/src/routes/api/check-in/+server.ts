@@ -216,12 +216,12 @@ export const POST: RequestHandler = async (event) => {
 
     await db
       .update(checkInTokens)
-      .set({ usedAt: now } as any)
+      .set({ usedAt: now })
       .where(eq(checkInTokens.id, tokenRow.id))
 
     await db
       .update(secrets)
-      .set({ lastCheckIn: now, nextCheckIn } as any)
+      .set({ lastCheckIn: now, nextCheckIn })
       .where(eq(secrets.id, tokenRow.secretId))
 
     await db.insert(checkinHistory).values({

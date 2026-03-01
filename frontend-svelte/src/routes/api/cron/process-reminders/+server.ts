@@ -1,9 +1,10 @@
 import { json } from "@sveltejs/kit"
 import type { RequestHandler } from "./$types"
+import { logger } from "$lib/logger"
 import { getDatabase } from "$lib/db/drizzle"
 import { getAllRecipients } from "$lib/db/queries/secrets"
 import { secrets, users, disclosureLog } from "$lib/db/schema"
-import type { Secret, User } from "$lib/db/schema"
+import type { Secret, SecretUpdate, User } from "$lib/db/schema"
 import { sendAdminNotification } from "$lib/email/admin-notification-service"
 import { logEmailFailure } from "$lib/email/email-failure-logger"
 import { calculateBackoffDelay } from "$lib/email/email-retry-service"
@@ -21,7 +22,6 @@ import {
   updateDisclosureLog,
   shouldRetrySecret,
 } from "$lib/cron/disclosure-helpers"
-import { adaptRequestEvent } from "$lib/cron/adapt-request"
 
 async function withRetry<T>(
   operation: () => Promise<T>,
@@ -68,7 +68,7 @@ async function processOverdueSecret(
           status: "failed",
           lastError: `Max retries (${CRON_CONFIG.MAX_SECRET_RETRIES}) exceeded`,
           updatedAt: new Date(),
-        } as any)
+        } as SecretUpdate)
         .where(eq(secrets.id, secret.id))
 
       return { success: false, sent: 0, failed: 0 }
@@ -80,7 +80,7 @@ async function processOverdueSecret(
         status: "triggered",
         processingStartedAt: new Date(),
         updatedAt: new Date(),
-      } as any)
+      } as SecretUpdate)
       .where(and(eq(secrets.id, secret.id), eq(secrets.status, "active")))
       .returning({ id: secrets.id })
 
@@ -100,7 +100,7 @@ async function processOverdueSecret(
           retryCount: secret.retryCount + 1,
           lastRetryAt: new Date(),
           updatedAt: new Date(),
-        } as any)
+        } as SecretUpdate)
         .where(eq(secrets.id, secret.id))
 
       return { success: false, sent: 0, failed: 0 }
@@ -131,7 +131,7 @@ async function processOverdueSecret(
           retryCount: secret.retryCount + 1,
           lastRetryAt: new Date(),
           updatedAt: new Date(),
-        } as any)
+        } as SecretUpdate)
         .where(eq(secrets.id, secret.id))
 
       return { success: false, sent: 0, failed: 0 }
@@ -182,7 +182,7 @@ async function processOverdueSecret(
               secretId: secret.id,
               recipientEmail: contactEmail,
               recipientName: recipient.name,
-            } as any)
+            })
             .returning({ id: disclosureLog.id })
             .onConflictDoNothing()
 
@@ -291,7 +291,7 @@ async function processOverdueSecret(
           retryCount: secret.retryCount + 1,
           lastRetryAt: new Date(),
           updatedAt: new Date(),
-        } as any)
+        } as SecretUpdate)
         .where(eq(secrets.id, secret.id))
 
       return { success: false, sent, failed }
@@ -310,7 +310,7 @@ async function processOverdueSecret(
         retryCount: allSent ? secret.retryCount : secret.retryCount + 1,
         lastRetryAt: allSent ? null : new Date(),
         updatedAt: new Date(),
-      } as any)
+      } as SecretUpdate)
       .where(eq(secrets.id, secret.id))
 
     return { success: allSent, sent, failed }
@@ -327,10 +327,12 @@ async function processOverdueSecret(
           retryCount: secret.retryCount + 1,
           lastRetryAt: new Date(),
           updatedAt: new Date(),
-        } as any)
+        } as SecretUpdate)
         .where(eq(secrets.id, secret.id))
     } catch {
-      console.error(`[process-reminders] Error rolling back ${secret.id}`)
+      logger.error("Error rolling back secret status", undefined, {
+        secretId: secret.id,
+      })
     }
 
     return { success: false, sent: 0, failed: 0 }
@@ -338,24 +340,22 @@ async function processOverdueSecret(
 }
 
 export const GET: RequestHandler = async (event) => {
-  const req = adaptRequestEvent(event)
-  if (!authorizeRequest(req)) {
+  if (!authorizeRequest(event.request, event.url)) {
     return json({ error: "Unauthorized" }, { status: 401 })
   }
   return json({ status: "ok", job: "process-reminders" })
 }
 
 export const POST: RequestHandler = async (event) => {
-  const req = adaptRequestEvent(event)
-  if (!authorizeRequest(req)) {
+  if (!authorizeRequest(event.request, event.url)) {
     return json({ error: "Unauthorized" }, { status: 401 })
   }
 
   const startTime = Date.now()
   const startDate = new Date()
-  console.log(
-    `[process-reminders] Cron job started at ${startDate.toISOString()}`,
-  )
+  logger.info("process-reminders cron job started", {
+    timestamp: startDate.toISOString(),
+  })
 
   try {
     const db = await getDatabase()
@@ -388,15 +388,10 @@ export const POST: RequestHandler = async (event) => {
         ),
       )
 
-    if (process.env.NODE_ENV === "development") {
-      console.log(
-        `[process-reminders] Found ${overdueSecrets.length} overdue secrets (with exponential backoff applied)`,
-      )
-    } else {
-      console.log(
-        `[process-reminders] Found ${overdueSecrets.length} overdue secrets`,
-      )
-    }
+    logger.info("Found overdue secrets", {
+      count: overdueSecrets.length,
+      withBackoff: process.env.NODE_ENV === "development",
+    })
 
     let processed = 0
     let succeeded = 0
@@ -434,10 +429,10 @@ export const POST: RequestHandler = async (event) => {
             }
           })
           .catch((error) => {
-            console.error(
-              `[process-reminders] Worker error for secret ${secret.id}:`,
-              sanitizeError(error),
-            )
+            logger.error("Worker error for secret", undefined, {
+              secretId: secret.id,
+              error: sanitizeError(error),
+            })
             processed++
             failedCount++
           })
@@ -458,9 +453,11 @@ export const POST: RequestHandler = async (event) => {
         !warnedAboutTime &&
         queue.length > 0
       ) {
-        console.warn(
-          `[process-reminders] Processing exceeds ${CRON_CONFIG.CRON_INTERVAL_MS}ms: ${elapsed}ms elapsed, ${queue.length} remaining`,
-        )
+        logger.warn("Processing exceeds cron interval", {
+          elapsedMs: elapsed,
+          cronIntervalMs: CRON_CONFIG.CRON_INTERVAL_MS,
+          remaining: queue.length,
+        })
         warnedAboutTime = true
       }
     }
@@ -485,7 +482,9 @@ export const POST: RequestHandler = async (event) => {
       timestamp: new Date().toISOString(),
     })
   } catch (error) {
-    console.error("[process-reminders] Error:", sanitizeError(error))
+    logger.error("process-reminders error", undefined, {
+      error: sanitizeError(error),
+    })
 
     const errorDetails = {
       error: "Database operation failed",

@@ -16,7 +16,7 @@ const verifyOTPSchema = z.object({
 export const POST: RequestHandler = async (event) => {
   try {
     const bodyResult = await validateBody(
-      event.request as any,
+      event.request,
       verifyOTPSchema,
     )
     if (!bodyResult.success) {

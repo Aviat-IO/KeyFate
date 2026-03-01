@@ -39,6 +39,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>Confirm Deletion | KeyFate</title>
+</svelte:head>
+
 <div class="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-6">
   <div class="w-full max-w-md space-y-6">
     <div class="flex items-center gap-2">

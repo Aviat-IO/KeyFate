@@ -1,6 +1,6 @@
 import { json } from "@sveltejs/kit"
 import type { RequestHandler } from "./$types"
-import { getDatabaseStats } from "$lib/db/get-database"
+import { getDatabaseStats } from "$lib/db/drizzle"
 import { authorizeRequest } from "$lib/cron/utils"
 
 /**
@@ -12,7 +12,7 @@ import { authorizeRequest } from "$lib/cron/utils"
  */
 export const GET: RequestHandler = async (event) => {
   // Require authentication for internal metrics
-  if (!authorizeRequest(event.request as any)) {
+  if (!authorizeRequest(event.request, event.url)) {
     return json({ error: "Unauthorized" }, { status: 401 })
   }
 

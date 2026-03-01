@@ -1,7 +1,7 @@
 import { redirect, error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { getSecret } from '$lib/db/operations';
-import { getDatabase } from '$lib/db/get-database';
+import { getDatabase } from '$lib/db/drizzle';
 import { checkinHistory } from '$lib/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 

@@ -1,6 +1,7 @@
 import { getDatabase } from "$lib/db/drizzle"
 import { reminderJobs } from "$lib/db/schema"
 import { eq, and, sql } from "drizzle-orm"
+import { logger } from "$lib/logger"
 
 export type ReminderType =
   | "1_hour"
@@ -101,7 +102,7 @@ export async function cancelRemindersForSecret(
     .set({
       status: "cancelled" as const,
       updatedAt: now,
-    } as any)
+    })
     .where(
       and(
         eq(reminderJobs.secretId, secretId),
@@ -113,9 +114,7 @@ export async function cancelRemindersForSecret(
   const cancelledCount = result.length
 
   if (process.env.NODE_ENV === "development") {
-    console.log(
-      `[reminder-scheduler] Cancelled ${cancelledCount} reminders for secret ${secretId}`,
-    )
+    logger.debug("Cancelled reminders for secret", { cancelledCount, secretId })
   }
 
   return cancelledCount
@@ -134,7 +133,7 @@ export async function scheduleRemindersForSecret(
     .set({
       status: "cancelled" as const,
       updatedAt: now,
-    } as any)
+    })
     .where(
       and(
         eq(reminderJobs.secretId, secretId),
@@ -177,7 +176,7 @@ export async function scheduleRemindersForSecret(
           reminderType,
           scheduledFor,
           status: "pending",
-        } as any)
+        })
         .onConflictDoNothing({
           target: [
             reminderJobs.secretId,
@@ -191,23 +190,27 @@ export async function scheduleRemindersForSecret(
         scheduledCount++
 
         if (process.env.NODE_ENV === "development") {
-          console.log(
-            `[reminder-scheduler] Scheduled ${reminderType} reminder for secret ${secretId} at ${scheduledFor.toISOString()}`,
-          )
+          logger.debug("Scheduled reminder", {
+            reminderType,
+            secretId,
+            scheduledFor: scheduledFor.toISOString(),
+          })
         }
       }
     } catch (error) {
-      console.error(
-        `[reminder-scheduler] Error scheduling ${reminderType} reminder for secret ${secretId}:`,
-        error,
-      )
+      logger.error("Error scheduling reminder", error instanceof Error ? error : undefined, {
+        reminderType,
+        secretId,
+      })
     }
   }
 
   if (process.env.NODE_ENV === "development") {
-    console.log(
-      `[reminder-scheduler] Scheduled ${scheduledCount} reminders, invalidated ${invalidatedCount} for secret ${secretId}`,
-    )
+    logger.debug("Reminder scheduling complete", {
+      scheduledCount,
+      invalidatedCount,
+      secretId,
+    })
   }
 
   return { scheduled: scheduledCount, invalidated: invalidatedCount }

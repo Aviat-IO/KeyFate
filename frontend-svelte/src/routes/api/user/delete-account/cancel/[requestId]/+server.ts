@@ -2,7 +2,7 @@ import { json } from "@sveltejs/kit"
 import type { RequestHandler } from "./$types"
 import { requireSession } from "$lib/server/auth"
 import { cancelAccountDeletion } from "$lib/gdpr/deletion-service"
-import { getDatabase } from "$lib/db/get-database"
+import { getDatabase } from "$lib/db/drizzle"
 import { auditLogs } from "$lib/db/schema"
 
 /**

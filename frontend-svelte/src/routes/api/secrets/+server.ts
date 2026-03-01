@@ -54,7 +54,7 @@ export const POST: RequestHandler = async (event) => {
     }
 
     // Ensures user exists in DB (creates for OAuth users) and checks email verification
-    const emailVerificationError = await requireEmailVerification(session as any)
+    const emailVerificationError = await requireEmailVerification(session as Parameters<typeof requireEmailVerification>[0])
     if (emailVerificationError) {
       return emailVerificationError
     }
@@ -199,7 +199,7 @@ export const POST: RequestHandler = async (event) => {
       // Insert the secret
       const [newSecret] = await tx
         .insert(secretsTable)
-        .values(insertData as any)
+        .values(insertData as typeof secretsTable.$inferInsert)
         .returning()
 
       // Build a lookup of email -> hex nostr pubkey from the optional recipient_nostr_pubkeys
@@ -248,7 +248,7 @@ export const POST: RequestHandler = async (event) => {
 
     const warning = undefined
 
-    const responseBody: any = {
+    const responseBody: Record<string, unknown> = {
       secretId: data.secret.id,
       ...data.secret,
       recipients: data.recipients.map((r) => ({

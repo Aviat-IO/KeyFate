@@ -15,7 +15,7 @@ async function getDb() {
 }
 
 export async function checkRateLimitDB(
-  type: "ip" | "user" | "checkIn" | "secretCreation" | "otp",
+  type: "ip" | "user" | "checkIn" | "secretCreation" | "otp" | "registration",
   identifier: string,
   limit: number,
   windowMs: number = 60000,

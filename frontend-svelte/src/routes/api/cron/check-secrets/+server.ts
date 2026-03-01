@@ -7,7 +7,7 @@ import {
   logCronMetrics,
   sanitizeError,
 } from "$lib/cron/utils"
-import { adaptRequestEvent } from "$lib/cron/adapt-request"
+import { logger } from "$lib/logger"
 import { getDatabase } from "$lib/db/drizzle"
 import {
   checkInTokens,
@@ -54,20 +54,19 @@ async function markReminderSent(
     await db
       .update(reminderJobs)
       .set({
-        status: "sent",
+        status: "sent" as const,
         sentAt: now,
         updatedAt: now,
-      } as any)
+      })
       .where(eq(reminderJobs.id, reminderId))
 
     if (process.env.NODE_ENV === "development") {
-      console.log(`[check-secrets] Marked reminder ${reminderId} as sent`)
+      logger.debug("Marked reminder as sent", { reminderId })
     }
   } catch (error) {
-    console.error(
-      `[check-secrets] Error marking reminder sent:`,
-      sanitizeError(error),
-    )
+    logger.error("Error marking reminder sent", undefined, {
+      error: sanitizeError(error),
+    })
     throw error
   }
 }
@@ -83,13 +82,13 @@ async function markReminderFailed(
     await db
       .update(reminderJobs)
       .set({
-        status: "failed",
+        status: "failed" as const,
         failedAt: now,
         error: errorMessage,
         retryCount: sql`COALESCE(${reminderJobs.retryCount}, 0) + 1`,
         nextRetryAt: sql`${now}::timestamp + (INTERVAL '${sql.raw(CRON_CONFIG.RETRY_BACKOFF_BASE_MINUTES.toString())} minutes' * POW(${sql.raw(CRON_CONFIG.RETRY_BACKOFF_EXPONENT.toString())}, COALESCE(${reminderJobs.retryCount}, 0)))`,
         updatedAt: now,
-      } as any)
+      })
       .where(
         and(
           eq(reminderJobs.id, reminderId),
@@ -101,13 +100,12 @@ async function markReminderFailed(
       )
 
     if (process.env.NODE_ENV === "development") {
-      console.log(`[check-secrets] Marked reminder ${reminderId} as failed`)
+      logger.debug("Marked reminder as failed", { reminderId })
     }
   } catch (err) {
-    console.error(
-      `[check-secrets] Error marking reminder failed:`,
-      sanitizeError(err),
-    )
+    logger.error("Error marking reminder failed", undefined, {
+      error: sanitizeError(err),
+    })
   }
 }
 
@@ -185,9 +183,9 @@ async function processSecret(
 ): Promise<{ sent: boolean; error?: string; reminderId?: string }> {
   try {
     if (!secret.nextCheckIn) {
-      console.warn(
-        `[check-secrets] Secret ${secret.id} missing nextCheckIn, skipping`,
-      )
+      logger.warn("Secret missing nextCheckIn, skipping", {
+        secretId: secret.id,
+      })
       return { sent: false, error: "missing_next_check_in" }
     }
 
@@ -272,7 +270,7 @@ async function processSecret(
   } catch (error) {
     const errorMessage = sanitizeError(error)
 
-    console.error(`[check-secrets] Failed to process secret:`, errorMessage)
+    logger.error("Failed to process secret", undefined, { error: errorMessage })
 
     if (reminderId) {
       await markReminderFailed(db, reminderId, errorMessage)
@@ -307,7 +305,7 @@ async function handleMissedReminders(
         retryCount: 0,
         nextRetryAt: now,
         updatedAt: now,
-      } as any)
+      })
       .where(
         and(
           eq(reminderJobs.status, "pending"),
@@ -320,7 +318,7 @@ async function handleMissedReminders(
     const marked = result.length
 
     if (marked > 0) {
-      console.log(`[check-secrets] Marked ${marked} missed reminders for retry`)
+      logger.info("Marked missed reminders for retry", { count: marked })
 
       if (marked > CRON_CONFIG.MISSED_REMINDERS_ALERT_THRESHOLD) {
         await sendAdminNotification({
@@ -329,20 +327,18 @@ async function handleMissedReminders(
           errorMessage: `High number of missed reminders detected: ${marked}. This may indicate a prolonged system outage.`,
           timestamp: now,
         }).catch((error) => {
-          console.error(
-            `[check-secrets] Failed to send admin notification:`,
-            sanitizeError(error),
-          )
+          logger.error("Failed to send admin notification", undefined, {
+            error: sanitizeError(error),
+          })
         })
       }
     }
 
     return { marked }
   } catch (error) {
-    console.error(
-      `[check-secrets] Error marking missed reminders:`,
-      sanitizeError(error),
-    )
+    logger.error("Error marking missed reminders", undefined, {
+      error: sanitizeError(error),
+    })
     return { marked: 0 }
   }
 }
@@ -382,9 +378,7 @@ async function processFailedReminders(
 
     for (const { reminder, secret, user } of failedReminders) {
       if (isApproachingTimeout(startTimeMs)) {
-        console.log(
-          `[check-secrets] Approaching timeout, stopping retry processing`,
-        )
+        logger.info("Approaching timeout, stopping retry processing")
         break
       }
 
@@ -405,10 +399,9 @@ async function processFailedReminders(
       }
     }
   } catch (error) {
-    console.error(
-      `[check-secrets] Error processing failed reminders:`,
-      sanitizeError(error),
-    )
+    logger.error("Error processing failed reminders", undefined, {
+      error: sanitizeError(error),
+    })
   }
 
   return { processed, sent, failed }
@@ -450,16 +443,14 @@ async function fetchPendingReminders(
 }
 
 export const GET: RequestHandler = async (event) => {
-  const req = adaptRequestEvent(event)
-  if (!authorizeRequest(req)) {
+  if (!authorizeRequest(event.request, event.url)) {
     return json({ error: "Unauthorized" }, { status: 401 })
   }
   return json({ status: "ok", job: "check-secrets" })
 }
 
 export const POST: RequestHandler = async (event) => {
-  const req = adaptRequestEvent(event)
-  if (!authorizeRequest(req)) {
+  if (!authorizeRequest(event.request, event.url)) {
     return json({ error: "Unauthorized" }, { status: 401 })
   }
 
@@ -474,9 +465,9 @@ export const POST: RequestHandler = async (event) => {
     async () => {
       const startTime = Date.now()
       const startDate = new Date()
-      console.log(
-        `[check-secrets] Cron job started at ${startDate.toISOString()}`,
-      )
+      logger.info("check-secrets cron job started", {
+        timestamp: startDate.toISOString(),
+      })
 
       try {
         const db = await getDatabase()
@@ -499,18 +490,20 @@ export const POST: RequestHandler = async (event) => {
 
           for (const { reminder, secret, user } of batchReminders) {
             if (isApproachingTimeout(startTime)) {
-              console.log(
-                `[check-secrets] Approaching timeout, stopping processing. Processed ${remindersProcessed} reminders`,
-              )
+              logger.info("Approaching timeout, stopping processing", {
+                remindersProcessed,
+              })
               break
             }
 
             remindersProcessed++
 
             if (process.env.NODE_ENV === "development") {
-              console.log(
-                `[check-secrets] Processing reminder ${reminder.id} (type: ${reminder.reminderType}) for secret ${secret.id}`,
-              )
+              logger.debug("Processing reminder", {
+                reminderId: reminder.id,
+                reminderType: reminder.reminderType,
+                secretId: secret.id,
+              })
             }
 
             const result = await processSecret(
@@ -557,7 +550,9 @@ export const POST: RequestHandler = async (event) => {
           failed: remindersFailed + retryStats.failed,
         })
       } catch (error) {
-        console.error("[check-secrets] Error:", sanitizeError(error))
+        logger.error("check-secrets error", undefined, {
+          error: sanitizeError(error),
+        })
 
         const errorDetails = {
           error: "Database operation failed",

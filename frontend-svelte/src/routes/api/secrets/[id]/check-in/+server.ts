@@ -104,8 +104,6 @@ export const POST: RequestHandler = async (event) => {
     })
   } catch (error) {
     console.error("Error in POST /api/secrets/[id]/check-in:", error)
-    const errorMessage =
-      error instanceof Error ? error.message : "Internal Server Error"
-    return json({ error: errorMessage }, { status: 500 })
+    return json({ error: "Internal server error" }, { status: 500 })
   }
 }

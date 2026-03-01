@@ -1,6 +1,6 @@
+import { json } from "@sveltejs/kit"
 import { ensureUserExists } from "$lib/auth/user-verification"
-import type { Session } from "$lib/compat/next-auth"
-import { NextResponse } from "$lib/compat/next-server"
+import type { Session } from "@auth/sveltekit"
 import { logger } from "$lib/logger"
 
 /**
@@ -11,13 +11,13 @@ import { logger } from "$lib/logger"
  * 2. Checks that email is verified before allowing protected operations
  *
  * @param session - NextAuth session
- * @returns NextResponse error or null if verification passes
+ * @returns Response error or null if verification passes
  */
 export async function requireEmailVerification(
   session: Session | null,
-): Promise<NextResponse | null> {
+): Promise<Response | null> {
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return json({ error: "Unauthorized" }, { status: 401 })
   }
 
   try {
@@ -31,7 +31,7 @@ export async function requireEmailVerification(
         exists: userVerification.exists,
         created: userVerification.created,
       })
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
+      return json({ error: "User not found" }, { status: 404 })
     }
 
     if (userVerification.created) {
@@ -46,7 +46,7 @@ export async function requireEmailVerification(
         userId: session.user.id,
       })
 
-      return NextResponse.json(
+      return json(
         {
           error: "Email verification required",
           code: "EMAIL_NOT_VERIFIED",
@@ -63,7 +63,7 @@ export async function requireEmailVerification(
       userId: session.user.id,
     })
 
-    return NextResponse.json(
+    return json(
       { error: "Internal server error" },
       { status: 500 },
     )

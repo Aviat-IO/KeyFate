@@ -1,23 +1,20 @@
-import type { NextRequest } from "$lib/compat/next-server"
-import { getServerSession } from "$lib/compat/next-auth"
-import { authConfig } from "$lib/auth-config"
 import { validateOTPToken } from "./otp"
 
 const RE_AUTH_WINDOW = 5 * 60 * 1000 // 5 minutes
 
 export async function requireRecentAuthentication(
-  request: NextRequest,
+  request: Request,
+  session: { user?: { id?: string; email?: string | null } } | null,
 ): Promise<{
   valid: boolean
   error?: string
   userId?: string
 }> {
-  const session = await getServerSession(authConfig)
   if (!session?.user) {
     return { valid: false, error: "Authentication required" }
   }
 
-  const userId = (session.user as { id?: string }).id
+  const userId = session.user.id
   if (!userId) {
     return { valid: false, error: "User ID not found" }
   }

@@ -5,8 +5,7 @@
  * error responses.
  */
 
-import type { NextRequest } from "$lib/compat/next-server"
-import { NextResponse } from "$lib/compat/next-server"
+import { json } from "@sveltejs/kit"
 import { z, ZodError, type ZodSchema } from "zod"
 import { APIError } from "$lib/errors/api-error"
 
@@ -87,7 +86,7 @@ export type ValidationResult<T> =
  * Validate request body against schema
  */
 export async function validateBody<T extends ZodSchema>(
-  request: NextRequest,
+  request: Request,
   schema: T,
 ): Promise<ValidationResult<z.infer<T>>> {
   try {
@@ -201,77 +200,6 @@ export function validateParams<T extends ZodSchema>(
         error as Error,
       ),
     }
-  }
-}
-
-/**
- * Higher-order function to wrap API handlers with validation
- */
-export function withValidation<
-  TBody = unknown,
-  TParams = unknown,
-  TQuery = unknown,
->(
-  schemas: {
-    body?: ZodSchema<TBody>
-    params?: ZodSchema<TParams>
-    query?: ZodSchema<TQuery>
-  },
-  handler: (
-    request: NextRequest,
-    validated: {
-      body?: TBody
-      params?: TParams
-      query?: TQuery
-    },
-  ) => Promise<NextResponse>,
-) {
-  return async (
-    request: NextRequest,
-    context?: { params: Promise<Record<string, string | string[]>> },
-  ): Promise<NextResponse> => {
-    const validated: {
-      body?: TBody
-      params?: TParams
-      query?: TQuery
-    } = {}
-
-    // Validate body if schema provided
-    if (schemas.body) {
-      const bodyResult = await validateBody(request, schemas.body)
-      if (!bodyResult.success) {
-        return NextResponse.json(bodyResult.error.toJSON(), {
-          status: bodyResult.error.statusCode,
-        })
-      }
-      validated.body = bodyResult.data
-    }
-
-    // Validate params if schema provided
-    if (schemas.params && context?.params) {
-      const params = await context.params
-      const paramsResult = validateParams(params, schemas.params)
-      if (!paramsResult.success) {
-        return NextResponse.json(paramsResult.error.toJSON(), {
-          status: paramsResult.error.statusCode,
-        })
-      }
-      validated.params = paramsResult.data
-    }
-
-    // Validate query if schema provided
-    if (schemas.query) {
-      const { searchParams } = new URL(request.url)
-      const queryResult = validateSearchParams(searchParams, schemas.query)
-      if (!queryResult.success) {
-        return NextResponse.json(queryResult.error.toJSON(), {
-          status: queryResult.error.statusCode,
-        })
-      }
-      validated.query = queryResult.data
-    }
-
-    return handler(request, validated)
   }
 }
 

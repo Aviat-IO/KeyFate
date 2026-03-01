@@ -1,5 +1,5 @@
 import { and, eq, lt } from "drizzle-orm"
-import { getDatabase } from "./get-database"
+import { getDatabase } from "$lib/db/drizzle"
 import {
   type Secret,
   type SecretInsert,

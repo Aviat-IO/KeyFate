@@ -215,8 +215,8 @@
         error = result.warning;
       }
 
-      // Store shares in localStorage with 2 hour expiry
-      const expiresAt = Date.now() + 2 * 60 * 60 * 1000;
+      // Store shares in localStorage with 24 hour expiry
+      const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
       localStorage.setItem(
         `keyfate:userManagedShares:${result.secretId}`,
         JSON.stringify({ shares: userManagedShares, expiresAt })
@@ -430,8 +430,9 @@
 
           <div class="grid grid-cols-2 gap-3">
             <div class="space-y-1">
-              <Label class="text-xs font-medium text-muted-foreground">Name</Label>
+              <Label for="recipient-{index}-name" class="text-xs font-medium text-muted-foreground">Name</Label>
               <Input
+                id="recipient-{index}-name"
                 bind:value={recipient.name}
                 placeholder="Jane Doe"
                 disabled={isSubmitting}
@@ -442,8 +443,9 @@
               {/if}
             </div>
             <div class="space-y-1">
-              <Label class="text-xs font-medium text-muted-foreground">Email</Label>
+              <Label for="recipient-{index}-email" class="text-xs font-medium text-muted-foreground">Email</Label>
               <Input
+                id="recipient-{index}-email"
                 type="email"
                 bind:value={recipient.email}
                 placeholder="recipient@example.com"

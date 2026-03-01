@@ -7,7 +7,7 @@
 
 import { hex } from "@scure/base"
 import { eq, and, desc } from "drizzle-orm"
-import { getDatabase } from "$lib/db/get-database"
+import { getDatabase } from "$lib/db/drizzle"
 import { bitcoinUtxos, secrets } from "$lib/db/schema"
 import type { BitcoinUtxo } from "$lib/db/schema"
 import {
@@ -18,6 +18,10 @@ import {
 import { refreshTimelockUTXO, estimateRefreshesRemaining } from "$lib/bitcoin/refresh"
 import { broadcastTransaction, getUTXOStatus } from "$lib/bitcoin/broadcast"
 import { daysToBlocks, blocksToApproxDays } from "$lib/bitcoin/script"
+
+/** Default Bitcoin network, configurable via BITCOIN_NETWORK env var */
+const BITCOIN_NETWORK: "mainnet" | "testnet" =
+  (process.env.BITCOIN_NETWORK as "mainnet" | "testnet") || "testnet"
 
 /** Parameters for enabling Bitcoin on a secret */
 export interface EnableBitcoinParams {
@@ -379,9 +383,8 @@ export async function getBitcoinStatus(
       ? estimateRefreshesRemaining(latestUtxo.amountSats, 10)
       : null
 
-  // Detect network from the pre-signed tx or default to testnet
-  // (The DB doesn't store network directly; we infer from context)
-  const network: "mainnet" | "testnet" = "testnet"
+  // The DB doesn't store network directly; use configured default
+  const network: "mainnet" | "testnet" = BITCOIN_NETWORK
 
   return {
     enabled: true,

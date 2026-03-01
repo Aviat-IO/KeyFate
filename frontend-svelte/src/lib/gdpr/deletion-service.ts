@@ -1,4 +1,5 @@
-import { getDatabase } from "$lib/db/get-database"
+import { logger } from "$lib/logger"
+import { getDatabase } from "$lib/db/drizzle"
 import {
   users,
   secrets,
@@ -304,7 +305,7 @@ export async function executeAccountDeletion(userId: string) {
 
     return true
   } catch (error) {
-    console.error("Error executing account deletion:", error)
+    logger.error("Error executing account deletion", error instanceof Error ? error : undefined)
     throw error
   }
 }

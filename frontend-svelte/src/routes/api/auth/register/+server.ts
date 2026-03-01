@@ -3,6 +3,11 @@ import type { RequestHandler } from "./$types"
 import { createUser } from "$lib/auth/users"
 import { validatePassword } from "$lib/auth/password"
 import { createCSRFErrorResponse } from "$lib/csrf"
+import {
+  checkRateLimit,
+  getClientIdentifier,
+  createRateLimitResponse,
+} from "$lib/rate-limit"
 
 export const POST: RequestHandler = async (event) => {
   try {
@@ -11,6 +16,13 @@ export const POST: RequestHandler = async (event) => {
     const host = event.request.headers.get("host")
     if (!origin || origin === "null" || new URL(origin).host !== host) {
       return createCSRFErrorResponse()
+    }
+
+    // Rate limit: 5 registrations per hour per IP
+    const clientIp = getClientIdentifier(event.request)
+    const rateLimitResult = await checkRateLimit("registration", clientIp, 5)
+    if (!rateLimitResult.success) {
+      return createRateLimitResponse(rateLimitResult)
     }
 
     const body = await event.request.json()

@@ -5,7 +5,7 @@
  * Supports retry tracking, resolution management, and cleanup policies
  */
 
-import { getDatabase } from "$lib/db/get-database"
+import { getDatabase } from "$lib/db/drizzle"
 import {
   emailFailures,
   type EmailFailure,
@@ -40,7 +40,7 @@ export async function incrementRetryCount(
     .update(emailFailures)
     .set({
       retryCount: sql`retry_count + 1`,
-    } as any)
+    })
     .where(eq(emailFailures.id, failureId))
     .returning()
 
@@ -60,7 +60,7 @@ export async function resolveEmailFailure(
   const db = await getDatabase()
   const [resolved] = await db
     .update(emailFailures)
-    .set({ resolvedAt: new Date() } as any)
+    .set({ resolvedAt: new Date() })
     .where(eq(emailFailures.id, failureId))
     .returning()
 

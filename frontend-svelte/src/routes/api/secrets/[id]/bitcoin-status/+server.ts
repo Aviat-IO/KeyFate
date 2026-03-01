@@ -22,12 +22,11 @@ export const GET: RequestHandler = async (event) => {
     return json(status)
   } catch (error) {
     console.error("Error in GET /api/secrets/[id]/bitcoin-status:", error)
-    const message = error instanceof Error ? error.message : "Internal server error"
 
-    if (message === "Secret not found") {
-      return json({ error: message }, { status: 404 })
+    if (error instanceof Error && error.message === "Secret not found") {
+      return json({ error: "Secret not found" }, { status: 404 })
     }
 
-    return json({ error: message }, { status: 500 })
+    return json({ error: "Internal server error" }, { status: 500 })
   }
 }

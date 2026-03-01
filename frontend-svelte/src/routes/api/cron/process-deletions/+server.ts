@@ -1,7 +1,7 @@
 import { json } from "@sveltejs/kit"
 import type { RequestHandler } from "./$types"
+import { logger } from "$lib/logger"
 import { authorizeRequest } from "$lib/cron/utils"
-import { adaptRequestEvent } from "$lib/cron/adapt-request"
 import {
   getPendingDeletions,
   executeAccountDeletion,
@@ -12,8 +12,7 @@ import {
  * Health check endpoint for monitoring
  */
 export const GET: RequestHandler = async (event) => {
-  const req = adaptRequestEvent(event)
-  if (!authorizeRequest(req)) {
+  if (!authorizeRequest(event.request, event.url)) {
     return json({ error: "Unauthorized" }, { status: 401 })
   }
   return json({ status: "ok", job: "process-deletions" })
@@ -25,18 +24,17 @@ export const GET: RequestHandler = async (event) => {
  */
 export const POST: RequestHandler = async (event) => {
   try {
-    const req = adaptRequestEvent(event)
-    if (!authorizeRequest(req)) {
+    if (!authorizeRequest(event.request, event.url)) {
       return json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    console.log("[CRON] Processing account deletions...")
+    logger.info("Processing account deletions")
 
     // Get deletions past grace period
     const pendingDeletions = await getPendingDeletions()
 
     if (pendingDeletions.length === 0) {
-      console.log("[CRON] No pending deletions found")
+      logger.info("No pending deletions found")
       return json({
         success: true,
         processed: 0,
@@ -44,7 +42,7 @@ export const POST: RequestHandler = async (event) => {
       })
     }
 
-    console.log(`[CRON] Found ${pendingDeletions.length} pending deletions`)
+    logger.info("Found pending deletions", { count: pendingDeletions.length })
 
     let successCount = 0
     let failureCount = 0
@@ -52,23 +50,19 @@ export const POST: RequestHandler = async (event) => {
     // Process each deletion
     for (const deletion of pendingDeletions) {
       try {
-        console.log(
-          `[CRON] Processing deletion ${deletion.id} for user ${deletion.userId}`,
-        )
+        logger.info("Processing deletion", { deletionId: deletion.id, userId: deletion.userId })
 
         await executeAccountDeletion(deletion.userId)
 
         successCount++
-        console.log(`[CRON] Account deletion ${deletion.id} completed`)
+        logger.info("Account deletion completed", { deletionId: deletion.id })
       } catch (error) {
-        console.error(`[CRON] Error processing deletion ${deletion.id}:`, error)
+        logger.error("Error processing deletion", error instanceof Error ? error : undefined, { deletionId: deletion.id })
         failureCount++
       }
     }
 
-    console.log(
-      `[CRON] Deletion processing complete: ${successCount} success, ${failureCount} failures`,
-    )
+    logger.info("Deletion processing complete", { successCount, failureCount })
 
     return json({
       success: true,
@@ -77,7 +71,7 @@ export const POST: RequestHandler = async (event) => {
       failureCount,
     })
   } catch (error) {
-    console.error("[CRON] Error in process-deletions:", error)
+    logger.error("Error in process-deletions", error instanceof Error ? error : undefined)
     return json(
       { error: "Failed to process deletions" },
       { status: 500 },

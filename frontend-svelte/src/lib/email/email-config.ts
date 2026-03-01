@@ -9,7 +9,7 @@
  * - Security best practices validation
  */
 
-import { NEXT_PUBLIC_SUPPORT_EMAIL } from "../env"
+import { SUPPORT_EMAIL } from "../env"
 import type { EmailProviderType } from "./email-factory"
 
 /**
@@ -55,7 +55,7 @@ export interface ValidationResult {
  */
 export const EMAIL_ENV_DEFAULTS = {
   SENDGRID_SENDER_NAME: "Dead Man's Switch",
-  ADMIN_ALERT_EMAIL: NEXT_PUBLIC_SUPPORT_EMAIL,
+  ADMIN_ALERT_EMAIL: SUPPORT_EMAIL,
   EMAIL_PROVIDER: "mock", // Development default
 } as const
 

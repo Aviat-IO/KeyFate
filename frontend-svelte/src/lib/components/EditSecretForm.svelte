@@ -158,13 +158,14 @@
           </div>
 
           <div class="space-y-2">
-            <Label class="text-xs font-medium text-muted-foreground">Name</Label>
-            <Input bind:value={recipient.name} placeholder="Recipient's name" class="h-9" />
+            <Label for="edit-recipient-{index}-name" class="text-xs font-medium text-muted-foreground">Name</Label>
+            <Input id="edit-recipient-{index}-name" bind:value={recipient.name} placeholder="Recipient's name" class="h-9" />
           </div>
 
           <div class="space-y-2">
-            <Label class="text-xs font-medium text-muted-foreground">Email</Label>
+            <Label for="edit-recipient-{index}-email" class="text-xs font-medium text-muted-foreground">Email</Label>
             <Input
+              id="edit-recipient-{index}-email"
               type="email"
               bind:value={recipient.email}
               placeholder="recipient@example.com"
@@ -173,8 +174,8 @@
           </div>
 
           <div class="space-y-2">
-            <Label class="text-xs font-medium text-muted-foreground">Phone (optional)</Label>
-            <Input type="tel" bind:value={recipient.phone} placeholder="+1234567890" class="h-9" />
+            <Label for="edit-recipient-{index}-phone" class="text-xs font-medium text-muted-foreground">Phone (optional)</Label>
+            <Input id="edit-recipient-{index}-phone" type="tel" bind:value={recipient.phone} placeholder="+1234567890" class="h-9" />
             <p class="text-muted-foreground text-xs">Phone notifications are not yet supported</p>
           </div>
         </div>
