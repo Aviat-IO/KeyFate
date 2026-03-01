@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
-  import { ArrowLeft, Calendar, Clock, User } from 'lucide-svelte';
+  import { ArrowLeft, Calendar, Clock, User } from '@lucide/svelte';
   import { marked } from 'marked';
   import sanitizeHtml from 'sanitize-html';
 

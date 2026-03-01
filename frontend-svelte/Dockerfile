@@ -16,6 +16,10 @@ FROM oven/bun:1-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
+# Run as non-root user for security
+RUN addgroup --system --gid 1001 keyfate && \
+    adduser --system --uid 1001 --ingroup keyfate keyfate
+
 # Copy build output, dependencies, and migration files
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/node_modules ./node_modules
@@ -29,6 +33,10 @@ RUN chmod +x migrate-and-start.sh
 
 # Create exports directory for GDPR data exports
 RUN mkdir -p /tmp/keyfate-exports
+
+# Set ownership and switch to non-root user
+RUN chown -R keyfate:keyfate /app /tmp/keyfate-exports
+USER keyfate
 
 # Railway sets PORT dynamically; default to 3000
 ENV PORT=3000

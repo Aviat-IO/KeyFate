@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { AlertCircle } from 'lucide-svelte';
+  import { AlertCircle } from '@lucide/svelte';
 
   const error = $derived($page.url.searchParams.get('error'));
 

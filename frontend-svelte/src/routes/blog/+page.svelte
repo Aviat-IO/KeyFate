@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Badge } from '$lib/components/ui/badge';
   import * as Card from '$lib/components/ui/card';
-  import { ArrowRight, BookOpen, Calendar, Clock } from 'lucide-svelte';
+  import { ArrowRight, BookOpen, Calendar, Clock } from '@lucide/svelte';
 
   let { data } = $props();
 </script>

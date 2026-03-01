@@ -5,6 +5,7 @@ import {
   uuid,
   pgEnum,
   integer,
+  bigint,
   boolean,
   jsonb,
   numeric,
@@ -353,18 +354,24 @@ export const secrets = pgTable(
   }),
 )
 
-export const secretRecipients = pgTable("secret_recipients", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  secretId: uuid("secret_id")
-    .notNull()
-    .references(() => secrets.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  email: text("email"),
-  phone: text("phone"),
-  nostrPubkey: text("nostr_pubkey"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-})
+export const secretRecipients = pgTable(
+  "secret_recipients",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    secretId: uuid("secret_id")
+      .notNull()
+      .references(() => secrets.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    email: text("email"),
+    phone: text("phone"),
+    nostrPubkey: text("nostr_pubkey"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    secretIdIdx: index("idx_secret_recipients_secret_id").on(table.secretId),
+  }),
+)
 
 export const adminNotifications = pgTable("admin_notifications", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -399,18 +406,25 @@ export const checkInTokens = pgTable(
   }),
 )
 
-export const checkinHistory = pgTable("checkin_history", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  secretId: uuid("secret_id")
-    .notNull()
-    .references(() => secrets.id, { onDelete: "cascade" }),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  checkedInAt: timestamp("checked_in_at").notNull(),
-  nextCheckIn: timestamp("next_check_in").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-})
+export const checkinHistory = pgTable(
+  "checkin_history",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    secretId: uuid("secret_id")
+      .notNull()
+      .references(() => secrets.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    checkedInAt: timestamp("checked_in_at").notNull(),
+    nextCheckIn: timestamp("next_check_in").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    secretIdIdx: index("idx_checkin_history_secret_id").on(table.secretId),
+    userIdIdx: index("idx_checkin_history_user_id").on(table.userId),
+  }),
+)
 
 export const cronConfig = pgTable("cron_config", {
   id: integer("id").primaryKey(),
@@ -420,19 +434,25 @@ export const cronConfig = pgTable("cron_config", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
 
-export const emailNotifications = pgTable("email_notifications", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  recipientEmail: text("recipient_email").notNull(),
-  secretId: uuid("secret_id")
-    .notNull()
-    .references(() => secrets.id, { onDelete: "cascade" }),
-  subject: text("subject").notNull(),
-  body: text("body").notNull(),
-  sentAt: timestamp("sent_at"),
-  failedAt: timestamp("failed_at"),
-  error: text("error"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-})
+export const emailNotifications = pgTable(
+  "email_notifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    recipientEmail: text("recipient_email").notNull(),
+    secretId: uuid("secret_id")
+      .notNull()
+      .references(() => secrets.id, { onDelete: "cascade" }),
+    subject: text("subject").notNull(),
+    body: text("body").notNull(),
+    sentAt: timestamp("sent_at"),
+    failedAt: timestamp("failed_at"),
+    error: text("error"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    secretIdIdx: index("idx_email_notifications_secret_id").on(table.secretId),
+  }),
+)
 
 export const reminderJobs = pgTable(
   "reminder_jobs",
@@ -749,7 +769,7 @@ export const bitcoinUtxos = pgTable(
       .references(() => secrets.id, { onDelete: "cascade" }),
     txId: text("tx_id").notNull(),
     outputIndex: integer("output_index").notNull(),
-    amountSats: integer("amount_sats").notNull(),
+    amountSats: bigint("amount_sats", { mode: "number" }).notNull(),
     timelockScript: text("timelock_script").notNull(), // hex-encoded
     ownerPubkey: text("owner_pubkey").notNull(), // hex
     recipientPubkey: text("recipient_pubkey").notNull(), // hex
@@ -765,7 +785,7 @@ export const bitcoinUtxos = pgTable(
   (table) => ({
     secretIdx: index("idx_bitcoin_utxos_secret").on(table.secretId),
     statusIdx: index("idx_bitcoin_utxos_status").on(table.status),
-    txIdx: index("idx_bitcoin_utxos_tx").on(table.txId, table.outputIndex),
+    txOutputUnique: unique("unique_bitcoin_utxos_tx_output").on(table.txId, table.outputIndex),
   }),
 )
 

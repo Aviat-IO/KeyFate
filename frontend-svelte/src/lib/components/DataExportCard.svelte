@@ -107,7 +107,7 @@
 
 		{#if recentExports.length > 0}
 			<div>
-				<h4 class="text-xs text-muted-foregroundr font-medium mb-3">Recent Exports</h4>
+				<h4 class="text-xs text-muted-foreground font-medium mb-3">Recent Exports</h4>
 				<div class="space-y-3">
 					{#each recentExports as exportJob}
 						<div class="flex items-center justify-between border-b border-border pb-3 last:border-0">

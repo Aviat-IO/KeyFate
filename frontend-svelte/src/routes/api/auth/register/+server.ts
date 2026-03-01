@@ -2,9 +2,17 @@ import { json } from "@sveltejs/kit"
 import type { RequestHandler } from "./$types"
 import { createUser } from "$lib/auth/users"
 import { validatePassword } from "$lib/auth/password"
+import { createCSRFErrorResponse } from "$lib/csrf"
 
 export const POST: RequestHandler = async (event) => {
   try {
+    // Origin validation for unauthenticated endpoint (no session-based CSRF token)
+    const origin = event.request.headers.get("origin")
+    const host = event.request.headers.get("host")
+    if (!origin || origin === "null" || new URL(origin).host !== host) {
+      return createCSRFErrorResponse()
+    }
+
     const body = await event.request.json()
     let { email, password: rawPassword } = body
 

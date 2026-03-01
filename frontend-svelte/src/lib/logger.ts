@@ -159,20 +159,6 @@ export const logger = {
   error: (message: string, error?: Error, data?: unknown) => {
     const entry = createLogEntry("error", message, data, error)
     console.error(JSON.stringify(entry))
-
-    if (typeof window !== "undefined" && (window as any).Sentry) {
-      const Sentry = (window as any).Sentry
-      Sentry.captureException(error || new Error(message), {
-        extra: sanitize(data),
-      })
-    } else if (process.env.SENTRY_DSN) {
-      try {
-        const Sentry = require("@sentry/nextjs")
-        Sentry.captureException(error || new Error(message), {
-          extra: sanitize(data),
-        })
-      } catch (e) {}
-    }
   },
 }
 

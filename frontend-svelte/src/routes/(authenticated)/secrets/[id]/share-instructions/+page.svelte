@@ -8,7 +8,7 @@
   import { Label } from '$lib/components/ui/label';
   import { Checkbox } from '$lib/components/ui/checkbox';
   import { Separator } from '$lib/components/ui/separator';
-  import { Copy, AlertTriangle, CheckCircle, Info, Send } from 'lucide-svelte';
+  import { Copy, AlertTriangle, CheckCircle, Info, Send } from '@lucide/svelte';
 
   let userManagedShares = $state<string[]>([]);
   let recipients = $state<Array<{ name: string; email?: string | null }>>([]);

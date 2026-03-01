@@ -29,7 +29,7 @@
     <div class="grid gap-6 py-4">
       {#if currentLimit && proLimit}
         <div class="bg-muted/50 rounded-lg border p-4">
-          <div class="text-xs text-muted-foregroundr font-medium mb-2">Your Limit</div>
+          <div class="text-xs text-muted-foreground font-medium mb-2">Your Limit</div>
           <div class="flex items-center justify-between">
             <div>
               <div class="font-semibold">Free Tier</div>

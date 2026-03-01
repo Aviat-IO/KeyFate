@@ -191,7 +191,7 @@
 		{:else}
 			<div class="space-y-6">
 				<div class="space-y-2">
-					<span class="text-xs text-muted-foregroundr font-medium">What happens when you delete your account</span>
+					<span class="text-xs text-muted-foreground font-medium">What happens when you delete your account</span>
 					<ul class="text-muted-foreground ml-4 list-disc space-y-1 text-sm mt-2">
 						<li>All your secrets and check-in data will be permanently deleted</li>
 						<li>Your audit logs and activity history will be removed</li>

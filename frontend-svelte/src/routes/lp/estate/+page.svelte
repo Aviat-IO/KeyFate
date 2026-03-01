@@ -7,7 +7,7 @@
   import {
     Shield, Lock, Clock, CheckCircle, EyeOff, ArrowRight, AlertTriangle,
     Camera, CreditCard, Mail, Music, Cloud, FileText, Heart, Home, Smartphone, Key
-  } from 'lucide-svelte';
+  } from '@lucide/svelte';
 
   let scrollY = $state(0);
 

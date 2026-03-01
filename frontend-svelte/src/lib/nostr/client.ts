@@ -9,7 +9,7 @@
 import { SimplePool } from "nostr-tools/pool"
 import type { Event as NostrEvent } from "nostr-tools/core"
 import type { Filter } from "nostr-tools/filter"
-import { DEFAULT_RELAYS } from "./relay-config"
+import { DEFAULT_RELAYS, MIN_PUBLISH_RELAYS } from "./relay-config"
 
 export type { Filter }
 
@@ -46,11 +46,24 @@ export class NostrClient {
   /**
    * Publish a signed event to all configured relays.
    *
-   * Resolves when at least one relay accepts the event.
-   * Rejects if no relay accepts it.
+   * Uses `Promise.allSettled` to attempt every relay, then checks
+   * that at least one succeeded (hard requirement) and warns if
+   * fewer than {@link MIN_PUBLISH_RELAYS} accepted the event.
    */
   async publish(event: NostrEvent): Promise<void> {
-    await Promise.any(this.pool.publish(this.relays, event))
+    const results = await Promise.allSettled(
+      this.pool.publish(this.relays, event),
+    )
+    const succeeded = results.filter((r) => r.status === "fulfilled").length
+    if (succeeded === 0) {
+      throw new Error("Failed to publish to any relay")
+    }
+    if (succeeded < MIN_PUBLISH_RELAYS) {
+      console.warn(
+        `[NostrClient] Published to only ${succeeded}/${this.relays.length} relays ` +
+          `(minimum ${MIN_PUBLISH_RELAYS} recommended)`,
+      )
+    }
   }
 
   /**

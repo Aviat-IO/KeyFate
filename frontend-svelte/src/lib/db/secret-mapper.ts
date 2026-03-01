@@ -84,6 +84,7 @@ export function mapApiSecretToDrizzleShape(
       name: r.name,
       email: r.email,
       phone: r.phone,
+      nostrPubkey: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     })),

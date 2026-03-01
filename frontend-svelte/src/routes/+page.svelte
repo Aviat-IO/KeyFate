@@ -18,7 +18,7 @@
     ArrowRight,
     Zap,
     Globe,
-  } from 'lucide-svelte';
+  } from '@lucide/svelte';
 
   let session = $derived($page.data.session);
   let scrollY = $state(0);

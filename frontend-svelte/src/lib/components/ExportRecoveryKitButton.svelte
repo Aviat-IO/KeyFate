@@ -97,7 +97,20 @@
         // Bitcoin data is optional — continue without it
       }
 
-      // Nostr data: include relay list and passphrase bundle if stored locally
+      // Nostr data: include relay list, symmetric keys (plaintextKs), and
+      // passphrase bundle if stored locally.
+      //
+      // Recovery architecture (3 independent paths):
+      //   1. Server path  — server share is included in this kit directly.
+      //   2. Nostr path   — encrypted shares live on Nostr relays; plaintextKs
+      //      (symmetric keys K) stored here allow offline decryption of those
+      //      shares if the user has a local copy. Event IDs let the recovery
+      //      UI fetch ciphertexts from relays as a fallback.
+      //   3. Bitcoin path — pre-signed timelock transaction included separately.
+      //
+      // If BOTH the server AND all relays are down simultaneously, recovery
+      // still works via the Bitcoin timelock (path 3) or if the user has the
+      // passphrase to derive K from encryptedKPassphrase.
       let nostrData: Record<string, unknown> | undefined;
       const nostrStoredData = localStorage.getItem(`keyfate:nostrData:${secret.id}`);
       if (nostrStoredData) {
@@ -106,6 +119,7 @@
           nostrData = {
             enabled: true,
             eventIds: parsed.eventIds ?? [],
+            plaintextKs: parsed.plaintextKs ?? [],
             relays: [...DEFAULT_RELAYS],
             encryptedKPassphrase: parsed.encryptedKPassphrase ?? null
           };
@@ -118,6 +132,7 @@
         nostrData = {
           enabled: false,
           eventIds: [],
+          plaintextKs: [],
           relays: [...DEFAULT_RELAYS],
           encryptedKPassphrase: null
         };
@@ -176,7 +191,7 @@
 <Dialog.Root bind:open={isOpen}>
   <Dialog.Trigger>
     {#snippet child({ props })}
-      <Button variant="outline" class="{className}" {...props}>
+      <Button variant="outline" class={className} {...props}>
         <Download class="mr-2 h-4 w-4" />
         Export Recovery Kit
       </Button>

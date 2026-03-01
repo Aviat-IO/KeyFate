@@ -74,10 +74,9 @@ export async function confirmPendingUtxos(): Promise<ConfirmUtxosResult> {
       failed++
       const message = error instanceof Error ? error.message : String(error)
       errors.push(`UTXO ${utxo.id} (tx: ${utxo.txId}): ${message}`)
-      logger.error("Failed to check UTXO status", {
+      logger.error("Failed to check UTXO status", error instanceof Error ? error : new Error(message), {
         utxoId: utxo.id,
         txId: utxo.txId,
-        error: message,
       })
     }
   }

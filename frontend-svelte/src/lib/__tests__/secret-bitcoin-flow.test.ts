@@ -407,8 +407,8 @@ describe("Bitcoin-Enabled Secret Lifecycle", () => {
     // Correct structure
     expect(rawTx.inputs.length).toBe(1)
     expect(rawTx.outputs.length).toBe(2) // OP_RETURN + recipient
-    expect(rawTx.witnesses.length).toBe(1)
-    expect(rawTx.witnesses[0].length).toBe(3) // sig, FALSE, witnessScript
+    expect(rawTx.witnesses!.length).toBe(1)
+    expect(rawTx.witnesses![0].length).toBe(3) // sig, FALSE, witnessScript
 
     // CSV sequence on input
     expect(rawTx.inputs[0].sequence).toBe(4320)
@@ -420,7 +420,7 @@ describe("Bitcoin-Enabled Secret Lifecycle", () => {
     expect(Number(rawTx.outputs[1].amount)).toBeGreaterThan(0)
 
     // Witness: second item is empty (FALSE for ELSE branch)
-    expect(rawTx.witnesses[0][1].length).toBe(0)
+    expect(rawTx.witnesses![0][1].length).toBe(0)
   })
 
   it("multiple sequential refreshes reduce UTXO amount", async () => {
