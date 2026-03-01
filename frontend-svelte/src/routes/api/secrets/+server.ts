@@ -42,7 +42,7 @@ export const POST: RequestHandler = async (event) => {
   let insertData: Record<string, unknown> | undefined
 
   try {
-    const csrfCheck = await requireCSRFProtection(event.request as any)
+    const csrfCheck = await requireCSRFProtection(event)
     if (!csrfCheck.valid) {
       return createCSRFErrorResponse()
     }

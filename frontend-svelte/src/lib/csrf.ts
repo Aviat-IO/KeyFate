@@ -1,6 +1,4 @@
-import type { NextRequest } from "$lib/compat/next-server"
-import { getServerSession } from "$lib/compat/next-auth"
-import { authConfig } from "$lib/auth-config"
+import type { RequestEvent } from "@sveltejs/kit"
 import { getDatabase } from "$lib/db/drizzle"
 import { csrfTokens } from "$lib/db/schema"
 import { and, eq, gt } from "drizzle-orm"
@@ -49,14 +47,15 @@ export async function validateCSRFToken(
 }
 
 export async function requireCSRFProtection(
-  request: NextRequest,
+  event: RequestEvent,
 ): Promise<{ valid: boolean; error?: string }> {
-  const session = await getServerSession(authConfig)
+  const session = await event.locals.auth()
   if (!session) {
     return { valid: false, error: "Authentication required" }
   }
 
   // 1. Origin validation
+  const request = event.request
   const origin = request.headers.get("origin")
   const host = request.headers.get("host")
 
