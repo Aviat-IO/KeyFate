@@ -1,13 +1,12 @@
 <script lang="ts">
   import CheckInButton from '$lib/components/CheckInButton.svelte';
+  import DataLabel from '$lib/components/DataLabel.svelte';
+  import Keyline from '$lib/components/Keyline.svelte';
   import TogglePauseButton from '$lib/components/TogglePauseButton.svelte';
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
-  import * as Card from '$lib/components/ui/card';
-  import { Separator } from '$lib/components/ui/separator';
   import { formatGranularTime } from '$lib/time-utils';
   import type { Secret, SecretWithRecipients } from '$lib/types/secret-types';
-  import { cn } from '$lib/utils';
   import { Pencil } from '@lucide/svelte';
   import { toast } from 'svelte-sonner';
   import { format } from 'timeago.js';
@@ -70,6 +69,25 @@
     return lastCheckIn < fifteenMinutesAgo;
   });
 
+  /** Keyline progress: percentage of check-in interval elapsed */
+  let keylineProgress = $derived.by(() => {
+    if (isTriggered || serverShareDeleted || secretState.status === 'paused') return 0;
+    const now = new Date();
+    const nextCheckIn = secretState.nextCheckIn ? new Date(secretState.nextCheckIn) : now;
+    const intervalMs = secretState.checkInDays * 24 * 60 * 60 * 1000;
+    const startMs = nextCheckIn.getTime() - intervalMs;
+    const elapsed = now.getTime() - startMs;
+    return Math.max(0, Math.min(100, (elapsed / intervalMs) * 100));
+  });
+
+  /** Massive countdown text */
+  let countdownText = $derived.by(() => {
+    if (isTriggered) return 'Sent';
+    if (serverShareDeleted) return '—';
+    if (secretState.status === 'paused') return 'Paused';
+    return formatGranularTime(secretState.nextCheckIn || new Date());
+  });
+
   function handleCheckInSuccess(updatedSecret: Secret) {
     secretState = { ...secretState, ...updatedSecret };
     toast.success(`Your check-in for "${secret.title}" has been recorded.`, {
@@ -91,145 +109,112 @@
     );
   }
 
-  function getTimingText() {
-    if (isTriggered) return `Sent ${format(secretState.triggeredAt!)}`;
-    if (serverShareDeleted) return 'Disabled';
-    if (secretState.status === 'paused') return 'Paused';
-    return `Triggers in ${formatGranularTime(secretState.nextCheckIn || new Date())}`;
+  function getRecipientsText(): string {
+    const count = secretState.recipients.length;
+    return `${count} ${count === 1 ? 'recipient' : 'recipients'}`;
   }
 
-  function getTriggerTimeTooltip() {
-    if (isTriggered || serverShareDeleted) return null;
+  function getLastCheckInText(): string | null {
+    if (!secretState.lastCheckIn || isTriggered || serverShareDeleted) return null;
+    return format(secretState.lastCheckIn);
+  }
+
+  function getNextCheckInDate(): string | null {
+    if (isTriggered || serverShareDeleted || secretState.status === 'paused') return null;
     const triggerDate = secretState.nextCheckIn
       ? new Date(secretState.nextCheckIn)
       : new Date();
-    return triggerDate.toLocaleString(undefined, {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
+    return triggerDate.toLocaleDateString(undefined, {
+      month: 'short',
       day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZoneName: 'short'
+      year: 'numeric'
     });
-  }
-
-  function getLastCheckInText() {
-    if (!secretState.lastCheckIn || isTriggered || serverShareDeleted) return null;
-    return `Last checkin: ${format(secretState.lastCheckIn)}`;
   }
 </script>
 
-<Card.Root
-  class={cn(
-    'flex flex-col transition-all duration-200',
-    isTriggered && 'border-destructive/50 bg-destructive/5',
-    secretState.status === 'paused' && 'border-accent bg-accent/10',
-    serverShareDeleted && 'border-muted-foreground/30 bg-muted/50 opacity-90',
-    statusBadge.label === 'Urgent' && 'border-destructive'
-  )}
->
-  <Card.Header class="flex-1 pb-4">
-    <div class="mb-4 flex items-start justify-between">
-      <h3 class="flex-1 truncate pr-2 text-base font-semibold md:text-xl">
-        {secretState.title}
-      </h3>
-      <Badge variant={statusBadge.variant} class="text-xs md:text-sm">
-        {statusBadge.label}
-      </Badge>
-    </div>
+<!-- Unboxed secret row — no Card wrapper -->
+<div class="py-10">
+  <!-- Header: title + status badge -->
+  <div class="flex items-start justify-between gap-4">
+    <h3 class="font-space text-xl font-semibold tracking-tight md:text-2xl">
+      {secretState.title}
+    </h3>
+    <Badge variant={statusBadge.variant} class="shrink-0 text-xs uppercase tracking-wider">
+      {statusBadge.label}
+    </Badge>
+  </div>
 
-    <div class="space-y-3 md:space-y-4">
-      <div>
-        <div class="text-foreground mb-1.5 text-sm font-medium md:mb-2 md:text-base">
-          {secretState.recipients.length}
-          {secretState.recipients.length === 1 ? 'Recipient' : 'Recipients'}
-        </div>
-        <ul class="text-muted-foreground ml-1 space-y-0.5 text-xs md:space-y-1 md:text-sm">
-          {#each secretState.recipients as recipient}
-            <li>
-              &bull; {recipient.name}
-              {recipient.email
-                ? `(${recipient.email})`
-                : recipient.phone
-                  ? `(${recipient.phone})`
-                  : ''}
-            </li>
-          {/each}
-        </ul>
-      </div>
+  <!-- Massive countdown -->
+  <div
+    class="font-space text-foreground -ml-1 mt-4 text-[3.5rem] font-light leading-none tracking-tighter sm:text-[5rem] md:text-[6rem]"
+  >
+    {countdownText}
+  </div>
 
-      <div>
-        <div class="text-foreground mb-1.5 text-sm font-medium md:mb-2 md:text-base">
-          {getTimingText()}
-        </div>
-        {#if !isTriggered && !serverShareDeleted}
-          {#if secretState.status === 'paused'}
-            <div class="text-muted-foreground ml-1 text-xs md:text-sm">
-              Will not trigger until resumed
-            </div>
-          {:else}
-            <div class="text-muted-foreground ml-1 text-xs md:text-sm">
-              {getTriggerTimeTooltip()}
-            </div>
-          {/if}
+  <!-- Keyline progress bar -->
+  {#if !isTriggered && !serverShareDeleted && secretState.status !== 'paused'}
+    <Keyline progress={keylineProgress} />
+  {:else}
+    <div class="my-8 h-[2px] w-full bg-muted"></div>
+  {/if}
+
+  <!-- Metadata row: horizontal DataLabels -->
+  <div class="flex flex-col gap-6 md:flex-row md:justify-between">
+    <DataLabel label="Recipients" value={getRecipientsText()} />
+
+    {#if getNextCheckInDate()}
+      <DataLabel label="Triggers On" value={getNextCheckInDate()} />
+    {/if}
+
+    {#if getLastCheckInText()}
+      <DataLabel label="Last Check-In" value={getLastCheckInText()} />
+    {/if}
+
+    {#if isTriggered && secretState.triggeredAt}
+      <DataLabel label="Sent" value={format(secretState.triggeredAt)} />
+    {/if}
+
+    <DataLabel label="Interval" value={`${secretState.checkInDays} days`} />
+  </div>
+
+  <!-- Actions -->
+  <div class="mt-8 flex items-center justify-between gap-4">
+    {#if !isTriggered}
+      <div class="flex items-center gap-2">
+        {#if !serverShareDeleted}
+          <TogglePauseButton
+            secretId={secretState.id}
+            status={secretState.status}
+            onToggleSuccess={handleToggleSuccess}
+          />
         {/if}
-        {#if serverShareDeleted}
-          <div class="text-muted-foreground ml-1 text-xs md:text-sm">Server share deleted</div>
-        {/if}
-      </div>
 
-      {#if getLastCheckInText()}
-        <div class="text-muted-foreground ml-1 text-xs md:text-sm">
-          {getLastCheckInText()}
-        </div>
-      {/if}
-    </div>
-  </Card.Header>
-
-  <Card.Content class="pt-0">
-    <Separator class="mb-3" />
-
-    <div class="flex items-center justify-between gap-2">
-      {#if !isTriggered}
-        <div class="flex items-center gap-2">
-          {#if !serverShareDeleted}
-            <TogglePauseButton
-              secretId={secretState.id}
-              status={secretState.status}
-              onToggleSuccess={handleToggleSuccess}
-            />
-            <Separator orientation="vertical" class="h-4" />
-          {/if}
-
-          <Button variant="ghost" size="sm" href={`/secrets/${secretState.id}/view`}>
-            View
-          </Button>
-
-          {#if !serverShareDeleted}
-            <Separator orientation="vertical" class="h-4" />
-            <Button variant="ghost" size="sm" href={`/secrets/${secretState.id}/edit`}>
-              <Pencil class="mr-1 h-4 w-4" />
-              <span class="hidden sm:inline">Edit</span>
-            </Button>
-          {/if}
-        </div>
-
-        <div>
-          {#if !serverShareDeleted && secretState.status === 'active' && canCheckIn}
-            <CheckInButton
-              secretId={secretState.id}
-              onCheckInSuccess={handleCheckInSuccess}
-              variant="outline"
-            />
-          {/if}
-        </div>
-      {:else}
-        <div></div>
-        <Button variant="ghost" size="sm" href={`/secrets/${secretState.id}/view`}>
+        <Button variant="ghost" size="sm" href={`/secrets/${secretState.id}/view`} class="uppercase tracking-wide">
           View
         </Button>
-      {/if}
-    </div>
-  </Card.Content>
-</Card.Root>
+
+        {#if !serverShareDeleted}
+          <Button variant="ghost" size="sm" href={`/secrets/${secretState.id}/edit`} class="uppercase tracking-wide">
+            <Pencil class="mr-1 h-4 w-4" />
+            Edit
+          </Button>
+        {/if}
+      </div>
+
+      <div>
+        {#if !serverShareDeleted && secretState.status === 'active' && canCheckIn}
+          <CheckInButton
+            secretId={secretState.id}
+            onCheckInSuccess={handleCheckInSuccess}
+            variant="outline"
+          />
+        {/if}
+      </div>
+    {:else}
+      <div></div>
+      <Button variant="ghost" size="sm" href={`/secrets/${secretState.id}/view`} class="uppercase tracking-wide">
+        View
+      </Button>
+    {/if}
+  </div>
+</div>
