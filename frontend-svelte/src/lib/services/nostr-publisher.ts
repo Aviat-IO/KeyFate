@@ -26,6 +26,12 @@ export interface PublishedShare {
   nostrEventId: string
   /** Plaintext symmetric key K (for OP_RETURN embedding) */
   plaintextK: Uint8Array
+  /** K encrypted with passphrase-derived key (if passphrase was provided) */
+  encryptedKPassphrase?: {
+    ciphertext: Uint8Array
+    nonce: Uint8Array
+    salt: Uint8Array
+  }
 }
 
 /** Result of publishing shares to Nostr */
@@ -167,6 +173,7 @@ export async function publishSharesToNostr(params: {
           recipientId: shareInput.recipientId,
           nostrEventId: giftWrap.id,
           plaintextK: encrypted.plaintextK,
+          encryptedKPassphrase: encrypted.encryptedKPassphrase,
         })
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)

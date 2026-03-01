@@ -118,33 +118,34 @@ export const POST: RequestHandler = async (event) => {
       )
     }
 
-    // Mark old UTXO as spent
-    await db
-      .update(bitcoinUtxos)
-      .set({
-        status: "spent",
-        spentAt: new Date(),
-        spentByTxId: body.newTxId,
-        updatedAt: new Date(),
-      })
-      .where(eq(bitcoinUtxos.id, currentUtxo.id))
+    // Mark old UTXO as spent AND insert new one atomically
+    const [newUtxoRecord] = await db.transaction(async (tx) => {
+      await tx
+        .update(bitcoinUtxos)
+        .set({
+          status: "spent",
+          spentAt: new Date(),
+          spentByTxId: body.newTxId,
+          updatedAt: new Date(),
+        })
+        .where(eq(bitcoinUtxos.id, currentUtxo.id))
 
-    // Insert new UTXO record
-    const [newUtxoRecord] = await db
-      .insert(bitcoinUtxos)
-      .values({
-        secretId,
-        txId: body.newTxId,
-        outputIndex: body.newOutputIndex,
-        amountSats: body.newAmountSats,
-        timelockScript: body.newTimelockScript,
-        ownerPubkey: currentUtxo.ownerPubkey,
-        recipientPubkey: currentUtxo.recipientPubkey,
-        ttlBlocks: body.ttlBlocks,
-        status: "pending",
-        preSignedRecipientTx: body.preSignedRecipientTx,
-      })
-      .returning()
+      return tx
+        .insert(bitcoinUtxos)
+        .values({
+          secretId,
+          txId: body.newTxId,
+          outputIndex: body.newOutputIndex,
+          amountSats: body.newAmountSats,
+          timelockScript: body.newTimelockScript,
+          ownerPubkey: currentUtxo.ownerPubkey,
+          recipientPubkey: currentUtxo.recipientPubkey,
+          ttlBlocks: body.ttlBlocks,
+          status: "pending",
+          preSignedRecipientTx: body.preSignedRecipientTx,
+        })
+        .returning()
+    })
 
     return json({
       utxoId: newUtxoRecord.id,

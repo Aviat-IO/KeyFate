@@ -285,33 +285,34 @@ export async function refreshBitcoin(
     network: params.network,
   })
 
-  // 4. Mark old UTXO as spent
-  await db
-    .update(bitcoinUtxos)
-    .set({
-      status: "spent",
-      spentAt: new Date(),
-      spentByTxId: newTxId,
-      updatedAt: new Date(),
-    })
-    .where(eq(bitcoinUtxos.id, currentUtxo.id))
+  // 4. Mark old UTXO as spent AND insert new one atomically
+  const [newUtxoRecord] = await db.transaction(async (tx) => {
+    await tx
+      .update(bitcoinUtxos)
+      .set({
+        status: "spent",
+        spentAt: new Date(),
+        spentByTxId: newTxId,
+        updatedAt: new Date(),
+      })
+      .where(eq(bitcoinUtxos.id, currentUtxo.id))
 
-  // 5. Insert new UTXO record with pre-signed tx
-  const [newUtxoRecord] = await db
-    .insert(bitcoinUtxos)
-    .values({
-      secretId,
-      txId: newTxId,
-      outputIndex: refreshResult.newOutputIndex,
-      amountSats: newAmountSats,
-      timelockScript: hex.encode(refreshResult.newTimelockScript),
-      ownerPubkey: currentUtxo.ownerPubkey,
-      recipientPubkey: currentUtxo.recipientPubkey,
-      ttlBlocks,
-      status: "pending",
-      preSignedRecipientTx: preSignedResult.txHex,
-    })
-    .returning()
+    return tx
+      .insert(bitcoinUtxos)
+      .values({
+        secretId,
+        txId: newTxId,
+        outputIndex: refreshResult.newOutputIndex,
+        amountSats: newAmountSats,
+        timelockScript: hex.encode(refreshResult.newTimelockScript),
+        ownerPubkey: currentUtxo.ownerPubkey,
+        recipientPubkey: currentUtxo.recipientPubkey,
+        ttlBlocks,
+        status: "pending",
+        preSignedRecipientTx: preSignedResult.txHex,
+      })
+      .returning()
+  })
 
   const refreshesRemaining = estimateRefreshesRemaining(
     newAmountSats,

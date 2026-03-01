@@ -1,6 +1,6 @@
+import type { RequestEvent } from "@sveltejs/kit"
 import { getDatabase } from "$lib/db/drizzle"
 import { auditLogs, type AuditLogInsert } from "$lib/db/schema"
-import { headers } from "$lib/compat/next-headers"
 
 export type AuditEventType =
   | "secret_created"
@@ -28,16 +28,22 @@ interface AuditLogParams {
   resourceType?: string
   resourceId?: string
   details?: Record<string, unknown>
+  event?: RequestEvent
 }
 
 export async function logAudit(params: AuditLogParams): Promise<void> {
   try {
     const db = await getDatabase()
-    const headersList = await headers()
 
-    const ipAddress =
-      headersList.get("x-forwarded-for") || headersList.get("x-real-ip") || null
-    const userAgent = headersList.get("user-agent") || null
+    let ipAddress: string | null = null
+    let userAgent: string | null = null
+
+    if (params.event) {
+      const headers = params.event.request.headers
+      ipAddress =
+        headers.get("x-forwarded-for") || headers.get("x-real-ip") || null
+      userAgent = headers.get("user-agent") || null
+    }
 
     const logEntry = {
       userId: params.userId,
@@ -60,6 +66,7 @@ export async function logSecretCreated(
   userId: string,
   secretId: string,
   details?: Record<string, unknown>,
+  event?: RequestEvent,
 ) {
   await logAudit({
     userId,
@@ -68,6 +75,7 @@ export async function logSecretCreated(
     resourceType: "secret",
     resourceId: secretId,
     details,
+    event,
   })
 }
 
@@ -75,6 +83,7 @@ export async function logSecretEdited(
   userId: string,
   secretId: string,
   details?: Record<string, unknown>,
+  event?: RequestEvent,
 ) {
   await logAudit({
     userId,
@@ -83,6 +92,7 @@ export async function logSecretEdited(
     resourceType: "secret",
     resourceId: secretId,
     details,
+    event,
   })
 }
 
@@ -90,6 +100,7 @@ export async function logSecretDeleted(
   userId: string,
   secretId: string,
   details?: Record<string, unknown>,
+  event?: RequestEvent,
 ) {
   await logAudit({
     userId,
@@ -98,6 +109,7 @@ export async function logSecretDeleted(
     resourceType: "secret",
     resourceId: secretId,
     details,
+    event,
   })
 }
 
@@ -105,6 +117,7 @@ export async function logCheckIn(
   userId: string,
   secretId: string,
   details?: Record<string, unknown>,
+  event?: RequestEvent,
 ) {
   await logAudit({
     userId,
@@ -113,6 +126,7 @@ export async function logCheckIn(
     resourceType: "secret",
     resourceId: secretId,
     details,
+    event,
   })
 }
 
@@ -120,6 +134,7 @@ export async function logSecretTriggered(
   userId: string,
   secretId: string,
   details?: Record<string, unknown>,
+  event?: RequestEvent,
 ) {
   await logAudit({
     userId,
@@ -128,6 +143,7 @@ export async function logSecretTriggered(
     resourceType: "secret",
     resourceId: secretId,
     details,
+    event,
   })
 }
 
@@ -136,6 +152,7 @@ export async function logRecipientAdded(
   secretId: string,
   recipientId: string,
   details?: Record<string, unknown>,
+  event?: RequestEvent,
 ) {
   await logAudit({
     userId,
@@ -144,6 +161,7 @@ export async function logRecipientAdded(
     resourceType: "recipient",
     resourceId: recipientId,
     details: { ...details, secretId },
+    event,
   })
 }
 
@@ -152,6 +170,7 @@ export async function logRecipientRemoved(
   secretId: string,
   recipientId: string,
   details?: Record<string, unknown>,
+  event?: RequestEvent,
 ) {
   await logAudit({
     userId,
@@ -160,6 +179,7 @@ export async function logRecipientRemoved(
     resourceType: "recipient",
     resourceId: recipientId,
     details: { ...details, secretId },
+    event,
   })
 }
 
@@ -169,6 +189,7 @@ export async function logLogin(
     resourceType?: string
     resourceId?: string
   },
+  event?: RequestEvent,
 ) {
   await logAudit({
     userId,
@@ -177,6 +198,7 @@ export async function logLogin(
     resourceType: details?.resourceType,
     resourceId: details?.resourceId,
     details,
+    event,
   })
 }
 
@@ -186,6 +208,7 @@ export async function logSubscriptionChanged(
     resourceType?: string
     resourceId?: string
   },
+  event?: RequestEvent,
 ) {
   await logAudit({
     userId,
@@ -194,17 +217,20 @@ export async function logSubscriptionChanged(
     resourceType: details?.resourceType,
     resourceId: details?.resourceId,
     details,
+    event,
   })
 }
 
 export async function logSettingsChanged(
   userId: string,
   details?: Record<string, unknown>,
+  event?: RequestEvent,
 ) {
   await logAudit({
     userId,
     eventType: "settings_changed",
     eventCategory: "settings",
     details,
+    event,
   })
 }
