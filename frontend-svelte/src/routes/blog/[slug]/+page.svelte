@@ -108,7 +108,17 @@
   </div>
 
   <div
-    class="prose prose-lg max-w-none prose-headings:font-semibold prose-p:leading-relaxed prose-li:my-1"
+    class="prose prose-lg max-w-none
+      prose-headings:text-foreground prose-headings:font-semibold
+      prose-p:text-foreground/90 prose-p:leading-relaxed
+      prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+      prose-strong:text-foreground prose-strong:font-semibold
+      prose-blockquote:border-primary/30 prose-blockquote:text-muted-foreground
+      prose-code:text-primary prose-code:bg-muted prose-code:rounded prose-code:px-1.5 prose-code:py-0.5 prose-code:text-sm prose-code:font-normal prose-code:before:content-none prose-code:after:content-none
+      prose-pre:bg-muted prose-pre:text-foreground prose-pre:border prose-pre:border-border
+      prose-li:text-foreground/90 prose-li:my-1
+      prose-hr:border-border
+      prose-th:text-foreground prose-td:text-foreground/90"
   >
     {@html htmlContent}
   </div>
@@ -120,7 +130,7 @@
         Ready to secure your cryptocurrency, passwords, and sensitive information for your loved
         ones?
       </p>
-      <Button href="/auth/signin">Get Started with KeyFate</Button>
+      <Button href="/sign-in">Get Started with KeyFate</Button>
     </div>
   </footer>
 </article>
