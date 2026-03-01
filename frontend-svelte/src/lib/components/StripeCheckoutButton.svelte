@@ -60,7 +60,7 @@
   }
 </script>
 
-<Button onclick={handleCheckout} disabled={disabled || loading} class="w-full">
+<Button onclick={handleCheckout} disabled={disabled || loading} class="w-full uppercase tracking-wide">
   {#if loading}
     Loading...
   {:else}

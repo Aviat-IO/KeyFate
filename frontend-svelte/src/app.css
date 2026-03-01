@@ -14,6 +14,12 @@
 	::file-selector-button {
 		border-color: var(--color-gray-200, currentcolor);
 	}
+
+	/* Tailwind CSS v4 does not set cursor: pointer on buttons by default */
+	button,
+	[role='button'] {
+		cursor: pointer;
+	}
 }
 
 @layer base {

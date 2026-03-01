@@ -110,12 +110,12 @@
 
 <div class="space-y-6">
   <div class="text-center">
-    <h1 class="mb-4 text-3xl font-bold">Secret Recovery</h1>
+    <h1 class="font-space mb-4 text-3xl font-bold">Secret Recovery</h1>
   </div>
 
-  <div class="space-y-6 rounded-lg border p-6 shadow-md">
+  <div class="space-y-6">
     <div>
-      <h2 class="mb-2 text-xl font-semibold">Enter Your Shares</h2>
+      <h2 class="font-space mb-2 text-xl font-semibold">Enter Your Shares</h2>
       <p class="text-muted-foreground text-sm">
         Enter your {companyName} shares below. You need a minimum number of correct shares (as per the
         threshold set during creation) to recover the original secret (shares are typically hexadecimal
@@ -152,7 +152,7 @@
         variant="outline"
         onclick={addShareInput}
         disabled={isLoading}
-        class="w-full sm:w-auto"
+        class="w-full sm:w-auto uppercase tracking-wide"
       >
         <PlusCircle class="mr-2 h-4 w-4" /> Add Another Share
       </Button>
@@ -162,7 +162,7 @@
       type="button"
       onclick={handleCombineShares}
       disabled={isLoading || shares.filter((s) => s.trim() !== '').length < 2}
-      class="w-full text-lg"
+      class="w-full text-lg uppercase tracking-wide"
       size="lg"
     >
       {isLoading ? 'Recovering...' : 'Recover Secret'}
@@ -207,7 +207,7 @@
     {/if}
   </div>
 
-  <div class="border-muted bg-muted/30 rounded-lg border p-4">
+  <div class="bg-muted/30 rounded-lg p-4">
     <div class="flex items-start space-x-3">
       <Info class="text-muted-foreground mt-0.5 h-4 w-4" />
       <div class="space-y-2 text-sm">

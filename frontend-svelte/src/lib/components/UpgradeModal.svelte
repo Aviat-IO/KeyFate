@@ -22,14 +22,14 @@
 <Dialog.Root bind:open onOpenChange={onOpenChange}>
   <Dialog.Content class="sm:max-w-[600px]">
     <Dialog.Header>
-      <Dialog.Title class="text-2xl">Upgrade to Pro</Dialog.Title>
+      <Dialog.Title class="font-space text-2xl">Upgrade to Pro</Dialog.Title>
       <Dialog.Description>Unlock {feature} and get access to premium features</Dialog.Description>
     </Dialog.Header>
 
     <div class="grid gap-6 py-4">
       {#if currentLimit && proLimit}
         <div class="bg-muted/50 rounded-lg border p-4">
-          <div class="text-muted-foreground mb-2 text-sm">Your Limit</div>
+          <div class="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-2">Your Limit</div>
           <div class="flex items-center justify-between">
             <div>
               <div class="font-semibold">Free Tier</div>
@@ -98,8 +98,8 @@
     </div>
 
     <Dialog.Footer>
-      <Button variant="outline" onclick={() => onOpenChange(false)}>Maybe Later</Button>
-      <Button href="/pricing">Upgrade to Pro</Button>
+      <Button variant="outline" onclick={() => onOpenChange(false)} class="uppercase tracking-wide">Maybe Later</Button>
+      <Button href="/pricing" class="uppercase tracking-wide">Upgrade to Pro</Button>
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>

@@ -176,7 +176,7 @@
 <Dialog.Root bind:open={isOpen}>
   <Dialog.Trigger>
     {#snippet child({ props })}
-      <Button variant="outline" class={className} {...props}>
+      <Button variant="outline" class="{className} uppercase tracking-wide" {...props}>
         <Download class="mr-2 h-4 w-4" />
         Export Recovery Kit
       </Button>
@@ -184,7 +184,7 @@
   </Dialog.Trigger>
   <Dialog.Content class="sm:max-w-md">
     <Dialog.Header>
-      <Dialog.Title class="flex items-center gap-2">
+      <Dialog.Title class="font-space flex items-center gap-2">
         <ShieldCheck class="text-primary h-5 w-5" />
         Export Recovery Kit
       </Dialog.Title>
@@ -194,8 +194,8 @@
     </Dialog.Header>
 
     <div class="space-y-4 py-4">
-      <div class="bg-muted/50 rounded-lg border p-4">
-        <h4 class="mb-2 font-medium">This kit includes:</h4>
+      <div class="bg-muted/50 rounded-lg p-4">
+        <h4 class="font-space mb-2 font-medium">This kit includes:</h4>
         <ul class="text-muted-foreground space-y-1 text-sm">
           <li>&bull; Standalone recovery tool (works offline)</li>
           <li>&bull; Server share (decrypted)</li>
@@ -206,12 +206,12 @@
         </ul>
       </div>
 
-      <div class="rounded-lg border border-amber-500/50 bg-amber-500/10 p-4">
+      <div class="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
         <div class="flex gap-2">
-          <AlertCircle class="h-5 w-5 shrink-0 text-amber-500" />
+          <AlertCircle class="h-5 w-5 shrink-0 text-destructive" />
           <div>
-            <h4 class="font-medium text-amber-700 dark:text-amber-400">Security Notice</h4>
-            <p class="text-sm text-amber-600 dark:text-amber-300">
+            <h4 class="font-medium text-foreground">Security Notice</h4>
+            <p class="text-sm text-muted-foreground">
               Store this file securely. Anyone with this kit and enough shares can reconstruct your
               secret.
             </p>
@@ -226,8 +226,8 @@
       {/if}
 
       {#if success}
-        <div class="rounded-lg border border-green-500/50 bg-green-500/10 p-4">
-          <p class="text-sm text-green-700 dark:text-green-400">
+        <div class="rounded-lg border border-primary/50 bg-primary/10 p-4">
+          <p class="text-sm text-primary">
             Recovery kit downloaded successfully!
           </p>
         </div>
@@ -235,10 +235,10 @@
     </div>
 
     <Dialog.Footer>
-      <Button variant="ghost" onclick={() => (isOpen = false)} disabled={isExporting}>
+      <Button variant="ghost" onclick={() => (isOpen = false)} disabled={isExporting} class="uppercase tracking-wide">
         Cancel
       </Button>
-      <Button onclick={handleExport} disabled={isExporting}>
+      <Button onclick={handleExport} disabled={isExporting} class="uppercase tracking-wide">
         {#if isExporting}
           <Loader2 class="mr-2 h-4 w-4 animate-spin" />
           Exporting...

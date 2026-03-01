@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
-	import * as Card from '$lib/components/ui/card';
 	import { Download, Clock, CircleCheck, CircleX, LoaderCircle } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 
@@ -78,105 +77,105 @@
 	}
 </script>
 
-<Card.Root>
-	<Card.Header>
-		<Card.Title>Export Your Data</Card.Title>
-		<Card.Description>
+<div class="space-y-6">
+	<div>
+		<h3 class="font-space text-lg font-bold tracking-tight">Export Your Data</h3>
+		<p class="text-sm text-muted-foreground mt-1">
 			Download a complete copy of your personal data in JSON format. This includes your secrets,
 			check-in history, audit logs, and subscription information.
-		</Card.Description>
-	</Card.Header>
-	<Card.Content class="space-y-4">
-		<div class="flex flex-col gap-4">
-			<div class="flex items-start gap-4">
-				<div class="flex-1">
-					<p class="text-muted-foreground text-sm">
-						Exports are available for 24 hours and can be downloaded up to 3 times. You can
-						request one export every 24 hours.
-					</p>
-				</div>
-				<Button onclick={handleRequestExport} disabled={isRequesting} class="shrink-0">
-					{#if isRequesting}
-						<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
-						Requesting...
-					{:else}
-						<Download class="mr-2 h-4 w-4" />
-						Request Export
-					{/if}
-				</Button>
-			</div>
+		</p>
+	</div>
 
-			{#if recentExports.length > 0}
-				<div class="mt-4">
-					<h4 class="mb-3 text-sm font-medium">Recent Exports</h4>
-					<div class="space-y-2">
-						{#each recentExports as exportJob}
-							<div class="flex items-center justify-between rounded-lg border p-3">
-								<div class="flex flex-col gap-1">
-									<div class="flex items-center gap-2">
-										{#if exportJob.status === 'pending'}
-											<Badge variant="secondary" class="gap-1">
-												<Clock class="h-3 w-3" />
-												Pending
-											</Badge>
-										{:else if exportJob.status === 'processing'}
-											<Badge variant="secondary" class="gap-1">
-												<LoaderCircle class="h-3 w-3 animate-spin" />
-												Processing
-											</Badge>
-										{:else if exportJob.status === 'completed'}
-											<Badge variant="default" class="gap-1">
-												<CircleCheck class="h-3 w-3" />
-												Ready
-											</Badge>
-										{:else if exportJob.status === 'failed'}
-											<Badge variant="destructive" class="gap-1">
-												<CircleX class="h-3 w-3" />
-												Failed
-											</Badge>
-										{:else}
-											<Badge variant="outline">{exportJob.status}</Badge>
-										{/if}
-										<span class="text-muted-foreground text-xs">
-											Requested {formatDate(exportJob.createdAt)}
-										</span>
-									</div>
-									{#if exportJob.fileSize}
-										<span class="text-muted-foreground text-xs">
-											Size: {formatFileSize(exportJob.fileSize)} • Downloads: {exportJob.downloadCount}/3
-										</span>
+	<div class="space-y-6">
+		<div class="flex items-start gap-4">
+			<div class="flex-1">
+				<p class="text-sm text-muted-foreground">
+					Exports are available for 24 hours and can be downloaded up to 3 times. You can
+					request one export every 24 hours.
+				</p>
+			</div>
+			<Button onclick={handleRequestExport} disabled={isRequesting} class="shrink-0 uppercase tracking-wide font-semibold">
+				{#if isRequesting}
+					<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
+					Requesting...
+				{:else}
+					<Download class="mr-2 h-4 w-4" />
+					Request Export
+				{/if}
+			</Button>
+		</div>
+
+		{#if recentExports.length > 0}
+			<div>
+				<h4 class="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-3">Recent Exports</h4>
+				<div class="space-y-3">
+					{#each recentExports as exportJob}
+						<div class="flex items-center justify-between border-b border-border pb-3 last:border-0">
+							<div class="flex flex-col gap-1">
+								<div class="flex items-center gap-2">
+									{#if exportJob.status === 'pending'}
+										<Badge variant="secondary" class="gap-1">
+											<Clock class="h-3 w-3" />
+											Pending
+										</Badge>
+									{:else if exportJob.status === 'processing'}
+										<Badge variant="secondary" class="gap-1">
+											<LoaderCircle class="h-3 w-3 animate-spin" />
+											Processing
+										</Badge>
+									{:else if exportJob.status === 'completed'}
+										<Badge variant="default" class="gap-1">
+											<CircleCheck class="h-3 w-3" />
+											Ready
+										</Badge>
+									{:else if exportJob.status === 'failed'}
+										<Badge variant="destructive" class="gap-1">
+											<CircleX class="h-3 w-3" />
+											Failed
+										</Badge>
+									{:else}
+										<Badge variant="outline">{exportJob.status}</Badge>
 									{/if}
-									{#if exportJob.expiresAt}
-										<span
-											class="text-xs {isExpired(exportJob.expiresAt)
-												? 'text-destructive'
-												: 'text-muted-foreground'}"
-										>
-											{isExpired(exportJob.expiresAt)
-												? 'Expired'
-												: `Expires ${formatDate(exportJob.expiresAt)}`}
-										</span>
-									{/if}
+									<span class="text-muted-foreground text-xs">
+										Requested {formatDate(exportJob.createdAt)}
+									</span>
 								</div>
-								{#if exportJob.status === 'completed' && exportJob.fileUrl && !isExpired(exportJob.expiresAt) && exportJob.downloadCount < 3}
-									<Button
-										size="sm"
-										variant="outline"
-										onclick={() => {
-											if (exportJob.fileUrl) {
-												window.open(exportJob.fileUrl, '_blank');
-											}
-										}}
+								{#if exportJob.fileSize}
+									<span class="text-muted-foreground text-xs">
+										Size: {formatFileSize(exportJob.fileSize)} • Downloads: {exportJob.downloadCount}/3
+									</span>
+								{/if}
+								{#if exportJob.expiresAt}
+									<span
+										class="text-xs {isExpired(exportJob.expiresAt)
+											? 'text-destructive'
+											: 'text-muted-foreground'}"
 									>
-										<Download class="mr-2 h-3 w-3" />
-										Download
-									</Button>
+										{isExpired(exportJob.expiresAt)
+											? 'Expired'
+											: `Expires ${formatDate(exportJob.expiresAt)}`}
+									</span>
 								{/if}
 							</div>
-						{/each}
-					</div>
+							{#if exportJob.status === 'completed' && exportJob.fileUrl && !isExpired(exportJob.expiresAt) && exportJob.downloadCount < 3}
+								<Button
+									size="sm"
+									variant="outline"
+									onclick={() => {
+										if (exportJob.fileUrl) {
+											window.open(exportJob.fileUrl, '_blank');
+										}
+									}}
+									class="uppercase tracking-wide font-semibold"
+								>
+									<Download class="mr-2 h-3 w-3" />
+									Download
+								</Button>
+							{/if}
+						</div>
+					{/each}
 				</div>
-			{/if}
-		</div>
-	</Card.Content>
-</Card.Root>
+			</div>
+		{/if}
+	</div>
+</div>

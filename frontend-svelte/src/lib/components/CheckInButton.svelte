@@ -41,7 +41,7 @@
   }
 </script>
 
-<Button onclick={handleCheckIn} disabled={loading} {variant} size="sm">
+<Button onclick={handleCheckIn} disabled={loading} {variant} size="sm" class="uppercase tracking-wide">
   {#if loading}
     <Loader2 class="h-4 w-4 animate-spin" />
     Checking in...

@@ -223,34 +223,32 @@
   <title>Sign In - KeyFate</title>
 </svelte:head>
 
-<div class="bg-background -mx-4 flex min-h-screen items-center justify-center py-8">
-  <div
-    class="bg-card border-border my-auto w-full max-w-lg space-y-6 rounded-xl border p-6 shadow-lg sm:space-y-8 sm:p-8"
-  >
+<div class="flex min-h-[80vh] items-center justify-center">
+  <div class="w-full max-w-sm space-y-8">
     <div>
-      <h2 class="text-foreground mt-6 text-center text-3xl font-extrabold">Sign in to KeyFate</h2>
-      <p class="text-muted-foreground mt-2 text-center text-sm">Secure your digital legacy</p>
+      <h2 class="font-space text-3xl font-light tracking-tight text-center">Sign In</h2>
+      <p class="text-xs text-muted-foreground text-center mt-3">Secure your digital legacy</p>
     </div>
 
     {#if getErrorMessage(urlError, errorMessage)}
-      <div class="border-destructive bg-destructive/10 text-destructive rounded-lg border px-4 py-3 text-sm">
+      <div class="border-destructive/30 text-destructive rounded-lg border px-4 py-3 text-xs">
         {getErrorMessage(urlError, errorMessage)}
       </div>
     {/if}
 
     {#if successMessage}
       <div
-        class="border-accent bg-accent/10 text-accent-foreground whitespace-pre-line rounded-lg border px-4 py-3 text-center text-sm"
+        class="border-accent/30 text-accent-foreground whitespace-pre-line rounded-lg border px-4 py-3 text-center text-xs"
       >
         {successMessage}
       </div>
     {/if}
 
-    <div class="mt-8 space-y-6">
+    <div class="space-y-6">
       {#if authStep === 'email'}
         <form onsubmit={handleRequestOTP} class="space-y-4">
           <div>
-            <label for="email" class="text-foreground block text-sm font-medium">Email address</label>
+            <label for="email" class="text-xs font-medium uppercase tracking-wider text-muted-foreground block">Email address</label>
             <input
               bind:this={emailInputRef}
               id="email"
@@ -259,7 +257,7 @@
               autocomplete="email"
               required
               bind:value={email}
-              class="border-input text-foreground placeholder-muted-foreground focus:border-primary focus:ring-primary relative mt-1 block w-full appearance-none rounded-lg border px-3 py-2 focus:z-10 focus:outline-none sm:text-sm"
+              class="border-border text-foreground placeholder-muted-foreground focus:border-primary focus:ring-primary relative mt-2 block w-full appearance-none rounded-lg border px-3 py-2 focus:z-10 focus:outline-none sm:text-sm"
               placeholder="you@example.com"
               disabled={isLoading}
             />
@@ -270,12 +268,12 @@
           <button
             type="submit"
             disabled={isLoading}
-            class="bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-ring group relative flex w-full justify-center rounded-lg border border-transparent px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            class="bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-ring group relative flex w-full justify-center rounded-lg border border-transparent px-4 py-2 text-sm uppercase tracking-wide font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoading ? 'Sending code...' : 'Continue with Email'}
           </button>
 
-          <p class="text-muted-foreground text-center text-xs">
+          <p class="text-xs text-muted-foreground text-center">
             By continuing, you accept our
             <a href="/terms-of-service" target="_blank" class="text-primary hover:underline"
               >Terms of Service</a
@@ -289,7 +287,7 @@
       {:else}
         <div class="space-y-4">
           <div>
-            <label for="otp" class="text-foreground mb-2 block text-sm font-medium"
+            <label for="otp" class="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2 block"
               >Enter 8-digit code</label
             >
             <input
@@ -301,27 +299,27 @@
               value={otpCode}
               oninput={handleOtpInput}
               disabled={isLoading}
-              class="border-input text-foreground focus:border-primary focus:ring-primary mt-1 block w-full rounded-lg border px-3 py-2 text-center text-2xl tracking-[0.5em] focus:outline-none sm:text-3xl"
+              class="border-border text-foreground focus:border-primary focus:ring-primary mt-2 block w-full rounded-lg border px-3 py-2 text-center text-2xl tracking-[0.5em] focus:outline-none sm:text-3xl"
               placeholder="00000000"
             />
           </div>
 
           <div class="text-center">
             {#if resendCountdown > 0}
-              <p class="text-muted-foreground text-sm">Resend code in {resendCountdown}s</p>
+              <p class="text-xs text-muted-foreground">Resend code in {resendCountdown}s</p>
             {:else}
               <button
                 onclick={handleResendOTP}
                 disabled={isLoading}
-                class="text-primary hover:text-primary text-sm font-medium disabled:opacity-50"
+                class="text-primary hover:text-primary/80 text-xs font-medium uppercase tracking-wider disabled:opacity-50"
               >
                 Resend code
               </button>
             {/if}
           </div>
 
-          <div class="border-muted bg-muted text-muted-foreground rounded-lg border px-4 py-3 text-sm">
-            <p class="font-medium">Didn't receive the code?</p>
+          <div class="border-border text-muted-foreground rounded-lg border px-4 py-3 text-xs">
+            <p class="font-medium uppercase tracking-wider text-xs">Didn't receive the code?</p>
             <ul class="mt-1 list-inside list-disc space-y-1 text-xs">
               <li>Check your spam folder</li>
               <li>Codes expire after 5 minutes</li>
@@ -333,10 +331,10 @@
 
       <div class="relative">
         <div class="absolute inset-0 flex items-center">
-          <div class="border-input w-full border-t"></div>
+          <div class="border-border w-full border-t"></div>
         </div>
-        <div class="relative flex justify-center text-sm">
-          <span class="text-muted-foreground bg-card px-2">Or continue with</span>
+        <div class="relative flex justify-center text-xs">
+          <span class="text-muted-foreground bg-background px-2 uppercase tracking-wider">Or continue with</span>
         </div>
       </div>
 
@@ -344,7 +342,7 @@
       <button
         onclick={handleGoogleSignIn}
         disabled={isLoading}
-        class="border-input text-foreground hover:bg-secondary focus:ring-ring bg-card flex w-full items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        class="border-border text-foreground hover:bg-secondary focus:ring-ring flex w-full items-center justify-center rounded-lg border px-4 py-2 text-sm uppercase tracking-wide font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <svg class="mr-2 h-5 w-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path

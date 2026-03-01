@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
-	import * as Card from '$lib/components/ui/card';
 	import AuditLogsPage from '$lib/components/AuditLogsPage.svelte';
 
 	let { data } = $props();
@@ -10,10 +9,10 @@
 	<title>Audit Logs - KeyFate</title>
 </svelte:head>
 
-<div class="space-y-6">
+<div class="space-y-8">
 	<div>
-		<h2 class="text-2xl font-bold tracking-tight">Audit Logs</h2>
-		<p class="text-muted-foreground">
+		<h2 class="font-space text-xl font-bold tracking-tight">Audit Logs</h2>
+		<p class="text-sm text-muted-foreground mt-1">
 			{data.userTier === 'pro'
 				? 'Comprehensive audit trail of all activities in your account'
 				: 'Comprehensive audit trails are a Pro feature'}
@@ -21,32 +20,29 @@
 	</div>
 
 	{#if data.userTier !== 'pro'}
-		<Card.Root>
-			<Card.Header>
-				<Card.Title>Audit Logs</Card.Title>
-				<Card.Description>Comprehensive audit trails are a Pro feature</Card.Description>
-			</Card.Header>
-			<Card.Content>
-				<div class="space-y-4">
-					<p class="text-muted-foreground">
-						Upgrade to Pro to access comprehensive audit logs that track all activities in your
-						account, including:
-					</p>
-					<ul class="text-muted-foreground list-inside list-disc space-y-2">
-						<li>Secret creation, editing, and deletion</li>
-						<li>Check-in activity</li>
-						<li>Recipient management</li>
-						<li>Login events</li>
-						<li>Subscription changes</li>
-						<li>Settings updates</li>
-					</ul>
-					<div class="flex gap-4 pt-4">
-						<Button href="/pricing">Upgrade to Pro</Button>
-						<Button variant="outline" href="/dashboard">Back to Dashboard</Button>
-					</div>
-				</div>
-			</Card.Content>
-		</Card.Root>
+		<div class="space-y-6">
+			<div>
+				<h3 class="font-space text-lg font-bold tracking-tight">Audit Logs</h3>
+				<p class="text-sm text-muted-foreground mt-1">Comprehensive audit trails are a Pro feature</p>
+			</div>
+
+			<p class="text-sm text-muted-foreground">
+				Upgrade to Pro to access comprehensive audit logs that track all activities in your
+				account, including:
+			</p>
+			<ul class="text-sm text-muted-foreground list-inside list-disc space-y-2">
+				<li>Secret creation, editing, and deletion</li>
+				<li>Check-in activity</li>
+				<li>Recipient management</li>
+				<li>Login events</li>
+				<li>Subscription changes</li>
+				<li>Settings updates</li>
+			</ul>
+			<div class="flex gap-4 pt-2">
+				<Button href="/pricing" class="uppercase tracking-wide font-semibold">Upgrade to Pro</Button>
+				<Button variant="outline" href="/dashboard" class="uppercase tracking-wide font-semibold">Back to Dashboard</Button>
+			</div>
+		</div>
 	{:else}
 		<AuditLogsPage />
 	{/if}

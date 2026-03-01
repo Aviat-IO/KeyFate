@@ -14,16 +14,16 @@
   ];
 </script>
 
-<div class="mx-auto py-8 sm:px-4">
-  <div class="grid grid-cols-1 gap-6 md:grid-cols-[200px_1px_1fr]">
+<div class="mx-auto py-10 sm:px-4">
+  <div class="grid grid-cols-1 gap-8 md:grid-cols-[200px_1px_1fr]">
     <aside class="md:col-span-1">
       <nav class="flex flex-col space-y-1">
         {#each navItems as item}
           <a
             href={item.href}
-            class="rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground {pathname ===
+            class="px-3 py-2 text-xs font-medium uppercase tracking-wider transition-colors hover:text-foreground {pathname ===
             item.href
-              ? 'bg-accent text-accent-foreground'
+              ? 'text-foreground border-l-2 border-foreground'
               : 'text-muted-foreground'}"
           >
             {item.label}

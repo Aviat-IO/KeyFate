@@ -2,7 +2,6 @@
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { browser } from '$app/environment';
-  import * as Card from '$lib/components/ui/card';
   import { Button } from '$lib/components/ui/button';
   import { AlertTriangle, CheckCircle2, Loader2, XCircle } from 'lucide-svelte';
 
@@ -40,20 +39,22 @@
   }
 </script>
 
-<div class="container mx-auto flex min-h-screen items-center justify-center p-4">
-  <Card.Root class="w-full max-w-md">
-    <Card.Header>
-      <Card.Title class="flex items-center gap-2">
-        {#if state === 'loading'}
-          <Loader2 class="h-5 w-5 animate-spin" /> Confirming Deletion Request
-        {:else if state === 'success'}
-          <CheckCircle2 class="h-5 w-5 text-green-600" /> Deletion Confirmed
-        {:else}
-          <XCircle class="text-destructive h-5 w-5" /> Confirmation Failed
-        {/if}
-      </Card.Title>
-    </Card.Header>
-    <Card.Content class="space-y-4">
+<div class="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-6">
+  <div class="w-full max-w-md space-y-6">
+    <div class="flex items-center gap-2">
+      {#if state === 'loading'}
+        <Loader2 class="h-5 w-5 animate-spin" />
+        <h1 class="font-space text-3xl font-light tracking-tight">Confirming Deletion Request</h1>
+      {:else if state === 'success'}
+        <CheckCircle2 class="text-primary h-5 w-5" />
+        <h1 class="font-space text-3xl font-light tracking-tight">Deletion Confirmed</h1>
+      {:else}
+        <XCircle class="text-destructive h-5 w-5" />
+        <h1 class="font-space text-3xl font-light tracking-tight">Confirmation Failed</h1>
+      {/if}
+    </div>
+
+    <div class="space-y-4">
       {#if state === 'loading'}
         <div class="flex justify-center py-4"><Loader2 class="text-muted-foreground h-8 w-8 animate-spin" /></div>
       {:else if state === 'success'}
@@ -85,6 +86,6 @@
           <Button onclick={() => goto('/settings/privacy')}>Go to Settings</Button>
         </div>
       {/if}
-    </Card.Content>
-  </Card.Root>
+    </div>
+  </div>
 </div>

@@ -83,11 +83,11 @@
         bind:value
         placeholder="npub1..."
         disabled={saving}
-        class={valid ? 'border-green-500 pr-8' : value.length > 0 ? 'border-destructive' : ''}
+        class={valid ? 'border-primary pr-8' : value.length > 0 ? 'border-destructive' : ''}
       />
       {#if valid}
         <CheckCircle
-          class="absolute top-1/2 right-2 h-4 w-4 -translate-y-1/2 text-green-500"
+          class="absolute top-1/2 right-2 h-4 w-4 -translate-y-1/2 text-primary"
         />
       {/if}
     </div>

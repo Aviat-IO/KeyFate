@@ -114,18 +114,18 @@
   </Alert.Root>
 {/if}
 
-<form onsubmit={handleSubmit} class="space-y-6">
+<form onsubmit={handleSubmit} class="space-y-8">
   <div class="space-y-4">
     <div class="space-y-2">
-      <Label for="title">Secret Title</Label>
+      <Label for="title" class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Secret Title</Label>
       <Input id="title" bind:value={title} placeholder="Example: Important Documents Location" />
     </div>
   </div>
 
   <!-- Recipients -->
-  <div class="space-y-4 border-t pt-6">
+  <div class="space-y-4 pt-8">
     <div class="flex items-center justify-between">
-      <h2 class="text-muted-foreground text-sm font-medium">Recipients</h2>
+      <h2 class="font-space text-lg font-bold tracking-tight">Recipients</h2>
       <Button
         type="button"
         variant="outline"
@@ -140,9 +140,9 @@
     </div>
     <div class="space-y-3">
       {#each recipients as recipient, index}
-        <div class="bg-muted/30 space-y-3 rounded-md border p-3">
+        <div class="space-y-3 rounded-md border border-border/50 p-4">
           <div class="flex items-center justify-between">
-            <div class="text-muted-foreground text-xs font-medium">Recipient {index + 1}</div>
+            <div class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Recipient {index + 1}</div>
             {#if recipients.length > 1}
               <Button
                 type="button"
@@ -158,12 +158,12 @@
           </div>
 
           <div class="space-y-2">
-            <Label class="text-xs">Name</Label>
+            <Label class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Name</Label>
             <Input bind:value={recipient.name} placeholder="Recipient's name" class="h-9" />
           </div>
 
           <div class="space-y-2">
-            <Label class="text-xs">Email</Label>
+            <Label class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Email</Label>
             <Input
               type="email"
               bind:value={recipient.email}
@@ -173,7 +173,7 @@
           </div>
 
           <div class="space-y-2">
-            <Label class="text-xs">Phone (optional)</Label>
+            <Label class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Phone (optional)</Label>
             <Input type="tel" bind:value={recipient.phone} placeholder="+1234567890" class="h-9" />
             <p class="text-muted-foreground text-xs">Phone notifications are not yet supported</p>
           </div>
@@ -183,10 +183,10 @@
   </div>
 
   <!-- Check-in Settings -->
-  <div class="space-y-4 border-t pt-6">
-    <h2 class="text-muted-foreground text-sm font-medium">Check-in Settings</h2>
+  <div class="space-y-4 pt-8">
+    <h2 class="font-space text-lg font-bold tracking-tight">Check-in Settings</h2>
     <div class="space-y-2">
-      <Label for="checkInDays">Trigger Deadline</Label>
+      <Label for="checkInDays" class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Trigger Deadline</Label>
       {#if isPaid}
         <Input
           id="checkInDays"
@@ -228,7 +228,7 @@
       variant="destructive"
       onclick={() => (showDeleteModal = true)}
       disabled={loading || deleteLoading}
-      class="w-full sm:w-auto"
+      class="w-full sm:w-auto uppercase tracking-wide font-semibold"
     >
       Delete Secret
     </Button>
@@ -238,12 +238,12 @@
         variant="outline"
         onclick={() => history.back()}
         disabled={loading || deleteLoading}
-        class="w-full sm:w-auto"
+        class="w-full sm:w-auto uppercase tracking-wide font-semibold"
         data-testid="form-cancel-button"
       >
         Cancel
       </Button>
-      <Button type="submit" disabled={loading || deleteLoading} class="w-full sm:w-auto">
+      <Button type="submit" disabled={loading || deleteLoading} class="w-full sm:w-auto uppercase tracking-wide font-semibold">
         {loading ? 'Saving...' : 'Save Changes'}
       </Button>
     </div>

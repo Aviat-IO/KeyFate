@@ -13,9 +13,9 @@
 </script>
 
 <div class={className}>
-  <Card.Root>
+  <Card.Root class="border-0 shadow-none bg-transparent">
     <Card.Header>
-      <Card.Title class="flex items-center gap-2">
+      <Card.Title class="font-space flex items-center gap-2">
         <Shield class="h-5 w-5" />
         Recovery Guide
       </Card.Title>
@@ -26,7 +26,7 @@
     <Card.Content class="space-y-6">
       <!-- What the kit contains -->
       <div>
-        <h3 class="mb-2 text-sm font-semibold">What your recovery kit contains</h3>
+        <h3 class="font-space mb-2 text-sm font-semibold">What your recovery kit contains</h3>
         <ul class="text-muted-foreground space-y-1 text-sm">
           <li>&bull; <strong>Server share</strong> — the decrypted Shamir share held by KeyFate</li>
           <li>&bull; <strong>User-managed shares</strong> — shares stored in your browser (if available)</li>
@@ -40,7 +40,7 @@
 
       <!-- Recovery methods -->
       <div>
-        <h3 class="mb-3 text-sm font-semibold">Recovery Methods</h3>
+        <h3 class="font-space mb-3 text-sm font-semibold">Recovery Methods</h3>
         <p class="text-muted-foreground mb-4 text-sm">
           Your secret is protected by double encryption. First, collect enough Shamir shares
           (threshold). Then, recover the symmetric key K using one of three independent paths:
@@ -86,10 +86,10 @@
                     original secret.
                   </li>
                 </ol>
-                <div class="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3">
+                <div class="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
                   <div class="flex gap-2">
-                    <AlertCircle class="h-4 w-4 shrink-0 text-amber-500" />
-                    <p class="text-xs text-amber-600 dark:text-amber-300">
+                    <AlertCircle class="h-4 w-4 shrink-0 text-destructive" />
+                    <p class="text-xs text-muted-foreground">
                       This path requires no trust in any third party. The Bitcoin network
                       enforces the timelock. K is revealed on-chain only after the owner
                       fails to check in.
@@ -136,10 +136,10 @@
                     Use K to decrypt the share, then combine shares to reconstruct the secret.
                   </li>
                 </ol>
-                <div class="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3">
+                <div class="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
                   <div class="flex gap-2">
-                    <AlertCircle class="h-4 w-4 shrink-0 text-amber-500" />
-                    <p class="text-xs text-amber-600 dark:text-amber-300">
+                    <AlertCircle class="h-4 w-4 shrink-0 text-destructive" />
+                    <p class="text-xs text-muted-foreground">
                       This path relies on elliptic curve cryptography (secp256k1) which is
                       <strong>not quantum-safe</strong>. Use the passphrase or Bitcoin path
                       for long-term security.
@@ -188,10 +188,10 @@
                     Combine the decrypted Shamir shares to reconstruct the secret.
                   </li>
                 </ol>
-                <div class="rounded-lg border border-green-500/50 bg-green-500/10 p-3">
+                <div class="rounded-lg border border-primary/50 bg-primary/10 p-3">
                   <div class="flex gap-2">
-                    <Lock class="h-4 w-4 shrink-0 text-green-500" />
-                    <p class="text-xs text-green-600 dark:text-green-300">
+                    <Lock class="h-4 w-4 shrink-0 text-primary" />
+                    <p class="text-xs text-muted-foreground">
                       This path uses only symmetric cryptography (PBKDF2 + AES-256-GCM +
                       ChaCha20-Poly1305). It is fully quantum-safe and works completely
                       offline.
@@ -208,7 +208,7 @@
 
       <!-- If KeyFate is unreachable -->
       <div>
-        <h3 class="mb-2 text-sm font-semibold">If KeyFate is unreachable</h3>
+        <h3 class="font-space mb-2 text-sm font-semibold">If KeyFate is unreachable</h3>
         <div class="text-muted-foreground space-y-2 text-sm">
           <p>
             Your recovery kit is designed to work without KeyFate. Here's what to do:

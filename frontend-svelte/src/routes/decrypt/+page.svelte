@@ -38,8 +38,8 @@
     <NavBar {session} />
   </div>
 
-  <div class="mx-auto flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
-    <div class="w-full max-w-2xl">
+  <div class="mx-auto flex min-h-[calc(100vh-4rem)] items-center justify-center px-6 py-12">
+    <div class="w-full max-w-3xl">
       <SSSDecryptor {initialShares} />
     </div>
   </div>

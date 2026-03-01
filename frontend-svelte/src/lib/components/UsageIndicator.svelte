@@ -13,7 +13,7 @@
 </script>
 
 {#if loading}
-  <Card.Root>
+  <Card.Root class="border-0 shadow-none bg-transparent">
     <Card.Content class="p-6">
       <div class="animate-pulse space-y-4">
         <div class="bg-muted h-4 w-3/4 rounded"></div>
@@ -22,9 +22,9 @@
     </Card.Content>
   </Card.Root>
 {:else if user}
-  <Card.Root>
+  <Card.Root class="border-0 shadow-none bg-transparent">
     <Card.Header>
-      <Card.Title class="flex items-center justify-between">
+      <Card.Title class="font-space flex items-center justify-between">
         Usage
         <Badge variant={usagePercentage >= 100 ? 'destructive' : 'secondary'}>
           {secretCount}/{maxSecrets}

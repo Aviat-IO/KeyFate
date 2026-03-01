@@ -15,7 +15,7 @@
 <Dialog.Root bind:open {onOpenChange}>
 	<Dialog.Content>
 		<Dialog.Header>
-			<Dialog.Title>Set Up Contact Methods</Dialog.Title>
+			<Dialog.Title class="font-space">Set Up Contact Methods</Dialog.Title>
 			<Dialog.Description>
 				Please provide at least one way for us to contact you for check-ins. This information will
 				be saved for future use.
