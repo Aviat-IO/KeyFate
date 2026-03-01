@@ -22,7 +22,7 @@
 
   interface StatusBadge {
     label: string;
-    variant: 'default' | 'secondary' | 'destructive' | 'outline';
+    colorClass: string;
   }
 
   function getStatusBadge(
@@ -32,13 +32,13 @@
     shareDeleted: boolean
   ): StatusBadge {
     if (triggeredAt || status === 'triggered') {
-      return { label: 'Sent', variant: 'outline' };
+      return { label: 'Sent', colorClass: 'border-muted-foreground/50 text-muted-foreground' };
     }
     if (shareDeleted) {
-      return { label: 'Disabled', variant: 'outline' };
+      return { label: 'Disabled', colorClass: 'border-muted-foreground/50 text-muted-foreground' };
     }
     if (status === 'paused') {
-      return { label: 'Paused', variant: 'outline' };
+      return { label: 'Paused', colorClass: 'border-warning/50 bg-warning/10 text-warning' };
     }
 
     const now = new Date();
@@ -47,9 +47,9 @@
       (checkInDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
     );
 
-    if (daysUntilCheckIn <= 2) return { label: 'Urgent', variant: 'destructive' };
-    if (daysUntilCheckIn <= 5) return { label: 'Upcoming', variant: 'default' };
-    return { label: 'Active', variant: 'secondary' };
+    if (daysUntilCheckIn <= 2) return { label: 'Urgent', colorClass: 'border-destructive/50 bg-destructive/10 text-destructive' };
+    if (daysUntilCheckIn <= 5) return { label: 'Upcoming', colorClass: 'border-warning/50 bg-warning/10 text-warning' };
+    return { label: 'Active', colorClass: 'border-success/50 bg-success/10 text-success' };
   }
 
   let statusBadge = $derived(
@@ -139,7 +139,7 @@
     <h3 class="font-space text-xl font-semibold tracking-tight md:text-2xl">
       {secretState.title}
     </h3>
-    <Badge variant={statusBadge.variant} class="shrink-0 text-xs uppercase tracking-wider">
+    <Badge variant="outline" class="shrink-0 text-xs uppercase tracking-wider {statusBadge.colorClass}">
       {statusBadge.label}
     </Badge>
   </div>
