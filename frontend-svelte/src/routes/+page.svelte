@@ -24,6 +24,10 @@
   let scrollY = $state(0);
 </script>
 
+<svelte:head>
+  <title>KeyFate - Secure Your Digital Legacy</title>
+</svelte:head>
+
 <svelte:window bind:scrollY />
 
 <div class="bg-background min-h-screen">
@@ -305,56 +309,58 @@
     </div>
   </section>
 
-  <!-- CTA Section -->
-  <section class="bg-primary/5 border-t">
-    <div class="container mx-auto px-4 py-24">
-      <div class="mx-auto max-w-4xl text-center">
-        <h2 class="mb-6 text-4xl font-bold tracking-tight md:text-5xl">
-          Ready to Protect Your Digital Legacy?
-        </h2>
-        <p class="text-muted-foreground mb-8 text-xl leading-relaxed md:text-2xl">
-          Join thousands who trust KeyFate to safeguard their most important information. Start with
-          our free plan and upgrade as you grow.
-        </p>
+  <!-- CTA Section + Footer wrapper -->
+  <div class="bg-primary/5 border-t">
+    <section>
+      <div class="container mx-auto px-4 py-24">
+        <div class="mx-auto max-w-4xl text-center">
+          <h2 class="mb-6 text-4xl font-bold tracking-tight md:text-5xl">
+            Ready to Protect Your Digital Legacy?
+          </h2>
+          <p class="text-muted-foreground mb-8 text-xl leading-relaxed md:text-2xl">
+            Join thousands who trust KeyFate to safeguard their most important information. Start
+            with our free plan and upgrade as you grow.
+          </p>
 
-        <div class="mb-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <Button size="lg" class="px-8 py-6 text-lg" href="/auth/signin">
-            Get Started Free
-            <ArrowRight class="ml-2 h-5 w-5" />
-          </Button>
-          <Button variant="outline" size="lg" class="px-8 py-6 text-lg" href="/pricing">
-            View Pricing
-          </Button>
-        </div>
+          <div class="mb-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <Button size="lg" class="px-8 py-6 text-lg" href="/auth/signin">
+              Get Started Free
+              <ArrowRight class="ml-2 h-5 w-5" />
+            </Button>
+            <Button variant="outline" size="lg" class="px-8 py-6 text-lg" href="/pricing">
+              View Pricing
+            </Button>
+          </div>
 
-        <div
-          class="text-muted-foreground flex flex-wrap items-center justify-center gap-8 text-sm"
-        >
-          <div class="flex items-center gap-2">
-            <CheckCircle class="text-accent-foreground h-4 w-4" />
-            <span>Free to start</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <CheckCircle class="text-accent-foreground h-4 w-4" />
-            <span>No credit card required</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <CheckCircle class="text-accent-foreground h-4 w-4" />
-            <span>30-day money-back guarantee</span>
-          </div>
-        </div>
-
-        <div class="mt-8">
-          <a
-            href="/blog"
-            class="text-muted-foreground hover:text-primary text-sm underline-offset-4 hover:underline"
+          <div
+            class="text-muted-foreground flex flex-wrap items-center justify-center gap-8 text-sm"
           >
-            Learn more on our blog &rarr;
-          </a>
+            <div class="flex items-center gap-2">
+              <CheckCircle class="text-accent-foreground h-4 w-4" />
+              <span>Free to start</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <CheckCircle class="text-accent-foreground h-4 w-4" />
+              <span>No credit card required</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <CheckCircle class="text-accent-foreground h-4 w-4" />
+              <span>30-day money-back guarantee</span>
+            </div>
+          </div>
+
+          <div class="mt-8">
+            <a
+              href="/blog"
+              class="text-muted-foreground hover:text-primary text-sm underline-offset-4 hover:underline"
+            >
+              Learn more on our blog &rarr;
+            </a>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <Footer />
+    <Footer />
+  </div>
 </div>
