@@ -2,14 +2,33 @@
   import { page } from '$app/stores';
   import NavBar from '$lib/components/NavBar.svelte';
   import Footer from '$lib/components/Footer.svelte';
+  import SSSDecryptor from '$lib/components/SSSDecryptor.svelte';
 
   let session = $derived($page.data.session);
 
-  // TODO: Port SssDecryptor component — handled by feature components subagent
+  // Extract shares from URL query parameters (share1, share2, share3, etc.)
+  let initialShares = $derived.by(() => {
+    const shares: string[] = [];
+    let index = 1;
+    while (true) {
+      const value = $page.url.searchParams.get(`share${index}`);
+      if (value) {
+        shares.push(value);
+        index++;
+      } else {
+        break;
+      }
+    }
+    return shares;
+  });
 </script>
 
 <svelte:head>
   <title>Recover Secret - KeyFate</title>
+  <meta
+    name="description"
+    content="Reconstruct your secret using Shamir's Secret Sharing. Enter your shares to recover the original secret — all processing happens in your browser."
+  />
 </svelte:head>
 
 <div class="bg-background min-h-screen">
@@ -19,17 +38,9 @@
     <NavBar {session} />
   </div>
 
-  <div class="mx-auto flex min-h-[calc(100vh-4rem)] items-center justify-center px-0 py-12 sm:px-4">
+  <div class="mx-auto flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
     <div class="w-full max-w-2xl">
-      <div class="text-center">
-        <h1 class="mb-4 text-3xl font-bold">Recover Your Secret</h1>
-        <p class="text-muted-foreground mb-8">
-          Enter your secret shares below to reconstruct your original secret using Shamir's Secret
-          Sharing.
-        </p>
-        <!-- SssDecryptor component will be ported by feature components subagent -->
-        <p class="text-muted-foreground text-sm">Decryptor component loading...</p>
-      </div>
+      <SSSDecryptor {initialShares} />
     </div>
   </div>
 
