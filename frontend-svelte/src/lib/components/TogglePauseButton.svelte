@@ -41,7 +41,7 @@
   }
 </script>
 
-<Button variant="ghost" size="sm" onclick={handleTogglePause} disabled={isLoading} class="uppercase tracking-wide">
+<Button variant="ghost" size="sm" onclick={handleTogglePause} disabled={isLoading} class="">
   {#if isLoading}
     <Loader2 class="h-4 w-4 animate-spin" />
     {status === 'active' ? 'Pause' : 'Resume'}

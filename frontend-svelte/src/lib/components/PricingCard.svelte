@@ -45,7 +45,7 @@
       {#if isPopular}
         <Crown class="text-primary h-5 w-5" />
       {/if}
-      <h3 class="font-space text-xl font-bold uppercase tracking-wider">{title}</h3>
+      <h3 class="font-space text-xl font-bold">{title}</h3>
       {#if isPopular}
         <Badge variant="outline" class="text-xs uppercase tracking-wider">
           Most Popular
@@ -94,11 +94,11 @@
         </div>
       {/if}
     {:else if buttonHref}
-      <Button class="w-full uppercase tracking-wide font-semibold" variant={isPopular ? 'default' : 'outline'} href={buttonHref}>
+      <Button class="w-full font-semibold" variant={isPopular ? 'default' : 'outline'} href={buttonHref}>
         {buttonText}
       </Button>
     {:else}
-      <Button class="w-full uppercase tracking-wide font-semibold" variant={isPopular ? 'default' : 'outline'} disabled>
+      <Button class="w-full font-semibold" variant={isPopular ? 'default' : 'outline'} disabled>
         {buttonText}
       </Button>
     {/if}

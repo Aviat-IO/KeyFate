@@ -34,12 +34,12 @@
 
 {#if isPaidUser}
   <div class="grid grid-cols-1 gap-3">
-    <Button variant="default" class="w-full uppercase tracking-wide" onclick={handlePaymentClick}>
+    <Button variant="default" class="w-full" onclick={handlePaymentClick}>
       <CreditCard class="mr-2 h-4 w-4" />
       Card
     </Button>
 
-    <Button variant="outline" class="w-full uppercase tracking-wide" onclick={handlePaymentClick} disabled>
+    <Button variant="outline" class="w-full" onclick={handlePaymentClick} disabled>
       <Bitcoin class="mr-2 h-4 w-4" />
       Bitcoin (coming soon)
     </Button>
@@ -57,8 +57,8 @@
         </Dialog.Description>
       </Dialog.Header>
       <Dialog.Footer class="flex flex-col gap-2 sm:flex-col sm:gap-2">
-        <Button href="/settings/subscription" class="w-full uppercase tracking-wide">Manage Subscription</Button>
-        <Button variant="outline" onclick={() => (showDialog = false)} class="w-full uppercase tracking-wide">Close</Button>
+        <Button href="/settings/subscription" class="w-full">Manage Subscription</Button>
+        <Button variant="outline" onclick={() => (showDialog = false)} class="w-full">Close</Button>
       </Dialog.Footer>
     </Dialog.Content>
   </Dialog.Root>
@@ -69,7 +69,7 @@
       Card
     </StripeCheckoutButton>
 
-    <Button variant="outline" class="w-full uppercase tracking-wide" disabled>
+    <Button variant="outline" class="w-full" disabled>
       <Bitcoin class="mr-2 h-4 w-4" />
       Bitcoin (coming soon)
     </Button>

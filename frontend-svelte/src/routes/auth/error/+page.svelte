@@ -59,14 +59,14 @@
       <div class="space-y-3">
         <a
           href="/sign-in"
-          class="bg-primary text-primary-foreground hover:bg-primary/90 block w-full rounded-lg px-4 py-2 text-sm font-semibold uppercase tracking-wide shadow-sm"
+          class="bg-primary text-primary-foreground hover:bg-primary/90 block w-full rounded-lg px-4 py-2 text-sm font-semibold shadow-sm"
         >
           Try signing in again
         </a>
 
         <a
           href="/"
-          class="border-input text-foreground hover:bg-muted/50 bg-background block w-full rounded-lg border px-4 py-2 text-sm font-semibold uppercase tracking-wide shadow-sm"
+          class="border-input text-foreground hover:bg-muted/50 bg-background block w-full rounded-lg border px-4 py-2 text-sm font-semibold shadow-sm"
         >
           Return to home
         </a>

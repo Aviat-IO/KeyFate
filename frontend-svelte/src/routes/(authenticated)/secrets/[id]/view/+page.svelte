@@ -212,7 +212,7 @@
 						variant="default"
 						onclick={handleCheckIn}
 						disabled={checkInLoading}
-						class="uppercase tracking-wide text-sm font-semibold"
+						class="text-sm font-semibold"
 					>
 						{#if checkInLoading}
 							<Loader2 class="mr-2 h-4 w-4 animate-spin" />
@@ -229,7 +229,7 @@
 						variant="outline"
 						onclick={handleTogglePause}
 						disabled={pauseLoading}
-						class="uppercase tracking-wide text-sm font-semibold"
+						class="text-sm font-semibold"
 					>
 						{#if data.secret.status === 'paused'}
 							<Play class="mr-2 h-4 w-4" />
@@ -244,7 +244,7 @@
 						variant="outline"
 						size="default"
 						href={`/secrets/${data.secret.id}/edit`}
-						class="uppercase tracking-wide text-sm font-semibold"
+						class="text-sm font-semibold"
 					>
 						<Pencil class="mr-2 h-4 w-4" />
 						Edit
@@ -277,7 +277,7 @@
 					variant="ghost"
 					onclick={() => (showDeleteModal = true)}
 					disabled={deleteLoading}
-					class="text-destructive hover:text-destructive uppercase tracking-wide text-sm font-semibold"
+					class="text-destructive hover:text-destructive text-sm font-semibold"
 				>
 					<Trash2 class="mr-2 h-4 w-4" />
 					Delete
@@ -378,8 +378,8 @@
 				<Table.Root>
 					<Table.Header>
 						<Table.Row>
-							<Table.Head class="text-xs text-muted-foreground uppercase tracking-wider">Check-in Date</Table.Head>
-							<Table.Head class="text-xs text-muted-foreground uppercase tracking-wider">Next Check-in</Table.Head>
+							<Table.Head class="text-xs text-muted-foregroundr">Check-in Date</Table.Head>
+							<Table.Head class="text-xs text-muted-foregroundr">Next Check-in</Table.Head>
 						</Table.Row>
 					</Table.Header>
 					<Table.Body>

@@ -152,7 +152,7 @@
         variant="outline"
         onclick={addShareInput}
         disabled={isLoading}
-        class="w-full sm:w-auto uppercase tracking-wide"
+        class="w-full sm:w-auto"
       >
         <PlusCircle class="mr-2 h-4 w-4" /> Add Another Share
       </Button>
@@ -162,7 +162,7 @@
       type="button"
       onclick={handleCombineShares}
       disabled={isLoading || shares.filter((s) => s.trim() !== '').length < 2}
-      class="w-full text-lg uppercase tracking-wide"
+      class="w-full text-lg"
       size="lg"
     >
       {isLoading ? 'Recovering...' : 'Recover Secret'}

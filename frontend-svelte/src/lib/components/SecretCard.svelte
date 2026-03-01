@@ -189,12 +189,12 @@
           />
         {/if}
 
-        <Button variant="ghost" size="sm" href={`/secrets/${secretState.id}/view`} class="uppercase tracking-wide">
+        <Button variant="ghost" size="sm" href={`/secrets/${secretState.id}/view`} class="">
           View
         </Button>
 
         {#if !serverShareDeleted}
-          <Button variant="ghost" size="sm" href={`/secrets/${secretState.id}/edit`} class="uppercase tracking-wide">
+          <Button variant="ghost" size="sm" href={`/secrets/${secretState.id}/edit`} class="">
             <Pencil class="mr-1 h-4 w-4" />
             Edit
           </Button>
@@ -212,7 +212,7 @@
       </div>
     {:else}
       <div></div>
-      <Button variant="ghost" size="sm" href={`/secrets/${secretState.id}/view`} class="uppercase tracking-wide">
+      <Button variant="ghost" size="sm" href={`/secrets/${secretState.id}/view`} class="">
         View
       </Button>
     {/if}

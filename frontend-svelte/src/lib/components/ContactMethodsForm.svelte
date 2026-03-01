@@ -186,9 +186,9 @@
 
 		<div class="flex justify-end space-x-4">
 			{#if showCancel}
-				<Button type="button" variant="outline" onclick={onCancel} class="uppercase tracking-wide">Cancel</Button>
+				<Button type="button" variant="outline" onclick={onCancel} class="">Cancel</Button>
 			{/if}
-			<Button type="submit" disabled={isLoading || !!emailError} class="uppercase tracking-wide">
+			<Button type="submit" disabled={isLoading || !!emailError} class="">
 				{isLoading ? 'Saving...' : submitLabel}
 			</Button>
 		</div>

@@ -31,6 +31,6 @@
   }
 </script>
 
-<Button onclick={handlePortal} disabled={loading} variant="outline" class="uppercase tracking-wide">
+<Button onclick={handlePortal} disabled={loading} variant="outline" class="">
   {loading ? 'Loading...' : 'Manage Billing'}
 </Button>

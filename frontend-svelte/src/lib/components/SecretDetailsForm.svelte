@@ -375,6 +375,6 @@
   </div>
 
   <div class="flex justify-end space-x-4">
-    <Button variant="outline" onclick={() => goto('/dashboard')} class="uppercase tracking-wide font-semibold">Back to Dashboard</Button>
+    <Button variant="outline" onclick={() => goto('/dashboard')} class="font-semibold">Back to Dashboard</Button>
   </div>
 </div>

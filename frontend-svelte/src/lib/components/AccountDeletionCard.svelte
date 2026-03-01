@@ -177,7 +177,7 @@
 					size="sm"
 					onclick={handleCancelDeletion}
 					disabled={isCancelling}
-					class="mt-4 uppercase tracking-wide font-semibold"
+					class="mt-4 font-semibold"
 				>
 					{#if isCancelling}
 						<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
@@ -191,7 +191,7 @@
 		{:else}
 			<div class="space-y-6">
 				<div class="space-y-2">
-					<span class="text-xs text-muted-foreground uppercase tracking-wider font-medium">What happens when you delete your account</span>
+					<span class="text-xs text-muted-foregroundr font-medium">What happens when you delete your account</span>
 					<ul class="text-muted-foreground ml-4 list-disc space-y-1 text-sm mt-2">
 						<li>All your secrets and check-in data will be permanently deleted</li>
 						<li>Your audit logs and activity history will be removed</li>
@@ -203,7 +203,7 @@
 
 				<AlertDialog.Root bind:open={alertOpen}>
 					<AlertDialog.Trigger
-						class="bg-destructive text-destructive-foreground hover:bg-destructive/90 inline-flex w-full items-center justify-center rounded-md px-4 py-2 text-sm uppercase tracking-wide font-semibold sm:w-auto"
+						class="bg-destructive text-destructive-foreground hover:bg-destructive/90 inline-flex w-full items-center justify-center rounded-md px-4 py-2 text-sm font-semibold sm:w-auto"
 					>
 						<Trash2 class="mr-2 h-4 w-4" />
 						Delete My Account
@@ -229,7 +229,7 @@
 							<AlertDialog.Action
 								onclick={handleRequestDeletion}
 								disabled={isDeleting}
-								class="bg-destructive text-destructive-foreground hover:bg-destructive/90 uppercase tracking-wide font-semibold"
+								class="bg-destructive text-destructive-foreground hover:bg-destructive/90 font-semibold"
 							>
 								{#if isDeleting}
 									<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />

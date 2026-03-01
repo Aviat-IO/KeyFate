@@ -248,7 +248,7 @@
       {#if authStep === 'email'}
         <form onsubmit={handleRequestOTP} class="space-y-4">
           <div>
-            <label for="email" class="text-xs font-medium uppercase tracking-wider text-muted-foreground block">Email address</label>
+            <label for="email" class="text-xs font-medium text-muted-foreground block">Email address</label>
             <input
               bind:this={emailInputRef}
               id="email"
@@ -268,7 +268,7 @@
           <button
             type="submit"
             disabled={isLoading}
-            class="bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-ring group relative flex w-full justify-center rounded-lg border border-transparent px-4 py-2 text-sm uppercase tracking-wide font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            class="bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-ring group relative flex w-full justify-center rounded-lg border border-transparent px-4 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoading ? 'Sending code...' : 'Continue with Email'}
           </button>
@@ -287,7 +287,7 @@
       {:else}
         <div class="space-y-4">
           <div>
-            <label for="otp" class="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2 block"
+            <label for="otp" class="text-xs font-medium text-muted-foreground mb-2 block"
               >Enter 8-digit code</label
             >
             <input
@@ -311,7 +311,7 @@
               <button
                 onclick={handleResendOTP}
                 disabled={isLoading}
-                class="text-primary hover:text-primary/80 text-xs font-medium uppercase tracking-wider disabled:opacity-50"
+                class="text-primary hover:text-primary/80 text-xs font-medium disabled:opacity-50"
               >
                 Resend code
               </button>
@@ -319,7 +319,7 @@
           </div>
 
           <div class="border-border text-muted-foreground rounded-lg border px-4 py-3 text-xs">
-            <p class="font-medium uppercase tracking-wider text-xs">Didn't receive the code?</p>
+            <p class="font-medium text-xs">Didn't receive the code?</p>
             <ul class="mt-1 list-inside list-disc space-y-1 text-xs">
               <li>Check your spam folder</li>
               <li>Codes expire after 5 minutes</li>
@@ -334,7 +334,7 @@
           <div class="border-border w-full border-t"></div>
         </div>
         <div class="relative flex justify-center text-xs">
-          <span class="text-muted-foreground bg-background px-2 uppercase tracking-wider">Or continue with</span>
+          <span class="text-muted-foreground bg-background px-2r">Or continue with</span>
         </div>
       </div>
 
@@ -342,7 +342,7 @@
       <button
         onclick={handleGoogleSignIn}
         disabled={isLoading}
-        class="border-border text-foreground hover:bg-secondary focus:ring-ring flex w-full items-center justify-center rounded-lg border px-4 py-2 text-sm uppercase tracking-wide font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        class="border-border text-foreground hover:bg-secondary focus:ring-ring flex w-full items-center justify-center rounded-lg border px-4 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <svg class="mr-2 h-5 w-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path

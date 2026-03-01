@@ -80,7 +80,7 @@
   }
 </script>
 
-<Button onclick={handleCheckout} disabled={disabled || loading} class="w-full uppercase tracking-wide" variant="default">
+<Button onclick={handleCheckout} disabled={disabled || loading} class="w-full" variant="default">
   <Bitcoin class="mr-2 h-4 w-4" />
   {#if loading}
     Loading...

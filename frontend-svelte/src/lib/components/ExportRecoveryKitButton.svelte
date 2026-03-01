@@ -176,7 +176,7 @@
 <Dialog.Root bind:open={isOpen}>
   <Dialog.Trigger>
     {#snippet child({ props })}
-      <Button variant="outline" class="{className} uppercase tracking-wide" {...props}>
+      <Button variant="outline" class="{className}" {...props}>
         <Download class="mr-2 h-4 w-4" />
         Export Recovery Kit
       </Button>
@@ -235,10 +235,10 @@
     </div>
 
     <Dialog.Footer>
-      <Button variant="ghost" onclick={() => (isOpen = false)} disabled={isExporting} class="uppercase tracking-wide">
+      <Button variant="ghost" onclick={() => (isOpen = false)} disabled={isExporting} class="">
         Cancel
       </Button>
-      <Button onclick={handleExport} disabled={isExporting} class="uppercase tracking-wide">
+      <Button onclick={handleExport} disabled={isExporting} class="">
         {#if isExporting}
           <Loader2 class="mr-2 h-4 w-4 animate-spin" />
           Exporting...
