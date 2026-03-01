@@ -18,14 +18,9 @@ vi.mock("$lib/db/get-database", () => ({
   getDatabaseStats: vi.fn(),
 }))
 
-vi.mock("$lib/logger", () => ({
-  logger: {
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
-  },
-}))
+// Note: $lib/logger is NOT mocked here to avoid polluting logger.test.ts
+// in Bun's shared module cache. The real logger runs but this test
+// doesn't assert on logger calls.
 
 vi.mock("$lib/email/email-service", () => ({
   getEmailServiceHealth: vi.fn(),
