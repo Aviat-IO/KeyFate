@@ -7,6 +7,8 @@ interface CronJob {
   endpoint: string
 }
 
+const runningJobs = new Set<string>()
+
 const CRON_JOBS: CronJob[] = [
   {
     name: "check-secrets",
@@ -72,6 +74,13 @@ function generateHMACHeaders(
 }
 
 async function invokeCronEndpoint(job: CronJob): Promise<void> {
+  if (runningJobs.has(job.name)) {
+    console.warn(
+      `[scheduler] ${job.name} is still running, skipping this invocation`,
+    )
+    return
+  }
+
   const cronSecret = process.env.CRON_SECRET
   if (!cronSecret) {
     console.error(`[scheduler] CRON_SECRET not set, skipping ${job.name}`)
@@ -81,6 +90,7 @@ async function invokeCronEndpoint(job: CronJob): Promise<void> {
   const port = process.env.PORT || 3000
   const url = `http://127.0.0.1:${port}${job.endpoint}`
 
+  runningJobs.add(job.name)
   try {
     const headers = generateHMACHeaders(job.endpoint, cronSecret)
 
@@ -109,6 +119,8 @@ async function invokeCronEndpoint(job: CronJob): Promise<void> {
       `[scheduler] ${job.name} error:`,
       error instanceof Error ? error.message : String(error),
     )
+  } finally {
+    runningJobs.delete(job.name)
   }
 }
 

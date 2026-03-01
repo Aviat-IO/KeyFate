@@ -5,7 +5,7 @@
   import { Badge } from '$lib/components/ui/badge';
   import * as Card from '$lib/components/ui/card';
   import * as Accordion from '$lib/components/ui/accordion';
-  import { Shield, Lock, Clock, Users, Download, Globe } from 'lucide-svelte';
+  import { Shield, Lock, Clock, Users, Download, Globe } from '@lucide/svelte';
 
   let session = $derived($page.data.session);
 

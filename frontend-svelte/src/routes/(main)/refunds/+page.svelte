@@ -1,6 +1,6 @@
 <script lang="ts">
   import { clientEnv } from '$lib/client-env';
-  import { AlertTriangle, CheckCircle, Clock, RefreshCw, Shield } from 'lucide-svelte';
+  import { AlertTriangle, CheckCircle, Clock, RefreshCw, Shield } from '@lucide/svelte';
 
   const supportEmail = clientEnv.SUPPORT_EMAIL;
 </script>
@@ -180,14 +180,14 @@
       </p>
       <div class="space-y-2">
         <div class="flex items-center space-x-2">
-          <span class="text-xs text-muted-foregroundr font-medium">Email</span>
+          <span class="text-xs text-muted-foreground font-medium">Email</span>
           <a
             href="mailto:{supportEmail}"
             class="text-primary hover:text-primary/90 text-sm hover:underline">{supportEmail}</a
           >
         </div>
         <div class="flex items-center space-x-2">
-          <span class="text-xs text-muted-foregroundr font-medium">Response Time</span>
+          <span class="text-xs text-muted-foreground font-medium">Response Time</span>
           <span class="text-sm">Within 24 hours</span>
         </div>
       </div>

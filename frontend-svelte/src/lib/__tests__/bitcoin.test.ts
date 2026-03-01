@@ -640,9 +640,9 @@ describe("Bitcoin CSV Timelock - Transaction", () => {
       expect(rawTx.inputs[0].sequence).toBe(144)
 
       // Should have witness data (3 items: sig, FALSE, witnessScript)
-      expect(rawTx.witnesses[0].length).toBe(3)
+      expect(rawTx.witnesses![0].length).toBe(3)
       // Second witness item should be empty (FALSE for ELSE branch)
-      expect(rawTx.witnesses[0][1].length).toBe(0)
+      expect(rawTx.witnesses![0][1].length).toBe(0)
     })
 
     it("throws when UTXO too small for fees", async () => {
@@ -763,10 +763,10 @@ describe("Bitcoin CSV Timelock - Refresh", () => {
       expect(rawTx.inputs[0].sequence).toBe(0xfffffffe)
 
       // Should have witness data (3 items: sig, TRUE, witnessScript)
-      expect(rawTx.witnesses[0].length).toBe(3)
+      expect(rawTx.witnesses![0].length).toBe(3)
       // Second witness item should be 0x01 (TRUE for IF branch)
-      expect(rawTx.witnesses[0][1].length).toBe(1)
-      expect(rawTx.witnesses[0][1][0]).toBe(0x01)
+      expect(rawTx.witnesses![0][1].length).toBe(1)
+      expect(rawTx.witnesses![0][1][0]).toBe(0x01)
     })
 
     it("reduces amount by fee", async () => {
@@ -1400,7 +1400,7 @@ describe("Bitcoin CSV Timelock - Integration", () => {
     // Input should have CSV sequence
     expect(rawPreSigned.inputs[0].sequence).toBe(4320)
     // Should have witness data
-    expect(rawPreSigned.witnesses[0].length).toBe(3)
+    expect(rawPreSigned.witnesses![0].length).toBe(3)
   })
 
   it("multiple sequential refreshes", async () => {

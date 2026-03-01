@@ -114,14 +114,14 @@
 	<div class="space-y-6">
 		{#if isProUser && subscription}
 			<div>
-				<span class="text-xs text-muted-foregroundr font-medium block">Status</span>
+				<span class="text-xs text-muted-foreground font-medium block">Status</span>
 				<p class="text-sm text-foreground mt-1 capitalize">
 					{'status' in subscription ? String(subscription.status) : 'Active'}
 				</p>
 			</div>
 			{#if currentPeriodEnd}
 				<div>
-					<span class="text-xs text-muted-foregroundr font-medium block">Current Period Ends</span>
+					<span class="text-xs text-muted-foreground font-medium block">Current Period Ends</span>
 					<p class="text-sm text-foreground mt-1">{formatDate(currentPeriodEnd)}</p>
 				</div>
 			{/if}
@@ -129,7 +129,7 @@
 
 		{#if !isProUser}
 			<div>
-				<span class="text-xs text-muted-foregroundr font-medium block">Limits</span>
+				<span class="text-xs text-muted-foreground font-medium block">Limits</span>
 				<ul class="mt-2 space-y-1 text-sm text-foreground">
 					<li>• 1 secret</li>
 					<li>• 1 recipient per secret</li>

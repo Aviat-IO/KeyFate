@@ -70,6 +70,21 @@ const middlewareHandle: Handle = async ({ event, resolve }) => {
   // Resolve the request and attach request ID to response
   const response = await resolve(event)
   response.headers.set("x-request-id", requestId)
+
+  // Security headers
+  response.headers.set("X-Frame-Options", "DENY")
+  response.headers.set("X-Content-Type-Options", "nosniff")
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin")
+  response.headers.set("X-XSS-Protection", "0")
+  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+
+  if (process.env.NODE_ENV === "production") {
+    response.headers.set(
+      "Strict-Transport-Security",
+      "max-age=31536000; includeSubDomains; preload"
+    )
+  }
+
   return response
 }
 
@@ -77,5 +92,15 @@ const middlewareHandle: Handle = async ({ event, resolve }) => {
 export const handle: Handle = sequence(authHandle, middlewareHandle)
 
 export const init: ServerInit = async () => {
+  // Global error handlers for production resilience
+  process.on("uncaughtException", (error) => {
+    console.error("[FATAL] Uncaught exception:", error)
+    // Don't exit — Railway will restart on crash anyway
+  })
+
+  process.on("unhandledRejection", (reason) => {
+    console.error("[FATAL] Unhandled rejection:", reason)
+  })
+
   startScheduler()
 }

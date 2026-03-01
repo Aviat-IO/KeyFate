@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
-  import { AlertCircle, CheckCircle2 } from 'lucide-svelte';
+  import { AlertCircle, CheckCircle2 } from '@lucide/svelte';
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';

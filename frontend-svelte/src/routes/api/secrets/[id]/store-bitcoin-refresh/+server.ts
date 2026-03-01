@@ -12,9 +12,15 @@ import type { RequestHandler } from "./$types"
 import { eq, and, desc } from "drizzle-orm"
 import { getDatabase } from "$lib/db/get-database"
 import { bitcoinUtxos, secrets } from "$lib/db/schema"
+import { requireCSRFProtection, createCSRFErrorResponse } from "$lib/csrf"
 
 export const POST: RequestHandler = async (event) => {
   try {
+    const csrfCheck = await requireCSRFProtection(event)
+    if (!csrfCheck.valid) {
+      return createCSRFErrorResponse()
+    }
+
     const session = await event.locals.auth()
     if (!session?.user?.id) {
       return json({ error: "Unauthorized" }, { status: 401 })

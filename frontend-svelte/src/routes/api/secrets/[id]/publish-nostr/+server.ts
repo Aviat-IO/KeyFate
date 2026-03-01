@@ -46,9 +46,18 @@ function getServerNostrSecretKey(): Uint8Array {
     return bytes
   }
 
-  // Generate an ephemeral key if no env var is set.
-  // In production, NOSTR_SERVER_SECRET_KEY should always be configured
-  // so the server identity is stable across restarts.
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "NOSTR_SERVER_SECRET_KEY must be set in production. " +
+        "Generate with: openssl rand -hex 32",
+    )
+  }
+
+  // Development only: generate ephemeral key with warning
+  console.warn(
+    "[publish-nostr] NOSTR_SERVER_SECRET_KEY not set — using ephemeral key. " +
+      "Shares will be irrecoverable after restart. Set NOSTR_SERVER_SECRET_KEY for persistence.",
+  )
   return generateSecretKey()
 }
 

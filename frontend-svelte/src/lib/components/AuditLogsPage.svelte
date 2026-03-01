@@ -161,11 +161,11 @@
     <Table.Root>
       <Table.Header>
         <Table.Row>
-          <Table.Head class="text-xs text-muted-foregroundr">Event</Table.Head>
-          <Table.Head class="text-xs text-muted-foregroundr">Category</Table.Head>
-          <Table.Head class="text-xs text-muted-foregroundr">Resource</Table.Head>
-          <Table.Head class="text-xs text-muted-foregroundr">Date</Table.Head>
-          <Table.Head class="text-xs text-muted-foregroundr">IP Address</Table.Head>
+          <Table.Head class="text-xs text-muted-foreground">Event</Table.Head>
+          <Table.Head class="text-xs text-muted-foreground">Category</Table.Head>
+          <Table.Head class="text-xs text-muted-foreground">Resource</Table.Head>
+          <Table.Head class="text-xs text-muted-foreground">Date</Table.Head>
+          <Table.Head class="text-xs text-muted-foreground">IP Address</Table.Head>
         </Table.Row>
       </Table.Header>
       <Table.Body>
@@ -213,7 +213,7 @@
 
   <!-- Pagination -->
   <div class="flex items-center justify-between">
-    <div class="text-xs text-muted-foregroundr">
+    <div class="text-xs text-muted-foreground">
       Page {currentPage} of {totalPages}
     </div>
     <div class="flex gap-2">

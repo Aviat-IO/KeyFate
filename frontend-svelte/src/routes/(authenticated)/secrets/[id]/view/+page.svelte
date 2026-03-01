@@ -534,8 +534,8 @@
 				<Table.Root>
 					<Table.Header>
 						<Table.Row>
-							<Table.Head class="text-xs text-muted-foregroundr">Check-in Date</Table.Head>
-							<Table.Head class="text-xs text-muted-foregroundr">Next Check-in</Table.Head>
+							<Table.Head class="text-xs text-muted-foreground">Check-in Date</Table.Head>
+							<Table.Head class="text-xs text-muted-foreground">Next Check-in</Table.Head>
 						</Table.Row>
 					</Table.Header>
 					<Table.Body>

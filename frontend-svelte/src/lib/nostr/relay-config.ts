@@ -19,7 +19,19 @@ export const DEFAULT_RELAYS: readonly string[] = [
   "wss://nos.lol",
   "wss://relay.snort.social",
   "wss://nostr.wine",
+  "wss://relay.primal.net",
+  "wss://nostr.mom",
+  "wss://relay.nostr.bg",
+  "wss://nostr-pub.wellorder.net",
+  "wss://nostr.oxtr.dev",
 ] as const
+
+/**
+ * Minimum number of relays that must accept a publish for it to be
+ * considered durable. If fewer relays accept, a warning is logged
+ * but the publish is not treated as a failure.
+ */
+export const MIN_PUBLISH_RELAYS = 3
 
 /** Timeout in ms for relay health checks. */
 const HEALTH_CHECK_TIMEOUT_MS = 5_000

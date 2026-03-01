@@ -8,6 +8,7 @@
 import { json } from "@sveltejs/kit"
 import type { RequestHandler } from "./$types"
 import { DeadLetterQueue } from "$lib/email/dead-letter-queue"
+import crypto from "crypto"
 
 /**
  * Authorization helper
@@ -15,7 +16,13 @@ import { DeadLetterQueue } from "$lib/email/dead-letter-queue"
 async function isAdmin(request: Request): Promise<boolean> {
   const authHeader = request.headers.get("authorization")
   const adminToken = process.env.ADMIN_TOKEN || "admin-secret"
-  return authHeader === `Bearer ${adminToken}`
+  const expected = `Bearer ${adminToken}`
+  return authHeader !== null &&
+    authHeader.length === expected.length &&
+    crypto.timingSafeEqual(
+      Buffer.from(authHeader),
+      Buffer.from(expected),
+    )
 }
 
 /**

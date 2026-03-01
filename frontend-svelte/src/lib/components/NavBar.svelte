@@ -3,7 +3,7 @@
   import { signOut } from '@auth/sveltekit/client';
   import { Button } from '$lib/components/ui/button';
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
-  import { Crown, LogOut, Menu, Settings, X } from 'lucide-svelte';
+  import { Crown, LogOut, Menu, Settings, X } from '@lucide/svelte';
 
   let { session = null }: { session?: any } = $props();
 

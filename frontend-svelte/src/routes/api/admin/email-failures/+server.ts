@@ -14,6 +14,7 @@ import {
   isIpWhitelisted,
 } from "$lib/auth/ip-whitelist"
 import { logger } from "$lib/logger"
+import crypto from "crypto"
 
 /**
  * Authorization helper - verify admin access
@@ -36,7 +37,13 @@ async function isAdmin(request: Request): Promise<boolean> {
   }
 
   const authHeader = request.headers.get("authorization")
-  const isAuthenticated = authHeader === `Bearer ${adminToken}`
+  const expected = `Bearer ${adminToken}`
+  const isAuthenticated = authHeader !== null &&
+    authHeader.length === expected.length &&
+    crypto.timingSafeEqual(
+      Buffer.from(authHeader),
+      Buffer.from(expected),
+    )
 
   if (!isAuthenticated) {
     logger.warn("Admin access denied - invalid token", { clientIp })

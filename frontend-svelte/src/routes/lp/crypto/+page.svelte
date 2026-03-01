@@ -7,7 +7,7 @@
   import {
     Shield, Lock, Clock, Key, CheckCircle, EyeOff, ArrowRight,
     AlertTriangle, XCircle, Coins, Wallet
-  } from 'lucide-svelte';
+  } from '@lucide/svelte';
 
   let scrollY = $state(0);
 </script>
