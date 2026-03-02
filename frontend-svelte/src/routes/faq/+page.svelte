@@ -1,13 +1,10 @@
 <script lang="ts">
-  import { page } from '$app/stores';
   import NavBar from '$lib/components/NavBar.svelte';
   import Footer from '$lib/components/Footer.svelte';
   import { Badge } from '$lib/components/ui/badge';
   import * as Card from '$lib/components/ui/card';
   import * as Accordion from '$lib/components/ui/accordion';
   import { Shield, Lock, Clock, Users, Download, Globe } from '@lucide/svelte';
-
-  let session = $derived($page.data.session);
 
   const faqs = [
     {
@@ -66,7 +63,7 @@
 
 <div class="bg-background min-h-screen">
   <nav class="fixed left-0 right-0 top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
-    <NavBar {session} />
+    <NavBar />
   </nav>
 
   <div class="h-16"></div>
