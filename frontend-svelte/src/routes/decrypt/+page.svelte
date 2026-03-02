@@ -4,8 +4,6 @@
   import Footer from '$lib/components/Footer.svelte';
   import SSSDecryptor from '$lib/components/SSSDecryptor.svelte';
 
-  let session = $derived($page.data.session);
-
   // Extract shares from URL query parameters (share1, share2, share3, etc.)
   let initialShares = $derived.by(() => {
     const shares: string[] = [];
@@ -35,7 +33,7 @@
   <div
     class="bg-background/90 supports-[backdrop-filter]:bg-background/50 sticky top-0 z-50 border-b backdrop-blur"
   >
-    <NavBar {session} />
+    <NavBar />
   </div>
 
   <div class="mx-auto flex min-h-[calc(100vh-4rem)] items-center justify-center px-6 py-12">

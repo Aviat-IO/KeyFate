@@ -6,9 +6,8 @@
   import { Crown, LogOut, Menu, Settings, X } from '@lucide/svelte';
   import { getCachedTier, setCachedTier } from '$lib/stores/subscription-cache';
 
-  let { session = null }: { session?: any } = $props();
-
   let pathname = $derived($page.url.pathname);
+  let session = $derived($page.data.session);
   let user = $derived(session?.user);
 
   let userTier = $state<'free' | 'pro'>('free');

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { page } from '$app/stores';
   import NavBar from '$lib/components/NavBar.svelte';
   import Footer from '$lib/components/Footer.svelte';
   import { Button } from '$lib/components/ui/button';
@@ -20,7 +19,6 @@
     Globe,
   } from '@lucide/svelte';
 
-  let session = $derived($page.data.session);
   let scrollY = $state(0);
 </script>
 
@@ -34,7 +32,7 @@
   <nav
     class="fixed left-0 right-0 top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60"
   >
-    <NavBar {session} />
+    <NavBar />
   </nav>
 
   <div class="h-16"></div>

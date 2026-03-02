@@ -1,12 +1,10 @@
 <script lang="ts">
-  import { page } from '$app/stores';
   import NavBar from '$lib/components/NavBar.svelte';
   import Footer from '$lib/components/Footer.svelte';
   import { Button } from '$lib/components/ui/button';
   import * as Alert from '$lib/components/ui/alert';
   import { Check, Copy, Download, Shield, Terminal } from '@lucide/svelte';
 
-  let session = $derived($page.data.session);
   let copiedStates = $state<Record<string, boolean>>({});
 
   async function handleCopy(id: string, code: string) {
@@ -20,7 +18,7 @@
 
 <div class="bg-background min-h-screen">
   <div class="bg-background/90 supports-[backdrop-filter]:bg-background/50 sticky top-0 z-50 border-b backdrop-blur">
-    <NavBar {session} />
+    <NavBar />
   </div>
 
   <div class="mx-auto max-w-3xl px-6 py-12">
