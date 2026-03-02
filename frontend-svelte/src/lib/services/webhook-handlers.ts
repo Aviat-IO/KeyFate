@@ -167,9 +167,14 @@ async function createOrUpdateSubscriptionFromCheckout(
 
 async function handleSubscriptionUpdate(event: WebhookEvent, userId: string) {
   const subscription: EventObject = event.data.object as EventObject
-  const tier = getTierFromStripePrice(
-    subscription.items.data[0].price.id,
-  )
+  const firstItem = subscription.items?.data?.[0]
+  const priceId = firstItem?.price?.id ?? firstItem?.pricing?.price_details?.price
+  const lookupKey = firstItem?.price?.lookup_key
+  const tier = getTierFromStripePrice(priceId, lookupKey)
+
+  // Clover API moved current_period_start/end from Subscription to SubscriptionItem
+  const periodStart = firstItem?.current_period_start ?? subscription.current_period_start
+  const periodEnd = firstItem?.current_period_end ?? subscription.current_period_end
 
   const subscriptionData: CreateSubscriptionData = {
     userId,
@@ -178,8 +183,8 @@ async function handleSubscriptionUpdate(event: WebhookEvent, userId: string) {
     providerSubscriptionId: subscription.id,
     tierName: tier,
     status: subscription.status as SubscriptionStatus,
-    currentPeriodStart: new Date(subscription.current_period_start * 1000),
-    currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+    currentPeriodStart: periodStart ? new Date(periodStart * 1000) : new Date(),
+    currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     cancelAtPeriodEnd: subscription.cancel_at_period_end,
   }
 
