@@ -22,7 +22,7 @@ const mockUpdateChain = {
 mockDb.select.mockReturnValue(mockSelectChain)
 mockDb.update.mockReturnValue(mockUpdateChain)
 
-vi.mock("$lib/db/drizzle", () => ({
+vi.mock("$lib/db/get-database", () => ({
   getDatabase: vi.fn().mockResolvedValue(mockDb),
 }))
 
