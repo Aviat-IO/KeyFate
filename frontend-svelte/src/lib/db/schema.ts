@@ -295,21 +295,27 @@ export const policyDocuments = pgTable("policy_documents", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 })
 
-export const privacyPolicyAcceptance = pgTable("privacy_policy_acceptance", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  policyVersion: text("policy_version").notNull(),
-  policyDocumentId: uuid("policy_document_id").references(
-    () => policyDocuments.id,
-  ), // Link to exact policy content
-  termsDocumentId: uuid("terms_document_id").references(
-    () => policyDocuments.id,
-  ), // Link to exact terms content
-  acceptedAt: timestamp("accepted_at").defaultNow().notNull(),
-  ipAddress: text("ip_address"),
-})
+export const privacyPolicyAcceptance = pgTable(
+  "privacy_policy_acceptance",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    policyVersion: text("policy_version").notNull(),
+    policyDocumentId: uuid("policy_document_id").references(
+      () => policyDocuments.id,
+    ), // Link to exact policy content
+    termsDocumentId: uuid("terms_document_id").references(
+      () => policyDocuments.id,
+    ), // Link to exact terms content
+    acceptedAt: timestamp("accepted_at").defaultNow().notNull(),
+    ipAddress: text("ip_address"),
+  },
+  (table) => ({
+    userIdIdx: index("idx_privacy_policy_acceptance_user_id").on(table.userId),
+  }),
+)
 
 // Application Tables
 export const secrets = pgTable(
@@ -467,7 +473,7 @@ export const reminderJobs = pgTable(
     sentAt: timestamp("sent_at"),
     failedAt: timestamp("failed_at"),
     error: text("error"),
-    retryCount: integer("retry_count").default(0),
+    retryCount: integer("retry_count").notNull().default(0),
     nextRetryAt: timestamp("next_retry_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -509,7 +515,7 @@ export const disclosureLog = pgTable(
     status: disclosureStatusEnum("status").notNull().default("pending"),
     sentAt: timestamp("sent_at"),
     error: text("error"),
-    retryCount: integer("retry_count").default(0),
+    retryCount: integer("retry_count").notNull().default(0),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
@@ -539,38 +545,55 @@ export const subscriptionTiers = pgTable("subscription_tiers", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
 
-export const userContactMethods = pgTable("user_contact_methods", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  email: text("email"),
-  phone: text("phone"),
-  preferredMethod: contactMethodEnum("preferred_method").default("email"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-})
+export const userContactMethods = pgTable(
+  "user_contact_methods",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    email: text("email"),
+    phone: text("phone"),
+    preferredMethod: contactMethodEnum("preferred_method").default("email"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdIdx: index("idx_user_contact_methods_user_id").on(table.userId),
+  }),
+)
 
-export const userSubscriptions = pgTable("user_subscriptions", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: text("user_id")
-    .notNull()
-    .unique()
-    .references(() => users.id, { onDelete: "cascade" }),
-  tierId: uuid("tier_id")
-    .notNull()
-    .references(() => subscriptionTiers.id),
-  provider: text("provider"),
-  providerCustomerId: text("provider_customer_id"),
-  providerSubscriptionId: text("provider_subscription_id"),
-  status: subscriptionStatusEnum("status").notNull().default("inactive"),
-  currentPeriodStart: timestamp("current_period_start"),
-  currentPeriodEnd: timestamp("current_period_end"),
-  cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
-  scheduledDowngradeAt: timestamp("scheduled_downgrade_at"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-})
+export const userSubscriptions = pgTable(
+  "user_subscriptions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .unique()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tierId: uuid("tier_id")
+      .notNull()
+      .references(() => subscriptionTiers.id),
+    provider: text("provider"),
+    providerCustomerId: text("provider_customer_id"),
+    providerSubscriptionId: text("provider_subscription_id"),
+    status: subscriptionStatusEnum("status").notNull().default("inactive"),
+    currentPeriodStart: timestamp("current_period_start"),
+    currentPeriodEnd: timestamp("current_period_end"),
+    cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
+    scheduledDowngradeAt: timestamp("scheduled_downgrade_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    providerCustomerIdIdx: index("idx_user_subscriptions_provider_customer_id").on(
+      table.providerCustomerId,
+    ),
+    providerSubscriptionIdIdx: index("idx_user_subscriptions_provider_subscription_id").on(
+      table.providerSubscriptionId,
+    ),
+  }),
+)
 
 export const webhookEvents = pgTable("webhook_events", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -581,7 +604,7 @@ export const webhookEvents = pgTable("webhook_events", {
   status: webhookStatusEnum("status").notNull().default("received"),
   processedAt: timestamp("processed_at"),
   errorMessage: text("error_message"),
-  retryCount: integer("retry_count").default(0),
+  retryCount: integer("retry_count").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
@@ -752,7 +775,7 @@ export const rateLimits = pgTable(
     key: text("key").primaryKey(),
     count: integer("count").notNull().default(0),
     expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
-    createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   },
   (table) => ({
     expiresIdx: index("idx_rate_limits_expires").on(table.expiresAt),

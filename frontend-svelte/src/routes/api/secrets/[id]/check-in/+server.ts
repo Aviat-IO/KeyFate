@@ -1,5 +1,6 @@
 import { json } from "@sveltejs/kit"
 import type { RequestHandler } from "./$types"
+import { requireCSRFProtection, createCSRFErrorResponse } from "$lib/csrf"
 import { ensureUserExists } from "$lib/auth/user-verification"
 import { getDatabase } from "$lib/db/drizzle"
 import { checkinHistory, secrets } from "$lib/db/schema"
@@ -12,6 +13,11 @@ import { scheduleRemindersForSecret } from "$lib/services/reminder-scheduler"
 export const POST: RequestHandler = async (event) => {
   try {
     const id = event.params.id
+
+    const csrfCheck = await requireCSRFProtection(event)
+    if (!csrfCheck.valid) {
+      return createCSRFErrorResponse()
+    }
 
     const session = await event.locals.auth()
     if (!session?.user?.id) {

@@ -6,7 +6,6 @@
  */
 
 import { hex } from "@scure/base"
-import { getPublicKey } from "nostr-tools/pure"
 import { doubleEncryptShare } from "$lib/crypto/double-encrypt"
 import { getConversationKey, encrypt, decrypt as nip44Decrypt } from "$lib/nostr/encryption"
 import { wrapShareForRecipient, type SharePayload } from "$lib/nostr/gift-wrap"

@@ -1,4 +1,4 @@
-import { timingSafeEqual } from "crypto"
+import { timingSafeEqual, createHmac } from "crypto"
 
 
 export function sanitizeError(error: unknown, secretId?: string): string {
@@ -87,8 +87,6 @@ function verifyHMACSignature(
     return false
   }
 
-  const crypto = require("crypto")
-
   // Validate signature is valid hex (SHA256 = 64 hex chars)
   if (!/^[a-f0-9]{64}$/i.test(signature)) {
     return false
@@ -101,8 +99,7 @@ function verifyHMACSignature(
   const fullUrl = `${protocol}://${host}${pathname}`
 
   const message = `${timestampMs}.${fullUrl}`
-  const expectedSignature = crypto
-    .createHmac("sha256", cronSecret)
+  const expectedSignature = createHmac("sha256", cronSecret)
     .update(message)
     .digest("hex")
 

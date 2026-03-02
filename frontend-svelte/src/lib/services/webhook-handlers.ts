@@ -16,19 +16,26 @@ import {
   handlePaymentFailure,
 } from "./subscription-lifecycle"
 import { createPaymentRecord } from "./payment-records"
-import { emailService } from "$lib/email/email-service"
 import type {
-  SubscriptionProvider,
   SubscriptionStatus,
   CreateSubscriptionData,
 } from "./subscription-service.types"
+import type { WebhookEvent } from "$lib/payment/interfaces/PaymentProvider"
+
+/**
+ * Convenience alias – webhook data.object fields are loosely typed because
+ * different event types carry different shapes.  Using Record<string, any>
+ * avoids littering every handler with individual casts while still being
+ * narrower than a bare `any` on the event parameter itself.
+ */
+type EventObject = Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
 
 // ── Stripe ──────────────────────────────────────────────────────────
 
 /**
  * Route a Stripe webhook event to the appropriate handler.
  */
-export async function handleStripeWebhook(event: any, userId: string) {
+export async function handleStripeWebhook(event: WebhookEvent, userId: string) {
   try {
     switch (event.type) {
       case "checkout.session.completed":
@@ -67,7 +74,7 @@ export async function handleStripeWebhook(event: any, userId: string) {
 /**
  * Route a BTCPay webhook event to the appropriate handler.
  */
-export async function handleBTCPayWebhook(event: any, userId: string) {
+export async function handleBTCPayWebhook(event: WebhookEvent, userId: string) {
   try {
     switch (event.type) {
       case "InvoiceSettled":
@@ -93,8 +100,8 @@ export async function handleBTCPayWebhook(event: any, userId: string) {
 
 // ── Stripe handlers (private) ───────────────────────────────────────
 
-async function handleCheckoutSessionCompleted(event: any, userId: string) {
-  const session = event.data.object
+async function handleCheckoutSessionCompleted(event: WebhookEvent, userId: string) {
+  const session: EventObject = event.data.object as EventObject
 
   if (session.mode === "subscription" && session.subscription) {
     logger.info("Checkout completed", {
@@ -122,7 +129,7 @@ async function createOrUpdateSubscriptionFromCheckout(
   userId: string,
   customerId: string,
   subscriptionId: string,
-  _session: any,
+  _session: EventObject,
 ) {
   try {
     const existingSubscription = await getUserSubscription(userId)
@@ -158,8 +165,8 @@ async function createOrUpdateSubscriptionFromCheckout(
   }
 }
 
-async function handleSubscriptionUpdate(event: any, userId: string) {
-  const subscription = event.data.object
+async function handleSubscriptionUpdate(event: WebhookEvent, userId: string) {
+  const subscription: EventObject = event.data.object as EventObject
   const tier = getTierFromStripePrice(
     subscription.items.data[0].price.id,
   )
@@ -190,12 +197,12 @@ async function handleSubscriptionUpdate(event: any, userId: string) {
   }
 }
 
-async function handleSubscriptionCancellation(_event: any, userId: string) {
+async function handleSubscriptionCancellation(_event: WebhookEvent, userId: string) {
   return await cancelSubscription(userId, true)
 }
 
-async function handlePaymentSuccess(event: any, userId: string) {
-  const invoice = event.data.object
+async function handlePaymentSuccess(event: WebhookEvent, userId: string) {
+  const invoice: EventObject = event.data.object as EventObject
 
   const subscription = await getUserSubscription(userId)
 
@@ -220,8 +227,8 @@ async function handlePaymentSuccess(event: any, userId: string) {
   }
 }
 
-async function handlePaymentFailed(event: any, userId: string) {
-  const invoice = event.data.object
+async function handlePaymentFailed(event: WebhookEvent, userId: string) {
+  const invoice: EventObject = event.data.object as EventObject
   const attemptCount = invoice.attempt_count || 1
 
   const subscription = await getUserSubscription(userId)
@@ -247,11 +254,13 @@ async function handlePaymentFailed(event: any, userId: string) {
   return await handlePaymentFailure(userId, attemptCount)
 }
 
-async function handleTrialWillEnd(event: any, userId: string) {
+async function handleTrialWillEnd(event: WebhookEvent, userId: string) {
   try {
+    const obj: EventObject = event.data.object as EventObject
+    const { emailService } = await import("$lib/email/email-service")
     await emailService.sendTrialWillEndNotification(userId, {
       daysRemaining: 3,
-      trialEndDate: new Date(event.data.object.trial_end * 1000),
+      trialEndDate: new Date(obj.trial_end * 1000),
     })
   } catch (error) {
     logger.error(
@@ -263,9 +272,9 @@ async function handleTrialWillEnd(event: any, userId: string) {
 
 // ── BTCPay handlers (private) ───────────────────────────────────────
 
-async function handleBitcoinPaymentSettled(event: any, userId: string) {
-  const invoice = event.data.object
-  const metadata = invoice.metadata || {}
+async function handleBitcoinPaymentSettled(event: WebhookEvent, userId: string) {
+  const invoice: EventObject = event.data.object as EventObject
+  const metadata: EventObject = invoice.metadata || {}
 
   logger.info("Bitcoin payment settled", {
     userId,
@@ -332,10 +341,10 @@ async function handleBitcoinPaymentSettled(event: any, userId: string) {
   }
 }
 
-async function handleBitcoinInvoiceExpired(_event: any, userId: string) {
+async function handleBitcoinInvoiceExpired(_event: WebhookEvent, userId: string) {
   logger.info(`Bitcoin invoice expired for user ${userId}`)
 }
 
-async function handleBitcoinInvoiceInvalid(_event: any, userId: string) {
+async function handleBitcoinInvoiceInvalid(_event: WebhookEvent, userId: string) {
   logger.info(`Bitcoin invoice invalid for user ${userId}`)
 }

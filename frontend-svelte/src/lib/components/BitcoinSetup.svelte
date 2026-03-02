@@ -137,6 +137,12 @@
       return;
     }
 
+    // Guard: do not proceed if the symmetric key is a placeholder (all zeros)
+    if (PLACEHOLDER_SYMMETRIC_KEY.every((b) => b === 0)) {
+      errorMessage = 'Symmetric key not available — cannot create Bitcoin timelock. Nostr integration must be completed first.';
+      return;
+    }
+
     loading = true;
     errorMessage = null;
     step = 'processing';

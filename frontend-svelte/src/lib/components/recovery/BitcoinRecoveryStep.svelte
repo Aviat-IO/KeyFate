@@ -64,18 +64,42 @@
           );
         }
 
-        const payload = JSON.parse(event.content);
-        const encShare = hexToBytes(payload.encryptedShare);
-        const nonce = hexToBytes(payload.nonce);
+        let payload: unknown;
+        try {
+          payload = JSON.parse(event.content);
+        } catch {
+          throw new Error('Failed to parse event content as JSON');
+        }
+
+        if (
+          typeof payload !== 'object' ||
+          payload === null ||
+          typeof (payload as any).encryptedShare !== 'string' ||
+          typeof (payload as any).nonce !== 'string'
+        ) {
+          throw new Error('Event content missing required fields: encryptedShare, nonce');
+        }
+
+        const validPayload = payload as {
+          encryptedShare: string;
+          nonce: string;
+          shareIndex?: number;
+          threshold?: number;
+          totalShares?: number;
+          secretId?: string;
+        };
+
+        const encShare = hexToBytes(validPayload.encryptedShare);
+        const nonce = hexToBytes(validPayload.nonce);
         const plaintext = decryptShare(encShare, nonce, symmetricKeyK);
 
         onComplete([
           {
             share: plaintext,
-            shareIndex: payload.shareIndex ?? 1,
-            threshold: payload.threshold ?? 0,
-            totalShares: payload.totalShares ?? 0,
-            secretId: payload.secretId ?? 'unknown',
+            shareIndex: validPayload.shareIndex ?? 1,
+            threshold: validPayload.threshold ?? 0,
+            totalShares: validPayload.totalShares ?? 0,
+            secretId: validPayload.secretId ?? 'unknown',
           },
         ]);
         toast.success('Share decrypted successfully');

@@ -11,7 +11,13 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN bun run build
 
-# Stage 3: Production
+# Stage 3: Production dependencies only
+FROM oven/bun:1 AS prod-deps
+WORKDIR /app
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile --production
+
+# Stage 4: Production
 FROM oven/bun:1-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
@@ -22,7 +28,7 @@ RUN addgroup --system --gid 1001 keyfate && \
 
 # Copy build output, dependencies, and migration files
 COPY --from=builder /app/build ./build
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/drizzle ./drizzle
 COPY --from=builder /app/drizzle.config.ts ./

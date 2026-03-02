@@ -5,13 +5,13 @@
  * Provides admin tools for email failure management and resolution
  */
 
-import { db } from "$lib/db/drizzle"
+import { getDatabase } from "$lib/db/drizzle"
 import {
   emailFailures,
   type EmailFailure,
   type EmailFailureUpdate,
 } from "$lib/db/schema"
-import { eq, and, isNull, lt } from "drizzle-orm"
+import { eq, and, isNull, isNotNull, lt } from "drizzle-orm"
 import {
   EmailRetryService,
   type EmailFailureContext,
@@ -100,20 +100,15 @@ export class DeadLetterQueue {
       conditions.push(isNull(emailFailures.resolvedAt))
     }
 
-    // Execute query with conditions
-    let allFailures: EmailFailure[]
+    // Execute query with SQL-level pagination
+    const db = await getDatabase()
+    const query = db.select().from(emailFailures)
 
-    if (conditions.length > 0) {
-      allFailures = await db
-        .select()
-        .from(emailFailures)
-        .where(and(...conditions))
-    } else {
-      allFailures = await db.select().from(emailFailures)
-    }
+    const results = conditions.length > 0
+      ? await query.where(and(...conditions)).limit(limit).offset(offset)
+      : await query.limit(limit).offset(offset)
 
-    // Manual pagination
-    return allFailures.slice(offset, offset + limit)
+    return results
   }
 
   /**
@@ -122,6 +117,7 @@ export class DeadLetterQueue {
    * @returns Statistics about failed emails
    */
   async getStats(): Promise<DeadLetterStats> {
+    const db = await getDatabase()
     const allFailures = await db.select().from(emailFailures)
 
     const unresolved = allFailures.filter((f) => !f.resolvedAt)
@@ -193,6 +189,7 @@ export class DeadLetterQueue {
     let failed = 0
     const errors: Array<{ id: string; error: string }> = []
 
+    const db = await getDatabase()
     for (const failureId of failureIds) {
       // Fetch failure context
       const [failure] = await db
@@ -253,6 +250,7 @@ export class DeadLetterQueue {
    * @returns Updated failure record
    */
   async markResolved(failureId: string): Promise<EmailFailure> {
+    const db = await getDatabase()
     const updateData: EmailFailureUpdate = { resolvedAt: new Date() }
     const [resolved] = await db
       .update(emailFailures)
@@ -279,11 +277,12 @@ export class DeadLetterQueue {
     const cutoffDate = new Date()
     cutoffDate.setDate(cutoffDate.getDate() - retentionDays)
 
+    const db = await getDatabase()
     const result = await db.delete(emailFailures).where(
       and(
         lt(emailFailures.createdAt, cutoffDate),
         // Only delete resolved failures
-        eq(emailFailures.resolvedAt, emailFailures.resolvedAt),
+        isNotNull(emailFailures.resolvedAt),
       ),
     )
 
@@ -306,6 +305,7 @@ export class DeadLetterQueue {
     recipient: string,
     limit: number = 10,
   ): Promise<EmailFailure[]> {
+    const db = await getDatabase()
     const failures = await db
       .select()
       .from(emailFailures)
@@ -330,6 +330,7 @@ export class DeadLetterQueue {
       | "admin_notification"
       | "verification",
   ) {
+    const db = await getDatabase()
     const failures = await db
       .select()
       .from(emailFailures)
@@ -369,6 +370,7 @@ export class DeadLetterQueue {
     const cutoffDate = new Date()
     cutoffDate.setDate(cutoffDate.getDate() - archiveDays)
 
+    const db = await getDatabase()
     const oldFailures = await db
       .select()
       .from(emailFailures)
@@ -376,7 +378,7 @@ export class DeadLetterQueue {
         and(
           lt(emailFailures.createdAt, cutoffDate),
           // Only archive resolved failures
-          eq(emailFailures.resolvedAt, emailFailures.resolvedAt),
+          isNotNull(emailFailures.resolvedAt),
         ),
       )
 

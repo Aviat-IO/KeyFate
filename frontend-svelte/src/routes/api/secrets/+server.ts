@@ -187,8 +187,6 @@ export const POST: RequestHandler = async (event) => {
       ),
     }
 
-    console.log("Insert data structure:", JSON.stringify(insertData, null, 2))
-
     // Create the secret and recipients in a transaction to ensure atomicity
     const db = await import("$lib/db/drizzle").then((m) => m.getDatabase())
     const { secrets: secretsTable, secretRecipients } = await import(
@@ -271,9 +269,6 @@ export const POST: RequestHandler = async (event) => {
     // Check if this is a database column error
     if (error instanceof Error && error.message.includes("recipient_name")) {
       console.error("Column mapping error detected:", error.message)
-      if (insertData) {
-        console.error("Insert data was:", JSON.stringify(insertData, null, 2))
-      }
       throw APIError.database("Database schema mismatch", error)
     }
 

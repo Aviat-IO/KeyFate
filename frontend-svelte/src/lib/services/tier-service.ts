@@ -74,7 +74,7 @@ async function ensureTierExists(tierName: SubscriptionTier) {
   try {
     const [tier] = await db
       .insert(subscriptionTiers)
-      .values(config as any)
+      .values(config as typeof subscriptionTiers.$inferInsert)
       .onConflictDoNothing()
       .returning()
 
@@ -99,15 +99,49 @@ async function ensureTierExists(tierName: SubscriptionTier) {
 }
 
 /**
+ * Look up a subscription tier by its UUID.
+ */
+export async function getTierById(tierId: string) {
+  const db = await getDatabase()
+  try {
+    const [tier] = await db
+      .select()
+      .from(subscriptionTiers)
+      .where(eq(subscriptionTiers.id, tierId))
+      .limit(1)
+
+    return tier || null
+  } catch (error) {
+    logger.error(
+      "Failed to get tier by ID",
+      error instanceof Error ? error : undefined,
+      { tierId },
+    )
+    throw error
+  }
+}
+
+/**
  * Map a Stripe price ID to a subscription tier.
+ *
+ * Price IDs are read from environment variables so they can differ between
+ * Stripe test-mode and live-mode without code changes.
  */
 export function getTierFromStripePrice(priceId: string): SubscriptionTier {
-  const priceToTierMap: Record<string, SubscriptionTier> = {
-    price_pro_monthly: "pro",
-    price_pro_yearly: "pro",
-    pro_monthly: "pro",
-    pro_yearly: "pro",
-  }
+  const priceToTierMap: Record<string, SubscriptionTier> = {}
+
+  // Pro tier price IDs from environment (monthly + yearly)
+  const proMonthly = process.env.STRIPE_PRICE_ID_PRO_MONTHLY
+  const proYearly = process.env.STRIPE_PRICE_ID_PRO_YEARLY
+
+  if (proMonthly) priceToTierMap[proMonthly] = "pro"
+  if (proYearly) priceToTierMap[proYearly] = "pro"
+
+  // Keep legacy fallback keys so existing test fixtures still work
+  priceToTierMap["price_pro_monthly"] = "pro"
+  priceToTierMap["price_pro_yearly"] = "pro"
+  priceToTierMap["pro_monthly"] = "pro"
+  priceToTierMap["pro_yearly"] = "pro"
 
   return priceToTierMap[priceId] || "free"
 }

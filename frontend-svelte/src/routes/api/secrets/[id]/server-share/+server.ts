@@ -82,7 +82,7 @@ export const GET: RequestHandler = async (event) => {
     }
 
     if (!secret.serverShare || !secret.iv || !secret.authTag) {
-      console.error("Secret data incomplete for decryption:", secret)
+      console.error("Secret data incomplete for decryption: missing fields for secret", id)
       return json(
         {
           error:
@@ -111,9 +111,7 @@ export const GET: RequestHandler = async (event) => {
     console.error("[ServerShare API Error]:", error)
     return json(
       {
-        error:
-          "Internal server error: " +
-          (error instanceof Error ? error.message : String(error)),
+        error: "Internal server error",
       },
       { status: 500 },
     )

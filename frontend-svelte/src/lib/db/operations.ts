@@ -133,12 +133,13 @@ export async function upsertUserContactMethods(
 
   if (existingRecord.length > 0) {
     // Update existing record
+    const updateValues: Partial<typeof userContactMethods.$inferInsert> = {
+      ...data,
+      updatedAt: new Date(),
+    }
     const result = await db
       .update(userContactMethods)
-      .set({
-        ...data,
-        updatedAt: new Date(),
-      } as any)
+      .set(updateValues)
       .where(eq(userContactMethods.userId, userId))
       .returning()
 

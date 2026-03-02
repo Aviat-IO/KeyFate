@@ -231,7 +231,7 @@
           );
           const nostrShares = nostrRecipients.map(
             (r: { id: string }, idx: number) => ({
-              share: userManagedShares[0],
+              share: userManagedShares[idx],
               shareIndex: idx + 1,
               recipientId: r.id
             })

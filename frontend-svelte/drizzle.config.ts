@@ -16,9 +16,6 @@ if (fs.existsSync(envLocalPath)) {
 
 // Validate DATABASE_URL is available
 const databaseUrl = process.env.DATABASE_URL
-console.log("DATABASE_URL type:", typeof databaseUrl)
-console.log("DATABASE_URL length:", databaseUrl?.length)
-console.log("DATABASE_URL first 80 chars:", databaseUrl?.substring(0, 80))
 
 if (!databaseUrl) {
   console.error("❌ DATABASE_URL environment variable is not set")

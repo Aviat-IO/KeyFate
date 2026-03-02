@@ -60,15 +60,13 @@ export const GET: RequestHandler = async (event) => {
     }
 
     // Core services required for basic operation
-    const coreHealthy = dbConnected && emailConfigured && encryptionKeyValid
-    const allHealthy = coreHealthy
-    const anyUnhealthy = !coreHealthy
+    const healthy = dbConnected && emailConfigured && encryptionKeyValid
 
     const dbStats = getDatabaseStats()
     const emailCircuitStats = getEmailServiceHealth()
 
     const health = {
-      status: allHealthy ? "healthy" : anyUnhealthy ? "degraded" : "unhealthy",
+      status: healthy ? "healthy" : "degraded",
       timestamp: new Date().toISOString(),
       checks,
       ...(detailed && {
@@ -92,7 +90,7 @@ export const GET: RequestHandler = async (event) => {
       }),
     }
 
-    const statusCode = allHealthy ? 200 : anyUnhealthy ? 503 : 500
+    const statusCode = healthy ? 200 : 503
 
     return json(health, { status: statusCode })
   } catch (error) {

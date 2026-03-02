@@ -4,24 +4,11 @@ import { logger } from "$lib/logger"
 import { getDatabase } from "$lib/db/drizzle"
 import { userSubscriptions } from "$lib/db/schema"
 import { subscriptionService } from "$lib/services/subscription-service"
+import { authorizeRequest } from "$lib/cron/utils"
 import { and, lte, eq, isNotNull, sql } from "drizzle-orm"
 
-function authorize(request: Request): boolean {
-  const header =
-    request.headers.get("authorization") || request.headers.get("Authorization")
-
-  if (!header?.startsWith("Bearer ")) {
-    return false
-  }
-
-  const token = header.slice(7).trim()
-  const cronSecret = process.env.CRON_SECRET
-
-  return !!cronSecret && token === cronSecret
-}
-
 export const GET: RequestHandler = async (event) => {
-  if (!authorize(event.request)) {
+  if (!authorizeRequest(event.request, event.url)) {
     return json({ error: "Unauthorized" }, { status: 401 })
   }
   return json({
@@ -31,7 +18,7 @@ export const GET: RequestHandler = async (event) => {
 }
 
 export const POST: RequestHandler = async (event) => {
-  if (!authorize(event.request)) {
+  if (!authorizeRequest(event.request, event.url)) {
     return json({ error: "Unauthorized" }, { status: 401 })
   }
 

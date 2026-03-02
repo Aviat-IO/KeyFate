@@ -23,6 +23,7 @@
 
 import { json } from "@sveltejs/kit"
 import type { RequestHandler } from "./$types"
+import { requireCSRFProtection, createCSRFErrorResponse } from "$lib/csrf"
 import { requireSession } from "$lib/server/auth"
 import { getDatabase } from "$lib/db/drizzle"
 import { secrets, secretRecipients } from "$lib/db/schema"
@@ -79,6 +80,11 @@ const publishNostrSchema = z.object({
 
 export const POST: RequestHandler = async (event) => {
   try {
+    const csrfCheck = await requireCSRFProtection(event)
+    if (!csrfCheck.valid) {
+      return createCSRFErrorResponse()
+    }
+
     const session = await requireSession(event)
     const secretId = event.params.id
 
