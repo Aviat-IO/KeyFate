@@ -1,5 +1,6 @@
 import { redirect, error } from '@sveltejs/kit';
 import { getAllSecretsWithRecipients } from '$lib/db/queries/secrets';
+import { getUserTierInfo } from '$lib/subscription';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
@@ -9,11 +10,15 @@ export const load: PageServerLoad = async (event) => {
 	}
 
 	try {
-		const secrets = await getAllSecretsWithRecipients(session.user.id);
+		const [secrets, tierInfo] = await Promise.all([
+			getAllSecretsWithRecipients(session.user.id),
+			getUserTierInfo(session.user.id)
+		]);
 
 		return {
 			session,
-			secrets: secrets ?? []
+			secrets: secrets ?? [],
+			canCreate: tierInfo?.limits?.secrets?.canCreate ?? true
 		};
 	} catch (err) {
 		console.error('[Dashboard] Failed to load secrets:', err);
