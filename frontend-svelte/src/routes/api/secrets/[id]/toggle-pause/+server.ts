@@ -1,7 +1,8 @@
 import { json } from "@sveltejs/kit"
 import type { RequestHandler } from "./$types"
 import { requireCSRFProtection, createCSRFErrorResponse } from "$lib/csrf"
-import { secretsService } from "$lib/db/drizzle"
+import { secretsService, getDatabase } from "$lib/db/drizzle"
+import { checkinHistory } from "$lib/db/schema"
 import { mapDrizzleSecretToApiShape } from "$lib/db/secret-mapper"
 import { getSecretWithRecipients } from "$lib/db/queries/secrets"
 import {
@@ -61,6 +62,15 @@ export const POST: RequestHandler = async (event) => {
     }
 
     if (newStatus === "active" && updatePayload.nextCheckIn) {
+      // Record check-in history for the implicit check-in on unpause
+      const database = await getDatabase()
+      await database.insert(checkinHistory).values({
+        secretId: id,
+        userId: session.user.id,
+        checkedInAt: updatePayload.lastCheckIn,
+        nextCheckIn: updatePayload.nextCheckIn,
+      })
+
       await scheduleRemindersForSecret(
         id,
         updatePayload.nextCheckIn,
