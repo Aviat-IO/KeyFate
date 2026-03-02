@@ -259,7 +259,7 @@ export class StripeProvider implements PaymentProvider {
     signature: string,
     secret: string,
   ): Promise<WebhookEvent> {
-    const event = this.stripe.webhooks.constructEvent(
+    const event = await this.stripe.webhooks.constructEventAsync(
       payload,
       signature,
       secret,
