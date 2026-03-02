@@ -2,6 +2,7 @@
   import { Button } from '$lib/components/ui/button';
   import { Loader2, Pause, Play } from '@lucide/svelte';
   import type { Secret } from '$lib/types/secret-types';
+  import { mapApiSecretToDrizzleShape } from '$lib/db/secret-mapper';
 
   let {
     secretId,
@@ -32,7 +33,7 @@
       const data = await response.json();
       if (data.error) throw new Error(data.error);
 
-      onToggleSuccess(data.secret);
+      onToggleSuccess(mapApiSecretToDrizzleShape(data.secret) as Secret);
     } catch (err) {
       console.error('Error toggling pause:', err);
     } finally {

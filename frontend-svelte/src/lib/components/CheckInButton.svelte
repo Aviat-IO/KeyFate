@@ -3,6 +3,7 @@
   import { toast } from 'svelte-sonner';
   import { CheckCircle, Loader2 } from '@lucide/svelte';
   import type { Secret } from '$lib/types/secret-types';
+  import { mapApiSecretToDrizzleShape } from '$lib/db/secret-mapper';
 
   let {
     secretId,
@@ -30,7 +31,7 @@
       }
 
       const res = await response.json();
-      onCheckInSuccess?.(res.secret);
+      onCheckInSuccess?.(mapApiSecretToDrizzleShape(res.secret) as Secret);
     } catch (err) {
       console.error('Error checking in:', err);
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
