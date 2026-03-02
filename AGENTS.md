@@ -119,7 +119,8 @@ snapshots cause migrations to be silently skipped, leading to schema drift.
 
 ### Deploying
 
-Railway auto-deploys on push to the connected branch. For manual deploys:
+Railway CI/CD automatically deploys on every push — no manual action needed. For
+manual deploys:
 
 ```bash
 cd frontend-svelte
