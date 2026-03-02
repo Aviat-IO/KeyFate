@@ -22,9 +22,9 @@ FROM oven/bun:1-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Run as non-root user for security
-RUN addgroup --system --gid 1001 keyfate && \
-    adduser --system --uid 1001 --ingroup keyfate keyfate
+# Run as non-root user for security (groupadd/useradd for slim images)
+RUN groupadd --system --gid 1001 keyfate && \
+    useradd --system --uid 1001 --gid keyfate --no-create-home keyfate
 
 # Copy build output, dependencies, and migration files
 COPY --from=builder /app/build ./build
