@@ -178,11 +178,6 @@ export class StripeProvider implements PaymentProvider {
           metadata: config.metadata,
         }
       }
-      if (config.metadata) {
-        sessionParams.subscription_data = {
-          metadata: config.metadata,
-        }
-      }
     } else if (config.mode === "payment") {
       if (!config.amount || !config.currency) {
         throw new Error("amount and currency are required for payment mode")
@@ -320,7 +315,11 @@ export class StripeProvider implements PaymentProvider {
   private mapStripeSubscription(
     subscription: Stripe.Subscription,
   ): Subscription {
-    const price = subscription.items.data[0].price
+    const firstItem = subscription.items.data[0]
+    const price = firstItem.price
+    // Clover API moved current_period_start/end from Subscription to SubscriptionItem
+    const periodStart = (firstItem as unknown as Record<string, unknown>).current_period_start as number | undefined
+    const periodEnd = (firstItem as unknown as Record<string, unknown>).current_period_end as number | undefined
     return {
       id: subscription.id,
       customerId: subscription.customer as string,
@@ -329,10 +328,8 @@ export class StripeProvider implements PaymentProvider {
       amount: price.unit_amount ? price.unit_amount / 100 : undefined,
       currency: price.currency.toUpperCase(),
       interval: price.recurring?.interval as "month" | "year" | undefined,
-      // TODO: Stripe Clover API removed current_period_start/end from Subscription.
-      // These are now on the subscription's items. Needs proper migration.
-      currentPeriodStart: new Date(((subscription as unknown as Record<string, unknown>).current_period_start as number ?? 0) * 1000),
-      currentPeriodEnd: new Date(((subscription as unknown as Record<string, unknown>).current_period_end as number ?? 0) * 1000),
+      currentPeriodStart: periodStart ? new Date(periodStart * 1000) : new Date(),
+      currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
       metadata: subscription.metadata,
     }

@@ -122,12 +122,17 @@ export async function getTierById(tierId: string) {
 }
 
 /**
- * Map a Stripe price ID to a subscription tier.
+ * Map a Stripe price ID (or lookup key) to a subscription tier.
  *
- * Price IDs are read from environment variables so they can differ between
- * Stripe test-mode and live-mode without code changes.
+ * Checks in order:
+ * 1. Environment variable overrides (STRIPE_PRICE_ID_PRO_MONTHLY/YEARLY)
+ * 2. Stripe lookup keys (pro_monthly, pro_yearly)
+ * 3. Legacy test fixture keys
+ *
+ * Pass the lookup key as the second argument when available from webhook data,
+ * since price IDs differ between test and live mode but lookup keys are stable.
  */
-export function getTierFromStripePrice(priceId: string): SubscriptionTier {
+export function getTierFromStripePrice(priceId: string, lookupKey?: string): SubscriptionTier {
   const priceToTierMap: Record<string, SubscriptionTier> = {}
 
   // Pro tier price IDs from environment (monthly + yearly)
@@ -137,13 +142,27 @@ export function getTierFromStripePrice(priceId: string): SubscriptionTier {
   if (proMonthly) priceToTierMap[proMonthly] = "pro"
   if (proYearly) priceToTierMap[proYearly] = "pro"
 
-  // Keep legacy fallback keys so existing test fixtures still work
-  priceToTierMap["price_pro_monthly"] = "pro"
-  priceToTierMap["price_pro_yearly"] = "pro"
+  // Stripe lookup keys — stable across test/live modes
   priceToTierMap["pro_monthly"] = "pro"
   priceToTierMap["pro_yearly"] = "pro"
 
-  return priceToTierMap[priceId] || "free"
+  // Legacy test fixture keys
+  priceToTierMap["price_pro_monthly"] = "pro"
+  priceToTierMap["price_pro_yearly"] = "pro"
+
+  // Check price ID first, then lookup key
+  const tier = priceToTierMap[priceId] ?? (lookupKey ? priceToTierMap[lookupKey] : undefined)
+
+  if (tier) return tier
+
+  logger.warn("Stripe price ID not mapped to any tier, defaulting to free", {
+    priceId,
+    lookupKey: lookupKey ?? "none",
+    configuredProMonthly: proMonthly ?? "NOT SET",
+    configuredProYearly: proYearly ?? "NOT SET",
+  })
+
+  return "free"
 }
 
 /**
