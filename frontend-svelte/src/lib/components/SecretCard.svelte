@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import CheckInButton from '$lib/components/CheckInButton.svelte';
   import DataLabel from '$lib/components/DataLabel.svelte';
   import Keyline from '$lib/components/Keyline.svelte';
@@ -13,7 +14,7 @@
 
   let { secret }: { secret: SecretWithRecipients } = $props();
 
-  let secretState = $state<SecretWithRecipients>(secret);
+  let secretState = $state<SecretWithRecipients>(untrack(() => secret));
 
   let serverShareDeleted = $derived(!secretState.serverShare);
   let isTriggered = $derived(

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import * as Alert from '$lib/components/ui/alert';
   import { Button } from '$lib/components/ui/button';
   import { Textarea } from '$lib/components/ui/textarea';
@@ -16,11 +17,13 @@
   } = $props();
 
   let shares = $state<string[]>(
-    initialShares.length === 0
-      ? ['', '']
-      : initialShares.length === 1
-        ? [initialShares[0], '']
-        : [...initialShares]
+    untrack(() =>
+      initialShares.length === 0
+        ? ['', '']
+        : initialShares.length === 1
+          ? [initialShares[0], '']
+          : [...initialShares]
+    )
   );
   let recoveredSecret = $state<string | null>(null);
   let error = $state<string | null>(null);

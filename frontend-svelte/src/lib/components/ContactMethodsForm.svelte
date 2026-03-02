@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -42,7 +43,7 @@
 		check_in_days: 90
 	};
 
-	let formData = $state<ContactMethodsFormData>({ ...(initialValues ?? defaults) });
+	let formData = $state<ContactMethodsFormData>(untrack(() => ({ ...(initialValues ?? defaults) })));
 	let isLoading = $state(false);
 	let error = $state<string | null>(null);
 
