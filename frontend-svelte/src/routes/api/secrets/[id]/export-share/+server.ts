@@ -1,6 +1,10 @@
 import { json } from "@sveltejs/kit"
 import type { RequestHandler } from "./$types"
 import { requireCSRFProtection, createCSRFErrorResponse } from "$lib/csrf"
+import {
+  requireRecentAuthentication,
+  createReAuthErrorResponse,
+} from "$lib/auth/re-authentication"
 import { getDatabase } from "$lib/db/drizzle"
 import { secrets } from "$lib/db/schema"
 import { decryptMessage } from "$lib/encryption"
@@ -43,6 +47,11 @@ export const POST: RequestHandler = async (event) => {
     }
 
     const session = await event.locals.auth()
+
+    const reAuthCheck = await requireRecentAuthentication(event.request, session)
+    if (!reAuthCheck.valid) {
+      return createReAuthErrorResponse(reAuthCheck.userId)
+    }
     if (!session?.user?.id) {
       return json({ error: "Unauthorized" }, { status: 401 })
     }

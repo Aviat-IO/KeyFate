@@ -17,6 +17,9 @@ import {
   deriveKeyFromPassphrase,
   decryptWithDerivedKey,
 } from "$lib/crypto/passphrase"
+import { hexToBytes, bytesToHex } from "./hex-utils"
+// Re-export so existing consumers (components, tests) don't break
+export { hexToBytes, bytesToHex }
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -230,7 +233,16 @@ function parseRawTx(
 ): { outputs: Array<{ script: Uint8Array; amount: bigint }> } {
   let offset = 0
 
+  function checkBounds(need: number, context: string): void {
+    if (offset + need > bytes.length) {
+      throw new Error(
+        `parseRawTx: buffer overflow reading ${context} at offset ${offset} (need ${need} bytes, have ${bytes.length - offset})`,
+      )
+    }
+  }
+
   function readUint32LE(): number {
+    checkBounds(4, "uint32")
     const val =
       bytes[offset] |
       (bytes[offset + 1] << 8) |
@@ -247,10 +259,12 @@ function parseRawTx(
   }
 
   function readVarInt(): number {
+    checkBounds(1, "varint prefix")
     const first = bytes[offset]
     offset++
     if (first < 0xfd) return first
     if (first === 0xfd) {
+      checkBounds(2, "varint uint16")
       const val = bytes[offset] | (bytes[offset + 1] << 8)
       offset += 2
       return val
@@ -264,6 +278,7 @@ function parseRawTx(
   }
 
   function readBytes(n: number): Uint8Array {
+    checkBounds(n, `${n}-byte slice`)
     const result = bytes.slice(offset, offset + n)
     offset += n
     return result
@@ -273,6 +288,7 @@ function parseRawTx(
   readUint32LE()
 
   // Check for segwit marker
+  checkBounds(2, "segwit marker check")
   let isSegwit = false
   if (bytes[offset] === 0x00 && bytes[offset + 1] === 0x01) {
     isSegwit = true
@@ -382,26 +398,6 @@ export function decryptShareWithK(
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-/** Convert hex string to Uint8Array */
-export function hexToBytes(hex: string): Uint8Array {
-  const clean = hex.replace(/^0x/, "").replace(/\s/g, "")
-  if (clean.length % 2 !== 0) {
-    throw new Error("Hex string must have even length")
-  }
-  const bytes = new Uint8Array(clean.length / 2)
-  for (let i = 0; i < bytes.length; i++) {
-    bytes[i] = parseInt(clean.substring(i * 2, i * 2 + 2), 16)
-  }
-  return bytes
-}
-
-/** Convert Uint8Array to hex string */
-export function bytesToHex(bytes: Uint8Array): string {
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("")
-}
 
 /** Convert base64 string to Uint8Array */
 function base64ToBytes(b64: string): Uint8Array {

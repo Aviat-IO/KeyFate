@@ -270,7 +270,6 @@ export const POST: RequestHandler = async (event) => {
     return json(
       {
         error: "Internal Server Error",
-        details: error instanceof Error ? error.message : "Unknown error",
       },
       {
         status: 500,

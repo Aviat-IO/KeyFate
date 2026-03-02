@@ -59,13 +59,8 @@ class ConnectionManager {
         return
       }
 
-      console.log(`\n🛑 Received ${signal} - initiating graceful shutdown`)
+      console.log(`\n🛑 Received ${signal} - cleaning up database connections`)
       this.isShuttingDown = true
-
-      const shutdownTimeout = setTimeout(() => {
-        console.error("⚠️ Shutdown timeout - forcing exit")
-        process.exit(1)
-      }, 30000) // 30 second timeout
 
       try {
         console.log(
@@ -73,7 +68,7 @@ class ConnectionManager {
         )
 
         let waitTime = 0
-        const maxWait = 25000 // 25 seconds
+        const maxWait = 10000 // 10 seconds
         while (this.activeQueries > 0 && waitTime < maxWait) {
           await this.delay(100)
           waitTime += 100
@@ -86,14 +81,11 @@ class ConnectionManager {
         }
 
         await this.closeConnection()
-        console.log("✅ Graceful shutdown complete")
-        clearTimeout(shutdownTimeout)
-        process.exit(0)
+        console.log("✅ Database connections cleaned up")
       } catch (error) {
-        console.error("❌ Error during shutdown:", error)
-        clearTimeout(shutdownTimeout)
-        process.exit(1)
+        console.error("❌ Error during database cleanup:", error)
       }
+      // Do NOT call process.exit() — let SvelteKit manage its own shutdown
     }
 
     process.on("SIGTERM", () => shutdown("SIGTERM"))

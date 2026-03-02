@@ -6,6 +6,7 @@
   import { Separator } from '$lib/components/ui/separator';
   import { toast } from 'svelte-sonner';
   import { AlertTriangle, Bitcoin, Clock, Loader2, RefreshCw } from '@lucide/svelte';
+  import { untrack } from 'svelte';
   import { hex } from '@scure/base';
   import { refreshBitcoinClient } from '$lib/bitcoin/client-operations';
   import { getStoredKeypair, getBitcoinMeta } from '$lib/bitcoin/client-wallet';
@@ -195,7 +196,7 @@
   }
 
   $effect(() => {
-    fetchStatus();
+    untrack(() => fetchStatus());
   });
 </script>
 

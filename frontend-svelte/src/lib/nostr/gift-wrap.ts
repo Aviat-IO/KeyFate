@@ -29,10 +29,10 @@ export const KEYFATE_SHARE_KIND = 21059
 const TWO_DAYS_S = 2 * 24 * 60 * 60
 
 /** Current unix timestamp in seconds. */
-const now = () => Math.round(Date.now() / 1000)
+const now = () => Math.floor(Date.now() / 1000)
 
 /** A random timestamp within the last two days (prevents timing analysis). */
-const randomNow = () => Math.round(now() - Math.random() * TWO_DAYS_S)
+const randomNow = () => Math.floor(now() - Math.random() * TWO_DAYS_S)
 
 /** Payload embedded in the rumor's `content` field. */
 export interface SharePayload {

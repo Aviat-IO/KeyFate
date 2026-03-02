@@ -40,7 +40,6 @@ interface EmailData {
 interface EmailOptions {
   maxRetries?: number
   retryDelay?: number
-  timeout?: number
 }
 
 // Email sending result
@@ -135,9 +134,15 @@ export async function validateEmailConfig(): Promise<ConfigValidationResult> {
 }
 
 /**
- * Create email transporter based on configuration
+ * Cached email transporter singleton
  */
-async function createTransporter() {
+let cachedTransporter: ReturnType<typeof nodemailer.createTransport> | null = null
+let cachedTransporterApiKey: string | undefined
+
+/**
+ * Get or create email transporter (lazy singleton, recreated if API key changes)
+ */
+async function getTransporter() {
   const config = await validateEmailConfig()
 
   if (!config.valid) {
@@ -151,16 +156,22 @@ async function createTransporter() {
     return null
   }
 
+  const currentApiKey = process.env.SENDGRID_API_KEY
+  if (cachedTransporter && cachedTransporterApiKey === currentApiKey) {
+    return cachedTransporter
+  }
+
   // Production SendGrid configuration
-  const transporter = nodemailer.createTransport({
+  cachedTransporter = nodemailer.createTransport({
     service: "SendGrid",
     auth: {
       user: "apikey",
-      pass: process.env.SENDGRID_API_KEY,
+      pass: currentApiKey,
     },
   })
+  cachedTransporterApiKey = currentApiKey
 
-  return transporter
+  return cachedTransporter
 }
 
 /**
@@ -204,7 +215,7 @@ export async function sendEmail(
   emailData: EmailData,
   options: EmailOptions = {},
 ): Promise<EmailResult> {
-  const { maxRetries = 3, retryDelay = 1000, timeout = 30000 } = options
+  const { maxRetries = 3, retryDelay = 1000 } = options
 
   try {
     const config = await validateEmailConfig()
@@ -244,7 +255,7 @@ ${emailData.text || "HTML content provided"}
       return await withRetry(
         async () => {
           attempts++
-          const transporter = await createTransporter()
+          const transporter = await getTransporter()
 
           if (!transporter) {
             throw new Error("Failed to create email transporter")

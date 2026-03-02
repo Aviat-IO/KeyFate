@@ -4,6 +4,7 @@
   import { Button } from '$lib/components/ui/button';
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
   import { Crown, LogOut, Menu, Settings, X } from '@lucide/svelte';
+  import { getCachedTier, setCachedTier } from '$lib/stores/subscription-cache';
 
   let { session = null }: { session?: any } = $props();
 
@@ -13,34 +14,32 @@
   let userTier = $state<'free' | 'pro'>('free');
   let mobileMenuOpen = $state(false);
 
-  // Cache subscription status to avoid re-fetching on every navigation.
-  // Module-scoped cache shared across all NavBar instances.
-  const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-  let cachedTier: { value: 'free' | 'pro'; fetchedAt: number; userId: string } | null = null;
-
   $effect(() => {
     if (!user?.id) return;
 
-    // Use cached value if fresh and for the same user
-    if (
-      cachedTier &&
-      cachedTier.userId === user.id &&
-      Date.now() - cachedTier.fetchedAt < CACHE_TTL_MS
-    ) {
-      userTier = cachedTier.value;
+    // Use module-scoped cached value if fresh and for the same user
+    const cached = getCachedTier(user.id);
+    if (cached) {
+      userTier = cached;
       return;
     }
 
-    fetch('/api/user/subscription')
+    const controller = new AbortController();
+
+    fetch('/api/user/subscription', { signal: controller.signal })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data) {
           const tier = data.tier?.name === 'pro' ? 'pro' as const : 'free' as const;
           userTier = tier;
-          cachedTier = { value: tier, fetchedAt: Date.now(), userId: user!.id! };
+          setCachedTier(user!.id!, tier);
         }
       })
-      .catch(() => {});
+      .catch((e) => {
+        if (e.name !== 'AbortError') { /* swallow */ }
+      });
+
+    return () => controller.abort();
   });
 
   let isProUser = $derived(userTier === 'pro');

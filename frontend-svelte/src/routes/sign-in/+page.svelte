@@ -334,7 +334,7 @@
           <div class="border-border w-full border-t"></div>
         </div>
         <div class="relative flex justify-center text-xs">
-          <span class="text-muted-foreground bg-background px-2r">Or continue with</span>
+          <span class="text-muted-foreground bg-background px-2">Or continue with</span>
         </div>
       </div>
 

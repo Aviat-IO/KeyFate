@@ -95,7 +95,7 @@ export const init: ServerInit = async () => {
   // Global error handlers for production resilience
   process.on("uncaughtException", (error) => {
     console.error("[FATAL] Uncaught exception:", error)
-    // Don't exit — Railway will restart on crash anyway
+    process.exit(1)
   })
 
   process.on("unhandledRejection", (reason) => {

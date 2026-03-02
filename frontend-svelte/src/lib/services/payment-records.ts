@@ -29,21 +29,22 @@ export interface CreatePaymentRecordData {
 export async function createPaymentRecord(data: CreatePaymentRecordData) {
   const db = await getDatabase()
   try {
+    const insertValues: typeof paymentHistory.$inferInsert = {
+      userId: data.userId,
+      subscriptionId: data.subscriptionId || null,
+      provider: data.provider,
+      providerPaymentId: data.providerPaymentId,
+      amount: data.amount.toString(),
+      currency: data.currency || "USD",
+      status: data.status,
+      failureReason: data.failureReason || null,
+      metadata: data.metadata || null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
     const [payment] = await db
       .insert(paymentHistory)
-      .values({
-        userId: data.userId,
-        subscriptionId: data.subscriptionId || null,
-        provider: data.provider,
-        providerPaymentId: data.providerPaymentId,
-        amount: data.amount.toString(),
-        currency: data.currency || "USD",
-        status: data.status,
-        failureReason: data.failureReason || null,
-        metadata: data.metadata || null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      } as any)
+      .values(insertValues)
       .returning()
 
     await logSubscriptionChanged(data.userId, {

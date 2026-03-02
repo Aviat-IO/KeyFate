@@ -23,6 +23,14 @@ vi.mock("@sveltejs/kit", () => ({
   },
 }))
 
+// Mock CSRF protection
+vi.mock("$lib/csrf", () => ({
+  requireCSRFProtection: vi.fn(async () => ({ valid: true })),
+  createCSRFErrorResponse: vi.fn(() =>
+    new Response(JSON.stringify({ error: "CSRF validation failed" }), { status: 403 }),
+  ),
+}))
+
 // Mock requireSession
 const mockRequireSession = vi.fn()
 vi.mock("$lib/server/auth", () => ({

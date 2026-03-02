@@ -5,7 +5,7 @@
  * Supports configurable retry limits per email type and integration with dead letter queue
  */
 
-import { db } from "$lib/db/drizzle"
+import { getDatabase } from "$lib/db/drizzle"
 import { emailFailures, type EmailFailureUpdate } from "$lib/db/schema"
 import { eq } from "drizzle-orm"
 
@@ -195,6 +195,7 @@ export class EmailRetryService {
     retryOperation: () => Promise<{ success: boolean; error?: string }>,
   ): Promise<RetryResult> {
     // Fetch failure record
+    const db = await getDatabase()
     const [failure] = await db
       .select()
       .from(emailFailures)
@@ -307,6 +308,7 @@ export class EmailRetryService {
       | "admin_notification"
       | "verification",
   ): Promise<EmailFailureContext[]> {
+    const db = await getDatabase()
     const query = db.select().from(emailFailures)
 
     const failures = await query

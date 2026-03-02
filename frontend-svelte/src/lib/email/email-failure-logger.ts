@@ -11,7 +11,7 @@ import {
   type EmailFailure,
   type EmailFailureInsert,
 } from "$lib/db/schema"
-import { eq, and, lte, isNull, lt, sql } from "drizzle-orm"
+import { eq, and, lte, isNull, isNotNull, lt, sql } from "drizzle-orm"
 
 /**
  * Log an email failure to the database
@@ -132,7 +132,7 @@ export async function cleanupOldFailures(
     and(
       lt(emailFailures.createdAt, cutoffDate),
       // Only delete resolved failures
-      eq(emailFailures.resolvedAt, emailFailures.resolvedAt),
+      isNotNull(emailFailures.resolvedAt),
     ),
   )
 

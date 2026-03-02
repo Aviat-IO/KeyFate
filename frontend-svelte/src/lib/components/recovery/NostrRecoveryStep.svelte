@@ -174,11 +174,15 @@
         K = recoverKFromOpReturn(opReturnBytes);
       }
 
+      if (!nonceHex || !nonceHex.trim()) {
+        throw new Error('Share nonce is required for decryption');
+      }
+
       const results: DecryptedShareResult[] = [];
       for (const share of unwrappedShares) {
         try {
           const encShare = hexToBytes(share.share);
-          const plaintext = decryptShare(encShare, hexToBytes(nonceHex), K);
+          const plaintext = decryptShare(encShare, hexToBytes(nonceHex.trim()), K);
           results.push({
             share: plaintext,
             shareIndex: share.shareIndex,

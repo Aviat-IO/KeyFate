@@ -15,11 +15,8 @@ import {
   deriveKeyFromPassphrase,
   encryptWithDerivedKey,
 } from "./passphrase"
-import {
-  getConversationKey,
-  encrypt as nip44Encrypt,
-  decrypt as nip44Decrypt,
-} from "$lib/nostr/encryption"
+import { defaultNip44Ops } from "./nip44-ops"
+import { bytesToHex } from "./hex-utils"
 
 /**
  * Interface for NIP-44 encryption operations.
@@ -57,28 +54,6 @@ export interface DoubleEncryptResult {
   encryptedKPassphrase?: EncryptedKPassphrase
   /** Plaintext K for Bitcoin OP_RETURN storage */
   plaintextK: Uint8Array
-}
-
-/**
- * Default NIP-44 operations using the real nostr-tools NIP-44 v2 implementation.
- */
-const defaultNip44Ops: Nip44Ops = {
-  encrypt(
-    plaintext: string,
-    senderPrivkey: Uint8Array,
-    recipientPubkey: string,
-  ): string {
-    const convKey = getConversationKey(senderPrivkey, recipientPubkey)
-    return nip44Encrypt(plaintext, convKey)
-  },
-  decrypt(
-    ciphertext: string,
-    recipientPrivkey: Uint8Array,
-    senderPubkey: string,
-  ): string {
-    const convKey = getConversationKey(recipientPrivkey, senderPubkey)
-    return nip44Decrypt(ciphertext, convKey)
-  },
 }
 
 /**
@@ -137,9 +112,4 @@ export async function doubleEncryptShare(
   }
 }
 
-/** Convert Uint8Array to hex string */
-function bytesToHex(bytes: Uint8Array): string {
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("")
-}
+

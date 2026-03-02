@@ -15,33 +15,8 @@ import {
   decryptWithDerivedKey,
 } from "./passphrase"
 import type { Nip44Ops, EncryptedKPassphrase } from "./double-encrypt"
-import {
-  getConversationKey,
-  encrypt as nip44Encrypt,
-  decrypt as nip44Decrypt,
-} from "$lib/nostr/encryption"
-
-/**
- * Default NIP-44 operations using the real nostr-tools NIP-44 v2 implementation.
- */
-const defaultNip44Ops: Nip44Ops = {
-  encrypt(
-    plaintext: string,
-    senderPrivkey: Uint8Array,
-    recipientPubkey: string,
-  ): string {
-    const convKey = getConversationKey(senderPrivkey, recipientPubkey)
-    return nip44Encrypt(plaintext, convKey)
-  },
-  decrypt(
-    ciphertext: string,
-    recipientPrivkey: Uint8Array,
-    senderPubkey: string,
-  ): string {
-    const convKey = getConversationKey(recipientPrivkey, senderPubkey)
-    return nip44Decrypt(ciphertext, convKey)
-  },
-}
+import { defaultNip44Ops } from "./nip44-ops"
+import { hexToBytes } from "./hex-utils"
 
 /**
  * Recover K from NIP-44 encrypted payload.
@@ -131,14 +106,4 @@ export function decryptShare(
   return new TextDecoder().decode(plaintext)
 }
 
-/** Convert hex string to Uint8Array */
-function hexToBytes(hex: string): Uint8Array {
-  if (hex.length % 2 !== 0) {
-    throw new Error("Hex string must have even length")
-  }
-  const bytes = new Uint8Array(hex.length / 2)
-  for (let i = 0; i < bytes.length; i++) {
-    bytes[i] = parseInt(hex.substring(i * 2, i * 2 + 2), 16)
-  }
-  return bytes
-}
+

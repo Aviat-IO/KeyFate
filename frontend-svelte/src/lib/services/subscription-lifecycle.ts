@@ -12,7 +12,7 @@ import { logSubscriptionChanged } from "$lib/services/audit-logger"
 import { and, eq } from "drizzle-orm"
 import { logger } from "$lib/logger"
 import { getPriceInCents } from "$lib/constants/tiers"
-import { getTierByName } from "./tier-service"
+import { getTierByName, getTierById } from "./tier-service"
 import type {
   SubscriptionProvider,
   SubscriptionStatus,
@@ -38,21 +38,23 @@ export async function createSubscription(data: CreateSubscriptionData) {
       throw new Error(`Tier ${data.tierName} not found`)
     }
 
+    const insertValues: typeof userSubscriptions.$inferInsert = {
+      userId: data.userId,
+      tierId: tier.id,
+      provider: data.provider,
+      providerCustomerId: data.providerCustomerId,
+      providerSubscriptionId: data.providerSubscriptionId,
+      status: data.status,
+      currentPeriodStart: data.currentPeriodStart,
+      currentPeriodEnd: data.currentPeriodEnd,
+      cancelAtPeriodEnd: data.cancelAtPeriodEnd || false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+
     const [subscription] = await db
       .insert(userSubscriptions)
-      .values({
-        userId: data.userId,
-        tierId: tier.id,
-        provider: data.provider,
-        providerCustomerId: data.providerCustomerId,
-        providerSubscriptionId: data.providerSubscriptionId,
-        status: data.status,
-        currentPeriodStart: data.currentPeriodStart,
-        currentPeriodEnd: data.currentPeriodEnd,
-        cancelAtPeriodEnd: data.cancelAtPeriodEnd || false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      } as any)
+      .values(insertValues)
       .returning()
 
     await logSubscriptionChanged(data.userId, {
@@ -110,14 +112,14 @@ export async function updateSubscription(
       tierId = tier.id
     }
 
-    const updateData: any = {
-      ...data,
+    const { tierName: _tierName, ...restData } = data
+    const updateData: Partial<typeof userSubscriptions.$inferInsert> = {
+      ...restData,
       updatedAt: new Date(),
     }
 
     if (tierId) {
       updateData.tierId = tierId
-      delete updateData.tierName
     }
 
     const [subscription] = await db
@@ -331,8 +333,8 @@ export async function handlePaymentFailure(
       await updateSubscriptionStatus(userId, "past_due")
     }
 
-    const tier = await getTierByName(subscription.tierId as any)
-    const tierName = (tier?.name as SubscriptionTier) || "pro"
+    const tier = await getTierById(subscription.tierId)
+    const tierName: SubscriptionTier = tier?.name ?? "pro"
     const amountInCents = getPriceInCents(tierName, "monthly")
 
     const emailService = await getEmailService()
@@ -393,12 +395,13 @@ export async function scheduleDowngrade(userId: string) {
 
     const scheduledDowngradeAt = new Date(subscription.currentPeriodEnd)
 
+    const setDowngrade: Partial<typeof userSubscriptions.$inferInsert> = {
+      scheduledDowngradeAt,
+      updatedAt: new Date(),
+    }
     const [updatedSubscription] = await db
       .update(userSubscriptions)
-      .set({
-        scheduledDowngradeAt,
-        updatedAt: new Date(),
-      } as any)
+      .set(setDowngrade)
       .where(eq(userSubscriptions.userId, userId))
       .returning()
 
@@ -408,12 +411,14 @@ export async function scheduleDowngrade(userId: string) {
     ) {
       const { getFiatPaymentProvider } = await import("$lib/payment")
       const stripeProvider = getFiatPaymentProvider()
-      await stripeProvider.updateSubscription!(
-        subscription.providerSubscriptionId,
-        {
-          cancelAtPeriodEnd: true,
-        },
-      )
+      if (stripeProvider.updateSubscription) {
+        await stripeProvider.updateSubscription(
+          subscription.providerSubscriptionId,
+          {
+            cancelAtPeriodEnd: true,
+          },
+        )
+      }
     }
 
     await logSubscriptionChanged(userId, {
@@ -449,12 +454,13 @@ export async function cancelScheduledDowngrade(userId: string) {
       throw new Error("No scheduled downgrade found")
     }
 
+    const setCancelDowngrade: Partial<typeof userSubscriptions.$inferInsert> = {
+      scheduledDowngradeAt: null,
+      updatedAt: new Date(),
+    }
     const [updatedSubscription] = await db
       .update(userSubscriptions)
-      .set({
-        scheduledDowngradeAt: null,
-        updatedAt: new Date(),
-      } as any)
+      .set(setCancelDowngrade)
       .where(eq(userSubscriptions.userId, userId))
       .returning()
 
@@ -464,12 +470,14 @@ export async function cancelScheduledDowngrade(userId: string) {
     ) {
       const { getFiatPaymentProvider } = await import("$lib/payment")
       const stripeProvider = getFiatPaymentProvider()
-      await stripeProvider.updateSubscription!(
-        subscription.providerSubscriptionId,
-        {
-          cancelAtPeriodEnd: false,
-        },
-      )
+      if (stripeProvider.updateSubscription) {
+        await stripeProvider.updateSubscription(
+          subscription.providerSubscriptionId,
+          {
+            cancelAtPeriodEnd: false,
+          },
+        )
+      }
     }
 
     await logSubscriptionChanged(userId, {
@@ -502,14 +510,15 @@ export async function executeScheduledDowngrade(userId: string) {
     const subscription = await getUserSubscription(userId)
     const oldTierName = subscription?.tierId || "unknown"
 
+    const setExecuteDowngrade: Partial<typeof userSubscriptions.$inferInsert> = {
+      tierId: freeTier.id,
+      status: "cancelled",
+      scheduledDowngradeAt: null,
+      updatedAt: new Date(),
+    }
     const [updatedSubscription] = await db
       .update(userSubscriptions)
-      .set({
-        tierId: freeTier.id,
-        status: "cancelled",
-        scheduledDowngradeAt: null,
-        updatedAt: new Date(),
-      } as any)
+      .set(setExecuteDowngrade)
       .where(eq(userSubscriptions.userId, userId))
       .returning()
 

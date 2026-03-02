@@ -1,5 +1,6 @@
 import { drizzle } from "drizzle-orm/postgres-js"
-import postgres from "postgres"
+import type { PostgresJsDatabase } from "drizzle-orm/postgres-js"
+import postgres, { type Sql } from "postgres"
 import * as schema from "./schema"
 
 // Database connection configuration
@@ -112,8 +113,8 @@ if (process.env.DEBUG_DB === "true" && typeof connectionOptions === "object") {
 
 // Create the connection with enhanced configuration (only at runtime)
 // Use lazy initialization to prevent build-time errors
-let client: any = null
-let db: any = null
+let client: Sql | null = null
+let db: PostgresJsDatabase<typeof schema> | null = null
 
 // Lazy initialization function
 function initializeDatabase() {

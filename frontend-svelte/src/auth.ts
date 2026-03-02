@@ -46,13 +46,27 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
           try {
             const db = await getDatabase()
 
-            // Validate the verification token against the database
+            // Look up user first to get their email for token validation
+            const userResult = await db
+              .select()
+              .from(users)
+              .where(eq(users.id, credentials.userId as string))
+              .limit(1)
+
+            const user = userResult[0]
+            if (!user || !user.email) {
+              console.warn("[Auth] User not found or has no email for userId:", credentials.userId)
+              return null
+            }
+
+            // Validate the verification token against the database, scoped to this user's email
             const tokenResult = await db
               .select()
               .from(verificationTokens)
               .where(
                 and(
                   eq(verificationTokens.token, credentials.verificationToken as string),
+                  eq(verificationTokens.identifier, user.email),
                   gt(verificationTokens.expires, new Date()),
                 ),
               )
@@ -62,14 +76,6 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
               console.warn("[Auth] Invalid or expired verification token for userId:", credentials.userId)
               return null
             }
-
-            const userResult = await db
-              .select()
-              .from(users)
-              .where(eq(users.id, credentials.userId as string))
-              .limit(1)
-
-            const user = userResult[0]
             if (user && user.emailVerified) {
               // Expire the token after use (single-use)
               await db
