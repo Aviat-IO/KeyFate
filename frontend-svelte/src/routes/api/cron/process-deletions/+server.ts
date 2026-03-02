@@ -2,10 +2,7 @@ import { json } from "@sveltejs/kit"
 import type { RequestHandler } from "./$types"
 import { logger } from "$lib/logger"
 import { authorizeRequest } from "$lib/cron/utils"
-import {
-  getPendingDeletions,
-  executeAccountDeletion,
-} from "$lib/gdpr/deletion-service"
+import { runProcessDeletions } from "$lib/cron/process-deletions"
 
 /**
  * GET /api/cron/process-deletions
@@ -28,48 +25,8 @@ export const POST: RequestHandler = async (event) => {
       return json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    logger.info("Processing account deletions")
-
-    // Get deletions past grace period
-    const pendingDeletions = await getPendingDeletions()
-
-    if (pendingDeletions.length === 0) {
-      logger.info("No pending deletions found")
-      return json({
-        success: true,
-        processed: 0,
-        message: "No pending deletions",
-      })
-    }
-
-    logger.info("Found pending deletions", { count: pendingDeletions.length })
-
-    let successCount = 0
-    let failureCount = 0
-
-    // Process each deletion
-    for (const deletion of pendingDeletions) {
-      try {
-        logger.info("Processing deletion", { deletionId: deletion.id, userId: deletion.userId })
-
-        await executeAccountDeletion(deletion.userId)
-
-        successCount++
-        logger.info("Account deletion completed", { deletionId: deletion.id })
-      } catch (error) {
-        logger.error("Error processing deletion", error instanceof Error ? error : undefined, { deletionId: deletion.id })
-        failureCount++
-      }
-    }
-
-    logger.info("Deletion processing complete", { successCount, failureCount })
-
-    return json({
-      success: true,
-      processed: pendingDeletions.length,
-      successCount,
-      failureCount,
-    })
+    const result = await runProcessDeletions()
+    return json(result)
   } catch (error) {
     logger.error("Error in process-deletions", error instanceof Error ? error : undefined)
     return json(

@@ -5,7 +5,7 @@
  * their status to "confirmed" when the transaction is mined.
  */
 
-import { getDatabase } from "$lib/db/drizzle"
+import { getDatabase } from "$lib/db/get-database"
 import { bitcoinUtxos } from "$lib/db/schema"
 import { eq } from "drizzle-orm"
 import { logger } from "$lib/logger"

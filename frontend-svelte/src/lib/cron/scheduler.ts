@@ -1,79 +1,87 @@
 import cron from "node-cron"
-import crypto from "crypto"
 
 interface CronJob {
   name: string
   schedule: string
-  endpoint: string
+  handler: () => Promise<{ processed: number; succeeded: number; failed: number }>
 }
 
 const runningJobs = new Set<string>()
 
-const CRON_JOBS: CronJob[] = [
-  {
-    name: "check-secrets",
-    schedule: "*/15 * * * *",
-    endpoint: "/api/cron/check-secrets",
-  },
-  {
-    name: "process-reminders",
-    schedule: "*/15 * * * *",
-    endpoint: "/api/cron/process-reminders",
-  },
-  {
-    name: "process-exports",
-    schedule: "0 2 * * *",
-    endpoint: "/api/cron/process-exports",
-  },
-  {
-    name: "process-deletions",
-    schedule: "0 3 * * *",
-    endpoint: "/api/cron/process-deletions",
-  },
-  {
-    name: "process-subscription-downgrades",
-    schedule: "0 4 * * *",
-    endpoint: "/api/cron/process-subscription-downgrades",
-  },
-  {
-    name: "cleanup-tokens",
-    schedule: "0 5 * * *",
-    endpoint: "/api/cron/cleanup-tokens",
-  },
-  {
-    name: "confirm-utxos",
-    schedule: "*/10 * * * *",
-    endpoint: "/api/cron/confirm-utxos",
-  },
-  {
-    name: "cleanup-exports",
-    schedule: "0 6 * * *",
-    endpoint: "/api/cron/cleanup-exports",
-  },
-]
-
-function generateHMACHeaders(
-  endpoint: string,
-  cronSecret: string,
-): Record<string, string> {
-  const timestamp = Date.now()
-  const host = `127.0.0.1:${process.env.PORT || 3000}`
-  const url = `http://${host}${endpoint}`
-  const message = `${timestamp}.${url}`
-  const signature = crypto
-    .createHmac("sha256", cronSecret)
-    .update(message)
-    .digest("hex")
-
-  return {
-    "x-cron-signature": signature,
-    "x-cron-timestamp": timestamp.toString(),
-    "x-forwarded-proto": "http",
-    host,
-  }
+/**
+ * Lazily builds the cron job list. Handler functions are imported at call time
+ * to avoid top-level module resolution (which breaks test mocking in Bun).
+ */
+function getCronJobs(): CronJob[] {
+  return [
+    {
+      name: "check-secrets",
+      schedule: "*/15 * * * *",
+      handler: async () => {
+        const { runCheckSecrets } = await import("./check-secrets")
+        return runCheckSecrets()
+      },
+    },
+    {
+      name: "process-reminders",
+      schedule: "*/15 * * * *",
+      handler: async () => {
+        const { runProcessReminders } = await import("./process-reminders")
+        return runProcessReminders()
+      },
+    },
+    {
+      name: "process-exports",
+      schedule: "0 2 * * *",
+      handler: async () => {
+        const { runProcessExports } = await import("./process-exports")
+        return runProcessExports()
+      },
+    },
+    {
+      name: "process-deletions",
+      schedule: "0 3 * * *",
+      handler: async () => {
+        const { runProcessDeletions } = await import("./process-deletions")
+        return runProcessDeletions()
+      },
+    },
+    {
+      name: "process-subscription-downgrades",
+      schedule: "0 4 * * *",
+      handler: async () => {
+        const { runProcessSubscriptionDowngrades } = await import("./process-subscription-downgrades")
+        return runProcessSubscriptionDowngrades()
+      },
+    },
+    {
+      name: "cleanup-tokens",
+      schedule: "0 5 * * *",
+      handler: async () => {
+        const { runCleanupTokens } = await import("./cleanup-tokens")
+        return runCleanupTokens()
+      },
+    },
+    {
+      name: "confirm-utxos",
+      schedule: "*/10 * * * *",
+      handler: async () => {
+        const { confirmPendingUtxos } = await import("./confirm-utxos")
+        return confirmPendingUtxos()
+      },
+    },
+    {
+      name: "cleanup-exports",
+      schedule: "0 6 * * *",
+      handler: async () => {
+        const { runCleanupExports } = await import("./cleanup-exports")
+        return runCleanupExports()
+      },
+    },
+  ]
 }
 
-async function invokeCronEndpoint(job: CronJob): Promise<void> {
+async function invokeCronJob(job: CronJob): Promise<void> {
   if (runningJobs.has(job.name)) {
     console.warn(
       `[scheduler] ${job.name} is still running, skipping this invocation`,
@@ -81,38 +89,11 @@ async function invokeCronEndpoint(job: CronJob): Promise<void> {
     return
   }
 
-  const cronSecret = process.env.CRON_SECRET
-  if (!cronSecret) {
-    console.error(`[scheduler] CRON_SECRET not set, skipping ${job.name}`)
-    return
-  }
-
-  const port = process.env.PORT || 3000
-  const url = `http://127.0.0.1:${port}${job.endpoint}`
-
   runningJobs.add(job.name)
   try {
-    const headers = generateHMACHeaders(job.endpoint, cronSecret)
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...headers,
-      },
-    })
-
-    if (!response.ok) {
-      const body = await response.text().catch(() => "")
-      console.error(
-        `[scheduler] ${job.name} failed: ${response.status} ${body}`,
-      )
-      return
-    }
-
-    const result = await response.json().catch(() => ({}))
+    const result = await job.handler()
     console.log(
-      `[scheduler] ${job.name} completed: processed=${(result as any).processed ?? 0}, succeeded=${(result as any).succeeded ?? 0}, failed=${(result as any).failed ?? 0}`,
+      `[scheduler] ${job.name} completed: processed=${result.processed ?? 0}, succeeded=${result.succeeded ?? 0}, failed=${result.failed ?? 0}`,
     )
   } catch (error) {
     console.error(
@@ -126,62 +107,28 @@ async function invokeCronEndpoint(job: CronJob): Promise<void> {
 
 const scheduledTasks: cron.ScheduledTask[] = []
 
-async function waitForServer(
-  port: number | string,
-  maxAttempts = 30,
-): Promise<boolean> {
-  for (let i = 0; i < maxAttempts; i++) {
-    try {
-      const res = await fetch(`http://127.0.0.1:${port}/api/health`, {
-        signal: AbortSignal.timeout(2000),
-      })
-      if (res.ok) return true
-    } catch {
-      // Server not ready yet
-    }
-    await new Promise((r) => setTimeout(r, 1000))
-  }
-  return false
-}
-
-export function startScheduler(): Promise<void> | void {
+export function startScheduler(): void {
   const enabled = process.env.CRON_ENABLED !== "false"
   if (!enabled) {
     console.log("[scheduler] Cron scheduler disabled (CRON_ENABLED=false)")
     return
   }
 
-  if (!process.env.CRON_SECRET) {
-    console.warn("[scheduler] CRON_SECRET not set, scheduler will not start")
-    return
-  }
+  const jobs = getCronJobs()
 
-  const port = process.env.PORT || 3000
+  console.log(
+    `[scheduler] Starting cron scheduler with ${jobs.length} jobs`,
+  )
 
-  // Wait for the HTTP server to be ready before scheduling cron jobs
-  return waitForServer(port).then((ready) => {
-    if (!ready) {
-      console.error(
-        "[scheduler] Server did not become ready after 30s, starting scheduler anyway",
-      )
-    } else {
-      console.log("[scheduler] Server is ready, starting cron scheduler")
-    }
-
-    console.log(
-      `[scheduler] Starting cron scheduler with ${CRON_JOBS.length} jobs`,
-    )
-
-    for (const job of CRON_JOBS) {
-      const task = cron.schedule(job.schedule, () => {
-        invokeCronEndpoint(job).catch((err) => {
-          console.error(`[scheduler] Unhandled error in ${job.name}:`, err)
-        })
+  for (const job of jobs) {
+    const task = cron.schedule(job.schedule, () => {
+      invokeCronJob(job).catch((err) => {
+        console.error(`[scheduler] Unhandled error in ${job.name}:`, err)
       })
-      scheduledTasks.push(task)
-      console.log(`[scheduler] Registered: ${job.name} (${job.schedule})`)
-    }
-  })
+    })
+    scheduledTasks.push(task)
+    console.log(`[scheduler] Registered: ${job.name} (${job.schedule})`)
+  }
 }
 
 export function stopScheduler(): void {

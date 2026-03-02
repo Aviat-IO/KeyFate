@@ -28,7 +28,6 @@ describe("Cron Scheduler", () => {
 
   it("should not start when CRON_ENABLED is false", async () => {
     process.env.CRON_ENABLED = "false"
-    process.env.CRON_SECRET = "test-secret"
 
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {})
 
@@ -42,35 +41,14 @@ describe("Cron Scheduler", () => {
     consoleSpy.mockRestore()
   })
 
-  it("should not start when CRON_SECRET is not set", async () => {
-    delete process.env.CRON_SECRET
-    delete process.env.CRON_ENABLED
-
-    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
-
-    const { startScheduler } = await import("$lib/cron/scheduler")
-    startScheduler()
-
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("CRON_SECRET not set"),
-    )
-
-    consoleSpy.mockRestore()
-  })
-
-  it("should register all 7 cron jobs when enabled", async () => {
-    process.env.CRON_SECRET = "test-secret-with-enough-length"
+  it("should register all 8 cron jobs when enabled", async () => {
     delete process.env.CRON_ENABLED
 
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {})
 
-    // Mock fetch so waitForServer resolves immediately
-    const originalFetch = globalThis.fetch
-    globalThis.fetch = vi.fn().mockResolvedValue({ ok: true }) as typeof fetch
-
     const cron = await import("node-cron")
     const { startScheduler } = await import("$lib/cron/scheduler")
-    await startScheduler()
+    startScheduler()
 
     expect(cron.default.schedule).toHaveBeenCalledTimes(8)
 
@@ -81,31 +59,24 @@ describe("Cron Scheduler", () => {
     expect(schedules.filter((s: string) => s === "*/10 * * * *")).toHaveLength(1)
     expect(schedules.filter((s: string) => s.startsWith("0 "))).toHaveLength(5)
 
-    globalThis.fetch = originalFetch
     consoleSpy.mockRestore()
   })
 
   it("should stop all tasks when stopScheduler is called", async () => {
-    process.env.CRON_SECRET = "test-secret-with-enough-length"
     delete process.env.CRON_ENABLED
 
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {})
 
-    // Mock fetch so waitForServer resolves immediately
-    const originalFetch = globalThis.fetch
-    globalThis.fetch = vi.fn().mockResolvedValue({ ok: true }) as typeof fetch
-
     const { startScheduler, stopScheduler } = await import(
       "$lib/cron/scheduler"
     )
-    await startScheduler()
+    startScheduler()
     stopScheduler()
 
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining("stopped"),
     )
 
-    globalThis.fetch = originalFetch
     consoleSpy.mockRestore()
   })
 })
