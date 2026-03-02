@@ -40,7 +40,7 @@
 </script>
 
 <div class="flex flex-col {className}">
-  <div class="pb-8 text-center">
+  <div class="pb-4 text-center">
     <div class="flex min-h-[40px] items-center justify-center space-x-2">
       {#if isPopular}
         <Crown class="text-primary h-5 w-5" />
@@ -66,11 +66,11 @@
     </div>
   </div>
 
-  <div class="flex flex-1 flex-col space-y-6">
+  <div class="flex flex-1 flex-col space-y-4">
     <ul class="flex-1 space-y-3">
       {#each features as feature}
         <li class="flex items-start space-x-3">
-          <Check class="text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0" />
+          <Check class="{isPopular ? 'text-success' : 'text-muted-foreground'} mt-0.5 h-4 w-4 flex-shrink-0" />
           <span class="text-sm text-muted-foreground">{feature}</span>
         </li>
       {/each}
