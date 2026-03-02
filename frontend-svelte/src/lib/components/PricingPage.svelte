@@ -62,7 +62,7 @@
   <BillingToggle {billingPeriod} onPeriodChange={(p) => (billingPeriod = p)} />
 
   <!-- Pricing Cards -->
-  <div class="mx-auto grid max-w-4xl gap-8 md:grid-cols-2">
+  <div class="mx-auto grid max-w-4xl gap-12 md:grid-cols-2 md:gap-16">
     <PricingCard
       title="Free"
       description="Perfect for getting started"
