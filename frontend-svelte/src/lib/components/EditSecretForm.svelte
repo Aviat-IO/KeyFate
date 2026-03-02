@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+  import { untrack } from 'svelte';
   import DeleteConfirm from '$lib/components/DeleteConfirm.svelte';
   import * as Alert from '$lib/components/ui/alert';
   import { Button } from '$lib/components/ui/button';
@@ -27,15 +28,15 @@
   let deleteLoading = $state(false);
   let showDeleteModal = $state(false);
 
-  let title = $state(initialData.title);
+  let title = $state(untrack(() => initialData.title));
   let recipients = $state(
-    initialData.recipients.map((r) => ({
+    untrack(() => initialData.recipients.map((r) => ({
       name: r.name,
       email: r.email || '',
       phone: r.phone || ''
-    }))
+    })))
   );
-  let checkInDays = $state(initialData.check_in_days);
+  let checkInDays = $state(untrack(() => initialData.check_in_days));
 
   function addRecipient() {
     recipients = [...recipients, { name: '', email: '', phone: '' }];
