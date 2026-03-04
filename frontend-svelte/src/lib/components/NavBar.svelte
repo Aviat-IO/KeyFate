@@ -62,20 +62,20 @@
     <div class="flex h-16 items-center justify-between">
       <div class="flex items-center space-x-4">
         <a href={user ? '/dashboard' : '/'} class="flex items-center">
-          <!-- Mobile icons -->
+          <!-- Mobile logos (smaller) -->
           <img
-            src="/img/icon-light.png"
+            src="/img/logo-light.png"
             alt="KeyFate"
-            width="40"
-            height="40"
-            class="block h-10 w-10 sm:hidden dark:hidden"
+            width="120"
+            height="24"
+            class="block h-6 w-auto sm:hidden dark:hidden"
           />
           <img
-            src="/img/icon-dark.png"
+            src="/img/logo-dark.png"
             alt="KeyFate"
-            width="40"
-            height="40"
-            class="hidden h-10 w-10 dark:block dark:sm:hidden"
+            width="120"
+            height="24"
+            class="hidden h-6 w-auto dark:block dark:sm:hidden"
           />
           <!-- Desktop logos -->
           <img
