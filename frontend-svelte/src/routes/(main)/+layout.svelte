@@ -13,7 +13,7 @@
     <NavBar />
   </div>
 
-  <main class="mx-auto max-w-5xl px-6 py-12">
+  <main class="mx-auto max-w-5xl px-3 py-8 sm:px-6 sm:py-12">
     {@render children()}
   </main>
 
