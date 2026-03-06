@@ -45,11 +45,11 @@
 <Button variant="ghost" size="sm" onclick={handleTogglePause} disabled={isLoading} class="">
   {#if isLoading}
     <Loader2 class="h-4 w-4 animate-spin" />
-    {status === 'active' ? 'Pause' : 'Resume'}
+    {status === 'active' ? 'Pausing...' : 'Resuming...'}
   {:else if status === 'active'}
     <Pause class="h-4 w-4" />
     Pause
-  {:else}
+  {:else if status === 'paused'}
     <Play class="h-4 w-4" />
     Resume
   {/if}

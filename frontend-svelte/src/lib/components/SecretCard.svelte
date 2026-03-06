@@ -20,6 +20,16 @@
   let isTriggered = $derived(
     secretState.triggeredAt !== null || secretState.status === 'triggered'
   );
+  let isFailed = $derived(secretState.status === 'failed');
+  let isOverdue = $derived(
+    secretState.status === 'active' &&
+      !isTriggered &&
+      !serverShareDeleted &&
+      secretState.nextCheckIn !== null &&
+      new Date(secretState.nextCheckIn).getTime() < Date.now()
+  );
+  /** Secret is in a terminal/inactive state where no actions apply */
+  let isInactive = $derived(isTriggered || isFailed || serverShareDeleted);
 
   interface StatusBadge {
     label: string;
@@ -35,6 +45,9 @@
     if (triggeredAt || status === 'triggered') {
       return { label: 'Sent', colorClass: 'border-muted-foreground/50 text-muted-foreground' };
     }
+    if (status === 'failed') {
+      return { label: 'Failed', colorClass: 'border-destructive/50 bg-destructive/10 text-destructive' };
+    }
     if (shareDeleted) {
       return { label: 'Disabled', colorClass: 'border-muted-foreground/50 text-muted-foreground' };
     }
@@ -48,6 +61,7 @@
       (checkInDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
     );
 
+    if (daysUntilCheckIn <= 0) return { label: 'Overdue', colorClass: 'border-destructive/50 bg-destructive/10 text-destructive' };
     if (daysUntilCheckIn <= 2) return { label: 'Urgent', colorClass: 'border-destructive/50 bg-destructive/10 text-destructive' };
     if (daysUntilCheckIn <= 5) return { label: 'Upcoming', colorClass: 'border-warning/50 bg-warning/10 text-warning' };
     return { label: 'Active', colorClass: 'border-success/50 bg-success/10 text-success' };
@@ -72,7 +86,8 @@
 
   /** Keyline progress: percentage of check-in interval elapsed */
   let keylineProgress = $derived.by(() => {
-    if (isTriggered || serverShareDeleted || secretState.status === 'paused') return 0;
+    if (isInactive || secretState.status === 'paused') return 0;
+    if (isOverdue) return 100;
     const now = new Date();
     const nextCheckIn = secretState.nextCheckIn ? new Date(secretState.nextCheckIn) : now;
     const intervalMs = secretState.checkInDays * 24 * 60 * 60 * 1000;
@@ -84,8 +99,10 @@
   /** Massive countdown text */
   let countdownText = $derived.by(() => {
     if (isTriggered) return 'Sent';
+    if (isFailed) return 'Failed';
     if (serverShareDeleted) return '—';
     if (secretState.status === 'paused') return 'Paused';
+    if (isOverdue) return 'Overdue';
     return formatGranularTime(secretState.nextCheckIn || new Date());
   });
 
@@ -116,12 +133,12 @@
   }
 
   function getLastCheckInText(): string | null {
-    if (!secretState.lastCheckIn || isTriggered || serverShareDeleted) return null;
+    if (!secretState.lastCheckIn || isInactive) return null;
     return format(secretState.lastCheckIn);
   }
 
   function getNextCheckInDate(): string | null {
-    if (isTriggered || serverShareDeleted || secretState.status === 'paused') return null;
+    if (isInactive || secretState.status === 'paused') return null;
     const triggerDate = secretState.nextCheckIn
       ? new Date(secretState.nextCheckIn)
       : new Date();
@@ -130,6 +147,10 @@
       day: 'numeric',
       year: 'numeric'
     });
+  }
+
+  function getOverdueLabel(): string {
+    return isOverdue ? 'Was Due' : 'Triggers On';
   }
 </script>
 
@@ -153,7 +174,7 @@
   </div>
 
   <!-- Keyline progress bar -->
-  {#if !isTriggered && !serverShareDeleted && secretState.status !== 'paused'}
+  {#if !isInactive && secretState.status !== 'paused'}
     <Keyline progress={keylineProgress} />
   {:else}
     <div class="my-8 h-[2px] w-full bg-muted"></div>
@@ -164,7 +185,7 @@
     <DataLabel label="Recipients" value={getRecipientsText()} />
 
     {#if getNextCheckInDate()}
-      <DataLabel label="Triggers On" value={getNextCheckInDate()} />
+      <DataLabel label={getOverdueLabel()} value={getNextCheckInDate()} />
     {/if}
 
     {#if getLastCheckInText()}
@@ -180,9 +201,14 @@
 
   <!-- Actions -->
   <div class="mt-8 flex items-center justify-between gap-4">
-    {#if !isTriggered}
+    {#if isInactive}
+      <div></div>
+      <Button variant="ghost" size="sm" href={`/secrets/${secretState.id}/view`} class="">
+        View
+      </Button>
+    {:else}
       <div class="flex items-center gap-2">
-        {#if !serverShareDeleted}
+        {#if !isOverdue}
           <TogglePauseButton
             secretId={secretState.id}
             status={secretState.status}
@@ -194,16 +220,14 @@
           View
         </Button>
 
-        {#if !serverShareDeleted}
-          <Button variant="ghost" size="sm" href={`/secrets/${secretState.id}/edit`} class="">
-            <Pencil class="mr-1 h-4 w-4" />
-            Edit
-          </Button>
-        {/if}
+        <Button variant="ghost" size="sm" href={`/secrets/${secretState.id}/edit`} class="">
+          <Pencil class="mr-1 h-4 w-4" />
+          Edit
+        </Button>
       </div>
 
       <div>
-        {#if !serverShareDeleted && secretState.status === 'active' && canCheckIn}
+        {#if secretState.status === 'active' && !isOverdue && canCheckIn}
           <CheckInButton
             secretId={secretState.id}
             onCheckInSuccess={handleCheckInSuccess}
@@ -211,11 +235,6 @@
           />
         {/if}
       </div>
-    {:else}
-      <div></div>
-      <Button variant="ghost" size="sm" href={`/secrets/${secretState.id}/view`} class="">
-        View
-      </Button>
     {/if}
   </div>
 </div>

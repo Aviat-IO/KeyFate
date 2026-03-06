@@ -42,30 +42,48 @@
 		data.secret.triggeredAt !== null || data.secret.status === 'triggered'
 	);
 	let serverShareDeleted = $derived(!data.secret.serverShare);
+	let isFailed = $derived(data.secret.status === 'failed');
+	let isOverdue = $derived(
+		data.secret.status === 'active' &&
+			!isTriggered &&
+			!serverShareDeleted &&
+			data.secret.nextCheckIn !== null &&
+			new Date(data.secret.nextCheckIn).getTime() < Date.now()
+	);
+	let isInactive = $derived(isTriggered || isFailed || serverShareDeleted);
 
 	let statusLabel = $derived.by(() => {
 		if (isTriggered) return 'sent';
+		if (isFailed) return 'failed';
+		if (serverShareDeleted) return 'disabled';
 		if (data.secret.status === 'paused') return 'paused';
+		if (isOverdue) return 'overdue';
 		if (data.secret.status === 'active') return 'active';
 		return 'unknown';
 	});
 
 	let statusColorClass = $derived.by(() => {
 		if (isTriggered) return 'border-muted-foreground/50 text-muted-foreground';
+		if (isFailed) return 'border-destructive/50 bg-destructive/10 text-destructive';
+		if (serverShareDeleted) return 'border-muted-foreground/50 text-muted-foreground';
 		if (data.secret.status === 'paused') return 'border-warning/50 bg-warning/10 text-warning';
+		if (isOverdue) return 'border-destructive/50 bg-destructive/10 text-destructive';
 		if (data.secret.status === 'active') return 'border-success/50 bg-success/10 text-success';
 		return 'border-muted-foreground/50 text-muted-foreground';
 	});
 
 	let countdownText = $derived.by(() => {
 		if (isTriggered) return 'Sent';
+		if (isFailed) return 'Failed';
 		if (serverShareDeleted) return '—';
 		if (data.secret.status === 'paused') return 'Paused';
+		if (isOverdue) return 'Overdue';
 		return formatGranularTime(data.secret.nextCheckIn || new Date().toISOString());
 	});
 
 	let keylineProgress = $derived.by(() => {
-		if (isTriggered || serverShareDeleted || data.secret.status === 'paused') return 0;
+		if (isInactive || data.secret.status === 'paused') return 0;
+		if (isOverdue) return 100;
 		const now = new Date();
 		const nextCheckIn = data.secret.nextCheckIn ? new Date(data.secret.nextCheckIn) : now;
 		const intervalMs = data.secret.checkInDays * 24 * 60 * 60 * 1000;
@@ -75,7 +93,7 @@
 	});
 
 	let canCheckIn = $derived.by(() => {
-		if (isTriggered || data.secret.status === 'paused' || serverShareDeleted) return false;
+		if (isInactive || data.secret.status === 'paused' || isOverdue) return false;
 		if (!data.secret.lastCheckIn) return true;
 		const lastCheckIn = new Date(data.secret.lastCheckIn);
 		const fifteenMinutesAgo = new Date();
@@ -326,7 +344,7 @@
 	</div>
 
 	<!-- Keyline -->
-	{#if !isTriggered && !serverShareDeleted && data.secret.status !== 'paused'}
+	{#if !isInactive && data.secret.status !== 'paused'}
 		<Keyline progress={keylineProgress} />
 	{:else}
 		<div class="my-8 h-[2px] w-full bg-muted"></div>
@@ -336,7 +354,7 @@
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<!-- Primary actions -->
 		<div class="flex flex-wrap items-center gap-2">
-			{#if !isTriggered}
+			{#if !isInactive}
 				{#if canCheckIn}
 					<Button
 						variant="default"
@@ -354,7 +372,7 @@
 					</Button>
 				{/if}
 
-				{#if !serverShareDeleted}
+				{#if !isOverdue && (data.secret.status === 'active' || data.secret.status === 'paused')}
 					<Button
 						variant="outline"
 						onclick={handleTogglePause}
@@ -369,17 +387,17 @@
 							{pauseLoading ? 'Pausing...' : 'Pause'}
 						{/if}
 					</Button>
-
-					<Button
-						variant="outline"
-						size="default"
-						href={`/secrets/${data.secret.id}/edit`}
-						class="text-sm font-semibold"
-					>
-						<Pencil class="mr-2 h-4 w-4" />
-						Edit
-					</Button>
 				{/if}
+
+				<Button
+					variant="outline"
+					size="default"
+					href={`/secrets/${data.secret.id}/edit`}
+					class="text-sm font-semibold"
+				>
+					<Pencil class="mr-2 h-4 w-4" />
+					Edit
+				</Button>
 			{/if}
 		</div>
 
