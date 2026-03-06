@@ -5,6 +5,7 @@
  * with consistent branding and responsive design.
  */
 
+import { SITE_URL } from "$lib/env"
 import { formatTimeRemaining } from "$lib/time-utils"
 import { getTierConfig } from "$lib/constants/tiers"
 
@@ -850,7 +851,7 @@ export function renderAccountDeletionCancelledTemplate(params: {
   userName: string
 }): EmailTemplate {
   const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
-  const dashboardUrl = `${process.env.NEXTAUTH_URL || "https://keyfate.com"}/dashboard`
+  const dashboardUrl = `${SITE_URL || "https://keyfate.com"}/dashboard`
   const content = `
     <p>Hi ${params.userName},</p>
     <p>Your account deletion request has been cancelled.</p>

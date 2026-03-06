@@ -1,3 +1,4 @@
+import { SITE_URL } from "$lib/env"
 import { logger } from "$lib/logger"
 import { getDatabase } from "$lib/db/drizzle"
 import {
@@ -60,10 +61,7 @@ export async function initiateAccountDeletion(userId: string) {
   }
 
   // Send confirmation email
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.NEXTAUTH_URL ||
-    "http://localhost:3000"
+  const baseUrl = SITE_URL || "https://keyfate.com"
   await sendEmail({
     to: user.email,
     subject: "Confirm Your Account Deletion Request",
@@ -115,10 +113,7 @@ export async function confirmAccountDeletion(token: string) {
 
   if (user) {
     // Send grace period started email
-    const baseUrl =
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      process.env.NEXTAUTH_URL ||
-      "http://localhost:3000"
+    const baseUrl = SITE_URL || "https://keyfate.com"
     await sendEmail({
       to: user.email,
       subject: "Your Account Will Be Deleted in 30 Days",
