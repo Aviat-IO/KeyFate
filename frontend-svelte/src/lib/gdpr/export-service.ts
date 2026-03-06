@@ -1,3 +1,4 @@
+import { SITE_URL } from "$lib/env"
 import { getDatabase } from "$lib/db/drizzle"
 import {
   users,
@@ -183,7 +184,7 @@ export async function uploadExportFile(
 
   await writeFile(filePath, jsonContent, "utf8")
 
-  const siteUrl = process.env.PUBLIC_SITE_URL || process.env.NEXTAUTH_URL || "http://localhost:3000"
+  const siteUrl = SITE_URL || "https://keyfate.com"
   const fileUrl = `${siteUrl}/api/user/export-data/download?user=${userId}&file=${fileName}`
 
   return {

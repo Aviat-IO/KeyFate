@@ -7,6 +7,7 @@
 
 import nodemailer from "nodemailer"
 import { CircuitBreaker } from "$lib/circuit-breaker"
+import { SITE_URL } from "$lib/env"
 import { logger } from "$lib/logger"
 import { SENDGRID_UNSUBSCRIBE_GROUPS, type UnsubscribeGroup } from "./constants"
 
@@ -261,7 +262,7 @@ ${emailData.text || "HTML content provided"}
             throw new Error("Failed to create email transporter")
           }
 
-          const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://keyfate.com"
+          const siteUrl = SITE_URL || "https://keyfate.com"
           const unsubscribeUrl = `${siteUrl}/settings/notifications`
 
           const mailOptions = {
@@ -414,7 +415,7 @@ export async function sendVerificationEmail(
   const { renderVerificationTemplate } = await import("./templates")
 
   const templateData = {
-    verificationUrl: `${process.env.NEXTAUTH_URL}/auth/verify-email?token=${token}&email=${encodeURIComponent(
+    verificationUrl: `${SITE_URL || "https://keyfate.com"}/auth/verify-email?token=${token}&email=${encodeURIComponent(
       email,
     )}`,
     expirationHours: 24,
