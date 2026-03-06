@@ -13,6 +13,9 @@ import { deleteExportFile } from "$lib/gdpr/export-service"
 
 export interface CleanupExportsResult {
   success: boolean
+  processed: number
+  succeeded: number
+  failed: number
   cleaned: number
   errors: number
   message?: string
@@ -32,6 +35,9 @@ export async function runCleanupExports(): Promise<CleanupExportsResult> {
     logger.info("No expired exports found")
     return {
       success: true,
+      processed: 0,
+      succeeded: 0,
+      failed: 0,
       cleaned: 0,
       errors: 0,
       message: "No expired exports",
@@ -64,6 +70,9 @@ export async function runCleanupExports(): Promise<CleanupExportsResult> {
 
   return {
     success: true,
+    processed: deletedCount + errorCount,
+    succeeded: deletedCount,
+    failed: errorCount,
     cleaned: deletedCount,
     errors: errorCount,
   }
