@@ -3,7 +3,7 @@ import type { RequestHandler } from "./$types"
 import { authorizeRequest } from "$lib/cron/utils"
 import { getDatabase } from "$lib/db/drizzle"
 import { secrets, reminderJobs, emailFailures } from "$lib/db/schema"
-import { eq, lt, and, sql, isNotNull, isNull, gt } from "drizzle-orm"
+import { eq, lt, and, sql } from "drizzle-orm"
 
 /**
  * GET /api/health/cron-diagnostics
@@ -22,17 +22,19 @@ export const GET: RequestHandler = async (event) => {
   try {
     const db = await getDatabase()
     const now = new Date()
+    const nowIso = now.toISOString()
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
 
-    // 1. Active secrets overview
-    const [activeSecretStats] = await db
-      .select({
-        total: sql<number>`count(*)`,
-        withServerShare: sql<number>`count(*) filter (where ${secrets.serverShare} is not null)`,
-        withNextCheckIn: sql<number>`count(*) filter (where ${secrets.nextCheckIn} is not null)`,
-        overdueCount: sql<number>`count(*) filter (where ${secrets.nextCheckIn} < ${now})`,
-      })
-      .from(secrets)
-      .where(eq(secrets.status, "active"))
+    // 1. Active secrets overview (use raw SQL to avoid Drizzle parameter issues with FILTER)
+    const [activeSecretStats] = await db.execute(sql`
+      select
+        count(*) as total,
+        count(*) filter (where server_share is not null) as "withServerShare",
+        count(*) filter (where next_check_in is not null) as "withNextCheckIn",
+        count(*) filter (where next_check_in < ${nowIso}::timestamp) as "overdueCount"
+      from secrets
+      where status = 'active'
+    `)
 
     // 2. Overdue secrets detail (no sensitive data)
     const overdueSecrets = await db
@@ -56,18 +58,18 @@ export const GET: RequestHandler = async (event) => {
       )
 
     // 3. Reminder jobs breakdown
-    const [reminderStats] = await db
-      .select({
-        totalPending: sql<number>`count(*) filter (where ${reminderJobs.status} = 'pending')`,
-        totalSent: sql<number>`count(*) filter (where ${reminderJobs.status} = 'sent')`,
-        totalFailed: sql<number>`count(*) filter (where ${reminderJobs.status} = 'failed')`,
-        totalCancelled: sql<number>`count(*) filter (where ${reminderJobs.status} = 'cancelled')`,
-        pendingOverdue: sql<number>`count(*) filter (where ${reminderJobs.status} = 'pending' and ${reminderJobs.scheduledFor} < ${now})`,
-        pendingFuture: sql<number>`count(*) filter (where ${reminderJobs.status} = 'pending' and ${reminderJobs.scheduledFor} >= ${now})`,
-        failedMaxRetries: sql<number>`count(*) filter (where ${reminderJobs.status} = 'failed' and ${reminderJobs.retryCount} >= 3)`,
-        failedRetryable: sql<number>`count(*) filter (where ${reminderJobs.status} = 'failed' and ${reminderJobs.retryCount} < 3)`,
-      })
-      .from(reminderJobs)
+    const [reminderStats] = await db.execute(sql`
+      select
+        count(*) filter (where status = 'pending') as "totalPending",
+        count(*) filter (where status = 'sent') as "totalSent",
+        count(*) filter (where status = 'failed') as "totalFailed",
+        count(*) filter (where status = 'cancelled') as "totalCancelled",
+        count(*) filter (where status = 'pending' and scheduled_for < ${nowIso}::timestamp) as "pendingOverdue",
+        count(*) filter (where status = 'pending' and scheduled_for >= ${nowIso}::timestamp) as "pendingFuture",
+        count(*) filter (where status = 'failed' and retry_count >= 3) as "failedMaxRetries",
+        count(*) filter (where status = 'failed' and retry_count < 3) as "failedRetryable"
+      from reminder_jobs
+    `)
 
     // 4. Failed reminders with errors (last 10)
     const recentFailedReminders = await db
@@ -88,12 +90,12 @@ export const GET: RequestHandler = async (event) => {
       .limit(10)
 
     // 5. Recent email failures
-    const [emailFailureStats] = await db
-      .select({
-        total: sql<number>`count(*)`,
-        last24h: sql<number>`count(*) filter (where ${emailFailures.createdAt} > ${new Date(now.getTime() - 24 * 60 * 60 * 1000)})`,
-      })
-      .from(emailFailures)
+    const [emailFailureStats] = await db.execute(sql`
+      select
+        count(*) as total,
+        count(*) filter (where created_at > ${yesterday}::timestamp) as "last24h"
+      from email_failures
+    `)
 
     // 6. Environment config check
     const envCheck = {
@@ -108,14 +110,14 @@ export const GET: RequestHandler = async (event) => {
     }
 
     // 7. All secrets status breakdown
-    const [allSecretStats] = await db
-      .select({
-        active: sql<number>`count(*) filter (where ${secrets.status} = 'active')`,
-        triggered: sql<number>`count(*) filter (where ${secrets.status} = 'triggered')`,
-        paused: sql<number>`count(*) filter (where ${secrets.status} = 'paused')`,
-        total: sql<number>`count(*)`,
-      })
-      .from(secrets)
+    const [allSecretStats] = await db.execute(sql`
+      select
+        count(*) filter (where status = 'active') as active,
+        count(*) filter (where status = 'triggered') as triggered,
+        count(*) filter (where status = 'paused') as paused,
+        count(*) as total
+      from secrets
+    `)
 
     return json({
       timestamp: now.toISOString(),
