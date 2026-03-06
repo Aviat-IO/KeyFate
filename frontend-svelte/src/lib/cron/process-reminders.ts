@@ -397,6 +397,37 @@ export async function runProcessReminders(): Promise<ProcessRemindersResult> {
     withBackoff: process.env.NODE_ENV === "development",
   })
 
+  // Observability: if no overdue secrets found, check if there are active
+  // secrets with nextCheckIn approaching to detect silent failures
+  if (overdueSecrets.length === 0) {
+    try {
+      const [activeStats] = await db
+        .select({
+          totalActive: sql<number>`count(*)`,
+          nearDeadline: sql<number>`count(*) filter (where ${secrets.nextCheckIn} < ${nowIso}::timestamp + interval '1 hour')`,
+          pastDeadlineTriggered: sql<number>`count(*) filter (where ${secrets.status} = 'triggered')`,
+        })
+        .from(secrets)
+        .where(eq(secrets.status, "active"))
+
+      const totalActive = Number(activeStats?.totalActive ?? 0)
+      const nearDeadline = Number(activeStats?.nearDeadline ?? 0)
+
+      if (totalActive > 0) {
+        logger.info("Active secrets status check", {
+          totalActive,
+          nearDeadline,
+          pastDeadlineTriggered: Number(activeStats?.pastDeadlineTriggered ?? 0),
+        })
+      }
+    } catch (err) {
+      // Don't let observability crash the cron
+      logger.error("Error in observability check", undefined, {
+        error: sanitizeError(err),
+      })
+    }
+  }
+
   let processed = 0
   let succeeded = 0
   let failedCount = 0
