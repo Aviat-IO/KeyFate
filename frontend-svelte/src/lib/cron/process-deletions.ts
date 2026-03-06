@@ -13,6 +13,8 @@ import {
 export interface ProcessDeletionsResult {
   success: boolean
   processed: number
+  succeeded: number
+  failed: number
   successCount: number
   failureCount: number
   message?: string
@@ -29,6 +31,8 @@ export async function runProcessDeletions(): Promise<ProcessDeletionsResult> {
     return {
       success: true,
       processed: 0,
+      succeeded: 0,
+      failed: 0,
       successCount: 0,
       failureCount: 0,
       message: "No pending deletions",
@@ -60,6 +64,8 @@ export async function runProcessDeletions(): Promise<ProcessDeletionsResult> {
   return {
     success: true,
     processed: pendingDeletions.length,
+    succeeded: successCount,
+    failed: failureCount,
     successCount,
     failureCount,
   }

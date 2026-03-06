@@ -18,6 +18,8 @@ import { sendEmail } from "$lib/email/email-service"
 export interface ProcessExportsResult {
   success: boolean
   processed: number
+  succeeded: number
+  failed: number
   successCount: number
   failureCount: number
   message?: string
@@ -40,6 +42,8 @@ export async function runProcessExports(): Promise<ProcessExportsResult> {
     return {
       success: true,
       processed: 0,
+      succeeded: 0,
+      failed: 0,
       successCount: 0,
       failureCount: 0,
       message: "No pending exports",
@@ -129,6 +133,8 @@ export async function runProcessExports(): Promise<ProcessExportsResult> {
   return {
     success: true,
     processed: pendingJobs.length,
+    succeeded: successCount,
+    failed: failureCount,
     successCount,
     failureCount,
   }

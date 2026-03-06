@@ -12,6 +12,9 @@ import { logger } from "$lib/logger"
 import { and, lte, eq, isNotNull, sql } from "drizzle-orm"
 
 export interface ProcessSubscriptionDowngradesResult {
+  processed: number
+  succeeded: number
+  failed: number
   downgradesProcessed: number
   downgradesSuccessful: number
   downgradesFailed: number
@@ -85,6 +88,9 @@ export async function runProcessSubscriptionDowngrades(): Promise<ProcessSubscri
   })
 
   return {
+    processed: downgradesProcessed,
+    succeeded: downgradesSuccessful,
+    failed: downgradesFailed,
     downgradesProcessed,
     downgradesSuccessful,
     downgradesFailed,

@@ -11,6 +11,9 @@ import { logger } from "$lib/logger"
 
 export interface CleanupTokensResult {
   success: boolean
+  processed: number
+  succeeded: number
+  failed: number
   deletedCount: number
   timestamp: string
 }
@@ -31,6 +34,9 @@ export async function runCleanupTokens(): Promise<CleanupTokensResult> {
 
   return {
     success: true,
+    processed: deletedTokens.length,
+    succeeded: deletedTokens.length,
+    failed: 0,
     deletedCount: deletedTokens.length,
     timestamp: now.toISOString(),
   }
