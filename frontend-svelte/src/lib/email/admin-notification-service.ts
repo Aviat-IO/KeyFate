@@ -6,6 +6,7 @@
  */
 
 import { sendEmail, type EmailResult } from "./email-service"
+import { COMPANY, SUPPORT_EMAIL } from "$lib/env"
 
 // Notification severity levels
 export type NotificationSeverity = "critical" | "high" | "medium" | "low"
@@ -71,7 +72,7 @@ function formatNotificationContent(
 ): { subject: string; html: string; text: string } {
   const timestamp = data.timestamp || new Date()
   const retryCount = data.retryCount || 0
-  const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
+  const companyName = COMPANY || "KeyFate"
 
   const subject = data.secretTitle
     ? `${companyName} Admin: Email delivery issue - ${data.secretTitle} [${severity}]`
@@ -248,7 +249,7 @@ export async function sendAdminNotification(
     // Get admin email from environment or use default
     const adminEmail =
       process.env.ADMIN_ALERT_EMAIL ||
-      process.env.NEXT_PUBLIC_SUPPORT_EMAIL ||
+      SUPPORT_EMAIL ||
       "support@keyfate.com"
 
     // Send notification using existing email service

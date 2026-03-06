@@ -5,7 +5,7 @@
  * with consistent branding and responsive design.
  */
 
-import { SITE_URL } from "$lib/env"
+import { SITE_URL, COMPANY, SUPPORT_EMAIL } from "$lib/env"
 import { formatTimeRemaining } from "$lib/time-utils"
 import { getTierConfig } from "$lib/constants/tiers"
 
@@ -14,7 +14,7 @@ import { getTierConfig } from "$lib/constants/tiers"
  * Centralized to ensure consistency across all email templates
  */
 function getSupportEmail(): string {
-  return process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@keyfate.com"
+  return SUPPORT_EMAIL || "support@keyfate.com"
 }
 
 // Template data interfaces
@@ -88,7 +88,7 @@ interface ValidationResult {
  * Designed to avoid spam filters with clean, professional styling
  */
 export function renderBaseTemplate(data: BaseTemplateData): EmailTemplate {
-  const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
+  const companyName = COMPANY || "KeyFate"
   const currentYear = new Date().getFullYear()
   const supportEmail = getSupportEmail()
 
@@ -196,7 +196,7 @@ Questions? Contact us at ${supportEmail}
 export function renderVerificationTemplate(
   data: VerificationTemplateData,
 ): EmailTemplate {
-  const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
+  const companyName = COMPANY || "KeyFate"
   const userName = data.userName || "there"
 
   const content = `
@@ -297,7 +297,7 @@ export function renderReminderTemplate(
 export function renderDisclosureTemplate(
   data: DisclosureTemplateData,
 ): EmailTemplate {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://keyfate.com"
+  const siteUrl = SITE_URL || "https://keyfate.com"
   const decryptUrl = `${siteUrl}/decrypt`
   const lastSeenText = data.senderLastSeen
     ? data.senderLastSeen.toLocaleDateString()
@@ -364,7 +364,7 @@ ${data.secretContent}
  * OTP authentication email template
  */
 export function renderOTPTemplate(data: OTPTemplateData): EmailTemplate {
-  const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
+  const companyName = COMPANY || "KeyFate"
   const userName = data.userName || "there"
 
   const content = `
@@ -407,7 +407,7 @@ export function renderOTPTemplate(data: OTPTemplateData): EmailTemplate {
 export function renderPasswordResetTemplate(
   data: PasswordResetTemplateData,
 ): EmailTemplate {
-  const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
+  const companyName = COMPANY || "KeyFate"
   const userName = data.userName || "there"
 
   const content = `
@@ -583,7 +583,7 @@ export function renderSubscriptionConfirmationTemplate(params: {
   interval: string
   nextBillingDate: Date
 }): EmailTemplate {
-  const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
+  const companyName = COMPANY || "KeyFate"
   const formattedAmount = formatCurrency(params.amount)
   const formattedDate = params.nextBillingDate.toLocaleDateString()
   const providerName = params.provider === "stripe" ? "Credit Card" : "Bitcoin"
@@ -600,7 +600,7 @@ export function renderSubscriptionConfirmationTemplate(params: {
     <p>Your ${capitalizeFirst(params.tierName)} features include:</p>
     <ul style="color: #374151;">${getTierFeaturesHtml(params.tierName)}</ul>
     <p style="text-align: center;">
-      <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard" class="button" style="color: #ffffff; text-decoration: none;">Go to Dashboard</a>
+      <a href="${SITE_URL}/dashboard" class="button" style="color: #ffffff; text-decoration: none;">Go to Dashboard</a>
     </p>
   `
   const baseTemplate = renderBaseTemplate({ title: "Subscription Confirmed", content })
@@ -615,7 +615,7 @@ export function renderPaymentFailedTemplate(params: {
   maxAttempts: number
   nextRetry: Date
 }): EmailTemplate {
-  const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
+  const companyName = COMPANY || "KeyFate"
   const formattedAmount = formatCurrency(params.amount)
   const formattedRetry = params.nextRetry.toLocaleString()
   const providerName = params.provider === "stripe" ? "Credit Card" : "Bitcoin"
@@ -635,7 +635,7 @@ export function renderPaymentFailedTemplate(params: {
       <li>Update your payment method if needed</li>
     </ul>
     <p style="text-align: center;">
-      <a href="${process.env.NEXT_PUBLIC_SITE_URL}/settings/subscription" class="button" style="color: #ffffff; text-decoration: none;">Update Payment Method</a>
+      <a href="${SITE_URL}/settings/subscription" class="button" style="color: #ffffff; text-decoration: none;">Update Payment Method</a>
     </p>
   `
   const baseTemplate = renderBaseTemplate({ title: "Payment Update Needed", content })
@@ -645,7 +645,7 @@ export function renderPaymentFailedTemplate(params: {
 export function renderSubscriptionCancelledTemplate(params: {
   userName: string
 }): EmailTemplate {
-  const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
+  const companyName = COMPANY || "KeyFate"
   const content = `
     <p>Hi ${params.userName},</p>
     <p>Your subscription has been cancelled. We're sorry to see you go.</p>
@@ -659,7 +659,7 @@ export function renderSubscriptionCancelledTemplate(params: {
       <li>You can resubscribe at any time</li>
     </ul>
     <p style="text-align: center;">
-      <a href="${process.env.NEXT_PUBLIC_SITE_URL}/pricing" class="button" style="color: #ffffff; text-decoration: none;">View Plans</a>
+      <a href="${SITE_URL}/pricing" class="button" style="color: #ffffff; text-decoration: none;">View Plans</a>
     </p>
   `
   const baseTemplate = renderBaseTemplate({ title: "Subscription Cancelled", content })
@@ -671,7 +671,7 @@ export function renderTrialWillEndTemplate(params: {
   daysRemaining: number
   trialEndDate: Date
 }): EmailTemplate {
-  const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
+  const companyName = COMPANY || "KeyFate"
   const formattedDate = params.trialEndDate.toLocaleDateString()
   const content = `
     <p>Hi ${params.userName},</p>
@@ -686,7 +686,7 @@ export function renderTrialWillEndTemplate(params: {
       <li>Custom check-in intervals</li>
     </ul>
     <p style="text-align: center;">
-      <a href="${process.env.NEXT_PUBLIC_SITE_URL}/pricing" class="button" style="color: #ffffff; text-decoration: none;">Choose Your Plan</a>
+      <a href="${SITE_URL}/pricing" class="button" style="color: #ffffff; text-decoration: none;">Choose Your Plan</a>
     </p>
   `
   const baseTemplate = renderBaseTemplate({ title: "Trial Ending Soon", content })
@@ -701,7 +701,7 @@ export function renderBitcoinPaymentConfirmationTemplate(params: {
   confirmations: number
   transactionId?: string
 }): EmailTemplate {
-  const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
+  const companyName = COMPANY || "KeyFate"
   const content = `
     <p>Hi ${params.userName},</p>
     <p>Your Bitcoin payment has been confirmed and your <strong>${capitalizeFirst(params.tierName)}</strong> subscription is now active.</p>
@@ -712,7 +712,7 @@ export function renderBitcoinPaymentConfirmationTemplate(params: {
       ${params.transactionId ? `<p style="margin: 0; font-size: 12px; color: #6b7280;"><strong>TX:</strong> ${params.transactionId}</p>` : ""}
     </div>
     <p style="text-align: center;">
-      <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard" class="button" style="color: #ffffff; text-decoration: none;">Go to Dashboard</a>
+      <a href="${SITE_URL}/dashboard" class="button" style="color: #ffffff; text-decoration: none;">Go to Dashboard</a>
     </p>
   `
   const baseTemplate = renderBaseTemplate({ title: "Bitcoin Payment Confirmed", content })
@@ -726,7 +726,7 @@ export function renderAdminAlertTemplate(params: {
   details: Record<string, unknown>
   timestamp: Date
 }): EmailTemplate {
-  const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
+  const companyName = COMPANY || "KeyFate"
   const content = `
     <p><strong>Type:</strong> ${params.type}</p>
     <p><strong>Severity:</strong> ${params.severity}</p>
@@ -753,7 +753,7 @@ export function renderDataExportReadyTemplate(params: {
   downloadUrl: string
   expiresAt: Date
 }): EmailTemplate {
-  const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
+  const companyName = COMPANY || "KeyFate"
   const hoursRemaining = Math.floor((params.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60))
   const content = `
     <p>Hi ${params.userName},</p>
@@ -783,7 +783,7 @@ export function renderAccountDeletionConfirmationTemplate(params: {
   confirmationUrl: string
   scheduledDate: Date
 }): EmailTemplate {
-  const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
+  const companyName = COMPANY || "KeyFate"
   const daysUntilDeletion = Math.floor((params.scheduledDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
   const content = `
     <p>Hi ${params.userName},</p>
@@ -814,7 +814,7 @@ export function renderAccountDeletionGracePeriodTemplate(params: {
   daysRemaining: number
   cancelUrl: string
 }): EmailTemplate {
-  const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
+  const companyName = COMPANY || "KeyFate"
   const content = `
     <p>Hi ${params.userName},</p>
     <p>This is a reminder that your account is scheduled for deletion in <strong>${params.daysRemaining} days</strong>.</p>
@@ -834,7 +834,7 @@ export function renderAccountDeletionGracePeriodTemplate(params: {
 export function renderAccountDeletionCompleteTemplate(params: {
   userName: string
 }): EmailTemplate {
-  const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
+  const companyName = COMPANY || "KeyFate"
   const content = `
     <p>Hi ${params.userName},</p>
     <p>Your account has been permanently deleted as requested.</p>
@@ -850,7 +850,7 @@ export function renderAccountDeletionCompleteTemplate(params: {
 export function renderAccountDeletionCancelledTemplate(params: {
   userName: string
 }): EmailTemplate {
-  const companyName = process.env.NEXT_PUBLIC_COMPANY || "KeyFate"
+  const companyName = COMPANY || "KeyFate"
   const dashboardUrl = `${SITE_URL || "https://keyfate.com"}/dashboard`
   const content = `
     <p>Hi ${params.userName},</p>
