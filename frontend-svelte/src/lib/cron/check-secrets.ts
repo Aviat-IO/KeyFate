@@ -12,6 +12,7 @@ import {
   logCronMetrics,
   sanitizeError,
 } from "$lib/cron/utils"
+import { SITE_URL } from "$lib/env"
 import { logger } from "$lib/logger"
 import { getDatabase } from "$lib/db/drizzle"
 import {
@@ -166,9 +167,9 @@ async function generateCheckInToken(
     .limit(1)
 
   if (existingToken.length > 0) {
-    const baseUrl = process.env.NEXTAUTH_URL
-    if (!baseUrl) {
-      throw new Error("NEXTAUTH_URL environment variable is required")
+    const baseUrl = SITE_URL || "https://keyfate.com"
+    if (!SITE_URL) {
+      logger.error("PUBLIC_SITE_URL is not set, using fallback https://keyfate.com for check-in URL")
     }
     const url = `${baseUrl}/check-in?token=${existingToken[0].token}`
     return { token: existingToken[0].token, url }
@@ -185,9 +186,9 @@ async function generateCheckInToken(
     expiresAt,
   })
 
-  const baseUrl = process.env.NEXTAUTH_URL
-  if (!baseUrl) {
-    throw new Error("NEXTAUTH_URL environment variable is required")
+  const baseUrl = SITE_URL || "https://keyfate.com"
+  if (!SITE_URL) {
+    logger.error("PUBLIC_SITE_URL is not set, using fallback https://keyfate.com for check-in URL")
   }
   const url = `${baseUrl}/check-in?token=${token}`
 
@@ -533,6 +534,63 @@ export async function runCheckSecrets(): Promise<CheckSecretsResult> {
       }
 
       const retryStats = await processFailedReminders(db, startTime)
+
+      // Observability: detect silent failures where no reminders are found
+      // but active secrets exist that should have reminders
+      if (remindersProcessed === 0 && retryStats.processed === 0) {
+        try {
+          const [activeSecretCount] = await db
+            .select({
+              count: sql<number>`count(*)`,
+              withReminders: sql<number>`count(distinct rj.secret_id)`,
+            })
+            .from(secrets)
+            .leftJoin(
+              sql`${reminderJobs} rj`,
+              sql`rj.secret_id = ${secrets.id} and rj.status in ('pending', 'failed')`,
+            )
+            .where(
+              and(
+                eq(secrets.status, "active"),
+                isNotNull(secrets.serverShare),
+                isNotNull(secrets.nextCheckIn),
+              ),
+            )
+
+          const totalActive = Number(activeSecretCount?.count ?? 0)
+          const withReminders = Number(activeSecretCount?.withReminders ?? 0)
+
+          if (totalActive > 0 && withReminders === 0) {
+            logger.warn(
+              "No pending/failed reminders found but active secrets exist. Reminders may not have been scheduled.",
+              { activeSecrets: totalActive },
+            )
+          }
+
+          // Also check for reminders stuck at max retries
+          const [stuckCount] = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(reminderJobs)
+            .where(
+              and(
+                eq(reminderJobs.status, "failed"),
+                sql`${reminderJobs.retryCount} >= ${CRON_CONFIG.MAX_RETRIES}`,
+              ),
+            )
+
+          if (Number(stuckCount?.count ?? 0) > 0) {
+            logger.warn(
+              "Reminders have exhausted all retries and will not be processed",
+              { stuckReminders: Number(stuckCount.count) },
+            )
+          }
+        } catch (err) {
+          // Don't let observability logging crash the cron
+          logger.error("Error in observability check", undefined, {
+            error: sanitizeError(err),
+          })
+        }
+      }
 
       const duration = Date.now() - startTime
 
