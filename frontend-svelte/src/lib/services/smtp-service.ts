@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer"
+import { SITE_URL } from "$lib/env"
 import { SENDGRID_UNSUBSCRIBE_GROUPS, type UnsubscribeGroup } from "$lib/email/constants"
 
 // Re-export for backwards compatibility
@@ -46,7 +47,7 @@ class SMTPService {
     try {
       const transporter = await this.getTransporter()
 
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://keyfate.com"
+      const siteUrl = SITE_URL || "https://keyfate.com"
       const unsubscribeUrl = `${siteUrl}/settings/notifications`
 
       const mailOptions = {

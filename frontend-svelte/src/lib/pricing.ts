@@ -1,3 +1,5 @@
+import { SITE_URL } from "$lib/env"
+
 /**
  * Pricing configuration for different environments
  * Development and staging use cheaper test prices to facilitate testing
@@ -35,7 +37,7 @@ function isProduction(): boolean {
     )
   }
   // Server-side check
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || ""
+  const siteUrl = SITE_URL || ""
   return (
     siteUrl.includes("keyfate.com") &&
     !siteUrl.includes("staging") &&

@@ -64,7 +64,7 @@ export class BTCPayProvider implements PaymentProvider {
   }
 
   private isTestEnvironment(): boolean {
-    const env = process.env.NEXT_PUBLIC_ENV?.toLowerCase() || ""
+    const env = (process.env.PUBLIC_ENV || process.env.NEXT_PUBLIC_ENV || "").toLowerCase()
     return ["local", "development", "dev", "staging", "stage"].includes(env)
   }
 
