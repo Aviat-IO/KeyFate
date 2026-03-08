@@ -60,10 +60,24 @@ export const POST: RequestHandler = async (event) => {
         now.getTime() + secret.checkInDays * 24 * 60 * 60 * 1000,
       )
 
+      // Build update payload — reset failure fields if recovering from failed status
+      const updatePayload: Record<string, unknown> = {
+        lastCheckIn: now,
+        nextCheckIn,
+        updatedAt: now,
+      }
+
+      if (secret.status === "failed") {
+        updatePayload.status = "active"
+        updatePayload.retryCount = 0
+        updatePayload.lastRetryAt = null
+        updatePayload.lastError = null
+      }
+
       // Update the secret with new check-in times
       const [updatedSecret] = await tx
         .update(secrets)
-        .set({ lastCheckIn: now, nextCheckIn, updatedAt: now })
+        .set(updatePayload)
         .where(and(eq(secrets.id, id), eq(secrets.userId, session.user.id)))
         .returning()
 

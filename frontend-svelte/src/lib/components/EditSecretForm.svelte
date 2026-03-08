@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { untrack } from 'svelte';
-  import DeleteConfirm from '$lib/components/DeleteConfirm.svelte';
+  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import * as Alert from '$lib/components/ui/alert';
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
@@ -252,12 +252,13 @@
   </div>
 </form>
 
-<DeleteConfirm
+<ConfirmDialog
   bind:open={showDeleteModal}
-  onOpenChange={(v) => (showDeleteModal = v)}
+  onOpenChange={(v: boolean) => (showDeleteModal = v)}
   onConfirm={handleDelete}
   title="Delete Secret"
   description="Are you sure you want to delete this secret? This action cannot be undone and the secret will be permanently removed."
   confirmText="Delete Secret"
+  loadingText="Deleting..."
   loading={deleteLoading}
 />

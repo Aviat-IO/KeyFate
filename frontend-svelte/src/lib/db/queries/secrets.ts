@@ -1,5 +1,5 @@
 import { getDatabase } from "$lib/db/drizzle"
-import { secrets, secretRecipients } from "$lib/db/schema"
+import { secrets, secretRecipients, disclosureLog } from "$lib/db/schema"
 import { eq, and, sql } from "drizzle-orm"
 import type {
   SecretWithRecipients,
@@ -96,6 +96,22 @@ export async function getAllRecipients(
     .from(secretRecipients)
     .where(eq(secretRecipients.secretId, secretId))
     .orderBy(secretRecipients.createdAt)
+}
+
+/**
+ * Check whether any disclosure emails have been successfully sent for a secret.
+ * Used to determine if a failed secret is still recoverable.
+ */
+export async function hasBeenDisclosed(secretId: string): Promise<boolean> {
+  const db = await getDatabase()
+  const [stats] = await db
+    .select({
+      sentCount: sql<number>`count(*) filter (where ${disclosureLog.status} = 'sent')`,
+    })
+    .from(disclosureLog)
+    .where(eq(disclosureLog.secretId, secretId))
+
+  return Number(stats?.sentCount ?? 0) > 0
 }
 
 export async function updateSecretRecipients(

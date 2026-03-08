@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
 	import DataLabel from '$lib/components/DataLabel.svelte';
-	import DeleteConfirm from '$lib/components/DeleteConfirm.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import ExportRecoveryKitButton from '$lib/components/ExportRecoveryKitButton.svelte';
 	import Keyline from '$lib/components/Keyline.svelte';
 	import { Badge } from '$lib/components/ui/badge';
@@ -26,6 +26,7 @@
 		Pencil,
 		Phone,
 		Play,
+		Send,
 		Trash2
 	} from '@lucide/svelte';
 
@@ -34,7 +35,9 @@
 	let checkInLoading = $state(false);
 	let pauseLoading = $state(false);
 	let deleteLoading = $state(false);
+	let sendNowLoading = $state(false);
 	let showDeleteModal = $state(false);
+	let showSendNowModal = $state(false);
 	let actionError = $state<string | null>(null);
 	let bitcoinRefreshWarning = $state<string | null>(null);
 
@@ -51,6 +54,7 @@
 			new Date(data.secret.nextCheckIn).getTime() < Date.now()
 	);
 	let isInactive = $derived(isTriggered || isFailed || serverShareDeleted);
+	let isRecoverable = $derived(isFailed && !data.hasBeenDisclosed && !!data.secret.serverShare);
 
 	let statusLabel = $derived.by(() => {
 		if (isTriggered) return 'sent';
@@ -93,6 +97,8 @@
 	});
 
 	let canCheckIn = $derived.by(() => {
+		// Recoverable failed secrets can always check in
+		if (isRecoverable) return true;
 		if (isInactive || data.secret.status === 'paused' || isOverdue) return false;
 		if (!data.secret.lastCheckIn) return true;
 		const lastCheckIn = new Date(data.secret.lastCheckIn);
@@ -311,6 +317,36 @@
 			deleteLoading = false;
 		}
 	}
+
+	async function handleSendNow() {
+		sendNowLoading = true;
+		actionError = null;
+		try {
+			const csrfRes = await fetch('/api/csrf-token');
+			const { token: csrfToken } = await csrfRes.json();
+
+			const response = await fetch(`/api/secrets/${data.secret.id}/send-now`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'x-csrf-token': csrfToken
+				}
+			});
+
+			if (!response.ok) {
+				const errData = await response.json();
+				throw new Error(errData.error || 'Failed to send secret');
+			}
+
+			showSendNowModal = false;
+			await invalidateAll();
+		} catch (err) {
+			actionError = err instanceof Error ? err.message : 'Failed to send secret';
+			showSendNowModal = false;
+		} finally {
+			sendNowLoading = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -354,7 +390,35 @@
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<!-- Primary actions -->
 		<div class="flex flex-wrap items-center gap-2">
-			{#if !isInactive}
+			{#if isRecoverable}
+				<!-- Recovery actions for failed secrets that haven't been disclosed -->
+				<Button
+					variant="default"
+					onclick={handleCheckIn}
+					disabled={checkInLoading}
+					class="text-sm font-semibold"
+				>
+					{#if checkInLoading}
+						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+						Recovering...
+					{:else}
+						<CheckCircle class="mr-2 h-4 w-4" />
+						Check In
+					{/if}
+				</Button>
+				<Button
+					variant="outline"
+					onclick={() => (showSendNowModal = true)}
+					disabled={sendNowLoading}
+					class="text-sm font-semibold"
+				>
+					<Send class="mr-2 h-4 w-4" />
+					Send Now
+				</Button>
+			{:else if isFailed && !isRecoverable}
+				<!-- Failed and already disclosed — no recovery possible -->
+				<p class="text-muted-foreground text-sm">This secret has already been disclosed to recipients.</p>
+			{:else if !isInactive}
 				{#if canCheckIn}
 					<Button
 						variant="default"
@@ -596,12 +660,24 @@
 	</div>
 </div>
 
-<DeleteConfirm
+<ConfirmDialog
 	bind:open={showDeleteModal}
-	onOpenChange={(v) => (showDeleteModal = v)}
+	onOpenChange={(v: boolean) => (showDeleteModal = v)}
 	onConfirm={handleDelete}
 	title="Delete Secret"
 	description="Are you sure you want to delete this secret? This action cannot be undone and the secret will be permanently removed."
 	confirmText="Delete Secret"
+	loadingText="Deleting..."
 	loading={deleteLoading}
+/>
+
+<ConfirmDialog
+	bind:open={showSendNowModal}
+	onOpenChange={(v: boolean) => (showSendNowModal = v)}
+	onConfirm={handleSendNow}
+	title="Send Secret Now"
+	description="This will immediately send the secret to all recipients. This action cannot be undone — once disclosed, the secret cannot be recovered."
+	confirmText="Send Now"
+	loadingText="Sending..."
+	loading={sendNowLoading}
 />

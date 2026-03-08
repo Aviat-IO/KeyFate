@@ -9,8 +9,10 @@
     onConfirm,
     title = 'Are you absolutely sure?',
     description = 'This action cannot be undone. This will permanently delete this item.',
-    confirmText = 'Delete',
+    confirmText = 'Confirm',
+    loadingText = 'Processing...',
     cancelText = 'Cancel',
+    confirmVariant = 'destructive',
     loading = false
   }: {
     open: boolean;
@@ -19,7 +21,9 @@
     title?: string;
     description?: string;
     confirmText?: string;
+    loadingText?: string;
     cancelText?: string;
+    confirmVariant?: 'destructive' | 'default' | 'outline';
     loading?: boolean;
   } = $props();
 </script>
@@ -43,8 +47,8 @@
       <Button type="button" variant="outline" onclick={() => onOpenChange(false)} disabled={loading} class="">
         {cancelText}
       </Button>
-      <Button type="button" variant="destructive" onclick={onConfirm} disabled={loading} class="">
-        {loading ? 'Deleting...' : confirmText}
+      <Button type="button" variant={confirmVariant} onclick={onConfirm} disabled={loading} class="">
+        {loading ? loadingText : confirmText}
       </Button>
     </Dialog.Footer>
   </Dialog.Content>

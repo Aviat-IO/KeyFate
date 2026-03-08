@@ -4,6 +4,7 @@ import { getSecret } from '$lib/db/operations';
 import { getDatabase } from '$lib/db/drizzle';
 import { checkinHistory } from '$lib/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
+import { hasBeenDisclosed } from '$lib/db/queries/secrets';
 
 export const load: PageServerLoad = async (event) => {
 	const session = await event.locals.auth();
@@ -30,8 +31,12 @@ export const load: PageServerLoad = async (event) => {
 			.orderBy(desc(checkinHistory.checkedInAt))
 			.limit(20);
 
+		// Check if any disclosure emails were successfully sent for this secret
+		const disclosed = await hasBeenDisclosed(id);
+
 		return {
 			session,
+			hasBeenDisclosed: disclosed,
 			secret: {
 				id: secret.id,
 				userId: secret.userId,
