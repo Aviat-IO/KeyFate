@@ -8,14 +8,14 @@
   >
     <div class="flex items-center gap-2">
       <img
-        src="/img/icon-light.png"
+        src="/img/icon-light-32.png"
         alt="KeyFate"
         width="32"
         height="32"
         class="block h-8 w-8 dark:hidden"
       />
       <img
-        src="/img/icon-dark.png"
+        src="/img/icon-dark-32.png"
         alt="KeyFate"
         width="32"
         height="32"
