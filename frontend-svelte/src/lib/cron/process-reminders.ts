@@ -77,7 +77,24 @@ async function processOverdueSecret(
   const db = await getDatabase()
 
   try {
+    logger.info("Processing overdue secret", {
+      secretId: secret.id,
+      secretTitle: secret.title,
+      retryCount: secret.retryCount,
+      nextCheckIn: secret.nextCheckIn?.toISOString(),
+      lastRetryAt: secret.lastRetryAt?.toISOString(),
+      lastError: secret.lastError,
+    })
+
     if (!shouldRetrySecret(secret.retryCount)) {
+      logger.warn("Secret exhausted all retries, marking as failed", {
+        secretId: secret.id,
+        secretTitle: secret.title,
+        retryCount: secret.retryCount,
+        maxRetries: CRON_CONFIG.MAX_SECRET_RETRIES,
+        lastError: secret.lastError,
+      })
+
       await db
         .update(secrets)
         .set({
@@ -101,12 +118,25 @@ async function processOverdueSecret(
       .returning({ id: secrets.id })
 
     if (updated.length === 0) {
+      logger.info("Secret already being processed by another worker", {
+        secretId: secret.id,
+      })
       return { success: false, sent: 0, failed: 0, alreadyProcessing: true }
     }
+
+    logger.info("Acquired processing lock for secret", {
+      secretId: secret.id,
+    })
 
     const recipients = await getAllRecipients(secret.id)
 
     if (recipients.length === 0) {
+      logger.warn("No recipients configured for secret", {
+        secretId: secret.id,
+        secretTitle: secret.title,
+        retryCount: secret.retryCount + 1,
+      })
+
       await db
         .update(secrets)
         .set({
@@ -121,6 +151,12 @@ async function processOverdueSecret(
 
       return { success: false, sent: 0, failed: 0 }
     }
+
+    logger.info("Found recipients for disclosure", {
+      secretId: secret.id,
+      recipientCount: recipients.length,
+      recipientEmails: recipients.map((r) => r.email).filter(Boolean),
+    })
 
     // Use Buffer for secure memory handling of decrypted content
     let decryptedBuffer: Buffer | null = null
@@ -137,7 +173,21 @@ async function processOverdueSecret(
 
       // Store in Buffer instead of string for secure cleanup
       decryptedBuffer = Buffer.from(decryptedContent, "utf8")
-    } catch {
+      logger.info("Successfully decrypted server share", {
+        secretId: secret.id,
+        keyVersion: secret.keyVersion,
+      })
+    } catch (decryptError) {
+      logger.error("Decryption failed for secret", decryptError instanceof Error ? decryptError : undefined, {
+        secretId: secret.id,
+        secretTitle: secret.title,
+        keyVersion: secret.keyVersion,
+        hasServerShare: !!secret.serverShare,
+        hasIv: !!secret.iv,
+        hasAuthTag: !!secret.authTag,
+        retryCount: secret.retryCount + 1,
+      })
+
       await db
         .update(secrets)
         .set({
@@ -170,6 +220,13 @@ async function processOverdueSecret(
 
     const sentEmails = new Set(existingLogs.map((log) => log.recipientEmail))
 
+    if (sentEmails.size > 0) {
+      logger.info("Found previously sent disclosures", {
+        secretId: secret.id,
+        alreadySent: Array.from(sentEmails),
+      })
+    }
+
     let sent = sentEmails.size
     let failed = 0
     let timedOut = false
@@ -177,16 +234,30 @@ async function processOverdueSecret(
     try {
       for (const recipient of recipients) {
         if (isApproachingTimeout(startTimeMs)) {
+          logger.warn("Approaching timeout, stopping email processing", {
+            secretId: secret.id,
+            elapsedMs: Date.now() - startTimeMs,
+            sent,
+            remaining: recipients.length - sent - failed,
+          })
           timedOut = true
           break
         }
 
         const contactEmail = recipient.email || ""
         if (!contactEmail) {
+          logger.warn("Recipient has no email, skipping", {
+            secretId: secret.id,
+            recipientName: recipient.name,
+          })
           continue
         }
 
         if (sentEmails.has(contactEmail)) {
+          logger.info("Skipping already-sent recipient", {
+            secretId: secret.id,
+            recipient: contactEmail,
+          })
           continue
         }
 
@@ -203,6 +274,10 @@ async function processOverdueSecret(
             .onConflictDoNothing()
 
           if (inserted.length === 0) {
+            logger.info("Disclosure log conflict (already exists), counting as sent", {
+              secretId: secret.id,
+              recipient: contactEmail,
+            })
             sent++
             continue
           }
@@ -212,6 +287,17 @@ async function processOverdueSecret(
           sent++
           continue
         }
+
+        logger.info("Sending disclosure email", {
+          secretId: secret.id,
+          secretTitle: secret.title,
+          recipient: contactEmail,
+          recipientName: recipient.name,
+          attempt: secret.retryCount + 1,
+          maxRetries: CRON_CONFIG.MAX_RETRIES,
+        })
+
+        const emailStartTime = Date.now()
 
         try {
           const emailResult = await withRetry(
@@ -232,7 +318,17 @@ async function processOverdueSecret(
             1000,
           )
 
+          const emailDuration = Date.now() - emailStartTime
+
           if (emailResult.success) {
+            logger.info("Disclosure email sent successfully", {
+              secretId: secret.id,
+              recipient: contactEmail,
+              messageId: emailResult.messageId,
+              provider: emailResult.provider,
+              durationMs: emailDuration,
+            })
+
             try {
               await updateDisclosureLog(db, logEntry.id, "sent")
               sent++
@@ -240,6 +336,18 @@ async function processOverdueSecret(
               sent++
             }
           } else {
+            logger.error("Disclosure email failed", undefined, {
+              secretId: secret.id,
+              secretTitle: secret.title,
+              recipient: contactEmail,
+              error: emailResult.error,
+              provider: emailResult.provider,
+              retryable: emailResult.retryable,
+              retryAfter: emailResult.retryAfter,
+              durationMs: emailDuration,
+              secretRetryCount: secret.retryCount,
+            })
+
             await updateDisclosureLog(
               db,
               logEntry.id,
@@ -269,7 +377,17 @@ async function processOverdueSecret(
             failed++
           }
         } catch (error) {
+          const emailDuration = Date.now() - emailStartTime
           const errorMsg = sanitizeError(error, secret.id)
+
+          logger.error("Disclosure email threw exception", error instanceof Error ? error : undefined, {
+            secretId: secret.id,
+            secretTitle: secret.title,
+            recipient: contactEmail,
+            errorMsg,
+            durationMs: emailDuration,
+            secretRetryCount: secret.retryCount,
+          })
 
           await updateDisclosureLog(db, logEntry.id, "failed", errorMsg)
 
@@ -298,6 +416,13 @@ async function processOverdueSecret(
     }
 
     if (timedOut) {
+      logger.warn("Secret processing timed out, reverting to active for retry", {
+        secretId: secret.id,
+        sent,
+        totalRecipients: recipients.length,
+        retryCount: secret.retryCount + 1,
+      })
+
       await db
         .update(secrets)
         .set({
@@ -316,6 +441,18 @@ async function processOverdueSecret(
     const allSent = sent === recipients.length && failed === 0
     const finalStatus = allSent ? "triggered" : "active"
 
+    logger.info("Secret disclosure processing complete", {
+      secretId: secret.id,
+      secretTitle: secret.title,
+      finalStatus,
+      sent,
+      failed,
+      totalRecipients: recipients.length,
+      allSent,
+      retryCount: allSent ? secret.retryCount : secret.retryCount + 1,
+      durationMs: Date.now() - startTimeMs,
+    })
+
     await db
       .update(secrets)
       .set({
@@ -332,6 +469,14 @@ async function processOverdueSecret(
     return { success: allSent, sent, failed }
   } catch (error) {
     const errorMsg = sanitizeError(error, secret.id)
+
+    logger.error("Unexpected error processing overdue secret", error instanceof Error ? error : undefined, {
+      secretId: secret.id,
+      secretTitle: secret.title,
+      errorMsg,
+      retryCount: secret.retryCount + 1,
+      durationMs: Date.now() - startTimeMs,
+    })
 
     try {
       await db
