@@ -191,17 +191,34 @@ async function withRetry<T>(
     } catch (error) {
       lastError = error as Error
 
+      logger.warn("Email send attempt failed", {
+        attempt,
+        maxRetries,
+        error: lastError.message,
+        errorCode: (lastError as NodeJS.ErrnoException).code,
+        nonRetryable: lastError.message.includes("Invalid API key"),
+      })
+
       // Don't retry on non-retryable errors
       if (error instanceof Error && error.message.includes("Invalid API key")) {
         throw error
       }
 
       if (attempt === maxRetries) {
+        logger.error("All email retry attempts exhausted", lastError, {
+          attempts: attempt,
+          maxRetries,
+        })
         throw lastError
       }
 
       // Exponential backoff with jitter
       const delay = baseDelay * Math.pow(2, attempt - 1) + Math.random() * 1000
+      logger.info("Retrying email send after backoff", {
+        attempt,
+        nextAttempt: attempt + 1,
+        delayMs: Math.round(delay),
+      })
       await new Promise((resolve) => setTimeout(resolve, delay))
     }
   }
@@ -217,6 +234,7 @@ export async function sendEmail(
   options: EmailOptions = {},
 ): Promise<EmailResult> {
   const { maxRetries = 3, retryDelay = 1000 } = options
+  let sendStartTime = Date.now()
 
   try {
     const config = await validateEmailConfig()
@@ -252,10 +270,25 @@ ${emailData.text || "HTML content provided"}
     // Production email sending with circuit breaker and retry logic
     let attempts = 0
 
+    logger.info("Sending email via SendGrid", {
+      to: emailData.to,
+      subject: emailData.subject,
+      priority: emailData.priority,
+      circuitBreakerState: emailCircuitBreaker.getState?.() ?? "unknown",
+    })
+
+    sendStartTime = Date.now()
+
     const result = await emailCircuitBreaker.execute(async () => {
       return await withRetry(
         async () => {
           attempts++
+          logger.info("Email send attempt", {
+            to: emailData.to,
+            attempt: attempts,
+            maxRetries,
+          })
+
           const transporter = await getTransporter()
 
           if (!transporter) {
@@ -299,6 +332,14 @@ ${emailData.text || "HTML content provided"}
 
           const info = await transporter.sendMail(mailOptions)
 
+          logger.info("Email sent successfully via SMTP", {
+            to: emailData.to,
+            messageId: info.messageId,
+            attempt: attempts,
+            durationMs: Date.now() - sendStartTime,
+            response: info.response,
+          })
+
           return {
             success: true,
             messageId: info.messageId,
@@ -314,7 +355,14 @@ ${emailData.text || "HTML content provided"}
 
     return result
   } catch (error) {
-    logger.error("Error sending email", error instanceof Error ? error : undefined)
+    const sendDuration = Date.now() - sendStartTime
+    logger.error("Error sending email", error instanceof Error ? error : undefined, {
+      to: emailData.to,
+      subject: emailData.subject,
+      durationMs: sendDuration,
+      errorMessage: error instanceof Error ? error.message : String(error),
+      errorCode: error instanceof Error ? (error as NodeJS.ErrnoException).code : undefined,
+    })
 
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error"
@@ -510,6 +558,14 @@ export async function sendSecretDisclosureEmail(disclosureData: {
   senderLastSeen?: Date
   secretCreatedAt?: Date
 }): Promise<EmailResult & { templateUsed?: string }> {
+  logger.info("Preparing disclosure email", {
+    recipient: disclosureData.contactEmail,
+    secretTitle: disclosureData.secretTitle,
+    reason: disclosureData.disclosureReason,
+    hasContent: !!disclosureData.secretContent,
+    contentLength: disclosureData.secretContent?.length ?? 0,
+  })
+
   const { renderDisclosureTemplate } = await import("./templates")
 
   const template = renderDisclosureTemplate(disclosureData)
@@ -530,11 +586,24 @@ export async function sendSecretDisclosureEmail(disclosureData: {
   })
 
   if (result.success) {
+    logger.info("Disclosure email delivered", {
+      recipient: disclosureData.contactEmail,
+      messageId: result.messageId,
+      provider: result.provider,
+    })
+
     return {
       ...result,
       templateUsed: "disclosure",
     }
   }
+
+  logger.warn("Disclosure email send returned failure", {
+    recipient: disclosureData.contactEmail,
+    error: result.error,
+    retryable: result.retryable,
+    provider: result.provider,
+  })
 
   return result
 }
