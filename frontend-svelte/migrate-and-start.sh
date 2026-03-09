@@ -1,8 +1,13 @@
 #!/bin/bash
 set -e
 
-MAX_RETRIES=3
+MAX_RETRIES=10
 RETRY_DELAY=5
+
+# Wait for Railway's internal DNS to propagate before attempting connections.
+# Private networking (*.railway.internal) can take 10-30s after container start.
+echo "Waiting for network readiness..."
+sleep 5
 
 echo "Running database migrations..."
 for i in $(seq 1 $MAX_RETRIES); do
