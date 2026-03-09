@@ -162,6 +162,7 @@ export const users = pgTable("users", {
   name: text("name"),
   image: text("image"),
   password: text("password"), // Optional field for credential-based authentication
+  isAdmin: boolean("is_admin").default(false).notNull(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 })

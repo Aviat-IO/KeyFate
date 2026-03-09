@@ -3,12 +3,13 @@
   import { signOut } from '@auth/sveltekit/client';
   import { Button } from '$lib/components/ui/button';
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
-  import { Crown, LogOut, Menu, Settings, X } from '@lucide/svelte';
+  import { Crown, LogOut, Menu, Settings, Shield, X } from '@lucide/svelte';
   import { getCachedTier, setCachedTier } from '$lib/stores/subscription-cache';
 
   let pathname = $derived($page.url.pathname);
   let session = $derived($page.data.session);
   let user = $derived(session?.user);
+  let isAdmin = $derived((user as any)?.isAdmin === true);
 
   let userTier = $state<'free' | 'pro'>('free');
   let mobileMenuOpen = $state(false);
@@ -106,6 +107,18 @@
             >
               Dashboard
             </a>
+            {#if isAdmin}
+              <a
+                href="/admin"
+                class="rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground {isActive(
+                  '/admin'
+                )
+                  ? 'bg-accent text-accent-foreground'
+                  : ''}"
+              >
+                Admin
+              </a>
+            {/if}
           {/if}
 
           {#if !user}
@@ -188,6 +201,18 @@
               <div
                 class="absolute right-0 z-50 mt-2 w-[200px] rounded-md border bg-popover p-2 shadow-md"
               >
+                {#if isAdmin}
+                  <a
+                    href="/admin"
+                    class="{menuItemClass} {isActive('/admin')
+                      ? 'bg-accent text-accent-foreground'
+                      : ''}"
+                    onclick={() => (mobileMenuOpen = false)}
+                  >
+                    <Shield class="h-4 w-4" />
+                    <span>Admin</span>
+                  </a>
+                {/if}
                 <a
                   href="/settings"
                   class="{menuItemClass} {isActive('/settings')
@@ -263,6 +288,18 @@
             >
               Dashboard
             </a>
+            {#if isAdmin}
+              <a
+                href="/admin"
+                class="{menuItemClass} {isActive('/admin')
+                  ? 'bg-accent text-accent-foreground'
+                  : ''}"
+                onclick={() => (mobileMenuOpen = false)}
+              >
+                <Shield class="h-4 w-4" />
+                Admin
+              </a>
+            {/if}
             <a
               href="/settings"
               class="{menuItemClass} {isActive('/settings')
