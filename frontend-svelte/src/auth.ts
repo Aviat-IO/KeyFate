@@ -340,6 +340,7 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
             if (dbUser.length > 0) {
               token.id = dbUser[0].id
               token.emailVerified = dbUser[0].emailVerified
+              token.isAdmin = dbUser[0].isAdmin
             } else {
               console.error(
                 "[Auth] JWT callback: User not found in database for email:",
@@ -363,6 +364,7 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 
           if (dbUser.length > 0) {
             token.emailVerified = dbUser[0].emailVerified
+            token.isAdmin = dbUser[0].isAdmin
           }
         } catch (error) {
           console.error(
@@ -385,9 +387,10 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
         if (!session.user.email && token.email) {
           session.user.email = token.email
         }
-        // Expose emailVerified on session user
+        // Expose emailVerified and isAdmin on session user
         ;(session.user as any).emailVerified =
           (token.emailVerified as Date | null) || null
+        ;(session.user as any).isAdmin = token.isAdmin === true
       }
       return session
     },
