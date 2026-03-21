@@ -1,29 +1,25 @@
 /**
  * Production Email Service
  *
- * Provides production-ready email delivery using SendGrid/Resend
+ * Provides production-ready email delivery using SendGrid Web API
  * with proper error handling, retry logic, and rate limiting.
+ *
+ * Uses the provider adapter pattern — see providers/SendGridAdapter.ts
+ * for the HTTP API transport (replaces nodemailer SMTP which caused
+ * connection timeouts on Railway).
  */
 
-import nodemailer from "nodemailer"
 import { CircuitBreaker } from "$lib/circuit-breaker"
 import { SITE_URL } from "$lib/env"
 import { logger } from "$lib/logger"
 import { SENDGRID_UNSUBSCRIBE_GROUPS, type UnsubscribeGroup } from "./constants"
+import { getEmailProvider } from "./email-factory"
+import type { SendGridEmailData } from "./providers/SendGridAdapter"
 
 // Re-export for backwards compatibility
 export { SENDGRID_UNSUBSCRIBE_GROUPS, type UnsubscribeGroup } from "./constants"
 
-// Email service configuration
-interface EmailConfig {
-  provider: "sendgrid" | "console-dev" | "resend"
-  apiKey?: string
-  adminEmail?: string
-  senderName?: string
-  developmentMode?: boolean
-}
-
-// Email data structure
+// Email data structure (delegates to provider's EmailData)
 interface EmailData {
   to: string
   subject: string
@@ -60,27 +56,6 @@ export interface EmailResult {
   }
 }
 
-// Email configuration validation result
-interface ConfigValidationResult {
-  valid: boolean
-  provider: string
-  missingVars: string[]
-  config?: EmailConfig
-  developmentMode?: boolean
-}
-
-// Delivery status tracking
-interface DeliveryStatus {
-  messageId: string
-  status: "sent" | "delivered" | "failed" | "bounced" | "spam"
-  deliveredAt?: Date
-  events: Array<{
-    type: string
-    timestamp: Date
-    details?: string
-  }>
-}
-
 // Circuit breaker for email service
 const emailCircuitBreaker = new CircuitBreaker("EmailService", {
   failureThreshold: 5,
@@ -91,267 +66,87 @@ const emailCircuitBreaker = new CircuitBreaker("EmailService", {
 /**
  * Validate email service configuration
  */
-export async function validateEmailConfig(): Promise<ConfigValidationResult> {
-  const missingVars: string[] = []
+export async function validateEmailConfig(): Promise<{
+  valid: boolean
+  provider: string
+  missingVars: string[]
+  developmentMode?: boolean
+}> {
   const isDevelopment = process.env.NODE_ENV === "development"
+  const provider = getEmailProvider()
+  const isValid = await provider.validateConfig()
 
-  // Check for SendGrid configuration
-  if (!process.env.SENDGRID_API_KEY) {
-    missingVars.push("SENDGRID_API_KEY")
-  }
-  if (!process.env.SENDGRID_ADMIN_EMAIL) {
-    missingVars.push("SENDGRID_ADMIN_EMAIL")
+  if (!isValid && isDevelopment) {
+    return { valid: true, provider: "console-dev", missingVars: [], developmentMode: true }
   }
 
-  // In development, allow fallback to console logging
-  if (isDevelopment && missingVars.length > 0) {
-    return {
-      valid: true,
-      provider: "console-dev",
-      missingVars: [],
-      developmentMode: true,
-    }
+  if (!isValid) {
+    const missingVars: string[] = []
+    if (!process.env.SENDGRID_API_KEY) missingVars.push("SENDGRID_API_KEY")
+    if (!process.env.SENDGRID_ADMIN_EMAIL) missingVars.push("SENDGRID_ADMIN_EMAIL")
+    return { valid: false, provider: provider.getProviderName(), missingVars }
   }
 
-  if (missingVars.length > 0) {
-    return {
-      valid: false,
-      provider: "sendgrid",
-      missingVars,
-    }
-  }
-
-  return {
-    valid: true,
-    provider: "sendgrid",
-    missingVars: [],
-    config: {
-      provider: "sendgrid",
-      apiKey: process.env.SENDGRID_API_KEY,
-      adminEmail: process.env.SENDGRID_ADMIN_EMAIL,
-      senderName: process.env.SENDGRID_SENDER_NAME || "Dead Man's Switch",
-    },
-  }
+  return { valid: true, provider: provider.getProviderName(), missingVars: [] }
 }
 
 /**
- * Cached email transporter singleton
- */
-let cachedTransporter: ReturnType<typeof nodemailer.createTransport> | null = null
-let cachedTransporterApiKey: string | undefined
-
-/**
- * Get or create email transporter (lazy singleton, recreated if API key changes)
- */
-async function getTransporter() {
-  const config = await validateEmailConfig()
-
-  if (!config.valid) {
-    throw new Error(
-      `Email configuration invalid: ${config.missingVars.join(", ")}`,
-    )
-  }
-
-  if (config.developmentMode) {
-    // Development mode - log to console
-    return null
-  }
-
-  const currentApiKey = process.env.SENDGRID_API_KEY
-  if (cachedTransporter && cachedTransporterApiKey === currentApiKey) {
-    return cachedTransporter
-  }
-
-  // Production SendGrid configuration
-  cachedTransporter = nodemailer.createTransport({
-    service: "SendGrid",
-    auth: {
-      user: "apikey",
-      pass: currentApiKey,
-    },
-  })
-  cachedTransporterApiKey = currentApiKey
-
-  return cachedTransporter
-}
-
-/**
- * Implement exponential backoff retry logic
- */
-async function withRetry<T>(
-  operation: () => Promise<T>,
-  maxRetries: number = 3,
-  baseDelay: number = 1000,
-): Promise<T> {
-  let lastError: Error
-
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      return await operation()
-    } catch (error) {
-      lastError = error as Error
-
-      logger.warn("Email send attempt failed", {
-        attempt,
-        maxRetries,
-        error: lastError.message,
-        errorCode: (lastError as NodeJS.ErrnoException).code,
-        nonRetryable: lastError.message.includes("Invalid API key"),
-      })
-
-      // Don't retry on non-retryable errors
-      if (error instanceof Error && error.message.includes("Invalid API key")) {
-        throw error
-      }
-
-      if (attempt === maxRetries) {
-        logger.error("All email retry attempts exhausted", lastError, {
-          attempts: attempt,
-          maxRetries,
-        })
-        throw lastError
-      }
-
-      // Exponential backoff with jitter
-      const delay = baseDelay * Math.pow(2, attempt - 1) + Math.random() * 1000
-      logger.info("Retrying email send after backoff", {
-        attempt,
-        nextAttempt: attempt + 1,
-        delayMs: Math.round(delay),
-      })
-      await new Promise((resolve) => setTimeout(resolve, delay))
-    }
-  }
-
-  throw lastError!
-}
-
-/**
- * Send email using configured provider
+ * Send email using configured provider (SendGrid Web API or Mock)
+ *
+ * Wraps the provider with circuit breaker protection and logging.
  */
 export async function sendEmail(
   emailData: EmailData,
-  options: EmailOptions = {},
+  _options: EmailOptions = {},
 ): Promise<EmailResult> {
-  const { maxRetries = 3, retryDelay = 1000 } = options
-  let sendStartTime = Date.now()
+  const sendStartTime = Date.now()
 
   try {
-    const config = await validateEmailConfig()
+    const isDevelopment = process.env.NODE_ENV === "development"
+    const provider = getEmailProvider()
 
-    if (!config.valid && !config.developmentMode) {
-      return {
-        success: false,
-        error: `Email service not configured: ${config.missingVars.join(", ")}`,
-        retryable: false,
-      }
-    }
-
-    // Development mode - console logging
-    if (config.developmentMode) {
+    // Development mode with mock provider - console logging
+    if (isDevelopment && provider.getProviderName() === "mock") {
       console.log(`
 ======== DEVELOPMENT EMAIL ========
 To: ${emailData.to}
 Subject: ${emailData.subject}
-From: ${emailData.from || config.config?.adminEmail}
+From: ${emailData.from || process.env.SENDGRID_ADMIN_EMAIL}
 ${emailData.text || "HTML content provided"}
 ===================================
       `)
 
       return {
         success: true,
-        messageId: `dev-${Date.now()}-${Math.random()
-          .toString(36)
-          .substring(7)}`,
+        messageId: `dev-${Date.now()}-${Math.random().toString(36).substring(7)}`,
         provider: "console-dev",
       }
     }
 
-    // Production email sending with circuit breaker and retry logic
-    let attempts = 0
-
-    logger.info("Sending email via SendGrid", {
+    logger.info("Sending email via SendGrid Web API", {
       to: emailData.to,
       subject: emailData.subject,
       priority: emailData.priority,
       circuitBreakerState: emailCircuitBreaker.getState?.() ?? "unknown",
     })
 
-    sendStartTime = Date.now()
-
+    // Circuit breaker wraps the provider call
+    // The provider (SendGridAdapter) handles its own retry logic internally
     const result = await emailCircuitBreaker.execute(async () => {
-      return await withRetry(
-        async () => {
-          attempts++
-          logger.info("Email send attempt", {
-            to: emailData.to,
-            attempt: attempts,
-            maxRetries,
-          })
-
-          const transporter = await getTransporter()
-
-          if (!transporter) {
-            throw new Error("Failed to create email transporter")
-          }
-
-          const siteUrl = SITE_URL || "https://keyfate.com"
-          const unsubscribeUrl = `${siteUrl}/settings/notifications`
-
-          const mailOptions = {
-            to: emailData.to,
-            subject: emailData.subject,
-            html: emailData.html,
-            text: emailData.text,
-            from:
-              emailData.from ||
-              `${config.config?.senderName} <${config.config?.adminEmail}>`,
-            replyTo: emailData.replyTo,
-            headers: {
-              ...emailData.headers,
-              // List-Unsubscribe helps deliverability with Gmail/Outlook
-              "List-Unsubscribe": `<${unsubscribeUrl}>`,
-              "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-              "X-SMTPAPI": JSON.stringify({
-                // SendGrid ASM (Advanced Suppression Manager) for unsubscribe groups
-                ...(emailData.unsubscribeGroup && {
-                  asm: {
-                    group_id: SENDGRID_UNSUBSCRIBE_GROUPS[emailData.unsubscribeGroup],
-                    groups_to_display: Object.values(SENDGRID_UNSUBSCRIBE_GROUPS),
-                  },
-                }),
-                tracking_settings: {
-                  click_tracking: {
-                    enable: false,
-                  },
-                },
-              }),
-            },
-            priority: emailData.priority || "normal",
-          }
-
-          const info = await transporter.sendMail(mailOptions)
-
-          logger.info("Email sent successfully via SMTP", {
-            to: emailData.to,
-            messageId: info.messageId,
-            attempt: attempts,
-            durationMs: Date.now() - sendStartTime,
-            response: info.response,
-          })
-
-          return {
-            success: true,
-            messageId: info.messageId,
-            provider: "sendgrid",
-            attempts,
-            trackingEnabled: emailData.trackDelivery || false,
-          }
-        },
-        maxRetries,
-        retryDelay,
-      )
+      const providerData: SendGridEmailData = {
+        ...emailData,
+      }
+      return await provider.sendEmail(providerData)
     })
+
+    if (result.success) {
+      logger.info("Email sent successfully", {
+        to: emailData.to,
+        messageId: result.messageId,
+        provider: result.provider,
+        durationMs: Date.now() - sendStartTime,
+      })
+    }
 
     return result
   } catch (error) {
@@ -361,17 +156,10 @@ ${emailData.text || "HTML content provided"}
       subject: emailData.subject,
       durationMs: sendDuration,
       errorMessage: error instanceof Error ? error.message : String(error),
-      errorCode: error instanceof Error ? (error as NodeJS.ErrnoException).code : undefined,
     })
 
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error"
-    const isRetryable =
-      !errorMessage.includes("Invalid API key") &&
-      !errorMessage.includes("Authentication failed") &&
-      !errorMessage.includes("Circuit breaker is OPEN")
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
 
-    // Check for circuit breaker open
     if (errorMessage.includes("Circuit breaker is OPEN")) {
       return {
         success: false,
@@ -381,25 +169,11 @@ ${emailData.text || "HTML content provided"}
       }
     }
 
-    // Check for rate limiting
-    if (errorMessage.includes("Rate limit") || errorMessage.includes("429")) {
-      return {
-        success: false,
-        error: "Rate limit exceeded",
-        retryable: true,
-        retryAfter: 60,
-        rateLimitInfo: {
-          limit: 100,
-          remaining: 0,
-          resetTime: Date.now() + 60000,
-        },
-      }
-    }
-
     return {
       success: false,
       error: errorMessage,
-      retryable: isRetryable,
+      retryable: !errorMessage.includes("Invalid API key") &&
+        !errorMessage.includes("Authentication failed"),
     }
   }
 }
