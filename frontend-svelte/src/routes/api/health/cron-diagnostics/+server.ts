@@ -57,6 +57,36 @@ export const GET: RequestHandler = async (event) => {
         ),
       )
 
+    // 2b. Failed secrets detail (for debugging)
+    const failedSecrets = await db
+      .select({
+        id: secrets.id,
+        title: secrets.title,
+        status: secrets.status,
+        retryCount: secrets.retryCount,
+        lastError: secrets.lastError,
+        lastRetryAt: secrets.lastRetryAt,
+        nextCheckIn: secrets.nextCheckIn,
+        updatedAt: secrets.updatedAt,
+      })
+      .from(secrets)
+      .where(eq(secrets.status, "failed"))
+
+    // 2c. Recent email failure error messages
+    const recentEmailErrors = await db
+      .select({
+        id: emailFailures.id,
+        emailType: emailFailures.emailType,
+        provider: emailFailures.provider,
+        recipient: emailFailures.recipient,
+        errorMessage: emailFailures.errorMessage,
+        retryCount: emailFailures.retryCount,
+        createdAt: emailFailures.createdAt,
+      })
+      .from(emailFailures)
+      .orderBy(sql`${emailFailures.createdAt} desc`)
+      .limit(20)
+
     // 3. Reminder jobs breakdown
     const [reminderStats] = await db.execute(sql`
       select
@@ -131,7 +161,9 @@ export const GET: RequestHandler = async (event) => {
             ? `${Math.round((now.getTime() - new Date(s.nextCheckIn).getTime()) / (1000 * 60 * 60))}h`
             : "unknown",
         })),
+        failed: failedSecrets,
       },
+      recentEmailErrors,
       reminderJobs: {
         stats: reminderStats,
         recentFailures: recentFailedReminders,
