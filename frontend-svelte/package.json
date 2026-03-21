@@ -63,6 +63,7 @@
     "@noble/hashes": "^2.0.1",
     "@scure/base": "^2.0.0",
     "@scure/btc-signer": "^2.0.1",
+    "@sendgrid/mail": "^8.1.6",
     "@tailwindcss/typography": "^0.5.19",
     "bcryptjs": "^3.0.3",
     "bits-ui": "^2.16.2",

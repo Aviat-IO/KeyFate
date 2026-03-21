@@ -1,61 +1,60 @@
 /**
  * SendGrid Email Provider Adapter
  *
- * Production email delivery using SendGrid with retry logic,
- * rate limiting, and comprehensive error handling.
+ * Production email delivery using SendGrid Web API (HTTP)
+ * instead of SMTP to avoid connection timeout issues on
+ * cloud platforms that block outbound SMTP.
  *
  * Features:
+ * - Uses @sendgrid/mail HTTP API (port 443, not SMTP 587)
  * - Exponential backoff retry logic
  * - Rate limiting (429) error handling
  * - Configuration validation
  * - Error classification (retryable vs non-retryable)
  */
 
-import nodemailer from "nodemailer"
+import sgMail from "@sendgrid/mail"
 import type { EmailData, EmailProvider, EmailResult } from "./EmailProvider"
+import { SENDGRID_UNSUBSCRIBE_GROUPS, type UnsubscribeGroup } from "../constants"
+
+export interface SendGridEmailData extends EmailData {
+  unsubscribeGroup?: UnsubscribeGroup
+}
 
 /**
- * SendGrid email provider implementation
- *
- * Wraps existing SendGrid logic from email-service.ts
- * with the EmailProvider interface for consistent usage.
+ * SendGrid email provider implementation using HTTP API
  */
 export class SendGridAdapter implements EmailProvider {
   private readonly maxRetries = 3
   private readonly baseRetryDelay = 1000 // 1 second
+  private initialized = false
+
+  private initialize(): void {
+    if (this.initialized) return
+    const apiKey = process.env.SENDGRID_API_KEY?.trim()
+    if (apiKey) {
+      sgMail.setApiKey(apiKey)
+      this.initialized = true
+    }
+  }
 
   /**
    * Validate SendGrid configuration
-   *
-   * Checks for required environment variables:
-   * - SENDGRID_API_KEY
-   * - SENDGRID_ADMIN_EMAIL
-   * - SENDGRID_SENDER_NAME (optional, defaults to "Dead Man's Switch")
    */
   async validateConfig(): Promise<boolean> {
     const apiKey = process.env.SENDGRID_API_KEY?.trim()
     const adminEmail = process.env.SENDGRID_ADMIN_EMAIL?.trim()
 
-    // Check for missing or empty values
-    if (!apiKey || apiKey === "") {
-      return false
-    }
-
-    if (!adminEmail || adminEmail === "") {
-      return false
-    }
+    if (!apiKey || apiKey === "") return false
+    if (!adminEmail || adminEmail === "") return false
 
     return true
   }
 
   /**
-   * Send email via SendGrid
-   *
-   * Implements retry logic with exponential backoff.
-   * Handles rate limiting and error classification.
+   * Send email via SendGrid Web API
    */
-  async sendEmail(data: EmailData): Promise<EmailResult> {
-    // Validate configuration before attempting to send
+  async sendEmail(data: SendGridEmailData): Promise<EmailResult> {
     const isValid = await this.validateConfig()
     if (!isValid) {
       return {
@@ -66,37 +65,29 @@ export class SendGridAdapter implements EmailProvider {
       }
     }
 
-    // Execute with retry logic
+    this.initialize()
+
     let attemptCount = 0
-    let lastError: Error | null = null
 
     for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
       attemptCount++
 
       try {
         const result = await this.sendEmailAttempt(data)
-        return {
-          ...result,
-          attempts: attemptCount,
-        }
+        return { ...result, attempts: attemptCount }
       } catch (error) {
-        lastError = error as Error
+        const classification = this.classifyError(error as Error)
 
-        // Check if error is retryable
-        const errorClassification = this.classifyError(error as Error)
-
-        // Don't retry on non-retryable errors
-        if (!errorClassification.retryable) {
+        if (!classification.retryable) {
           return {
             success: false,
-            error: errorClassification.message,
+            error: classification.message,
             retryable: false,
             attempts: attemptCount,
           }
         }
 
-        // Check for rate limiting
-        if (errorClassification.isRateLimit) {
+        if (classification.isRateLimit) {
           return {
             success: false,
             error: "Rate limit exceeded",
@@ -111,88 +102,76 @@ export class SendGridAdapter implements EmailProvider {
           }
         }
 
-        // If this was the last attempt, return error
         if (attempt === this.maxRetries) {
           return {
             success: false,
-            error: errorClassification.message,
+            error: classification.message,
             retryable: true,
             attempts: attemptCount,
           }
         }
 
-        // Exponential backoff with jitter before next retry
         const delay = this.calculateBackoffDelay(attempt)
         await this.sleep(delay)
       }
     }
 
-    // Should never reach here, but TypeScript requires it
     return {
       success: false,
-      error: lastError?.message || "Unknown error",
+      error: "Unknown error after retries",
       retryable: true,
       attempts: attemptCount,
     }
   }
 
-  /**
-   * Get provider name for logging and debugging
-   */
   getProviderName(): string {
     return "sendgrid"
   }
 
   /**
-   * Single email sending attempt without retry logic
+   * Single email sending attempt via HTTP API
    */
-  private async sendEmailAttempt(data: EmailData): Promise<EmailResult> {
-    const transporter = this.createTransporter()
-
+  private async sendEmailAttempt(data: SendGridEmailData): Promise<EmailResult> {
     const senderName = process.env.SENDGRID_SENDER_NAME || "Dead Man's Switch"
     const adminEmail = process.env.SENDGRID_ADMIN_EMAIL!
 
-    const mailOptions = {
+    const msg: sgMail.MailDataRequired = {
       to: data.to,
+      from: data.from || { email: adminEmail, name: senderName },
       subject: data.subject,
       html: data.html,
-      text: data.text,
-      from: data.from || `${senderName} <${adminEmail}>`,
-      replyTo: data.replyTo,
+      text: data.text || undefined,
+      replyTo: data.replyTo || undefined,
       headers: {
         ...data.headers,
-        "X-SMTPAPI": JSON.stringify({
-          tracking_settings: {
-            click_tracking: {
-              enable: false,
-            },
-          },
-        }),
       },
-      priority: data.priority || "normal",
+      trackingSettings: {
+        clickTracking: { enable: false, enableText: false },
+        openTracking: { enable: false },
+      },
     }
 
-    const info = await transporter.sendMail(mailOptions)
+    // Add ASM unsubscribe group if specified
+    if (data.unsubscribeGroup) {
+      msg.asm = {
+        groupId: SENDGRID_UNSUBSCRIBE_GROUPS[data.unsubscribeGroup],
+        groupsToDisplay: Object.values(SENDGRID_UNSUBSCRIBE_GROUPS),
+      }
+    }
+
+    const [response] = await sgMail.send(msg)
+
+    // SendGrid returns x-message-id header
+    const messageId =
+      response.headers?.["x-message-id"] as string ||
+      `sg-${Date.now()}-${Math.random().toString(36).substring(7)}`
 
     return {
       success: true,
-      messageId: info.messageId,
+      messageId,
       provider: "sendgrid",
       trackingEnabled: data.trackDelivery || false,
     }
-  }
-
-  /**
-   * Create SendGrid transporter using nodemailer
-   */
-  private createTransporter() {
-    return nodemailer.createTransport({
-      service: "SendGrid",
-      auth: {
-        user: "apikey",
-        pass: process.env.SENDGRID_API_KEY,
-      },
-    })
   }
 
   /**
@@ -204,52 +183,36 @@ export class SendGridAdapter implements EmailProvider {
     isRateLimit: boolean
   } {
     const errorMessage = error.message
+    const statusCode = (error as { code?: number }).code
 
     // Non-retryable errors
     if (
       errorMessage.includes("Invalid API key") ||
-      errorMessage.includes("Authentication failed")
+      errorMessage.includes("Authentication failed") ||
+      errorMessage.includes("Unauthorized") ||
+      statusCode === 401 ||
+      statusCode === 403
     ) {
-      return {
-        retryable: false,
-        message: errorMessage,
-        isRateLimit: false,
-      }
+      return { retryable: false, message: errorMessage, isRateLimit: false }
     }
 
-    // Rate limiting errors
+    // Rate limiting
     if (
       errorMessage.includes("Rate limit") ||
       errorMessage.includes("429") ||
-      (error as { statusCode?: number }).statusCode === 429
+      statusCode === 429
     ) {
-      return {
-        retryable: true,
-        message: "Rate limit exceeded",
-        isRateLimit: true,
-      }
+      return { retryable: true, message: "Rate limit exceeded", isRateLimit: true }
     }
 
-    // All other errors are retryable (network issues, temporary failures, etc.)
-    return {
-      retryable: true,
-      message: errorMessage,
-      isRateLimit: false,
-    }
+    // All other errors are retryable
+    return { retryable: true, message: errorMessage, isRateLimit: false }
   }
 
-  /**
-   * Calculate exponential backoff delay with jitter
-   */
   private calculateBackoffDelay(attempt: number): number {
-    const exponentialDelay = this.baseRetryDelay * Math.pow(2, attempt - 1)
-    const jitter = Math.random() * 1000
-    return exponentialDelay + jitter
+    return this.baseRetryDelay * Math.pow(2, attempt - 1) + Math.random() * 1000
   }
 
-  /**
-   * Sleep utility for retry delays
-   */
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms))
   }
