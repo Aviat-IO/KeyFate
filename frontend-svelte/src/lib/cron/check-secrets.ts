@@ -1,0 +1,620 @@
+/**
+ * Core logic for the check-secrets cron job.
+ *
+ * Processes pending reminder jobs: sends reminder emails for secrets
+ * approaching their check-in deadline, retries failed reminders,
+ * and marks missed reminders for recovery.
+ */
+
+import {
+  CRON_CONFIG,
+  isApproachingTimeout,
+  logCronMetrics,
+  sanitizeError,
+} from "$lib/cron/utils"
+import { SITE_URL } from "$lib/env"
+import { logger } from "$lib/logger"
+import { getDatabase } from "$lib/db/drizzle"
+import {
+  checkInTokens,
+  emailFailures,
+  reminderJobs,
+  secrets,
+  users,
+  type Secret,
+  type User,
+} from "$lib/db/schema"
+import { sendAdminNotification } from "$lib/email/admin-notification-service"
+import { logEmailFailure } from "$lib/email/email-failure-logger"
+import { sendReminderEmail } from "$lib/email/email-service"
+import { withRequestContext } from "$lib/request-context"
+import { randomBytes } from "crypto"
+import { and, desc, eq, gt, isNotNull, isNull, lt, sql } from "drizzle-orm"
+
+type ReminderType =
+  | "1_hour"
+  | "12_hours"
+  | "24_hours"
+  | "3_days"
+  | "7_days"
+  | "25_percent"
+  | "50_percent"
+
+type ReminderJob = typeof reminderJobs.$inferSelect
+
+type PendingReminderWithDetails = {
+  reminder: ReminderJob
+  secret: Secret
+  user: User
+}
+
+type DatabaseConnection = Awaited<ReturnType<typeof getDatabase>>
+
+export interface CheckSecretsResult {
+  remindersProcessed: number
+  remindersSent: number
+  remindersFailed: number
+  retriesProcessed: number
+  retriesSent: number
+  retriesFailed: number
+  missedRemindersMarked: number
+  duration: number
+  timestamp: string
+  processed: number
+  succeeded: number
+  failed: number
+}
+
+async function markReminderSent(
+  db: DatabaseConnection,
+  reminderId: string,
+): Promise<void> {
+  try {
+    const now = new Date()
+
+    await db
+      .update(reminderJobs)
+      .set({
+        status: "sent" as const,
+        sentAt: now,
+        updatedAt: now,
+      })
+      .where(eq(reminderJobs.id, reminderId))
+
+    if (process.env.NODE_ENV === "development") {
+      logger.debug("Marked reminder as sent", { reminderId })
+    }
+  } catch (error) {
+    logger.error("Error marking reminder sent", undefined, {
+      error: sanitizeError(error),
+    })
+    throw error
+  }
+}
+
+async function markReminderFailed(
+  db: DatabaseConnection,
+  reminderId: string,
+  errorMessage: string,
+): Promise<void> {
+  try {
+    const now = new Date()
+
+    await db
+      .update(reminderJobs)
+      .set({
+        status: "failed" as const,
+        failedAt: now,
+        error: errorMessage,
+        retryCount: sql`COALESCE(${reminderJobs.retryCount}, 0) + 1`,
+        nextRetryAt: sql`${now}::timestamp + (INTERVAL '${sql.raw(CRON_CONFIG.RETRY_BACKOFF_BASE_MINUTES.toString())} minutes' * POW(${sql.raw(CRON_CONFIG.RETRY_BACKOFF_EXPONENT.toString())}, COALESCE(${reminderJobs.retryCount}, 0)))`,
+        updatedAt: now,
+      })
+      .where(
+        and(
+          eq(reminderJobs.id, reminderId),
+          lt(
+            sql`COALESCE(${reminderJobs.retryCount}, 0)`,
+            CRON_CONFIG.MAX_RETRIES,
+          ),
+        ),
+      )
+
+    if (process.env.NODE_ENV === "development") {
+      logger.debug("Marked reminder as failed", { reminderId })
+    }
+  } catch (err) {
+    logger.error("Error marking reminder failed", undefined, {
+      error: sanitizeError(err),
+    })
+  }
+}
+
+function calculateUrgency(
+  nextCheckIn: Date,
+): "critical" | "high" | "medium" | "low" {
+  const now = new Date()
+  const msRemaining = nextCheckIn.getTime() - now.getTime()
+  const hoursRemaining = msRemaining / (1000 * 60 * 60)
+
+  if (hoursRemaining < 1) {
+    return "critical"
+  } else if (hoursRemaining < 24) {
+    return "high"
+  } else if (hoursRemaining < 24 * 7) {
+    return "medium"
+  } else {
+    return "low"
+  }
+}
+
+async function generateCheckInToken(
+  db: DatabaseConnection,
+  secretId: string,
+): Promise<{ token: string; url: string }> {
+  const now = new Date()
+
+  const existingToken = await db
+    .select()
+    .from(checkInTokens)
+    .where(
+      and(
+        eq(checkInTokens.secretId, secretId),
+        isNull(checkInTokens.usedAt),
+        gt(checkInTokens.expiresAt, now),
+      ),
+    )
+    .limit(1)
+
+  if (existingToken.length > 0) {
+    const baseUrl = SITE_URL || "https://keyfate.com"
+    if (!SITE_URL) {
+      logger.error("PUBLIC_SITE_URL is not set, using fallback https://keyfate.com for check-in URL")
+    }
+    const url = `${baseUrl}/check-in?token=${existingToken[0].token}`
+    return { token: existingToken[0].token, url }
+  }
+
+  const token = randomBytes(32).toString("hex")
+
+  const expiresAt = new Date()
+  expiresAt.setDate(expiresAt.getDate() + 30)
+
+  await db.insert(checkInTokens).values({
+    secretId,
+    token,
+    expiresAt,
+  })
+
+  const baseUrl = SITE_URL || "https://keyfate.com"
+  if (!SITE_URL) {
+    logger.error("PUBLIC_SITE_URL is not set, using fallback https://keyfate.com for check-in URL")
+  }
+  const url = `${baseUrl}/check-in?token=${token}`
+
+  return { token, url }
+}
+
+async function processSecret(
+  db: DatabaseConnection,
+  secret: Secret,
+  user: User,
+  reminderType: ReminderType,
+  reminderId?: string,
+): Promise<{ sent: boolean; error?: string; reminderId?: string }> {
+  try {
+    if (!secret.nextCheckIn) {
+      logger.warn("Secret missing nextCheckIn, skipping", {
+        secretId: secret.id,
+      })
+      return { sent: false, error: "missing_next_check_in" }
+    }
+
+    const nextCheckIn: Date = new Date(secret.nextCheckIn)
+
+    const urgency = calculateUrgency(nextCheckIn)
+
+    const now = new Date()
+    const msRemaining = nextCheckIn.getTime() - now.getTime()
+    const daysRemaining = Math.max(0, msRemaining / (1000 * 60 * 60 * 24))
+
+    const { url: checkInUrl } = await generateCheckInToken(db, secret.id)
+
+    const result = await sendReminderEmail({
+      userEmail: user.email,
+      userName: user.name || user.email.split("@")[0],
+      secretTitle: secret.title,
+      daysRemaining,
+      checkInUrl,
+      urgencyLevel: urgency,
+      reminderType,
+    })
+
+    if (!result.success) {
+      await logEmailFailure({
+        emailType: "reminder",
+        provider:
+          (result.provider as "sendgrid" | "console-dev" | "resend") ||
+          "sendgrid",
+        recipient: user.email,
+        subject: `Check-in Reminder: ${secret.title}`,
+        errorMessage: result.error || "Unknown error",
+      })
+
+      const [failureStats] = await db
+        .select({
+          totalRetries: sql<number>`COALESCE(SUM(${emailFailures.retryCount}), 0)`,
+        })
+        .from(emailFailures)
+        .where(
+          and(
+            eq(emailFailures.emailType, "reminder"),
+            eq(emailFailures.recipient, user.email),
+          ),
+        )
+        .orderBy(desc(emailFailures.createdAt))
+        .limit(5)
+
+      const retryCount = failureStats?.totalRetries || 0
+
+      if (retryCount > CRON_CONFIG.ADMIN_NOTIFICATION_THRESHOLD) {
+        await sendAdminNotification({
+          emailType: "reminder",
+          recipient: user.email,
+          errorMessage: result.error || "Unknown error",
+          secretTitle: secret.title,
+          timestamp: new Date(),
+          retryCount,
+        })
+      }
+
+      if (reminderId) {
+        await markReminderFailed(
+          db,
+          reminderId,
+          result.error || "Unknown error",
+        )
+      }
+
+      return {
+        sent: false,
+        error: result.error,
+        reminderId,
+      }
+    }
+
+    if (reminderId) {
+      await markReminderSent(db, reminderId)
+    }
+
+    return { sent: true, reminderId }
+  } catch (error) {
+    const errorMessage = sanitizeError(error)
+
+    logger.error("Failed to process secret", undefined, { error: errorMessage })
+
+    if (reminderId) {
+      await markReminderFailed(db, reminderId, errorMessage)
+    }
+
+    return {
+      sent: false,
+      error: errorMessage,
+      reminderId,
+    }
+  }
+}
+
+async function handleMissedReminders(
+  db: DatabaseConnection,
+): Promise<{ marked: number }> {
+  const now = new Date()
+
+  const missedThresholdMs = CRON_CONFIG.MISSED_THRESHOLD_HOURS * 60 * 60 * 1000
+  const missedDeadline = new Date(now.getTime() - missedThresholdMs)
+
+  const gracePeriodMs = CRON_CONFIG.GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000
+  const earliestAllowedTime = new Date(now.getTime() - gracePeriodMs)
+
+  try {
+    const result = await db
+      .update(reminderJobs)
+      .set({
+        status: "failed" as const,
+        failedAt: now,
+        error: "Missed due to cron outage - marked for retry",
+        retryCount: 0,
+        nextRetryAt: now,
+        updatedAt: now,
+      })
+      .where(
+        and(
+          eq(reminderJobs.status, "pending"),
+          lt(reminderJobs.scheduledFor, missedDeadline),
+          gt(reminderJobs.scheduledFor, earliestAllowedTime),
+        ),
+      )
+      .returning({ id: reminderJobs.id })
+
+    const marked = result.length
+
+    if (marked > 0) {
+      logger.info("Marked missed reminders for retry", { count: marked })
+
+      if (marked > CRON_CONFIG.MISSED_REMINDERS_ALERT_THRESHOLD) {
+        await sendAdminNotification({
+          emailType: "admin_notification",
+          recipient: "system",
+          errorMessage: `High number of missed reminders detected: ${marked}. This may indicate a prolonged system outage.`,
+          timestamp: now,
+        }).catch((error) => {
+          logger.error("Failed to send admin notification", undefined, {
+            error: sanitizeError(error),
+          })
+        })
+      }
+    }
+
+    return { marked }
+  } catch (error) {
+    logger.error("Error marking missed reminders", undefined, {
+      error: sanitizeError(error),
+    })
+    return { marked: 0 }
+  }
+}
+
+async function processFailedReminders(
+  db: DatabaseConnection,
+  startTimeMs: number,
+): Promise<{ processed: number; sent: number; failed: number }> {
+  const now = new Date()
+  let processed = 0
+  let sent = 0
+  let failed = 0
+
+  try {
+    const gracePeriodMs = CRON_CONFIG.GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000
+    const earliestAllowedTime = new Date(now.getTime() - gracePeriodMs)
+
+    const failedReminders = await db
+      .select({
+        reminder: reminderJobs,
+        secret: secrets,
+        user: users,
+      })
+      .from(reminderJobs)
+      .innerJoin(secrets, eq(reminderJobs.secretId, secrets.id))
+      .innerJoin(users, eq(secrets.userId, users.id))
+      .where(
+        and(
+          eq(reminderJobs.status, "failed"),
+          lt(reminderJobs.retryCount, CRON_CONFIG.MAX_RETRIES),
+          lt(reminderJobs.nextRetryAt, now),
+          gt(reminderJobs.scheduledFor, earliestAllowedTime),
+          eq(secrets.status, "active"),
+        ),
+      )
+      .limit(50)
+
+    for (const { reminder, secret, user } of failedReminders) {
+      if (isApproachingTimeout(startTimeMs)) {
+        logger.info("Approaching timeout, stopping retry processing")
+        break
+      }
+
+      processed++
+
+      const result = await processSecret(
+        db,
+        secret,
+        user,
+        reminder.reminderType as ReminderType,
+        reminder.id,
+      )
+
+      if (result.sent) {
+        sent++
+      } else {
+        failed++
+      }
+    }
+  } catch (error) {
+    logger.error("Error processing failed reminders", undefined, {
+      error: sanitizeError(error),
+    })
+  }
+
+  return { processed, sent, failed }
+}
+
+async function fetchPendingReminders(
+  db: DatabaseConnection,
+  offset: number,
+): Promise<PendingReminderWithDetails[]> {
+  const now = new Date()
+
+  const gracePeriodMs = CRON_CONFIG.GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000
+  const earliestAllowedTime = new Date(now.getTime() - gracePeriodMs)
+
+  const results = await db
+    .select({
+      reminder: reminderJobs,
+      secret: secrets,
+      user: users,
+    })
+    .from(reminderJobs)
+    .innerJoin(secrets, eq(reminderJobs.secretId, secrets.id))
+    .innerJoin(users, eq(secrets.userId, users.id))
+    .where(
+      and(
+        eq(reminderJobs.status, "pending"),
+        lt(reminderJobs.scheduledFor, now),
+        gt(reminderJobs.scheduledFor, earliestAllowedTime),
+        eq(secrets.status, "active"),
+        isNotNull(secrets.serverShare),
+        isNotNull(secrets.nextCheckIn),
+      ),
+    )
+    .orderBy(reminderJobs.scheduledFor)
+    .limit(CRON_CONFIG.BATCH_SIZE)
+    .offset(offset)
+
+  return results
+}
+
+export async function runCheckSecrets(): Promise<CheckSecretsResult> {
+  const requestId = crypto.randomUUID()
+
+  return withRequestContext(
+    {
+      requestId,
+      jobName: "check-secrets",
+      startTime: Date.now(),
+    },
+    async () => {
+      const startTime = Date.now()
+      const startDate = new Date()
+      logger.info("check-secrets cron job started", {
+        timestamp: startDate.toISOString(),
+      })
+
+      const db = await getDatabase()
+
+      // First, mark missed reminders for retry
+      const missedStats = await handleMissedReminders(db)
+
+      let remindersProcessed = 0
+      let remindersSent = 0
+      let remindersFailed = 0
+      let offset = 0
+      let hasMore = true
+
+      while (hasMore && !isApproachingTimeout(startTime)) {
+        const batchReminders = await fetchPendingReminders(db, offset)
+
+        if (batchReminders.length < CRON_CONFIG.BATCH_SIZE) {
+          hasMore = false
+        }
+
+        for (const { reminder, secret, user } of batchReminders) {
+          if (isApproachingTimeout(startTime)) {
+            logger.info("Approaching timeout, stopping processing", {
+              remindersProcessed,
+            })
+            break
+          }
+
+          remindersProcessed++
+
+          if (process.env.NODE_ENV === "development") {
+            logger.debug("Processing reminder", {
+              reminderId: reminder.id,
+              reminderType: reminder.reminderType,
+              secretId: secret.id,
+            })
+          }
+
+          const result = await processSecret(
+            db,
+            secret,
+            user,
+            reminder.reminderType as ReminderType,
+            reminder.id,
+          )
+
+          if (result.sent) {
+            remindersSent++
+          } else {
+            remindersFailed++
+          }
+        }
+
+        offset += CRON_CONFIG.BATCH_SIZE
+      }
+
+      const retryStats = await processFailedReminders(db, startTime)
+
+      // Observability: detect silent failures where no reminders are found
+      // but active secrets exist that should have reminders
+      if (remindersProcessed === 0 && retryStats.processed === 0) {
+        try {
+          const [activeSecretCount] = await db
+            .select({
+              count: sql<number>`count(*)`,
+              withReminders: sql<number>`count(distinct rj.secret_id)`,
+            })
+            .from(secrets)
+            .leftJoin(
+              sql`${reminderJobs} rj`,
+              sql`rj.secret_id = ${secrets.id} and rj.status in ('pending', 'failed')`,
+            )
+            .where(
+              and(
+                eq(secrets.status, "active"),
+                isNotNull(secrets.serverShare),
+                isNotNull(secrets.nextCheckIn),
+              ),
+            )
+
+          const totalActive = Number(activeSecretCount?.count ?? 0)
+          const withReminders = Number(activeSecretCount?.withReminders ?? 0)
+
+          if (totalActive > 0 && withReminders === 0) {
+            logger.warn(
+              "No pending/failed reminders found but active secrets exist. Reminders may not have been scheduled.",
+              { activeSecrets: totalActive },
+            )
+          }
+
+          // Also check for reminders stuck at max retries
+          const [stuckCount] = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(reminderJobs)
+            .where(
+              and(
+                eq(reminderJobs.status, "failed"),
+                sql`${reminderJobs.retryCount} >= ${CRON_CONFIG.MAX_RETRIES}`,
+              ),
+            )
+
+          if (Number(stuckCount?.count ?? 0) > 0) {
+            logger.warn(
+              "Reminders have exhausted all retries and will not be processed",
+              { stuckReminders: Number(stuckCount.count) },
+            )
+          }
+        } catch (err) {
+          // Don't let observability logging crash the cron
+          logger.error("Error in observability check", undefined, {
+            error: sanitizeError(err),
+          })
+        }
+      }
+
+      const duration = Date.now() - startTime
+
+      logCronMetrics("check-secrets", {
+        duration,
+        processed: remindersProcessed + retryStats.processed,
+        succeeded: remindersSent + retryStats.sent,
+        failed: remindersFailed + retryStats.failed,
+      })
+
+      return {
+        remindersProcessed,
+        remindersSent,
+        remindersFailed,
+        retriesProcessed: retryStats.processed,
+        retriesSent: retryStats.sent,
+        retriesFailed: retryStats.failed,
+        missedRemindersMarked: missedStats.marked,
+        duration,
+        timestamp: new Date().toISOString(),
+        processed: remindersProcessed + retryStats.processed,
+        succeeded: remindersSent + retryStats.sent,
+        failed: remindersFailed + retryStats.failed,
+      }
+    },
+  )
+}

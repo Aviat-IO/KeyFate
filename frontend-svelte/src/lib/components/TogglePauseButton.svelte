@@ -1,0 +1,56 @@
+<script lang="ts">
+  import { Button } from '$lib/components/ui/button';
+  import { Loader2, Pause, Play } from '@lucide/svelte';
+  import type { Secret } from '$lib/types/secret-types';
+  import { mapApiSecretToDrizzleShape } from '$lib/db/secret-mapper';
+
+  let {
+    secretId,
+    status,
+    onToggleSuccess
+  }: {
+    secretId: string;
+    status: Secret['status'];
+    onToggleSuccess: (updatedSecret: Secret) => void;
+  } = $props();
+
+  let isLoading = $state(false);
+
+  async function handleTogglePause() {
+    try {
+      isLoading = true;
+
+      const csrfRes = await fetch('/api/csrf-token');
+      const { token: csrfToken } = await csrfRes.json();
+
+      const response = await fetch(`/api/secrets/${secretId}/toggle-pause`, {
+        method: 'POST',
+        headers: {
+          'x-csrf-token': csrfToken
+        }
+      });
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+
+      onToggleSuccess(mapApiSecretToDrizzleShape(data.secret) as Secret);
+    } catch (err) {
+      console.error('Error toggling pause:', err);
+    } finally {
+      isLoading = false;
+    }
+  }
+</script>
+
+<Button variant="ghost" size="sm" onclick={handleTogglePause} disabled={isLoading} class="">
+  {#if isLoading}
+    <Loader2 class="h-4 w-4 animate-spin" />
+    {status === 'active' ? 'Pausing...' : 'Resuming...'}
+  {:else if status === 'active'}
+    <Pause class="h-4 w-4" />
+    Pause
+  {:else if status === 'paused'}
+    <Play class="h-4 w-4" />
+    Resume
+  {/if}
+</Button>
