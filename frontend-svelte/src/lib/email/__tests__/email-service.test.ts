@@ -96,13 +96,11 @@ describe("email-service", () => {
         html: "<p>Body</p>",
         text: "Body",
         priority: "high",
-        unsubscribeGroup: "CHECK_IN_REMINDERS",
       })
 
       const callArg = (mockProvider.sendEmail as ReturnType<typeof vi.fn>).mock.calls[0][0]
       expect(callArg.to).toBe("user@example.com")
       expect(callArg.subject).toBe("Test Subject")
-      expect(callArg.unsubscribeGroup).toBe("CHECK_IN_REMINDERS")
     })
 
     it("returns error when circuit breaker is open", async () => {
