@@ -305,7 +305,6 @@ export async function sendReminderEmail(reminderData: {
         ? "high"
         : "normal",
     trackDelivery: true,
-    unsubscribeGroup: "CHECK_IN_REMINDERS",
   })
 
   if (result.success) {
@@ -350,13 +349,7 @@ export async function sendSecretDisclosureEmail(disclosureData: {
     html: template.html,
     text: template.text,
     priority: "high",
-    headers: {
-      "X-Priority": "1",
-      "X-MSMail-Priority": "High",
-      Importance: "high",
-    },
     trackDelivery: true,
-    unsubscribeGroup: "ACCOUNT_NOTIFICATIONS",
   })
 
   if (result.success) {

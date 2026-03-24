@@ -239,55 +239,45 @@ export function renderVerificationTemplate(
 export function renderReminderTemplate(
   data: ReminderTemplateData,
 ): EmailTemplate {
-  // Use softer, less spam-triggering labels and colors
-  const urgencyConfig = {
-    low: { bgColor: "#f0f9ff", textColor: "#1e40af", borderColor: "#3b82f6", label: "Reminder" },
-    medium: { bgColor: "#f0f9ff", textColor: "#1e40af", borderColor: "#3b82f6", label: "Reminder" },
-    high: { bgColor: "#fef3c7", textColor: "#92400e", borderColor: "#f59e0b", label: "Action needed" },
-    critical: { bgColor: "#fef2f2", textColor: "#991b1b", borderColor: "#ef4444", label: "Action needed" },
-  }
-
-  const urgency = urgencyConfig[data.urgencyLevel || "medium"]
   const timeText = formatTimeRemaining(data.daysRemaining)
+  const supportEmail = getSupportEmail()
+  const companyName = COMPANY || "KeyFate"
 
-  // Avoid spam trigger words in subject line
-  const subject = `KeyFate: Check-in for "${data.secretTitle}" - ${timeText} remaining`
+  const subject = `${companyName}: Check-in for "${data.secretTitle}" - ${timeText} remaining`
 
-  const content = `
-    <p>Hi ${data.userName},</p>
+  // Plain transactional email — no newsletter chrome, no colored boxes.
+  // Gmail categorises emails with heavy HTML + List-Unsubscribe as
+  // subscriptions and routes them to the Updates tab.
+  const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; color: #333; line-height: 1.5; margin: 0; padding: 20px;">
+  <p>Hi ${data.userName},</p>
 
-    <p>This is a scheduled reminder for your KeyFate secret.</p>
+  <p>Your secret <strong>"${data.secretTitle}"</strong> requires a check-in within <strong>${timeText}</strong>.</p>
 
-    <div style="background: ${urgency.bgColor}; border-left: 4px solid ${urgency.borderColor}; padding: 15px; margin: 20px 0;">
-      <p style="margin: 0 0 10px 0; color: ${urgency.textColor}; font-weight: 600;">
-        ${urgency.label}: Check-in required
-      </p>
-      <p style="margin: 0; color: ${urgency.textColor};">
-        Your secret "${data.secretTitle}" requires a check-in within <strong>${timeText}</strong>.
-      </p>
-    </div>
+  <p>If you don't check in before the deadline, your secret will be shared with your designated contacts.</p>
 
-    <div style="text-align: center; margin: 30px 0;">
-      <a href="${data.checkInUrl}" class="button" style="color: #ffffff;">Check In Now</a>
-    </div>
+  <p><a href="${data.checkInUrl}" style="color: #2563eb;">Check in now</a></p>
 
-    <p style="color: #666; font-size: 14px;">
-      If you don't check in before the deadline, your secret will be shared with your designated contacts as configured.
-    </p>
+  <p style="font-size: 13px; color: #888;">If the link above doesn't work, copy this URL into your browser:<br>${data.checkInUrl}</p>
 
-    <p style="font-size: 13px; color: #888;">Direct link: <a href="${data.checkInUrl}" style="color: #2563eb;">${data.checkInUrl}</a></p>
-  `
+  <p style="font-size: 12px; color: #999; margin-top: 32px;">${companyName} &middot; <a href="mailto:${supportEmail}" style="color: #999;">${supportEmail}</a></p>
+</body>
+</html>`
 
-  const baseTemplate = renderBaseTemplate({
-    title: "Check-in Reminder",
-    content,
-  })
+  const text = `Hi ${data.userName},
 
-  return {
-    subject,
-    html: baseTemplate.html,
-    text: baseTemplate.text,
-  }
+Your secret "${data.secretTitle}" requires a check-in within ${timeText}.
+
+If you don't check in before the deadline, your secret will be shared with your designated contacts.
+
+Check in now: ${data.checkInUrl}
+
+${companyName} - ${supportEmail}`
+
+  return { subject, html, text }
 }
 
 /**
@@ -299,6 +289,8 @@ export function renderDisclosureTemplate(
 ): EmailTemplate {
   const siteUrl = SITE_URL || "https://keyfate.com"
   const decryptUrl = `${siteUrl}/decrypt`
+  const supportEmail = getSupportEmail()
+  const companyName = COMPANY || "KeyFate"
   const lastSeenText = data.senderLastSeen
     ? data.senderLastSeen.toLocaleDateString()
     : "recently"
@@ -308,56 +300,71 @@ export function renderDisclosureTemplate(
       ? `${data.senderName} has chosen to share this information with you.`
       : `${data.senderName} has not checked in as scheduled (last activity: ${lastSeenText}).`
 
-  const subject = `KeyFate: Message from ${data.senderName} - ${data.secretTitle}`
+  const subject = `${companyName}: Message from ${data.senderName} - ${data.secretTitle}`
 
-  const content = `
-    <p>Dear ${data.contactName},</p>
+  // Plain transactional email — avoids Gmail subscription categorisation.
+  const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; color: #333; line-height: 1.5; margin: 0; padding: 20px;">
+  <p>Dear ${data.contactName},</p>
 
-    <p>${data.senderName} has entrusted you with confidential information through KeyFate, a secure information sharing platform.</p>
+  <p>${data.senderName} has entrusted you with confidential information through ${companyName}, a secure information sharing platform.</p>
 
-    <div class="info-box">
-      <p style="margin: 0; color: #1e40af;">${reasonText}</p>
-    </div>
+  <p>${reasonText}</p>
 
-    <div style="background: #f9fafb; padding: 16px; border-radius: 6px; margin: 20px 0;">
-      <p style="margin: 0 0 8px 0;"><strong>Title:</strong> ${data.secretTitle}</p>
-      <p style="margin: 0;"><strong>From:</strong> ${data.senderName}</p>
-    </div>
+  <p><strong>Title:</strong> ${data.secretTitle}<br><strong>From:</strong> ${data.senderName}</p>
 
-    <div style="background: #ffffff; border: 1px solid #e5e7eb; padding: 20px; border-radius: 6px; margin: 20px 0;">
-      <h3 style="margin: 0 0 12px 0; color: #374151; font-size: 16px;">Your Secret Share</h3>
-      <p style="margin: 0 0 12px 0; font-size: 14px; color: #6b7280;">This is the second share needed to reconstruct the complete message.</p>
-      <div style="background: #f3f4f6; padding: 12px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; white-space: pre-wrap; word-break: break-word; color: #374151;">
+  <hr style="border: none; border-top: 1px solid #ddd; margin: 24px 0;">
+
+  <p><strong>Your Secret Share</strong></p>
+  <p style="font-size: 14px; color: #666;">This is the second share needed to reconstruct the complete message.</p>
+  <pre style="background: #f5f5f5; padding: 12px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; white-space: pre-wrap; word-break: break-word; color: #333; border: 1px solid #ddd;">${data.secretContent}</pre>
+
+  <hr style="border: none; border-top: 1px solid #ddd; margin: 24px 0;">
+
+  <p><strong>How to Reconstruct</strong></p>
+  <ol style="padding-left: 20px; font-size: 14px;">
+    <li>Locate the first share from ${data.senderName}${data.secretCreatedAt ? ` (shared around ${data.secretCreatedAt.toLocaleDateString()})` : ""}</li>
+    <li>Copy the share above</li>
+    <li>Visit <a href="${decryptUrl}" style="color: #2563eb;">${decryptUrl}</a> to combine both shares</li>
+  </ol>
+
+  <p style="font-size: 13px; color: #666;"><strong>Please keep this information secure.</strong> Store both shares safely and do not share with unauthorized parties.</p>
+
+  <p style="font-size: 12px; color: #999; margin-top: 32px;">${companyName} &middot; <a href="mailto:${supportEmail}" style="color: #999;">${supportEmail}</a></p>
+</body>
+</html>`
+
+  const text = `Dear ${data.contactName},
+
+${data.senderName} has entrusted you with confidential information through ${companyName}, a secure information sharing platform.
+
+${reasonText}
+
+Title: ${data.secretTitle}
+From: ${data.senderName}
+
+---
+
+Your Secret Share
+This is the second share needed to reconstruct the complete message.
+
 ${data.secretContent}
-      </div>
-    </div>
 
-    <div class="info-box">
-      <h4 style="margin: 0 0 8px 0; color: #1e40af; font-size: 14px;">How to Reconstruct</h4>
-      <ol style="margin: 8px 0 0 0; padding-left: 20px; font-size: 14px; color: #374151;">
-        <li>Locate the first share from ${data.senderName}${data.secretCreatedAt ? ` (shared around ${data.secretCreatedAt.toLocaleDateString()})` : ""}</li>
-        <li>Copy the share above</li>
-        <li>Visit <a href="${decryptUrl}" style="color: #2563eb;">${decryptUrl}</a> to combine both shares</li>
-      </ol>
-    </div>
+---
 
-    <div class="notice-box">
-      <p style="margin: 0; font-size: 13px; color: #92400e;">
-        <strong>Please keep this information secure.</strong> Store both shares safely and do not share with unauthorized parties.
-      </p>
-    </div>
-  `
+How to Reconstruct
+1. Locate the first share from ${data.senderName}${data.secretCreatedAt ? ` (shared around ${data.secretCreatedAt.toLocaleDateString()})` : ""}
+2. Copy the share above
+3. Visit ${decryptUrl} to combine both shares
 
-  const baseTemplate = renderBaseTemplate({
-    title: "Confidential Message",
-    content,
-  })
+Please keep this information secure. Store both shares safely and do not share with unauthorized parties.
 
-  return {
-    subject,
-    html: baseTemplate.html,
-    text: baseTemplate.text,
-  }
+${companyName} - ${supportEmail}`
+
+  return { subject, html, text }
 }
 
 /**
