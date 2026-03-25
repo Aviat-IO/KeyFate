@@ -28,6 +28,7 @@
         isSuccessful = true;
         toast.success('Check-in successful!', {
           description: data.message ?? `Next check-in: ${data.nextCheckIn}`,
+          duration: 10000
         });
       } else {
         throw new Error(data.error || 'Check-in failed');
