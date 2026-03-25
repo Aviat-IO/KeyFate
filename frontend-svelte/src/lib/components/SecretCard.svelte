@@ -109,7 +109,8 @@
   function handleCheckInSuccess(updatedSecret: Secret) {
     secretState = { ...secretState, ...updatedSecret };
     toast.success(`Your check-in for "${secret.title}" has been recorded.`, {
-      description: 'Checked in successfully'
+      description: 'Checked in successfully',
+      duration: 10000
     });
   }
 
