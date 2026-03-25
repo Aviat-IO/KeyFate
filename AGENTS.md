@@ -119,41 +119,17 @@ snapshots cause migrations to be silently skipped, leading to schema drift.
 
 ### Deploying
 
-Railway CI/CD automatically deploys on every push — no manual action needed. For
-manual deploys:
+Railway CI/CD automatically deploys on every push to the linked branch — no
+manual action needed. Do NOT use `railway up` (CLI uploads lack the correct
+service config and will fail).
+
+To check deployment status after pushing:
 
 ```bash
-cd frontend-svelte
-
-# Deploy to staging
-railway up --service dead-mans-switch -e staging
-
-# Deploy to production
-railway up --service dead-mans-switch -e production
-```
-
-### CRITICAL: Always Check Deployment Status After Deploying
-
-After every deploy (push or `railway up`), verify the deployment succeeded:
-
-```bash
-# Check deployment status (look for latestDeployment.status)
-railway status --json 2>&1 | jq '.environments.edges[].node | {
-  name: .name,
-  latestStatus: .serviceInstances.edges[0].node.latestDeployment.status,
-  activeStatus: .serviceInstances.edges[0].node.activeDeployments[0].status,
-  configErrors: .serviceInstances.edges[0].node.latestDeployment.meta.configErrors
-}'
-
 # Check runtime logs
 railway logs --service dead-mans-switch -e production
 railway logs --service dead-mans-switch -e staging
 ```
-
-**Common failure**: Railway auto-deploy fails with
-`"Could not find root directory: /frontend-svelte"` if service settings get
-reset. Verify the root directory and Dockerfile path are set in Railway
-dashboard or use `railway up` which builds locally.
 
 ### Key Environment Variables
 
