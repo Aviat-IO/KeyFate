@@ -4,17 +4,17 @@ on:
   push:
     branches: [main, develop, staging]
     paths:
-      - "frontend-svelte/**"
+      - "frontend/**"
       - ".github/workflows/ci.yml"
   pull_request:
     branches: [main, develop, staging]
     paths:
-      - "frontend-svelte/**"
+      - "frontend/**"
       - ".github/workflows/ci.yml"
 
 defaults:
   run:
-    working-directory: frontend-svelte
+    working-directory: frontend
 
 jobs:
   lint-typecheck:
@@ -78,4 +78,4 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t keyfate:test .
-        working-directory: frontend-svelte
+        working-directory: frontend

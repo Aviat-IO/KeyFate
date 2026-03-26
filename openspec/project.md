@@ -143,7 +143,7 @@ crypto holders), with future B2B potential.
 - **Subscription Management:** Stripe and BTCPay Server integration
 - **Contact Methods:** Email only (SMS/phone deferred to future)
 - **Pro Features Constant:** All Pro features defined in
-  `frontend-svelte/src/constants/pro-features.ts` with title, description, and
+  `frontend/src/constants/pro-features.ts` with title, description, and
   optional features list
 - **Future Plans:** SMS notifications, B2B features, Nostr integration, Bitcoin
   CSV timelocks for trustless disclosure
@@ -203,9 +203,9 @@ crypto holders), with future B2B potential.
 - **Payment processing:** Stripe and BTCPay Server
 - **Contact methods:** Email only until SMS feature is implemented
 - **UI Components:** shadcn-svelte with theme defined in
-  `frontend-svelte/src/app.css`
+  `frontend/src/app.css`
 - **Pro Features Reference:** All Pro features centralized in
-  `frontend-svelte/src/constants/pro-features.ts`
+  `frontend/src/constants/pro-features.ts`
 
 ## External Dependencies
 
