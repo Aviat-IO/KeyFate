@@ -170,8 +170,8 @@ export const GET: RequestHandler = async (event) => {
       },
       emailFailures: emailFailureStats,
       diagnosis: generateDiagnosis(
-        activeSecretStats,
-        reminderStats,
+        activeSecretStats as Record<string, number>,
+        reminderStats as Record<string, number>,
         overdueSecrets.length,
         envCheck,
       ),

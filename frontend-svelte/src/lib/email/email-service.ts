@@ -375,6 +375,13 @@ export async function sendSecretDisclosureEmail(disclosureData: {
   return result
 }
 
+interface DeliveryStatus {
+  messageId: string
+  status: string
+  deliveredAt: Date
+  events: Array<{ type: string; timestamp: Date }>
+}
+
 /**
  * Get delivery status for a message
  */

@@ -29,6 +29,13 @@ vi.mock("../$types", () => ({}))
 
 import { load } from "../+page.server"
 
+// Helper to assert load() returned data (it always does, even in catch block)
+async function loadAdmin() {
+	const result = await load({} as Parameters<typeof load>[0])
+	if (!result) throw new Error("load returned void unexpectedly")
+	return result
+}
+
 // --- Fixtures ---
 
 const MOCK_SECRET_COUNTS = { active: 10, paused: 3, triggered: 1, failed: 2, total: 16 }
@@ -96,7 +103,7 @@ describe("Admin page.server load", () => {
 
 	describe("happy path", () => {
 		it("returns all metrics data from queries and cronMonitor", async () => {
-			const result = await load({} as any)
+			const result = await loadAdmin()
 
 			expect(result).toEqual({
 				secretCounts: MOCK_SECRET_COUNTS,
@@ -110,7 +117,7 @@ describe("Admin page.server load", () => {
 		})
 
 		it("calls all six query functions", async () => {
-			await load({} as any)
+			await loadAdmin()
 
 			expect(mockGetSecretStatusCounts).toHaveBeenCalledOnce()
 			expect(mockGetUserCounts).toHaveBeenCalledOnce()
@@ -121,7 +128,7 @@ describe("Admin page.server load", () => {
 		})
 
 		it("calls cronMonitor.getAllStats()", async () => {
-			await load({} as any)
+			await loadAdmin()
 
 			expect(mockGetAllStats).toHaveBeenCalledOnce()
 		})
@@ -130,7 +137,7 @@ describe("Admin page.server load", () => {
 			const customStats = { "my-job": { runs: 99 } }
 			mockGetAllStats.mockReturnValue(customStats)
 
-			const result = await load({} as any)
+			const result = await loadAdmin()
 
 			expect(result.cronStats).toBe(customStats)
 		})
@@ -138,7 +145,7 @@ describe("Admin page.server load", () => {
 
 	describe("return shape", () => {
 		it("has all expected top-level keys", async () => {
-			const result = await load({} as any)
+			const result = await loadAdmin()
 
 			expect(Object.keys(result).sort()).toEqual([
 				"cronStats",
@@ -156,7 +163,7 @@ describe("Admin page.server load", () => {
 		it("returns fallback zeroed data when getSecretStatusCounts throws", async () => {
 			mockGetSecretStatusCounts.mockRejectedValue(new Error("DB connection lost"))
 
-			const result = await load({} as any)
+			const result = await loadAdmin()
 
 			expect(result.secretCounts).toEqual(FALLBACK_SECRET_COUNTS)
 			expect(result.userCounts).toEqual(FALLBACK_USER_COUNTS)
@@ -170,7 +177,7 @@ describe("Admin page.server load", () => {
 		it("returns fallback data when getUserCounts throws", async () => {
 			mockGetUserCounts.mockRejectedValue(new Error("query timeout"))
 
-			const result = await load({} as any)
+			const result = await loadAdmin()
 
 			expect(result.secretCounts).toEqual(FALLBACK_SECRET_COUNTS)
 			expect(result.userCounts).toEqual(FALLBACK_USER_COUNTS)
@@ -179,7 +186,7 @@ describe("Admin page.server load", () => {
 		it("returns fallback data when getRecentActivity throws", async () => {
 			mockGetRecentActivity.mockRejectedValue(new Error("table missing"))
 
-			const result = await load({} as any)
+			const result = await loadAdmin()
 
 			expect(result.recentActivity).toEqual([])
 		})
@@ -189,7 +196,7 @@ describe("Admin page.server load", () => {
 			const dbError = new Error("DB exploded")
 			mockGetSecretStatusCounts.mockRejectedValue(dbError)
 
-			await load({} as any)
+			await loadAdmin()
 
 			expect(consoleSpy).toHaveBeenCalledOnce()
 			expect(consoleSpy).toHaveBeenCalledWith(
@@ -203,7 +210,7 @@ describe("Admin page.server load", () => {
 		it("does not log when queries succeed", async () => {
 			const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
 
-			await load({} as any)
+			await loadAdmin()
 
 			expect(consoleSpy).not.toHaveBeenCalled()
 
@@ -216,7 +223,7 @@ describe("Admin page.server load", () => {
 				throw new Error("monitor broken")
 			})
 
-			const result = await load({} as any)
+			const result = await loadAdmin()
 
 			expect(result.cronStats).toEqual({})
 		})
@@ -224,7 +231,7 @@ describe("Admin page.server load", () => {
 		it("fallback secretCounts has correct shape", async () => {
 			mockGetSecretStatusCounts.mockRejectedValue(new Error("fail"))
 
-			const result = await load({} as any)
+			const result = await loadAdmin()
 
 			expect(result.secretCounts).toHaveProperty("active", 0)
 			expect(result.secretCounts).toHaveProperty("paused", 0)
@@ -236,7 +243,7 @@ describe("Admin page.server load", () => {
 		it("fallback userCounts has correct shape", async () => {
 			mockGetUserCounts.mockRejectedValue(new Error("fail"))
 
-			const result = await load({} as any)
+			const result = await loadAdmin()
 
 			expect(result.userCounts).toHaveProperty("total", 0)
 			expect(result.userCounts).toHaveProperty("withActiveSecrets", 0)
@@ -246,7 +253,7 @@ describe("Admin page.server load", () => {
 		it("fallback emailStats has correct shape", async () => {
 			mockGetEmailDeliveryStats.mockRejectedValue(new Error("fail"))
 
-			const result = await load({} as any)
+			const result = await loadAdmin()
 
 			expect(result.emailStats).toHaveProperty("sent", 0)
 			expect(result.emailStats).toHaveProperty("failed", 0)

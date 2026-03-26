@@ -202,9 +202,9 @@
 							{#each emailFailures as failure}
 								<Table.Row>
 									<Table.Cell class="font-medium">{failure.recipient}</Table.Cell>
-									<Table.Cell class="max-w-xs truncate text-sm">{failure.error}</Table.Cell>
+									<Table.Cell class="max-w-xs truncate text-sm">{failure.errorMessage}</Table.Cell>
 									<Table.Cell>
-										<Badge variant="outline">{failure.type}</Badge>
+										<Badge variant="outline">{failure.emailType}</Badge>
 									</Table.Cell>
 									<Table.Cell class="text-muted-foreground">{failure.provider ?? '--'}</Table.Cell>
 									<Table.Cell class="text-muted-foreground text-sm">{formatDate(failure.createdAt)}</Table.Cell>
