@@ -7,7 +7,7 @@
 - [x] 1.4 Configure environment variables in Railway (migrated from GCP Secret
       Manager + Cloud Run env vars to both staging and production)
 - [x] 1.5 Configure Railway to use the Dockerfile for builds (root dir =
-      frontend-svelte)
+      frontend)
 - [ ] 1.6 Configure custom domain (keyfate.com) DNS to Railway
 - [x] 1.7 Add PostgreSQL plugin to Railway production environment
 

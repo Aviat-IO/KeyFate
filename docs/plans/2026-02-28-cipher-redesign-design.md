@@ -1,6 +1,6 @@
 # The Cipher Redesign — Full Site Design Document
 
-**Date:** 2026-02-28 **Scope:** Full site redesign of frontend-svelte to match
+**Date:** 2026-02-28 **Scope:** Full site redesign of frontend to match
 DESIGN.md ("The Cipher") **Approach:** Bottom-up foundation (global theme first,
 then page sweeps)
 

@@ -35,7 +35,7 @@ install:
 	@echo "Directories created"
 	@echo ""
 	@echo "Step 4: Installing dependencies..."
-	@cd frontend-svelte && bun install
+	@cd frontend && bun install
 	@echo "Dependencies ready"
 	@echo ""
 	@echo "Step 5: Building Docker containers..."
@@ -48,7 +48,7 @@ install:
 	@echo "Local development environment installation complete!"
 	@echo ""
 	@echo "Next steps:"
-	@echo "  1. Copy frontend-svelte/.env.example to frontend-svelte/.env.local and configure"
+	@echo "  1. Copy frontend/.env.example to frontend/.env.local and configure"
 	@echo "  2. Run 'make dev' to start the development environment"
 	@echo ""
 
@@ -77,7 +77,7 @@ dev:
 	@echo "Frontend: http://localhost:5173"
 	@echo "Database: localhost:5432"
 	@echo ""
-	@cd frontend-svelte && bun run dev
+	@cd frontend && bun run dev
 
 stop:
 	@echo "Stopping all local services..."
@@ -92,15 +92,15 @@ clean:
 
 test:
 	@echo "Running tests..."
-	@cd frontend-svelte && bun run test
+	@cd frontend && bun run test
 
 build:
 	@echo "Building for production..."
-	@cd frontend-svelte && bun run build
+	@cd frontend && bun run build
 
 migrate:
 	@echo "Running database migrations..."
-	@cd frontend-svelte && bunx drizzle-kit migrate
+	@cd frontend && bunx drizzle-kit migrate
 	@echo "Migrations complete"
 
 seed:
@@ -178,7 +178,7 @@ check-database-ready:
 setup-env-files:
 	@echo "Setting up environment files..."
 	@if [ ! -f .env.local ]; then cp .env.local.example .env.local 2>/dev/null || echo "# Local environment variables" > .env.local; fi
-	@if [ ! -f frontend-svelte/.env.local ]; then cp frontend-svelte/.env.example frontend-svelte/.env.local 2>/dev/null || echo "# Local environment variables" > frontend-svelte/.env.local; fi
+	@if [ ! -f frontend/.env.local ]; then cp frontend/.env.example frontend/.env.local 2>/dev/null || echo "# Local environment variables" > frontend/.env.local; fi
 	@echo "Environment files ready"
 
 setup-database:

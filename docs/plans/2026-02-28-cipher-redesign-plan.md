@@ -21,14 +21,14 @@ invisible. Button text gets uppercase tracking treatment.
 
 **Files:**
 
-- Modify: `frontend-svelte/package.json`
+- Modify: `frontend/package.json`
 
 **Step 1: Install fonts**
 
 Run:
 
 ```bash
-cd frontend-svelte && bun add @fontsource/space-grotesk @fontsource/inter
+cd frontend && bun add @fontsource/space-grotesk @fontsource/inter
 ```
 
 **Step 2: Verify installation**
@@ -50,7 +50,7 @@ git commit -m "chore: install Space Grotesk and Inter font packages"
 
 **Files:**
 
-- Modify: `frontend-svelte/src/app.css`
+- Modify: `frontend/src/app.css`
 
 **Step 1: Add font imports at the top of app.css**
 
@@ -203,7 +203,7 @@ Replace the `.theme` block (lines 128-138) with:
 
 **Step 5: Build and verify**
 
-Run: `cd frontend-svelte && bun run build` Expected: Successful build
+Run: `cd frontend && bun run build` Expected: Successful build
 
 **Step 6: Commit**
 
@@ -218,7 +218,7 @@ git commit -m "feat: update CSS variables to The Cipher slate/black palette with
 
 **Files:**
 
-- Modify: `frontend-svelte/tailwind.config.ts`
+- Modify: `frontend/tailwind.config.ts`
 
 **Step 1: Add `space` font family to the extend.fontFamily section**
 
@@ -235,7 +235,7 @@ fontFamily: {
 
 **Step 2: Build and verify**
 
-Run: `cd frontend-svelte && bun run build` Expected: Successful build
+Run: `cd frontend && bun run build` Expected: Successful build
 
 **Step 3: Commit**
 
@@ -250,7 +250,7 @@ git commit -m "feat: add font-space mapping to Tailwind config"
 
 **Files:**
 
-- Modify: `frontend-svelte/src/lib/components/ui/card/card.svelte`
+- Modify: `frontend/src/lib/components/ui/card/card.svelte`
 
 **Step 1: Replace the Card's default classes**
 
@@ -272,7 +272,7 @@ visible containment can add classes via `className`.
 
 **Step 2: Build and run tests**
 
-Run: `cd frontend-svelte && bun run build && bun test` Expected: Build succeeds.
+Run: `cd frontend && bun run build && bun test` Expected: Build succeeds.
 Tests pass (card styling changes shouldn't break test assertions unless tests
 check for specific classes).
 
@@ -289,7 +289,7 @@ git commit -m "feat: strip Card component to invisible default per The Cipher de
 
 **Files:**
 
-- Create: `frontend-svelte/src/lib/components/Keyline.svelte`
+- Create: `frontend/src/lib/components/Keyline.svelte`
 
 **Step 1: Create the component**
 
@@ -314,7 +314,7 @@ git commit -m "feat: strip Card component to invisible default per The Cipher de
 
 **Step 2: Build**
 
-Run: `cd frontend-svelte && bun run build` Expected: Successful build
+Run: `cd frontend && bun run build` Expected: Successful build
 
 **Step 3: Commit**
 
@@ -329,7 +329,7 @@ git commit -m "feat: add Keyline progress bar component per The Cipher design"
 
 **Files:**
 
-- Create: `frontend-svelte/src/lib/components/DataLabel.svelte`
+- Create: `frontend/src/lib/components/DataLabel.svelte`
 
 **Step 1: Create the component**
 
@@ -364,7 +364,7 @@ git commit -m "feat: add Keyline progress bar component per The Cipher design"
 
 **Step 2: Build**
 
-Run: `cd frontend-svelte && bun run build` Expected: Successful build
+Run: `cd frontend && bun run build` Expected: Successful build
 
 **Step 3: Commit**
 
@@ -379,7 +379,7 @@ git commit -m "feat: add DataLabel unboxed metadata component per The Cipher des
 
 **Files:**
 
-- Modify: `frontend-svelte/src/lib/components/NavBar.svelte`
+- Modify: `frontend/src/lib/components/NavBar.svelte`
 
 **Step 1: Simplify nav styling**
 
@@ -432,7 +432,7 @@ For the "Recover Secret" button (line 129), "Sign In" (line 147), "Sign Up"
 
 **Step 4: Build and run tests**
 
-Run: `cd frontend-svelte && bun run build && bun test` Expected: Build passes,
+Run: `cd frontend && bun run build && bun test` Expected: Build passes,
 tests pass
 
 **Step 5: Commit**
@@ -448,7 +448,7 @@ git commit -m "feat: update NavBar to The Cipher aesthetic with uppercase tracki
 
 **Files:**
 
-- Modify: `frontend-svelte/src/lib/components/Footer.svelte`
+- Modify: `frontend/src/lib/components/Footer.svelte`
 
 **Step 1: Update container and spacing**
 
@@ -483,7 +483,7 @@ Change tagline (line 51) to:
 
 **Step 4: Build and verify**
 
-Run: `cd frontend-svelte && bun run build` Expected: Successful build
+Run: `cd frontend && bun run build` Expected: Successful build
 
 **Step 5: Commit**
 
@@ -498,11 +498,11 @@ git commit -m "feat: update Footer to The Cipher aesthetic"
 
 **Files:**
 
-- Modify: `frontend-svelte/src/routes/+page.svelte`
+- Modify: `frontend/src/routes/+page.svelte`
 
 **Step 1: Read the current landing page**
 
-Read `frontend-svelte/src/routes/+page.svelte` to understand the current
+Read `frontend/src/routes/+page.svelte` to understand the current
 structure.
 
 **Step 2: Apply The Cipher treatment**
@@ -527,7 +527,7 @@ Key changes:
 
 **Step 3: Build and run tests**
 
-Run: `cd frontend-svelte && bun run build && bun test` Expected: Build and tests
+Run: `cd frontend && bun run build && bun test` Expected: Build and tests
 pass
 
 **Step 4: Commit**
@@ -543,9 +543,9 @@ git commit -m "feat: redesign landing page to The Cipher aesthetic"
 
 **Files:**
 
-- Modify: `frontend-svelte/src/routes/(authenticated)/dashboard/+page.svelte`
-- Modify: `frontend-svelte/src/lib/components/SecretsGrid.svelte`
-- Modify: `frontend-svelte/src/lib/components/SecretCard.svelte`
+- Modify: `frontend/src/routes/(authenticated)/dashboard/+page.svelte`
+- Modify: `frontend/src/lib/components/SecretsGrid.svelte`
+- Modify: `frontend/src/lib/components/SecretCard.svelte`
 
 **Step 1: Read the current files**
 
@@ -576,7 +576,7 @@ list (`space-y-0 divide-y divide-border/50`) for the unboxed flow.
 
 **Step 5: Build and run tests**
 
-Run: `cd frontend-svelte && bun run build && bun test` Expected: Build and tests
+Run: `cd frontend && bun run build && bun test` Expected: Build and tests
 pass
 
 **Step 6: Commit**
@@ -593,7 +593,7 @@ git commit -m "feat: redesign dashboard and secret cards to The Cipher aesthetic
 **Files:**
 
 - Modify:
-  `frontend-svelte/src/routes/(authenticated)/secrets/[id]/view/+page.svelte`
+  `frontend/src/routes/(authenticated)/secrets/[id]/view/+page.svelte`
 
 **Step 1: Read the current file**
 
@@ -615,7 +615,7 @@ Read the ~435 line file to understand its 4 Card sections.
 
 **Step 3: Build and run tests**
 
-Run: `cd frontend-svelte && bun run build && bun test`
+Run: `cd frontend && bun run build && bun test`
 
 **Step 4: Commit**
 
@@ -630,12 +630,12 @@ git commit -m "feat: redesign secret detail view to The Cipher aesthetic"
 
 **Files:**
 
-- Modify: `frontend-svelte/src/routes/(authenticated)/secrets/new/+page.svelte`
+- Modify: `frontend/src/routes/(authenticated)/secrets/new/+page.svelte`
 - Modify:
-  `frontend-svelte/src/routes/(authenticated)/secrets/[id]/edit/+page.svelte`
-- Modify: `frontend-svelte/src/lib/components/NewSecretForm.svelte`
-- Modify: `frontend-svelte/src/lib/components/EditSecretForm.svelte`
-- Modify: `frontend-svelte/src/lib/components/SecretDetailsForm.svelte`
+  `frontend/src/routes/(authenticated)/secrets/[id]/edit/+page.svelte`
+- Modify: `frontend/src/lib/components/NewSecretForm.svelte`
+- Modify: `frontend/src/lib/components/EditSecretForm.svelte`
+- Modify: `frontend/src/lib/components/SecretDetailsForm.svelte`
 
 **Step 1: Read all form files**
 
@@ -651,7 +651,7 @@ git commit -m "feat: redesign secret detail view to The Cipher aesthetic"
 
 **Step 3: Build and run tests**
 
-Run: `cd frontend-svelte && bun run build && bun test`
+Run: `cd frontend && bun run build && bun test`
 
 **Step 4: Commit**
 
@@ -667,7 +667,7 @@ git commit -m "feat: redesign secret create/edit forms to The Cipher aesthetic"
 **Files:**
 
 - Modify:
-  `frontend-svelte/src/routes/(authenticated)/secrets/[id]/share-instructions/+page.svelte`
+  `frontend/src/routes/(authenticated)/secrets/[id]/share-instructions/+page.svelte`
 
 **Step 1: Read and transform**
 
@@ -678,7 +678,7 @@ git commit -m "feat: redesign secret create/edit forms to The Cipher aesthetic"
 
 **Step 2: Build and test**
 
-Run: `cd frontend-svelte && bun run build && bun test`
+Run: `cd frontend && bun run build && bun test`
 
 **Step 3: Commit**
 
@@ -693,7 +693,7 @@ git commit -m "feat: redesign share instructions to The Cipher aesthetic"
 
 **Files:**
 
-- Modify: `frontend-svelte/src/routes/sign-in/+page.svelte`
+- Modify: `frontend/src/routes/sign-in/+page.svelte`
 
 **Step 1: Read and transform**
 
@@ -707,7 +707,7 @@ git commit -m "feat: redesign share instructions to The Cipher aesthetic"
 
 **Step 2: Build and test**
 
-Run: `cd frontend-svelte && bun run build && bun test`
+Run: `cd frontend && bun run build && bun test`
 
 **Step 3: Commit**
 
@@ -722,20 +722,20 @@ git commit -m "feat: redesign sign-in page to The Cipher aesthetic"
 
 **Files:**
 
-- Modify: `frontend-svelte/src/routes/(authenticated)/settings/+layout.svelte`
+- Modify: `frontend/src/routes/(authenticated)/settings/+layout.svelte`
 - Modify:
-  `frontend-svelte/src/routes/(authenticated)/settings/general/+page.svelte`
+  `frontend/src/routes/(authenticated)/settings/general/+page.svelte`
 - Modify:
-  `frontend-svelte/src/routes/(authenticated)/settings/subscription/+page.svelte`
+  `frontend/src/routes/(authenticated)/settings/subscription/+page.svelte`
 - Modify:
-  `frontend-svelte/src/routes/(authenticated)/settings/privacy/+page.svelte`
+  `frontend/src/routes/(authenticated)/settings/privacy/+page.svelte`
 - Modify:
-  `frontend-svelte/src/routes/(authenticated)/settings/audit/+page.svelte`
-- Modify: `frontend-svelte/src/lib/components/SettingsNav.svelte`
-- Modify: `frontend-svelte/src/lib/components/SubscriptionManager.svelte`
-- Modify: `frontend-svelte/src/lib/components/DataExportCard.svelte`
-- Modify: `frontend-svelte/src/lib/components/AccountDeletionCard.svelte`
-- Modify: `frontend-svelte/src/lib/components/AuditLogsPage.svelte`
+  `frontend/src/routes/(authenticated)/settings/audit/+page.svelte`
+- Modify: `frontend/src/lib/components/SettingsNav.svelte`
+- Modify: `frontend/src/lib/components/SubscriptionManager.svelte`
+- Modify: `frontend/src/lib/components/DataExportCard.svelte`
+- Modify: `frontend/src/lib/components/AccountDeletionCard.svelte`
+- Modify: `frontend/src/lib/components/AuditLogsPage.svelte`
 
 **Step 1: Read all settings files**
 
@@ -753,7 +753,7 @@ git commit -m "feat: redesign sign-in page to The Cipher aesthetic"
 
 **Step 3: Build and test**
 
-Run: `cd frontend-svelte && bun run build && bun test`
+Run: `cd frontend && bun run build && bun test`
 
 **Step 4: Commit**
 
@@ -768,9 +768,9 @@ git commit -m "feat: redesign settings pages to The Cipher aesthetic"
 
 **Files:**
 
-- Modify: `frontend-svelte/src/lib/components/PricingPage.svelte`
-- Modify: `frontend-svelte/src/lib/components/PricingCard.svelte`
-- Modify: `frontend-svelte/src/lib/components/BillingToggle.svelte`
+- Modify: `frontend/src/lib/components/PricingPage.svelte`
+- Modify: `frontend/src/lib/components/PricingCard.svelte`
+- Modify: `frontend/src/lib/components/BillingToggle.svelte`
 
 **Step 1: Read all pricing files**
 
@@ -786,7 +786,7 @@ git commit -m "feat: redesign settings pages to The Cipher aesthetic"
 
 **Step 3: Build and test**
 
-Run: `cd frontend-svelte && bun run build && bun test`
+Run: `cd frontend && bun run build && bun test`
 
 **Step 4: Commit**
 
@@ -801,8 +801,8 @@ git commit -m "feat: redesign pricing page to The Cipher aesthetic"
 
 **Files:**
 
-- Modify: `frontend-svelte/src/routes/blog/+page.svelte`
-- Modify: `frontend-svelte/src/routes/blog/[slug]/+page.svelte`
+- Modify: `frontend/src/routes/blog/+page.svelte`
+- Modify: `frontend/src/routes/blog/[slug]/+page.svelte`
 
 **Step 1: Read both blog files**
 
@@ -823,7 +823,7 @@ git commit -m "feat: redesign pricing page to The Cipher aesthetic"
 
 **Step 4: Build and test**
 
-Run: `cd frontend-svelte && bun run build && bun test`
+Run: `cd frontend && bun run build && bun test`
 
 **Step 5: Commit**
 
@@ -838,7 +838,7 @@ git commit -m "feat: redesign blog pages to The Cipher aesthetic"
 
 **Files:**
 
-- Modify: `frontend-svelte/src/routes/faq/+page.svelte`
+- Modify: `frontend/src/routes/faq/+page.svelte`
 
 **Step 1: Read and transform**
 
@@ -851,7 +851,7 @@ git commit -m "feat: redesign blog pages to The Cipher aesthetic"
 
 **Step 2: Build and test**
 
-Run: `cd frontend-svelte && bun run build && bun test`
+Run: `cd frontend && bun run build && bun test`
 
 **Step 3: Commit**
 
@@ -866,9 +866,9 @@ git commit -m "feat: redesign FAQ page to The Cipher aesthetic"
 
 **Files:**
 
-- Modify: `frontend-svelte/src/routes/terms-of-service/+page.svelte`
-- Modify: `frontend-svelte/src/routes/privacy-policy/+page.svelte`
-- Modify: `frontend-svelte/src/routes/(main)/refunds/+page.svelte`
+- Modify: `frontend/src/routes/terms-of-service/+page.svelte`
+- Modify: `frontend/src/routes/privacy-policy/+page.svelte`
+- Modify: `frontend/src/routes/(main)/refunds/+page.svelte`
 
 **Step 1: Read and transform**
 
@@ -880,7 +880,7 @@ git commit -m "feat: redesign FAQ page to The Cipher aesthetic"
 
 **Step 2: Build and test**
 
-Run: `cd frontend-svelte && bun run build && bun test`
+Run: `cd frontend && bun run build && bun test`
 
 **Step 3: Commit**
 
@@ -895,12 +895,12 @@ git commit -m "feat: redesign legal pages to The Cipher aesthetic"
 
 **Files:**
 
-- Modify: `frontend-svelte/src/routes/decrypt/+page.svelte`
-- Modify: `frontend-svelte/src/routes/recover/+page.svelte`
-- Modify: `frontend-svelte/src/routes/local-instructions/+page.svelte`
-- Modify: `frontend-svelte/src/routes/profile/+page.svelte`
-- Modify: `frontend-svelte/src/routes/confirm-deletion/+page.svelte`
-- Modify: `frontend-svelte/src/routes/auth/error/+page.svelte`
+- Modify: `frontend/src/routes/decrypt/+page.svelte`
+- Modify: `frontend/src/routes/recover/+page.svelte`
+- Modify: `frontend/src/routes/local-instructions/+page.svelte`
+- Modify: `frontend/src/routes/profile/+page.svelte`
+- Modify: `frontend/src/routes/confirm-deletion/+page.svelte`
+- Modify: `frontend/src/routes/auth/error/+page.svelte`
 
 **Step 1: Read all files**
 
@@ -917,7 +917,7 @@ git commit -m "feat: redesign legal pages to The Cipher aesthetic"
 
 **Step 3: Build and run ALL tests**
 
-Run: `cd frontend-svelte && bun run build && bun test` Expected: All 303 tests
+Run: `cd frontend && bun run build && bun test` Expected: All 303 tests
 pass
 
 **Step 4: Commit**
@@ -933,9 +933,9 @@ git commit -m "feat: redesign remaining pages to The Cipher aesthetic"
 
 **Files:**
 
-- Modify: `frontend-svelte/src/routes/(main)/+layout.svelte`
-- Modify: `frontend-svelte/src/routes/(authenticated)/+layout.svelte`
-- Modify: `frontend-svelte/src/routes/blog/+layout.svelte`
+- Modify: `frontend/src/routes/(main)/+layout.svelte`
+- Modify: `frontend/src/routes/(authenticated)/+layout.svelte`
+- Modify: `frontend/src/routes/blog/+layout.svelte`
 
 **Step 1: Read and update layouts**
 
@@ -945,7 +945,7 @@ git commit -m "feat: redesign remaining pages to The Cipher aesthetic"
 
 **Step 2: Build and test**
 
-Run: `cd frontend-svelte && bun run build && bun test`
+Run: `cd frontend && bun run build && bun test`
 
 **Step 3: Commit**
 
@@ -960,7 +960,7 @@ git commit -m "feat: update layout files to The Cipher container and spacing sta
 
 **Files:**
 
-- Modify: `frontend-svelte/src/lib/components/ui/badge/badge.svelte`
+- Modify: `frontend/src/lib/components/ui/badge/badge.svelte`
 
 **Step 1: Set default variant to outline**
 
@@ -981,7 +981,7 @@ DESIGN.md's preference.
 
 **Step 2: Build and test**
 
-Run: `cd frontend-svelte && bun run build && bun test`
+Run: `cd frontend && bun run build && bun test`
 
 **Step 3: Commit**
 
@@ -998,13 +998,13 @@ git commit -m "feat: set Badge default variant to outline per The Cipher design"
 
 - Modify: Any remaining components that use Card, hardcoded colors, or don't
   follow The Cipher patterns
-- Check: `frontend-svelte/src/lib/components/UpgradeModal.svelte`
-- Check: `frontend-svelte/src/lib/components/TierUsageCard.svelte`
-- Check: `frontend-svelte/src/lib/components/UsageIndicator.svelte`
-- Check: `frontend-svelte/src/lib/components/ContactMethodsForm.svelte`
-- Check: `frontend-svelte/src/lib/components/ContactMethodsDialog.svelte`
-- Check: `frontend-svelte/src/lib/components/RecoveryGuide.svelte`
-- Check: `frontend-svelte/src/lib/components/SSSDecryptor.svelte`
+- Check: `frontend/src/lib/components/UpgradeModal.svelte`
+- Check: `frontend/src/lib/components/TierUsageCard.svelte`
+- Check: `frontend/src/lib/components/UsageIndicator.svelte`
+- Check: `frontend/src/lib/components/ContactMethodsForm.svelte`
+- Check: `frontend/src/lib/components/ContactMethodsDialog.svelte`
+- Check: `frontend/src/lib/components/RecoveryGuide.svelte`
+- Check: `frontend/src/lib/components/SSSDecryptor.svelte`
 
 **Step 1: Read and audit each component**
 
@@ -1021,7 +1021,7 @@ Apply The Cipher patterns to all remaining components.
 
 **Step 3: Build and run full test suite**
 
-Run: `cd frontend-svelte && bun run build && bun test` Expected: All 303 tests
+Run: `cd frontend && bun run build && bun test` Expected: All 303 tests
 pass
 
 **Step 4: Commit**
@@ -1037,16 +1037,16 @@ git commit -m "feat: update remaining components to The Cipher aesthetic"
 
 **Step 1: Run full build**
 
-Run: `cd frontend-svelte && bun run build` Expected: Successful build with no
+Run: `cd frontend && bun run build` Expected: Successful build with no
 errors
 
 **Step 2: Run full test suite**
 
-Run: `cd frontend-svelte && bun test` Expected: All 303 tests pass
+Run: `cd frontend && bun test` Expected: All 303 tests pass
 
 **Step 3: Run type checking**
 
-Run: `cd frontend-svelte && bun run check` Expected: No type errors
+Run: `cd frontend && bun run check` Expected: No type errors
 (pre-existing errors in confirm-deletion may persist)
 
 **Step 4: Search for remaining violations**
@@ -1054,7 +1054,7 @@ Run: `cd frontend-svelte && bun run check` Expected: No type errors
 Run:
 
 ```bash
-cd frontend-svelte && rg -n 'text-blue-|text-green-|text-red-|bg-white|bg-blue-|bg-green-|bg-red-' src/ --include '*.svelte' --include '*.ts'
+cd frontend && rg -n 'text-blue-|text-green-|text-red-|bg-white|bg-blue-|bg-green-|bg-red-' src/ --include '*.svelte' --include '*.ts'
 ```
 
 Expected: No matches (or only in test fixtures/mocks)

@@ -24,7 +24,7 @@ See `openspec/changes/refactor-hosting-migration/tasks.md` for full checklist.
 
 ### Railway Service Settings
 
-- [ ] Set root directory to `frontend-svelte` in Railway production service
+- [ ] Set root directory to `frontend` in Railway production service
       settings (so GitHub-triggered deploys work, not just `railway up`)
 
 ### External Service Webhooks
@@ -48,7 +48,7 @@ See `openspec/changes/refactor-hosting-migration/tasks.md` for full checklist.
 ## Future Work
 
 - [ ] Add PostHog analytics (rewrite `add-posthog-analytics` for SvelteKit)
-- [ ] Add static assets (favicon, logos) to `frontend-svelte/static/`
+- [ ] Add static assets (favicon, logos) to `frontend/static/`
 - [ ] Review and implement relevant items from archived
       `fix-security-scalability-issues` (DB indexes, OTP hardening, structured
       errors) as new proposals

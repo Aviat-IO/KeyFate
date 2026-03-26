@@ -10,8 +10,7 @@
 ## Project Structure
 
 ```
-frontend-svelte/     # SvelteKit 5 app (primary — all development here)
-frontend/            # Next.js 15 app (legacy reference — DO NOT modify)
+frontend/            # SvelteKit 5 app
 openspec/            # Spec-driven development proposals
 docs/plans/          # Architecture design documents
 ```
@@ -31,7 +30,7 @@ docs/plans/          # Architecture design documents
 ## Build & Test Commands
 
 ```bash
-cd frontend-svelte
+cd frontend
 bun run build          # Build the SvelteKit app
 bun test               # Run all 303 tests
 bun run check          # Svelte type checking
@@ -69,7 +68,7 @@ Do NOT use these Vitest APIs (they don't work in Bun):
 ### Creating Migrations
 
 ```bash
-cd frontend-svelte
+cd frontend
 bunx drizzle-kit generate --name="description_of_change"
 ```
 
@@ -92,7 +91,7 @@ snapshots cause migrations to be silently skipped, leading to schema drift.
 
 ### Workflow
 
-1. Modify `frontend-svelte/src/lib/db/schema.ts`
+1. Modify `frontend/src/lib/db/schema.ts`
 2. Run `bunx drizzle-kit generate --name="your_change"`
 3. Review generated SQL in `drizzle/NNNN_*.sql`
 4. Test locally: `bunx drizzle-kit migrate`
@@ -105,9 +104,9 @@ snapshots cause migrations to be silently skipped, leading to schema drift.
 - **Project**: `keyfate` on Railway
 - **Environments**: `staging` and `production`
 - **Service**: `dead-mans-switch` (Docker-based, Dockerfile at
-  `frontend-svelte/Dockerfile`)
+  `frontend/Dockerfile`)
 - **Database**: PostgreSQL plugin in each environment
-- **Root directory**: `/frontend-svelte` (configured in Railway service
+- **Root directory**: `/frontend` (configured in Railway service
   settings)
 
 ### Domains
@@ -159,7 +158,7 @@ The Dockerfile is a multi-stage Bun build:
 If `bun install --frozen-lockfile` fails, regenerate the lockfile:
 
 ```bash
-cd frontend-svelte
+cd frontend
 bun install    # Regenerates bun.lock
 ```
 

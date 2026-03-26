@@ -19,18 +19,18 @@ component
 
 **Files:**
 
-- Modify: `frontend-svelte/src/lib/components/NavBar.svelte`
-- Modify: `frontend-svelte/src/routes/+page.svelte` (remove session
+- Modify: `frontend/src/lib/components/NavBar.svelte`
+- Modify: `frontend/src/routes/+page.svelte` (remove session
   pass-through)
-- Modify: `frontend-svelte/src/routes/local-instructions/+page.svelte` (remove
+- Modify: `frontend/src/routes/local-instructions/+page.svelte` (remove
   session pass-through)
-- Modify: `frontend-svelte/src/routes/faq/+page.svelte` (remove session
+- Modify: `frontend/src/routes/faq/+page.svelte` (remove session
   pass-through)
-- Modify: `frontend-svelte/src/routes/decrypt/+page.svelte` (remove session
+- Modify: `frontend/src/routes/decrypt/+page.svelte` (remove session
   pass-through)
-- Modify: `frontend-svelte/src/routes/blog/+layout.svelte` (remove session
+- Modify: `frontend/src/routes/blog/+layout.svelte` (remove session
   pass-through)
-- Modify: `frontend-svelte/src/routes/(authenticated)/+layout.svelte` (remove
+- Modify: `frontend/src/routes/(authenticated)/+layout.svelte` (remove
   session pass-through)
 
 **Step 1:** In NavBar.svelte, replace the session prop with internal
@@ -53,8 +53,8 @@ files that pass it.
 
 **Files:**
 
-- Modify: `frontend-svelte/src/routes/(authenticated)/dashboard/+page.server.ts`
-- Modify: `frontend-svelte/src/routes/(authenticated)/dashboard/+page.svelte`
+- Modify: `frontend/src/routes/(authenticated)/dashboard/+page.server.ts`
+- Modify: `frontend/src/routes/(authenticated)/dashboard/+page.svelte`
 
 **Step 1:** In `+page.server.ts`, add `getUserTierInfo` call and return
 `canCreate`:
@@ -88,9 +88,9 @@ navigating:
 
 **Files:**
 
-- Modify: `frontend-svelte/src/lib/components/TogglePauseButton.svelte`
-- Modify: `frontend-svelte/src/lib/components/CheckInButton.svelte`
-- Modify: `frontend-svelte/src/routes/api/secrets/[id]/toggle-pause/+server.ts`
+- Modify: `frontend/src/lib/components/TogglePauseButton.svelte`
+- Modify: `frontend/src/lib/components/CheckInButton.svelte`
+- Modify: `frontend/src/routes/api/secrets/[id]/toggle-pause/+server.ts`
 
 **Step 1 (casing fix):** In TogglePauseButton.svelte, convert API response
 before passing to callback:

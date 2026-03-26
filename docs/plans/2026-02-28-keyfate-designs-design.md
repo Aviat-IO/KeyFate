@@ -46,7 +46,7 @@ interaction where the user sees their switch status and checks in.
 ## Execution Plan
 
 A single HTML artifact will be created at the root or within
-`frontend-svelte/static` called `keyfate-design-explorations.html`. It will use
+`frontend/static` called `keyfate-design-explorations.html`. It will use
 inline Tailwind and standard HTML structure to present these six themes.
 
 ## Iteration 2: Sentinel + Lifeline Minimalism (The Owl, Shield, Key)
