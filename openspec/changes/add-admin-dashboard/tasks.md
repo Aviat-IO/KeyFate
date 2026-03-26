@@ -22,9 +22,9 @@
   - `getCronHealthStats()` — last run times, error counts from recent logs
   - `getFailedSecrets()` — list of failed secrets with owner info (no content)
   - `getRecentActivity()` — recent check-ins, secret creations, disclosures
-- [ ] 3.2 Create API endpoint `src/routes/api/admin/metrics/+server.ts`
+- [x] 3.2 Create API endpoint `src/routes/api/admin/metrics/+server.ts`
 - [x] 3.3 Write tests for admin metrics queries
-- [ ] 3.4 Write tests for admin metrics API endpoint
+- [x] 3.4 Write tests for admin metrics API endpoint
 
 ## 4. Admin Dashboard Page
 
