@@ -46,7 +46,7 @@ export async function deriveKeyFromPassphrase(
   const derivedKey = await crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
-      salt,
+      salt: salt as BufferSource,
       iterations: PBKDF2_ITERATIONS,
       hash: "SHA-256",
     },
@@ -73,9 +73,9 @@ export async function encryptWithDerivedKey(
   const nonce = crypto.getRandomValues(new Uint8Array(AES_NONCE_LENGTH))
 
   const ciphertextBuffer = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv: nonce },
+    { name: "AES-GCM", iv: nonce as BufferSource },
     key,
-    plaintext,
+    plaintext as BufferSource,
   )
 
   return {
@@ -99,9 +99,9 @@ export async function decryptWithDerivedKey(
   key: CryptoKey,
 ): Promise<Uint8Array> {
   const plaintextBuffer = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: nonce },
+    { name: "AES-GCM", iv: nonce as BufferSource },
     key,
-    ciphertext,
+    ciphertext as BufferSource,
   )
 
   return new Uint8Array(plaintextBuffer)

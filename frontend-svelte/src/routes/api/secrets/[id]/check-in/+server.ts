@@ -40,6 +40,8 @@ export const POST: RequestHandler = async (event) => {
       )
     }
 
+    const userId = session.user.id
+
     const database = await getDatabase()
 
     // Use transaction with SELECT FOR UPDATE to prevent TOCTOU race
@@ -48,7 +50,7 @@ export const POST: RequestHandler = async (event) => {
       const [secret] = await tx
         .select()
         .from(secrets)
-        .where(and(eq(secrets.id, id), eq(secrets.userId, session.user.id)))
+        .where(and(eq(secrets.id, id), eq(secrets.userId, userId)))
         .for("update")
 
       if (!secret) {
@@ -78,13 +80,13 @@ export const POST: RequestHandler = async (event) => {
       const [updatedSecret] = await tx
         .update(secrets)
         .set(updatePayload)
-        .where(and(eq(secrets.id, id), eq(secrets.userId, session.user.id)))
+        .where(and(eq(secrets.id, id), eq(secrets.userId, userId)))
         .returning()
 
       // Record check-in history
       await tx.insert(checkinHistory).values({
         secretId: id,
-        userId: session.user.id,
+        userId,
         checkedInAt: now,
         nextCheckIn: nextCheckIn,
       })

@@ -105,7 +105,7 @@ async function invokeCronJob(job: CronJob): Promise<void> {
   }
 }
 
-const scheduledTasks: cron.ScheduledTask[] = []
+const scheduledTasks: ReturnType<typeof cron.schedule>[] = []
 
 export function startScheduler(): void {
   const enabled = process.env.CRON_ENABLED !== "false"

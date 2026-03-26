@@ -184,8 +184,11 @@ async function extractUserIdFromBTCPayEvent(
         )
 
         if (invoice.metadata?.user_id) {
-          logger.debug("Found user_id in invoice metadata", { userId: invoice.metadata.user_id })
-          return invoice.metadata.user_id
+          const uid = invoice.metadata.user_id
+          if (typeof uid === "string") {
+            logger.debug("Found user_id in invoice metadata", { userId: uid })
+            return uid
+          }
         }
       } catch (error) {
         logger.error("Error fetching invoice from BTCPay", error instanceof Error ? error : undefined, { invoiceId })
