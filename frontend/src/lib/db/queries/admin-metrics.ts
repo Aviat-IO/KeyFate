@@ -61,15 +61,15 @@ export async function getUserCounts() {
 export async function getEmailDeliveryStats() {
 	const db = await getDatabase()
 	const now = new Date()
-	const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+	const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
 
 	const [row] = await db
 		.select({
 			sent: sql<number>`count(*) filter (where ${disclosureLog.status} = 'sent')`,
 			failed: sql<number>`count(*) filter (where ${disclosureLog.status} = 'failed')`,
 			pending: sql<number>`count(*) filter (where ${disclosureLog.status} = 'pending')`,
-			sentLast24h: sql<number>`count(*) filter (where ${disclosureLog.status} = 'sent' and ${disclosureLog.createdAt} >= ${oneDayAgo})`,
-			failedLast24h: sql<number>`count(*) filter (where ${disclosureLog.status} = 'failed' and ${disclosureLog.createdAt} >= ${oneDayAgo})`,
+			sentLast24h: sql<number>`count(*) filter (where ${disclosureLog.status} = 'sent' and ${disclosureLog.createdAt} >= ${oneDayAgo}::timestamptz)`,
+			failedLast24h: sql<number>`count(*) filter (where ${disclosureLog.status} = 'failed' and ${disclosureLog.createdAt} >= ${oneDayAgo}::timestamptz)`,
 		})
 		.from(disclosureLog)
 
