@@ -66,9 +66,9 @@
 
 ## 11. Testing
 
-- [ ] 11.1 Unit tests for NIP-44 encryption/decryption
-- [ ] 11.2 Unit tests for gift wrap construction (rumor, seal, gift wrap layers)
-- [ ] 11.3 Unit tests for double-encrypt orchestrator
-- [ ] 11.4 Unit tests for nostr-publisher service (mocked relay/client)
-- [ ] 11.5 Unit tests for K recovery from Nostr path
-- [ ] 11.6 Unit tests for keypair generation and NIP-19 encoding
+- [x] 11.1 Unit tests for NIP-44 encryption/decryption
+- [x] 11.2 Unit tests for gift wrap construction (rumor, seal, gift wrap layers)
+- [x] 11.3 Unit tests for double-encrypt orchestrator
+- [x] 11.4 Unit tests for nostr-publisher service (mocked relay/client)
+- [x] 11.5 Unit tests for K recovery from Nostr path
+- [x] 11.6 Unit tests for keypair generation and NIP-19 encoding

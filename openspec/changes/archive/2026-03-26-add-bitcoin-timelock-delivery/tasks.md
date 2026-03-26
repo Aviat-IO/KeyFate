@@ -63,9 +63,9 @@
 
 ## 11. Testing
 
-- [ ] 11.1 Unit tests for CSV script construction and decoding
-- [ ] 11.2 Unit tests for transaction creation and signing
-- [ ] 11.3 Unit tests for fee estimation fallback behavior
-- [ ] 11.4 Unit tests for UTXO refresh and remaining estimation
-- [ ] 11.5 Unit tests for bitcoin-service database operations
-- [ ] 11.6 Unit tests for confirm-utxos cron logic
+- [x] 11.1 Unit tests for CSV script construction and decoding
+- [x] 11.2 Unit tests for transaction creation and signing
+- [x] 11.3 Unit tests for fee estimation fallback behavior
+- [x] 11.4 Unit tests for UTXO refresh and remaining estimation
+- [x] 11.5 Unit tests for bitcoin-service database operations
+- [x] 11.6 Unit tests for confirm-utxos cron logic

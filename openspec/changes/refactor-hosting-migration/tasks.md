@@ -1,8 +1,7 @@
 ## 1. Railway Setup
 
 - [x] 1.1 Create Railway account and project
-- [x] 1.2 Create Railway service from GitHub repo (connect to
-      `refactor/rearchitect-sveltekit-nostr-bitcoin` branch)
+- [x] 1.2 Create Railway service from GitHub repo (merged to `main`)
 - [x] 1.3 Add PostgreSQL plugin to Railway project (staging)
 - [x] 1.4 Configure environment variables in Railway (migrated from GCP Secret
       Manager + Cloud Run env vars to both staging and production)
@@ -56,8 +55,7 @@
 - [x] 5.9 Update health endpoint to use Railway env vars instead of GCP/Vercel
 - [x] 5.10 Remove databaseProvider from /api/config (GCP-specific)
 - [x] 5.11 Remove NEXT_PUBLIC_ fallbacks from /api/config endpoint
-- [ ] 5.12 Remove old Next.js `frontend/` directory from repo (keeping for
-      reference during SvelteKit feature parity work)
+- [x] 5.12 Remove old Next.js `frontend/` directory from repo (done in 0885a7f)
 
 ## 6. Verification (Staging)
 

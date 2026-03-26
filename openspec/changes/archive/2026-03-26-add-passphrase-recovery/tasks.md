@@ -32,9 +32,9 @@
 
 ## 6. Testing
 
-- [ ] 6.1 Unit tests for PBKDF2 key derivation
-- [ ] 6.2 Unit tests for AES-256-GCM encrypt/decrypt round-trip
-- [ ] 6.3 Unit tests for recoverKFromPassphrase
-- [ ] 6.4 Unit tests for recoverKFromOpReturn
-- [ ] 6.5 Unit tests for decryptShare with recovered K
-- [ ] 6.6 Unit tests for double-encrypt with passphrase integration
+- [x] 6.1 Unit tests for PBKDF2 key derivation
+- [x] 6.2 Unit tests for AES-256-GCM encrypt/decrypt round-trip
+- [x] 6.3 Unit tests for recoverKFromPassphrase
+- [x] 6.4 Unit tests for recoverKFromOpReturn
+- [x] 6.5 Unit tests for decryptShare with recovered K
+- [x] 6.6 Unit tests for double-encrypt with passphrase integration
