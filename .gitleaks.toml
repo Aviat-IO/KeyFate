@@ -1,0 +1,11 @@
+title = "dead-mans-switch gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Validated current-tree false positives"
+regexes = [
+  '''^VALID_TEST_123$''',
+  '''^secret-uuid-123$'''
+]
