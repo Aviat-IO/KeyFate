@@ -9,49 +9,40 @@
  * The rumor for KeyFate carries a custom kind (21059) with share metadata.
  */
 
-import {
-  finalizeEvent,
-  generateSecretKey,
-  getPublicKey,
-  getEventHash,
-} from "nostr-tools/pure"
-import type {
-  UnsignedEvent,
-  Event as NostrEvent,
-  EventTemplate,
-} from "nostr-tools/core"
-import { getConversationKey, encrypt } from "./encryption"
+import { finalizeEvent, generateSecretKey, getPublicKey, getEventHash } from 'nostr-tools/pure';
+import type { UnsignedEvent, Event as NostrEvent, EventTemplate } from 'nostr-tools/core';
+import { getConversationKey, encrypt } from './encryption';
 
 /** Custom kind for KeyFate share delivery via Nostr. */
-export const KEYFATE_SHARE_KIND = 21059
+export const KEYFATE_SHARE_KIND = 21059;
 
 /** Two days in seconds – used to randomise timestamps. */
-const TWO_DAYS_S = 2 * 24 * 60 * 60
+const TWO_DAYS_S = 2 * 24 * 60 * 60;
 
 /** Current unix timestamp in seconds. */
-const now = () => Math.floor(Date.now() / 1000)
+const now = () => Math.floor(Date.now() / 1000);
 
 /** A random timestamp within the last two days (prevents timing analysis). */
-const randomNow = () => Math.floor(now() - Math.random() * TWO_DAYS_S)
+const randomNow = () => Math.floor(now() - Math.random() * TWO_DAYS_S);
 
 /** Payload embedded in the rumor's `content` field. */
 export interface SharePayload {
-  /** The double-encrypted share data */
-  share: string
-  /** KeyFate secret ID */
-  secretId: string
-  /** 1-based share index */
-  shareIndex: number
-  /** Minimum shares needed to reconstruct */
-  threshold: number
-  /** Total number of shares */
-  totalShares: number
-  /** Schema version */
-  version: number
+	/** The double-encrypted share data */
+	share: string;
+	/** KeyFate secret ID */
+	secretId: string;
+	/** 1-based share index */
+	shareIndex: number;
+	/** Minimum shares needed to reconstruct */
+	threshold: number;
+	/** Total number of shares */
+	totalShares: number;
+	/** Schema version */
+	version: number;
 }
 
 /** A rumor is an unsigned event with a computed id. */
-export type Rumor = UnsignedEvent & { id: string }
+export type Rumor = UnsignedEvent & { id: string };
 
 /**
  * Build an unsigned rumor event for a KeyFate share.
@@ -59,20 +50,17 @@ export type Rumor = UnsignedEvent & { id: string }
  * @param payload   - Share metadata
  * @param authorPubkey - Hex public key of the real author (KeyFate server key)
  */
-export function createRumor(
-  payload: SharePayload,
-  authorPubkey: string,
-): Rumor {
-  const rumor: UnsignedEvent = {
-    kind: KEYFATE_SHARE_KIND,
-    created_at: now(),
-    tags: [],
-    content: JSON.stringify(payload),
-    pubkey: authorPubkey,
-  }
+export function createRumor(payload: SharePayload, authorPubkey: string): Rumor {
+	const rumor: UnsignedEvent = {
+		kind: KEYFATE_SHARE_KIND,
+		created_at: now(),
+		tags: [],
+		content: JSON.stringify(payload),
+		pubkey: authorPubkey
+	};
 
-  const id = getEventHash(rumor)
-  return { ...rumor, id }
+	const id = getEventHash(rumor);
+	return { ...rumor, id };
 }
 
 /**
@@ -85,21 +73,21 @@ export function createRumor(
  * @param recipientPublicKey - Recipient's hex public key
  */
 export function createSeal(
-  rumor: Rumor,
-  senderSecretKey: Uint8Array,
-  recipientPublicKey: string,
+	rumor: Rumor,
+	senderSecretKey: Uint8Array,
+	recipientPublicKey: string
 ): NostrEvent {
-  const conversationKey = getConversationKey(senderSecretKey, recipientPublicKey)
-  const encryptedRumor = encrypt(JSON.stringify(rumor), conversationKey)
+	const conversationKey = getConversationKey(senderSecretKey, recipientPublicKey);
+	const encryptedRumor = encrypt(JSON.stringify(rumor), conversationKey);
 
-  const sealTemplate: EventTemplate = {
-    kind: 13,
-    content: encryptedRumor,
-    created_at: randomNow(),
-    tags: [],
-  }
+	const sealTemplate: EventTemplate = {
+		kind: 13,
+		content: encryptedRumor,
+		created_at: randomNow(),
+		tags: []
+	};
 
-  return finalizeEvent(sealTemplate, senderSecretKey) as NostrEvent
+	return finalizeEvent(sealTemplate, senderSecretKey) as NostrEvent;
 }
 
 /**
@@ -111,22 +99,19 @@ export function createSeal(
  * @param seal               - The signed seal event
  * @param recipientPublicKey - Recipient's hex public key (added as p-tag)
  */
-export function createGiftWrap(
-  seal: NostrEvent,
-  recipientPublicKey: string,
-): NostrEvent {
-  const ephemeralKey = generateSecretKey()
-  const conversationKey = getConversationKey(ephemeralKey, recipientPublicKey)
-  const encryptedSeal = encrypt(JSON.stringify(seal), conversationKey)
+export function createGiftWrap(seal: NostrEvent, recipientPublicKey: string): NostrEvent {
+	const ephemeralKey = generateSecretKey();
+	const conversationKey = getConversationKey(ephemeralKey, recipientPublicKey);
+	const encryptedSeal = encrypt(JSON.stringify(seal), conversationKey);
 
-  const wrapTemplate: EventTemplate = {
-    kind: 1059,
-    content: encryptedSeal,
-    created_at: randomNow(),
-    tags: [["p", recipientPublicKey]],
-  }
+	const wrapTemplate: EventTemplate = {
+		kind: 1059,
+		content: encryptedSeal,
+		created_at: randomNow(),
+		tags: [['p', recipientPublicKey]]
+	};
 
-  return finalizeEvent(wrapTemplate, ephemeralKey) as NostrEvent
+	return finalizeEvent(wrapTemplate, ephemeralKey) as NostrEvent;
 }
 
 /**
@@ -137,12 +122,12 @@ export function createGiftWrap(
  * @param recipientPublicKey - Recipient's hex public key
  */
 export function wrapShareForRecipient(
-  payload: SharePayload,
-  senderSecretKey: Uint8Array,
-  recipientPublicKey: string,
+	payload: SharePayload,
+	senderSecretKey: Uint8Array,
+	recipientPublicKey: string
 ): NostrEvent {
-  const senderPubkey = getPublicKey(senderSecretKey)
-  const rumor = createRumor(payload, senderPubkey)
-  const seal = createSeal(rumor, senderSecretKey, recipientPublicKey)
-  return createGiftWrap(seal, recipientPublicKey)
+	const senderPubkey = getPublicKey(senderSecretKey);
+	const rumor = createRumor(payload, senderPubkey);
+	const seal = createSeal(rumor, senderSecretKey, recipientPublicKey);
+	return createGiftWrap(seal, recipientPublicKey);
 }

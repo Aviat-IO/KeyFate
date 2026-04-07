@@ -9,14 +9,11 @@
  * Once K is recovered, the share can be decrypted with ChaCha20-Poly1305.
  */
 
-import { decryptWithSymmetricKey } from "./symmetric"
-import {
-  deriveKeyFromPassphrase,
-  decryptWithDerivedKey,
-} from "./passphrase"
-import type { Nip44Ops, EncryptedKPassphrase } from "./double-encrypt"
-import { defaultNip44Ops } from "./nip44-ops"
-import { hexToBytes } from "./hex-utils"
+import { decryptWithSymmetricKey } from './symmetric';
+import { deriveKeyFromPassphrase, decryptWithDerivedKey } from './passphrase';
+import type { Nip44Ops, EncryptedKPassphrase } from './double-encrypt';
+import { defaultNip44Ops } from './nip44-ops';
+import { hexToBytes } from './hex-utils';
 
 /**
  * Recover K from NIP-44 encrypted payload.
@@ -28,19 +25,19 @@ import { hexToBytes } from "./hex-utils"
  * @returns The 32-byte symmetric key K
  */
 export async function recoverKFromNostr(
-  encryptedK: string,
-  recipientPrivkey: Uint8Array,
-  senderPubkey: string,
-  nip44: Nip44Ops = defaultNip44Ops,
+	encryptedK: string,
+	recipientPrivkey: Uint8Array,
+	senderPubkey: string,
+	nip44: Nip44Ops = defaultNip44Ops
 ): Promise<Uint8Array> {
-  const kHex = await nip44.decrypt(encryptedK, recipientPrivkey, senderPubkey)
-  const K = hexToBytes(kHex)
+	const kHex = await nip44.decrypt(encryptedK, recipientPrivkey, senderPubkey);
+	const K = hexToBytes(kHex);
 
-  if (K.length !== 32) {
-    throw new Error(`Recovered K must be 32 bytes, got ${K.length}`)
-  }
+	if (K.length !== 32) {
+		throw new Error(`Recovered K must be 32 bytes, got ${K.length}`);
+	}
 
-  return K
+	return K;
 }
 
 /**
@@ -51,22 +48,22 @@ export async function recoverKFromNostr(
  * @returns The 32-byte symmetric key K
  */
 export async function recoverKFromPassphrase(
-  encryptedKPassphrase: EncryptedKPassphrase,
-  passphrase: string,
+	encryptedKPassphrase: EncryptedKPassphrase,
+	passphrase: string
 ): Promise<Uint8Array> {
-  const { ciphertext, nonce, salt } = encryptedKPassphrase
+	const { ciphertext, nonce, salt } = encryptedKPassphrase;
 
-  // Re-derive the same key using the stored salt
-  const { key: derivedKey } = await deriveKeyFromPassphrase(passphrase, salt)
+	// Re-derive the same key using the stored salt
+	const { key: derivedKey } = await deriveKeyFromPassphrase(passphrase, salt);
 
-  // Decrypt K
-  const K = await decryptWithDerivedKey(ciphertext, nonce, derivedKey)
+	// Decrypt K
+	const K = await decryptWithDerivedKey(ciphertext, nonce, derivedKey);
 
-  if (K.length !== 32) {
-    throw new Error(`Recovered K must be 32 bytes, got ${K.length}`)
-  }
+	if (K.length !== 32) {
+		throw new Error(`Recovered K must be 32 bytes, got ${K.length}`);
+	}
 
-  return K
+	return K;
 }
 
 /**
@@ -79,14 +76,12 @@ export async function recoverKFromPassphrase(
  * @returns The 32-byte symmetric key K
  */
 export function recoverKFromOpReturn(opReturnData: Uint8Array): Uint8Array {
-  if (opReturnData.length !== 32) {
-    throw new Error(
-      `OP_RETURN data must be exactly 32 bytes, got ${opReturnData.length}`,
-    )
-  }
+	if (opReturnData.length !== 32) {
+		throw new Error(`OP_RETURN data must be exactly 32 bytes, got ${opReturnData.length}`);
+	}
 
-  // Return a copy to prevent mutation of the source
-  return new Uint8Array(opReturnData)
+	// Return a copy to prevent mutation of the source
+	return new Uint8Array(opReturnData);
 }
 
 /**
@@ -98,12 +93,10 @@ export function recoverKFromOpReturn(opReturnData: Uint8Array): Uint8Array {
  * @returns The original share string
  */
 export function decryptShare(
-  encryptedShare: Uint8Array,
-  nonce: Uint8Array,
-  key: Uint8Array,
+	encryptedShare: Uint8Array,
+	nonce: Uint8Array,
+	key: Uint8Array
 ): string {
-  const plaintext = decryptWithSymmetricKey(encryptedShare, nonce, key)
-  return new TextDecoder().decode(plaintext)
+	const plaintext = decryptWithSymmetricKey(encryptedShare, nonce, key);
+	return new TextDecoder().decode(plaintext);
 }
-
-

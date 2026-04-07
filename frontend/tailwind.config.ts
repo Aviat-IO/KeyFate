@@ -99,10 +99,7 @@ const config: Config = {
 			}
 		}
 	},
-	plugins: [
-		tailwindcssAnimate,
-		tailwindcssTypography
-	]
+	plugins: [tailwindcssAnimate, tailwindcssTypography]
 };
 
 export default config;

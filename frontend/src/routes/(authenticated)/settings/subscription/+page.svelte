@@ -11,7 +11,7 @@
 <div class="space-y-8">
 	<div>
 		<h2 class="font-space text-xl font-bold tracking-tight">Subscription</h2>
-		<p class="text-sm text-muted-foreground mt-1">Manage your subscription and billing</p>
+		<p class="text-muted-foreground mt-1 text-sm">Manage your subscription and billing</p>
 	</div>
 
 	{#if data.tierInfo}

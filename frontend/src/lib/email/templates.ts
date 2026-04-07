@@ -5,81 +5,81 @@
  * with consistent branding and responsive design.
  */
 
-import { SITE_URL, COMPANY, SUPPORT_EMAIL } from "$lib/env"
-import { formatTimeRemaining } from "$lib/time-utils"
-import { getTierConfig } from "$lib/constants/tiers"
+import { SITE_URL, COMPANY, SUPPORT_EMAIL } from '$lib/env';
+import { formatTimeRemaining } from '$lib/time-utils';
+import { getTierConfig } from '$lib/constants/tiers';
 
 /**
  * Get support email from environment variable with fallback
  * Centralized to ensure consistency across all email templates
  */
 function getSupportEmail(): string {
-  return SUPPORT_EMAIL || "support@keyfate.com"
+	return SUPPORT_EMAIL || 'support@keyfate.com';
 }
 
 // Template data interfaces
 interface VerificationTemplateData {
-  verificationUrl: string
-  expirationHours: number
-  userName?: string
-  supportEmail?: string
+	verificationUrl: string;
+	expirationHours: number;
+	userName?: string;
+	supportEmail?: string;
 }
 
 interface ReminderTemplateData {
-  userName: string
-  secretTitle: string
-  daysRemaining: number
-  checkInUrl: string
-  urgencyLevel?: "low" | "medium" | "high" | "critical"
-  reminderType?:
-    | "1_hour"
-    | "12_hours"
-    | "24_hours"
-    | "3_days"
-    | "7_days"
-    | "25_percent"
-    | "50_percent"
+	userName: string;
+	secretTitle: string;
+	daysRemaining: number;
+	checkInUrl: string;
+	urgencyLevel?: 'low' | 'medium' | 'high' | 'critical';
+	reminderType?:
+		| '1_hour'
+		| '12_hours'
+		| '24_hours'
+		| '3_days'
+		| '7_days'
+		| '25_percent'
+		| '50_percent';
 }
 
 interface DisclosureTemplateData {
-  contactName: string
-  secretTitle: string
-  senderName: string
-  message: string
-  secretContent: string
-  disclosureReason?: "scheduled" | "manual"
-  senderLastSeen?: Date
-  secretCreatedAt?: Date
+	contactName: string;
+	secretTitle: string;
+	senderName: string;
+	message: string;
+	secretContent: string;
+	disclosureReason?: 'scheduled' | 'manual';
+	senderLastSeen?: Date;
+	secretCreatedAt?: Date;
 }
 
 interface PasswordResetTemplateData {
-  resetUrl: string
-  userName?: string
-  supportEmail?: string
+	resetUrl: string;
+	userName?: string;
+	supportEmail?: string;
 }
 
 interface OTPTemplateData {
-  code: string
-  expirationMinutes: number
-  userName?: string
-  supportEmail?: string
+	code: string;
+	expirationMinutes: number;
+	userName?: string;
+	supportEmail?: string;
 }
 
 interface BaseTemplateData {
-  title: string
-  content: string
-  footerText?: string
+	title: string;
+	content: string;
+	footerText?: string;
 }
 
 interface EmailTemplate {
-  subject: string
-  html: string
-  text: string
+	subject: string;
+	html: string;
+	text: string;
 }
 
 interface ValidationResult {
-  valid: boolean
-  errors: string[]
+	valid: boolean;
+	errors: string[];
 }
 
 /**
@@ -88,11 +88,11 @@ interface ValidationResult {
  * Designed to avoid spam filters with clean, professional styling
  */
 export function renderBaseTemplate(data: BaseTemplateData): EmailTemplate {
-  const companyName = COMPANY || "KeyFate"
-  const currentYear = new Date().getFullYear()
-  const supportEmail = getSupportEmail()
+	const companyName = COMPANY || 'KeyFate';
+	const currentYear = new Date().getFullYear();
+	const supportEmail = getSupportEmail();
 
-  const html = `
+	const html = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -157,7 +157,7 @@ export function renderBaseTemplate(data: BaseTemplateData): EmailTemplate {
           <!-- Footer -->
           <tr>
             <td style="text-align: center; font-size: 12px; color: #6b7280; padding: 16px 24px 24px 24px; border-top: 1px solid #e5e7eb;">
-              ${data.footerText || ""}
+              ${data.footerText || ''}
               <p style="margin: 8px 0;">Questions? Contact us at <a href="mailto:${supportEmail}" style="color: #2563eb;">${supportEmail}</a></p>
               <p style="margin: 8px 0; color: #9ca3af;">&copy; ${currentYear} ${companyName}. All rights reserved.</p>
             </td>
@@ -167,39 +167,37 @@ export function renderBaseTemplate(data: BaseTemplateData): EmailTemplate {
     </tr>
   </table>
 </body>
-</html>`
+</html>`;
 
-  const text = `
+	const text = `
 ${data.title}
 
 ${data.content
-  .replace(/<[^>]*>/g, "")
-  .replace(/\s+/g, " ")
-  .trim()}
+	.replace(/<[^>]*>/g, '')
+	.replace(/\s+/g, ' ')
+	.trim()}
 
-${data.footerText || ""}
+${data.footerText || ''}
 
 Questions? Contact us at ${supportEmail}
 © ${currentYear} ${companyName}. All rights reserved.
-  `.trim()
+  `.trim();
 
-  return {
-    subject: data.title,
-    html,
-    text,
-  }
+	return {
+		subject: data.title,
+		html,
+		text
+	};
 }
 
 /**
  * Email verification template
  */
-export function renderVerificationTemplate(
-  data: VerificationTemplateData,
-): EmailTemplate {
-  const companyName = COMPANY || "KeyFate"
-  const userName = data.userName || "there"
+export function renderVerificationTemplate(data: VerificationTemplateData): EmailTemplate {
+	const companyName = COMPANY || 'KeyFate';
+	const userName = data.userName || 'there';
 
-  const content = `
+	const content = `
     <p>Hi ${userName},</p>
     
     <p>Thanks for signing up for ${companyName}. Please verify your email address to complete your account setup.</p>
@@ -219,36 +217,34 @@ export function renderVerificationTemplate(
     <p style="font-size: 13px; color: #6b7280; margin-top: 24px;">
       If you didn't create an account with ${companyName}, you can safely ignore this email.
     </p>
-  `
+  `;
 
-  const baseTemplate = renderBaseTemplate({
-    title: "Verify Your Email",
-    content,
-  })
+	const baseTemplate = renderBaseTemplate({
+		title: 'Verify Your Email',
+		content
+	});
 
-  return {
-    subject: `${companyName}: Please verify your email address`,
-    html: baseTemplate.html,
-    text: baseTemplate.text,
-  }
+	return {
+		subject: `${companyName}: Please verify your email address`,
+		html: baseTemplate.html,
+		text: baseTemplate.text
+	};
 }
 
 /**
  * Reminder email template with urgency levels
  */
-export function renderReminderTemplate(
-  data: ReminderTemplateData,
-): EmailTemplate {
-  const timeText = formatTimeRemaining(data.daysRemaining)
-  const supportEmail = getSupportEmail()
-  const companyName = COMPANY || "KeyFate"
+export function renderReminderTemplate(data: ReminderTemplateData): EmailTemplate {
+	const timeText = formatTimeRemaining(data.daysRemaining);
+	const supportEmail = getSupportEmail();
+	const companyName = COMPANY || 'KeyFate';
 
-  const subject = `${companyName}: Check-in for "${data.secretTitle}" - ${timeText} remaining`
+	const subject = `${companyName}: Check-in for "${data.secretTitle}" - ${timeText} remaining`;
 
-  // Plain transactional email — no newsletter chrome, no colored boxes.
-  // Gmail categorises emails with heavy HTML + List-Unsubscribe as
-  // subscriptions and routes them to the Updates tab.
-  const html = `
+	// Plain transactional email — no newsletter chrome, no colored boxes.
+	// Gmail categorises emails with heavy HTML + List-Unsubscribe as
+	// subscriptions and routes them to the Updates tab.
+	const html = `
 <!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"></head>
@@ -265,9 +261,9 @@ export function renderReminderTemplate(
 
   <p style="font-size: 12px; color: #999; margin-top: 32px;">${companyName} &middot; <a href="mailto:${supportEmail}" style="color: #999;">${supportEmail}</a></p>
 </body>
-</html>`
+</html>`;
 
-  const text = `Hi ${data.userName},
+	const text = `Hi ${data.userName},
 
 Your secret "${data.secretTitle}" requires a check-in within ${timeText}.
 
@@ -275,35 +271,31 @@ If you don't check in before the deadline, your secret will be shared with your 
 
 Check in now: ${data.checkInUrl}
 
-${companyName} - ${supportEmail}`
+${companyName} - ${supportEmail}`;
 
-  return { subject, html, text }
+	return { subject, html, text };
 }
 
 /**
  * Secret disclosure email template
  * Sends the server's secret share to the recipient when triggered
  */
-export function renderDisclosureTemplate(
-  data: DisclosureTemplateData,
-): EmailTemplate {
-  const siteUrl = SITE_URL || "https://keyfate.com"
-  const decryptUrl = `${siteUrl}/decrypt`
-  const supportEmail = getSupportEmail()
-  const companyName = COMPANY || "KeyFate"
-  const lastSeenText = data.senderLastSeen
-    ? data.senderLastSeen.toLocaleDateString()
-    : "recently"
+export function renderDisclosureTemplate(data: DisclosureTemplateData): EmailTemplate {
+	const siteUrl = SITE_URL || 'https://keyfate.com';
+	const decryptUrl = `${siteUrl}/decrypt`;
+	const supportEmail = getSupportEmail();
+	const companyName = COMPANY || 'KeyFate';
+	const lastSeenText = data.senderLastSeen ? data.senderLastSeen.toLocaleDateString() : 'recently';
 
-  const reasonText =
-    data.disclosureReason === "manual"
-      ? `${data.senderName} has chosen to share this information with you.`
-      : `${data.senderName} has not checked in as scheduled (last activity: ${lastSeenText}).`
+	const reasonText =
+		data.disclosureReason === 'manual'
+			? `${data.senderName} has chosen to share this information with you.`
+			: `${data.senderName} has not checked in as scheduled (last activity: ${lastSeenText}).`;
 
-  const subject = `${companyName}: Message from ${data.senderName} - ${data.secretTitle}`
+	const subject = `${companyName}: Message from ${data.senderName} - ${data.secretTitle}`;
 
-  // Plain transactional email — avoids Gmail subscription categorisation.
-  const html = `
+	// Plain transactional email — avoids Gmail subscription categorisation.
+	const html = `
 <!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"></head>
@@ -326,7 +318,7 @@ export function renderDisclosureTemplate(
 
   <p><strong>How to Reconstruct</strong></p>
   <ol style="padding-left: 20px; font-size: 14px;">
-    <li>Locate the first share from ${data.senderName}${data.secretCreatedAt ? ` (shared around ${data.secretCreatedAt.toLocaleDateString()})` : ""}</li>
+    <li>Locate the first share from ${data.senderName}${data.secretCreatedAt ? ` (shared around ${data.secretCreatedAt.toLocaleDateString()})` : ''}</li>
     <li>Copy the share above</li>
     <li>Visit <a href="${decryptUrl}" style="color: #2563eb;">${decryptUrl}</a> to combine both shares</li>
   </ol>
@@ -335,9 +327,9 @@ export function renderDisclosureTemplate(
 
   <p style="font-size: 12px; color: #999; margin-top: 32px;">${companyName} &middot; <a href="mailto:${supportEmail}" style="color: #999;">${supportEmail}</a></p>
 </body>
-</html>`
+</html>`;
 
-  const text = `Dear ${data.contactName},
+	const text = `Dear ${data.contactName},
 
 ${data.senderName} has entrusted you with confidential information through ${companyName}, a secure information sharing platform.
 
@@ -356,25 +348,25 @@ ${data.secretContent}
 ---
 
 How to Reconstruct
-1. Locate the first share from ${data.senderName}${data.secretCreatedAt ? ` (shared around ${data.secretCreatedAt.toLocaleDateString()})` : ""}
+1. Locate the first share from ${data.senderName}${data.secretCreatedAt ? ` (shared around ${data.secretCreatedAt.toLocaleDateString()})` : ''}
 2. Copy the share above
 3. Visit ${decryptUrl} to combine both shares
 
 Please keep this information secure. Store both shares safely and do not share with unauthorized parties.
 
-${companyName} - ${supportEmail}`
+${companyName} - ${supportEmail}`;
 
-  return { subject, html, text }
+	return { subject, html, text };
 }
 
 /**
  * OTP authentication email template
  */
 export function renderOTPTemplate(data: OTPTemplateData): EmailTemplate {
-  const companyName = COMPANY || "KeyFate"
-  const userName = data.userName || "there"
+	const companyName = COMPANY || 'KeyFate';
+	const userName = data.userName || 'there';
 
-  const content = `
+	const content = `
     <p>Hi ${userName},</p>
     
     <p>Here's your sign-in code for ${companyName}:</p>
@@ -394,30 +386,28 @@ export function renderOTPTemplate(data: OTPTemplateData): EmailTemplate {
     <p style="font-size: 13px; color: #6b7280; margin-top: 20px;">
       If you didn't request this code, you can safely ignore this email. Your account is secure.
     </p>
-  `
+  `;
 
-  const baseTemplate = renderBaseTemplate({
-    title: "Your Sign-in Code",
-    content,
-  })
+	const baseTemplate = renderBaseTemplate({
+		title: 'Your Sign-in Code',
+		content
+	});
 
-  return {
-    subject: `${companyName}: Your sign-in code is ${data.code}`,
-    html: baseTemplate.html,
-    text: baseTemplate.text,
-  }
+	return {
+		subject: `${companyName}: Your sign-in code is ${data.code}`,
+		html: baseTemplate.html,
+		text: baseTemplate.text
+	};
 }
 
 /**
  * Password reset email template
  */
-export function renderPasswordResetTemplate(
-  data: PasswordResetTemplateData,
-): EmailTemplate {
-  const companyName = COMPANY || "KeyFate"
-  const userName = data.userName || "there"
+export function renderPasswordResetTemplate(data: PasswordResetTemplateData): EmailTemplate {
+	const companyName = COMPANY || 'KeyFate';
+	const userName = data.userName || 'there';
 
-  const content = `
+	const content = `
     <p>Hi ${userName},</p>
     
     <p>We received a request to reset your ${companyName} password. Click the button below to create a new password:</p>
@@ -439,117 +429,109 @@ export function renderPasswordResetTemplate(
     <p style="font-size: 13px; color: #6b7280; margin-top: 20px;">
       If you didn't request this password reset, you can safely ignore this email. Your password will remain unchanged.
     </p>
-  `
+  `;
 
-  const baseTemplate = renderBaseTemplate({
-    title: "Reset Your Password",
-    content,
-  })
+	const baseTemplate = renderBaseTemplate({
+		title: 'Reset Your Password',
+		content
+	});
 
-  return {
-    subject: `${companyName}: Reset your password`,
-    html: baseTemplate.html,
-    text: baseTemplate.text,
-  }
+	return {
+		subject: `${companyName}: Reset your password`,
+		html: baseTemplate.html,
+		text: baseTemplate.text
+	};
 }
 
 /**
  * Validate template data
  */
 export function validateTemplateData(
-  templateType:
-    | "verification"
-    | "reminder"
-    | "disclosure"
-    | "password-reset"
-    | "otp",
-  data: any,
+	templateType: 'verification' | 'reminder' | 'disclosure' | 'password-reset' | 'otp',
+	data: any
 ): ValidationResult {
-  const errors: string[] = []
+	const errors: string[] = [];
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  switch (templateType) {
-    case "verification":
-      if (!data.verificationUrl) {
-        errors.push("verificationUrl is required")
-      }
-      if (!data.expirationHours || typeof data.expirationHours !== "number") {
-        errors.push("expirationHours is required and must be a number")
-      }
-      if (data.supportEmail && !emailRegex.test(data.supportEmail)) {
-        errors.push("Invalid email format in supportEmail")
-      }
-      break
+	switch (templateType) {
+		case 'verification':
+			if (!data.verificationUrl) {
+				errors.push('verificationUrl is required');
+			}
+			if (!data.expirationHours || typeof data.expirationHours !== 'number') {
+				errors.push('expirationHours is required and must be a number');
+			}
+			if (data.supportEmail && !emailRegex.test(data.supportEmail)) {
+				errors.push('Invalid email format in supportEmail');
+			}
+			break;
 
-    case "reminder":
-      if (!data.userName) {
-        errors.push("userName is required")
-      }
-      if (!data.secretTitle) {
-        errors.push("secretTitle is required")
-      }
-      if (typeof data.daysRemaining !== "number") {
-        errors.push("daysRemaining is required and must be a number")
-      }
-      if (!data.checkInUrl) {
-        errors.push("checkInUrl is required")
-      }
-      break
+		case 'reminder':
+			if (!data.userName) {
+				errors.push('userName is required');
+			}
+			if (!data.secretTitle) {
+				errors.push('secretTitle is required');
+			}
+			if (typeof data.daysRemaining !== 'number') {
+				errors.push('daysRemaining is required and must be a number');
+			}
+			if (!data.checkInUrl) {
+				errors.push('checkInUrl is required');
+			}
+			break;
 
-    case "disclosure":
-      if (!data.contactName) {
-        errors.push("contactName is required")
-      }
-      if (!data.secretTitle) {
-        errors.push("secretTitle is required")
-      }
-      if (!data.senderName) {
-        errors.push("senderName is required")
-      }
-      if (!data.message) {
-        errors.push("message is required")
-      }
-      if (!data.secretContent) {
-        errors.push("secretContent is required")
-      }
-      break
+		case 'disclosure':
+			if (!data.contactName) {
+				errors.push('contactName is required');
+			}
+			if (!data.secretTitle) {
+				errors.push('secretTitle is required');
+			}
+			if (!data.senderName) {
+				errors.push('senderName is required');
+			}
+			if (!data.message) {
+				errors.push('message is required');
+			}
+			if (!data.secretContent) {
+				errors.push('secretContent is required');
+			}
+			break;
 
-    case "password-reset":
-      if (!data.resetUrl) {
-        errors.push("resetUrl is required")
-      }
-      if (data.supportEmail && !emailRegex.test(data.supportEmail)) {
-        errors.push("Invalid email format in supportEmail")
-      }
-      break
+		case 'password-reset':
+			if (!data.resetUrl) {
+				errors.push('resetUrl is required');
+			}
+			if (data.supportEmail && !emailRegex.test(data.supportEmail)) {
+				errors.push('Invalid email format in supportEmail');
+			}
+			break;
 
-    case "otp":
-      if (!data.code) {
-        errors.push("code is required")
-      }
-      if (data.code && !/^\d{8}$/.test(data.code)) {
-        errors.push("code must be an 8-digit number")
-      }
-      if (
-        !data.expirationMinutes ||
-        typeof data.expirationMinutes !== "number"
-      ) {
-        errors.push("expirationMinutes is required and must be a number")
-      }
-      if (data.supportEmail && !emailRegex.test(data.supportEmail)) {
-        errors.push("Invalid email format in supportEmail")
-      }
-      break
+		case 'otp':
+			if (!data.code) {
+				errors.push('code is required');
+			}
+			if (data.code && !/^\d{8}$/.test(data.code)) {
+				errors.push('code must be an 8-digit number');
+			}
+			if (!data.expirationMinutes || typeof data.expirationMinutes !== 'number') {
+				errors.push('expirationMinutes is required and must be a number');
+			}
+			if (data.supportEmail && !emailRegex.test(data.supportEmail)) {
+				errors.push('Invalid email format in supportEmail');
+			}
+			break;
 
-    default:
-      errors.push(`Unknown template type: ${templateType}`)
-  }
+		default:
+			errors.push(`Unknown template type: ${templateType}`);
+	}
 
-  return {
-    valid: errors.length === 0,
-    errors,
-  }
+	return {
+		valid: errors.length === 0,
+		errors
+	};
 }
 
 // ============================================================================
@@ -558,44 +540,42 @@ export function validateTemplateData(
 // ============================================================================
 
 function formatCurrency(cents: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(cents / 100)
+	return new Intl.NumberFormat('en-US', {
+		style: 'currency',
+		currency: 'USD'
+	}).format(cents / 100);
 }
 
 function capitalizeFirst(str: string): string {
-  return str.charAt(0).toUpperCase() + str.slice(1)
+	return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 function getTierFeaturesHtml(tierName: string): string {
-  const tierConfig = getTierConfig(tierName as "free" | "pro")
-  if (!tierConfig || !tierConfig.features) {
-    return "<li>All features included</li>"
-  }
-  const supportEmail = getSupportEmail()
-  return tierConfig.features
-    .map((feature: string) =>
-      feature.replace(/support@keyfate\.com/g, supportEmail),
-    )
-    .map((feature: string) => `<li>${feature}</li>`)
-    .join("")
+	const tierConfig = getTierConfig(tierName as 'free' | 'pro');
+	if (!tierConfig || !tierConfig.features) {
+		return '<li>All features included</li>';
+	}
+	const supportEmail = getSupportEmail();
+	return tierConfig.features
+		.map((feature: string) => feature.replace(/support@keyfate\.com/g, supportEmail))
+		.map((feature: string) => `<li>${feature}</li>`)
+		.join('');
 }
 
 export function renderSubscriptionConfirmationTemplate(params: {
-  userName: string
-  tierName: string
-  provider: "stripe" | "btcpay"
-  amount: number
-  interval: string
-  nextBillingDate: Date
+	userName: string;
+	tierName: string;
+	provider: 'stripe' | 'btcpay';
+	amount: number;
+	interval: string;
+	nextBillingDate: Date;
 }): EmailTemplate {
-  const companyName = COMPANY || "KeyFate"
-  const formattedAmount = formatCurrency(params.amount)
-  const formattedDate = params.nextBillingDate.toLocaleDateString()
-  const providerName = params.provider === "stripe" ? "Credit Card" : "Bitcoin"
+	const companyName = COMPANY || 'KeyFate';
+	const formattedAmount = formatCurrency(params.amount);
+	const formattedDate = params.nextBillingDate.toLocaleDateString();
+	const providerName = params.provider === 'stripe' ? 'Credit Card' : 'Bitcoin';
 
-  const content = `
+	const content = `
     <p>Hi ${params.userName},</p>
     <p>Thank you for subscribing to <strong>${companyName} ${capitalizeFirst(params.tierName)}</strong>. Your subscription is now active.</p>
     <div style="background: #f9fafb; padding: 16px; border-radius: 6px; margin: 16px 0;">
@@ -609,31 +589,35 @@ export function renderSubscriptionConfirmationTemplate(params: {
     <p style="text-align: center;">
       <a href="${SITE_URL}/dashboard" class="button" style="color: #ffffff; text-decoration: none;">Go to Dashboard</a>
     </p>
-  `
-  const baseTemplate = renderBaseTemplate({ title: "Subscription Confirmed", content })
-  return { subject: `${companyName}: Your subscription is confirmed`, html: baseTemplate.html, text: baseTemplate.text }
+  `;
+	const baseTemplate = renderBaseTemplate({ title: 'Subscription Confirmed', content });
+	return {
+		subject: `${companyName}: Your subscription is confirmed`,
+		html: baseTemplate.html,
+		text: baseTemplate.text
+	};
 }
 
 export function renderPaymentFailedTemplate(params: {
-  userName: string
-  amount: number
-  provider: "stripe" | "btcpay"
-  attemptCount: number
-  maxAttempts: number
-  nextRetry: Date
+	userName: string;
+	amount: number;
+	provider: 'stripe' | 'btcpay';
+	attemptCount: number;
+	maxAttempts: number;
+	nextRetry: Date;
 }): EmailTemplate {
-  const companyName = COMPANY || "KeyFate"
-  const formattedAmount = formatCurrency(params.amount)
-  const formattedRetry = params.nextRetry.toLocaleString()
-  const providerName = params.provider === "stripe" ? "Credit Card" : "Bitcoin"
+	const companyName = COMPANY || 'KeyFate';
+	const formattedAmount = formatCurrency(params.amount);
+	const formattedRetry = params.nextRetry.toLocaleString();
+	const providerName = params.provider === 'stripe' ? 'Credit Card' : 'Bitcoin';
 
-  const content = `
+	const content = `
     <p>Hi ${params.userName},</p>
     <p>We were unable to process your payment of <strong>${formattedAmount}</strong> using your ${providerName}.</p>
     <div class="notice-box">
       <p style="margin: 0 0 8px 0; color: #92400e;"><strong>Attempt ${params.attemptCount} of ${params.maxAttempts}</strong></p>
       <p style="margin: 0; color: #92400e;">We'll retry automatically on ${formattedRetry}.</p>
-      ${params.attemptCount >= params.maxAttempts ? '<p style="margin: 8px 0 0 0; color: #92400e;"><strong>Note:</strong> This was our final automatic attempt.</p>' : ""}
+      ${params.attemptCount >= params.maxAttempts ? '<p style="margin: 8px 0 0 0; color: #92400e;"><strong>Note:</strong> This was our final automatic attempt.</p>' : ''}
     </div>
     <p>To resolve this:</p>
     <ul style="color: #374151;">
@@ -644,16 +628,18 @@ export function renderPaymentFailedTemplate(params: {
     <p style="text-align: center;">
       <a href="${SITE_URL}/settings/subscription" class="button" style="color: #ffffff; text-decoration: none;">Update Payment Method</a>
     </p>
-  `
-  const baseTemplate = renderBaseTemplate({ title: "Payment Update Needed", content })
-  return { subject: `${companyName}: Payment update needed`, html: baseTemplate.html, text: baseTemplate.text }
+  `;
+	const baseTemplate = renderBaseTemplate({ title: 'Payment Update Needed', content });
+	return {
+		subject: `${companyName}: Payment update needed`,
+		html: baseTemplate.html,
+		text: baseTemplate.text
+	};
 }
 
-export function renderSubscriptionCancelledTemplate(params: {
-  userName: string
-}): EmailTemplate {
-  const companyName = COMPANY || "KeyFate"
-  const content = `
+export function renderSubscriptionCancelledTemplate(params: { userName: string }): EmailTemplate {
+	const companyName = COMPANY || 'KeyFate';
+	const content = `
     <p>Hi ${params.userName},</p>
     <p>Your subscription has been cancelled. We're sorry to see you go.</p>
     <div class="info-box">
@@ -668,19 +654,23 @@ export function renderSubscriptionCancelledTemplate(params: {
     <p style="text-align: center;">
       <a href="${SITE_URL}/pricing" class="button" style="color: #ffffff; text-decoration: none;">View Plans</a>
     </p>
-  `
-  const baseTemplate = renderBaseTemplate({ title: "Subscription Cancelled", content })
-  return { subject: `${companyName}: Your subscription has been cancelled`, html: baseTemplate.html, text: baseTemplate.text }
+  `;
+	const baseTemplate = renderBaseTemplate({ title: 'Subscription Cancelled', content });
+	return {
+		subject: `${companyName}: Your subscription has been cancelled`,
+		html: baseTemplate.html,
+		text: baseTemplate.text
+	};
 }
 
 export function renderTrialWillEndTemplate(params: {
-  userName: string
-  daysRemaining: number
-  trialEndDate: Date
+	userName: string;
+	daysRemaining: number;
+	trialEndDate: Date;
 }): EmailTemplate {
-  const companyName = COMPANY || "KeyFate"
-  const formattedDate = params.trialEndDate.toLocaleDateString()
-  const content = `
+	const companyName = COMPANY || 'KeyFate';
+	const formattedDate = params.trialEndDate.toLocaleDateString();
+	const content = `
     <p>Hi ${params.userName},</p>
     <p>Your free trial ends in <strong>${params.daysRemaining} days</strong> (${formattedDate}).</p>
     <div class="info-box">
@@ -695,46 +685,54 @@ export function renderTrialWillEndTemplate(params: {
     <p style="text-align: center;">
       <a href="${SITE_URL}/pricing" class="button" style="color: #ffffff; text-decoration: none;">Choose Your Plan</a>
     </p>
-  `
-  const baseTemplate = renderBaseTemplate({ title: "Trial Ending Soon", content })
-  return { subject: `${companyName}: Your trial ends in ${params.daysRemaining} days`, html: baseTemplate.html, text: baseTemplate.text }
+  `;
+	const baseTemplate = renderBaseTemplate({ title: 'Trial Ending Soon', content });
+	return {
+		subject: `${companyName}: Your trial ends in ${params.daysRemaining} days`,
+		html: baseTemplate.html,
+		text: baseTemplate.text
+	};
 }
 
 export function renderBitcoinPaymentConfirmationTemplate(params: {
-  userName: string
-  amount: number
-  currency: string
-  tierName: string
-  confirmations: number
-  transactionId?: string
+	userName: string;
+	amount: number;
+	currency: string;
+	tierName: string;
+	confirmations: number;
+	transactionId?: string;
 }): EmailTemplate {
-  const companyName = COMPANY || "KeyFate"
-  const content = `
+	const companyName = COMPANY || 'KeyFate';
+	const content = `
     <p>Hi ${params.userName},</p>
     <p>Your Bitcoin payment has been confirmed and your <strong>${capitalizeFirst(params.tierName)}</strong> subscription is now active.</p>
     <div style="background: #f9fafb; padding: 16px; border-radius: 6px; margin: 16px 0;">
       <p style="margin: 0 0 8px 0;"><strong>Amount:</strong> ${params.amount} ${params.currency}</p>
       <p style="margin: 0 0 8px 0;"><strong>Confirmations:</strong> ${params.confirmations}/6</p>
       <p style="margin: 0 0 8px 0;"><strong>Plan:</strong> ${capitalizeFirst(params.tierName)}</p>
-      ${params.transactionId ? `<p style="margin: 0; font-size: 12px; color: #6b7280;"><strong>TX:</strong> ${params.transactionId}</p>` : ""}
+      ${params.transactionId ? `<p style="margin: 0; font-size: 12px; color: #6b7280;"><strong>TX:</strong> ${params.transactionId}</p>` : ''}
     </div>
     <p style="text-align: center;">
       <a href="${SITE_URL}/dashboard" class="button" style="color: #ffffff; text-decoration: none;">Go to Dashboard</a>
     </p>
-  `
-  const baseTemplate = renderBaseTemplate({ title: "Bitcoin Payment Confirmed", content })
-  return { subject: `${companyName}: Bitcoin payment confirmed`, html: baseTemplate.html, text: baseTemplate.text }
+  `;
+	const baseTemplate = renderBaseTemplate({ title: 'Bitcoin Payment Confirmed', content });
+	return {
+		subject: `${companyName}: Bitcoin payment confirmed`,
+		html: baseTemplate.html,
+		text: baseTemplate.text
+	};
 }
 
 export function renderAdminAlertTemplate(params: {
-  type: string
-  severity: "low" | "medium" | "high" | "critical"
-  message: string
-  details: Record<string, unknown>
-  timestamp: Date
+	type: string;
+	severity: 'low' | 'medium' | 'high' | 'critical';
+	message: string;
+	details: Record<string, unknown>;
+	timestamp: Date;
 }): EmailTemplate {
-  const companyName = COMPANY || "KeyFate"
-  const content = `
+	const companyName = COMPANY || 'KeyFate';
+	const content = `
     <p><strong>Type:</strong> ${params.type}</p>
     <p><strong>Severity:</strong> ${params.severity}</p>
     <p><strong>Time:</strong> ${params.timestamp.toISOString()}</p>
@@ -745,9 +743,13 @@ export function renderAdminAlertTemplate(params: {
       <p style="margin: 0 0 8px 0; font-weight: 600;">Details</p>
       <pre style="margin: 0; font-size: 12px; white-space: pre-wrap; word-break: break-word;">${JSON.stringify(params.details, null, 2)}</pre>
     </div>
-  `
-  const baseTemplate = renderBaseTemplate({ title: `Admin Alert: ${params.type}`, content })
-  return { subject: `${companyName} Admin: ${params.type} [${params.severity}]`, html: baseTemplate.html, text: baseTemplate.text }
+  `;
+	const baseTemplate = renderBaseTemplate({ title: `Admin Alert: ${params.type}`, content });
+	return {
+		subject: `${companyName} Admin: ${params.type} [${params.severity}]`,
+		html: baseTemplate.html,
+		text: baseTemplate.text
+	};
 }
 
 // ============================================================================
@@ -756,13 +758,13 @@ export function renderAdminAlertTemplate(params: {
 // ============================================================================
 
 export function renderDataExportReadyTemplate(params: {
-  userName: string
-  downloadUrl: string
-  expiresAt: Date
+	userName: string;
+	downloadUrl: string;
+	expiresAt: Date;
 }): EmailTemplate {
-  const companyName = COMPANY || "KeyFate"
-  const hoursRemaining = Math.floor((params.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60))
-  const content = `
+	const companyName = COMPANY || 'KeyFate';
+	const hoursRemaining = Math.floor((params.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60));
+	const content = `
     <p>Hi ${params.userName},</p>
     <p>Your personal data export is ready to download.</p>
     <div class="notice-box">
@@ -780,19 +782,25 @@ export function renderDataExportReadyTemplate(params: {
       <li>Subscription and payment history</li>
     </ul>
     <p style="font-size: 13px; color: #6b7280;">If you didn't request this export, please contact us at ${getSupportEmail()}</p>
-  `
-  const baseTemplate = renderBaseTemplate({ title: "Your Data Export is Ready", content })
-  return { subject: `${companyName}: Your data export is ready`, html: baseTemplate.html, text: baseTemplate.text }
+  `;
+	const baseTemplate = renderBaseTemplate({ title: 'Your Data Export is Ready', content });
+	return {
+		subject: `${companyName}: Your data export is ready`,
+		html: baseTemplate.html,
+		text: baseTemplate.text
+	};
 }
 
 export function renderAccountDeletionConfirmationTemplate(params: {
-  userName: string
-  confirmationUrl: string
-  scheduledDate: Date
+	userName: string;
+	confirmationUrl: string;
+	scheduledDate: Date;
 }): EmailTemplate {
-  const companyName = COMPANY || "KeyFate"
-  const daysUntilDeletion = Math.floor((params.scheduledDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-  const content = `
+	const companyName = COMPANY || 'KeyFate';
+	const daysUntilDeletion = Math.floor(
+		(params.scheduledDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+	);
+	const content = `
     <p>Hi ${params.userName},</p>
     <p>We received a request to delete your account and all associated data.</p>
     <div class="notice-box">
@@ -811,18 +819,22 @@ export function renderAccountDeletionConfirmationTemplate(params: {
       <strong>Changed your mind?</strong> Simply ignore this email. Your account will remain active.<br>
       <strong>Didn't request this?</strong> Contact us at ${getSupportEmail()}
     </p>
-  `
-  const baseTemplate = renderBaseTemplate({ title: "Account Deletion Request", content })
-  return { subject: `${companyName}: Confirm your account deletion request`, html: baseTemplate.html, text: baseTemplate.text }
+  `;
+	const baseTemplate = renderBaseTemplate({ title: 'Account Deletion Request', content });
+	return {
+		subject: `${companyName}: Confirm your account deletion request`,
+		html: baseTemplate.html,
+		text: baseTemplate.text
+	};
 }
 
 export function renderAccountDeletionGracePeriodTemplate(params: {
-  userName: string
-  daysRemaining: number
-  cancelUrl: string
+	userName: string;
+	daysRemaining: number;
+	cancelUrl: string;
 }): EmailTemplate {
-  const companyName = COMPANY || "KeyFate"
-  const content = `
+	const companyName = COMPANY || 'KeyFate';
+	const content = `
     <p>Hi ${params.userName},</p>
     <p>This is a reminder that your account is scheduled for deletion in <strong>${params.daysRemaining} days</strong>.</p>
     <div class="notice-box">
@@ -833,33 +845,39 @@ export function renderAccountDeletionGracePeriodTemplate(params: {
       <a href="${params.cancelUrl}" class="button" style="color: #ffffff; text-decoration: none;">Cancel Deletion</a>
     </p>
     <p style="font-size: 13px; color: #6b7280;">If you take no action, deletion will proceed automatically on the scheduled date.</p>
-  `
-  const baseTemplate = renderBaseTemplate({ title: "Account Deletion Reminder", content })
-  return { subject: `${companyName}: Account deletion in ${params.daysRemaining} days`, html: baseTemplate.html, text: baseTemplate.text }
+  `;
+	const baseTemplate = renderBaseTemplate({ title: 'Account Deletion Reminder', content });
+	return {
+		subject: `${companyName}: Account deletion in ${params.daysRemaining} days`,
+		html: baseTemplate.html,
+		text: baseTemplate.text
+	};
 }
 
-export function renderAccountDeletionCompleteTemplate(params: {
-  userName: string
-}): EmailTemplate {
-  const companyName = COMPANY || "KeyFate"
-  const content = `
+export function renderAccountDeletionCompleteTemplate(params: { userName: string }): EmailTemplate {
+	const companyName = COMPANY || 'KeyFate';
+	const content = `
     <p>Hi ${params.userName},</p>
     <p>Your account has been permanently deleted as requested.</p>
     <div class="info-box">
       <p style="margin: 0; color: #1e40af;">All your data has been removed from our systems in accordance with GDPR regulations.</p>
     </div>
     <p>Thank you for using ${companyName}. If you ever need our services again, you're welcome to create a new account.</p>
-  `
-  const baseTemplate = renderBaseTemplate({ title: "Account Deleted", content })
-  return { subject: `${companyName}: Your account has been deleted`, html: baseTemplate.html, text: baseTemplate.text }
+  `;
+	const baseTemplate = renderBaseTemplate({ title: 'Account Deleted', content });
+	return {
+		subject: `${companyName}: Your account has been deleted`,
+		html: baseTemplate.html,
+		text: baseTemplate.text
+	};
 }
 
 export function renderAccountDeletionCancelledTemplate(params: {
-  userName: string
+	userName: string;
 }): EmailTemplate {
-  const companyName = COMPANY || "KeyFate"
-  const dashboardUrl = `${SITE_URL || "https://keyfate.com"}/dashboard`
-  const content = `
+	const companyName = COMPANY || 'KeyFate';
+	const dashboardUrl = `${SITE_URL || 'https://keyfate.com'}/dashboard`;
+	const content = `
     <p>Hi ${params.userName},</p>
     <p>Your account deletion request has been cancelled.</p>
     <div class="info-box">
@@ -869,7 +887,11 @@ export function renderAccountDeletionCancelledTemplate(params: {
       <a href="${dashboardUrl}" class="button" style="color: #ffffff; text-decoration: none;">Go to Dashboard</a>
     </p>
     <p style="font-size: 13px; color: #6b7280;">If you didn't cancel this request, please contact us at ${getSupportEmail()}</p>
-  `
-  const baseTemplate = renderBaseTemplate({ title: "Account Deletion Cancelled", content })
-  return { subject: `${companyName}: Account deletion cancelled`, html: baseTemplate.html, text: baseTemplate.text }
+  `;
+	const baseTemplate = renderBaseTemplate({ title: 'Account Deletion Cancelled', content });
+	return {
+		subject: `${companyName}: Account deletion cancelled`,
+		html: baseTemplate.html,
+		text: baseTemplate.text
+	};
 }

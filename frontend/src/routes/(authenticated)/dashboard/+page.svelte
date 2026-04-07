@@ -19,9 +19,7 @@
 	<div class="mb-10 flex items-end justify-between">
 		<h1 class="font-space text-3xl font-light tracking-tight md:text-4xl">Your Secrets</h1>
 		{#if canCreate}
-			<Button variant="outline" href="/secrets/new" class="font-semibold">
-				Create New Secret
-			</Button>
+			<Button variant="outline" href="/secrets/new" class="font-semibold">Create New Secret</Button>
 		{:else}
 			<Button variant="outline" class="font-semibold" onclick={() => (showUpgradeModal = true)}>
 				Create New Secret
@@ -35,14 +33,12 @@
 		<!-- Unboxed empty state — no Card wrapper -->
 		<div class="py-16 text-center">
 			<h2 class="font-space text-2xl font-light tracking-tight">No Secrets Yet</h2>
-			<p class="text-muted-foreground mt-4 max-w-md mx-auto text-sm">
+			<p class="text-muted-foreground mx-auto mt-4 max-w-md text-sm">
 				You haven't created any secrets yet. Get started by creating your first dead man's switch.
 			</p>
 			<div class="mt-8">
 				{#if canCreate}
-					<Button href="/secrets/new" class="font-semibold">
-						Create Your First Secret
-					</Button>
+					<Button href="/secrets/new" class="font-semibold">Create Your First Secret</Button>
 				{:else}
 					<Button class="font-semibold" onclick={() => (showUpgradeModal = true)}>
 						Create Your First Secret

@@ -5,27 +5,23 @@
  * Implements severity classification and batching to prevent alert spam.
  */
 
-import { sendEmail, type EmailResult } from "./email-service"
-import { COMPANY, SUPPORT_EMAIL } from "$lib/env"
+import { sendEmail, type EmailResult } from './email-service';
+import { COMPANY, SUPPORT_EMAIL } from '$lib/env';
 
 // Notification severity levels
-export type NotificationSeverity = "critical" | "high" | "medium" | "low"
+export type NotificationSeverity = 'critical' | 'high' | 'medium' | 'low';
 
 // Email types matching schema
-type EmailType =
-  | "reminder"
-  | "disclosure"
-  | "admin_notification"
-  | "verification"
+type EmailType = 'reminder' | 'disclosure' | 'admin_notification' | 'verification';
 
 // Admin notification data structure
 export interface AdminNotificationData {
-  emailType: EmailType
-  recipient: string
-  errorMessage: string
-  secretTitle?: string
-  timestamp?: Date
-  retryCount?: number
+	emailType: EmailType;
+	recipient: string;
+	errorMessage: string;
+	secretTitle?: string;
+	timestamp?: Date;
+	retryCount?: number;
 }
 
 /**
@@ -38,28 +34,28 @@ export interface AdminNotificationData {
  * - Low: Verification/admin_notification emails failing
  */
 export function calculateSeverity(data: {
-  emailType: EmailType
-  retryCount?: number
+	emailType: EmailType;
+	retryCount?: number;
 }): NotificationSeverity {
-  const { emailType, retryCount = 0 } = data
+	const { emailType, retryCount = 0 } = data;
 
-  // Critical: Disclosure emails are mission-critical
-  if (emailType === "disclosure") {
-    return "critical"
-  }
+	// Critical: Disclosure emails are mission-critical
+	if (emailType === 'disclosure') {
+		return 'critical';
+	}
 
-  // High: Reminder emails with multiple retries
-  if (emailType === "reminder" && retryCount > 3) {
-    return "high"
-  }
+	// High: Reminder emails with multiple retries
+	if (emailType === 'reminder' && retryCount > 3) {
+		return 'high';
+	}
 
-  // Medium: Reminder emails with few retries
-  if (emailType === "reminder") {
-    return "medium"
-  }
+	// Medium: Reminder emails with few retries
+	if (emailType === 'reminder') {
+		return 'medium';
+	}
 
-  // Low: Verification and admin notification failures
-  return "low"
+	// Low: Verification and admin notification failures
+	return 'low';
 }
 
 /**
@@ -67,18 +63,18 @@ export function calculateSeverity(data: {
  * Uses clean, professional styling consistent with other system emails
  */
 function formatNotificationContent(
-  data: AdminNotificationData,
-  severity: NotificationSeverity,
+	data: AdminNotificationData,
+	severity: NotificationSeverity
 ): { subject: string; html: string; text: string } {
-  const timestamp = data.timestamp || new Date()
-  const retryCount = data.retryCount || 0
-  const companyName = COMPANY || "KeyFate"
+	const timestamp = data.timestamp || new Date();
+	const retryCount = data.retryCount || 0;
+	const companyName = COMPANY || 'KeyFate';
 
-  const subject = data.secretTitle
-    ? `${companyName} Admin: Email delivery issue - ${data.secretTitle} [${severity}]`
-    : `${companyName} Admin: Email delivery issue - ${data.emailType} [${severity}]`
+	const subject = data.secretTitle
+		? `${companyName} Admin: Email delivery issue - ${data.secretTitle} [${severity}]`
+		: `${companyName} Admin: Email delivery issue - ${data.emailType} [${severity}]`;
 
-  const html = `
+	const html = `
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -102,7 +98,7 @@ function formatNotificationContent(
                   <div style="background: #f9fafb; padding: 16px; border-radius: 6px; margin-bottom: 16px;">
                     <p style="margin: 0 0 8px 0;"><strong>Severity:</strong> ${severity}</p>
                     <p style="margin: 0 0 8px 0;"><strong>Type:</strong> ${data.emailType}</p>
-                    ${data.secretTitle ? `<p style="margin: 0 0 8px 0;"><strong>Secret:</strong> ${data.secretTitle}</p>` : ""}
+                    ${data.secretTitle ? `<p style="margin: 0 0 8px 0;"><strong>Secret:</strong> ${data.secretTitle}</p>` : ''}
                     <p style="margin: 0 0 8px 0;"><strong>Recipient:</strong> ${data.recipient}</p>
                     <p style="margin: 0 0 8px 0;"><strong>Retries:</strong> ${retryCount}</p>
                     <p style="margin: 0;"><strong>Time:</strong> ${timestamp.toISOString()}</p>
@@ -127,14 +123,14 @@ function formatNotificationContent(
       </table>
     </body>
     </html>
-  `
+  `;
 
-  const text = `
+	const text = `
 ${companyName} Admin: Email Delivery Issue [${severity}]
 
 Severity: ${severity}
 Type: ${data.emailType}
-${data.secretTitle ? `Secret: ${data.secretTitle}\n` : ""}Recipient: ${data.recipient}
+${data.secretTitle ? `Secret: ${data.secretTitle}\n` : ''}Recipient: ${data.recipient}
 Retries: ${retryCount}
 Time: ${timestamp.toISOString()}
 
@@ -144,25 +140,25 @@ ${getSeverityGuidanceText(severity)}
 
 ---
 Automated alert from ${companyName} monitoring
-  `.trim()
+  `.trim();
 
-  return { subject, html, text }
+	return { subject, html, text };
 }
 
 /**
  * Get color for severity level
  */
 function getSeverityColor(severity: NotificationSeverity): string {
-  switch (severity) {
-    case "critical":
-      return "#dc3545"
-    case "high":
-      return "#fd7e14"
-    case "medium":
-      return "#ffc107"
-    case "low":
-      return "#17a2b8"
-  }
+	switch (severity) {
+		case 'critical':
+			return '#dc3545';
+		case 'high':
+			return '#fd7e14';
+		case 'medium':
+			return '#ffc107';
+		case 'low':
+			return '#17a2b8';
+	}
 }
 
 /**
@@ -170,61 +166,64 @@ function getSeverityColor(severity: NotificationSeverity): string {
  * Uses softer, more professional styling
  */
 function getSeverityGuidance(severity: NotificationSeverity): string {
-  const configs = {
-    critical: {
-      bg: "#fef2f2",
-      border: "#ef4444",
-      text: "#991b1b",
-      title: "Action needed",
-      message: "A disclosure email has failed. The recipient may not receive their secret. Please investigate promptly.",
-    },
-    high: {
-      bg: "#fff7ed",
-      border: "#f97316",
-      text: "#9a3412",
-      title: "High priority",
-      message: "A reminder email has failed multiple times. Please check email service configuration.",
-    },
-    medium: {
-      bg: "#f0f9ff",
-      border: "#3b82f6",
-      text: "#1e40af",
-      title: "Medium priority",
-      message: "A reminder email has failed. Automatic retries are in progress. Monitor for additional failures.",
-    },
-    low: {
-      bg: "#f0fdf4",
-      border: "#22c55e",
-      text: "#166534",
-      title: "Low priority",
-      message: "A verification or notification email has failed. No immediate action required.",
-    },
-  }
+	const configs = {
+		critical: {
+			bg: '#fef2f2',
+			border: '#ef4444',
+			text: '#991b1b',
+			title: 'Action needed',
+			message:
+				'A disclosure email has failed. The recipient may not receive their secret. Please investigate promptly.'
+		},
+		high: {
+			bg: '#fff7ed',
+			border: '#f97316',
+			text: '#9a3412',
+			title: 'High priority',
+			message:
+				'A reminder email has failed multiple times. Please check email service configuration.'
+		},
+		medium: {
+			bg: '#f0f9ff',
+			border: '#3b82f6',
+			text: '#1e40af',
+			title: 'Medium priority',
+			message:
+				'A reminder email has failed. Automatic retries are in progress. Monitor for additional failures.'
+		},
+		low: {
+			bg: '#f0fdf4',
+			border: '#22c55e',
+			text: '#166534',
+			title: 'Low priority',
+			message: 'A verification or notification email has failed. No immediate action required.'
+		}
+	};
 
-  const config = configs[severity]
+	const config = configs[severity];
 
-  return `
+	return `
     <div style="background: ${config.bg}; border-left: 4px solid ${config.border}; padding: 12px 16px; border-radius: 4px;">
       <p style="margin: 0 0 4px 0; font-weight: 600; color: ${config.text};">${config.title}</p>
       <p style="margin: 0; font-size: 14px; color: ${config.text};">${config.message}</p>
     </div>
-  `
+  `;
 }
 
 /**
  * Get guidance text for plain text emails
  */
 function getSeverityGuidanceText(severity: NotificationSeverity): string {
-  switch (severity) {
-    case "critical":
-      return "Action needed: A disclosure email has failed. The recipient may not receive their secret. Please investigate promptly."
-    case "high":
-      return "High priority: A reminder email has failed multiple times. Please check email service configuration."
-    case "medium":
-      return "Medium priority: A reminder email has failed. Automatic retries are in progress."
-    case "low":
-      return "Low priority: A verification or notification email has failed. No immediate action required."
-  }
+	switch (severity) {
+		case 'critical':
+			return 'Action needed: A disclosure email has failed. The recipient may not receive their secret. Please investigate promptly.';
+		case 'high':
+			return 'High priority: A reminder email has failed multiple times. Please check email service configuration.';
+		case 'medium':
+			return 'Medium priority: A reminder email has failed. Automatic retries are in progress.';
+		case 'low':
+			return 'Low priority: A verification or notification email has failed. No immediate action required.';
+	}
 }
 
 /**
@@ -233,54 +232,45 @@ function getSeverityGuidanceText(severity: NotificationSeverity): string {
  * @param data - Notification data including error details and context
  * @returns Email result indicating success or failure
  */
-export async function sendAdminNotification(
-  data: AdminNotificationData,
-): Promise<EmailResult> {
-  try {
-    // Calculate severity level
-    const severity = calculateSeverity({
-      emailType: data.emailType,
-      retryCount: data.retryCount,
-    })
+export async function sendAdminNotification(data: AdminNotificationData): Promise<EmailResult> {
+	try {
+		// Calculate severity level
+		const severity = calculateSeverity({
+			emailType: data.emailType,
+			retryCount: data.retryCount
+		});
 
-    // Format notification content
-    const { subject, html, text } = formatNotificationContent(data, severity)
+		// Format notification content
+		const { subject, html, text } = formatNotificationContent(data, severity);
 
-    // Get admin email from environment or use default
-    const adminEmail =
-      process.env.ADMIN_ALERT_EMAIL ||
-      SUPPORT_EMAIL ||
-      "support@keyfate.com"
+		// Get admin email from environment or use default
+		const adminEmail = process.env.ADMIN_ALERT_EMAIL || SUPPORT_EMAIL || 'support@keyfate.com';
 
-    // Send notification using existing email service
-    const result = await sendEmail({
-      to: adminEmail,
-      subject,
-      html,
-      text,
-      priority:
-        severity === "critical" || severity === "high" ? "high" : "normal",
-      headers:
-        severity === "critical"
-          ? {
-              "X-Priority": "1",
-              "X-MSMail-Priority": "High",
-              Importance: "high",
-            }
-          : undefined,
-    })
+		// Send notification using existing email service
+		const result = await sendEmail({
+			to: adminEmail,
+			subject,
+			html,
+			text,
+			priority: severity === 'critical' || severity === 'high' ? 'high' : 'normal',
+			headers:
+				severity === 'critical'
+					? {
+							'X-Priority': '1',
+							'X-MSMail-Priority': 'High',
+							Importance: 'high'
+						}
+					: undefined
+		});
 
-    return result
-  } catch (error) {
-    console.error(
-      "[AdminNotification] Failed to send admin notification:",
-      error,
-    )
+		return result;
+	} catch (error) {
+		console.error('[AdminNotification] Failed to send admin notification:', error);
 
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
-      retryable: true,
-    }
-  }
+		return {
+			success: false,
+			error: error instanceof Error ? error.message : 'Unknown error',
+			retryable: true
+		};
+	}
 }

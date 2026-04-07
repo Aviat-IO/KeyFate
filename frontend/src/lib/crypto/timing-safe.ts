@@ -5,7 +5,7 @@
  * take constant time regardless of input values.
  */
 
-import { timingSafeEqual } from "crypto"
+import { timingSafeEqual } from 'crypto';
 
 /**
  * Compare two strings in constant time
@@ -26,23 +26,23 @@ import { timingSafeEqual } from "crypto"
  * ```
  */
 export function timingSafeStringEqual(a: string, b: string): boolean {
-  // Early length check is safe - length isn't secret
-  if (a.length !== b.length) {
-    return false
-  }
+	// Early length check is safe - length isn't secret
+	if (a.length !== b.length) {
+		return false;
+	}
 
-  // Convert strings to buffers for timing-safe comparison
-  const bufA = Buffer.from(a, "utf8")
-  const bufB = Buffer.from(b, "utf8")
+	// Convert strings to buffers for timing-safe comparison
+	const bufA = Buffer.from(a, 'utf8');
+	const bufB = Buffer.from(b, 'utf8');
 
-  try {
-    return timingSafeEqual(bufA, bufB)
-  } catch {
-    // timingSafeEqual throws if buffers have different lengths
-    // This shouldn't happen due to the length check above,
-    // but we handle it defensively
-    return false
-  }
+	try {
+		return timingSafeEqual(bufA, bufB);
+	} catch {
+		// timingSafeEqual throws if buffers have different lengths
+		// This shouldn't happen due to the length check above,
+		// but we handle it defensively
+		return false;
+	}
 }
 
 /**
@@ -55,16 +55,16 @@ export function timingSafeStringEqual(a: string, b: string): boolean {
  * @returns true if buffers are equal, false otherwise
  */
 export function timingSafeBufferEqual(a: Buffer, b: Buffer): boolean {
-  // Early length check is safe - length isn't secret
-  if (a.length !== b.length) {
-    return false
-  }
+	// Early length check is safe - length isn't secret
+	if (a.length !== b.length) {
+		return false;
+	}
 
-  try {
-    return timingSafeEqual(a, b)
-  } catch {
-    return false
-  }
+	try {
+		return timingSafeEqual(a, b);
+	} catch {
+		return false;
+	}
 }
 
 /**
@@ -77,17 +77,17 @@ export function timingSafeBufferEqual(a: Buffer, b: Buffer): boolean {
  * @returns true if hex strings are equal, false otherwise
  */
 export function timingSafeHexEqual(a: string, b: string): boolean {
-  // Early length check is safe - length isn't secret
-  if (a.length !== b.length) {
-    return false
-  }
+	// Early length check is safe - length isn't secret
+	if (a.length !== b.length) {
+		return false;
+	}
 
-  const bufA = Buffer.from(a, "hex")
-  const bufB = Buffer.from(b, "hex")
+	const bufA = Buffer.from(a, 'hex');
+	const bufB = Buffer.from(b, 'hex');
 
-  try {
-    return timingSafeEqual(bufA, bufB)
-  } catch {
-    return false
-  }
+	try {
+		return timingSafeEqual(bufA, bufB);
+	} catch {
+		return false;
+	}
 }

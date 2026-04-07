@@ -5,14 +5,14 @@
  * based on environment configuration. Supports SendGrid and Mock providers.
  */
 
-import type { EmailProvider } from "./providers/EmailProvider"
-import { SendGridAdapter } from "./providers/SendGridAdapter"
-import { MockAdapter } from "./providers/MockAdapter"
+import type { EmailProvider } from './providers/EmailProvider';
+import { SendGridAdapter } from './providers/SendGridAdapter';
+import { MockAdapter } from './providers/MockAdapter';
 
 /**
  * Supported email provider types
  */
-export type EmailProviderType = "sendgrid" | "mock"
+export type EmailProviderType = 'sendgrid' | 'mock';
 
 /**
  * Email provider factory function
@@ -25,28 +25,25 @@ export type EmailProviderType = "sendgrid" | "mock"
  * @throws Error if EMAIL_PROVIDER value is not supported
  */
 export function getEmailProvider(): EmailProvider {
-  // Read provider from environment, with smart defaults
-  const envProvider = process.env.EMAIL_PROVIDER?.toLowerCase() as
-    | EmailProviderType
-    | undefined
-  const isDevelopment = process.env.NODE_ENV === "development"
+	// Read provider from environment, with smart defaults
+	const envProvider = process.env.EMAIL_PROVIDER?.toLowerCase() as EmailProviderType | undefined;
+	const isDevelopment = process.env.NODE_ENV === 'development';
 
-  // Determine provider with fallback logic
-  const providerType: EmailProviderType =
-    envProvider || (isDevelopment ? "mock" : "sendgrid")
+	// Determine provider with fallback logic
+	const providerType: EmailProviderType = envProvider || (isDevelopment ? 'mock' : 'sendgrid');
 
-  switch (providerType) {
-    case "sendgrid":
-      return new SendGridAdapter()
+	switch (providerType) {
+		case 'sendgrid':
+			return new SendGridAdapter();
 
-    case "mock":
-      return new MockAdapter()
+		case 'mock':
+			return new MockAdapter();
 
-    default:
-      throw new Error(
-        `Unsupported email provider: ${providerType}. Supported providers: sendgrid, mock`,
-      )
-  }
+		default:
+			throw new Error(
+				`Unsupported email provider: ${providerType}. Supported providers: sendgrid, mock`
+			);
+	}
 }
 
 /**
@@ -57,41 +54,39 @@ export function getEmailProvider(): EmailProvider {
  * @returns Object with validation status and any error messages
  */
 export function validateEmailProviderConfig(): {
-  valid: boolean
-  provider: EmailProviderType
-  errors: string[]
+	valid: boolean;
+	provider: EmailProviderType;
+	errors: string[];
 } {
-  const errors: string[] = []
-  const envProvider = process.env.EMAIL_PROVIDER?.toLowerCase()
-  const isDevelopment = process.env.NODE_ENV === "development"
+	const errors: string[] = [];
+	const envProvider = process.env.EMAIL_PROVIDER?.toLowerCase();
+	const isDevelopment = process.env.NODE_ENV === 'development';
 
-  // Determine provider
-  const provider: EmailProviderType =
-    (envProvider as EmailProviderType) || (isDevelopment ? "mock" : "sendgrid")
+	// Determine provider
+	const provider: EmailProviderType =
+		(envProvider as EmailProviderType) || (isDevelopment ? 'mock' : 'sendgrid');
 
-  // Validate provider type
-  const supportedProviders: EmailProviderType[] = ["sendgrid", "mock"]
-  if (!supportedProviders.includes(provider)) {
-    errors.push(
-      `Unsupported EMAIL_PROVIDER: ${provider}. Supported: ${supportedProviders.join(
-        ", ",
-      )}`,
-    )
-  }
+	// Validate provider type
+	const supportedProviders: EmailProviderType[] = ['sendgrid', 'mock'];
+	if (!supportedProviders.includes(provider)) {
+		errors.push(
+			`Unsupported EMAIL_PROVIDER: ${provider}. Supported: ${supportedProviders.join(', ')}`
+		);
+	}
 
-  // Provider-specific validation
-  if (provider === "sendgrid") {
-    if (!process.env.SENDGRID_API_KEY) {
-      errors.push("SENDGRID_API_KEY environment variable is required")
-    }
-    if (!process.env.SENDGRID_ADMIN_EMAIL) {
-      errors.push("SENDGRID_ADMIN_EMAIL environment variable is required")
-    }
-  }
+	// Provider-specific validation
+	if (provider === 'sendgrid') {
+		if (!process.env.SENDGRID_API_KEY) {
+			errors.push('SENDGRID_API_KEY environment variable is required');
+		}
+		if (!process.env.SENDGRID_ADMIN_EMAIL) {
+			errors.push('SENDGRID_ADMIN_EMAIL environment variable is required');
+		}
+	}
 
-  return {
-    valid: errors.length === 0,
-    provider,
-    errors,
-  }
+	return {
+		valid: errors.length === 0,
+		provider,
+		errors
+	};
 }

@@ -1,18 +1,18 @@
-import type { BlogPost } from "./types"
+import type { BlogPost } from './types';
 
 export const blogPosts: BlogPost[] = [
-  {
-    slug: "what-is-a-dead-mans-switch",
-    title: "What Is a Dead Man's Switch? A Complete Guide",
-    description:
-      "Learn what a dead man's switch is, how it works, and why cryptocurrency holders, journalists, and anyone with sensitive digital assets should consider using one.",
-    publishedAt: "2025-01-15",
-    author: "KeyFate Team",
-    category: "Education",
-    tags: ["dead mans switch", "digital security", "cryptocurrency", "estate planning"],
-    readingTime: "6 min read",
-    featured: true,
-    content: `
+	{
+		slug: 'what-is-a-dead-mans-switch',
+		title: "What Is a Dead Man's Switch? A Complete Guide",
+		description:
+			"Learn what a dead man's switch is, how it works, and why cryptocurrency holders, journalists, and anyone with sensitive digital assets should consider using one.",
+		publishedAt: '2025-01-15',
+		author: 'KeyFate Team',
+		category: 'Education',
+		tags: ['dead mans switch', 'digital security', 'cryptocurrency', 'estate planning'],
+		readingTime: '6 min read',
+		featured: true,
+		content: `
 ## What Is a Dead Man's Switch?
 
 A dead man's switch triggers an action when the person controlling it stops responding. The name comes from railroad engineering: train operators held a lever that kept the brakes off. Let go—because you passed out, had a heart attack, or fell—and the brakes engaged automatically. No decision required. The absence of action *was* the trigger.
@@ -52,19 +52,19 @@ Your email, bank accounts, social media, subscriptions, cloud storage, password 
 **Censorship-resistant delivery.** KeyFate publishes encrypted shares to Nostr relays, a decentralized network with no single point of failure. If KeyFate disappears, the shares are still out there on independent relays, retrievable by your recipients.
 
 **Bitcoin timelocks.** For the highest level of trustlessness, KeyFate can lock the decryption key behind a Bitcoin CSV (CheckSequenceVerify) timelock. The key becomes spendable—and thus recoverable—only after a specified number of blocks, with no human in the loop.
-    `.trim(),
-  },
-  {
-    slug: "securing-cryptocurrency-inheritance",
-    title: "How to Secure Your Cryptocurrency for Inheritance",
-    description:
-      "Protect your Bitcoin, Ethereum, and other crypto assets for your heirs. Learn the best practices for cryptocurrency estate planning and inheritance.",
-    publishedAt: "2025-01-10",
-    author: "KeyFate Team",
-    category: "Cryptocurrency",
-    tags: ["cryptocurrency", "bitcoin", "inheritance", "estate planning", "private keys"],
-    readingTime: "8 min read",
-    content: `
+    `.trim()
+	},
+	{
+		slug: 'securing-cryptocurrency-inheritance',
+		title: 'How to Secure Your Cryptocurrency for Inheritance',
+		description:
+			'Protect your Bitcoin, Ethereum, and other crypto assets for your heirs. Learn the best practices for cryptocurrency estate planning and inheritance.',
+		publishedAt: '2025-01-10',
+		author: 'KeyFate Team',
+		category: 'Cryptocurrency',
+		tags: ['cryptocurrency', 'bitcoin', 'inheritance', 'estate planning', 'private keys'],
+		readingTime: '8 min read',
+		content: `
 ## The Problem
 
 Roughly 3.7 million Bitcoin are permanently inaccessible. Forgotten passwords, lost hard drives, dead holders who never shared keys. Hundreds of billions of dollars, visible on the blockchain, owned by no one.
@@ -106,19 +106,19 @@ This means your crypto inheritance plan doesn't depend on any single company, se
 **Test the process.** Reconstruct your seed from shares. Walk through recovery on a fresh device. If anything confuses you, it'll be worse for your heirs under stress.
 
 **Update regularly.** New wallets, changed holdings, different family circumstances. Review at least annually.
-    `.trim(),
-  },
-  {
-    slug: "shamirs-secret-sharing-explained",
-    title: "Shamir's Secret Sharing: The Math Behind Secure Key Splitting",
-    description:
-      "Understand how Shamir's Secret Sharing algorithm works to split secrets securely. Learn why this cryptographic technique is ideal for protecting cryptocurrency keys and sensitive data.",
-    publishedAt: "2025-01-05",
-    author: "KeyFate Team",
-    category: "Technology",
-    tags: ["cryptography", "shamir secret sharing", "security", "mathematics"],
-    readingTime: "7 min read",
-    content: `
+    `.trim()
+	},
+	{
+		slug: 'shamirs-secret-sharing-explained',
+		title: "Shamir's Secret Sharing: The Math Behind Secure Key Splitting",
+		description:
+			"Understand how Shamir's Secret Sharing algorithm works to split secrets securely. Learn why this cryptographic technique is ideal for protecting cryptocurrency keys and sensitive data.",
+		publishedAt: '2025-01-05',
+		author: 'KeyFate Team',
+		category: 'Technology',
+		tags: ['cryptography', 'shamir secret sharing', 'security', 'mathematics'],
+		readingTime: '7 min read',
+		content: `
 ## What Is Shamir's Secret Sharing?
 
 Adi Shamir published the algorithm in 1979. (He's the "S" in RSA.) The idea: split a secret into multiple shares where any *threshold* number of shares reconstructs the original, but fewer shares reveal nothing. Not partial information—literally zero bits of knowledge about the secret.
@@ -173,19 +173,19 @@ Test reconstruction before you depend on it. Generate your shares, combine the t
 Label shares clearly but don't label them with what they protect. "Share 2 of 3 — contact [trusted person] for additional shares" is useful. "Share for Bitcoin wallet containing 50 BTC" is dangerous.
 
 Update when circumstances change—new holdings, different family situation, changed trust relationships. Shamir's scheme is cheap to redo.
-    `.trim(),
-  },
-  {
-    slug: "digital-estate-planning-checklist",
-    title: "Digital Estate Planning Checklist: What to Include",
-    description:
-      "A comprehensive checklist for digital estate planning. Ensure your passwords, accounts, cryptocurrency, and digital assets are accessible to your heirs.",
-    publishedAt: "2024-12-20",
-    author: "KeyFate Team",
-    category: "Estate Planning",
-    tags: ["estate planning", "digital assets", "passwords", "checklist"],
-    readingTime: "5 min read",
-    content: `
+    `.trim()
+	},
+	{
+		slug: 'digital-estate-planning-checklist',
+		title: 'Digital Estate Planning Checklist: What to Include',
+		description:
+			'A comprehensive checklist for digital estate planning. Ensure your passwords, accounts, cryptocurrency, and digital assets are accessible to your heirs.',
+		publishedAt: '2024-12-20',
+		author: 'KeyFate Team',
+		category: 'Estate Planning',
+		tags: ['estate planning', 'digital assets', 'passwords', 'checklist'],
+		readingTime: '5 min read',
+		content: `
 ## Why This Matters
 
 The average person has over 100 online accounts. When you die, exactly zero of them transfer automatically to your heirs. Subscriptions keep charging. Photos stay locked behind passwords nobody knows. Cryptocurrency vanishes. Email—the master key to resetting every other account—sits behind a login your family can't crack.
@@ -235,19 +235,19 @@ Don't put credentials in a Word doc on your desktop. Don't email them to yoursel
 Use a dead man's switch. Store everything encrypted, designate recipients, set your check-in schedule. The information stays locked while you're alive and releases automatically when needed. KeyFate encrypts on your device before anything reaches the server, splits secrets with Shamir's Secret Sharing, and distributes shares via Nostr relays for censorship-resistant delivery.
 
 Review every 6-12 months. Accounts change. Passwords get updated. New services appear. An outdated inventory is worse than useless—it gives false confidence.
-    `.trim(),
-  },
-  {
-    slug: "journalist-source-protection",
-    title: "Dead Man's Switch for Journalists: Protecting Sources and Stories",
-    description:
-      "How investigative journalists use dead man's switches to protect their sources, unpublished stories, and ensure information survives if they're compromised.",
-    publishedAt: "2024-12-15",
-    author: "KeyFate Team",
-    category: "Security",
-    tags: ["journalism", "source protection", "security", "whistleblowers"],
-    readingTime: "6 min read",
-    content: `
+    `.trim()
+	},
+	{
+		slug: 'journalist-source-protection',
+		title: "Dead Man's Switch for Journalists: Protecting Sources and Stories",
+		description:
+			"How investigative journalists use dead man's switches to protect their sources, unpublished stories, and ensure information survives if they're compromised.",
+		publishedAt: '2024-12-15',
+		author: 'KeyFate Team',
+		category: 'Security',
+		tags: ['journalism', 'source protection', 'security', 'whistleblowers'],
+		readingTime: '6 min read',
+		content: `
 ## The Problem
 
 You're holding information that someone powerful wants buried. You need to protect it *and* ensure it comes out if you can't publish it yourself. These two requirements pull in opposite directions: secrecy demands keeping information locked down; resilience demands distributing it.
@@ -302,19 +302,19 @@ For the switch itself, choose a service with zero-knowledge architecture—where
 Shield laws vary by jurisdiction. Some protect against compelled disclosure of sources; most don't explicitly address dead man's switches. Consult a media lawyer. Document your reasoning for configuring the switch—courts are more sympathetic to journalists acting in good faith.
 
 The decentralized delivery via Nostr relays matters here. A court order directed at KeyFate can't recall shares already published to independent relays across multiple jurisdictions.
-    `.trim(),
-  },
-  {
-    slug: "bitcoin-inheritance-guide",
-    title: "Bitcoin Inheritance: The Complete Guide for Hodlers",
-    description:
-      "A comprehensive guide to Bitcoin inheritance planning. Learn how to ensure your BTC passes safely to your heirs without exposing your private keys.",
-    publishedAt: "2024-12-10",
-    author: "KeyFate Team",
-    category: "Cryptocurrency",
-    tags: ["bitcoin", "inheritance", "hodl", "private keys", "cold storage"],
-    readingTime: "9 min read",
-    content: `
+    `.trim()
+	},
+	{
+		slug: 'bitcoin-inheritance-guide',
+		title: 'Bitcoin Inheritance: The Complete Guide for Hodlers',
+		description:
+			'A comprehensive guide to Bitcoin inheritance planning. Learn how to ensure your BTC passes safely to your heirs without exposing your private keys.',
+		publishedAt: '2024-12-10',
+		author: 'KeyFate Team',
+		category: 'Cryptocurrency',
+		tags: ['bitcoin', 'inheritance', 'hodl', 'private keys', 'cold storage'],
+		readingTime: '9 min read',
+		content: `
 ## The Self-Custody Paradox
 
 Bitcoin's killer feature—no intermediary can freeze, seize, or deny access to your coins—becomes a lethal bug when you die. The network doesn't know you're dead. It doesn't care. It verifies cryptographic signatures, not death certificates.
@@ -370,19 +370,19 @@ Write your seed phrase on paper, put it in a safe. Simple, and dangerously britt
 **Never testing.** An untested backup is not a backup. If you haven't verified reconstruction works, you don't know that it does.
 
 **Not updating.** Holdings change. Relationships change. Storage locations get compromised. A plan from three years ago may not reflect your current situation.
-    `.trim(),
-  },
-  {
-    slug: "password-manager-master-password-protection",
-    title: "Protecting Your Password Manager Master Password",
-    description:
-      "Your password manager master password is the key to your entire digital life. Learn how to protect it while ensuring trusted access when needed.",
-    publishedAt: "2024-12-05",
-    author: "KeyFate Team",
-    category: "Security",
-    tags: ["password manager", "master password", "security", "1password", "bitwarden"],
-    readingTime: "6 min read",
-    content: `
+    `.trim()
+	},
+	{
+		slug: 'password-manager-master-password-protection',
+		title: 'Protecting Your Password Manager Master Password',
+		description:
+			'Your password manager master password is the key to your entire digital life. Learn how to protect it while ensuring trusted access when needed.',
+		publishedAt: '2024-12-05',
+		author: 'KeyFate Team',
+		category: 'Security',
+		tags: ['password manager', 'master password', 'security', '1password', 'bitwarden'],
+		readingTime: '6 min read',
+		content: `
 ## The Single Point of Failure
 
 Password managers solve the "too many passwords" problem. You memorize one master password; the manager handles the rest. Security experts recommend this, and they're right.
@@ -425,19 +425,19 @@ No single party can access your vault. KeyFate can't. Your spouse can't. A compl
 **Test every 6-12 months.** Verify the master password is still current. Confirm recovery methods still work. Make sure your recipient knows what they'll receive.
 
 **Plan for 2FA.** If your password manager has two-factor authentication enabled (it should), the recovery codes need to be in your dead man's switch too. Otherwise your heirs hit a second locked door after cracking the first.
-    `.trim(),
-  },
-  {
-    slug: "check-in-schedule-best-practices",
-    title: "How to Choose the Right Check-In Schedule",
-    description:
-      "Selecting the right check-in frequency for your dead man's switch is crucial. Learn how to balance security with convenience for your lifestyle.",
-    publishedAt: "2024-11-28",
-    author: "KeyFate Team",
-    category: "Education",
-    tags: ["check-in", "dead mans switch", "security", "best practices"],
-    readingTime: "5 min read",
-    content: `
+    `.trim()
+	},
+	{
+		slug: 'check-in-schedule-best-practices',
+		title: 'How to Choose the Right Check-In Schedule',
+		description:
+			"Selecting the right check-in frequency for your dead man's switch is crucial. Learn how to balance security with convenience for your lifestyle.",
+		publishedAt: '2024-11-28',
+		author: 'KeyFate Team',
+		category: 'Education',
+		tags: ['check-in', 'dead mans switch', 'security', 'best practices'],
+		readingTime: '5 min read',
+		content: `
 ## The Tradeoff
 
 Check-in frequency controls two things: how quickly your secrets release if something happens to you, and how much mental overhead you tolerate in daily life. Too short and you'll accidentally trigger a release during a camping trip. Too long and your heirs wait months for access they need now.
@@ -484,19 +484,19 @@ Before a vacation or planned absence, check in early. If you'll be unreachable f
 Missing one check-in doesn't immediately trigger release. KeyFate sends escalating reminders—gentle nudge, then urgent, then final warning. The grace period between missed check-in and actual release gives you a buffer.
 
 If you're worried about false triggers: start with a longer interval and shorten it once you've built the habit. A monthly check-in with a 2-week grace period gives you 6 weeks of silence before release—plenty of margin while you're getting comfortable.
-    `.trim(),
-  },
-  {
-    slug: "two-factor-authentication-recovery",
-    title: "Two-Factor Authentication Recovery: Planning for the Worst",
-    description:
-      "2FA protects your accounts, but what happens when you lose access? Learn how to plan 2FA recovery for yourself and your heirs.",
-    publishedAt: "2024-11-20",
-    author: "KeyFate Team",
-    category: "Security",
-    tags: ["2fa", "two-factor authentication", "recovery", "security", "backup codes"],
-    readingTime: "7 min read",
-    content: `
+    `.trim()
+	},
+	{
+		slug: 'two-factor-authentication-recovery',
+		title: 'Two-Factor Authentication Recovery: Planning for the Worst',
+		description:
+			'2FA protects your accounts, but what happens when you lose access? Learn how to plan 2FA recovery for yourself and your heirs.',
+		publishedAt: '2024-11-20',
+		author: 'KeyFate Team',
+		category: 'Security',
+		tags: ['2fa', 'two-factor authentication', 'recovery', 'security', 'backup codes'],
+		readingTime: '7 min read',
+		content: `
 ## The Problem You Created by Being Secure
 
 Two-factor authentication is excellent security. Something you know (password) plus something you have (phone, security key). Remote attackers who steal your password still can't get in.
@@ -544,19 +544,19 @@ For each account: name, URL, login email, password manager reference, 2FA type, 
 General info: password manager master password, authenticator app backup password, phone PIN, computer passwords, hardware key locations.
 
 Store this in your dead man's switch. KeyFate encrypts it on your device before it ever leaves your browser, splits it into shares, and delivers the shares to your recipients when the switch triggers. Your heirs get everything they need in one package.
-    `.trim(),
-  },
-  {
-    slug: "zero-knowledge-security-explained",
-    title: "Zero-Knowledge Security: Why It Matters for Your Secrets",
-    description:
-      "Understand zero-knowledge architecture and why it's essential for protecting sensitive information. Learn how KeyFate ensures even we can't access your secrets.",
-    publishedAt: "2024-11-15",
-    author: "KeyFate Team",
-    category: "Technology",
-    tags: ["zero knowledge", "encryption", "security", "privacy", "architecture"],
-    readingTime: "6 min read",
-    content: `
+    `.trim()
+	},
+	{
+		slug: 'zero-knowledge-security-explained',
+		title: 'Zero-Knowledge Security: Why It Matters for Your Secrets',
+		description:
+			"Understand zero-knowledge architecture and why it's essential for protecting sensitive information. Learn how KeyFate ensures even we can't access your secrets.",
+		publishedAt: '2024-11-15',
+		author: 'KeyFate Team',
+		category: 'Technology',
+		tags: ['zero knowledge', 'encryption', 'security', 'privacy', 'architecture'],
+		readingTime: '6 min read',
+		content: `
 ## What It Actually Means
 
 "Zero-knowledge" means the service provider cannot access your data. Not "won't"—*can't*. The system is built so that decryption without your keys is mathematically impossible.
@@ -607,19 +607,19 @@ Many services marketed as "encrypted" fail these tests. End-to-end encryption is
 Zero-knowledge puts responsibility on you. Lost keys mean lost data. There's no safety net. This is the price of mathematical guarantees. KeyFate mitigates this through Shamir's threshold scheme (losing one share doesn't lose the secret) and decentralized distribution via Nostr (shares survive even if KeyFate doesn't). But ultimately, your secrets are only as safe as your management of the shares and key material.
 
 That tradeoff—responsibility for actual security—is better than the alternative: trusting someone else's promise and hoping it holds.
-    `.trim(),
-  },
-  {
-    slug: "digital-will-vs-dead-mans-switch",
-    title: "Digital Will vs Dead Man's Switch: Key Differences Explained",
-    description:
-      "Understand the differences between a digital will and a dead man's switch. Learn which solution is right for your digital estate planning needs.",
-    publishedAt: "2024-11-10",
-    author: "KeyFate Team",
-    category: "Estate Planning",
-    tags: ["digital will", "dead mans switch", "estate planning", "comparison"],
-    readingTime: "6 min read",
-    content: `
+    `.trim()
+	},
+	{
+		slug: 'digital-will-vs-dead-mans-switch',
+		title: "Digital Will vs Dead Man's Switch: Key Differences Explained",
+		description:
+			"Understand the differences between a digital will and a dead man's switch. Learn which solution is right for your digital estate planning needs.",
+		publishedAt: '2024-11-10',
+		author: 'KeyFate Team',
+		category: 'Estate Planning',
+		tags: ['digital will', 'dead mans switch', 'estate planning', 'comparison'],
+		readingTime: '6 min read',
+		content: `
 ## Different Tools for Different Assets
 
 A digital will is a legal document. It goes through probate, becomes public record, takes weeks to months, and gives your executor court authority to compel companies to comply.
@@ -672,19 +672,19 @@ Your dead man's switch handles the sensitive material:
 Your will might say: "I maintain a dead man's switch with KeyFate. Recipients [names] will receive access to my cryptocurrency and credentials. My executor should coordinate with these recipients for complete estate settlement."
 
 The will provides authority. The switch provides access. Together they cover everything.
-    `.trim(),
-  },
-  {
-    slug: "cold-storage-inheritance-planning",
-    title: "Cold Storage Inheritance Planning: Securing Hardware Wallets for Heirs",
-    description:
-      "Learn how to plan inheritance for Bitcoin stored in cold storage. Ensure your hardware wallet holdings pass safely to your family.",
-    publishedAt: "2024-11-05",
-    author: "KeyFate Team",
-    category: "Cryptocurrency",
-    tags: ["cold storage", "hardware wallet", "ledger", "trezor", "inheritance"],
-    readingTime: "8 min read",
-    content: `
+    `.trim()
+	},
+	{
+		slug: 'cold-storage-inheritance-planning',
+		title: 'Cold Storage Inheritance Planning: Securing Hardware Wallets for Heirs',
+		description:
+			'Learn how to plan inheritance for Bitcoin stored in cold storage. Ensure your hardware wallet holdings pass safely to your family.',
+		publishedAt: '2024-11-05',
+		author: 'KeyFate Team',
+		category: 'Cryptocurrency',
+		tags: ['cold storage', 'hardware wallet', 'ledger', 'trezor', 'inheritance'],
+		readingTime: '8 min read',
+		content: `
 ## The Problem with Cold Storage Inheritance
 
 Cold storage is the gold standard for protecting crypto from online threats. Hardware wallets keep your keys offline, air-gapped from the internet. Excellent security while you're alive.
@@ -739,19 +739,19 @@ Gather your threshold shares. Combine them. Verify the seed phrase comes back co
 Have someone else read your instructions and explain the steps back to you. If they're confused, your heirs will be worse off—they'll be confused and grieving.
 
 Update annually or after any significant change in holdings, devices, or family situation.
-    `.trim(),
-  },
-  {
-    slug: "subscription-accounts-after-death",
-    title: "Managing Subscription Accounts After Death: A Guide for Families",
-    description:
-      "When someone passes away, their subscriptions keep charging. Learn how to identify, access, and cancel digital subscriptions during estate settlement.",
-    publishedAt: "2024-10-30",
-    author: "KeyFate Team",
-    category: "Estate Planning",
-    tags: ["subscriptions", "estate planning", "digital accounts", "family"],
-    readingTime: "5 min read",
-    content: `
+    `.trim()
+	},
+	{
+		slug: 'subscription-accounts-after-death',
+		title: 'Managing Subscription Accounts After Death: A Guide for Families',
+		description:
+			'When someone passes away, their subscriptions keep charging. Learn how to identify, access, and cancel digital subscriptions during estate settlement.',
+		publishedAt: '2024-10-30',
+		author: 'KeyFate Team',
+		category: 'Estate Planning',
+		tags: ['subscriptions', 'estate planning', 'digital accounts', 'family'],
+		readingTime: '5 min read',
+		content: `
 ## Subscriptions Don't Know You're Dead
 
 The average person carries 12+ paid subscriptions. Netflix, Spotify, Adobe, gym memberships, cloud storage, meal kits, news sites, SaaS tools. When you die, they keep charging. Month after month, the credit card bills pile up while your family doesn't even know which services exist, let alone how to cancel them.
@@ -793,19 +793,19 @@ Maintain a subscription inventory. For each: service name, cost, billing frequen
 Include notes on what to keep (shared family accounts, cloud storage with irreplaceable data), what to cancel immediately (anything purely personal), and what's hard to cancel (gym memberships, services without online cancellation).
 
 Update the list when you add or remove subscriptions. A stale inventory is better than nothing, but a current one is better.
-    `.trim(),
-  },
-  {
-    slug: "social-media-accounts-after-death",
-    title: "Social Media After Death: Memorialize, Delete, or Transfer?",
-    description:
-      "What happens to social media accounts when someone dies? Learn about memorialization, deletion, and account transfer options for Facebook, Instagram, Twitter, and more.",
-    publishedAt: "2024-10-25",
-    author: "KeyFate Team",
-    category: "Estate Planning",
-    tags: ["social media", "facebook", "instagram", "digital legacy", "memorialization"],
-    readingTime: "6 min read",
-    content: `
+    `.trim()
+	},
+	{
+		slug: 'social-media-accounts-after-death',
+		title: 'Social Media After Death: Memorialize, Delete, or Transfer?',
+		description:
+			'What happens to social media accounts when someone dies? Learn about memorialization, deletion, and account transfer options for Facebook, Instagram, Twitter, and more.',
+		publishedAt: '2024-10-25',
+		author: 'KeyFate Team',
+		category: 'Estate Planning',
+		tags: ['social media', 'facebook', 'instagram', 'digital legacy', 'memorialization'],
+		readingTime: '6 min read',
+		content: `
 ## What Happens to Your Accounts
 
 When you die, your social media accounts keep existing. Friends still tag you in memories. The algorithm still surfaces your old posts. Your profile picture still appears in search results. Nothing happens automatically.
@@ -845,19 +845,19 @@ You often don't need passwords. Memorialization, deletion, and data requests go 
 Don't rush. Friends may want time to post memories and tributes on a memorialized account. Deletion is permanent. Download data first.
 
 There's no universally right answer. Some families find comfort in a preserved profile. Others want clean closure. If the person didn't leave instructions, make the decision together.
-    `.trim(),
-  },
-  {
-    slug: "email-access-for-executors",
-    title: "Email Access for Executors: Legal and Practical Guide",
-    description:
-      "Executors often need email access to settle estates. Learn the legal framework, provider policies, and practical steps for accessing a deceased person's email.",
-    publishedAt: "2024-10-20",
-    author: "KeyFate Team",
-    category: "Estate Planning",
-    tags: ["email", "executor", "estate planning", "legal", "gmail", "outlook"],
-    readingTime: "7 min read",
-    content: `
+    `.trim()
+	},
+	{
+		slug: 'email-access-for-executors',
+		title: 'Email Access for Executors: Legal and Practical Guide',
+		description:
+			"Executors often need email access to settle estates. Learn the legal framework, provider policies, and practical steps for accessing a deceased person's email.",
+		publishedAt: '2024-10-20',
+		author: 'KeyFate Team',
+		category: 'Estate Planning',
+		tags: ['email', 'executor', 'estate planning', 'legal', 'gmail', 'outlook'],
+		readingTime: '7 min read',
+		content: `
 ## Why Email Is the First Domino
 
 Email is the skeleton key to a digital estate. Password recovery for almost every service routes through it. Financial statements, subscription confirmations, legal documents, business correspondence—it all lives in the inbox.
@@ -899,19 +899,19 @@ All of this is avoidable. A dead man's switch delivers email credentials directl
 Set up Google Inactive Account Manager. Set up Apple Digital Legacy. Store your email password in a dead man's switch. Use a password manager with emergency access features.
 
 If you're an executor, have this conversation with the person *now*—while they can still configure access. Once they're gone, your options narrow dramatically.
-    `.trim(),
-  },
-  {
-    slug: "freelancer-digital-asset-protection",
-    title: "Freelancer Digital Asset Protection: A Business Continuity Guide",
-    description:
-      "Freelancers and solopreneurs face unique digital asset risks. Learn how to protect your business continuity with proper digital asset planning.",
-    publishedAt: "2024-10-15",
-    author: "KeyFate Team",
-    category: "Security",
-    tags: ["freelancer", "business", "solopreneur", "continuity", "digital assets"],
-    readingTime: "6 min read",
-    content: `
+    `.trim()
+	},
+	{
+		slug: 'freelancer-digital-asset-protection',
+		title: 'Freelancer Digital Asset Protection: A Business Continuity Guide',
+		description:
+			'Freelancers and solopreneurs face unique digital asset risks. Learn how to protect your business continuity with proper digital asset planning.',
+		publishedAt: '2024-10-15',
+		author: 'KeyFate Team',
+		category: 'Security',
+		tags: ['freelancer', 'business', 'solopreneur', 'continuity', 'digital assets'],
+		readingTime: '6 min read',
+		content: `
 ## You Are a Single Point of Failure
 
 As a freelancer, everything lives in your head and on your devices. Client relationships, project context, account credentials, financial records. There's no HR department, no backup team, no institutional memory. If you're incapacitated tomorrow, your business doesn't pause—it collapses. Clients get stranded. Projects miss deadlines. Years of work becomes inaccessible.
@@ -965,19 +965,19 @@ This gives you someone who actually understands freelance work, can communicate 
 **Tier 2 (longer check-in):** Complete client database, all credentials, financial records, full documentation.
 
 **Tier 3 (business wind-down):** Long-term disposition of assets, IP instructions, final communications to send.
-    `.trim(),
-  },
-  {
-    slug: "aes-256-encryption-explained",
-    title: "Encryption at KeyFate: AES-256, ChaCha20, and Why We Use Both",
-    description:
-      "How KeyFate uses ChaCha20-Poly1305 and AES-256-GCM together to protect your secrets. A plain-language explanation of the encryption behind the dead man's switch.",
-    publishedAt: "2024-10-10",
-    author: "KeyFate Team",
-    category: "Technology",
-    tags: ["encryption", "chacha20", "aes-256", "security", "cryptography", "technology"],
-    readingTime: "6 min read",
-    content: `
+    `.trim()
+	},
+	{
+		slug: 'aes-256-encryption-explained',
+		title: 'Encryption at KeyFate: AES-256, ChaCha20, and Why We Use Both',
+		description:
+			"How KeyFate uses ChaCha20-Poly1305 and AES-256-GCM together to protect your secrets. A plain-language explanation of the encryption behind the dead man's switch.",
+		publishedAt: '2024-10-10',
+		author: 'KeyFate Team',
+		category: 'Technology',
+		tags: ['encryption', 'chacha20', 'aes-256', 'security', 'cryptography', 'technology'],
+		readingTime: '6 min read',
+		content: `
 ## Two Ciphers, One Job
 
 KeyFate doesn't rely on a single encryption algorithm. Your secrets are protected by two different ciphers working together:
@@ -1040,19 +1040,19 @@ Putting it all together, here's what happens when you store a secret with KeyFat
 5. KeyFate never sees plaintext data, plaintext keys, or enough shares to reconstruct anything
 
 The result: your secret is protected by proven mathematics at every layer, distributed across independent systems, and recoverable only when the right conditions are met—without trusting any single party, including us.
-    `.trim(),
-  },
-  {
-    slug: "how-to-pass-on-bitcoin-after-death",
-    title: "How to Pass On Bitcoin After Death",
-    description:
-      "Learn practical methods for passing Bitcoin to your heirs after death. Compare paper backups, multisig wallets, and dead man's switches to find the right approach for your holdings.",
-    publishedAt: "2025-02-19",
-    author: "KeyFate Team",
-    category: "Cryptocurrency",
-    tags: ["bitcoin", "inheritance", "cryptocurrency", "estate planning"],
-    readingTime: "7 min read",
-    content: `
+    `.trim()
+	},
+	{
+		slug: 'how-to-pass-on-bitcoin-after-death',
+		title: 'How to Pass On Bitcoin After Death',
+		description:
+			"Learn practical methods for passing Bitcoin to your heirs after death. Compare paper backups, multisig wallets, and dead man's switches to find the right approach for your holdings.",
+		publishedAt: '2025-02-19',
+		author: 'KeyFate Team',
+		category: 'Cryptocurrency',
+		tags: ['bitcoin', 'inheritance', 'cryptocurrency', 'estate planning'],
+		readingTime: '7 min read',
+		content: `
 ## Bitcoin Dies With You Unless You Plan Ahead
 
 Here's the uncomfortable truth: if you get hit by a bus tomorrow, your Bitcoin is gone. Not frozen, not recoverable through a court order, not sitting in some account your family can petition to unlock. <strong>Gone.</strong> Permanently removed from circulation, as if it never existed.
@@ -1127,19 +1127,19 @@ The check-in process is simple—confirm you're okay on your chosen schedule. Da
 The process takes about fifteen minutes. The alternative—your family losing access to your Bitcoin forever—takes no time at all. It just happens, silently and irreversibly.
 
 Don't wait. <a href="/pricing">Check out KeyFate's plans</a> and protect your Bitcoin inheritance today.
-    `.trim(),
-  },
-  {
-    slug: "digital-dead-mans-switch-explained",
-    title: "Digital Dead Man's Switch Explained",
-    description:
-      "A complete guide to digital dead man's switches: their history, how they work, modern use cases, and how they protect your most sensitive information.",
-    publishedAt: "2025-02-19",
-    author: "KeyFate Team",
-    category: "Technology",
-    tags: ["dead mans switch", "digital security", "technology", "automation"],
-    readingTime: "8 min read",
-    content: `
+    `.trim()
+	},
+	{
+		slug: 'digital-dead-mans-switch-explained',
+		title: "Digital Dead Man's Switch Explained",
+		description:
+			"A complete guide to digital dead man's switches: their history, how they work, modern use cases, and how they protect your most sensitive information.",
+		publishedAt: '2025-02-19',
+		author: 'KeyFate Team',
+		category: 'Technology',
+		tags: ['dead mans switch', 'digital security', 'technology', 'automation'],
+		readingTime: '8 min read',
+		content: `
 ## From Train Brakes to Encrypted Secrets
 
 The dead man's switch was invented to solve a simple problem: what happens when the person in control can't act anymore?
@@ -1225,19 +1225,19 @@ Encrypted shares are distributed via Nostr relays for censorship-resistant deliv
 Flexible check-in schedules with grace periods prevent false triggers while maintaining security. A complete server compromise reveals nothing usable, and the decentralized distribution means the system works even if KeyFate goes offline.
 
 <a href="/sign-in">Set up your dead man's switch</a> in minutes. Check our <a href="/pricing">pricing page</a> for plan details.
-    `.trim(),
-  },
-  {
-    slug: "shamirs-secret-sharing-for-beginners",
-    title: "Shamir's Secret Sharing for Beginners",
-    description:
-      "A beginner-friendly explanation of Shamir's Secret Sharing. Learn how this cryptographic technique splits secrets securely, with simple analogies and real-world applications.",
-    publishedAt: "2025-02-19",
-    author: "KeyFate Team",
-    category: "Education",
-    tags: ["cryptography", "shamir secret sharing", "security", "education"],
-    readingTime: "7 min read",
-    content: `
+    `.trim()
+	},
+	{
+		slug: 'shamirs-secret-sharing-for-beginners',
+		title: "Shamir's Secret Sharing for Beginners",
+		description:
+			"A beginner-friendly explanation of Shamir's Secret Sharing. Learn how this cryptographic technique splits secrets securely, with simple analogies and real-world applications.",
+		publishedAt: '2025-02-19',
+		author: 'KeyFate Team',
+		category: 'Education',
+		tags: ['cryptography', 'shamir secret sharing', 'security', 'education'],
+		readingTime: '7 min read',
+		content: `
 ## The Problem: Sharing a Secret Without Trusting Anyone Completely
 
 You have a secret—say, a Bitcoin seed phrase worth a million dollars. You need someone to access it if something happens to you, but you don't want any single person to have it right now. Not your spouse, not your lawyer, not your best friend. Not because you don't trust them, but because trusting any one person with everything is a single point of failure.
@@ -1318,19 +1318,19 @@ You don't need to understand the math to benefit from it. KeyFate handles the cr
 If you want to go deeper into the technical details, check out our <a href="/blog/shamirs-secret-sharing-explained">in-depth technical article on Shamir's Secret Sharing</a>.
 
 Ready to protect your secrets with proven cryptography? <a href="/sign-in">Create your KeyFate account</a> and see how it works. View our <a href="/pricing">pricing plans</a> to find the right fit.
-    `.trim(),
-  },
-  {
-    slug: "what-happens-to-crypto-when-you-die",
-    title: "What Happens to Your Crypto When You Die?",
-    description:
-      "Explore the legal and practical reality of cryptocurrency after death. Learn about the $140B+ lost Bitcoin problem and how to prevent your crypto from vanishing.",
-    publishedAt: "2025-02-19",
-    author: "KeyFate Team",
-    category: "Cryptocurrency",
-    tags: ["cryptocurrency", "inheritance", "bitcoin", "estate planning", "legal"],
-    readingTime: "8 min read",
-    content: `
+    `.trim()
+	},
+	{
+		slug: 'what-happens-to-crypto-when-you-die',
+		title: 'What Happens to Your Crypto When You Die?',
+		description:
+			'Explore the legal and practical reality of cryptocurrency after death. Learn about the $140B+ lost Bitcoin problem and how to prevent your crypto from vanishing.',
+		publishedAt: '2025-02-19',
+		author: 'KeyFate Team',
+		category: 'Cryptocurrency',
+		tags: ['cryptocurrency', 'inheritance', 'bitcoin', 'estate planning', 'legal'],
+		readingTime: '8 min read',
+		content: `
 ## The $140 Billion Graveyard
 
 An estimated 3.7 million Bitcoin are permanently lost. At current prices, that's over $140 billion in value that no one will ever access again. Some of those coins belong to early adopters who lost hard drives. Some belong to people who forgot passwords. And a significant—growing—portion belongs to people who died.
@@ -1410,19 +1410,19 @@ Store your recovery information in an encrypted <a href="/blog/what-is-a-dead-ma
 <strong>If you hold significant amounts:</strong> Use multiple layers. A dead man's switch for your seed phrases, documented exchange accounts for custodied assets, and clear instructions for your executor about what exists and where.
 
 Don't become a statistic. <a href="/sign-in">Set up a KeyFate dead man's switch</a> and make sure your crypto survives you. It takes fifteen minutes and costs less than a single transaction fee. See <a href="/pricing">pricing details here</a>.
-    `.trim(),
-  },
-  {
-    slug: "vendor-lock-in-secret-management",
-    title: "Vendor Lock-in: The Silent Threat to Your Secret Management",
-    description:
-      "Why centralized secret management platforms create dangerous vendor lock-in, and how to protect your critical infrastructure with portable, open approaches.",
-    publishedAt: "2025-02-19",
-    author: "KeyFate Team",
-    category: "Security",
-    tags: ["security", "vendor lock-in", "secret management", "data portability", "infrastructure"],
-    readingTime: "7 min read",
-    content: `
+    `.trim()
+	},
+	{
+		slug: 'vendor-lock-in-secret-management',
+		title: 'Vendor Lock-in: The Silent Threat to Your Secret Management',
+		description:
+			'Why centralized secret management platforms create dangerous vendor lock-in, and how to protect your critical infrastructure with portable, open approaches.',
+		publishedAt: '2025-02-19',
+		author: 'KeyFate Team',
+		category: 'Security',
+		tags: ['security', 'vendor lock-in', 'secret management', 'data portability', 'infrastructure'],
+		readingTime: '7 min read',
+		content: `
 ## Your Secrets Are Only as Safe as the Vendor Holding Them
 
 You've chosen a secret management platform. You've migrated your API keys, database credentials, encryption keys, and access tokens. Your CI/CD pipelines pull from it. Your applications depend on it. Your team has built workflows around it.
@@ -1513,36 +1513,36 @@ Ask these questions about your current secret management:
 If the answer to any of these is "no" or "I don't know," you have a vendor lock-in problem. And that problem will only get worse as you add more secrets and integrations.
 
 Take control of your secrets. <a href="/sign-in">Try KeyFate</a> and experience secret management built on open standards, client-side encryption, and zero vendor lock-in. <a href="/pricing">View pricing</a> to get started.
-    `.trim(),
-  },
-]
+    `.trim()
+	}
+];
 
 export function getBlogPost(slug: string): BlogPost | undefined {
-  return blogPosts.find((post) => post.slug === slug)
+	return blogPosts.find((post) => post.slug === slug);
 }
 
 export function getAllBlogPosts(): BlogPost[] {
-  return blogPosts.sort(
-    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-  )
+	return blogPosts.sort(
+		(a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+	);
 }
 
 export function getFeaturedPosts(): BlogPost[] {
-  return blogPosts.filter((post) => post.featured)
+	return blogPosts.filter((post) => post.featured);
 }
 
 export function getPostsByCategory(category: string): BlogPost[] {
-  return blogPosts.filter((post) => post.category === category)
+	return blogPosts.filter((post) => post.category === category);
 }
 
 export function getPostsByTag(tag: string): BlogPost[] {
-  return blogPosts.filter((post) => post.tags.includes(tag))
+	return blogPosts.filter((post) => post.tags.includes(tag));
 }
 
 export function getAllCategories(): string[] {
-  return [...new Set(blogPosts.map((post) => post.category))]
+	return [...new Set(blogPosts.map((post) => post.category))];
 }
 
 export function getAllTags(): string[] {
-  return [...new Set(blogPosts.flatMap((post) => post.tags))]
+	return [...new Set(blogPosts.flatMap((post) => post.tags))];
 }

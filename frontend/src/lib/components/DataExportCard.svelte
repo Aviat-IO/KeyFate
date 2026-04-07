@@ -80,7 +80,7 @@
 <div class="space-y-6">
 	<div>
 		<h3 class="font-space text-lg font-bold tracking-tight">Export Your Data</h3>
-		<p class="text-sm text-muted-foreground mt-1">
+		<p class="text-muted-foreground mt-1 text-sm">
 			Download a complete copy of your personal data in JSON format. This includes your secrets,
 			check-in history, audit logs, and subscription information.
 		</p>
@@ -89,9 +89,9 @@
 	<div class="space-y-6">
 		<div class="flex items-start gap-4">
 			<div class="flex-1">
-				<p class="text-sm text-muted-foreground">
-					Exports are available for 24 hours and can be downloaded up to 3 times. You can
-					request one export every 24 hours.
+				<p class="text-muted-foreground text-sm">
+					Exports are available for 24 hours and can be downloaded up to 3 times. You can request
+					one export every 24 hours.
 				</p>
 			</div>
 			<Button onclick={handleRequestExport} disabled={isRequesting} class="shrink-0 font-semibold">
@@ -107,10 +107,12 @@
 
 		{#if recentExports.length > 0}
 			<div>
-				<h4 class="text-xs text-muted-foreground font-medium mb-3">Recent Exports</h4>
+				<h4 class="text-muted-foreground mb-3 text-xs font-medium">Recent Exports</h4>
 				<div class="space-y-3">
 					{#each recentExports as exportJob}
-						<div class="flex items-center justify-between border-b border-border pb-3 last:border-0">
+						<div
+							class="border-border flex items-center justify-between border-b pb-3 last:border-0"
+						>
 							<div class="flex flex-col gap-1">
 								<div class="flex items-center gap-2">
 									{#if exportJob.status === 'pending'}

@@ -1,19 +1,18 @@
 export interface MessageTemplate {
-  id: string
-  title: string
-  category: string
-  description: string
-  content: string
+	id: string;
+	title: string;
+	category: string;
+	description: string;
+	content: string;
 }
 
 export const MESSAGE_TEMPLATES: MessageTemplate[] = [
-  {
-    id: "bitcoin-wallet",
-    title: "Bitcoin Wallet Access",
-    category: "Cryptocurrency",
-    description:
-      "Share access to a Bitcoin wallet with seed phrase and instructions",
-    content: `BITCOIN WALLET ACCESS
+	{
+		id: 'bitcoin-wallet',
+		title: 'Bitcoin Wallet Access',
+		category: 'Cryptocurrency',
+		description: 'Share access to a Bitcoin wallet with seed phrase and instructions',
+		content: `BITCOIN WALLET ACCESS
 
 Wallet Address: [Your wallet address]
 
@@ -30,14 +29,14 @@ Additional Notes:
 - Access the wallet at: [website/software link]
 - Current approximate balance: [amount] BTC
 
-Important: Test the recovery process with a small amount first.`,
-  },
-  {
-    id: "password-manager",
-    title: "Password Manager Master Password",
-    category: "Account Access",
-    description: "Provide access to a password manager account",
-    content: `PASSWORD MANAGER ACCESS
+Important: Test the recovery process with a small amount first.`
+	},
+	{
+		id: 'password-manager',
+		title: 'Password Manager Master Password',
+		category: 'Account Access',
+		description: 'Provide access to a password manager account',
+		content: `PASSWORD MANAGER ACCESS
 
 Service: [e.g., 1Password, LastPass, Bitwarden]
 Email/Username: [your account email]
@@ -57,14 +56,14 @@ Important Accounts:
 - Bank: [bank name]
 - Other: [list critical accounts]
 
-Additional notes: [any special instructions]`,
-  },
-  {
-    id: "estate-documents",
-    title: "Estate Planning Document Location",
-    category: "Legal",
-    description: "Share location of important estate planning documents",
-    content: `ESTATE PLANNING DOCUMENTS
+Additional notes: [any special instructions]`
+	},
+	{
+		id: 'estate-documents',
+		title: 'Estate Planning Document Location',
+		category: 'Legal',
+		description: 'Share location of important estate planning documents',
+		content: `ESTATE PLANNING DOCUMENTS
 
 Last Will and Testament:
 - Physical Location: [address, safe deposit box, lawyer's office]
@@ -87,14 +86,14 @@ Financial Advisors:
 - [Name, company, contact info]
 
 Important Notes:
-[Any specific instructions or wishes]`,
-  },
-  {
-    id: "safe-deposit-box",
-    title: "Safe Deposit Box Instructions",
-    category: "Physical Assets",
-    description: "Provide access information for a safe deposit box",
-    content: `SAFE DEPOSIT BOX ACCESS
+[Any specific instructions or wishes]`
+	},
+	{
+		id: 'safe-deposit-box',
+		title: 'Safe Deposit Box Instructions',
+		category: 'Physical Assets',
+		description: 'Provide access information for a safe deposit box',
+		content: `SAFE DEPOSIT BOX ACCESS
 
 Bank Name: [bank name]
 Branch Location: [full address]
@@ -118,14 +117,14 @@ Bank Representative:
 - Phone: [contact number]
 
 Additional Notes:
-[Special instructions or information]`,
-  },
-  {
-    id: "cryptocurrency-exchange",
-    title: "Cryptocurrency Exchange Account",
-    category: "Cryptocurrency",
-    description: "Share access to a cryptocurrency exchange account",
-    content: `CRYPTOCURRENCY EXCHANGE ACCESS
+[Special instructions or information]`
+	},
+	{
+		id: 'cryptocurrency-exchange',
+		title: 'Cryptocurrency Exchange Account',
+		category: 'Cryptocurrency',
+		description: 'Share access to a cryptocurrency exchange account',
+		content: `CRYPTOCURRENCY EXCHANGE ACCESS
 
 Exchange: [e.g., Coinbase, Binance, Kraken]
 Website: [exchange URL]
@@ -153,14 +152,14 @@ Important Notes:
 
 Emergency Contact at Exchange:
 - Support Email: [exchange support email]
-- Account ID: [your account ID if applicable]`,
-  },
-  {
-    id: "cloud-storage",
-    title: "Cloud Storage Access",
-    category: "Digital Assets",
-    description: "Provide access to cloud storage accounts and important files",
-    content: `CLOUD STORAGE ACCESS
+- Account ID: [your account ID if applicable]`
+	},
+	{
+		id: 'cloud-storage',
+		title: 'Cloud Storage Access',
+		category: 'Digital Assets',
+		description: 'Provide access to cloud storage accounts and important files',
+		content: `CLOUD STORAGE ACCESS
 
 Primary Storage:
 - Service: [e.g., Google Drive, Dropbox, iCloud]
@@ -186,15 +185,14 @@ Access Instructions:
 Total Storage Used: [approximate amount]
 
 Notes:
-[Any additional information about file organization or important files]`,
-  },
-  {
-    id: "social-media-accounts",
-    title: "Social Media Account Access",
-    category: "Digital Legacy",
-    description:
-      "Share access to social media accounts for memorialization or closure",
-    content: `SOCIAL MEDIA ACCOUNTS
+[Any additional information about file organization or important files]`
+	},
+	{
+		id: 'social-media-accounts',
+		title: 'Social Media Account Access',
+		category: 'Digital Legacy',
+		description: 'Share access to social media accounts for memorialization or closure',
+		content: `SOCIAL MEDIA ACCOUNTS
 
 Instructions: [Choose what you want done - memorialize, delete, transfer]
 
@@ -227,19 +225,19 @@ My Wishes:
 [Specific instructions about what you want done with each account]
 
 Important Posts/Memories:
-[If you want specific content saved or shared]`,
-  },
-]
+[If you want specific content saved or shared]`
+	}
+];
 
 export function getTemplateById(id: string): MessageTemplate | undefined {
-  return MESSAGE_TEMPLATES.find((template) => template.id === id)
+	return MESSAGE_TEMPLATES.find((template) => template.id === id);
 }
 
 export function getTemplatesByCategory(category: string): MessageTemplate[] {
-  return MESSAGE_TEMPLATES.filter((template) => template.category === category)
+	return MESSAGE_TEMPLATES.filter((template) => template.category === category);
 }
 
 export function getAllCategories(): string[] {
-  const categories = new Set(MESSAGE_TEMPLATES.map((t) => t.category))
-  return Array.from(categories).sort()
+	const categories = new Set(MESSAGE_TEMPLATES.map((t) => t.category));
+	return Array.from(categories).sort();
 }

@@ -59,8 +59,7 @@
 			}, 2000);
 		} catch (err) {
 			toast.error('Error', {
-				description:
-					err instanceof Error ? err.message : 'Failed to request account deletion'
+				description: err instanceof Error ? err.message : 'Failed to request account deletion'
 			});
 		} finally {
 			isDeleting = false;
@@ -72,13 +71,10 @@
 
 		isCancelling = true;
 		try {
-			const response = await fetch(
-				`/api/user/delete-account/cancel/${activeDeletionRequest.id}`,
-				{
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' }
-				}
-			);
+			const response = await fetch(`/api/user/delete-account/cancel/${activeDeletionRequest.id}`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' }
+			});
 
 			if (!response.ok) {
 				const data = await response.json();
@@ -94,8 +90,7 @@
 			}, 2000);
 		} catch (err) {
 			toast.error('Error', {
-				description:
-					err instanceof Error ? err.message : 'Failed to cancel deletion request'
+				description: err instanceof Error ? err.message : 'Failed to cancel deletion request'
 			});
 		} finally {
 			isCancelling = false;
@@ -121,13 +116,15 @@
 	}
 </script>
 
-<div class="border-t border-border pt-8 space-y-6">
+<div class="border-border space-y-6 border-t pt-8">
 	<div>
-		<h3 class="font-space text-lg font-bold tracking-tight text-destructive flex items-center gap-2">
+		<h3
+			class="font-space text-destructive flex items-center gap-2 text-lg font-bold tracking-tight"
+		>
 			<AlertTriangle class="h-5 w-5" />
 			Delete Account
 		</h3>
-		<p class="text-sm text-muted-foreground mt-1">
+		<p class="text-muted-foreground mt-1 text-sm">
 			Permanently delete your account and all associated data. This action cannot be undone.
 		</p>
 	</div>
@@ -166,8 +163,8 @@
 							)}
 						</p>
 						<p class="text-muted-foreground text-sm">
-							{getDaysRemaining(activeDeletionRequest.scheduledDeletionAt)} days remaining in
-							grace period. You can cancel this request at any time before the scheduled date.
+							{getDaysRemaining(activeDeletionRequest.scheduledDeletionAt)} days remaining in grace period.
+							You can cancel this request at any time before the scheduled date.
 						</p>
 					</div>
 				{/if}
@@ -191,8 +188,10 @@
 		{:else}
 			<div class="space-y-6">
 				<div class="space-y-2">
-					<span class="text-xs text-muted-foreground font-medium">What happens when you delete your account</span>
-					<ul class="text-muted-foreground ml-4 list-disc space-y-1 text-sm mt-2">
+					<span class="text-muted-foreground text-xs font-medium"
+						>What happens when you delete your account</span
+					>
+					<ul class="text-muted-foreground mt-2 ml-4 list-disc space-y-1 text-sm">
 						<li>All your secrets and check-in data will be permanently deleted</li>
 						<li>Your audit logs and activity history will be removed</li>
 						<li>Any pending data exports will be cancelled</li>
@@ -214,12 +213,12 @@
 							<AlertDialog.Description>
 								<div class="space-y-2">
 									<p>
-										This will initiate the account deletion process. You'll receive an email
-										to confirm your decision.
+										This will initiate the account deletion process. You'll receive an email to
+										confirm your decision.
 									</p>
 									<p class="text-destructive font-medium">
-										After confirmation, you'll have 30 days to cancel before all your data
-										is permanently deleted.
+										After confirmation, you'll have 30 days to cancel before all your data is
+										permanently deleted.
 									</p>
 								</div>
 							</AlertDialog.Description>

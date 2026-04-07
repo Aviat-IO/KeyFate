@@ -6,35 +6,35 @@
  */
 
 export interface RelayHealth {
-  url: string
-  healthy: boolean
-  latencyMs: number | null
-  lastChecked: Date
+	url: string;
+	healthy: boolean;
+	latencyMs: number | null;
+	lastChecked: Date;
 }
 
 /** Default relays for gift-wrap delivery. Ordered by reliability. */
 export const DEFAULT_RELAYS: readonly string[] = [
-  "wss://relay.damus.io",
-  "wss://relay.nostr.band",
-  "wss://nos.lol",
-  "wss://relay.snort.social",
-  "wss://nostr.wine",
-  "wss://relay.primal.net",
-  "wss://nostr.mom",
-  "wss://relay.nostr.bg",
-  "wss://nostr-pub.wellorder.net",
-  "wss://nostr.oxtr.dev",
-] as const
+	'wss://relay.damus.io',
+	'wss://relay.nostr.band',
+	'wss://nos.lol',
+	'wss://relay.snort.social',
+	'wss://nostr.wine',
+	'wss://relay.primal.net',
+	'wss://nostr.mom',
+	'wss://relay.nostr.bg',
+	'wss://nostr-pub.wellorder.net',
+	'wss://nostr.oxtr.dev'
+] as const;
 
 /**
  * Minimum number of relays that must accept a publish for it to be
  * considered durable. If fewer relays accept, a warning is logged
  * but the publish is not treated as a failure.
  */
-export const MIN_PUBLISH_RELAYS = 3
+export const MIN_PUBLISH_RELAYS = 3;
 
 /** Timeout in ms for relay health checks. */
-const HEALTH_CHECK_TIMEOUT_MS = 5_000
+const HEALTH_CHECK_TIMEOUT_MS = 5_000;
 
 /**
  * Check whether a single relay is reachable by opening a WebSocket
@@ -43,44 +43,44 @@ const HEALTH_CHECK_TIMEOUT_MS = 5_000
  * Returns a {@link RelayHealth} result regardless of outcome.
  */
 export async function checkRelayHealth(url: string): Promise<RelayHealth> {
-  const start = Date.now()
+	const start = Date.now();
 
-  try {
-    const healthy = await new Promise<boolean>((resolve) => {
-      const timeout = setTimeout(() => {
-        ws.close()
-        resolve(false)
-      }, HEALTH_CHECK_TIMEOUT_MS)
+	try {
+		const healthy = await new Promise<boolean>((resolve) => {
+			const timeout = setTimeout(() => {
+				ws.close();
+				resolve(false);
+			}, HEALTH_CHECK_TIMEOUT_MS);
 
-      const ws = new WebSocket(url)
+			const ws = new WebSocket(url);
 
-      ws.onopen = () => {
-        clearTimeout(timeout)
-        ws.close()
-        resolve(true)
-      }
+			ws.onopen = () => {
+				clearTimeout(timeout);
+				ws.close();
+				resolve(true);
+			};
 
-      ws.onerror = () => {
-        clearTimeout(timeout)
-        ws.close()
-        resolve(false)
-      }
-    })
+			ws.onerror = () => {
+				clearTimeout(timeout);
+				ws.close();
+				resolve(false);
+			};
+		});
 
-    return {
-      url,
-      healthy,
-      latencyMs: healthy ? Date.now() - start : null,
-      lastChecked: new Date(),
-    }
-  } catch {
-    return {
-      url,
-      healthy: false,
-      latencyMs: null,
-      lastChecked: new Date(),
-    }
-  }
+		return {
+			url,
+			healthy,
+			latencyMs: healthy ? Date.now() - start : null,
+			lastChecked: new Date()
+		};
+	} catch {
+		return {
+			url,
+			healthy: false,
+			latencyMs: null,
+			lastChecked: new Date()
+		};
+	}
 }
 
 /**
@@ -88,10 +88,10 @@ export async function checkRelayHealth(url: string): Promise<RelayHealth> {
  * sorted by latency (fastest first).
  */
 export async function getHealthyRelays(
-  relays: readonly string[] = DEFAULT_RELAYS,
+	relays: readonly string[] = DEFAULT_RELAYS
 ): Promise<RelayHealth[]> {
-  const results = await Promise.all(relays.map(checkRelayHealth))
-  return results
-    .filter((r) => r.healthy)
-    .sort((a, b) => (a.latencyMs ?? Infinity) - (b.latencyMs ?? Infinity))
+	const results = await Promise.all(relays.map(checkRelayHealth));
+	return results
+		.filter((r) => r.healthy)
+		.sort((a, b) => (a.latencyMs ?? Infinity) - (b.latencyMs ?? Infinity));
 }

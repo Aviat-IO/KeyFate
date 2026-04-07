@@ -1,21 +1,21 @@
-import { getDatabase } from "$lib/db/drizzle"
-import { secrets, secretRecipients, disclosureLog } from "$lib/db/schema"
-import { eq, and, sql } from "drizzle-orm"
+import { getDatabase } from '$lib/db/drizzle';
+import { secrets, secretRecipients, disclosureLog } from '$lib/db/schema';
+import { eq, and, sql } from 'drizzle-orm';
 import type {
-  SecretWithRecipients,
-  SecretRecipient,
-  RecipientInput,
-} from "$lib/types/secret-types"
+	SecretWithRecipients,
+	SecretRecipient,
+	RecipientInput
+} from '$lib/types/secret-types';
 
 export async function getSecretWithRecipients(
-  secretId: string,
-  userId: string,
+	secretId: string,
+	userId: string
 ): Promise<SecretWithRecipients | null> {
-  const db = await getDatabase()
-  const result = await db
-    .select({
-      secret: secrets,
-      recipients: sql<SecretRecipient[]>`
+	const db = await getDatabase();
+	const result = await db
+		.select({
+			secret: secrets,
+			recipients: sql<SecretRecipient[]>`
         COALESCE(
           json_agg(
             json_build_object(
@@ -32,32 +32,30 @@ export async function getSecretWithRecipients(
           ) FILTER (WHERE ${secretRecipients.id} IS NOT NULL),
           '[]'::json
         )
-      `,
-    })
-    .from(secrets)
-    .leftJoin(secretRecipients, eq(secrets.id, secretRecipients.secretId))
-    .where(and(eq(secrets.id, secretId), eq(secrets.userId, userId)))
-    .groupBy(secrets.id)
+      `
+		})
+		.from(secrets)
+		.leftJoin(secretRecipients, eq(secrets.id, secretRecipients.secretId))
+		.where(and(eq(secrets.id, secretId), eq(secrets.userId, userId)))
+		.groupBy(secrets.id);
 
-  if (!result || result.length === 0) {
-    return null
-  }
+	if (!result || result.length === 0) {
+		return null;
+	}
 
-  const row = result[0]
-  return {
-    ...row.secret,
-    recipients: row.recipients || [],
-  }
+	const row = result[0];
+	return {
+		...row.secret,
+		recipients: row.recipients || []
+	};
 }
 
-export async function getAllSecretsWithRecipients(
-  userId: string,
-): Promise<SecretWithRecipients[]> {
-  const db = await getDatabase()
-  const result = await db
-    .select({
-      secret: secrets,
-      recipients: sql<SecretRecipient[]>`
+export async function getAllSecretsWithRecipients(userId: string): Promise<SecretWithRecipients[]> {
+	const db = await getDatabase();
+	const result = await db
+		.select({
+			secret: secrets,
+			recipients: sql<SecretRecipient[]>`
         COALESCE(
           json_agg(
             json_build_object(
@@ -74,28 +72,26 @@ export async function getAllSecretsWithRecipients(
           ) FILTER (WHERE ${secretRecipients.id} IS NOT NULL),
           '[]'::json
         )
-      `,
-    })
-    .from(secrets)
-    .leftJoin(secretRecipients, eq(secrets.id, secretRecipients.secretId))
-    .where(eq(secrets.userId, userId))
-    .groupBy(secrets.id)
+      `
+		})
+		.from(secrets)
+		.leftJoin(secretRecipients, eq(secrets.id, secretRecipients.secretId))
+		.where(eq(secrets.userId, userId))
+		.groupBy(secrets.id);
 
-  return result.map((row) => ({
-    ...row.secret,
-    recipients: row.recipients || [],
-  }))
+	return result.map((row) => ({
+		...row.secret,
+		recipients: row.recipients || []
+	}));
 }
 
-export async function getAllRecipients(
-  secretId: string,
-): Promise<SecretRecipient[]> {
-  const db = await getDatabase()
-  return db
-    .select()
-    .from(secretRecipients)
-    .where(eq(secretRecipients.secretId, secretId))
-    .orderBy(secretRecipients.createdAt)
+export async function getAllRecipients(secretId: string): Promise<SecretRecipient[]> {
+	const db = await getDatabase();
+	return db
+		.select()
+		.from(secretRecipients)
+		.where(eq(secretRecipients.secretId, secretId))
+		.orderBy(secretRecipients.createdAt);
 }
 
 /**
@@ -103,36 +99,34 @@ export async function getAllRecipients(
  * Used to determine if a failed secret is still recoverable.
  */
 export async function hasBeenDisclosed(secretId: string): Promise<boolean> {
-  const db = await getDatabase()
-  const [stats] = await db
-    .select({
-      sentCount: sql<number>`count(*) filter (where ${disclosureLog.status} = 'sent')`,
-    })
-    .from(disclosureLog)
-    .where(eq(disclosureLog.secretId, secretId))
+	const db = await getDatabase();
+	const [stats] = await db
+		.select({
+			sentCount: sql<number>`count(*) filter (where ${disclosureLog.status} = 'sent')`
+		})
+		.from(disclosureLog)
+		.where(eq(disclosureLog.secretId, secretId));
 
-  return Number(stats?.sentCount ?? 0) > 0
+	return Number(stats?.sentCount ?? 0) > 0;
 }
 
 export async function updateSecretRecipients(
-  secretId: string,
-  recipientsData: RecipientInput[],
+	secretId: string,
+	recipientsData: RecipientInput[]
 ): Promise<void> {
-  const db = await getDatabase()
-  await db.transaction(async (tx) => {
-    await tx
-      .delete(secretRecipients)
-      .where(eq(secretRecipients.secretId, secretId))
+	const db = await getDatabase();
+	await db.transaction(async (tx) => {
+		await tx.delete(secretRecipients).where(eq(secretRecipients.secretId, secretId));
 
-    const recipientsToInsert = recipientsData.map((r) => ({
-      name: r.name,
-      email: r.email ?? null,
-      phone: r.phone ?? null,
-      secretId,
-    }))
+		const recipientsToInsert = recipientsData.map((r) => ({
+			name: r.name,
+			email: r.email ?? null,
+			phone: r.phone ?? null,
+			secretId
+		}));
 
-    if (recipientsToInsert.length > 0) {
-      await tx.insert(secretRecipients).values(recipientsToInsert)
-    }
-  })
+		if (recipientsToInsert.length > 0) {
+			await tx.insert(secretRecipients).values(recipientsToInsert);
+		}
+	});
 }

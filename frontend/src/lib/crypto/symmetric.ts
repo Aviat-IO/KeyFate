@@ -7,21 +7,21 @@
  * only halves the effective key length, so 256-bit keys remain 128-bit secure).
  */
 
-import { chacha20poly1305 } from "@noble/ciphers/chacha.js"
+import { chacha20poly1305 } from '@noble/ciphers/chacha.js';
 
-const KEY_LENGTH = 32 // 256-bit key
-const NONCE_LENGTH = 12 // 96-bit nonce for ChaCha20-Poly1305
+const KEY_LENGTH = 32; // 256-bit key
+const NONCE_LENGTH = 12; // 96-bit nonce for ChaCha20-Poly1305
 
 /** Generate cryptographically secure random bytes using Web Crypto API. */
 function secureRandomBytes(length: number): Uint8Array {
-  return crypto.getRandomValues(new Uint8Array(length))
+	return crypto.getRandomValues(new Uint8Array(length));
 }
 
 /**
  * Generate a cryptographically secure random 256-bit symmetric key.
  */
 export function generateSymmetricKey(): Uint8Array {
-  return secureRandomBytes(KEY_LENGTH)
+	return secureRandomBytes(KEY_LENGTH);
 }
 
 /**
@@ -33,18 +33,18 @@ export function generateSymmetricKey(): Uint8Array {
  * @throws If key is not 32 bytes
  */
 export function encryptWithSymmetricKey(
-  plaintext: Uint8Array,
-  key: Uint8Array,
+	plaintext: Uint8Array,
+	key: Uint8Array
 ): { ciphertext: Uint8Array; nonce: Uint8Array } {
-  if (key.length !== KEY_LENGTH) {
-    throw new Error(`Key must be ${KEY_LENGTH} bytes, got ${key.length}`)
-  }
+	if (key.length !== KEY_LENGTH) {
+		throw new Error(`Key must be ${KEY_LENGTH} bytes, got ${key.length}`);
+	}
 
-  const nonce = secureRandomBytes(NONCE_LENGTH)
-  const cipher = chacha20poly1305(key, nonce)
-  const ciphertext = cipher.encrypt(plaintext)
+	const nonce = secureRandomBytes(NONCE_LENGTH);
+	const cipher = chacha20poly1305(key, nonce);
+	const ciphertext = cipher.encrypt(plaintext);
 
-  return { ciphertext, nonce }
+	return { ciphertext, nonce };
 }
 
 /**
@@ -57,17 +57,17 @@ export function encryptWithSymmetricKey(
  * @throws If key is not 32 bytes, nonce is not 12 bytes, or authentication fails
  */
 export function decryptWithSymmetricKey(
-  ciphertext: Uint8Array,
-  nonce: Uint8Array,
-  key: Uint8Array,
+	ciphertext: Uint8Array,
+	nonce: Uint8Array,
+	key: Uint8Array
 ): Uint8Array {
-  if (key.length !== KEY_LENGTH) {
-    throw new Error(`Key must be ${KEY_LENGTH} bytes, got ${key.length}`)
-  }
-  if (nonce.length !== NONCE_LENGTH) {
-    throw new Error(`Nonce must be ${NONCE_LENGTH} bytes, got ${nonce.length}`)
-  }
+	if (key.length !== KEY_LENGTH) {
+		throw new Error(`Key must be ${KEY_LENGTH} bytes, got ${key.length}`);
+	}
+	if (nonce.length !== NONCE_LENGTH) {
+		throw new Error(`Nonce must be ${NONCE_LENGTH} bytes, got ${nonce.length}`);
+	}
 
-  const cipher = chacha20poly1305(key, nonce)
-  return cipher.decrypt(ciphertext)
+	const cipher = chacha20poly1305(key, nonce);
+	return cipher.decrypt(ciphertext);
 }

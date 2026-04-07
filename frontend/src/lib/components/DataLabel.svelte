@@ -1,26 +1,26 @@
 <script lang="ts">
-  import type { Snippet } from 'svelte';
+	import type { Snippet } from 'svelte';
 
-  let {
-    label,
-    value = undefined,
-    children = undefined,
-    class: className = ''
-  }: {
-    label: string;
-    value?: string | number | null;
-    children?: Snippet;
-    class?: string;
-  } = $props();
+	let {
+		label,
+		value = undefined,
+		children = undefined,
+		class: className = ''
+	}: {
+		label: string;
+		value?: string | number | null;
+		children?: Snippet;
+		class?: string;
+	} = $props();
 </script>
 
 <div class={className}>
-  <dt class="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</dt>
-  {#if children}
-    <dd class="mt-1 text-sm text-foreground">
-      {@render children()}
-    </dd>
-  {:else if value !== undefined && value !== null}
-    <dd class="mt-1 text-sm text-foreground">{value}</dd>
-  {/if}
+	<dt class="text-muted-foreground text-xs font-medium tracking-wider uppercase">{label}</dt>
+	{#if children}
+		<dd class="text-foreground mt-1 text-sm">
+			{@render children()}
+		</dd>
+	{:else if value !== undefined && value !== null}
+		<dd class="text-foreground mt-1 text-sm">{value}</dd>
+	{/if}
 </div>

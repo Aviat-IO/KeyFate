@@ -6,7 +6,7 @@
  * two Nostr keypairs.
  */
 
-import * as nip44 from "nostr-tools/nip44"
+import * as nip44 from 'nostr-tools/nip44';
 
 /**
  * Derive a shared conversation key from a private key and a public key.
@@ -16,11 +16,8 @@ import * as nip44 from "nostr-tools/nip44"
  * @param privateKey - Sender's secret key as Uint8Array
  * @param publicKey  - Recipient's hex-encoded public key
  */
-export function getConversationKey(
-  privateKey: Uint8Array,
-  publicKey: string,
-): Uint8Array {
-  return nip44.v2.utils.getConversationKey(privateKey, publicKey)
+export function getConversationKey(privateKey: Uint8Array, publicKey: string): Uint8Array {
+	return nip44.v2.utils.getConversationKey(privateKey, publicKey);
 }
 
 /**
@@ -30,11 +27,8 @@ export function getConversationKey(
  * @param conversationKey - Shared key from {@link getConversationKey}
  * @returns Base64-encoded NIP-44 payload
  */
-export function encrypt(
-  plaintext: string,
-  conversationKey: Uint8Array,
-): string {
-  return nip44.v2.encrypt(plaintext, conversationKey)
+export function encrypt(plaintext: string, conversationKey: Uint8Array): string {
+	return nip44.v2.encrypt(plaintext, conversationKey);
 }
 
 /**
@@ -45,9 +39,6 @@ export function encrypt(
  * @returns The original plaintext
  * @throws If the MAC check fails or the payload is malformed
  */
-export function decrypt(
-  payload: string,
-  conversationKey: Uint8Array,
-): string {
-  return nip44.v2.decrypt(payload, conversationKey)
+export function decrypt(payload: string, conversationKey: Uint8Array): string {
+	return nip44.v2.decrypt(payload, conversationKey);
 }

@@ -28,8 +28,7 @@ export const load: PageServerLoad = async (event) => {
 		.limit(1);
 
 	const activeDeletionRequest =
-		activeDeletion &&
-		(activeDeletion.status === 'pending' || activeDeletion.status === 'confirmed')
+		activeDeletion && (activeDeletion.status === 'pending' || activeDeletion.status === 'confirmed')
 			? activeDeletion
 			: null;
 
@@ -47,8 +46,7 @@ export const load: PageServerLoad = async (event) => {
 					createdAt: activeDeletionRequest.createdAt.toISOString(),
 					confirmationSentAt: activeDeletionRequest.confirmationSentAt.toISOString(),
 					confirmedAt: activeDeletionRequest.confirmedAt?.toISOString() ?? null,
-					scheduledDeletionAt:
-						activeDeletionRequest.scheduledDeletionAt?.toISOString() ?? null,
+					scheduledDeletionAt: activeDeletionRequest.scheduledDeletionAt?.toISOString() ?? null,
 					cancelledAt: activeDeletionRequest.cancelledAt?.toISOString() ?? null,
 					deletedAt: activeDeletionRequest.deletedAt?.toISOString() ?? null
 				}

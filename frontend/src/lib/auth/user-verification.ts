@@ -6,21 +6,21 @@
  * before performing operations that require foreign key constraints.
  */
 
-import { getDatabase } from "$lib/db/drizzle"
-import { users } from "$lib/db/schema"
-import { eq } from "drizzle-orm"
-import type { Session } from "@auth/sveltekit"
+import { getDatabase } from '$lib/db/drizzle';
+import { users } from '$lib/db/schema';
+import { eq } from 'drizzle-orm';
+import type { Session } from '@auth/sveltekit';
 
 export interface UserVerificationResult {
-  exists: boolean
-  user?: {
-    id: string
-    email: string
-    name: string | null
-    image: string | null
-    emailVerified: Date | null
-  }
-  created?: boolean
+	exists: boolean;
+	user?: {
+		id: string;
+		email: string;
+		name: string | null;
+		image: string | null;
+		emailVerified: Date | null;
+	};
+	created?: boolean;
 }
 
 /**
@@ -30,79 +30,71 @@ export interface UserVerificationResult {
  * @param session - NextAuth session object
  * @returns Promise<UserVerificationResult> - Result indicating if user exists or was created
  */
-export async function ensureUserExists(
-  session: Session,
-): Promise<UserVerificationResult> {
-  if (!session?.user?.id || !session?.user?.email) {
-    throw new Error("Invalid session: missing user ID or email")
-  }
+export async function ensureUserExists(session: Session): Promise<UserVerificationResult> {
+	if (!session?.user?.id || !session?.user?.email) {
+		throw new Error('Invalid session: missing user ID or email');
+	}
 
-  const userId = session.user.id
-  const userEmail = session.user.email.toLowerCase().trim()
+	const userId = session.user.id;
+	const userEmail = session.user.email.toLowerCase().trim();
 
-  try {
-    const db = await getDatabase()
-    // Check if user exists by ID first (primary lookup)
-    const existingUserById = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1)
+	try {
+		const db = await getDatabase();
+		// Check if user exists by ID first (primary lookup)
+		const existingUserById = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
-    if (existingUserById.length > 0) {
-      return {
-        exists: true,
-        user: existingUserById[0],
-      }
-    }
+		if (existingUserById.length > 0) {
+			return {
+				exists: true,
+				user: existingUserById[0]
+			};
+		}
 
-    // Check if user exists by email (fallback for email-based lookup)
-    const existingUserByEmail = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, userEmail))
-      .limit(1)
+		// Check if user exists by email (fallback for email-based lookup)
+		const existingUserByEmail = await db
+			.select()
+			.from(users)
+			.where(eq(users.email, userEmail))
+			.limit(1);
 
-    if (existingUserByEmail.length > 0) {
-      return {
-        exists: true,
-        user: existingUserByEmail[0],
-      }
-    }
+		if (existingUserByEmail.length > 0) {
+			return {
+				exists: true,
+				user: existingUserByEmail[0]
+			};
+		}
 
-    // User doesn't exist, create them from session data
-    const newUserData = {
-      id: userId,
-      email: userEmail,
-      name: session.user.name || null,
-      image: session.user.image || null,
-      emailVerified: (session.user as any).email_verified ? new Date() : null, // For OAuth users
-      password: null, // OAuth users don't have passwords
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }
+		// User doesn't exist, create them from session data
+		const newUserData = {
+			id: userId,
+			email: userEmail,
+			name: session.user.name || null,
+			image: session.user.image || null,
+			emailVerified: (session.user as any).email_verified ? new Date() : null, // For OAuth users
+			password: null, // OAuth users don't have passwords
+			createdAt: new Date(),
+			updatedAt: new Date()
+		};
 
-    const insertResult = await db.insert(users).values(newUserData).returning()
+		const insertResult = await db.insert(users).values(newUserData).returning();
 
-    console.log("[UserVerification] Created new user from session:", {
-      userId,
-      email: userEmail,
-      name: newUserData.name,
-    })
+		console.log('[UserVerification] Created new user from session:', {
+			userId,
+			email: userEmail,
+			name: newUserData.name
+		});
 
-    return {
-      exists: false,
-      user: insertResult[0],
-      created: true,
-    }
-  } catch (error) {
-    console.error("[UserVerification] Error ensuring user exists:", error)
-    throw new Error(
-      `Failed to verify or create user: ${
-        error instanceof Error ? error.message : "Unknown error"
-      }`,
-    )
-  }
+		return {
+			exists: false,
+			user: insertResult[0],
+			created: true
+		};
+	} catch (error) {
+		console.error('[UserVerification] Error ensuring user exists:', error);
+		throw new Error(
+			`Failed to verify or create user: ${error instanceof Error ? error.message : 'Unknown error'}`
+		);
+	}
 }
 
 /**
@@ -112,37 +104,29 @@ export async function ensureUserExists(
  * @param userId - User ID to verify
  * @returns Promise<UserVerificationResult> - Result indicating if user exists
  */
-export async function verifyUserExists(
-  userId: string,
-): Promise<UserVerificationResult> {
-  if (!userId) {
-    throw new Error("User ID is required")
-  }
+export async function verifyUserExists(userId: string): Promise<UserVerificationResult> {
+	if (!userId) {
+		throw new Error('User ID is required');
+	}
 
-  try {
-    const db = await getDatabase()
-    const existingUser = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1)
+	try {
+		const db = await getDatabase();
+		const existingUser = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
-    if (existingUser.length > 0) {
-      return {
-        exists: true,
-        user: existingUser[0],
-      }
-    }
+		if (existingUser.length > 0) {
+			return {
+				exists: true,
+				user: existingUser[0]
+			};
+		}
 
-    return {
-      exists: false,
-    }
-  } catch (error) {
-    console.error("[UserVerification] Error verifying user exists:", error)
-    throw new Error(
-      `Failed to verify user existence: ${
-        error instanceof Error ? error.message : "Unknown error"
-      }`,
-    )
-  }
+		return {
+			exists: false
+		};
+	} catch (error) {
+		console.error('[UserVerification] Error verifying user exists:', error);
+		throw new Error(
+			`Failed to verify user existence: ${error instanceof Error ? error.message : 'Unknown error'}`
+		);
+	}
 }

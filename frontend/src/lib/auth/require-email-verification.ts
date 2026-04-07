@@ -1,7 +1,7 @@
-import { json } from "@sveltejs/kit"
-import { ensureUserExists } from "$lib/auth/user-verification"
-import type { Session } from "@auth/sveltekit"
-import { logger } from "$lib/logger"
+import { json } from '@sveltejs/kit';
+import { ensureUserExists } from '$lib/auth/user-verification';
+import type { Session } from '@auth/sveltekit';
+import { logger } from '$lib/logger';
 
 /**
  * Ensures user exists in database and has verified email.
@@ -13,59 +13,53 @@ import { logger } from "$lib/logger"
  * @param session - NextAuth session
  * @returns Response error or null if verification passes
  */
-export async function requireEmailVerification(
-  session: Session | null,
-): Promise<Response | null> {
-  if (!session?.user?.id) {
-    return json({ error: "Unauthorized" }, { status: 401 })
-  }
+export async function requireEmailVerification(session: Session | null): Promise<Response | null> {
+	if (!session?.user?.id) {
+		return json({ error: 'Unauthorized' }, { status: 401 });
+	}
 
-  try {
-    // First ensure user exists in database (creates if missing for OAuth users)
-    const userVerification = await ensureUserExists(session)
-    const user = userVerification.user
+	try {
+		// First ensure user exists in database (creates if missing for OAuth users)
+		const userVerification = await ensureUserExists(session);
+		const user = userVerification.user;
 
-    if (!user) {
-      logger.error("User verification returned no user", undefined, {
-        userId: session.user.id,
-        exists: userVerification.exists,
-        created: userVerification.created,
-      })
-      return json({ error: "User not found" }, { status: 404 })
-    }
+		if (!user) {
+			logger.error('User verification returned no user', undefined, {
+				userId: session.user.id,
+				exists: userVerification.exists,
+				created: userVerification.created
+			});
+			return json({ error: 'User not found' }, { status: 404 });
+		}
 
-    if (userVerification.created) {
-      logger.info("Created new user record during email verification check", {
-        userId: session.user.id,
-        email: user.email,
-      })
-    }
+		if (userVerification.created) {
+			logger.info('Created new user record during email verification check', {
+				userId: session.user.id,
+				email: user.email
+			});
+		}
 
-    if (!user.emailVerified) {
-      logger.warn("Email verification required", {
-        userId: session.user.id,
-      })
+		if (!user.emailVerified) {
+			logger.warn('Email verification required', {
+				userId: session.user.id
+			});
 
-      return json(
-        {
-          error: "Email verification required",
-          code: "EMAIL_NOT_VERIFIED",
-          message:
-            "Please verify your email address before accessing this resource",
-        },
-        { status: 403 },
-      )
-    }
+			return json(
+				{
+					error: 'Email verification required',
+					code: 'EMAIL_NOT_VERIFIED',
+					message: 'Please verify your email address before accessing this resource'
+				},
+				{ status: 403 }
+			);
+		}
 
-    return null
-  } catch (error) {
-    logger.error("Email verification check failed", error as Error, {
-      userId: session.user.id,
-    })
+		return null;
+	} catch (error) {
+		logger.error('Email verification check failed', error as Error, {
+			userId: session.user.id
+		});
 
-    return json(
-      { error: "Internal server error" },
-      { status: 500 },
-    )
-  }
+		return json({ error: 'Internal server error' }, { status: 500 });
+	}
 }

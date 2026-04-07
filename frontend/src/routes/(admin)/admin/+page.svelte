@@ -49,10 +49,7 @@
 	};
 	const DEFAULT_INTERVAL = 24 * 60 * 60 * 1000;
 
-	function getCronHealth(
-		jobName: string,
-		lastExecution: number
-	): 'healthy' | 'warning' {
+	function getCronHealth(jobName: string, lastExecution: number): 'healthy' | 'warning' {
 		if (lastExecution === 0) return 'warning';
 		const expected = EXPECTED_INTERVALS[jobName] ?? DEFAULT_INTERVAL;
 		return Date.now() - lastExecution > 2 * expected ? 'warning' : 'healthy';
@@ -91,7 +88,8 @@
 			<Card.Content>
 				<div class="text-2xl font-bold">{secretCounts.total}</div>
 				<p class="text-muted-foreground text-xs">
-					{secretCounts.active} active / {secretCounts.paused} paused / {secretCounts.triggered} triggered / {secretCounts.failed} failed
+					{secretCounts.active} active / {secretCounts.paused} paused / {secretCounts.triggered} triggered
+					/ {secretCounts.failed} failed
 				</p>
 			</Card.Content>
 		</Card.Root>
@@ -163,8 +161,12 @@
 								<Table.Row>
 									<Table.Cell class="font-medium">{secret.title}</Table.Cell>
 									<Table.Cell class="text-muted-foreground">{secret.ownerEmail}</Table.Cell>
-									<Table.Cell class="max-w-xs truncate text-sm">{secret.lastError ?? '--'}</Table.Cell>
-									<Table.Cell class="text-muted-foreground text-sm">{formatDate(secret.updatedAt)}</Table.Cell>
+									<Table.Cell class="max-w-xs truncate text-sm"
+										>{secret.lastError ?? '--'}</Table.Cell
+									>
+									<Table.Cell class="text-muted-foreground text-sm"
+										>{formatDate(secret.updatedAt)}</Table.Cell
+									>
 									<Table.Cell class="text-right">{secret.retryCount ?? 0}</Table.Cell>
 								</Table.Row>
 							{/each}
@@ -207,7 +209,9 @@
 										<Badge variant="outline">{failure.emailType}</Badge>
 									</Table.Cell>
 									<Table.Cell class="text-muted-foreground">{failure.provider ?? '--'}</Table.Cell>
-									<Table.Cell class="text-muted-foreground text-sm">{formatDate(failure.createdAt)}</Table.Cell>
+									<Table.Cell class="text-muted-foreground text-sm"
+										>{formatDate(failure.createdAt)}</Table.Cell
+									>
 								</Table.Row>
 							{/each}
 						</Table.Body>

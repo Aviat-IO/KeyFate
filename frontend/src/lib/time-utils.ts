@@ -22,42 +22,42 @@
  * formatTimeRemaining(0) // "less than a minute"
  */
 export function formatTimeRemaining(daysRemaining: number): string {
-  if (daysRemaining <= 0) {
-    return "less than a minute"
-  }
+	if (daysRemaining <= 0) {
+		return 'less than a minute';
+	}
 
-  if (daysRemaining < 1) {
-    const hours = daysRemaining * 24
+	if (daysRemaining < 1) {
+		const hours = daysRemaining * 24;
 
-    if (hours >= 1) {
-      // Display in hours when >= 1 hour, round down for urgency
-      // Use threshold to handle floating point: if within 0.001 of an integer, round to it
-      const hoursInt = Math.floor(hours + 0.001)
-      return hoursInt === 1 ? "1 hour" : `${hoursInt} hours`
-    } else {
-      // Display in minutes when < 1 hour, round down for urgency
-      const minutes = hours * 60
-      // Use threshold to handle floating point: if within 0.01 of an integer, round to it
-      const minutesInt = Math.floor(minutes + 0.01)
+		if (hours >= 1) {
+			// Display in hours when >= 1 hour, round down for urgency
+			// Use threshold to handle floating point: if within 0.001 of an integer, round to it
+			const hoursInt = Math.floor(hours + 0.001);
+			return hoursInt === 1 ? '1 hour' : `${hoursInt} hours`;
+		} else {
+			// Display in minutes when < 1 hour, round down for urgency
+			const minutes = hours * 60;
+			// Use threshold to handle floating point: if within 0.01 of an integer, round to it
+			const minutesInt = Math.floor(minutes + 0.01);
 
-      if (minutesInt === 0) {
-        return "less than a minute"
-      }
+			if (minutesInt === 0) {
+				return 'less than a minute';
+			}
 
-      // Handle case where minutes rounds to 60 or more (should be displayed as hours)
-      if (minutesInt >= 60) {
-        const hoursFromMinutes = Math.floor(minutesInt / 60)
-        return hoursFromMinutes === 1 ? "1 hour" : `${hoursFromMinutes} hours`
-      }
+			// Handle case where minutes rounds to 60 or more (should be displayed as hours)
+			if (minutesInt >= 60) {
+				const hoursFromMinutes = Math.floor(minutesInt / 60);
+				return hoursFromMinutes === 1 ? '1 hour' : `${hoursFromMinutes} hours`;
+			}
 
-      return minutesInt === 1 ? "1 minute" : `${minutesInt} minutes`
-    }
-  }
+			return minutesInt === 1 ? '1 minute' : `${minutesInt} minutes`;
+		}
+	}
 
-  // Days: round down to whole days
-  // Use threshold to handle floating point
-  const days = Math.floor(daysRemaining + 0.0001)
-  return days === 1 ? "1 day" : `${days} days`
+	// Days: round down to whole days
+	// Use threshold to handle floating point
+	const days = Math.floor(daysRemaining + 0.0001);
+	return days === 1 ? '1 day' : `${days} days`;
 }
 
 /**
@@ -75,39 +75,38 @@ export function formatTimeRemaining(daysRemaining: number): string {
  * formatGranularTime(new Date(Date.now() + 45 * 60 * 1000)) // "45 minutes"
  */
 export function formatGranularTime(futureDate: Date | string): string {
-  const future =
-    typeof futureDate === "string" ? new Date(futureDate) : futureDate
-  const now = new Date()
-  const diffMs = future.getTime() - now.getTime()
+	const future = typeof futureDate === 'string' ? new Date(futureDate) : futureDate;
+	const now = new Date();
+	const diffMs = future.getTime() - now.getTime();
 
-  // Handle past dates
-  if (diffMs < 0) {
-    const absDiffMs = Math.abs(diffMs)
-    const days = Math.floor(absDiffMs / (1000 * 60 * 60 * 24))
-    const hours = Math.floor(absDiffMs / (1000 * 60 * 60))
-    const minutes = Math.floor(absDiffMs / (1000 * 60))
+	// Handle past dates
+	if (diffMs < 0) {
+		const absDiffMs = Math.abs(diffMs);
+		const days = Math.floor(absDiffMs / (1000 * 60 * 60 * 24));
+		const hours = Math.floor(absDiffMs / (1000 * 60 * 60));
+		const minutes = Math.floor(absDiffMs / (1000 * 60));
 
-    if (days > 0) {
-      return `${days} day${days !== 1 ? "s" : ""} ago`
-    } else if (hours > 0) {
-      return `${hours} hour${hours !== 1 ? "s" : ""} ago`
-    } else {
-      return `${minutes} minute${minutes !== 1 ? "s" : ""} ago`
-    }
-  }
+		if (days > 0) {
+			return `${days} day${days !== 1 ? 's' : ''} ago`;
+		} else if (hours > 0) {
+			return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+		} else {
+			return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+		}
+	}
 
-  // Future dates
-  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-  const hours = Math.floor(diffMs / (1000 * 60 * 60))
-  const minutes = Math.floor(diffMs / (1000 * 60))
+	// Future dates
+	const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+	const hours = Math.floor(diffMs / (1000 * 60 * 60));
+	const minutes = Math.floor(diffMs / (1000 * 60));
 
-  if (days > 0) {
-    return `${days} day${days !== 1 ? "s" : ""}`
-  } else if (hours > 0) {
-    return `${hours} hour${hours !== 1 ? "s" : ""}`
-  } else if (minutes > 0) {
-    return `${minutes} minute${minutes !== 1 ? "s" : ""}`
-  } else {
-    return "less than a minute"
-  }
+	if (days > 0) {
+		return `${days} day${days !== 1 ? 's' : ''}`;
+	} else if (hours > 0) {
+		return `${hours} hour${hours !== 1 ? 's' : ''}`;
+	} else if (minutes > 0) {
+		return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+	} else {
+		return 'less than a minute';
+	}
 }

@@ -5,51 +5,45 @@
  * Provides admin interface for viewing and managing email failures
  */
 
-import { json } from "@sveltejs/kit"
-import type { RequestHandler } from "./$types"
-import { DeadLetterQueue } from "$lib/email/dead-letter-queue"
-import {
-  getClientIp,
-  getAdminWhitelist,
-  isIpWhitelisted,
-} from "$lib/auth/ip-whitelist"
-import { logger } from "$lib/logger"
-import crypto from "crypto"
+import { json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
+import { DeadLetterQueue } from '$lib/email/dead-letter-queue';
+import { getClientIp, getAdminWhitelist, isIpWhitelisted } from '$lib/auth/ip-whitelist';
+import { logger } from '$lib/logger';
+import crypto from 'crypto';
 
 /**
  * Authorization helper - verify admin access
  */
 async function isAdmin(request: Request): Promise<boolean> {
-  const adminToken = process.env.ADMIN_TOKEN
+	const adminToken = process.env.ADMIN_TOKEN;
 
-  if (!adminToken) {
-    throw new Error(
-      "ADMIN_TOKEN environment variable is not configured. Server cannot start without admin authentication.",
-    )
-  }
+	if (!adminToken) {
+		throw new Error(
+			'ADMIN_TOKEN environment variable is not configured. Server cannot start without admin authentication.'
+		);
+	}
 
-  const clientIp = getClientIp(request)
-  const whitelist = getAdminWhitelist()
+	const clientIp = getClientIp(request);
+	const whitelist = getAdminWhitelist();
 
-  if (!isIpWhitelisted(clientIp, whitelist)) {
-    logger.warn("Admin access denied - IP not whitelisted", { clientIp })
-    return false
-  }
+	if (!isIpWhitelisted(clientIp, whitelist)) {
+		logger.warn('Admin access denied - IP not whitelisted', { clientIp });
+		return false;
+	}
 
-  const authHeader = request.headers.get("authorization")
-  const expected = `Bearer ${adminToken}`
-  const isAuthenticated = authHeader !== null &&
-    authHeader.length === expected.length &&
-    crypto.timingSafeEqual(
-      Buffer.from(authHeader),
-      Buffer.from(expected),
-    )
+	const authHeader = request.headers.get('authorization');
+	const expected = `Bearer ${adminToken}`;
+	const isAuthenticated =
+		authHeader !== null &&
+		authHeader.length === expected.length &&
+		crypto.timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected));
 
-  if (!isAuthenticated) {
-    logger.warn("Admin access denied - invalid token", { clientIp })
-  }
+	if (!isAuthenticated) {
+		logger.warn('Admin access denied - invalid token', { clientIp });
+	}
 
-  return isAuthenticated
+	return isAuthenticated;
 }
 
 /**
@@ -67,54 +61,54 @@ async function isAdmin(request: Request): Promise<boolean> {
  * - stats: true | false (return stats instead of failures)
  */
 export const GET: RequestHandler = async (event) => {
-  // Verify admin access
-  if (!(await isAdmin(event.request))) {
-    return json({ error: "Unauthorized" }, { status: 401 })
-  }
+	// Verify admin access
+	if (!(await isAdmin(event.request))) {
+		return json({ error: 'Unauthorized' }, { status: 401 });
+	}
 
-  try {
-    const { searchParams } = event.url
+	try {
+		const { searchParams } = event.url;
 
-    // Check if stats requested
-    if (searchParams.get("stats") === "true") {
-      const dlq = new DeadLetterQueue()
-      const stats = await dlq.getStats()
-      return json(stats)
-    }
+		// Check if stats requested
+		if (searchParams.get('stats') === 'true') {
+			const dlq = new DeadLetterQueue();
+			const stats = await dlq.getStats();
+			return json(stats);
+		}
 
-    // Parse query parameters
-    const emailType = searchParams.get("emailType") as any
-    const provider = searchParams.get("provider") as any
-    const recipient = searchParams.get("recipient") || undefined
-    const unresolvedOnly = searchParams.get("unresolvedOnly") === "true"
-    const limit = parseInt(searchParams.get("limit") || "100")
-    const offset = parseInt(searchParams.get("offset") || "0")
+		// Parse query parameters
+		const emailType = searchParams.get('emailType') as any;
+		const provider = searchParams.get('provider') as any;
+		const recipient = searchParams.get('recipient') || undefined;
+		const unresolvedOnly = searchParams.get('unresolvedOnly') === 'true';
+		const limit = parseInt(searchParams.get('limit') || '100');
+		const offset = parseInt(searchParams.get('offset') || '0');
 
-    const dlq = new DeadLetterQueue()
-    const failures = await dlq.queryFailures({
-      emailType,
-      provider,
-      recipient,
-      unresolvedOnly,
-      limit,
-      offset,
-    })
+		const dlq = new DeadLetterQueue();
+		const failures = await dlq.queryFailures({
+			emailType,
+			provider,
+			recipient,
+			unresolvedOnly,
+			limit,
+			offset
+		});
 
-    return json({
-      failures,
-      count: failures.length,
-      limit,
-      offset,
-    })
-  } catch (error) {
-    console.error("[admin/email-failures] GET error:", error)
+		return json({
+			failures,
+			count: failures.length,
+			limit,
+			offset
+		});
+	} catch (error) {
+		console.error('[admin/email-failures] GET error:', error);
 
-    return json(
-      {
-        error: "Failed to query email failures",
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    )
-  }
-}
+		return json(
+			{
+				error: 'Failed to query email failures',
+				message: error instanceof Error ? error.message : 'Unknown error'
+			},
+			{ status: 500 }
+		);
+	}
+};

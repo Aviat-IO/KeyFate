@@ -48,6 +48,7 @@ supabase/prod-migrations/*
 *.crt
 supabase/seed.sql
 reset_databases.sh
+.worktrees/
 
 **/metrics/*.json
 **/metrics/*.log

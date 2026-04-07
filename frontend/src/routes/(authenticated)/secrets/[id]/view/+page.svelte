@@ -168,7 +168,8 @@
 		const meta = getBitcoinMeta(data.secret.id);
 
 		if (!ownerKeypair || !recipientKeypair || !meta) {
-			bitcoinRefreshWarning = 'Bitcoin UTXO was not refreshed: keypairs or metadata not found in this browser session.';
+			bitcoinRefreshWarning =
+				'Bitcoin UTXO was not refreshed: keypairs or metadata not found in this browser session.';
 			return false;
 		}
 
@@ -179,7 +180,7 @@
 				currentUtxo: {
 					txId: utxo.txId,
 					outputIndex: utxo.outputIndex,
-					amountSats: utxo.amountSats,
+					amountSats: utxo.amountSats
 				},
 				currentScript: hex.decode(utxo.timelockScript),
 				ttlBlocks: utxo.ttlBlocks,
@@ -188,7 +189,7 @@
 				nostrEventId: meta.nostrEventId,
 				recipientPrivkey: recipientKeypair.privkey,
 				recipientAddress: meta.recipientAddress,
-				network: bitcoinStatusData.network,
+				network: bitcoinStatusData.network
 			});
 
 			// Store results on server
@@ -208,7 +209,7 @@
 					newTimelockScript: hex.encode(result.newTimelockScript),
 					ttlBlocks: utxo.ttlBlocks,
 					preSignedRecipientTx: result.preSignedRecipientTx,
-					network: bitcoinStatusData.network,
+					network: bitcoinStatusData.network
 				})
 			});
 
@@ -356,7 +357,10 @@
 <div class="mx-auto max-w-5xl px-6 py-12">
 	<!-- Back link -->
 	<div class="mb-8">
-		<a href="/dashboard" class="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm transition-colors">
+		<a
+			href="/dashboard"
+			class="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm transition-colors"
+		>
 			<ArrowLeft class="h-4 w-4" />
 			Dashboard
 		</a>
@@ -367,14 +371,14 @@
 		<h1 class="font-space text-3xl font-light tracking-tight md:text-4xl">
 			{data.secret.title}
 		</h1>
-		<Badge variant="outline" class="shrink-0 text-xs uppercase tracking-wider {statusColorClass}">
+		<Badge variant="outline" class="shrink-0 text-xs tracking-wider uppercase {statusColorClass}">
 			{statusLabel}
 		</Badge>
 	</div>
 
 	<!-- Massive countdown -->
 	<div
-		class="font-space text-foreground -ml-1 mt-4 text-[3.5rem] font-light leading-none tracking-tighter sm:text-[5rem] md:text-[6rem]"
+		class="font-space text-foreground mt-4 -ml-1 text-[3.5rem] leading-none font-light tracking-tighter sm:text-[5rem] md:text-[6rem]"
 	>
 		{countdownText}
 	</div>
@@ -383,7 +387,7 @@
 	{#if !isInactive && data.secret.status !== 'paused'}
 		<Keyline progress={keylineProgress} />
 	{:else}
-		<div class="my-8 h-[2px] w-full bg-muted"></div>
+		<div class="bg-muted my-8 h-[2px] w-full"></div>
 	{/if}
 
 	<!-- Actions bar — consolidated at the top, logically grouped -->
@@ -417,7 +421,9 @@
 				</Button>
 			{:else if isFailed && !isRecoverable}
 				<!-- Failed and already disclosed — no recovery possible -->
-				<p class="text-muted-foreground text-sm">This secret has already been disclosed to recipients.</p>
+				<p class="text-muted-foreground text-sm">
+					This secret has already been disclosed to recipients.
+				</p>
 			{:else if !isInactive}
 				{#if canCheckIn}
 					<Button
@@ -520,11 +526,11 @@
 	<div class="mt-16 space-y-16">
 		<!-- Secret metadata — single consolidated section -->
 		<section>
-			<h2 class="font-space text-xl font-semibold tracking-tight mb-8">Details</h2>
+			<h2 class="font-space mb-8 text-xl font-semibold tracking-tight">Details</h2>
 
 			<div class="grid grid-cols-2 gap-x-12 gap-y-8 md:grid-cols-4">
 				<DataLabel label="Status">
-					<Badge variant="outline" class="text-xs uppercase tracking-wider {statusColorClass}">
+					<Badge variant="outline" class="text-xs tracking-wider uppercase {statusColorClass}">
 						{statusLabel}
 					</Badge>
 				</DataLabel>
@@ -561,20 +567,23 @@
 					})}
 				</DataLabel>
 
-				<DataLabel label="Shares" value="{data.secret.sssThreshold} of {data.secret.sssSharesTotal} required" />
+				<DataLabel
+					label="Shares"
+					value="{data.secret.sssThreshold} of {data.secret.sssSharesTotal} required"
+				/>
 			</div>
 		</section>
 
 		<!-- Recipients -->
 		<section>
-			<h2 class="font-space text-xl font-semibold tracking-tight mb-8">
+			<h2 class="font-space mb-8 text-xl font-semibold tracking-tight">
 				Recipients ({data.secret.recipients.length})
 			</h2>
 
 			<div class="space-y-4">
 				{#each data.secret.recipients as recipient (recipient.id)}
 					<div class="flex items-center gap-4 text-sm">
-						<span class="font-medium text-foreground">{recipient.name}</span>
+						<span class="text-foreground font-medium">{recipient.name}</span>
 						{#if recipient.email}
 							<span class="text-muted-foreground flex items-center gap-1.5">
 								<Mail class="h-3.5 w-3.5" />
@@ -611,13 +620,13 @@
 
 		<!-- Check-in History -->
 		<section>
-			<h2 class="font-space text-xl font-semibold tracking-tight mb-8">Check-in History</h2>
+			<h2 class="font-space mb-8 text-xl font-semibold tracking-tight">Check-in History</h2>
 			{#if data.checkInHistory.length > 0}
 				<Table.Root>
 					<Table.Header>
 						<Table.Row>
-							<Table.Head class="text-xs text-muted-foreground">Check-in Date</Table.Head>
-							<Table.Head class="text-xs text-muted-foreground">Next Check-in</Table.Head>
+							<Table.Head class="text-muted-foreground text-xs">Check-in Date</Table.Head>
+							<Table.Head class="text-muted-foreground text-xs">Next Check-in</Table.Head>
 						</Table.Row>
 					</Table.Header>
 					<Table.Body>

@@ -12,7 +12,9 @@
 <div class="space-y-10">
 	<div>
 		<h2 class="font-space text-xl font-bold tracking-tight">Data & Privacy</h2>
-		<p class="text-sm text-muted-foreground mt-1">Manage your personal data, exports, and account deletion</p>
+		<p class="text-muted-foreground mt-1 text-sm">
+			Manage your personal data, exports, and account deletion
+		</p>
 	</div>
 
 	<DataExportCard recentExports={data.recentExports} />

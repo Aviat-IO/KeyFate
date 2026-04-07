@@ -11,39 +11,33 @@
 
 // Re-export types from the new Drizzle-based system
 export type {
-  Secret,
-  SecretInsert,
-  SecretUpdate,
-  User,
-  UserInsert,
-  UserUpdate,
-  Database,
-  Tables,
-  Reminder,
-  ReminderInsert,
-  ReminderUpdate
-} from "$lib/types/index.d.ts";
+	Secret,
+	SecretInsert,
+	SecretUpdate,
+	User,
+	UserInsert,
+	UserUpdate,
+	Database,
+	Tables,
+	Reminder,
+	ReminderInsert,
+	ReminderUpdate
+} from '$lib/types/index.d.ts';
 
 // Legacy JSON type for compatibility
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[];
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 // Legacy exports for backward compatibility
-export type { Tables as TablesInsert } from "$lib/types/index.d.ts";
-export type { Tables as TablesUpdate } from "$lib/types/index.d.ts";
+export type { Tables as TablesInsert } from '$lib/types/index.d.ts';
+export type { Tables as TablesUpdate } from '$lib/types/index.d.ts';
 
 // Legacy enums (use schema enums instead)
-export type Enums<T> = T extends "contact_method"
-  ? "email" | "phone" | "both"
-  : T extends "secret_status"
-  ? "active" | "paused" | "triggered"
-  : T extends "subscription_tier"
-  ? "free" | "pro"
-  : never;
+export type Enums<T> = T extends 'contact_method'
+	? 'email' | 'phone' | 'both'
+	: T extends 'secret_status'
+		? 'active' | 'paused' | 'triggered'
+		: T extends 'subscription_tier'
+			? 'free' | 'pro'
+			: never;
 
 export type CompositeTypes<_T = never> = never;

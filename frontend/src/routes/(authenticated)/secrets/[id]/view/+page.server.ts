@@ -25,9 +25,7 @@ export const load: PageServerLoad = async (event) => {
 				nextCheckIn: checkinHistory.nextCheckIn
 			})
 			.from(checkinHistory)
-			.where(
-				and(eq(checkinHistory.secretId, id), eq(checkinHistory.userId, session.user.id))
-			)
+			.where(and(eq(checkinHistory.secretId, id), eq(checkinHistory.userId, session.user.id)))
 			.orderBy(desc(checkinHistory.checkedInAt))
 			.limit(20);
 

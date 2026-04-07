@@ -43,7 +43,9 @@
 		check_in_days: 90
 	};
 
-	let formData = $state<ContactMethodsFormData>(untrack(() => ({ ...(initialValues ?? defaults) })));
+	let formData = $state<ContactMethodsFormData>(
+		untrack(() => ({ ...(initialValues ?? defaults) }))
+	);
 	let isLoading = $state(false);
 	let error = $state<string | null>(null);
 
@@ -111,7 +113,7 @@
 				aria-invalid={!!emailError}
 			/>
 			{#if emailError}
-				<p class="text-sm text-destructive">{emailError}</p>
+				<p class="text-destructive text-sm">{emailError}</p>
 			{/if}
 		</div>
 

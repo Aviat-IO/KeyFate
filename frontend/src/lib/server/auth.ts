@@ -1,5 +1,5 @@
-import type { RequestEvent } from "@sveltejs/kit"
-import type { Session } from "@auth/sveltekit"
+import type { RequestEvent } from '@sveltejs/kit';
+import type { Session } from '@auth/sveltekit';
 
 /**
  * Get the current session from a RequestEvent.
@@ -17,10 +17,8 @@ import type { Session } from "@auth/sveltekit"
  * }
  * ```
  */
-export async function getSession(
-  event: RequestEvent,
-): Promise<Session | null> {
-  return event.locals.auth()
+export async function getSession(event: RequestEvent): Promise<Session | null> {
+	return event.locals.auth();
 }
 
 /**
@@ -39,16 +37,16 @@ export async function getSession(
  * ```
  */
 export async function requireSession(
-  event: RequestEvent,
+	event: RequestEvent
 ): Promise<Session & { user: { id: string; email?: string | null } }> {
-  const session = await getSession(event)
+	const session = await getSession(event);
 
-  if (!session?.user?.id) {
-    const { error } = await import("@sveltejs/kit")
-    throw error(401, "Unauthorized")
-  }
+	if (!session?.user?.id) {
+		const { error } = await import('@sveltejs/kit');
+		throw error(401, 'Unauthorized');
+	}
 
-  return session as Session & {
-    user: { id: string; email?: string | null }
-  }
+	return session as Session & {
+		user: { id: string; email?: string | null };
+	};
 }

@@ -12,7 +12,7 @@
 <div class="space-y-8">
 	<div>
 		<h2 class="font-space text-xl font-bold tracking-tight">Audit Logs</h2>
-		<p class="text-sm text-muted-foreground mt-1">
+		<p class="text-muted-foreground mt-1 text-sm">
 			{data.userTier === 'pro'
 				? 'Comprehensive audit trail of all activities in your account'
 				: 'Comprehensive audit trails are a Pro feature'}
@@ -23,14 +23,16 @@
 		<div class="space-y-6">
 			<div>
 				<h3 class="font-space text-lg font-bold tracking-tight">Audit Logs</h3>
-				<p class="text-sm text-muted-foreground mt-1">Comprehensive audit trails are a Pro feature</p>
+				<p class="text-muted-foreground mt-1 text-sm">
+					Comprehensive audit trails are a Pro feature
+				</p>
 			</div>
 
-			<p class="text-sm text-muted-foreground">
-				Upgrade to Pro to access comprehensive audit logs that track all activities in your
-				account, including:
+			<p class="text-muted-foreground text-sm">
+				Upgrade to Pro to access comprehensive audit logs that track all activities in your account,
+				including:
 			</p>
-			<ul class="text-sm text-muted-foreground list-inside list-disc space-y-2">
+			<ul class="text-muted-foreground list-inside list-disc space-y-2 text-sm">
 				<li>Secret creation, editing, and deletion</li>
 				<li>Check-in activity</li>
 				<li>Recipient management</li>
