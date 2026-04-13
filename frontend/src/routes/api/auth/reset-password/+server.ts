@@ -1,13 +1,15 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { checkRateLimit } from '$lib/auth/rate-limiting';
-import { validatePasswordResetToken, deletePasswordResetToken } from '$lib/auth/password-reset';
+import {
+	deletePasswordResetTokenById,
+	getConsumablePasswordResetToken
+} from '$lib/auth/password-reset';
 import { validatePassword, hashPassword } from '$lib/auth/password';
 import { getDatabase } from '$lib/db/drizzle';
 import { users, sessions } from '$lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { APIError, handleAPIError } from '$lib/errors/api-error';
-import { invalidateAllUserSessions, SessionInvalidationReason } from '$lib/auth/session-management';
 import { logger } from '$lib/logger';
 
 export const POST: RequestHandler = async (event) => {
@@ -32,34 +34,44 @@ export const POST: RequestHandler = async (event) => {
 			throw APIError.validation(passwordValidation.message);
 		}
 
-		const tokenValidation = await validatePasswordResetToken(token);
-		if (!tokenValidation.isValid) {
-			throw APIError.validation(tokenValidation.error || 'Invalid or expired token');
-		}
-
 		const hashedPassword = await hashPassword(password);
 		const db = await getDatabase();
+		const resetResult = await db.transaction(async (tx) => {
+			const tokenValidation = await getConsumablePasswordResetToken(tx, token);
+			if (!tokenValidation.isValid) {
+				return {
+					success: false as const,
+					error: tokenValidation.error || 'Invalid or expired token'
+				};
+			}
 
-		// Update password
-		await db
-			.update(users)
-			.set({ password: hashedPassword, updatedAt: new Date() } as any)
-			.where(eq(users.id, tokenValidation.userId!));
+			const invalidatedAt = new Date();
 
-		// Delete used token
-		await deletePasswordResetToken(token);
+			await tx
+				.update(users)
+				.set({
+					password: hashedPassword,
+					updatedAt: invalidatedAt,
+					sessionsInvalidatedAt: invalidatedAt,
+					sessionVersion: sql`${users.sessionVersion} + 1`
+				} as any)
+				.where(eq(users.id, tokenValidation.userId!));
 
-		// Invalidate all sessions (logout from all devices)
-		await invalidateAllUserSessions(
-			tokenValidation.userId!,
-			SessionInvalidationReason.PASSWORD_CHANGE
-		);
+			await tx.delete(sessions).where(eq(sessions.userId, tokenValidation.userId!));
+			await deletePasswordResetTokenById(tx, tokenValidation.tokenId!);
 
-		// Also delete session records
-		await db.delete(sessions).where(eq(sessions.userId, tokenValidation.userId!));
+			return {
+				success: true as const,
+				userId: tokenValidation.userId!
+			};
+		});
+
+		if (!resetResult.success) {
+			throw APIError.validation(resetResult.error);
+		}
 
 		logger.info('Password reset successful', {
-			userId: tokenValidation.userId,
+			userId: resetResult.userId,
 			timestamp: new Date().toISOString()
 		});
 

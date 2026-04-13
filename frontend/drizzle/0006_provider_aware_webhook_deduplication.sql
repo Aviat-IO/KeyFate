@@ -1,0 +1,2 @@
+ALTER TABLE "webhook_events" DROP CONSTRAINT "webhook_events_event_id_unique";--> statement-breakpoint
+ALTER TABLE "webhook_events" ADD CONSTRAINT "webhook_events_provider_event_id_unique" UNIQUE("provider","event_id");

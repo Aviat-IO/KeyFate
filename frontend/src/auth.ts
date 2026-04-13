@@ -2,11 +2,12 @@ import { SvelteKitAuth } from '@auth/sveltekit';
 import Google from '@auth/sveltekit/providers/google';
 import Credentials from '@auth/sveltekit/providers/credentials';
 import { getDatabase } from '$lib/db/drizzle';
-import { users, verificationTokens, type UserInsert } from '$lib/db/schema';
-import { and, eq, gt } from 'drizzle-orm';
+import { users, type UserInsert } from '$lib/db/schema';
+import { eq } from 'drizzle-orm';
 import { validatePassword } from '$lib/auth/password';
 import { authenticateUser } from '$lib/auth/users';
 import { validateOTPToken } from '$lib/auth/otp';
+import { consumeVerificationToken } from '$lib/auth/email-verification';
 import { recordPrivacyPolicyAcceptance } from '$lib/auth/privacy-policy';
 import { logLogin } from '$lib/services/audit-logger';
 
@@ -62,20 +63,13 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 							return null;
 						}
 
-						// Validate the verification token against the database, scoped to this user's email
-						const tokenResult = await db
-							.select()
-							.from(verificationTokens)
-							.where(
-								and(
-									eq(verificationTokens.token, credentials.verificationToken as string),
-									eq(verificationTokens.identifier, user.email),
-									gt(verificationTokens.expires, new Date())
-								)
-							)
-							.limit(1);
+						const tokenResult = await consumeVerificationToken({
+							email: user.email,
+							token: credentials.verificationToken as string,
+							purpose: 'email_verification_login'
+						});
 
-						if (tokenResult.length === 0) {
+						if (!tokenResult.success) {
 							console.warn(
 								'[Auth] Invalid or expired verification token for userId:',
 								credentials.userId
@@ -83,17 +77,6 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 							return null;
 						}
 						if (user && user.emailVerified) {
-							// Expire the token after use (single-use)
-							await db
-								.update(verificationTokens)
-								.set({ expires: new Date() })
-								.where(
-									and(
-										eq(verificationTokens.token, credentials.verificationToken as string),
-										eq(verificationTokens.identifier, user.email!)
-									)
-								);
-
 							return {
 								id: user.id,
 								email: user.email,
@@ -306,13 +289,26 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 		},
 
 		async jwt({ token, user, account, profile }) {
-			// TODO(#37): Session invalidation gap — this callback does not compare
-			// token.iat against the user's updatedAt field. When a user changes their
-			// password or revokes sessions, existing JWTs remain valid until they
-			// expire naturally. To fix: fetch user.updatedAt from DB and reject
-			// tokens where token.iat < user.updatedAt (converted to epoch seconds).
-			// This needs careful testing to avoid breaking active sessions during
-			// normal profile updates that also touch updatedAt.
+			if (!user && typeof token.id === 'string') {
+				try {
+					const db = await getDatabase();
+					const [dbUser] = await db.select().from(users).where(eq(users.id, token.id)).limit(1);
+
+					if (!dbUser) {
+						return null;
+					}
+
+					const tokenSessionVersion =
+						typeof token.sessionVersion === 'number' ? token.sessionVersion : 0;
+
+					if (dbUser.sessionVersion !== tokenSessionVersion) {
+						return null;
+					}
+				} catch (error) {
+					console.error('[Auth] Error loading user for JWT validation:', error);
+					return null;
+				}
+			}
 
 			// Google OAuth: look up user in DB by email to get our internal user ID
 			if (account?.provider === 'google' && profile) {
@@ -336,6 +332,7 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 							token.id = dbUser[0].id;
 							token.emailVerified = dbUser[0].emailVerified;
 							token.isAdmin = dbUser[0].isAdmin;
+							token.sessionVersion = dbUser[0].sessionVersion;
 						} else {
 							console.error(
 								'[Auth] JWT callback: User not found in database for email:',
@@ -356,6 +353,7 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 					if (dbUser.length > 0) {
 						token.emailVerified = dbUser[0].emailVerified;
 						token.isAdmin = dbUser[0].isAdmin;
+						token.sessionVersion = dbUser[0].sessionVersion;
 					}
 				} catch (error) {
 					console.error('[Auth] Error fetching email verification status:', error);

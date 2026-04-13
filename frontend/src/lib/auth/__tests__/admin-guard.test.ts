@@ -5,6 +5,14 @@ const mockRedirect = vi.fn();
 const mockError = vi.fn();
 
 vi.mock('@sveltejs/kit', () => ({
+	json: (data: unknown, init?: { status?: number; headers?: HeadersInit }) =>
+		new Response(JSON.stringify(data), {
+			status: init?.status ?? 200,
+			headers: {
+				'Content-Type': 'application/json',
+				...(init?.headers ?? {})
+			}
+		}),
 	redirect: (...args: unknown[]) => mockRedirect(...args),
 	error: (...args: unknown[]) => mockError(...args)
 }));

@@ -10,21 +10,7 @@ import type { RequestHandler } from './$types';
 import { DeadLetterQueue } from '$lib/email/dead-letter-queue';
 import { sendReminderEmail } from '$lib/email/email-service';
 import type { EmailFailureContext } from '$lib/email/email-retry-service';
-import crypto from 'crypto';
-
-/**
- * Authorization helper
- */
-async function isAdmin(request: Request): Promise<boolean> {
-	const authHeader = request.headers.get('authorization');
-	const adminToken = process.env.ADMIN_TOKEN || 'admin-secret';
-	const expected = `Bearer ${adminToken}`;
-	return (
-		authHeader !== null &&
-		authHeader.length === expected.length &&
-		crypto.timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected))
-	);
-}
+import { requireAdmin } from '$lib/auth/admin-guard';
 
 /**
  * Request body for batch retry
@@ -44,9 +30,8 @@ interface BatchRetryRequest {
  * }
  */
 export const POST: RequestHandler = async (event) => {
-	if (!(await isAdmin(event.request))) {
-		return json({ error: 'Unauthorized' }, { status: 401 });
-	}
+	const session = await event.locals.auth();
+	requireAdmin(session);
 
 	try {
 		const body: BatchRetryRequest = await event.request.json();

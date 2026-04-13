@@ -5,6 +5,15 @@ import { checkInTokens, secrets, checkinHistory } from '$lib/db/schema';
 import { scheduleRemindersForSecret } from '$lib/services/reminder-scheduler';
 import { checkRateLimit, getRateLimitHeaders, getClientIdentifier } from '$lib/rate-limit';
 import { eq } from 'drizzle-orm';
+import { createHash } from 'node:crypto';
+
+function getTokenFingerprint(token: string | null): string | undefined {
+	if (!token) {
+		return undefined;
+	}
+
+	return `sha256:${createHash('sha256').update(token).digest('hex').slice(0, 12)}`;
+}
 
 /**
  * GET /api/check-in
@@ -49,12 +58,13 @@ export const POST: RequestHandler = async (event) => {
 		console.log('[CHECK-IN] Attempt received', {
 			timestamp: new Date().toISOString(),
 			hasToken: !!token,
+			tokenFingerprint: getTokenFingerprint(token),
 			ip:
 				event.request.headers.get('x-forwarded-for') ||
 				event.request.headers.get('x-real-ip') ||
 				'unknown',
 			method: event.request.method,
-			url: event.url.toString()
+			url: event.url.pathname
 		});
 
 		if (!token) {
@@ -100,7 +110,7 @@ export const POST: RequestHandler = async (event) => {
 
 			console.warn('[CHECK-IN] Invalid token attempt', {
 				timestamp: new Date().toISOString(),
-				tokenPrefix: token.substring(0, 8) + '...'
+				tokenFingerprint: getTokenFingerprint(token)
 			});
 
 			return json(

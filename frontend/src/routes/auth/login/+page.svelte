@@ -1,13 +1,11 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { buildAuthLoginRedirectPath } from '$lib/auth/redirect-callers';
 	import { onMount } from 'svelte';
 
 	onMount(() => {
-		const nextUrl = $page.url.searchParams.get('next');
-		const redirectPath = nextUrl
-			? `/sign-in?callbackUrl=${encodeURIComponent(nextUrl)}`
-			: '/sign-in';
+		const redirectPath = buildAuthLoginRedirectPath($page.url);
 		goto(redirectPath, { replaceState: true });
 	});
 </script>

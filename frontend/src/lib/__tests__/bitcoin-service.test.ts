@@ -189,7 +189,7 @@ describe('bitcoin-service', () => {
 
 			mockCreateTimelockUTXO.mockReturnValue(MOCK_UTXO_RESULT);
 			mockCreatePreSignedRecipientTx.mockReturnValue(MOCK_PRESIGNED_RESULT);
-			setupInsert([{ id: 'utxo_new', ...MOCK_DB_UTXO }]);
+			setupInsert([MOCK_DB_UTXO]);
 
 			const result = await enableBitcoin(SECRET_ID, USER_ID, enableParams);
 
@@ -213,7 +213,7 @@ describe('bitcoin-service', () => {
 
 			mockCreateTimelockUTXO.mockReturnValue(MOCK_UTXO_RESULT);
 			mockCreatePreSignedRecipientTx.mockReturnValue(MOCK_PRESIGNED_RESULT);
-			setupInsert([{ id: 'utxo_new', ...MOCK_DB_UTXO }]);
+			setupInsert([MOCK_DB_UTXO]);
 
 			const result = await enableBitcoin(SECRET_ID, USER_ID, enableParams);
 

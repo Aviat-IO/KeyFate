@@ -6,12 +6,20 @@ import type { WebhookEvent } from '$lib/payment/interfaces/PaymentProvider';
 import { serverEnv } from '$lib/server-env';
 import { subscriptionService } from '$lib/services/subscription-service';
 import { emailService } from '$lib/email/email-service';
-import { isWebhookProcessed, recordWebhookEvent } from '$lib/webhooks/deduplication';
+import {
+	claimWebhookEvent,
+	finalizeWebhookEventProcessing,
+	markWebhookEventFailed,
+	recordWebhookEvent
+} from '$lib/webhooks/deduplication';
 import { getDatabase } from '$lib/db/drizzle';
 import { userSubscriptions } from '$lib/db/schema';
 import { eq, or } from 'drizzle-orm';
 
 export const POST: RequestHandler = async (event) => {
+	let claimedEventId: string | null = null;
+	let sideEffectsCompleted = false;
+
 	try {
 		const body = await event.request.text();
 		const signature = event.request.headers.get('stripe-signature');
@@ -36,11 +44,17 @@ export const POST: RequestHandler = async (event) => {
 			created: webhookEvent.created
 		});
 
-		const alreadyProcessed = await isWebhookProcessed('stripe', webhookEvent.id);
-		if (alreadyProcessed) {
+		const claimed = await claimWebhookEvent(
+			'stripe',
+			webhookEvent.id,
+			webhookEvent.type,
+			webhookEvent
+		);
+		if (!claimed) {
 			logger.info('Webhook already processed (replay detected)', { eventId: webhookEvent.id });
 			return json({ received: true, duplicate: true });
 		}
+		claimedEventId = webhookEvent.id;
 
 		const eventData = webhookEvent.data.object as Record<string, unknown>;
 		logger.debug('Stripe event data', {
@@ -81,6 +95,7 @@ export const POST: RequestHandler = async (event) => {
 					metadata: eventData.metadata
 				}
 			});
+			await safelyMarkWebhookEventFailed('stripe', webhookEvent.id, 'No user_id in metadata');
 			return json({ error: 'No user_id in metadata' }, { status: 400 });
 		}
 
@@ -88,11 +103,22 @@ export const POST: RequestHandler = async (event) => {
 
 		// Handle event using subscription service
 		await subscriptionService.handleStripeWebhook(webhookEvent, userId);
+		sideEffectsCompleted = true;
 
 		await recordWebhookEvent('stripe', webhookEvent.id, webhookEvent.type, webhookEvent);
 
 		return json({ received: true });
 	} catch (error) {
+		if (claimedEventId && sideEffectsCompleted) {
+			await safelyFinalizeWebhookEventProcessing('stripe', claimedEventId);
+		} else if (claimedEventId && !sideEffectsCompleted) {
+			await safelyMarkWebhookEventFailed(
+				'stripe',
+				claimedEventId,
+				error instanceof Error ? error.message : 'Unknown error'
+			);
+		}
+
 		logger.error('Stripe webhook error', error instanceof Error ? error : undefined);
 
 		// Send admin alert for webhook failures
@@ -116,6 +142,37 @@ export const POST: RequestHandler = async (event) => {
 		return json({ error: 'Webhook processing failed' }, { status: 400 });
 	}
 };
+
+async function safelyFinalizeWebhookEventProcessing(
+	provider: 'stripe' | 'btcpay',
+	eventId: string
+): Promise<void> {
+	try {
+		await finalizeWebhookEventProcessing(provider, eventId);
+	} catch (finalizationError) {
+		logger.error(
+			'Failed to persist webhook processed finalization',
+			finalizationError instanceof Error ? finalizationError : undefined,
+			{ provider, eventId }
+		);
+	}
+}
+
+async function safelyMarkWebhookEventFailed(
+	provider: 'stripe' | 'btcpay',
+	eventId: string,
+	errorMessage: string
+): Promise<void> {
+	try {
+		await markWebhookEventFailed(provider, eventId, errorMessage);
+	} catch (bookkeepingError) {
+		logger.error(
+			'Failed to persist webhook failure bookkeeping',
+			bookkeepingError instanceof Error ? bookkeepingError : undefined,
+			{ provider, eventId }
+		);
+	}
+}
 
 // Helper function to extract user ID from webhook event
 async function extractUserIdFromEvent(event: WebhookEvent): Promise<string | null> {

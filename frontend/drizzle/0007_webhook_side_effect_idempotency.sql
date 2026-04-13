@@ -1,0 +1,2 @@
+ALTER TABLE "payment_history" ADD CONSTRAINT "payment_history_provider_payment_id_unique" UNIQUE("provider","provider_payment_id");--> statement-breakpoint
+ALTER TABLE "user_subscriptions" ADD CONSTRAINT "user_subscriptions_provider_provider_subscription_id_unique" UNIQUE("provider","provider_subscription_id");

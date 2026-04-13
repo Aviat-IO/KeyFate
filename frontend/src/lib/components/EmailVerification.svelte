@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { resolveEmailVerificationCallbackUrl } from '$lib/auth/redirect-callers';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -14,7 +15,7 @@
 	let {
 		email: emailProp = '',
 		showOTPInput = true,
-		callbackUrl: callbackUrlProp = '/dashboard',
+		callbackUrl: callbackUrlProp,
 		class: className
 	}: {
 		email?: string;
@@ -34,7 +35,9 @@
 	const email = $derived(
 		emailProp || searchParams.get('email') || $page.data.session?.user?.email || ''
 	);
-	const callbackUrl = $derived(callbackUrlProp || searchParams.get('callbackUrl') || '/dashboard');
+	const callbackUrl = $derived(
+		resolveEmailVerificationCallbackUrl(callbackUrlProp, searchParams, $page.url.origin)
+	);
 	const token = $derived(searchParams.get('token'));
 
 	$effect(() => {

@@ -1,19 +1,12 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { browser } from '$app/environment';
+	import { buildSignUpRedirectUrl } from '$lib/auth/redirect-callers';
 
 	$effect(() => {
 		if (!browser) return;
-		const callbackUrl = $page.url.searchParams.get('callbackUrl');
-		const next = $page.url.searchParams.get('next');
 
-		let redirectUrl = '/auth/signin';
-		const params = new URLSearchParams();
-		if (callbackUrl) params.set('callbackUrl', callbackUrl);
-		if (next) params.set('next', next);
-		if (params.toString()) redirectUrl += `?${params.toString()}`;
-
-		window.location.href = redirectUrl;
+		window.location.href = buildSignUpRedirectUrl($page.url);
 	});
 </script>
 

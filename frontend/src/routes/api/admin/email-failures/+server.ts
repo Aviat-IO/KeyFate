@@ -8,43 +8,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { DeadLetterQueue } from '$lib/email/dead-letter-queue';
-import { getClientIp, getAdminWhitelist, isIpWhitelisted } from '$lib/auth/ip-whitelist';
-import { logger } from '$lib/logger';
-import crypto from 'crypto';
-
-/**
- * Authorization helper - verify admin access
- */
-async function isAdmin(request: Request): Promise<boolean> {
-	const adminToken = process.env.ADMIN_TOKEN;
-
-	if (!adminToken) {
-		throw new Error(
-			'ADMIN_TOKEN environment variable is not configured. Server cannot start without admin authentication.'
-		);
-	}
-
-	const clientIp = getClientIp(request);
-	const whitelist = getAdminWhitelist();
-
-	if (!isIpWhitelisted(clientIp, whitelist)) {
-		logger.warn('Admin access denied - IP not whitelisted', { clientIp });
-		return false;
-	}
-
-	const authHeader = request.headers.get('authorization');
-	const expected = `Bearer ${adminToken}`;
-	const isAuthenticated =
-		authHeader !== null &&
-		authHeader.length === expected.length &&
-		crypto.timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected));
-
-	if (!isAuthenticated) {
-		logger.warn('Admin access denied - invalid token', { clientIp });
-	}
-
-	return isAuthenticated;
-}
+import { requireAdmin } from '$lib/auth/admin-guard';
 
 /**
  * GET /api/admin/email-failures
@@ -61,10 +25,8 @@ async function isAdmin(request: Request): Promise<boolean> {
  * - stats: true | false (return stats instead of failures)
  */
 export const GET: RequestHandler = async (event) => {
-	// Verify admin access
-	if (!(await isAdmin(event.request))) {
-		return json({ error: 'Unauthorized' }, { status: 401 });
-	}
+	const session = await event.locals.auth();
+	requireAdmin(session);
 
 	try {
 		const { searchParams } = event.url;

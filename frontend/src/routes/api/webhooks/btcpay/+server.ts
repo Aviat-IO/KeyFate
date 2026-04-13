@@ -6,9 +6,17 @@ import type { BTCPayProvider } from '$lib/payment/providers/BTCPayProvider';
 import { serverEnv } from '$lib/server-env';
 import { subscriptionService } from '$lib/services/subscription-service';
 import { emailService } from '$lib/email/email-service';
-import { isWebhookProcessed, recordWebhookEvent } from '$lib/webhooks/deduplication';
+import {
+	claimWebhookEvent,
+	finalizeWebhookEventProcessing,
+	markWebhookEventFailed,
+	recordWebhookEvent
+} from '$lib/webhooks/deduplication';
 
 export const POST: RequestHandler = async (event) => {
+	let claimedEventId: string | null = null;
+	let sideEffectsCompleted = false;
+
 	try {
 		const body = await event.request.text();
 		const signature = event.request.headers.get('btcpay-sig');
@@ -43,18 +51,27 @@ export const POST: RequestHandler = async (event) => {
 			id: webhookEvent.id
 		});
 
-		const alreadyProcessed = await isWebhookProcessed(
+		const rawEvent = JSON.parse(body);
+		const deduplicationKey = rawEvent.originalDeliveryId || webhookEvent.id;
+
+		if (!deduplicationKey) {
+			throw new Error('BTCPay webhook missing delivery identifier');
+		}
+
+		const claimed = await claimWebhookEvent(
 			'btcpay',
-			webhookEvent.id || `btcpay-${Date.now()}`
+			deduplicationKey,
+			webhookEvent.type,
+			webhookEvent
 		);
-		if (alreadyProcessed) {
+		if (!claimed) {
 			logger.info('BTCPay webhook already processed (replay detected)');
 			return json({ received: true, duplicate: true });
 		}
+		claimedEventId = deduplicationKey;
 
 		// BTCPay webhooks don't include full invoice data, just the ID
 		// We need to fetch the invoice to get metadata
-		const rawEvent = JSON.parse(body);
 		const invoiceId = rawEvent.invoiceId;
 
 		logger.debug('BTCPay webhook invoiceId', { invoiceId });
@@ -66,6 +83,7 @@ export const POST: RequestHandler = async (event) => {
 			webhookEvent.type.includes('Test');
 
 		if (isTestWebhook) {
+			await recordWebhookEvent('btcpay', deduplicationKey, webhookEvent.type, webhookEvent);
 			logger.info('Test webhook received and verified successfully');
 			return json({
 				received: true,
@@ -93,6 +111,7 @@ export const POST: RequestHandler = async (event) => {
 					eventData: webhookEvent.data
 				}
 			});
+			await safelyMarkWebhookEventFailed('btcpay', deduplicationKey, 'No user_id in metadata');
 			return json(
 				{
 					error: 'No user_id in metadata',
@@ -105,16 +124,27 @@ export const POST: RequestHandler = async (event) => {
 
 		// Handle event using subscription service
 		await subscriptionService.handleBTCPayWebhook(webhookEvent, userId);
+		sideEffectsCompleted = true;
 
 		await recordWebhookEvent(
 			'btcpay',
-			webhookEvent.id || `btcpay-${Date.now()}`,
+			deduplicationKey,
 			webhookEvent.type,
 			webhookEvent
 		);
 
 		return json({ received: true });
 	} catch (error) {
+		if (claimedEventId && sideEffectsCompleted) {
+			await safelyFinalizeWebhookEventProcessing('btcpay', claimedEventId);
+		} else if (claimedEventId && !sideEffectsCompleted) {
+			await safelyMarkWebhookEventFailed(
+				'btcpay',
+				claimedEventId,
+				error instanceof Error ? error.message : 'Unknown error'
+			);
+		}
+
 		logger.error('BTCPay webhook error', error instanceof Error ? error : undefined);
 
 		// Send admin alert for webhook failures
@@ -147,6 +177,37 @@ export const POST: RequestHandler = async (event) => {
 		return json({ error: 'Webhook processing failed' }, { status: 500 });
 	}
 };
+
+async function safelyFinalizeWebhookEventProcessing(
+	provider: 'stripe' | 'btcpay',
+	eventId: string
+): Promise<void> {
+	try {
+		await finalizeWebhookEventProcessing(provider, eventId);
+	} catch (finalizationError) {
+		logger.error(
+			'Failed to persist webhook processed finalization',
+			finalizationError instanceof Error ? finalizationError : undefined,
+			{ provider, eventId }
+		);
+	}
+}
+
+async function safelyMarkWebhookEventFailed(
+	provider: 'stripe' | 'btcpay',
+	eventId: string,
+	errorMessage: string
+): Promise<void> {
+	try {
+		await markWebhookEventFailed(provider, eventId, errorMessage);
+	} catch (bookkeepingError) {
+		logger.error(
+			'Failed to persist webhook failure bookkeeping',
+			bookkeepingError instanceof Error ? bookkeepingError : undefined,
+			{ provider, eventId }
+		);
+	}
+}
 
 // Helper function to extract user ID from BTCPay webhook event
 async function extractUserIdFromBTCPayEvent(

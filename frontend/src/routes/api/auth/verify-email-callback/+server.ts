@@ -1,10 +1,14 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getDatabase } from '$lib/db/drizzle';
-import { users, verificationTokens } from '$lib/db/schema';
-import { and, eq } from 'drizzle-orm';
+import { users } from '$lib/db/schema';
+import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import crypto from 'crypto';
+import {
+	createAutoLoginToken,
+	deleteVerificationTokenById,
+	getConsumableVerificationToken
+} from '$lib/auth/email-verification';
 
 const verifyEmailSchema = z.object({
 	token: z.string().min(1, 'Token is required'),
@@ -30,51 +34,65 @@ export const POST: RequestHandler = async (event) => {
 		}
 
 		const { token, email } = validation.data;
+		const normalizedEmail = email.toLowerCase().trim();
 
-		// Verify the token exists and hasn't expired
-		const verificationResult = await db
-			.select()
-			.from(verificationTokens)
-			.where(and(eq(verificationTokens.identifier, email), eq(verificationTokens.token, token)))
-			.limit(1);
+		const verificationResult = await db.transaction(async (tx) => {
+			const tokenResult = await getConsumableVerificationToken(tx, {
+				email: normalizedEmail,
+				token,
+				purpose: 'email_verification'
+			});
 
-		const verificationRecord = verificationResult[0];
-		if (!verificationRecord) {
+			if (!tokenResult.success) {
+				return {
+					status: 'invalid' as const,
+					error: tokenResult.error
+				};
+			}
+
+			const updateResult = await tx
+				.update(users)
+				.set({
+					emailVerified: new Date(),
+					updatedAt: new Date()
+				} as any)
+				.where(eq(users.email, normalizedEmail))
+				.returning();
+
+			const updatedUser = updateResult[0];
+			if (!updatedUser) {
+				return { status: 'not_found' as const };
+			}
+
+			await deleteVerificationTokenById(tx, {
+				email: normalizedEmail,
+				token,
+				purpose: 'email_verification'
+			});
+
+			const verificationToken = await createAutoLoginToken(normalizedEmail, tx);
+
+			return {
+				status: 'verified' as const,
+				updatedUser,
+				verificationToken
+			};
+		});
+
+		if (verificationResult.status === 'invalid') {
 			return json(
 				{
 					success: false,
-					error: 'Invalid or expired verification token'
+					error:
+						verificationResult.error === 'Token expired'
+							? 'Verification token has expired'
+							: 'Invalid or expired verification token'
 				},
 				{ status: 400 }
 			);
 		}
 
-		// Check if token has expired
-		if (verificationRecord.expires < new Date()) {
-			// Clean up expired token
-			await db.delete(verificationTokens).where(eq(verificationTokens.token, token));
-
-			return json(
-				{
-					success: false,
-					error: 'Verification token has expired'
-				},
-				{ status: 400 }
-			);
-		}
-
-		// Update user's email verification status
-		const updateResult = await db
-			.update(users)
-			.set({
-				emailVerified: new Date(),
-				updatedAt: new Date()
-			} as any)
-			.where(eq(users.email, email))
-			.returning();
-
-		const updatedUser = updateResult[0];
-		if (!updatedUser) {
+		if (verificationResult.status === 'not_found') {
 			return json(
 				{
 					success: false,
@@ -84,20 +102,16 @@ export const POST: RequestHandler = async (event) => {
 			);
 		}
 
-		// Remove the used verification token
-		await db.delete(verificationTokens).where(eq(verificationTokens.token, token));
-
-		console.log(`[VerifyEmail] Successfully verified email for user: ${updatedUser.id}`);
-
-		// Generate a verification token for auto-login
-		const verificationToken = crypto.randomBytes(32).toString('hex');
+		console.log(
+			`[VerifyEmail] Successfully verified email for user: ${verificationResult.updatedUser.id}`
+		);
 
 		return json({
 			success: true,
 			verified: true,
 			message: 'Email successfully verified',
-			sessionToken: verificationToken,
-			userId: updatedUser.id
+			sessionToken: verificationResult.verificationToken,
+			userId: verificationResult.updatedUser.id
 		});
 	} catch (error) {
 		console.error('[VerifyEmail] Unexpected error:', error);

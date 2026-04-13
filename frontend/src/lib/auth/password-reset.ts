@@ -1,18 +1,21 @@
-import crypto from 'crypto';
 import { getDatabase } from '$lib/db/drizzle';
 import { passwordResetTokens, users } from '$lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq, gt } from 'drizzle-orm';
+import { generateHexToken, hashToken } from '$lib/auth/token-utils';
+
+type DatabaseExecutor = any;
 
 export async function generatePasswordResetToken(userId: string): Promise<string> {
 	const db = await getDatabase();
-	const token = crypto.randomBytes(32).toString('hex');
+	const token = generateHexToken();
+	const tokenHash = hashToken(token);
 	const expires = new Date(Date.now() + 60 * 60 * 1000);
 
 	await db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, userId));
 
 	await db.insert(passwordResetTokens).values({
 		userId,
-		token,
+		token: tokenHash,
 		expires
 	});
 
@@ -25,10 +28,11 @@ export async function validatePasswordResetToken(token: string): Promise<{
 	error?: string;
 }> {
 	const db = await getDatabase();
+	const tokenHash = hashToken(token);
 	const resetTokens = await db
 		.select()
 		.from(passwordResetTokens)
-		.where(eq(passwordResetTokens.token, token))
+		.where(eq(passwordResetTokens.token, tokenHash))
 		.limit(1);
 
 	if (resetTokens.length === 0) {
@@ -47,7 +51,67 @@ export async function validatePasswordResetToken(token: string): Promise<{
 
 export async function deletePasswordResetToken(token: string): Promise<void> {
 	const db = await getDatabase();
-	await db.delete(passwordResetTokens).where(eq(passwordResetTokens.token, token));
+	await db.delete(passwordResetTokens).where(eq(passwordResetTokens.token, hashToken(token)));
+}
+
+export async function deletePasswordResetTokenById(
+	executor: DatabaseExecutor,
+	tokenId: string
+): Promise<void> {
+	await executor.delete(passwordResetTokens).where(eq(passwordResetTokens.id, tokenId));
+}
+
+export async function getConsumablePasswordResetToken(
+	executor: DatabaseExecutor,
+	token: string
+): Promise<{
+	isValid: boolean;
+	userId?: string;
+	tokenId?: string;
+	error?: string;
+}> {
+	const tokenHash = hashToken(token);
+	const [resetToken] = await executor
+		.select()
+		.from(passwordResetTokens)
+		.where(eq(passwordResetTokens.token, tokenHash))
+		.for('update');
+
+	if (!resetToken) {
+		return { isValid: false, error: 'Invalid token' };
+	}
+
+	if (new Date() > resetToken.expires) {
+		await deletePasswordResetTokenById(executor, resetToken.id);
+		return { isValid: false, error: 'Token expired' };
+	}
+
+	return {
+		isValid: true,
+		userId: resetToken.userId,
+		tokenId: resetToken.id
+	};
+}
+
+export async function consumePasswordResetToken(token: string): Promise<{
+	isValid: boolean;
+	userId?: string;
+	error?: string;
+}> {
+	const db = await getDatabase();
+	const tokenHash = hashToken(token);
+	const now = new Date();
+
+	const consumedTokens = await db
+		.delete(passwordResetTokens)
+		.where(and(eq(passwordResetTokens.token, tokenHash), gt(passwordResetTokens.expires, now)))
+		.returning({ userId: passwordResetTokens.userId });
+
+	if (consumedTokens.length > 0) {
+		return { isValid: true, userId: consumedTokens[0].userId };
+	}
+
+	return await validatePasswordResetToken(token);
 }
 
 export async function canRequestPasswordReset(email: string): Promise<{

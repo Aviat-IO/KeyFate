@@ -8,21 +8,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { DeadLetterQueue } from '$lib/email/dead-letter-queue';
-import crypto from 'crypto';
-
-/**
- * Authorization helper
- */
-async function isAdmin(request: Request): Promise<boolean> {
-	const authHeader = request.headers.get('authorization');
-	const adminToken = process.env.ADMIN_TOKEN || 'admin-secret';
-	const expected = `Bearer ${adminToken}`;
-	return (
-		authHeader !== null &&
-		authHeader.length === expected.length &&
-		crypto.timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected))
-	);
-}
+import { requireAdmin } from '$lib/auth/admin-guard';
 
 /**
  * GET /api/admin/email-failures/:id
@@ -30,9 +16,8 @@ async function isAdmin(request: Request): Promise<boolean> {
  * Get details of a specific email failure
  */
 export const GET: RequestHandler = async (event) => {
-	if (!(await isAdmin(event.request))) {
-		return json({ error: 'Unauthorized' }, { status: 401 });
-	}
+	const session = await event.locals.auth();
+	requireAdmin(session);
 
 	try {
 		const failureId = event.params.id;
@@ -77,9 +62,8 @@ export const GET: RequestHandler = async (event) => {
  * Using PATCH as specified since it better represents "updating" the resolution status.
  */
 export const PATCH: RequestHandler = async (event) => {
-	if (!(await isAdmin(event.request))) {
-		return json({ error: 'Unauthorized' }, { status: 401 });
-	}
+	const session = await event.locals.auth();
+	requireAdmin(session);
 
 	try {
 		const failureId = event.params.id;

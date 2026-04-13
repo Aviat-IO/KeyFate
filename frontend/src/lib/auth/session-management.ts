@@ -6,7 +6,7 @@
 
 import { getDatabase } from '$lib/db/drizzle';
 import { users } from '$lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { logger } from '$lib/logger';
 
 /**
@@ -50,14 +50,13 @@ export async function invalidateAllUserSessions(
 ): Promise<{ success: boolean; sessionsInvalidated: number }> {
 	try {
 		const db = await getDatabase();
+		const invalidatedAt = new Date();
 
-		// NextAuth stores sessions in the database
-		// We update a field that forces session revalidation
 		await db
 			.update(users)
 			.set({
-				// Force session refresh by updating a timestamp
-				updatedAt: new Date()
+				sessionsInvalidatedAt: invalidatedAt,
+				sessionVersion: sql`${users.sessionVersion} + 1`
 			})
 			.where(eq(users.id, userId));
 
@@ -119,24 +118,23 @@ export async function invalidateSession(
  * Check if session should be invalidated
  *
  * Checks various conditions that should trigger session invalidation:
- * - Password change timestamp
- * - Account status changes
- * - Security flags
+	 * - Session revocation timestamp
+	 * - Account status changes
+	 * - Security flags
  *
  * @param userId - User ID to check
- * @param sessionCreatedAt - When the session was created
+	 * @param sessionVersion - Session version stored in the token/session
  */
 export async function shouldInvalidateSession(
 	userId: string,
-	sessionCreatedAt: Date
+	sessionVersion: number
 ): Promise<{ shouldInvalidate: boolean; reason?: string }> {
 	try {
 		const db = await getDatabase();
 
 		const [user] = await db
 			.select({
-				updatedAt: users.updatedAt,
-				emailVerified: users.emailVerified
+				sessionVersion: users.sessionVersion
 			})
 			.from(users)
 			.where(eq(users.id, userId))
@@ -149,20 +147,10 @@ export async function shouldInvalidateSession(
 			};
 		}
 
-		// If user was updated after session creation, invalidate
-		// This catches password changes and security updates
-		if (user.updatedAt && user.updatedAt > sessionCreatedAt) {
+		if (user.sessionVersion !== sessionVersion) {
 			return {
 				shouldInvalidate: true,
-				reason: 'User account updated'
-			};
-		}
-
-		// If email is not verified, invalidate sessions
-		if (!user.emailVerified) {
-			return {
-				shouldInvalidate: true,
-				reason: 'Email not verified'
+				reason: 'User session version changed'
 			};
 		}
 

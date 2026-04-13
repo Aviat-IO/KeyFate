@@ -38,6 +38,22 @@ export async function createSubscription(data: CreateSubscriptionData) {
 			throw new Error(`Tier ${data.tierName} not found`);
 		}
 
+		if (data.provider && data.providerSubscriptionId) {
+			const existingSubscription = await getSubscriptionByProviderSubscriptionId(
+				data.provider,
+				data.providerSubscriptionId
+			);
+
+			if (existingSubscription) {
+				logger.info('Skipping duplicate subscription creation replay', {
+					provider: data.provider,
+					providerSubscriptionId: data.providerSubscriptionId,
+					userId: data.userId
+				});
+				return existingSubscription;
+			}
+		}
+
 		const insertValues: typeof userSubscriptions.$inferInsert = {
 			userId: data.userId,
 			tierId: tier.id,
@@ -52,7 +68,23 @@ export async function createSubscription(data: CreateSubscriptionData) {
 			updatedAt: new Date()
 		};
 
-		const [subscription] = await db.insert(userSubscriptions).values(insertValues).returning();
+		const [subscription] = await db
+			.insert(userSubscriptions)
+			.values(insertValues)
+			.onConflictDoNothing()
+			.returning();
+
+		if (!subscription && data.provider && data.providerSubscriptionId) {
+			const existingSubscription = await getSubscriptionByProviderSubscriptionId(
+				data.provider,
+				data.providerSubscriptionId
+			);
+
+			if (existingSubscription) {
+				return existingSubscription;
+			}
+			throw new Error('Subscription insert conflicted but existing subscription was not found');
+		}
 
 		await logSubscriptionChanged(data.userId, {
 			action: 'created',
@@ -147,6 +179,19 @@ export async function updateSubscriptionStatus(userId: string, status: Subscript
  */
 export async function cancelSubscription(userId: string, immediate: boolean = false) {
 	try {
+		const currentSubscription = await getUserSubscription(userId);
+		if (!currentSubscription) {
+			throw new Error('Subscription not found');
+		}
+
+		if (immediate && currentSubscription.status === 'cancelled') {
+			return currentSubscription;
+		}
+
+		if (!immediate && currentSubscription.cancelAtPeriodEnd) {
+			return currentSubscription;
+		}
+
 		const updateData: UpdateSubscriptionData = immediate
 			? { status: 'cancelled', cancelAtPeriodEnd: false }
 			: { cancelAtPeriodEnd: true };

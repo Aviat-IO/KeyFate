@@ -2,9 +2,13 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { checkRateLimit } from '$lib/auth/rate-limiting';
 import { getDatabase } from '$lib/db/drizzle';
-import { users, verificationTokens } from '$lib/db/schema';
-import { and, eq } from 'drizzle-orm';
+import { users } from '$lib/db/schema';
+import { eq } from 'drizzle-orm';
 import { z } from 'zod';
+import {
+	deleteVerificationTokenById,
+	getConsumableVerificationToken
+} from '$lib/auth/email-verification';
 
 const verifyEmailSchema = z.object({
 	email: z.string().email('Invalid email address'),
@@ -53,49 +57,78 @@ export const POST: RequestHandler = async (event) => {
 			);
 		}
 
-		// Look up verification token
-		const tokenResult = await db
-			.select()
-			.from(verificationTokens)
-			.where(
-				and(eq(verificationTokens.identifier, normalizedEmail), eq(verificationTokens.token, token))
-			)
-			.limit(1);
+		const verificationResult = await db.transaction(async (tx) => {
+			const tokenResult = await getConsumableVerificationToken(tx, {
+				email: normalizedEmail,
+				token,
+				purpose: 'email_verification'
+			});
 
-		const verificationToken = tokenResult[0];
-		if (!verificationToken) {
+			if (!tokenResult.success) {
+				return {
+					status: 'invalid' as const,
+					error: tokenResult.error
+				};
+			}
+
+			const userResult = await tx
+				.select()
+				.from(users)
+				.where(eq(users.email, normalizedEmail))
+				.limit(1);
+			const user = userResult[0];
+
+			if (!user) {
+				return { status: 'not_found' as const };
+			}
+
+			if (user.emailVerified) {
+				await deleteVerificationTokenById(tx, {
+					email: normalizedEmail,
+					token,
+					purpose: 'email_verification'
+				});
+
+				return {
+					status: 'already_verified' as const,
+					user
+				};
+			}
+
+			await tx
+				.update(users)
+				.set({
+					emailVerified: new Date(),
+					updatedAt: new Date()
+				} as any)
+				.where(eq(users.id, user.id));
+
+			await deleteVerificationTokenById(tx, {
+				email: normalizedEmail,
+				token,
+				purpose: 'email_verification'
+			});
+
+			return {
+				status: 'verified' as const,
+				user
+			};
+		});
+
+		if (verificationResult.status === 'invalid') {
 			return json(
 				{
 					success: false,
-					error: 'Invalid or expired verification token'
+					error:
+						verificationResult.error === 'Token expired'
+							? 'Verification token has expired'
+							: 'Invalid or expired verification token'
 				},
 				{ status: 400 }
 			);
 		}
 
-		// Check if token is expired
-		if (verificationToken.expires < new Date()) {
-			// Clean up expired token
-			await db.delete(verificationTokens).where(eq(verificationTokens.token, token));
-
-			return json(
-				{
-					success: false,
-					error: 'Verification token has expired'
-				},
-				{ status: 400 }
-			);
-		}
-
-		// Look up user
-		const userResult = await db
-			.select()
-			.from(users)
-			.where(eq(users.email, normalizedEmail))
-			.limit(1);
-
-		const user = userResult[0];
-		if (!user) {
+		if (verificationResult.status === 'not_found') {
 			return json(
 				{
 					success: false,
@@ -105,19 +138,15 @@ export const POST: RequestHandler = async (event) => {
 			);
 		}
 
-		// Check if user is already verified
-		if (user.emailVerified) {
-			// Still clean up the token
-			await db.delete(verificationTokens).where(eq(verificationTokens.token, token));
-
+		if (verificationResult.status === 'already_verified') {
 			return new Response(
 				JSON.stringify({
 					success: true,
 					verified: true,
 					message: 'Email is already verified',
 					user: {
-						id: user.id,
-						email: user.email
+						id: verificationResult.user.id,
+						email: verificationResult.user.email
 					}
 				}),
 				{
@@ -131,30 +160,15 @@ export const POST: RequestHandler = async (event) => {
 			);
 		}
 
-		// Update user as verified and clean up token
-		await Promise.all([
-			// Mark email as verified
-			db
-				.update(users)
-				.set({
-					emailVerified: new Date(),
-					updatedAt: new Date()
-				} as any)
-				.where(eq(users.id, user.id)),
-
-			// Delete the used verification token
-			db.delete(verificationTokens).where(eq(verificationTokens.token, token))
-		]);
-
-		console.log(`[VerifyEmail] Successfully verified email for user: ${user.id}`);
+		console.log(`[VerifyEmail] Successfully verified email for user: ${verificationResult.user.id}`);
 
 		return new Response(
 			JSON.stringify({
 				success: true,
 				verified: true,
 				user: {
-					id: user.id,
-					email: user.email
+					id: verificationResult.user.id,
+					email: verificationResult.user.email
 				}
 			}),
 			{

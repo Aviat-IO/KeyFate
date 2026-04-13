@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { getSafeRedirectTarget } from '$lib/auth/redirects';
 	import { signIn } from '@auth/sveltekit/client';
 
 	type AuthStep = 'email' | 'otp';
@@ -15,7 +16,9 @@
 
 	let emailInputRef = $state<HTMLInputElement | null>(null);
 
-	const callbackUrl = $derived($page.url.searchParams.get('callbackUrl') || '/dashboard');
+	const callbackUrl = $derived(
+		getSafeRedirectTarget($page.url.searchParams.get('callbackUrl'), $page.url.origin)
+	);
 	const urlError = $derived($page.url.searchParams.get('error'));
 
 	$effect(() => {

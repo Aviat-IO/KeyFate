@@ -1,34 +1,19 @@
 import { getDatabase } from '$lib/db/drizzle';
 import { users, verificationTokens } from '$lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq, gt, lte } from 'drizzle-orm';
+import { generateHexToken, hashToken } from '$lib/auth/token-utils';
+
+type VerificationTokenPurpose = 'email_verification' | 'email_verification_login';
+type DatabaseExecutor = any;
+
+const EMAIL_VERIFICATION_PURPOSE: VerificationTokenPurpose = 'email_verification';
+const EMAIL_VERIFICATION_LOGIN_PURPOSE: VerificationTokenPurpose = 'email_verification_login';
 
 /**
  * Generate a secure verification token using Web Crypto API (Edge Runtime compatible)
  */
 function generateVerificationToken(): string {
-	// Use Web Crypto API for Edge Runtime compatibility
-	const array = new Uint8Array(32);
-
-	try {
-		crypto.getRandomValues(array);
-
-		// Check if we got actual random values (not all zeros)
-		const hasRandomValues = array.some((byte) => byte !== 0);
-		if (!hasRandomValues) {
-			// Fallback for test environments where crypto might return zeros
-			for (let i = 0; i < array.length; i++) {
-				array[i] = Math.floor(Math.random() * 256);
-			}
-		}
-	} catch {
-		// Fallback for environments without crypto
-		for (let i = 0; i < array.length; i++) {
-			array[i] = Math.floor(Math.random() * 256);
-		}
-	}
-
-	// Convert to hex string
-	return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
+	return generateHexToken();
 }
 
 /**
@@ -70,16 +55,25 @@ export async function createVerificationToken(email: string): Promise<{
 
 		// Generate verification token
 		const token = generateVerificationToken();
+		const tokenHash = hashToken(token);
 		const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
 
 		// Remove any existing verification tokens for this email
-		await db.delete(verificationTokens).where(eq(verificationTokens.identifier, normalizedEmail));
+		await db
+			.delete(verificationTokens)
+			.where(
+				and(
+					eq(verificationTokens.identifier, normalizedEmail),
+					eq(verificationTokens.purpose, EMAIL_VERIFICATION_PURPOSE)
+				)
+			);
 
 		// Store new verification token
 		await db.insert(verificationTokens).values({
 			identifier: normalizedEmail,
-			token,
-			expires
+			token: tokenHash,
+			expires,
+			purpose: EMAIL_VERIFICATION_PURPOSE
 		});
 
 		console.log(`[EmailVerification] Created verification token for: ${normalizedEmail}`);
@@ -95,6 +89,178 @@ export async function createVerificationToken(email: string): Promise<{
 			error: 'Failed to create verification token'
 		};
 	}
+}
+
+export async function createAutoLoginToken(
+	email: string,
+	executor?: DatabaseExecutor
+): Promise<string> {
+	const db = executor ?? (await getDatabase());
+	const normalizedEmail = email.toLowerCase().trim();
+	const token = generateVerificationToken();
+	const tokenHash = hashToken(token);
+	const expires = new Date(Date.now() + 15 * 60 * 1000);
+
+	await db
+		.delete(verificationTokens)
+		.where(
+			and(
+				eq(verificationTokens.identifier, normalizedEmail),
+				eq(verificationTokens.purpose, EMAIL_VERIFICATION_LOGIN_PURPOSE)
+			)
+		);
+
+	await db.insert(verificationTokens).values({
+		identifier: normalizedEmail,
+		token: tokenHash,
+		expires,
+		purpose: EMAIL_VERIFICATION_LOGIN_PURPOSE
+	});
+
+	return token;
+}
+
+export async function deleteVerificationTokenById(
+	executor: DatabaseExecutor,
+	{
+		email,
+		token,
+		purpose
+	}: {
+		email: string;
+		token: string;
+		purpose: VerificationTokenPurpose;
+	}
+): Promise<void> {
+	const normalizedEmail = email.toLowerCase().trim();
+	await executor.delete(verificationTokens).where(
+		and(
+			eq(verificationTokens.identifier, normalizedEmail),
+			eq(verificationTokens.token, hashToken(token)),
+			eq(verificationTokens.purpose, purpose)
+		)
+	);
+}
+
+export async function getConsumableVerificationToken(
+	executor: DatabaseExecutor,
+	{
+		email,
+		token,
+		purpose
+	}: {
+		email: string;
+		token: string;
+		purpose: VerificationTokenPurpose;
+	}
+): Promise<{
+		success: boolean;
+		consumed?: {
+			identifier: string;
+			expires: Date;
+			purpose: VerificationTokenPurpose;
+		};
+		error?: string;
+}> {
+	const normalizedEmail = email.toLowerCase().trim();
+	const tokenHash = hashToken(token);
+	const [verificationToken] = await executor
+		.select()
+		.from(verificationTokens)
+		.where(
+			and(
+				eq(verificationTokens.identifier, normalizedEmail),
+				eq(verificationTokens.token, tokenHash),
+				eq(verificationTokens.purpose, purpose)
+			)
+		)
+		.for('update');
+
+	if (!verificationToken) {
+		return { success: false, error: 'Invalid token' };
+	}
+
+	if (verificationToken.expires <= new Date()) {
+		await deleteVerificationTokenById(executor, { email, token, purpose });
+		return { success: false, error: 'Token expired' };
+	}
+
+	return {
+		success: true,
+		consumed: {
+			identifier: verificationToken.identifier,
+			expires: verificationToken.expires,
+			purpose: verificationToken.purpose as VerificationTokenPurpose
+		}
+	};
+}
+
+export async function consumeVerificationToken({
+	email,
+	token,
+	purpose
+}: {
+	email: string;
+	token: string;
+	purpose: VerificationTokenPurpose;
+}): Promise<{
+	success: boolean;
+	consumed?: {
+		identifier: string;
+		expires: Date;
+		purpose: VerificationTokenPurpose;
+	};
+	error?: string;
+}> {
+	const db = await getDatabase();
+	const normalizedEmail = email.toLowerCase().trim();
+	const tokenHash = hashToken(token);
+	const now = new Date();
+
+	const consumedTokens = await db
+		.delete(verificationTokens)
+		.where(
+			and(
+				eq(verificationTokens.identifier, normalizedEmail),
+				eq(verificationTokens.token, tokenHash),
+				eq(verificationTokens.purpose, purpose),
+				gt(verificationTokens.expires, now)
+			)
+		)
+		.returning({
+			identifier: verificationTokens.identifier,
+			expires: verificationTokens.expires,
+			purpose: verificationTokens.purpose
+		});
+
+	if (consumedTokens.length > 0) {
+		return {
+			success: true,
+			consumed: {
+				identifier: consumedTokens[0].identifier,
+				expires: consumedTokens[0].expires,
+				purpose: consumedTokens[0].purpose as VerificationTokenPurpose
+			}
+		};
+	}
+
+	const expiredTokens = await db
+		.delete(verificationTokens)
+		.where(
+			and(
+				eq(verificationTokens.identifier, normalizedEmail),
+				eq(verificationTokens.token, tokenHash),
+				eq(verificationTokens.purpose, purpose),
+				lte(verificationTokens.expires, now)
+			)
+		)
+		.returning({ identifier: verificationTokens.identifier });
+
+	if (expiredTokens.length > 0) {
+		return { success: false, error: 'Token expired' };
+	}
+
+	return { success: false, error: 'Invalid token' };
 }
 
 /**

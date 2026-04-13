@@ -1,7 +1,65 @@
 import { getDatabase } from '$lib/db/drizzle';
 import { webhookEvents } from '$lib/db/schema';
-import { eq, and, lt } from 'drizzle-orm';
+import { eq, and, lt, sql } from 'drizzle-orm';
 import { logger } from '$lib/logger';
+
+const STALE_WEBHOOK_PROCESSING_MS = 5 * 60 * 1000;
+
+export async function claimWebhookEvent(
+	provider: 'stripe' | 'btcpay',
+	eventId: string,
+	eventType: string,
+	payload: unknown
+): Promise<boolean> {
+	try {
+		const db = await getDatabase();
+		const now = new Date();
+		const staleProcessingCutoff = new Date(now.getTime() - STALE_WEBHOOK_PROCESSING_MS);
+
+		const [claimed] = await db
+			.insert(webhookEvents)
+			.values({
+				provider,
+				eventId,
+				eventType,
+				payload: payload as Record<string, unknown>,
+				status: 'processing',
+				processedAt: null,
+				errorMessage: null,
+				updatedAt: now
+			})
+			.onConflictDoUpdate({
+				target: [webhookEvents.provider, webhookEvents.eventId],
+				set: {
+					eventType,
+					payload: payload as Record<string, unknown>,
+					status: 'processing',
+					processedAt: null,
+					errorMessage: null,
+					retryCount: sql`${webhookEvents.retryCount} + 1`,
+					updatedAt: now
+				},
+				setWhere: sql`${webhookEvents.status} = 'failed' or (${webhookEvents.status} = 'processing' and ${webhookEvents.updatedAt} < ${staleProcessingCutoff})`
+			})
+			.returning({ id: webhookEvents.id });
+
+		if (!claimed) {
+			logger.info('Webhook already claimed (duplicate)', {
+				provider,
+				eventId
+			});
+			return false;
+		}
+
+		return true;
+	} catch (error) {
+		logger.error('Failed to claim webhook event', error as Error, {
+			provider,
+			eventId
+		});
+		throw error;
+	}
+}
 
 export async function isWebhookProcessed(
 	provider: 'stripe' | 'btcpay',
@@ -32,33 +90,82 @@ export async function recordWebhookEvent(
 	eventType: string,
 	payload: unknown
 ): Promise<boolean> {
+	void eventType;
+	void payload;
+
 	try {
 		const db = await getDatabase();
 
-		await db.insert(webhookEvents).values({
-			provider,
-			eventId,
-			eventType,
-			payload: payload as Record<string, unknown>,
-			status: 'processed',
-			processedAt: new Date()
-		});
+		const [updated] = await db
+			.update(webhookEvents)
+			.set({
+				status: 'processed',
+				processedAt: new Date(),
+				errorMessage: null,
+				updatedAt: new Date()
+			})
+			.where(and(eq(webhookEvents.provider, provider), eq(webhookEvents.eventId, eventId)))
+			.returning({ id: webhookEvents.id });
 
-		return true;
+		return !!updated;
 	} catch (error) {
-		if (
-			error instanceof Error &&
-			'code' in error &&
-			(error as Error & { code: string }).code === '23505'
-		) {
-			logger.info('Webhook already processed (duplicate)', {
-				provider,
-				eventId
-			});
-			return false;
-		}
-
 		logger.error('Failed to record webhook event', error as Error, {
+			provider,
+			eventId
+		});
+		throw error;
+	}
+}
+
+export async function finalizeWebhookEventProcessing(
+	provider: 'stripe' | 'btcpay',
+	eventId: string
+): Promise<boolean> {
+	try {
+		const db = await getDatabase();
+
+		const [updated] = await db
+			.update(webhookEvents)
+			.set({
+				status: 'processed',
+				processedAt: new Date(),
+				errorMessage: null,
+				updatedAt: new Date()
+			})
+			.where(and(eq(webhookEvents.provider, provider), eq(webhookEvents.eventId, eventId)))
+			.returning({ id: webhookEvents.id });
+
+		return !!updated;
+	} catch (error) {
+		logger.error('Failed to finalize webhook event processing', error as Error, {
+			provider,
+			eventId
+		});
+		throw error;
+	}
+}
+
+export async function markWebhookEventFailed(
+	provider: 'stripe' | 'btcpay',
+	eventId: string,
+	errorMessage: string
+): Promise<boolean> {
+	try {
+		const db = await getDatabase();
+
+		const [updated] = await db
+			.update(webhookEvents)
+			.set({
+				status: 'failed',
+				errorMessage,
+				updatedAt: new Date()
+			})
+			.where(and(eq(webhookEvents.provider, provider), eq(webhookEvents.eventId, eventId)))
+			.returning({ id: webhookEvents.id });
+
+		return !!updated;
+	} catch (error) {
+		logger.error('Failed to mark webhook event as failed', error as Error, {
 			provider,
 			eventId
 		});

@@ -1,34 +1,69 @@
 {
-	"version": "7",
-	"dialect": "postgresql",
-	"entries": [
-		{
-			"idx": 0,
-			"version": "7",
-			"when": 1764047448839,
-			"tag": "0000_initial_schema_with_rate_limits",
-			"breakpoints": true
-		},
-		{
-			"idx": 1,
-			"version": "7",
-			"when": 1772260286588,
-			"tag": "0001_add_nostr_pubkey",
-			"breakpoints": true
-		},
-		{
-			"idx": 2,
-			"version": "7",
-			"when": 1772260662835,
-			"tag": "0002_add_bitcoin_utxos",
-			"breakpoints": true
-		},
-		{
-			"idx": 3,
-			"version": "7",
-			"when": 1773015377729,
-			"tag": "0003_add_is_admin_column",
-			"breakpoints": true
-		}
-	]
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1764047448839,
+      "tag": "0000_initial_schema_with_rate_limits",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1772260286588,
+      "tag": "0001_add_nostr_pubkey",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772260662835,
+      "tag": "0002_add_bitcoin_utxos",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1773015377729,
+      "tag": "0003_add_is_admin_column",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1776040324758,
+      "tag": "0004_add_session_revocation_timestamp",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1776040669692,
+      "tag": "0005_add_session_version",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1776042290509,
+      "tag": "0006_provider_aware_webhook_deduplication",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1776043628768,
+      "tag": "0007_webhook_side_effect_idempotency",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1776044955028,
+      "tag": "0008_add_email_verification_login_token_purpose",
+      "breakpoints": true
+    }
+  ]
 }

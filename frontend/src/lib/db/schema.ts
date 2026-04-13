@@ -77,7 +77,11 @@ export const emailFailureProviderEnum = pgEnum('email_failure_provider', [
 	'console-dev',
 	'resend'
 ]);
-export const tokenPurposeEnum = pgEnum('token_purpose', ['email_verification', 'authentication']);
+export const tokenPurposeEnum = pgEnum('token_purpose', [
+	'email_verification',
+	'authentication',
+	'email_verification_login'
+]);
 export const auditEventTypeEnum = pgEnum('audit_event_type', [
 	'secret_created',
 	'secret_edited',
@@ -147,6 +151,8 @@ export const users = pgTable('users', {
 	image: text('image'),
 	password: text('password'), // Optional field for credential-based authentication
 	isAdmin: boolean('is_admin').default(false).notNull(),
+	sessionVersion: integer('session_version').default(0).notNull(),
+	sessionsInvalidatedAt: timestamp('sessions_invalidated_at', { mode: 'date' }),
 	createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
 	updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull()
 });
@@ -566,40 +572,61 @@ export const userSubscriptions = pgTable(
 		),
 		providerSubscriptionIdIdx: index('idx_user_subscriptions_provider_subscription_id').on(
 			table.providerSubscriptionId
+		),
+		providerSubscriptionUnique: unique(
+			'user_subscriptions_provider_provider_subscription_id_unique'
+		).on(table.provider, table.providerSubscriptionId)
+	})
+	);
+
+export const webhookEvents = pgTable(
+	'webhook_events',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		provider: text('provider').notNull(), // "stripe" or "btcpay"
+		eventType: text('event_type').notNull(),
+		eventId: text('event_id').notNull(),
+		payload: jsonb('payload').notNull(),
+		status: webhookStatusEnum('status').notNull().default('received'),
+		processedAt: timestamp('processed_at'),
+		errorMessage: text('error_message'),
+		retryCount: integer('retry_count').notNull().default(0),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at').defaultNow().notNull()
+	},
+	(table) => ({
+		providerEventUnique: unique('webhook_events_provider_event_id_unique').on(
+			table.provider,
+			table.eventId
 		)
 	})
 );
 
-export const webhookEvents = pgTable('webhook_events', {
-	id: uuid('id').primaryKey().defaultRandom(),
-	provider: text('provider').notNull(), // "stripe" or "btcpay"
-	eventType: text('event_type').notNull(),
-	eventId: text('event_id').notNull().unique(),
-	payload: jsonb('payload').notNull(),
-	status: webhookStatusEnum('status').notNull().default('received'),
-	processedAt: timestamp('processed_at'),
-	errorMessage: text('error_message'),
-	retryCount: integer('retry_count').notNull().default(0),
-	createdAt: timestamp('created_at').defaultNow().notNull(),
-	updatedAt: timestamp('updated_at').defaultNow().notNull()
-});
-
-export const paymentHistory = pgTable('payment_history', {
-	id: uuid('id').primaryKey().defaultRandom(),
-	userId: text('user_id')
-		.notNull()
-		.references(() => users.id, { onDelete: 'cascade' }),
-	subscriptionId: uuid('subscription_id').references(() => userSubscriptions.id),
-	provider: text('provider').notNull(),
-	providerPaymentId: text('provider_payment_id').notNull(),
-	amount: numeric('amount', { precision: 10, scale: 2 }).notNull(),
-	currency: text('currency').notNull().default('USD'),
-	status: paymentStatusEnum('status').notNull(),
-	failureReason: text('failure_reason'),
-	metadata: jsonb('metadata'),
-	createdAt: timestamp('created_at').defaultNow().notNull(),
-	updatedAt: timestamp('updated_at').defaultNow().notNull()
-});
+export const paymentHistory = pgTable(
+	'payment_history',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		userId: text('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		subscriptionId: uuid('subscription_id').references(() => userSubscriptions.id),
+		provider: text('provider').notNull(),
+		providerPaymentId: text('provider_payment_id').notNull(),
+		amount: numeric('amount', { precision: 10, scale: 2 }).notNull(),
+		currency: text('currency').notNull().default('USD'),
+		status: paymentStatusEnum('status').notNull(),
+		failureReason: text('failure_reason'),
+		metadata: jsonb('metadata'),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at').defaultNow().notNull()
+	},
+	(table) => ({
+		providerPaymentUnique: unique('payment_history_provider_payment_id_unique').on(
+			table.provider,
+			table.providerPaymentId
+		)
+	})
+);
 
 export const emailFailures = pgTable(
 	'email_failures',

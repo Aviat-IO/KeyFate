@@ -12,21 +12,7 @@ import { getDatabase } from '$lib/db/drizzle';
 import { emailFailures } from '$lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { sendReminderEmail } from '$lib/email/email-service';
-import crypto from 'crypto';
-
-/**
- * Authorization helper
- */
-async function isAdmin(request: Request): Promise<boolean> {
-	const authHeader = request.headers.get('authorization');
-	const adminToken = process.env.ADMIN_TOKEN || 'admin-secret';
-	const expected = `Bearer ${adminToken}`;
-	return (
-		authHeader !== null &&
-		authHeader.length === expected.length &&
-		crypto.timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected))
-	);
-}
+import { requireAdmin } from '$lib/auth/admin-guard';
 
 /**
  * POST /api/admin/email-failures/:id/retry
@@ -34,9 +20,8 @@ async function isAdmin(request: Request): Promise<boolean> {
  * Manually retry a failed email
  */
 export const POST: RequestHandler = async (event) => {
-	if (!(await isAdmin(event.request))) {
-		return json({ error: 'Unauthorized' }, { status: 401 });
-	}
+	const session = await event.locals.auth();
+	requireAdmin(session);
 
 	try {
 		const failureId = event.params.id;
