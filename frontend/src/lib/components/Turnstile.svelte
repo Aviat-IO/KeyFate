@@ -12,7 +12,7 @@
 		onExpire?: () => void;
 	} = $props();
 
-	let container: HTMLDivElement;
+	let container = $state<HTMLDivElement | undefined>(undefined);
 	let widgetId: string | undefined;
 
 	const siteKey = env.PUBLIC_TURNSTILE_SITE_KEY;

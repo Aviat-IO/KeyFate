@@ -16,8 +16,13 @@
 		class?: string;
 	} = $props();
 
-	let otp = $state<string[]>(new Array(length).fill(''));
-	let inputRefs = $state<(HTMLInputElement | null)[]>(new Array(length).fill(null));
+	let otp = $state<string[]>([]);
+	let inputRefs = $state<(HTMLInputElement | null)[]>([]);
+
+	$effect(() => {
+		otp = Array.from({ length }, (_, index) => otp[index] ?? '');
+		inputRefs = Array.from({ length }, (_, index) => inputRefs[index] ?? null);
+	});
 
 	$effect(() => {
 		// Auto-focus first input on mount

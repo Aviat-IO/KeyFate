@@ -21,7 +21,7 @@ export class StripeProvider implements PaymentProvider {
 
 	constructor(secretKey: string) {
 		this.stripe = new Stripe(secretKey, {
-			apiVersion: '2026-02-25.clover'
+			apiVersion: '2026-04-22.dahlia'
 		});
 	}
 
@@ -193,7 +193,7 @@ export class StripeProvider implements PaymentProvider {
 		}
 
 		if (config.locale) {
-			sessionParams.locale = config.locale as Stripe.Checkout.SessionCreateParams.Locale;
+			sessionParams.locale = config.locale as typeof sessionParams.locale;
 		}
 
 		if (config.metadata) {

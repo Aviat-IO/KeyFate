@@ -52,7 +52,8 @@
 	let serverShare = $state<string | null>(null);
 	let showDeleteDialog = $state(false);
 	let showRevealDialog = $state(false);
-	let serverShareDeleted = $state(!secret.server_share);
+	let serverShareDeletedLocally = $state(false);
+	let serverShareDeleted = $derived(serverShareDeletedLocally || !secret.server_share);
 	let hasBitcoin = $state(false);
 	let bitcoinChecked = $state(false);
 
@@ -121,7 +122,7 @@
 				throw new Error(data.error || 'Failed to delete server share');
 			}
 
-			serverShareDeleted = true;
+			serverShareDeletedLocally = true;
 			showDeleteDialog = false;
 		} catch (err) {
 			console.error('Error deleting server share:', err);
