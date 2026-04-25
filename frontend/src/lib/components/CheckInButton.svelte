@@ -21,8 +21,14 @@
 		loading = true;
 
 		try {
+			const csrfRes = await fetch('/api/csrf-token');
+			const { token: csrfToken } = await csrfRes.json();
+
 			const response = await fetch(`/api/secrets/${secretId}/check-in`, {
-				method: 'POST'
+				method: 'POST',
+				headers: {
+					'x-csrf-token': csrfToken
+				}
 			});
 
 			if (!response.ok) {
