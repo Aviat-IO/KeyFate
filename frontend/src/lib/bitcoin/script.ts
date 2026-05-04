@@ -18,6 +18,14 @@
 import * as btc from '@scure/btc-signer';
 import { hex } from '@scure/base';
 
+export type BitcoinTimelockNetwork = 'mainnet' | 'testnet' | 'signet';
+
+function getAddressNetwork(
+	network: BitcoinTimelockNetwork
+): typeof btc.NETWORK | typeof btc.TEST_NETWORK {
+	return network === 'mainnet' ? btc.NETWORK : btc.TEST_NETWORK;
+}
+
 /** Maximum CSV value using 16-bit encoding (~388 days at 144 blocks/day) */
 export const MAX_CSV_BLOCKS = 65535;
 
@@ -107,10 +115,9 @@ export function createCSVTimelockScript(
  */
 export function createP2WSHAddress(
 	script: Uint8Array,
-	network: 'mainnet' | 'testnet' = 'mainnet'
+	network: BitcoinTimelockNetwork = 'mainnet'
 ): string {
-	const net = network === 'testnet' ? btc.TEST_NETWORK : btc.NETWORK;
-	const p2wshResult = btc.p2wsh({ type: 'unknown' as const, script }, net);
+	const p2wshResult = btc.p2wsh({ type: 'unknown' as const, script }, getAddressNetwork(network));
 	if (!p2wshResult.address) {
 		throw new Error('Failed to generate P2WSH address');
 	}
@@ -123,10 +130,9 @@ export function createP2WSHAddress(
  */
 export function getP2WSHOutputScript(
 	script: Uint8Array,
-	network: 'mainnet' | 'testnet' = 'mainnet'
+	network: BitcoinTimelockNetwork = 'mainnet'
 ): Uint8Array {
-	const net = network === 'testnet' ? btc.TEST_NETWORK : btc.NETWORK;
-	const p2wshResult = btc.p2wsh({ type: 'unknown' as const, script }, net);
+	const p2wshResult = btc.p2wsh({ type: 'unknown' as const, script }, getAddressNetwork(network));
 	return p2wshResult.script;
 }
 
