@@ -1,7 +1,21 @@
 # KeyFate (Dead Man's Switch)
 
-A secure digital service that automatically triggers an alarm or other emergency
-response when the user is incapacitated.
+A zero-knowledge dead man's switch for encrypted secret recovery. KeyFate helps a
+user prepare sensitive information for release to chosen recipients if the user
+misses check-ins, while keeping secret creation and recovery client-side.
+
+## Public alpha review package
+
+Start here if you are evaluating KeyFate without private project context:
+
+- [Alpha release notes and checklist](./docs/release/alpha-0.1.0.md)
+- [Self-hosting guide](./docs/self-hosting.md)
+- [Product walkthrough outline](./docs/demos/product-walkthrough.md)
+- [Nostr recovery demo outline](./docs/demos/nostr-recovery.md)
+- [Offline recovery demo outline](./docs/demos/offline-recovery.md)
+
+No public alpha tag or GitHub release has been cut by this branch. The proposed
+review tag is `v0.1.0-alpha.1`.
 
 ## 🚀 Quick Start (Local Development)
 
@@ -25,22 +39,21 @@ open http://localhost:3000
 
 For detailed setup instructions, see [INFRASTRUCTURE.md](./INFRASTRUCTURE.md)
 
-**Payment testing:** See [PAYMENT_TESTING.md](./PAYMENT_TESTING.md) for BTCPay
-Server and Stripe testing
+**Payment testing:** Stripe and BTCPay Server are optional for alpha review. See
+[docs/self-hosting.md](./docs/self-hosting.md) for required environment
+variables.
 
 ## Alternative Setup Options
 
-1. **Deploy Infrastructure:** See
-   [Infrastructure README](infrastructure/README.md) for automated Terragrunt
-   deployment
-2. **Frontend Development:** See [Frontend README](frontend/README.md) for local
-   development setup
+1. **Self-hosting:** See [docs/self-hosting.md](./docs/self-hosting.md) for the
+   alpha reviewer/operator setup.
+2. **Frontend development:** Run commands from `frontend/` with Bun.
 
 ## Tech Stack
 
 ### Local Development
 
-- **Frontend:** Next.js, TypeScript, Tailwind CSS, Shadcn UI
+- **Frontend:** SvelteKit 5, TypeScript, Tailwind CSS, shadcn-svelte
 - **Database:** PostgreSQL 16 (Docker)
 - **ORM:** Drizzle ORM
 - **Orchestration:** Docker Compose, Make
@@ -82,16 +95,13 @@ Option 2 - Using Drizzle ORM:
 ```bash
 # From frontend directory, push schema to database
 cd frontend
-npm run db:push  # Push schema changes
+bunx drizzle-kit push  # Push schema changes for non-production review use
 # or
 # Run pending migrations
-npm run db:migrate
+bunx drizzle-kit migrate
 
-# To migrate staging
-npm run db:migrate -- --config=drizzle-staging.config.ts
-
-# To migrate production
-npm run db:migrate -- --config=drizzle-production.config.ts
+# To migrate staging/production, use the environment-specific DATABASE_URL and
+# run the same Drizzle migration command from frontend/.
 ```
 
 ### Connecting to Cloud SQL Database
