@@ -10,6 +10,7 @@ import { doubleEncryptShare } from '$lib/crypto/double-encrypt';
 import { getConversationKey, encrypt, decrypt as nip44Decrypt } from '$lib/nostr/encryption';
 import { wrapShareForRecipient, type SharePayload } from '$lib/nostr/gift-wrap';
 import { createNostrClient } from '$lib/nostr/client';
+import { resolveRecipientInboxRelays } from '$lib/nostr/relay-preferences';
 import type { Nip44Ops } from '$lib/crypto/double-encrypt';
 
 /** Input for a single share to publish */
@@ -69,7 +70,8 @@ function createNip44Ops(): Nip44Ops {
  * For each eligible recipient:
  *   1. Double-encrypt the share (ChaCha20 + NIP-44)
  *   2. Create a NIP-59 Gift Wrap event
- *   3. Publish to Nostr relays
+ *   3. Resolve recipient NIP-65 inbox/read relays, appending KeyFate defaults as fallback
+ *   4. Publish to Nostr relays
  *
  * @param secretId - The secret's UUID
  * @param shares - Array of shares with recipient IDs
@@ -106,65 +108,66 @@ export async function publishSharesToNostr(params: {
 	}
 
 	const nip44Ops = createNip44Ops();
-	const client = createNostrClient();
 
-	try {
-		for (const shareInput of shares) {
-			const nostrPubkey = recipientMap.get(shareInput.recipientId);
-			if (!nostrPubkey) {
-				result.skipped.push(shareInput.recipientId);
-				continue;
-			}
-
-			try {
-				// 1. Double-encrypt the share
-				const encrypted = await doubleEncryptShare(
-					shareInput.share,
-					nostrPubkey,
-					senderSecretKey,
-					passphrase,
-					nip44Ops
-				);
-
-				// 2. Encode the encrypted share as hex for the gift wrap payload
-				const encryptedShareHex = hex.encode(encrypted.encryptedShare);
-				const nonceHex = hex.encode(encrypted.nonce);
-
-				const payload: SharePayload = {
-					share: JSON.stringify({
-						encryptedShare: encryptedShareHex,
-						nonce: nonceHex,
-						encryptedKNostr: encrypted.encryptedKNostr
-					}),
-					secretId,
-					shareIndex: shareInput.shareIndex,
-					threshold,
-					totalShares,
-					version: 1
-				};
-
-				// 3. Create gift wrap
-				const giftWrap = wrapShareForRecipient(payload, senderSecretKey, nostrPubkey);
-
-				// 4. Publish to relays
-				await client.publish(giftWrap);
-
-				result.published.push({
-					recipientId: shareInput.recipientId,
-					nostrEventId: giftWrap.id,
-					plaintextK: encrypted.plaintextK,
-					encryptedKPassphrase: encrypted.encryptedKPassphrase
-				});
-			} catch (err) {
-				const message = err instanceof Error ? err.message : String(err);
-				result.errors.push({
-					recipientId: shareInput.recipientId,
-					error: message
-				});
-			}
+	for (const shareInput of shares) {
+		const nostrPubkey = recipientMap.get(shareInput.recipientId);
+		if (!nostrPubkey) {
+			result.skipped.push(shareInput.recipientId);
+			continue;
 		}
-	} finally {
-		client.close();
+
+		try {
+			// 1. Double-encrypt the share
+			const encrypted = await doubleEncryptShare(
+				shareInput.share,
+				nostrPubkey,
+				senderSecretKey,
+				passphrase,
+				nip44Ops
+			);
+
+			// 2. Encode the encrypted share as hex for the gift wrap payload
+			const encryptedShareHex = hex.encode(encrypted.encryptedShare);
+			const nonceHex = hex.encode(encrypted.nonce);
+
+			const payload: SharePayload = {
+				share: JSON.stringify({
+					encryptedShare: encryptedShareHex,
+					nonce: nonceHex,
+					encryptedKNostr: encrypted.encryptedKNostr
+				}),
+				secretId,
+				shareIndex: shareInput.shareIndex,
+				threshold,
+				totalShares,
+				version: 1
+			};
+
+			// 3. Create gift wrap
+			const giftWrap = wrapShareForRecipient(payload, senderSecretKey, nostrPubkey);
+
+			// 4. Publish to recipient inbox relays, plus default fallbacks for durability.
+			const relays = await resolveRecipientInboxRelays(nostrPubkey);
+			const client = createNostrClient({ relays });
+			try {
+				await client.publish(giftWrap);
+			} finally {
+				client.close();
+			}
+
+			result.published.push({
+				recipientId: shareInput.recipientId,
+				nostrEventId: giftWrap.id,
+				plaintextK: encrypted.plaintextK,
+				encryptedKPassphrase: encrypted.encryptedKPassphrase
+			});
+		} catch (err) {
+			const message = err instanceof Error ? err.message : String(err);
+			result.errors.push({
+				recipientId: shareInput.recipientId,
+				error: message
+			});
+		}
 	}
 
 	return result;

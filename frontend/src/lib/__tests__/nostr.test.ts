@@ -406,6 +406,71 @@ describe('Nostr Relay Config', () => {
 });
 
 // ---------------------------------------------------------------------------
+// relay-preferences.ts
+// ---------------------------------------------------------------------------
+describe('NIP-65 Relay Preferences', () => {
+	it('extracts read/inbox relays and ignores write-only relays', async () => {
+		const { parseNip65InboxRelays } = await import('$lib/nostr/relay-preferences');
+
+		const relays = parseNip65InboxRelays({
+			kind: 10002,
+			pubkey: 'a'.repeat(64),
+			created_at: 1,
+			tags: [
+				['r', 'wss://read.example/', 'read'],
+				['r', 'wss://write.example', 'write'],
+				['r', 'wss://both.example'],
+				['r', 'not-a-url', 'read'],
+				['p', 'wss://ignored.example']
+			]
+		});
+
+		expect(relays).toEqual(['wss://read.example', 'wss://both.example']);
+	});
+
+	it('merges recipient relays before fallback relays and de-dupes', async () => {
+		const { mergeRecipientRelays } = await import('$lib/nostr/relay-preferences');
+
+		expect(
+			mergeRecipientRelays(
+				['wss://recipient.example/', 'wss://fallback.example'],
+				['wss://fallback.example/', 'wss://default.example']
+			)
+		).toEqual(['wss://recipient.example', 'wss://fallback.example', 'wss://default.example']);
+	});
+
+	it('resolves NIP-65 inbox relays with fallback defaults appended', async () => {
+		const { resolveRecipientInboxRelays } = await import('$lib/nostr/relay-preferences');
+
+		const relays = await resolveRecipientInboxRelays('a'.repeat(64), {
+			discoveryRelays: ['wss://discovery.example'],
+			fallbackRelays: ['wss://fallback.example'],
+			queryRelayList: async () => ({
+				kind: 10002,
+				pubkey: 'a'.repeat(64),
+				created_at: 1,
+				tags: [['r', 'wss://inbox.example', 'read']]
+			})
+		});
+
+		expect(relays).toEqual(['wss://inbox.example', 'wss://fallback.example']);
+	});
+
+	it('falls back to defaults when NIP-65 discovery fails', async () => {
+		const { resolveRecipientInboxRelays } = await import('$lib/nostr/relay-preferences');
+
+		const relays = await resolveRecipientInboxRelays('a'.repeat(64), {
+			fallbackRelays: ['wss://fallback.example'],
+			queryRelayList: async () => {
+				throw new Error('relay down');
+			}
+		});
+
+		expect(relays).toEqual(['wss://fallback.example']);
+	});
+});
+
+// ---------------------------------------------------------------------------
 // client.ts
 // ---------------------------------------------------------------------------
 describe('Nostr Client', () => {
