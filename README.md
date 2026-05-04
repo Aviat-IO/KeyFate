@@ -25,6 +25,10 @@ open http://localhost:3000
 
 For detailed setup instructions, see [INFRASTRUCTURE.md](./INFRASTRUCTURE.md)
 
+**Use-case brief:** See the
+[HRF activist and journalist brief](./docs/hrf-activist-journalist-use-cases.md)
+for human-rights emergency disclosure and continuity scenarios.
+
 **Payment testing:** See [PAYMENT_TESTING.md](./PAYMENT_TESTING.md) for BTCPay
 Server and Stripe testing
 
