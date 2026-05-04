@@ -5,6 +5,10 @@
 **Scope:** Full codebase including authentication, payment integration, cron
 jobs, database, and infrastructure
 
+For dead-man-switch-specific risks such as early recipient discovery, metadata
+leakage, operator disappearance, false triggers, missed check-ins, forced
+check-ins, and replay/link-forwarding, see [docs/threat-model.md](./docs/threat-model.md).
+
 ---
 
 ## Executive Summary
