@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vitest/config';
@@ -22,8 +23,7 @@ export default defineConfig({
 		globals: true,
 		alias: {
 			// Ensure $lib resolves correctly in tests
-			$lib: './src/lib',
-			'$lib/*': './src/lib/*'
+			$lib: fileURLToPath(new URL('./src/lib', import.meta.url))
 		}
 	}
 });

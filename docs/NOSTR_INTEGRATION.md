@@ -244,6 +244,19 @@ Add Nostr recovery option to `/decrypt` page:
 - **Relays cannot read content**: All content encrypted
 - **Relays cannot fake events**: Cryptographic signatures
 
+### NIP-65 Relay Preference Fallback
+
+For recipient Nostr deliveries, KeyFate checks the recipient's NIP-65 kind `10002`
+relay list and publishes gift wraps to the recipient's `read` relays (their inbox
+relays). Relay tags without a `read`/`write` marker are treated as both read and
+write. `write`-only relays are ignored for inbox delivery.
+
+KeyFate always appends its default disclosure relays after any recipient-preferred
+inbox relays. If NIP-65 discovery fails, no relay list exists, or the list has no
+valid inbox relays, publishing falls back to the default relay set. This preserves
+the current durable broadcast behavior while improving delivery to recipients who
+advertise relay preferences.
+
 ## Database Schema Changes
 
 ```sql
