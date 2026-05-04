@@ -21,9 +21,9 @@
 		isValidNsec,
 		nsecToSecretKey,
 		unwrapGiftWrap,
+		recoverShareFromGiftWrap,
 		parseEncryptedKBundle,
 		recoverKWithPassphrase,
-		decryptShareWithK,
 		hexToBytes,
 		type FoundGiftWrap,
 		type UnwrappedShare,
@@ -54,6 +54,7 @@
 	let kBundleJson = $state('');
 	let kOpReturnHex = $state('');
 	let nonceHex = $state('');
+	let decryptingNostr = $state(false);
 	let recoveringK = $state(false);
 
 	let nsecValid = $derived(nsecInput.trim().length > 0 && isValidNsec(nsecInput.trim()));
@@ -152,6 +153,38 @@
 		}
 	}
 
+	async function decryptSharesWithNostrKey() {
+		if (!hasSelectedEvents || !nsecValid) return;
+		onError('');
+		decryptingNostr = true;
+
+		try {
+			const secretKey = nsecToSecretKey(nsecInput.trim());
+			const results: DecryptedShareResult[] = [];
+
+			for (const idx of selectedEventIndices) {
+				const gw = foundEvents[idx];
+				try {
+					results.push(await recoverShareFromGiftWrap(gw.event, secretKey));
+				} catch (e) {
+					toast.error(
+						`Failed to recover event ${idx + 1}: ${e instanceof Error ? e.message : String(e)}`
+					);
+				}
+			}
+
+			if (results.length > 0) {
+				onComplete(results);
+				toast.success(`Recovered ${results.length} share(s) via Nostr`);
+			}
+		} catch (e) {
+			onError(`Nostr recovery failed: ${e instanceof Error ? e.message : String(e)}`);
+			toast.error('Failed to recover shares via Nostr');
+		} finally {
+			decryptingNostr = false;
+		}
+	}
+
 	async function decryptSharesWithK() {
 		if (!kRecoveryMethod) return;
 		onError('');
@@ -174,15 +207,16 @@
 				K = recoverKFromOpReturn(opReturnBytes);
 			}
 
-			if (!nonceHex || !nonceHex.trim()) {
-				throw new Error('Share nonce is required for decryption');
-			}
-
 			const results: DecryptedShareResult[] = [];
 			for (const share of unwrappedShares) {
 				try {
-					const encShare = hexToBytes(share.share);
-					const plaintext = decryptShare(encShare, hexToBytes(nonceHex.trim()), K);
+					const shareNonce = share.nonce ?? nonceHex.trim();
+					if (!shareNonce) {
+						throw new Error('Share nonce is required for decryption');
+					}
+
+					const encShare = hexToBytes(share.encryptedShare ?? share.share);
+					const plaintext = decryptShare(encShare, hexToBytes(shareNonce), K);
 					results.push({
 						share: plaintext,
 						shareIndex: share.shareIndex,
@@ -336,8 +370,19 @@
 				Unwrapped {unwrappedShares.length} share{unwrappedShares.length !== 1 ? 's' : ''}
 			</h3>
 			<p class="text-muted-foreground text-xs">
-				Shares are still encrypted with the symmetric key K. Choose how to recover K:
+				Current KeyFate Nostr events include the encrypted share, nonce, and K encrypted to your
+				Nostr key. Recover directly, or use a fallback K source.
 			</p>
+
+			<Button onclick={decryptSharesWithNostrKey} disabled={decryptingNostr} class="w-full">
+				{#if decryptingNostr}
+					<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+					Recovering via Nostr...
+				{:else}
+					<KeyRound class="mr-2 h-4 w-4" />
+					Recover Shares via Nostr Key
+				{/if}
+			</Button>
 
 			<div class="grid gap-2 sm:grid-cols-2">
 				<Button

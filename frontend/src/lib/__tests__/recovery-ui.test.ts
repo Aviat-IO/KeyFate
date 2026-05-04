@@ -18,6 +18,7 @@ import {
 	isValidNsec,
 	nsecToSecretKey,
 	unwrapGiftWrap,
+	recoverShareFromGiftWrap,
 	parseOpReturnFromTx,
 	parseEncryptedKBundle,
 	recoverKWithPassphrase,
@@ -27,6 +28,7 @@ import {
 } from '$lib/crypto/recovery-flows';
 import { generateKeypair } from '$lib/nostr/keypair';
 import { wrapShareForRecipient, type SharePayload } from '$lib/nostr/gift-wrap';
+import { doubleEncryptShare } from '$lib/crypto/double-encrypt';
 import { generateSymmetricKey, encryptWithSymmetricKey } from '$lib/crypto/symmetric';
 import { deriveKeyFromPassphrase, encryptWithDerivedKey } from '$lib/crypto/passphrase';
 import * as nip19 from 'nostr-tools/nip19';
@@ -145,6 +147,40 @@ describe('unwrapGiftWrap', () => {
 
 		const kp = generateKeypair();
 		expect(() => unwrapGiftWrap(fakeEvent as any, kp.secretKey)).toThrow('Expected kind 1059');
+	});
+
+	it('recovers current Nostr payloads without external K or nonce input', async () => {
+		const sender = generateKeypair();
+		const recipient = generateKeypair();
+		const shareText = 'shamir-share-1-of-3:feedface';
+		const encrypted = await doubleEncryptShare(shareText, recipient.publicKey, sender.secretKey);
+
+		const giftWrap = wrapShareForRecipient(
+			{
+				share: JSON.stringify({
+					encryptedShare: bytesToHex(encrypted.encryptedShare),
+					nonce: bytesToHex(encrypted.nonce),
+					encryptedKNostr: encrypted.encryptedKNostr
+				}),
+				secretId: 'secret-1',
+				shareIndex: 1,
+				threshold: 2,
+				totalShares: 3,
+				version: 1
+			},
+			sender.secretKey,
+			recipient.publicKey
+		);
+
+		const unwrapped = unwrapGiftWrap(giftWrap, recipient.secretKey);
+		expect(unwrapped.encryptedShare).toBe(bytesToHex(encrypted.encryptedShare));
+		expect(unwrapped.nonce).toBe(bytesToHex(encrypted.nonce));
+		expect(unwrapped.encryptedKNostr).toBe(encrypted.encryptedKNostr);
+		expect(unwrapped.senderPubkey).toBe(sender.publicKey);
+
+		const recovered = await recoverShareFromGiftWrap(giftWrap, recipient.secretKey);
+		expect(recovered.share).toBe(shareText);
+		expect(recovered.secretId).toBe('secret-1');
 	});
 
 	it('unwraps multiple different shares from same sender', () => {

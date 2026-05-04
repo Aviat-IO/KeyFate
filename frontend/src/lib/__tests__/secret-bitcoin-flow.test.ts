@@ -29,7 +29,13 @@ const recipient = makeKeyPair(2);
 
 // ─── Mock only the Nostr client (to avoid network calls) ─────────────────────
 
-const mockPublish = vi.fn().mockResolvedValue(undefined);
+const broadcastStatus = {
+	attempted: 1,
+	succeeded: 1,
+	failed: 0,
+	relays: [{ relay: 'wss://test.relay', success: true }]
+};
+const mockPublish = vi.fn().mockResolvedValue(broadcastStatus);
 
 vi.mock('$lib/nostr/client', () => ({
 	createNostrClient: vi.fn().mockImplementation(() => ({
@@ -48,7 +54,7 @@ vi.mock('$lib/nostr/client', () => ({
 describe('Nostr Publisher Service', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockPublish.mockResolvedValue(undefined);
+		mockPublish.mockResolvedValue(broadcastStatus);
 	});
 
 	it('publishes gift wraps for recipients with nostrPubkey', async () => {
@@ -72,6 +78,7 @@ describe('Nostr Publisher Service', () => {
 		expect(result.published[0].nostrEventId).toMatch(/^[0-9a-f]{64}$/);
 		expect(result.published[0].plaintextK).toBeInstanceOf(Uint8Array);
 		expect(result.published[0].plaintextK.length).toBe(32);
+		expect(result.published[0].broadcast.succeeded).toBe(1);
 		expect(result.skipped).toHaveLength(0);
 		expect(result.errors).toHaveLength(0);
 
@@ -154,6 +161,34 @@ describe('Nostr Publisher Service', () => {
 		expect(result.errors).toHaveLength(1);
 		expect(result.errors[0].recipientId).toBe('r1');
 		expect(result.errors[0].error).toContain('Relay refused');
+	});
+
+	it('recipient recovers a published gift wrap using only their Nostr key', async () => {
+		const { publishSharesToNostr } = await import('$lib/services/nostr-publisher');
+		const { recoverShareFromGiftWrap } = await import('$lib/crypto/recovery-flows');
+		const { generateKeypair } = await import('$lib/nostr/keypair');
+
+		const sender = generateKeypair();
+		const recipientKp = generateKeypair();
+		const originalShare = 'shamir-share-1-of-3:deadbeef';
+
+		await publishSharesToNostr({
+			secretId: 'secret-123',
+			shares: [{ recipientId: 'r1', share: originalShare, shareIndex: 1 }],
+			recipients: [{ id: 'r1', nostrPubkey: recipientKp.publicKey }],
+			senderSecretKey: sender.secretKey,
+			threshold: 2,
+			totalShares: 3
+		});
+
+		const giftWrap = mockPublish.mock.calls[0][0];
+		const recovered = await recoverShareFromGiftWrap(giftWrap, recipientKp.secretKey);
+
+		expect(recovered.share).toBe(originalShare);
+		expect(recovered.secretId).toBe('secret-123');
+		expect(recovered.shareIndex).toBe(1);
+		expect(recovered.threshold).toBe(2);
+		expect(recovered.totalShares).toBe(3);
 	});
 
 	it('returns unique plaintextK for each published share', async () => {

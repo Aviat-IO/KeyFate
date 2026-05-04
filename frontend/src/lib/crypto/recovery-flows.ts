@@ -12,7 +12,7 @@
 import { getConversationKey, decrypt as nip44Decrypt } from '$lib/nostr/encryption';
 import type { Event as NostrEvent } from 'nostr-tools/core';
 import * as nip19 from 'nostr-tools/nip19';
-import { recoverKFromOpReturn, decryptShare } from '$lib/crypto/recovery';
+import { recoverKFromNostr, recoverKFromOpReturn, decryptShare } from '$lib/crypto/recovery';
 import { deriveKeyFromPassphrase, decryptWithDerivedKey } from '$lib/crypto/passphrase';
 import { hexToBytes, bytesToHex } from './hex-utils';
 // Re-export so existing consumers (components, tests) don't break
@@ -22,8 +22,16 @@ export { hexToBytes, bytesToHex };
 
 /** Decoded share payload from a gift-wrapped Nostr event. */
 export interface UnwrappedShare {
-	/** The encrypted share data (base64 or hex) */
+	/** The encrypted share data, or the raw legacy share payload */
 	share: string;
+	/** Hex-encoded ChaCha20-Poly1305 ciphertext when using current Nostr recovery payloads */
+	encryptedShare?: string;
+	/** Hex-encoded ChaCha20-Poly1305 nonce when using current Nostr recovery payloads */
+	nonce?: string;
+	/** Symmetric key K encrypted to the recipient via NIP-44 */
+	encryptedKNostr?: string;
+	/** Nostr pubkey that sealed the event and encrypted K */
+	senderPubkey: string;
 	/** KeyFate secret ID */
 	secretId: string;
 	/** 1-based share index */
@@ -131,14 +139,80 @@ export function unwrapGiftWrap(
 
 	// Parse the rumor content as a share payload
 	const payload = JSON.parse(rumor.content);
+	const encryptedPayload = parseNostrSharePayload(payload.share);
 
 	return {
-		share: payload.share,
+		share: encryptedPayload?.encryptedShare ?? payload.share,
+		encryptedShare: encryptedPayload?.encryptedShare,
+		nonce: encryptedPayload?.nonce,
+		encryptedKNostr: encryptedPayload?.encryptedKNostr,
+		senderPubkey: seal.pubkey,
 		secretId: payload.secretId,
 		shareIndex: payload.shareIndex,
 		threshold: payload.threshold,
 		totalShares: payload.totalShares,
 		version: payload.version
+	};
+}
+
+interface NostrSharePayload {
+	encryptedShare: string;
+	nonce: string;
+	encryptedKNostr: string;
+}
+
+function parseNostrSharePayload(value: string): NostrSharePayload | null {
+	try {
+		const parsed = JSON.parse(value) as Partial<NostrSharePayload>;
+		if (
+			typeof parsed.encryptedShare === 'string' &&
+			typeof parsed.nonce === 'string' &&
+			typeof parsed.encryptedKNostr === 'string'
+		) {
+			return {
+				encryptedShare: parsed.encryptedShare,
+				nonce: parsed.nonce,
+				encryptedKNostr: parsed.encryptedKNostr
+			};
+		}
+	} catch {
+		// Legacy payloads stored the encrypted share directly in `share`.
+	}
+
+	return null;
+}
+
+/**
+ * Recover one share using only the recipient's Nostr secret key.
+ *
+ * This is the current KeyFate Nostr disclosure path:
+ * 1. NIP-59 unwrap gift wrap and seal.
+ * 2. NIP-44 decrypt K using the seal author's pubkey.
+ * 3. ChaCha20-Poly1305 decrypt the share using K and the embedded nonce.
+ */
+export async function recoverShareFromGiftWrap(
+	giftWrap: NostrEvent,
+	recipientSecretKey: Uint8Array
+): Promise<DecryptedShareResult> {
+	const unwrapped = unwrapGiftWrap(giftWrap, recipientSecretKey);
+
+	if (!unwrapped.encryptedKNostr || !unwrapped.encryptedShare || !unwrapped.nonce) {
+		throw new Error('Gift wrap payload is missing encryptedShare, nonce, or encryptedKNostr');
+	}
+
+	const K = await recoverKFromNostr(
+		unwrapped.encryptedKNostr,
+		recipientSecretKey,
+		unwrapped.senderPubkey
+	);
+	const share = decryptShareWithK(unwrapped.encryptedShare, unwrapped.nonce, K);
+
+	return {
+		share,
+		shareIndex: unwrapped.shareIndex,
+		threshold: unwrapped.threshold,
+		totalShares: unwrapped.totalShares,
+		secretId: unwrapped.secretId
 	};
 }
 
