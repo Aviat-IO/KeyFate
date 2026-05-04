@@ -1,6 +1,10 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vitest/config';
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
@@ -22,8 +26,8 @@ export default defineConfig({
 		globals: true,
 		alias: {
 			// Ensure $lib resolves correctly in tests
-			$lib: './src/lib',
-			'$lib/*': './src/lib/*'
+			$lib: path.resolve(dirname, 'src/lib'),
+			'$lib/*': path.resolve(dirname, 'src/lib/*')
 		}
 	}
 });

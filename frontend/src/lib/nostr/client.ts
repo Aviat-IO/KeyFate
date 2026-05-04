@@ -13,6 +13,19 @@ import { DEFAULT_RELAYS, MIN_PUBLISH_RELAYS } from './relay-config';
 
 export type { Filter };
 
+export interface RelayPublishResult {
+	relay: string;
+	success: boolean;
+	error?: string;
+}
+
+export interface PublishStatus {
+	attempted: number;
+	succeeded: number;
+	failed: number;
+	relays: RelayPublishResult[];
+}
+
 /** Options for the Nostr client. */
 export interface NostrClientOptions {
 	/** Relay URLs to use. Defaults to {@link DEFAULT_RELAYS}. */
@@ -50,9 +63,23 @@ export class NostrClient {
 	 * that at least one succeeded (hard requirement) and warns if
 	 * fewer than {@link MIN_PUBLISH_RELAYS} accepted the event.
 	 */
-	async publish(event: NostrEvent): Promise<void> {
+	async publish(event: NostrEvent): Promise<PublishStatus> {
 		const results = await Promise.allSettled(this.pool.publish(this.relays, event));
-		const succeeded = results.filter((r) => r.status === 'fulfilled').length;
+		const relays = results.map((result, index) => ({
+			relay: this.relays[index],
+			success: result.status === 'fulfilled',
+			...(result.status === 'rejected'
+				? { error: result.reason instanceof Error ? result.reason.message : String(result.reason) }
+				: {})
+		}));
+		const succeeded = relays.filter((r) => r.success).length;
+		const status: PublishStatus = {
+			attempted: this.relays.length,
+			succeeded,
+			failed: this.relays.length - succeeded,
+			relays
+		};
+
 		if (succeeded === 0) {
 			throw new Error('Failed to publish to any relay');
 		}
@@ -62,6 +89,8 @@ export class NostrClient {
 					`(minimum ${MIN_PUBLISH_RELAYS} recommended)`
 			);
 		}
+
+		return status;
 	}
 
 	/**

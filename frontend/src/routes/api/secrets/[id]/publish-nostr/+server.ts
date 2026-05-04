@@ -159,6 +159,7 @@ export const POST: RequestHandler = async (event) => {
 			recipientId: p.recipientId,
 			nostrEventId: p.nostrEventId,
 			plaintextK: hex.encode(p.plaintextK),
+			broadcast: p.broadcast,
 			...(p.encryptedKPassphrase
 				? {
 						encryptedKPassphrase: {

@@ -9,7 +9,7 @@ import { hex } from '@scure/base';
 import { doubleEncryptShare } from '$lib/crypto/double-encrypt';
 import { getConversationKey, encrypt, decrypt as nip44Decrypt } from '$lib/nostr/encryption';
 import { wrapShareForRecipient, type SharePayload } from '$lib/nostr/gift-wrap';
-import { createNostrClient } from '$lib/nostr/client';
+import { createNostrClient, type PublishStatus } from '$lib/nostr/client';
 import type { Nip44Ops } from '$lib/crypto/double-encrypt';
 
 /** Input for a single share to publish */
@@ -25,6 +25,8 @@ export interface PublishedShare {
 	nostrEventId: string;
 	/** Plaintext symmetric key K (for OP_RETURN embedding) */
 	plaintextK: Uint8Array;
+	/** Per-relay broadcast status for this gift wrap */
+	broadcast: PublishStatus;
 	/** K encrypted with passphrase-derived key (if passphrase was provided) */
 	encryptedKPassphrase?: {
 		ciphertext: Uint8Array;
@@ -146,13 +148,14 @@ export async function publishSharesToNostr(params: {
 				// 3. Create gift wrap
 				const giftWrap = wrapShareForRecipient(payload, senderSecretKey, nostrPubkey);
 
-				// 4. Publish to relays
-				await client.publish(giftWrap);
+				// 4. Publish to relays and keep per-relay status for audit/debugging
+				const broadcast = await client.publish(giftWrap);
 
 				result.published.push({
 					recipientId: shareInput.recipientId,
 					nostrEventId: giftWrap.id,
 					plaintextK: encrypted.plaintextK,
+					broadcast,
 					encryptedKPassphrase: encrypted.encryptedKPassphrase
 				});
 			} catch (err) {
