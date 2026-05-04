@@ -8,7 +8,8 @@ export {
 	daysToBlocks,
 	blocksToApproxDays,
 	MAX_CSV_BLOCKS,
-	MIN_UTXO_SATS
+	MIN_UTXO_SATS,
+	type BitcoinTimelockNetwork
 } from './script.js';
 
 export {
@@ -26,6 +27,12 @@ export { refreshTimelockUTXO, estimateRefreshesRemaining, type RefreshResult } f
 export { broadcastTransaction, getUTXOStatus, type UTXOStatus } from './broadcast.js';
 
 export { estimateFeeRate, getAllFeeRates, type FeePriority } from './fee-estimation.js';
+
+export {
+	buildBitcoinTimelockDemo,
+	type BitcoinTimelockDemoParams,
+	type BitcoinTimelockDemoVector
+} from './timelock-demo.js';
 
 export {
 	generateBitcoinKeypair,

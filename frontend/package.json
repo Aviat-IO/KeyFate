@@ -12,6 +12,7 @@
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"test:coverage": "vitest run --coverage",
+		"bitcoin:timelock-demo": "bun run scripts/bitcoin-timelock-demo.ts",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write ."
 	},
