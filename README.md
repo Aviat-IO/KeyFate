@@ -25,6 +25,11 @@ open http://localhost:3000
 
 For detailed setup instructions, see [INFRASTRUCTURE.md](./INFRASTRUCTURE.md)
 
+## Freedom-tech roadmap
+
+- [Grant roadmap](./docs/grants/README.md): HRF, OpenSats, and NLnet briefs plus a 12-16 week milestone plan.
+- [Threat model](./docs/threat-model.md): assets, adversaries, trust boundaries, mitigations, and residual risks for KeyFate's dead man's switch workflow.
+
 **Payment testing:** See [PAYMENT_TESTING.md](./PAYMENT_TESTING.md) for BTCPay
 Server and Stripe testing
 
