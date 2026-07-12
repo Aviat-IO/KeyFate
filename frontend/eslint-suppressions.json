@@ -1,0 +1,649 @@
+{
+	"src/auth.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 2
+		},
+		"no-useless-assignment": {
+			"count": 1
+		}
+	},
+	"src/lib/__tests__/e2e-bitcoin-nostr.test.ts": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		}
+	},
+	"src/lib/__tests__/nostr.test.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		},
+		"@typescript-eslint/no-unused-vars": {
+			"count": 2
+		}
+	},
+	"src/lib/__tests__/recovery-ui.test.ts": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		}
+	},
+	"src/lib/__tests__/scheduler.test.ts": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 2
+		}
+	},
+	"src/lib/__tests__/subscription.test.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		}
+	},
+	"src/lib/api/validation.ts": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		}
+	},
+	"src/lib/auth/__tests__/admin-guard.test.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		}
+	},
+	"src/lib/auth/__tests__/auth-config.test.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 3
+		}
+	},
+	"src/lib/auth/admin-guard.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		}
+	},
+	"src/lib/auth/email-verification.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 3
+		},
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		}
+	},
+	"src/lib/auth/password-reset.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		}
+	},
+	"src/lib/auth/password.ts": {
+		"no-useless-escape": {
+			"count": 2
+		}
+	},
+	"src/lib/auth/privacy-policy.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		},
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		}
+	},
+	"src/lib/auth/re-authentication.ts": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		}
+	},
+	"src/lib/auth/user-verification.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		},
+		"preserve-caught-error": {
+			"count": 2
+		}
+	},
+	"src/lib/auth/users.ts": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 4
+		}
+	},
+	"src/lib/auth/validate-env.ts": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		}
+	},
+	"src/lib/bitcoin/refresh.ts": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		}
+	},
+	"src/lib/bitcoin/transaction.ts": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		}
+	},
+	"src/lib/components/AuditLogsPage.svelte": {
+		"svelte/prefer-svelte-reactivity": {
+			"count": 2
+		},
+		"svelte/require-each-key": {
+			"count": 1
+		}
+	},
+	"src/lib/components/AuthForm.svelte": {
+		"svelte/no-navigation-without-resolve": {
+			"count": 4
+		}
+	},
+	"src/lib/components/BitcoinCostEstimate.svelte": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		}
+	},
+	"src/lib/components/DataExportCard.svelte": {
+		"svelte/require-each-key": {
+			"count": 1
+		}
+	},
+	"src/lib/components/EditSecretForm.svelte": {
+		"svelte/no-navigation-without-resolve": {
+			"count": 2
+		},
+		"svelte/require-each-key": {
+			"count": 1
+		}
+	},
+	"src/lib/components/EmailVerification.svelte": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		},
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		},
+		"svelte/no-navigation-without-resolve": {
+			"count": 5
+		}
+	},
+	"src/lib/components/Footer.svelte": {
+		"svelte/no-navigation-without-resolve": {
+			"count": 5
+		}
+	},
+	"src/lib/components/MessageTemplateSelector.svelte": {
+		"svelte/require-each-key": {
+			"count": 2
+		}
+	},
+	"src/lib/components/NavBar.svelte": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		},
+		"svelte/no-navigation-without-resolve": {
+			"count": 15
+		}
+	},
+	"src/lib/components/NewSecretForm.svelte": {
+		"svelte/no-navigation-without-resolve": {
+			"count": 1
+		},
+		"svelte/no-useless-mustaches": {
+			"count": 2
+		},
+		"svelte/require-each-key": {
+			"count": 3
+		}
+	},
+	"src/lib/components/OtpInput.svelte": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		},
+		"svelte/require-each-key": {
+			"count": 1
+		}
+	},
+	"src/lib/components/PaymentMethodSelector.svelte": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 2
+		}
+	},
+	"src/lib/components/PricingCard.svelte": {
+		"svelte/require-each-key": {
+			"count": 1
+		}
+	},
+	"src/lib/components/PricingPage.svelte": {
+		"svelte/no-navigation-without-resolve": {
+			"count": 1
+		}
+	},
+	"src/lib/components/PrivacyPolicyGuard.svelte": {
+		"svelte/no-navigation-without-resolve": {
+			"count": 2
+		}
+	},
+	"src/lib/components/RecoveryMethodSelector.svelte": {
+		"svelte/require-each-key": {
+			"count": 1
+		}
+	},
+	"src/lib/components/SSSDecryptor.svelte": {
+		"svelte/no-navigation-without-resolve": {
+			"count": 1
+		},
+		"svelte/require-each-key": {
+			"count": 1
+		}
+	},
+	"src/lib/components/SecretCard.svelte": {
+		"svelte/prefer-svelte-reactivity": {
+			"count": 1
+		}
+	},
+	"src/lib/components/SecretDetailsForm.svelte": {
+		"svelte/no-navigation-without-resolve": {
+			"count": 1
+		},
+		"svelte/require-each-key": {
+			"count": 1
+		}
+	},
+	"src/lib/components/SettingsNav.svelte": {
+		"svelte/no-navigation-without-resolve": {
+			"count": 1
+		},
+		"svelte/require-each-key": {
+			"count": 1
+		}
+	},
+	"src/lib/components/SubscriptionManager.svelte": {
+		"svelte/require-each-key": {
+			"count": 1
+		}
+	},
+	"src/lib/components/TierUsageCard.svelte": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		},
+		"svelte/no-useless-mustaches": {
+			"count": 1
+		}
+	},
+	"src/lib/components/Turnstile.svelte": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 6
+		}
+	},
+	"src/lib/components/recovery/RecoveryResultStep.svelte": {
+		"svelte/require-each-key": {
+			"count": 1
+		}
+	},
+	"src/lib/components/ui/button/button.svelte": {
+		"svelte/no-navigation-without-resolve": {
+			"count": 1
+		}
+	},
+	"src/lib/crypto/recovery-flows.ts": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 2
+		},
+		"preserve-caught-error": {
+			"count": 1
+		}
+	},
+	"src/lib/csrf.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		}
+	},
+	"src/lib/db/connection-manager.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 2
+		},
+		"preserve-caught-error": {
+			"count": 2
+		}
+	},
+	"src/lib/db/connection-parser.ts": {
+		"no-useless-escape": {
+			"count": 1
+		}
+	},
+	"src/lib/db/connection.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		}
+	},
+	"src/lib/db/queries/__tests__/admin-metrics.test.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		}
+	},
+	"src/lib/db/schema.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 3
+		}
+	},
+	"src/lib/db/secrets-service-robust.ts": {
+		"preserve-caught-error": {
+			"count": 1
+		}
+	},
+	"src/lib/email/admin-notification-service.ts": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		}
+	},
+	"src/lib/email/dead-letter-queue.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		}
+	},
+	"src/lib/email/email-failure-logger.ts": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		}
+	},
+	"src/lib/email/email-service.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 3
+		},
+		"@typescript-eslint/no-unused-vars": {
+			"count": 2
+		}
+	},
+	"src/lib/email/templates.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		}
+	},
+	"src/lib/gdpr/deletion-service.ts": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		}
+	},
+	"src/lib/payment/providers/BTCPayProvider.ts": {
+		"preserve-caught-error": {
+			"count": 3
+		}
+	},
+	"src/lib/rate-limit-db.ts": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		}
+	},
+	"src/lib/services/subscription-lifecycle.ts": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		}
+	},
+	"src/lib/services/subscription-service.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 2
+		}
+	},
+	"src/lib/subscription.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 3
+		},
+		"@typescript-eslint/no-unused-vars": {
+			"count": 2
+		}
+	},
+	"src/lib/types/database.types.ts": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		}
+	},
+	"src/routes/(admin)/admin/+page.svelte": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		},
+		"svelte/no-navigation-without-resolve": {
+			"count": 1
+		},
+		"svelte/require-each-key": {
+			"count": 3
+		}
+	},
+	"src/routes/(authenticated)/secrets/[id]/share-instructions/+page.svelte": {
+		"svelte/no-navigation-without-resolve": {
+			"count": 1
+		},
+		"svelte/require-each-key": {
+			"count": 2
+		}
+	},
+	"src/routes/(authenticated)/secrets/[id]/view/+page.svelte": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		},
+		"svelte/no-navigation-without-resolve": {
+			"count": 2
+		},
+		"svelte/prefer-svelte-reactivity": {
+			"count": 1
+		}
+	},
+	"src/routes/(authenticated)/settings/+layout.svelte": {
+		"svelte/no-navigation-without-resolve": {
+			"count": 1
+		},
+		"svelte/require-each-key": {
+			"count": 1
+		}
+	},
+	"src/routes/(main)/refunds/+page.svelte": {
+		"svelte/no-navigation-without-resolve": {
+			"count": 1
+		},
+		"svelte/require-each-key": {
+			"count": 1
+		}
+	},
+	"src/routes/+layout.svelte": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		}
+	},
+	"src/routes/+page.svelte": {
+		"svelte/no-navigation-without-resolve": {
+			"count": 1
+		},
+		"svelte/require-each-key": {
+			"count": 1
+		}
+	},
+	"src/routes/api/admin/email-failures/+server.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 2
+		}
+	},
+	"src/routes/api/admin/email-failures/[id]/+server.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		}
+	},
+	"src/routes/api/admin/email-failures/__tests__/auth.test.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		}
+	},
+	"src/routes/api/admin/metrics/+server.ts": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		}
+	},
+	"src/routes/api/admin/metrics/__tests__/metrics-api.test.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		}
+	},
+	"src/routes/api/audit-logs/+server.ts": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		}
+	},
+	"src/routes/api/auth/register/+server.ts": {
+		"prefer-const": {
+			"count": 1
+		}
+	},
+	"src/routes/api/auth/reset-password/+server.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		}
+	},
+	"src/routes/api/auth/verify-email-callback/+server.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		}
+	},
+	"src/routes/api/auth/verify-email/+server.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		}
+	},
+	"src/routes/api/csrf-token/+server.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		}
+	},
+	"src/routes/api/health/__tests__/health.test.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 8
+		}
+	},
+	"src/routes/api/secrets/[id]/+server.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		}
+	},
+	"src/routes/api/secrets/[id]/check-in/+server.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		}
+	},
+	"src/routes/api/secrets/[id]/check-in/__tests__/check-in.test.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		},
+		"@typescript-eslint/no-unsafe-function-type": {
+			"count": 5
+		},
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		}
+	},
+	"src/routes/api/secrets/[id]/delete-server-share/+server.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		}
+	},
+	"src/routes/api/secrets/[id]/send-now/__tests__/send-now.test.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		},
+		"@typescript-eslint/no-unused-vars": {
+			"count": 7
+		}
+	},
+	"src/routes/api/secrets/[id]/toggle-pause/+server.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		}
+	},
+	"src/routes/api/user/delete-account/cancel/[requestId]/+server.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		}
+	},
+	"src/routes/api/user/delete-account/confirm/+server.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		}
+	},
+	"src/routes/auth/error/+page.svelte": {
+		"svelte/no-navigation-without-resolve": {
+			"count": 3
+		}
+	},
+	"src/routes/auth/forgot-password/+page.svelte": {
+		"svelte/no-navigation-without-resolve": {
+			"count": 1
+		}
+	},
+	"src/routes/auth/login/+page.svelte": {
+		"svelte/no-navigation-without-resolve": {
+			"count": 1
+		}
+	},
+	"src/routes/auth/reset-password/+page.svelte": {
+		"no-useless-escape": {
+			"count": 2
+		},
+		"svelte/no-navigation-without-resolve": {
+			"count": 3
+		},
+		"svelte/require-each-key": {
+			"count": 1
+		}
+	},
+	"src/routes/auth/update-password/+page.svelte": {
+		"svelte/no-navigation-without-resolve": {
+			"count": 1
+		}
+	},
+	"src/routes/auth/verify/+page.svelte": {
+		"svelte/no-navigation-without-resolve": {
+			"count": 1
+		},
+		"svelte/prefer-svelte-reactivity": {
+			"count": 1
+		}
+	},
+	"src/routes/blog/+page.svelte": {
+		"svelte/no-navigation-without-resolve": {
+			"count": 2
+		},
+		"svelte/require-each-key": {
+			"count": 2
+		}
+	},
+	"src/routes/confirm-deletion/+page.svelte": {
+		"svelte/no-navigation-without-resolve": {
+			"count": 5
+		}
+	},
+	"src/routes/faq/+page.svelte": {
+		"svelte/require-each-key": {
+			"count": 2
+		}
+	},
+	"src/routes/lp/crypto/+page.svelte": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		},
+		"svelte/require-each-key": {
+			"count": 6
+		}
+	},
+	"src/routes/lp/estate/+page.svelte": {
+		"svelte/require-each-key": {
+			"count": 6
+		}
+	},
+	"src/routes/sign-in/+page.svelte": {
+		"@typescript-eslint/no-unused-vars": {
+			"count": 1
+		},
+		"svelte/no-navigation-without-resolve": {
+			"count": 2
+		}
+	},
+	"src/test/factories.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 2
+		},
+		"@typescript-eslint/no-unused-vars": {
+			"count": 2
+		}
+	},
+	"src/test/setup.ts": {
+		"@typescript-eslint/no-explicit-any": {
+			"count": 1
+		}
+	}
+}

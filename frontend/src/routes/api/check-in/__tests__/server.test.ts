@@ -26,7 +26,12 @@ vi.mock('$lib/db/drizzle', () => ({
 }));
 
 vi.mock('$lib/db/schema', () => ({
-	checkInTokens: { token: 'token', id: 'id', secretId: 'secret_id' },
+	checkInTokens: {
+		token: 'token',
+		tokenVersion: 'token_version',
+		id: 'id',
+		secretId: 'secret_id'
+	},
 	secrets: { id: 'id' },
 	checkinHistory: { secretId: 'secret_id' }
 }));
@@ -37,12 +42,17 @@ vi.mock('$lib/services/reminder-scheduler', () => ({
 
 vi.mock('$lib/rate-limit', () => ({
 	checkRateLimit: vi.fn(async () => ({ success: true })),
+	createRateLimitResponse: vi.fn(() => new Response(null, { status: 429 })),
 	getRateLimitHeaders: vi.fn(() => ({})),
 	getClientIdentifier: vi.fn(() => '127.0.0.1')
 }));
 
 vi.mock('drizzle-orm', () => ({
-	eq: vi.fn((left, right) => ({ left, right }))
+	eq: vi.fn((left, right) => ({ type: 'eq', left, right })),
+	and: vi.fn((...conditions: unknown[]) => ({ type: 'and', conditions })),
+	or: vi.fn((...conditions: unknown[]) => ({ type: 'or', conditions })),
+	gt: vi.fn((left, right) => ({ type: 'gt', left, right })),
+	isNull: vi.fn((value) => ({ type: 'isNull', value }))
 }));
 
 describe('POST /api/check-in logging', () => {
@@ -53,18 +63,20 @@ describe('POST /api/check-in logging', () => {
 	});
 
 	it('does not log raw token-bearing URLs or token values, and uses a fingerprint instead', async () => {
-		const token = 'super-secret-check-in-token';
+		const token = 'super-secret-check-in-token-at-least-32-bytes';
 		const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 		const { POST } = await import('../+server');
 		const response = await POST({
-			url: new URL(`http://localhost/api/check-in?token=${token}`),
-			request: new Request(`http://localhost/api/check-in?token=${token}`, {
+			url: new URL('http://localhost/api/check-in'),
+			request: new Request('http://localhost/api/check-in', {
 				method: 'POST',
 				headers: {
+					'content-type': 'application/json',
 					'x-forwarded-for': '203.0.113.10'
-				}
+				},
+				body: JSON.stringify({ token })
 			})
 		} as Parameters<typeof POST>[0]);
 

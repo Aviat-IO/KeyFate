@@ -29,9 +29,8 @@ export { estimateFeeRate, getAllFeeRates, type FeePriority } from './fee-estimat
 
 export {
 	generateBitcoinKeypair,
-	storeKeypair,
-	getStoredKeypair,
-	clearKeypairs,
+	bitcoinKeypairFromPrivateKey,
+	zeroBitcoinKeypair,
 	type BitcoinKeypair
 } from './client-wallet.js';
 
@@ -43,3 +42,9 @@ export {
 	type RefreshBitcoinClientParams,
 	type RefreshBitcoinClientResult
 } from './client-operations.js';
+
+export {
+	encryptBitcoinContinuityKit,
+	decryptBitcoinContinuityKit,
+	type BitcoinContinuityData
+} from './continuity-kit.js';

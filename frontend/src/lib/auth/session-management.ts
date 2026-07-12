@@ -118,12 +118,12 @@ export async function invalidateSession(
  * Check if session should be invalidated
  *
  * Checks various conditions that should trigger session invalidation:
-	 * - Session revocation timestamp
-	 * - Account status changes
-	 * - Security flags
+ * - Session revocation timestamp
+ * - Account status changes
+ * - Security flags
  *
  * @param userId - User ID to check
-	 * @param sessionVersion - Session version stored in the token/session
+ * @param sessionVersion - Session version stored in the token/session
  */
 export async function shouldInvalidateSession(
 	userId: string,

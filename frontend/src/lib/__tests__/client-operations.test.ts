@@ -19,8 +19,8 @@ function makeKeyPair(seed: number) {
 	return { privkey, pubkey };
 }
 
-const owner = makeKeyPair(1);
-const recipient = makeKeyPair(2);
+let owner = makeKeyPair(1);
+let recipient = makeKeyPair(2);
 
 // ─── enableBitcoinClient tests ────────────────────────────────────────────────
 
@@ -29,6 +29,8 @@ describe('Client Operations - enableBitcoinClient', () => {
 
 	beforeEach(() => {
 		vi.restoreAllMocks();
+		owner = makeKeyPair(1);
+		recipient = makeKeyPair(2);
 	});
 
 	it('creates timelock UTXO, broadcasts, and returns result', async () => {
@@ -46,7 +48,7 @@ describe('Client Operations - enableBitcoinClient', () => {
 
 		const result = await enableBitcoinClient({
 			ownerKeypair: owner,
-			recipientKeypair: recipient,
+			branchKeypair: recipient,
 			fundingUtxo: {
 				txId: 'cc'.repeat(32),
 				outputIndex: 0,
@@ -69,10 +71,12 @@ describe('Client Operations - enableBitcoinClient', () => {
 		expect(result.preSignedRecipientTx).toBeTruthy();
 		expect(typeof result.preSignedRecipientTx).toBe('string');
 		expect(Array.from(result.ownerPubkey)).toEqual(Array.from(owner.pubkey));
-		expect(Array.from(result.recipientPubkey)).toEqual(Array.from(recipient.pubkey));
+		expect(Array.from(result.branchPubkey)).toEqual(Array.from(recipient.pubkey));
+		expect(recipient.privkey.every((byte) => byte === 0)).toBe(true);
+		expect(owner.privkey.some((byte) => byte !== 0)).toBe(true);
 
 		// Verify broadcast was called
-		const mockFetch = globalThis.fetch as ReturnType<typeof vi.fn>;
+		const mockFetch = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
 		expect(mockFetch).toHaveBeenCalledTimes(1);
 
 		globalThis.fetch = originalFetch;
@@ -92,7 +96,7 @@ describe('Client Operations - enableBitcoinClient', () => {
 
 		const result = await enableBitcoinClient({
 			ownerKeypair: owner,
-			recipientKeypair: recipient,
+			branchKeypair: recipient,
 			fundingUtxo: {
 				txId: 'ff'.repeat(32),
 				outputIndex: 0,
@@ -133,7 +137,7 @@ describe('Client Operations - enableBitcoinClient', () => {
 		await expect(
 			enableBitcoinClient({
 				ownerKeypair: owner,
-				recipientKeypair: recipient,
+				branchKeypair: recipient,
 				fundingUtxo: {
 					txId: 'aa'.repeat(32),
 					outputIndex: 0,
@@ -149,6 +153,7 @@ describe('Client Operations - enableBitcoinClient', () => {
 				network: 'testnet'
 			})
 		).rejects.toThrow('Failed to broadcast');
+		expect(recipient.privkey.every((byte) => byte === 0)).toBe(true);
 
 		globalThis.fetch = originalFetch;
 	});
@@ -168,7 +173,7 @@ describe('Client Operations - enableBitcoinClient', () => {
 
 		const result = await enableBitcoinClient({
 			ownerKeypair: owner,
-			recipientKeypair: recipient,
+			branchKeypair: recipient,
 			fundingUtxo: {
 				txId: '22'.repeat(32),
 				outputIndex: 0,
@@ -200,6 +205,8 @@ describe('Client Operations - refreshBitcoinClient', () => {
 
 	beforeEach(() => {
 		vi.restoreAllMocks();
+		owner = makeKeyPair(1);
+		recipient = makeKeyPair(2);
 	});
 
 	it('refreshes a timelock UTXO and returns new UTXO data', async () => {
@@ -218,7 +225,7 @@ describe('Client Operations - refreshBitcoinClient', () => {
 
 		const result = await refreshBitcoinClient({
 			ownerKeypair: owner,
-			recipientPubkey: recipient.pubkey,
+			newBranchKeypair: recipient,
 			currentUtxo: {
 				txId: 'aa'.repeat(32),
 				outputIndex: 0,
@@ -229,7 +236,6 @@ describe('Client Operations - refreshBitcoinClient', () => {
 			feeRateSatsPerVbyte: 10,
 			symmetricKeyK: new Uint8Array(32).fill(0xaa),
 			nostrEventId: 'dd'.repeat(32),
-			recipientPrivkey: recipient.privkey,
 			recipientAddress: recipientP2wpkh.address!,
 			network: 'testnet'
 		});
@@ -240,9 +246,12 @@ describe('Client Operations - refreshBitcoinClient', () => {
 		expect(result.newAmountSats).toBeLessThan(50000);
 		expect(result.newAmountSats).toBeGreaterThan(0);
 		expect(result.preSignedRecipientTx).toBeTruthy();
+		expect(result.newBranchPubkey).toEqual(recipient.pubkey);
+		expect(recipient.privkey.every((byte) => byte === 0)).toBe(true);
+		expect(owner.privkey.some((byte) => byte !== 0)).toBe(true);
 
 		// Verify broadcast was called
-		const mockFetch = globalThis.fetch as ReturnType<typeof vi.fn>;
+		const mockFetch = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
 		expect(mockFetch).toHaveBeenCalledTimes(1);
 
 		globalThis.fetch = originalFetch;
@@ -263,7 +272,7 @@ describe('Client Operations - refreshBitcoinClient', () => {
 
 		const result = await refreshBitcoinClient({
 			ownerKeypair: owner,
-			recipientPubkey: recipient.pubkey,
+			newBranchKeypair: recipient,
 			currentUtxo: {
 				txId: 'dd'.repeat(32),
 				outputIndex: 0,
@@ -274,7 +283,6 @@ describe('Client Operations - refreshBitcoinClient', () => {
 			feeRateSatsPerVbyte: 5,
 			symmetricKeyK: new Uint8Array(32).fill(0xee),
 			nostrEventId: 'ff'.repeat(32),
-			recipientPrivkey: recipient.privkey,
 			recipientAddress: recipientP2wpkh.address!,
 			network: 'testnet'
 		});
@@ -303,7 +311,7 @@ describe('Client Operations - refreshBitcoinClient', () => {
 		await expect(
 			refreshBitcoinClient({
 				ownerKeypair: owner,
-				recipientPubkey: recipient.pubkey,
+				newBranchKeypair: recipient,
 				currentUtxo: {
 					txId: 'aa'.repeat(32),
 					outputIndex: 0,
@@ -314,11 +322,11 @@ describe('Client Operations - refreshBitcoinClient', () => {
 				feeRateSatsPerVbyte: 10,
 				symmetricKeyK: new Uint8Array(32).fill(0xaa),
 				nostrEventId: 'bb'.repeat(32),
-				recipientPrivkey: recipient.privkey,
 				recipientAddress: recipientP2wpkh.address!,
 				network: 'testnet'
 			})
 		).rejects.toThrow('Failed to broadcast');
+		expect(recipient.privkey.every((byte) => byte === 0)).toBe(true);
 
 		globalThis.fetch = originalFetch;
 	});
@@ -339,7 +347,7 @@ describe('Client Operations - refreshBitcoinClient', () => {
 
 		const result = await refreshBitcoinClient({
 			ownerKeypair: owner,
-			recipientPubkey: recipient.pubkey,
+			newBranchKeypair: recipient,
 			currentUtxo: {
 				txId: 'ff'.repeat(32),
 				outputIndex: 0,
@@ -350,7 +358,6 @@ describe('Client Operations - refreshBitcoinClient', () => {
 			feeRateSatsPerVbyte: 10,
 			symmetricKeyK: new Uint8Array(32).fill(0x11),
 			nostrEventId: '22'.repeat(32),
-			recipientPrivkey: recipient.privkey,
 			recipientAddress: recipientP2wpkh.address!,
 			network: 'testnet'
 		});

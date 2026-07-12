@@ -50,6 +50,10 @@ interface DisclosureTemplateData {
 	disclosureReason?: 'scheduled' | 'manual';
 	senderLastSeen?: Date;
 	secretCreatedAt?: Date;
+	nostrManifest?: string;
+	bitcoinRecoveryEnvelope?: string;
+	bitcoinRecoverySenderPubkey?: string;
+	bitcoinRecoveryGeneration?: number;
 }
 
 interface PasswordResetTemplateData {
@@ -283,6 +287,7 @@ ${companyName} - ${supportEmail}`;
 export function renderDisclosureTemplate(data: DisclosureTemplateData): EmailTemplate {
 	const siteUrl = SITE_URL || 'https://keyfate.com';
 	const decryptUrl = `${siteUrl}/decrypt`;
+	const recoveryUrl = `${siteUrl}/recover`;
 	const supportEmail = getSupportEmail();
 	const companyName = COMPANY || 'KeyFate';
 	const lastSeenText = data.senderLastSeen ? data.senderLastSeen.toLocaleDateString() : 'recently';
@@ -293,6 +298,34 @@ export function renderDisclosureTemplate(data: DisclosureTemplateData): EmailTem
 			: `${data.senderName} has not checked in as scheduled (last activity: ${lastSeenText}).`;
 
 	const subject = `${companyName}: Message from ${data.senderName} - ${data.secretTitle}`;
+	const escapedManifest = data.nostrManifest
+		?.replaceAll('&', '&amp;')
+		.replaceAll('<', '&lt;')
+		.replaceAll('>', '&gt;');
+	const nostrManifestHtml = escapedManifest
+		? `<li>Visit <a href="${recoveryUrl}" style="color: #2563eb;">${recoveryUrl}</a>, choose Nostr recovery, and paste this signed manifest:</li><pre style="background: #f5f5f5; padding: 12px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 11px; white-space: pre-wrap; word-break: break-word; color: #333; border: 1px solid #ddd;">${escapedManifest}</pre><li>Use the matching recipient nsec locally to recover the other share, then combine it with the share above.</li>`
+		: `<li>Locate the first share from ${data.senderName}${data.secretCreatedAt ? ` (shared around ${data.secretCreatedAt.toLocaleDateString()})` : ''}</li><li>Copy the share above</li><li>Visit <a href="${decryptUrl}" style="color: #2563eb;">${decryptUrl}</a> to combine both shares</li>`;
+	const nostrManifestText = data.nostrManifest
+		? `1. Visit ${recoveryUrl} and choose Nostr recovery.\n2. Paste this signed manifest:\n\n${data.nostrManifest}\n\n3. Use the matching recipient nsec locally to recover the other share, then combine it with the share above.`
+		: `1. Locate the first share from ${data.senderName}${data.secretCreatedAt ? ` (shared around ${data.secretCreatedAt.toLocaleDateString()})` : ''}\n2. Copy the share above\n3. Visit ${decryptUrl} to combine both shares`;
+	const escapedBitcoinEnvelope = data.bitcoinRecoveryEnvelope
+		?.replaceAll('&', '&amp;')
+		.replaceAll('<', '&lt;')
+		.replaceAll('>', '&gt;');
+	const bitcoinGeneration =
+		typeof data.bitcoinRecoveryGeneration === 'number' &&
+		Number.isInteger(data.bitcoinRecoveryGeneration) &&
+		data.bitcoinRecoveryGeneration >= 1
+			? data.bitcoinRecoveryGeneration
+			: null;
+	const bitcoinRecoveryHtml =
+		escapedBitcoinEnvelope && data.bitcoinRecoverySenderPubkey && bitcoinGeneration
+			? `<hr style="border: none; border-top: 1px solid #ddd; margin: 24px 0;"><p><strong>Bitcoin Delayed Recovery</strong></p><p style="font-size: 14px; color: #666;">At or after the Bitcoin CSV delay, visit <a href="${recoveryUrl}" style="color: #2563eb;">${recoveryUrl}</a>, choose Bitcoin recovery, and use the envelope, expected sender, and current generation below. Superseded generations must be rejected.</p><p><strong>Expected current generation:</strong> ${bitcoinGeneration}</p><p><strong>Expected sender:</strong></p><pre style="background: #f5f5f5; padding: 12px; font-size: 11px; word-break: break-all;">${data.bitcoinRecoverySenderPubkey}</pre><p><strong>Encrypted envelope:</strong></p><pre style="background: #f5f5f5; padding: 12px; font-size: 11px; white-space: pre-wrap; word-break: break-word;">${escapedBitcoinEnvelope}</pre>`
+			: '';
+	const bitcoinRecoveryText =
+		data.bitcoinRecoveryEnvelope && data.bitcoinRecoverySenderPubkey && bitcoinGeneration
+			? `\n\nBitcoin Delayed Recovery\nVisit ${recoveryUrl}, choose Bitcoin recovery, and use:\nExpected current generation: ${bitcoinGeneration}\nExpected sender: ${data.bitcoinRecoverySenderPubkey}\nEncrypted envelope: ${data.bitcoinRecoveryEnvelope}\nReject any envelope whose generation does not match this latest disclosure notice.`
+			: '';
 
 	// Plain transactional email — avoids Gmail subscription categorisation.
 	const html = `
@@ -318,10 +351,10 @@ export function renderDisclosureTemplate(data: DisclosureTemplateData): EmailTem
 
   <p><strong>How to Reconstruct</strong></p>
   <ol style="padding-left: 20px; font-size: 14px;">
-    <li>Locate the first share from ${data.senderName}${data.secretCreatedAt ? ` (shared around ${data.secretCreatedAt.toLocaleDateString()})` : ''}</li>
-    <li>Copy the share above</li>
-    <li>Visit <a href="${decryptUrl}" style="color: #2563eb;">${decryptUrl}</a> to combine both shares</li>
+    ${nostrManifestHtml}
   </ol>
+
+  ${bitcoinRecoveryHtml}
 
   <p style="font-size: 13px; color: #666;"><strong>Please keep this information secure.</strong> Store both shares safely and do not share with unauthorized parties.</p>
 
@@ -348,9 +381,7 @@ ${data.secretContent}
 ---
 
 How to Reconstruct
-1. Locate the first share from ${data.senderName}${data.secretCreatedAt ? ` (shared around ${data.secretCreatedAt.toLocaleDateString()})` : ''}
-2. Copy the share above
-3. Visit ${decryptUrl} to combine both shares
+${nostrManifestText}${bitcoinRecoveryText}
 
 Please keep this information secure. Store both shares safely and do not share with unauthorized parties.
 

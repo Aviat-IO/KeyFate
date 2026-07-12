@@ -8,7 +8,6 @@
 		id: string;
 		userId: string;
 		status: string;
-		fileUrl: string | null;
 		fileSize: number | null;
 		downloadCount: number;
 		expiresAt: string;
@@ -159,14 +158,12 @@
 									</span>
 								{/if}
 							</div>
-							{#if exportJob.status === 'completed' && exportJob.fileUrl && !isExpired(exportJob.expiresAt) && exportJob.downloadCount < 3}
+							{#if exportJob.status === 'completed' && !isExpired(exportJob.expiresAt) && exportJob.downloadCount < 3}
 								<Button
 									size="sm"
 									variant="outline"
 									onclick={() => {
-										if (exportJob.fileUrl) {
-											window.open(exportJob.fileUrl, '_blank');
-										}
+										window.location.assign(`/api/user/export-data/${exportJob.id}/download`);
 									}}
 									class="font-semibold"
 								>

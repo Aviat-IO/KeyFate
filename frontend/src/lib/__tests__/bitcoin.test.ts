@@ -833,7 +833,7 @@ describe('Bitcoin CSV Timelock - Broadcast', () => {
 			const txId = await broadcastTransaction('deadbeef', 'mainnet');
 			expect(txId).toBe('abc123txid');
 
-			const mockFetch = globalThis.fetch as ReturnType<typeof vi.fn>;
+			const mockFetch = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
 			expect(mockFetch).toHaveBeenCalledWith(
 				'https://mempool.space/api/tx',
 				expect.objectContaining({
@@ -863,7 +863,7 @@ describe('Bitcoin CSV Timelock - Broadcast', () => {
 			const txId = await broadcastTransaction('deadbeef', 'mainnet');
 			expect(txId).toBe('fallback_txid');
 
-			const mockFetch = globalThis.fetch as ReturnType<typeof vi.fn>;
+			const mockFetch = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
 			expect(mockFetch).toHaveBeenCalledTimes(2);
 
 			globalThis.fetch = originalFetch;
@@ -895,7 +895,7 @@ describe('Bitcoin CSV Timelock - Broadcast', () => {
 
 			await broadcastTransaction('deadbeef', 'testnet');
 
-			const mockFetch = globalThis.fetch as ReturnType<typeof vi.fn>;
+			const mockFetch = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
 			expect(mockFetch).toHaveBeenCalledWith(
 				'https://mempool.space/testnet/api/tx',
 				expect.anything()
@@ -1080,7 +1080,7 @@ describe('Bitcoin CSV Timelock - Fee Estimation', () => {
 
 			await estimateFeeRate('medium', 'testnet');
 
-			const mockFetch = globalThis.fetch as ReturnType<typeof vi.fn>;
+			const mockFetch = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
 			expect(mockFetch).toHaveBeenCalledWith(
 				'https://mempool.space/testnet/api/v1/fees/recommended'
 			);

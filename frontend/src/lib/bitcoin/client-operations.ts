@@ -1,20 +1,20 @@
 /**
- * Client-side Bitcoin transaction operations.
+ * Browser-only Bitcoin transaction orchestration.
  *
- * Orchestrates the full Bitcoin flow from the browser:
- * key generation → transaction creation → signing → broadcast → result storage.
- *
- * No private keys leave the browser.
+ * The owner continuity key may be restored from an explicitly encrypted owner
+ * kit. A fresh branch key signs exactly one delayed recipient transaction and
+ * is zeroed before the operation returns. The real recipient controls only the
+ * destination address.
  */
 
 import { createTimelockUTXO, createPreSignedRecipientTx, type UTXO } from './transaction.js';
 import { refreshTimelockUTXO } from './refresh.js';
 import { broadcastTransaction } from './broadcast.js';
-import type { BitcoinKeypair } from './client-wallet.js';
+import { zeroBitcoinKeypair, type BitcoinKeypair } from './client-wallet.js';
 
 export interface EnableBitcoinClientParams {
 	ownerKeypair: BitcoinKeypair;
-	recipientKeypair: BitcoinKeypair;
+	branchKeypair: BitcoinKeypair;
 	fundingUtxo: UTXO;
 	amountSats: number;
 	feeRateSatsPerVbyte: number;
@@ -31,68 +31,63 @@ export interface EnableBitcoinClientResult {
 	timelockScript: Uint8Array;
 	preSignedRecipientTx: string;
 	ownerPubkey: Uint8Array;
-	recipientPubkey: Uint8Array;
+	branchPubkey: Uint8Array;
 }
 
-/**
- * Client-side: create timelock UTXO, broadcast it, create pre-signed recipient tx.
- * No private keys leave the browser.
- */
 export async function enableBitcoinClient(
 	params: EnableBitcoinClientParams
 ): Promise<EnableBitcoinClientResult> {
-	// 1. Create the timelock UTXO transaction
-	const utxoResult = createTimelockUTXO({
-		ownerPrivkey: params.ownerKeypair.privkey,
-		ownerPubkey: params.ownerKeypair.pubkey,
-		recipientPubkey: params.recipientKeypair.pubkey,
-		ttlBlocks: params.ttlBlocks,
-		amountSats: params.amountSats,
-		feeRateSatsPerVbyte: params.feeRateSatsPerVbyte,
-		fundingUtxo: params.fundingUtxo,
-		network: params.network
-	});
+	try {
+		const utxoResult = createTimelockUTXO({
+			ownerPrivkey: params.ownerKeypair.privkey,
+			ownerPubkey: params.ownerKeypair.pubkey,
+			recipientPubkey: params.branchKeypair.pubkey,
+			ttlBlocks: params.ttlBlocks,
+			amountSats: params.amountSats,
+			feeRateSatsPerVbyte: params.feeRateSatsPerVbyte,
+			fundingUtxo: params.fundingUtxo,
+			network: params.network
+		});
 
-	// 2. Broadcast the transaction
-	const txId = await broadcastTransaction(utxoResult.txHex, params.network);
+		const txId = await broadcastTransaction(utxoResult.txHex, params.network);
+		const preSignedResult = createPreSignedRecipientTx({
+			timelockUtxo: {
+				txId,
+				outputIndex: utxoResult.outputIndex,
+				amountSats: params.amountSats
+			},
+			timelockScript: utxoResult.timelockScript,
+			recipientPrivkey: params.branchKeypair.privkey,
+			recipientAddress: params.recipientAddress,
+			ttlBlocks: params.ttlBlocks,
+			symmetricKeyK: params.symmetricKeyK,
+			nostrEventId: params.nostrEventId,
+			feeRateSatsPerVbyte: params.feeRateSatsPerVbyte,
+			network: params.network
+		});
 
-	// 3. Create pre-signed recipient tx
-	const preSignedResult = createPreSignedRecipientTx({
-		timelockUtxo: {
+		return {
 			txId,
 			outputIndex: utxoResult.outputIndex,
-			amountSats: params.amountSats
-		},
-		timelockScript: utxoResult.timelockScript,
-		recipientPrivkey: params.recipientKeypair.privkey,
-		recipientAddress: params.recipientAddress,
-		ttlBlocks: params.ttlBlocks,
-		symmetricKeyK: params.symmetricKeyK,
-		nostrEventId: params.nostrEventId,
-		feeRateSatsPerVbyte: params.feeRateSatsPerVbyte,
-		network: params.network
-	});
-
-	return {
-		txId,
-		outputIndex: utxoResult.outputIndex,
-		timelockScript: utxoResult.timelockScript,
-		preSignedRecipientTx: preSignedResult.txHex,
-		ownerPubkey: params.ownerKeypair.pubkey,
-		recipientPubkey: params.recipientKeypair.pubkey
-	};
+			timelockScript: utxoResult.timelockScript,
+			preSignedRecipientTx: preSignedResult.txHex,
+			ownerPubkey: params.ownerKeypair.pubkey,
+			branchPubkey: params.branchKeypair.pubkey
+		};
+	} finally {
+		zeroBitcoinKeypair(params.branchKeypair);
+	}
 }
 
 export interface RefreshBitcoinClientParams {
 	ownerKeypair: BitcoinKeypair;
-	recipientPubkey: Uint8Array;
+	newBranchKeypair: BitcoinKeypair;
 	currentUtxo: { txId: string; outputIndex: number; amountSats: number };
 	currentScript: Uint8Array;
 	ttlBlocks: number;
 	feeRateSatsPerVbyte: number;
 	symmetricKeyK: Uint8Array;
 	nostrEventId: string;
-	recipientPrivkey: Uint8Array;
 	recipientAddress: string;
 	network: 'mainnet' | 'testnet';
 }
@@ -103,57 +98,52 @@ export interface RefreshBitcoinClientResult {
 	newTimelockScript: Uint8Array;
 	newAmountSats: number;
 	preSignedRecipientTx: string;
+	newBranchPubkey: Uint8Array;
 }
 
-/**
- * Client-side: refresh (check-in) a timelock UTXO.
- * Spends the current UTXO via the owner path, creates a new one,
- * broadcasts, and creates a new pre-signed recipient tx.
- */
 export async function refreshBitcoinClient(
 	params: RefreshBitcoinClientParams
 ): Promise<RefreshBitcoinClientResult> {
-	// 1. Create the refresh transaction
-	const refreshResult = refreshTimelockUTXO({
-		currentUtxo: params.currentUtxo,
-		currentScript: params.currentScript,
-		ownerPrivkey: params.ownerKeypair.privkey,
-		ownerPubkey: params.ownerKeypair.pubkey,
-		recipientPubkey: params.recipientPubkey,
-		ttlBlocks: params.ttlBlocks,
-		feeRateSatsPerVbyte: params.feeRateSatsPerVbyte,
-		network: params.network
-	});
+	try {
+		const refreshResult = refreshTimelockUTXO({
+			currentUtxo: params.currentUtxo,
+			currentScript: params.currentScript,
+			ownerPrivkey: params.ownerKeypair.privkey,
+			ownerPubkey: params.ownerKeypair.pubkey,
+			recipientPubkey: params.newBranchKeypair.pubkey,
+			ttlBlocks: params.ttlBlocks,
+			feeRateSatsPerVbyte: params.feeRateSatsPerVbyte,
+			network: params.network
+		});
 
-	// 2. Broadcast the refresh transaction
-	const newTxId = await broadcastTransaction(refreshResult.txHex, params.network);
+		const newTxId = await broadcastTransaction(refreshResult.txHex, params.network);
+		const estimatedFee = Math.ceil(204 * params.feeRateSatsPerVbyte);
+		const newAmountSats = params.currentUtxo.amountSats - estimatedFee;
+		const preSignedResult = createPreSignedRecipientTx({
+			timelockUtxo: {
+				txId: newTxId,
+				outputIndex: refreshResult.newOutputIndex,
+				amountSats: newAmountSats
+			},
+			timelockScript: refreshResult.newTimelockScript,
+			recipientPrivkey: params.newBranchKeypair.privkey,
+			recipientAddress: params.recipientAddress,
+			ttlBlocks: params.ttlBlocks,
+			symmetricKeyK: params.symmetricKeyK,
+			nostrEventId: params.nostrEventId,
+			feeRateSatsPerVbyte: params.feeRateSatsPerVbyte,
+			network: params.network
+		});
 
-	// Calculate new amount (original minus fee)
-	const estimatedFee = Math.ceil(204 * params.feeRateSatsPerVbyte);
-	const newAmountSats = params.currentUtxo.amountSats - estimatedFee;
-
-	// 3. Create pre-signed recipient tx for the new UTXO
-	const preSignedResult = createPreSignedRecipientTx({
-		timelockUtxo: {
-			txId: newTxId,
-			outputIndex: refreshResult.newOutputIndex,
-			amountSats: newAmountSats
-		},
-		timelockScript: refreshResult.newTimelockScript,
-		recipientPrivkey: params.recipientPrivkey,
-		recipientAddress: params.recipientAddress,
-		ttlBlocks: params.ttlBlocks,
-		symmetricKeyK: params.symmetricKeyK,
-		nostrEventId: params.nostrEventId,
-		feeRateSatsPerVbyte: params.feeRateSatsPerVbyte,
-		network: params.network
-	});
-
-	return {
-		newTxId,
-		newOutputIndex: refreshResult.newOutputIndex,
-		newTimelockScript: refreshResult.newTimelockScript,
-		newAmountSats,
-		preSignedRecipientTx: preSignedResult.txHex
-	};
+		return {
+			newTxId,
+			newOutputIndex: refreshResult.newOutputIndex,
+			newTimelockScript: refreshResult.newTimelockScript,
+			newAmountSats,
+			preSignedRecipientTx: preSignedResult.txHex,
+			newBranchPubkey: params.newBranchKeypair.pubkey
+		};
+	} finally {
+		zeroBitcoinKeypair(params.newBranchKeypair);
+	}
 }

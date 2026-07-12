@@ -1,33 +1,21 @@
-import { json, redirect } from '@sveltejs/kit';
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { requireSession } from '$lib/server/auth';
 import { requireCSRFProtection, createCSRFErrorResponse } from '$lib/csrf';
 import { SITE_URL } from '$lib/env';
+import { logger } from '$lib/logger';
 import { getFiatPaymentProvider } from '$lib/payment';
+import { getPaidPlan, getStripePriceId, PAID_PLAN_IDS } from '$lib/payment/plans';
+import { z } from 'zod';
+
+const checkoutRequestSchema = z
+	.object({
+		plan: z.enum(PAID_PLAN_IDS)
+	})
+	.strict();
 
 /**
- * GET /api/create-checkout-session
- *
- * Handle post-authentication redirects for checkout.
- * Redirects to Stripe checkout or back to pricing.
- */
-export const GET: RequestHandler = async (event) => {
-	const lookupKey = event.url.searchParams.get('lookup_key');
-	const redirectAfterAuth = event.url.searchParams.get('redirect_after_auth');
-
-	if (!lookupKey || !redirectAfterAuth) {
-		return redirect(303, `${SITE_URL}/pricing`);
-	}
-
-	// This is a post-authentication redirect, create checkout session and redirect
-	return createCheckoutSession(event, lookupKey, true);
-};
-
-/**
- * POST /api/create-checkout-session
- *
- * Create a Stripe checkout session via AJAX.
- * Requires CSRF protection and authentication.
+ * Create a Stripe checkout session for one server-owned paid plan.
+ * Checkout creation is intentionally POST-only.
  */
 export const POST: RequestHandler = async (event) => {
 	try {
@@ -36,110 +24,57 @@ export const POST: RequestHandler = async (event) => {
 			return createCSRFErrorResponse();
 		}
 
-		const { lookup_key } = await event.request.json();
-		return createCheckoutSession(event, lookup_key, false);
-	} catch (error) {
-		console.error('Error parsing request body:', error);
-		return json({ error: 'Invalid request body' }, { status: 400 });
-	}
-};
+		const parsed = checkoutRequestSchema.safeParse(await event.request.json());
+		if (!parsed.success) {
+			return json({ error: 'Invalid checkout plan' }, { status: 400 });
+		}
 
-async function createCheckoutSession(
-	event: Parameters<RequestHandler>[0],
-	lookupKey: string,
-	shouldRedirect = false
-) {
-	try {
-		console.log(`🔍 Creating checkout session for lookup key: ${lookupKey}`);
-
-		// Get user from session
+		const plan = getPaidPlan(parsed.data.plan);
+		const priceId = getStripePriceId(plan.id);
 		const session = await event.locals.auth();
 		const user = session?.user;
-		if (!user?.email || !user?.id) {
-			console.log('❌ Authentication failed: missing session user');
+		if (!user?.email || !user.id) {
 			return json({ error: 'Unauthorized' }, { status: 401 });
 		}
 
-		console.log(`✅ User authenticated: ${user.id}`);
-
-		// Get payment provider
-		const fiatPaymentProvider = getFiatPaymentProvider();
-		console.log('✅ Payment provider initialized');
-
-		const customerId = await fiatPaymentProvider.createCustomer(user.email!, {
+		const provider = getFiatPaymentProvider();
+		const customerId = await provider.createCustomer(user.email, {
 			user_id: user.id
 		});
-
-		// Get price by lookup key
-		console.log('🔍 Fetching prices from Stripe...');
-		const prices = await fiatPaymentProvider.listPrices();
-		console.log(`✅ Found ${prices.length} prices`);
-
-		const price = prices.find((p) => p.lookupKey === lookupKey);
-
-		if (!price) {
-			console.log(`❌ Price not found for lookup key: ${lookupKey}`);
-			console.log('Available lookup keys:', prices.map((p) => p.lookupKey).filter(Boolean));
-			return json({ error: 'Price not found' }, { status: 404 });
-		}
-
-		console.log(`✅ Found price: ${price.id} (${price.unitAmount} ${price.currency})`);
-
-		// Create checkout session
-		console.log('🛒 Creating Stripe checkout session...');
-		const sessionConfig = {
+		const checkoutSession = await provider.createCheckoutSession({
 			customerId,
-			priceId: price.id,
-			mode: 'subscription' as const,
+			priceId,
+			mode: 'subscription',
 			successUrl: `${SITE_URL}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
 			cancelUrl: `${SITE_URL}/pricing?canceled=true`,
-			billingAddressCollection: 'auto' as const,
+			billingAddressCollection: 'auto',
 			automaticTax: { enabled: false },
-			locale: 'en' as const,
+			locale: 'en',
 			metadata: {
-				user_id: user.id
+				user_id: user.id,
+				plan_id: plan.id,
+				expected_price_id: priceId,
+				expected_amount: String(plan.amount),
+				expected_currency: plan.currency,
+				billing_interval: plan.interval
 			}
-		};
+		});
 
-		if (process.env.NODE_ENV === 'development') {
-			console.log('Session config:', {
-				mode: sessionConfig.mode,
-				successUrl: sessionConfig.successUrl,
-				cancelUrl: sessionConfig.cancelUrl
-			});
-		}
-
-		const checkoutSession = await fiatPaymentProvider.createCheckoutSession(sessionConfig);
-
-		console.log(`✅ Checkout session created: ${checkoutSession.id}`);
-		console.log(`🔗 Checkout URL: ${checkoutSession.url}`);
-
-		// For GET requests (post-auth), redirect directly to Stripe
-		// For POST requests (AJAX), return JSON
-		if (shouldRedirect) {
-			return redirect(303, checkoutSession.url);
-		}
+		logger.info('Stripe checkout session created', {
+			userId: user.id,
+			planId: plan.id,
+			sessionId: checkoutSession.id
+		});
 
 		return json({
 			url: checkoutSession.url,
 			sessionId: checkoutSession.id
 		});
 	} catch (error) {
-		console.error('❌ Error creating checkout session:', error);
-
-		// Log more details for debugging
-		if (error instanceof Error) {
-			console.error('Error message:', error.message);
-			console.error('Error stack:', error.stack);
-		}
-
-		// Return more specific error information
-		return json(
-			{
-				error: 'Internal server error',
-				details: error instanceof Error ? error.message : 'Unknown error'
-			},
-			{ status: 500 }
+		logger.error(
+			'Failed to create Stripe checkout session',
+			error instanceof Error ? error : undefined
 		);
+		return json({ error: 'Checkout is temporarily unavailable' }, { status: 503 });
 	}
-}
+};

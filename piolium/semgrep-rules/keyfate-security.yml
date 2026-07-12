@@ -1,0 +1,65 @@
+rules:
+  - id: keyfate-plaintext-server-share-response
+    message: A plaintext recovery share is returned from a public token-gated route; verify URL-token secrecy, response caching, logging, and token replay controls.
+    languages: [typescript]
+    severity: WARNING
+    metadata:
+      category: security
+      confidence: HIGH
+      impact: HIGH
+      cwe: CWE-200
+    patterns:
+      - pattern: |
+          return json({ serverShare: $SHARE });
+    paths:
+      include:
+        - frontend/src/routes/api/**/server-share/+server.ts
+
+  - id: keyfate-credential-in-url-parameter
+    message: A credential-like value is accepted from the URL, which can leak through request logs, browser history, analytics, and referrers.
+    languages: [typescript]
+    severity: WARNING
+    metadata:
+      category: security
+      confidence: HIGH
+      impact: MEDIUM
+      cwe: CWE-598
+    pattern-either:
+      - pattern: event.url.searchParams.get('token')
+      - pattern: event.url.searchParams.get('secret')
+      - pattern: event.url.searchParams.get('recoveryKey')
+    paths:
+      include:
+        - frontend/src/routes/api/**
+
+  - id: keyfate-sensitive-browser-storage
+    message: KeyFate persists recovery shares, private keys, or decryption metadata in browser storage; any same-origin script compromise can exfiltrate it.
+    languages: [generic]
+    severity: WARNING
+    metadata:
+      category: security
+      confidence: MEDIUM
+      impact: HIGH
+      cwe: CWE-922
+    pattern-regex: '(?s)(localStorage|sessionStorage)\.setItem\([^;]{0,500}(userManagedShares|privkey|plaintextKs|symmetricKeyK|encryptedKPassphrase)'
+    paths:
+      include:
+        - frontend/src/**/*.ts
+        - frontend/src/**/*.svelte
+
+  - id: keyfate-production-pricing-fails-open
+    message: Production pricing is selected from a substring check of SITE_URL and falls back to test pricing when configuration is absent or unexpected.
+    languages: [typescript]
+    severity: WARNING
+    metadata:
+      category: security
+      confidence: HIGH
+      impact: HIGH
+      cwe: CWE-1188
+    pattern: |
+      return (
+        $SITE.includes('keyfate.com') && !$SITE.includes('staging') && !$SITE.includes('dev')
+      );
+    paths:
+      include:
+        - frontend/src/lib/pricing.ts

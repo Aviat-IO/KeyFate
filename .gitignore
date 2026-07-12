@@ -56,5 +56,12 @@ reset_databases.sh
 # Drizzle
 frontend/drizzle-staging.config.ts
 frontend/drizzle-production.config.ts
+
+# Reproducible or sensitive audit working artifacts
+piolium/codeql-artifacts/db/
+.pi-subagents/artifacts/*_transcript.jsonl
+.pi-subagents/artifacts/*_input.md
+.pi-subagents/artifacts/*_meta.json
+
 MARKETING_GUIDE.md
 .mcp.json

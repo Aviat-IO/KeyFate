@@ -1,8 +1,9 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { checkOTPRateLimit, createOTPToken } from '$lib/auth/otp';
+import { createOTPToken } from '$lib/auth/otp';
 import { sendOTPEmail } from '$lib/email/email-service';
 import { verifyTurnstileToken } from '$lib/auth/turnstile';
+import { getClientIdentifier } from '$lib/rate-limit';
 
 export const POST: RequestHandler = async (event) => {
 	try {
@@ -43,19 +44,15 @@ export const POST: RequestHandler = async (event) => {
 			return json({ error: 'Invalid email format' }, { status: 400 });
 		}
 
-		const rateLimit = await checkOTPRateLimit(normalizedEmail);
-		if (!rateLimit.allowed) {
-			return json(
-				{
-					error: 'Too many requests. Please try again later.',
-					resetAt: rateLimit.resetAt
-				},
-				{ status: 429 }
-			);
-		}
-
-		const otpResult = await createOTPToken(normalizedEmail, 'authentication');
+		const clientIp = getClientIdentifier(event.request);
+		const otpResult = await createOTPToken(normalizedEmail, 'authentication', clientIp);
 		if (!otpResult.success || !otpResult.code) {
+			if (otpResult.reason === 'rate_limited') {
+				return json({ error: otpResult.error }, { status: 429 });
+			}
+			if (otpResult.reason === 'unavailable') {
+				return json({ error: otpResult.error }, { status: 503, headers: { 'Retry-After': '60' } });
+			}
 			console.error('[OTP] Failed to create OTP:', otpResult.error);
 			return json({ error: 'Failed to generate OTP. Please try again.' }, { status: 500 });
 		}
@@ -69,7 +66,7 @@ export const POST: RequestHandler = async (event) => {
 		return json({
 			success: true,
 			message: 'OTP sent successfully. Check your email.',
-			remaining: rateLimit.remaining
+			remaining: otpResult.remaining
 		});
 	} catch (error) {
 		console.error('[OTP] Request OTP error:', error);

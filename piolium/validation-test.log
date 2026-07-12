@@ -1,0 +1,802 @@
+bun test v1.3.14 (0d9b296a)
+
+src/lib/__tests__/scheduler.test.ts:
+(pass) Cron Scheduler > should not start when CRON_ENABLED is false [0.80ms]
+(pass) Cron Scheduler > should register all 8 cron jobs when enabled [0.24ms]
+(pass) Cron Scheduler > should stop all tasks when stopScheduler is called [0.08ms]
+
+src/lib/__tests__/client-operations.test.ts:
+(pass) Client Operations - enableBitcoinClient > creates timelock UTXO, broadcasts, and returns result [15.63ms]
+(pass) Client Operations - enableBitcoinClient > pre-signed tx contains OP_RETURN with symmetric key [2.84ms]
+(pass) Client Operations - enableBitcoinClient > throws when broadcast fails [1.33ms]
+(pass) Client Operations - enableBitcoinClient > timelockScript can be decoded to verify owner/recipient pubkeys [1.74ms]
+(pass) Client Operations - refreshBitcoinClient > refreshes a timelock UTXO and returns new UTXO data [1.96ms]
+(pass) Client Operations - refreshBitcoinClient > new UTXO has reduced amount (fee deducted) [1.48ms]
+(pass) Client Operations - refreshBitcoinClient > throws when broadcast fails during refresh [0.93ms]
+(pass) Client Operations - refreshBitcoinClient > new timelock script has correct TTL [1.88ms]
+
+src/lib/__tests__/nostr.test.ts:
+(pass) Nostr Keypair > generates a valid keypair with all fields [11.78ms]
+(pass) Nostr Keypair > generates unique keypairs each call [0.37ms]
+(pass) Nostr Keypair > derives the correct public key from a secret key [0.26ms]
+(pass) Nostr Keypair > round-trips npub encoding [0.30ms]
+(pass) Nostr Keypair > npubToHex throws on invalid input [0.04ms]
+(pass) Nostr Keypair > npubToHex throws when given an nsec [0.17ms]
+(pass) Nostr Keypair > isValidNpub > returns true for a valid npub [0.16ms]
+(pass) Nostr Keypair > isValidNpub > returns false for garbage [0.04ms]
+(pass) Nostr Keypair > isValidHexPubkey > returns true for a 64-char hex string [0.16ms]
+(pass) Nostr Keypair > isValidHexPubkey > returns false for wrong length or uppercase [0.03ms]
+(pass) Nostr NIP-44 Encryption > encrypts and decrypts a message between two keypairs [6.49ms]
+(pass) Nostr NIP-44 Encryption > conversation key is symmetric [2.21ms]
+(pass) Nostr NIP-44 Encryption > produces different ciphertext for the same plaintext [1.30ms]
+(pass) Nostr NIP-44 Encryption > decryption fails with wrong key [2.22ms]
+(pass) Nostr NIP-44 Encryption > handles unicode content [1.46ms]
+(pass) Nostr NIP-44 Encryption > handles JSON payloads [1.48ms]
+(pass) Nostr NIP-59 Gift Wrap > createRumor produces an unsigned event with correct kind [1.60ms]
+(pass) Nostr NIP-59 Gift Wrap > createSeal produces a kind 13 signed event [2.43ms]
+(pass) Nostr NIP-59 Gift Wrap > createGiftWrap produces a kind 1059 event with p-tag [4.46ms]
+(pass) Nostr NIP-59 Gift Wrap > wrapShareForRecipient produces a complete gift wrap [3.88ms]
+(pass) Nostr NIP-59 Gift Wrap > recipient can unwrap the gift wrap to recover the share payload [5.57ms]
+(pass) Nostr NIP-59 Gift Wrap > different recipients get different gift wraps for the same payload [8.06ms]
+(pass) Nostr Relay Config > exports a non-empty default relay list [0.70ms]
+(pass) Nostr Relay Config > checkRelayHealth returns unhealthy for invalid URL [1.43ms]
+(pass) Nostr Client > creates a client with default relays [2.09ms]
+(pass) Nostr Client > creates a client with custom relays [0.05ms]
+(pass) Nostr Client > setRelays updates the relay list [0.05ms]
+(pass) Nostr Client > createNostrClient factory returns a NostrClient [0.04ms]
+
+src/lib/__tests__/encryption.test.ts:
+(pass) Encryption Functions > encryptMessage > should encrypt a message and return encrypted data with IV and auth tag [0.70ms]
+(pass) Encryption Functions > encryptMessage > should accept a custom IV [0.05ms]
+(pass) Encryption Functions > encryptMessage > should produce different ciphertext for same message with different IVs [0.05ms]
+(pass) Encryption Functions > encryptMessage > should handle empty messages [0.03ms]
+(pass) Encryption Functions > decryptMessage > should decrypt a message using cipher text, IV, and auth tag [0.08ms]
+(pass) Encryption Functions > decryptMessage > should handle decryption errors gracefully [0.05ms]
+(pass) Encryption Functions > Encryption/Decryption Round Trip > should successfully encrypt and decrypt a message [0.04ms]
+(pass) Encryption Functions > Encryption/Decryption Round Trip > should handle unicode messages [0.04ms]
+(pass) Encryption Functions > Encryption/Decryption Round Trip > should handle long messages [0.06ms]
+
+src/lib/__tests__/subscription.test.ts:
+(pass) Subscription Tier Management > getUserTierInfo > should return free tier info for users without subscription [0.32ms]
+Error in getUserTierInfo: 71 | 			expect(result?.tier.tiers.max_recipients_per_secret).toBe(1);
+72 | 			expect(result?.tier.tiers.custom_intervals).toBe(false);
+73 | 		});
+74 | 
+75 | 		it('should handle database errors gracefully', async () => {
+76 | 			(getDatabase as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Database error'));
+                                                                        ^
+error: Database error
+      at <anonymous> (/Users/alancolver/dev/keyfate/frontend/src/lib/__tests__/subscription.test.ts:76:68)
+
+(pass) Subscription Tier Management > getUserTierInfo > should handle database errors gracefully [0.19ms]
+(pass) Subscription Tier Management > canUserCreateSecret > should return true when user can create secrets [0.07ms]
+Error in getUserTierInfo:  99 | 
+100 | 			expect(result).toBe(true);
+101 | 		});
+102 | 
+103 | 		it('should return false on error', async () => {
+104 | 			(getDatabase as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Database error'));
+                                                                         ^
+error: Database error
+      at <anonymous> (/Users/alancolver/dev/keyfate/frontend/src/lib/__tests__/subscription.test.ts:104:68)
+
+(pass) Subscription Tier Management > canUserCreateSecret > should return false on error [0.06ms]
+(pass) Subscription Tier Management > calculateUserUsage > should return zeros on error [0.02ms]
+(pass) Subscription Tier Management > getTierLimits > should return correct limits for free tier [0.02ms]
+(pass) Subscription Tier Management > getTierLimits > should return correct limits for pro tier
+(pass) Subscription Tier Management > isIntervalAllowed > should allow free tier intervals for free users [0.02ms]
+(pass) Subscription Tier Management > isIntervalAllowed > should reject non-allowed intervals for free users [0.01ms]
+(pass) Subscription Tier Management > isIntervalAllowed > should allow all pro intervals for pro users [0.02ms]
+(pass) Subscription Tier Management > isIntervalAllowed > should reject invalid intervals for pro users
+(pass) Subscription Tier Management > getAvailableIntervals > should return 3 intervals for free tier [0.03ms]
+(pass) Subscription Tier Management > getAvailableIntervals > should return 9 intervals for pro tier [0.01ms]
+
+src/lib/__tests__/client-wallet.test.ts:
+(pass) Client Wallet - generateBitcoinKeypair > generates a keypair with 32-byte private key [0.53ms]
+(pass) Client Wallet - generateBitcoinKeypair > generates a keypair with 33-byte compressed public key [0.20ms]
+(pass) Client Wallet - generateBitcoinKeypair > generates a valid secp256k1 public key matching the private key [0.27ms]
+(pass) Client Wallet - generateBitcoinKeypair > generates unique keypairs on each call [0.33ms]
+(pass) Client Wallet - generateBitcoinKeypair > produces a pubkey starting with 0x02 or 0x03 (compressed) [0.18ms]
+(pass) Client Wallet - sessionStorage operations > stores and retrieves a keypair by secretId and role [0.25ms]
+(pass) Client Wallet - sessionStorage operations > returns null for non-existent keypair [0.03ms]
+(pass) Client Wallet - sessionStorage operations > stores owner and recipient keypairs separately [0.26ms]
+(pass) Client Wallet - sessionStorage operations > clears keypairs for a specific secret [0.14ms]
+(pass) Client Wallet - sessionStorage operations > does not clear keypairs for other secrets [0.23ms]
+(pass) Client Wallet - sessionStorage operations > retrieved keypair has correct byte lengths [0.14ms]
+
+src/lib/__tests__/tier-validation.test.ts:
+(pass) canAccessMessageTemplates > should return true for Pro tier [0.01ms]
+(pass) canAccessMessageTemplates > should return false for Free tier
+(pass) canConfigureThreshold > should return true for Pro tier
+(pass) canConfigureThreshold > should return false for Free tier
+(pass) canAccessAuditLogs > should return true for Pro tier
+(pass) canAccessAuditLogs > should return false for Free tier
+(pass) getMaxShares > should return 7 for Pro tier
+(pass) getMaxShares > should return 3 for Free tier
+(pass) getMaxThreshold > should return totalShares when under tier limit [0.01ms]
+(pass) getMaxThreshold > should return tier max when totalShares exceeds it
+(pass) getMinThreshold > should always return 2
+(pass) isValidThreshold > Pro tier > should accept valid 2-of-3 [0.01ms]
+(pass) isValidThreshold > Pro tier > should accept valid 3-of-5
+(pass) isValidThreshold > Pro tier > should accept valid 4-of-7
+(pass) isValidThreshold > Pro tier > should accept valid 7-of-7
+(pass) isValidThreshold > Pro tier > should reject threshold > totalShares
+(pass) isValidThreshold > Pro tier > should reject threshold < 2
+(pass) isValidThreshold > Pro tier > should reject totalShares > 7
+(pass) isValidThreshold > Pro tier > should reject totalShares < 3
+(pass) isValidThreshold > Free tier > should accept 2-of-3
+(pass) isValidThreshold > Free tier > should accept 3-of-3
+(pass) isValidThreshold > Free tier > should reject totalShares > 3
+(pass) isValidThreshold > Free tier > should reject threshold < 2
+(pass) isValidThreshold > Free tier > should reject threshold > totalShares
+
+src/lib/__tests__/secret-bitcoin-flow.test.ts:
+(pass) Nostr Publisher Service > publishes gift wraps for recipients with nostrPubkey [8.49ms]
+(pass) Nostr Publisher Service > skips recipients without nostrPubkey [0.22ms]
+(pass) Nostr Publisher Service > handles mixed recipients (some with, some without nostrPubkey) [4.61ms]
+(pass) Nostr Publisher Service > records errors for failed publishes without crashing [4.56ms]
+(pass) Nostr Publisher Service > returns unique plaintextK for each published share [10.17ms]
+(pass) Bitcoin-Enabled Secret Lifecycle > full flow: create timelock → pre-sign → refresh → check status [4.96ms]
+(pass) Bitcoin-Enabled Secret Lifecycle > Nostr + Bitcoin combined: publish shares then create timelock with K [6.71ms]
+(pass) Bitcoin-Enabled Secret Lifecycle > pre-signed tx has correct structure for recipient spending [1.42ms]
+(pass) Bitcoin-Enabled Secret Lifecycle > multiple sequential refreshes reduce UTXO amount [3.13ms]
+(pass) Bitcoin Service types and interfaces > EnableBitcoinParams interface is correctly typed [2.24ms]
+(pass) Bitcoin Service types and interfaces > Nostr publisher module exports correctly [0.06ms]
+(pass) Bitcoin API endpoint validation logic > validates amountSats minimum (10000) [0.01ms]
+(pass) Bitcoin API endpoint validation logic > validates network parameter [0.02ms]
+(pass) Bitcoin API endpoint validation logic > validates required fields for enable-bitcoin [0.05ms]
+(pass) Bitcoin API endpoint validation logic > validates fundingUtxo structure [0.05ms]
+(pass) Bitcoin API endpoint validation logic > daysToBlocks conversion matches check-in days [0.05ms]
+
+src/lib/__tests__/confirm-utxos.test.ts:
+(pass) confirm-utxos cron logic > returns early when no pending UTXOs exist [1.52ms]
+{"level":"info","message":"UTXO confirmation check completed","timestamp":"2026-07-10T23:48:23.824Z","data":{"processed":1,"confirmed":1,"stillPending":0,"failed":0}}
+(pass) confirm-utxos cron logic > updates confirmed UTXOs to confirmed status [0.36ms]
+{"level":"info","message":"UTXO confirmation check completed","timestamp":"2026-07-10T23:48:23.824Z","data":{"processed":1,"confirmed":0,"stillPending":1,"failed":0}}
+(pass) confirm-utxos cron logic > leaves unconfirmed UTXOs as pending [0.09ms]
+{"level":"info","message":"UTXO confirmation check completed","timestamp":"2026-07-10T23:48:23.824Z","data":{"processed":10,"confirmed":10,"stillPending":0,"failed":0}}
+(pass) confirm-utxos cron logic > limits processing to max 10 UTXOs per run [0.13ms]
+{"level":"error","message":"Failed to check UTXO status","timestamp":"2026-07-10T23:48:23.824Z","data":{"utxoId":"utxo-2","txId":"tx-2"},"error":"mempool.space API timeout","stack":"Error: mempool.space API timeout\n    at <anonymous> (/Users/alancolver/dev/keyfate/frontend/src/lib/__tests__/confirm-utxos.test.ts:175:31)"}
+{"level":"info","message":"UTXO confirmation check completed","timestamp":"2026-07-10T23:48:23.824Z","data":{"processed":3,"confirmed":1,"stillPending":1,"failed":1}}
+(pass) confirm-utxos cron logic > handles per-UTXO errors without crashing the batch [0.20ms]
+{"level":"info","message":"UTXO confirmation check completed","timestamp":"2026-07-10T23:48:23.824Z","data":{"processed":4,"confirmed":2,"stillPending":2,"failed":0}}
+(pass) confirm-utxos cron logic > handles multiple confirmed and pending UTXOs in a batch [0.10ms]
+
+src/lib/__tests__/pricing.test.ts:
+(pass) Pricing Utility > Pricing Tiers > should return pricing with monthly and yearly amounts [0.04ms]
+(pass) Pricing Utility > Pricing Tiers > should return positive non-zero prices [0.01ms]
+(pass) Pricing Utility > Pricing Tiers > should have yearly and monthly at reasonable levels [0.01ms]
+(pass) Pricing Utility > getAmount > should return monthly amount from pricing [0.01ms]
+(pass) Pricing Utility > getAmount > should return yearly amount from pricing
+(pass) Pricing Utility > getAmount > should accept valid period parameters [0.02ms]
+(pass) Pricing Utility > Test Pricing Detection > should return boolean for isTestPricing
+(pass) Pricing Utility > Test Pricing Detection > should have isTestPricing inverse of production check [0.01ms]
+(pass) Pricing Utility > Bitcoin Conversion Context > should provide reasonable amounts for BTC conversion [0.01ms]
+(pass) Pricing Utility > Bitcoin Conversion Context > should have test pricing at reasonable levels
+
+src/lib/__tests__/double-encryption.test.ts:
+(pass) symmetric (ChaCha20-Poly1305) > generateSymmetricKey > returns a 32-byte Uint8Array [0.02ms]
+(pass) symmetric (ChaCha20-Poly1305) > generateSymmetricKey > generates unique keys each call [0.03ms]
+(pass) symmetric (ChaCha20-Poly1305) > encryptWithSymmetricKey > returns ciphertext and 12-byte nonce [0.14ms]
+(pass) symmetric (ChaCha20-Poly1305) > encryptWithSymmetricKey > produces different ciphertext for same plaintext (random nonce) [0.12ms]
+(pass) symmetric (ChaCha20-Poly1305) > encryptWithSymmetricKey > throws on invalid key length [0.03ms]
+(pass) symmetric (ChaCha20-Poly1305) > encryptWithSymmetricKey > handles empty plaintext [0.04ms]
+(pass) symmetric (ChaCha20-Poly1305) > decryptWithSymmetricKey > round-trips plaintext correctly [0.19ms]
+(pass) symmetric (ChaCha20-Poly1305) > decryptWithSymmetricKey > round-trips unicode text [0.15ms]
+(pass) symmetric (ChaCha20-Poly1305) > decryptWithSymmetricKey > round-trips large data [9.39ms]
+(pass) symmetric (ChaCha20-Poly1305) > decryptWithSymmetricKey > throws on wrong key [0.21ms]
+(pass) symmetric (ChaCha20-Poly1305) > decryptWithSymmetricKey > throws on tampered ciphertext [0.08ms]
+(pass) symmetric (ChaCha20-Poly1305) > decryptWithSymmetricKey > throws on wrong nonce [0.05ms]
+(pass) symmetric (ChaCha20-Poly1305) > decryptWithSymmetricKey > throws on invalid key length [0.03ms]
+(pass) symmetric (ChaCha20-Poly1305) > decryptWithSymmetricKey > throws on invalid nonce length [0.01ms]
+(pass) passphrase (PBKDF2 + AES-256-GCM) > deriveKeyFromPassphrase > returns a CryptoKey and 16-byte salt [38.03ms]
+(pass) passphrase (PBKDF2 + AES-256-GCM) > deriveKeyFromPassphrase > generates different salts each call [75.71ms]
+(pass) passphrase (PBKDF2 + AES-256-GCM) > deriveKeyFromPassphrase > derives same key with same salt [113.42ms]
+(pass) passphrase (PBKDF2 + AES-256-GCM) > deriveKeyFromPassphrase > throws on empty passphrase [0.12ms]
+(pass) passphrase (PBKDF2 + AES-256-GCM) > encryptWithDerivedKey / decryptWithDerivedKey > round-trips data correctly [38.12ms]
+(pass) passphrase (PBKDF2 + AES-256-GCM) > encryptWithDerivedKey / decryptWithDerivedKey > returns 12-byte nonce [37.39ms]
+(pass) passphrase (PBKDF2 + AES-256-GCM) > encryptWithDerivedKey / decryptWithDerivedKey > fails decryption with wrong key [75.42ms]
+(pass) doubleEncryptShare > returns all required fields without passphrase [0.26ms]
+(pass) doubleEncryptShare > returns passphrase-encrypted K when passphrase provided [37.69ms]
+(pass) doubleEncryptShare > encrypted share can be decrypted with plaintextK [0.23ms]
+(pass) doubleEncryptShare > encryptedKNostr can be decrypted to recover K [0.13ms]
+(pass) doubleEncryptShare > generates unique K for each call [0.09ms]
+(pass) doubleEncryptShare > works with async NIP-44 ops [0.06ms]
+(pass) recovery > recoverKFromNostr > recovers K from NIP-44 encrypted payload [0.15ms]
+(pass) recovery > recoverKFromNostr > throws if recovered K is not 32 bytes [0.04ms]
+(pass) recovery > recoverKFromPassphrase > recovers K from passphrase-encrypted payload [86.08ms]
+(pass) recovery > recoverKFromPassphrase > fails with wrong passphrase [77.38ms]
+(pass) recovery > recoverKFromOpReturn > returns a copy of the 32-byte OP_RETURN data [0.10ms]
+(pass) recovery > recoverKFromOpReturn > throws if data is not 32 bytes [0.05ms]
+(pass) recovery > recoverKFromOpReturn > returned copy is independent of source [0.02ms]
+(pass) recovery > decryptShare > decrypts a share encrypted with ChaCha20-Poly1305 [0.11ms]
+(pass) recovery > decryptShare > handles unicode shares [0.09ms]
+(pass) recovery > decryptShare > throws with wrong key [0.06ms]
+(pass) end-to-end double encryption > encrypts and recovers share via Nostr path [0.17ms]
+(pass) end-to-end double encryption > encrypts and recovers share via passphrase path [75.08ms]
+(pass) end-to-end double encryption > encrypts and recovers share via OP_RETURN path [0.18ms]
+(pass) end-to-end double encryption > all three recovery paths yield the same K [75.21ms]
+(pass) end-to-end double encryption > handles large shares [1.35ms]
+
+src/lib/__tests__/recovery-ui.test.ts:
+(pass) nsec validation > validates a correct nsec [0.29ms]
+(pass) nsec validation > rejects empty string [0.02ms]
+(pass) nsec validation > rejects garbage
+(pass) nsec validation > rejects npub (wrong type) [0.13ms]
+(pass) nsec validation > handles whitespace-padded nsec [0.12ms]
+(pass) nsecToSecretKey > decodes nsec to 32-byte Uint8Array [0.13ms]
+(pass) nsecToSecretKey > throws on invalid nsec [0.01ms]
+(pass) nsecToSecretKey > throws on npub input [0.14ms]
+(pass) unwrapGiftWrap > unwraps a gift-wrapped share event [4.98ms]
+(pass) unwrapGiftWrap > fails with wrong recipient key [4.14ms]
+(pass) unwrapGiftWrap > rejects non-1059 events [0.16ms]
+(pass) unwrapGiftWrap > unwraps multiple different shares from same sender [14.12ms]
+(pass) parseOpReturnFromTx > extracts K and event ID from a valid OP_RETURN [0.35ms]
+(pass) parseOpReturnFromTx > handles real-looking K and event ID values [0.08ms]
+(pass) parseOpReturnFromTx > throws for invalid transaction hex [0.02ms]
+(pass) parseOpReturnFromTx > throws for transaction without OP_RETURN [0.06ms]
+(pass) parseOpReturnFromTx > throws for OP_RETURN with wrong payload size [0.04ms]
+(pass) parseOpReturnFromTx > handles segwit transactions [0.07ms]
+(pass) parseEncryptedKBundle > parses a valid JSON bundle [0.05ms]
+(pass) parseEncryptedKBundle > throws on invalid JSON [0.02ms]
+(pass) parseEncryptedKBundle > throws on missing fields [0.02ms]
+(pass) recoverKWithPassphrase > recovers K from passphrase and bundle [75.34ms]
+(pass) recoverKWithPassphrase > fails with wrong passphrase [75.49ms]
+(pass) decryptShareWithK > decrypts a share using hex-encoded inputs [0.25ms]
+(pass) decryptShareWithK > throws with wrong key [0.10ms]
+(pass) decryptShareWithK > handles unicode shares [0.07ms]
+(pass) hex utilities > hexToBytes > converts hex to bytes [0.02ms]
+(pass) hex utilities > hexToBytes > handles 0x prefix
+(pass) hex utilities > hexToBytes > handles whitespace [0.01ms]
+(pass) hex utilities > hexToBytes > throws on odd-length hex [0.02ms]
+(pass) hex utilities > hexToBytes > handles empty string
+(pass) hex utilities > bytesToHex > converts bytes to hex [0.01ms]
+(pass) hex utilities > bytesToHex > pads single-digit values [0.01ms]
+(pass) hex utilities > bytesToHex > handles empty array
+(pass) hex utilities > round-trip > hex → bytes → hex
+(pass) hex utilities > round-trip > bytes → hex → bytes [0.01ms]
+(pass) end-to-end recovery flow > Nostr: wrap → unwrap → decrypt share [5.11ms]
+(pass) end-to-end recovery flow > Passphrase: encrypt K → bundle → recover K → decrypt share [75.40ms]
+(pass) end-to-end recovery flow > Bitcoin: build tx → parse OP_RETURN → extract K [0.25ms]
+
+src/lib/__tests__/e2e-bitcoin-nostr.test.ts:
+(pass) E2E 7.3: Create secret with Bitcoin -> timeout -> recipient recovers > full flow: encrypt share, embed K in OP_RETURN, recipient recovers [40.68ms]
+(pass) E2E 7.3: Create secret with Bitcoin -> timeout -> recipient recovers > OP_RETURN K in pre-signed tx matches the encryption key [2.75ms]
+(pass) E2E 7.4: Create + check-in refresh -> old tx references spent output > refresh creates new UTXO with different txId, old UTXO is spent [1.82ms]
+(pass) E2E 7.4: Create + check-in refresh -> old tx references spent output > multiple refreshes create a chain of new UTXOs [3.15ms]
+(pass) E2E 7.4: Create + check-in refresh -> old tx references spent output > pre-signed tx for old UTXO references different txId than refreshed UTXO [1.62ms]
+(pass) E2E 7.5: Quantum-safe recovery (passphrase + OP_RETURN K, no NIP-44) > recovers share using only passphrase — no secp256k1/NIP-44 involved [74.68ms]
+(pass) E2E 7.5: Quantum-safe recovery (passphrase + OP_RETURN K, no NIP-44) > passphrase recovery fails with wrong passphrase [74.56ms]
+(pass) E2E 7.5: Quantum-safe recovery (passphrase + OP_RETURN K, no NIP-44) > OP_RETURN recovery rejects tampered data [0.11ms]
+(pass) E2E 7.5: Quantum-safe recovery (passphrase + OP_RETURN K, no NIP-44) > full quantum-safe pipeline: encrypt share, encrypt K two ways, recover both [74.28ms]
+(pass) E2E 7.5: Quantum-safe recovery (passphrase + OP_RETURN K, no NIP-44) > ChaCha20-Poly1305 detects tampering (integrity check) [0.13ms]
+(pass) E2E 7.5: Quantum-safe recovery (passphrase + OP_RETURN K, no NIP-44) > AES-256-GCM detects tampering on passphrase-encrypted K [74.39ms]
+
+src/lib/__tests__/bitcoin.test.ts:
+(pass) Bitcoin CSV Timelock - Script > daysToBlocks > converts 1 day to 144 blocks [0.05ms]
+(pass) Bitcoin CSV Timelock - Script > daysToBlocks > converts 30 days to 4320 blocks [0.02ms]
+(pass) Bitcoin CSV Timelock - Script > daysToBlocks > converts 365 days to 52560 blocks [0.02ms]
+(pass) Bitcoin CSV Timelock - Script > daysToBlocks > throws for 0 days [0.04ms]
+(pass) Bitcoin CSV Timelock - Script > daysToBlocks > throws for negative days [0.02ms]
+(pass) Bitcoin CSV Timelock - Script > daysToBlocks > throws when exceeding MAX_CSV_BLOCKS [0.04ms]
+(pass) Bitcoin CSV Timelock - Script > blocksToApproxDays > converts 144 blocks to 1 day [0.02ms]
+(pass) Bitcoin CSV Timelock - Script > blocksToApproxDays > converts 4320 blocks to 30 days [0.02ms]
+(pass) Bitcoin CSV Timelock - Script > blocksToApproxDays > throws for 0 blocks [0.02ms]
+(pass) Bitcoin CSV Timelock - Script > createCSVTimelockScript > creates a valid script with correct structure [0.10ms]
+(pass) Bitcoin CSV Timelock - Script > createCSVTimelockScript > encodes the correct opcodes [0.05ms]
+(pass) Bitcoin CSV Timelock - Script > createCSVTimelockScript > handles maximum CSV value (65535 blocks) [0.04ms]
+(pass) Bitcoin CSV Timelock - Script > createCSVTimelockScript > handles minimum CSV value (1 block) [0.03ms]
+(pass) Bitcoin CSV Timelock - Script > createCSVTimelockScript > throws for invalid owner pubkey length [0.03ms]
+(pass) Bitcoin CSV Timelock - Script > createCSVTimelockScript > throws for invalid recipient pubkey length [0.03ms]
+(pass) Bitcoin CSV Timelock - Script > createCSVTimelockScript > throws for ttlBlocks = 0 [0.02ms]
+(pass) Bitcoin CSV Timelock - Script > createCSVTimelockScript > throws for ttlBlocks > MAX_CSV_BLOCKS [0.02ms]
+(pass) Bitcoin CSV Timelock - Script > createCSVTimelockScript > throws for non-integer ttlBlocks [0.03ms]
+(pass) Bitcoin CSV Timelock - Script > createCSVTimelockScript > produces deterministic output for same inputs [0.05ms]
+(pass) Bitcoin CSV Timelock - Script > createCSVTimelockScript > produces different output for different TTLs [0.03ms]
+(pass) Bitcoin CSV Timelock - Script > createP2WSHAddress > generates a valid mainnet bech32 address [0.14ms]
+(pass) Bitcoin CSV Timelock - Script > createP2WSHAddress > generates a valid testnet bech32 address [0.05ms]
+(pass) Bitcoin CSV Timelock - Script > createP2WSHAddress > produces different addresses for mainnet and testnet [0.06ms]
+(pass) Bitcoin CSV Timelock - Script > createP2WSHAddress > produces deterministic addresses [0.06ms]
+(pass) Bitcoin CSV Timelock - Script > decodeCSVTimelockScript > round-trips with createCSVTimelockScript [0.04ms]
+(pass) Bitcoin CSV Timelock - Script > decodeCSVTimelockScript > throws for invalid script [0.03ms]
+(pass) Bitcoin CSV Timelock - Script > createOpReturnPayload > creates a 64-byte payload [0.04ms]
+(pass) Bitcoin CSV Timelock - Script > createOpReturnPayload > throws for wrong key length [0.02ms]
+(pass) Bitcoin CSV Timelock - Script > createOpReturnPayload > throws for wrong event ID length [0.02ms]
+(pass) Bitcoin CSV Timelock - Script > createOpReturnScript > creates a valid OP_RETURN script [0.02ms]
+(pass) Bitcoin CSV Timelock - Script > createOpReturnScript > throws for data > 80 bytes [0.02ms]
+(pass) Bitcoin CSV Timelock - Script > createOpReturnScript > accepts exactly 80 bytes [0.02ms]
+(pass) Bitcoin CSV Timelock - Transaction > createTimelockUTXO > creates a valid timelock UTXO transaction [0.78ms]
+(pass) Bitcoin CSV Timelock - Transaction > createTimelockUTXO > throws for amount below minimum [0.08ms]
+(pass) Bitcoin CSV Timelock - Transaction > createTimelockUTXO > throws for insufficient funds [0.16ms]
+(pass) Bitcoin CSV Timelock - Transaction > createTimelockUTXO > includes change output when change > dust [0.55ms]
+(pass) Bitcoin CSV Timelock - Transaction > createTimelockUTXO > works with testnet [0.53ms]
+(pass) Bitcoin CSV Timelock - Transaction > createPreSignedRecipientTx > creates a valid pre-signed recipient transaction [1.04ms]
+(pass) Bitcoin CSV Timelock - Transaction > createPreSignedRecipientTx > throws when UTXO too small for fees [0.15ms]
+(pass) Bitcoin CSV Timelock - Transaction > estimateTimelockCreationVbytes > returns a reasonable estimate [0.03ms]
+(pass) Bitcoin CSV Timelock - Transaction > estimateRecipientSpendVbytes > returns a reasonable estimate [0.02ms]
+(pass) Bitcoin CSV Timelock - Refresh > refreshTimelockUTXO > creates a valid refresh transaction [1.04ms]
+(pass) Bitcoin CSV Timelock - Refresh > refreshTimelockUTXO > reduces amount by fee [0.50ms]
+(pass) Bitcoin CSV Timelock - Refresh > refreshTimelockUTXO > throws when remaining amount below minimum [0.11ms]
+(pass) Bitcoin CSV Timelock - Refresh > refreshTimelockUTXO > can change TTL on refresh [0.50ms]
+(pass) Bitcoin CSV Timelock - Refresh > estimateRefreshesRemaining > estimates correct number of refreshes [0.02ms]
+(pass) Bitcoin CSV Timelock - Refresh > estimateRefreshesRemaining > returns 0 when amount is at minimum [0.02ms]
+(pass) Bitcoin CSV Timelock - Refresh > estimateRefreshesRemaining > returns 0 when fee exceeds available amount [0.02ms]
+(pass) Bitcoin CSV Timelock - Broadcast > broadcastTransaction > broadcasts via mempool.space on success [0.19ms]
+(pass) Bitcoin CSV Timelock - Broadcast > broadcastTransaction > falls back to blockstream on mempool failure [0.05ms]
+(pass) Bitcoin CSV Timelock - Broadcast > broadcastTransaction > throws when all endpoints fail [0.04ms]
+(pass) Bitcoin CSV Timelock - Broadcast > broadcastTransaction > uses testnet endpoints [0.04ms]
+(pass) Bitcoin CSV Timelock - Broadcast > getUTXOStatus > returns confirmed and unspent status [0.19ms]
+(pass) Bitcoin CSV Timelock - Broadcast > getUTXOStatus > returns spent status with spending txid [0.05ms]
+(pass) Bitcoin CSV Timelock - Broadcast > getUTXOStatus > falls back to blockstream on mempool failure [0.05ms]
+(pass) Bitcoin CSV Timelock - Fee Estimation > estimateFeeRate > returns high priority fee [0.38ms]
+(pass) Bitcoin CSV Timelock - Fee Estimation > estimateFeeRate > returns medium priority fee [0.07ms]
+(pass) Bitcoin CSV Timelock - Fee Estimation > estimateFeeRate > returns low priority fee [0.06ms]
+Fee estimation failed (Network error), using defaults
+(pass) Bitcoin CSV Timelock - Fee Estimation > estimateFeeRate > returns defaults when API fails [0.07ms]
+(pass) Bitcoin CSV Timelock - Fee Estimation > estimateFeeRate > uses testnet endpoint [0.05ms]
+(pass) Bitcoin CSV Timelock - Fee Estimation > getAllFeeRates > returns all fee rates [0.09ms]
+Fee estimation failed (Network error), using defaults
+(pass) Bitcoin CSV Timelock - Fee Estimation > getAllFeeRates > returns defaults when API fails [0.05ms]
+(pass) Bitcoin CSV Timelock - Integration > full lifecycle: create → pre-sign → refresh [1.85ms]
+(pass) Bitcoin CSV Timelock - Integration > full lifecycle: create → pre-sign → refresh → re-create pre-signed tx [2.01ms]
+(pass) Bitcoin CSV Timelock - Integration > multiple sequential refreshes [1.37ms]
+
+src/lib/__tests__/time-utils.test.ts:
+(pass) formatTimeRemaining > Days formatting > should format whole days [0.05ms]
+(pass) formatTimeRemaining > Days formatting > should format 1 day singular
+(pass) formatTimeRemaining > Days formatting > should floor fractional days >= 1
+(pass) formatTimeRemaining > Hours formatting > should format hours when >= 1 hour and < 1 day
+(pass) formatTimeRemaining > Hours formatting > should format 1 hour singular
+(pass) formatTimeRemaining > Hours formatting > should floor fractional hours >= 1 for urgency
+(pass) formatTimeRemaining > Minutes formatting > should format minutes when < 1 hour
+(pass) formatTimeRemaining > Minutes formatting > should format 1 minute singular
+(pass) formatTimeRemaining > Minutes formatting > should floor fractional minutes for urgency
+(pass) formatTimeRemaining > Minutes formatting > should show less than a minute when very small
+(pass) formatTimeRemaining > Edge cases > should handle exactly 0 days
+(pass) formatTimeRemaining > Edge cases > should handle transition boundaries [0.01ms]
+(pass) formatTimeRemaining > Real-world scenarios > should handle common reminder thresholds [0.01ms]
+(pass) formatTimeRemaining > Real-world scenarios > should handle the bug case: sub-hour times show as minutes
+(pass) formatTimeRemaining > Real-world scenarios > should handle cron timing variations with floor for urgency [0.01ms]
+(pass) formatTimeRemaining > Real-world scenarios > should err on the side of urgency
+
+src/lib/__tests__/bitcoin-service.test.ts:
+(pass) bitcoin-service > enableBitcoin > throws when secret not found [0.18ms]
+(pass) bitcoin-service > enableBitcoin > throws when Bitcoin already enabled [0.05ms]
+(pass) bitcoin-service > enableBitcoin > creates timelock UTXO, broadcasts, creates pre-signed tx, and stores in DB [0.10ms]
+(pass) bitcoin-service > enableBitcoin > converts checkInDays to blocks for TTL [0.06ms]
+(pass) bitcoin-service > refreshBitcoin > throws when secret not found [0.15ms]
+(pass) bitcoin-service > refreshBitcoin > throws when no active UTXO exists [0.04ms]
+(pass) bitcoin-service > refreshBitcoin > spends current UTXO, broadcasts, creates new pre-signed tx, and stores atomically [0.14ms]
+(pass) bitcoin-service > getBitcoinStatus > throws when secret not found [0.09ms]
+(pass) bitcoin-service > getBitcoinStatus > returns disabled status when no UTXO exists [0.05ms]
+(pass) bitcoin-service > getBitcoinStatus > returns enabled status with confirmed UTXO [0.06ms]
+(pass) bitcoin-service > getBitcoinStatus > returns null estimates for spent UTXO [0.05ms]
+(pass) bitcoin-service > getActiveUtxo > returns null when no confirmed UTXO exists [0.06ms]
+(pass) bitcoin-service > getActiveUtxo > returns the confirmed UTXO when it exists [0.03ms]
+
+src/lib/__tests__/logger.test.ts:
+{"level":"info","message":"Test message","timestamp":"2026-07-10T23:48:25.200Z","data":{"serverShare":"[REDACTED]"}}
+(pass) Logger Sanitization > Sensitive Data Redaction > should redact serverShare field [0.47ms]
+{"level":"info","message":"Test message","timestamp":"2026-07-10T23:48:25.200Z","data":{"encryptedShare":"[REDACTED]"}}
+(pass) Logger Sanitization > Sensitive Data Redaction > should redact encryptedShare field [0.04ms]
+{"level":"info","message":"Test message","timestamp":"2026-07-10T23:48:25.200Z","data":{"secret":"[REDACTED]"}}
+(pass) Logger Sanitization > Sensitive Data Redaction > should redact secret field [0.02ms]
+{"level":"info","message":"Test message","timestamp":"2026-07-10T23:48:25.200Z","data":{"token":"[REDACTED]"}}
+(pass) Logger Sanitization > Sensitive Data Redaction > should redact token field [0.02ms]
+{"level":"info","message":"Test message","timestamp":"2026-07-10T23:48:25.200Z","data":{"password":"[REDACTED]"}}
+(pass) Logger Sanitization > Sensitive Data Redaction > should redact password field [0.02ms]
+{"level":"info","message":"Test message","timestamp":"2026-07-10T23:48:25.200Z","data":{"key":"[REDACTED]"}}
+(pass) Logger Sanitization > Sensitive Data Redaction > should redact key field [0.02ms]
+{"level":"info","message":"Test message","timestamp":"2026-07-10T23:48:25.200Z","data":{"otp":"[REDACTED]"}}
+(pass) Logger Sanitization > Sensitive Data Redaction > should redact otp field [0.02ms]
+{"level":"info","message":"Test message","timestamp":"2026-07-10T23:48:25.200Z","data":{"apiKey":"[REDACTED]"}}
+(pass) Logger Sanitization > Sensitive Data Redaction > should redact apiKey field [0.02ms]
+{"level":"info","message":"Test message","timestamp":"2026-07-10T23:48:25.200Z","data":{"accessToken":"[REDACTED]"}}
+(pass) Logger Sanitization > Sensitive Data Redaction > should redact accessToken field [0.01ms]
+{"level":"info","message":"Test message","timestamp":"2026-07-10T23:48:25.200Z","data":{"privateKey":"[REDACTED]"}}
+(pass) Logger Sanitization > Sensitive Data Redaction > should redact privateKey field [0.02ms]
+{"level":"info","message":"Test message","timestamp":"2026-07-10T23:48:25.200Z","data":{"user":{"id":"123","password":"[REDACTED]","email":"t***@example.com"}}}
+(pass) Logger Sanitization > Nested Object Sanitization > should redact sensitive fields in nested objects [0.04ms]
+{"level":"info","message":"Test message","timestamp":"2026-07-10T23:48:25.200Z","data":{"items":[{"id":"1","secret":"[REDACTED]"},{"id":"2","secret":"[REDACTED]"}]}}
+(pass) Logger Sanitization > Nested Object Sanitization > should redact sensitive fields in arrays [0.04ms]
+{"level":"info","message":"Test message","timestamp":"2026-07-10T23:48:25.200Z","data":{"level1":{"level2":{"level3":{"apiKey":"[REDACTED]","publicInfo":"safe"}}}}}
+(pass) Logger Sanitization > Nested Object Sanitization > should handle deeply nested sensitive data [0.03ms]
+{"level":"info","message":"Test message","timestamp":"2026-07-10T23:48:25.200Z","data":{"userId":"123","email":"t***@example.com","status":"active"}}
+(pass) Logger Sanitization > Non-Sensitive Data Preservation > should preserve non-sensitive data [0.02ms]
+{"level":"info","message":"Test message","timestamp":"2026-07-10T23:48:25.201Z","data":{"nullValue":null}}
+(pass) Logger Sanitization > Non-Sensitive Data Preservation > should preserve null and undefined values [0.02ms]
+{"level":"info","message":"Info message","timestamp":"2026-07-10T23:48:25.201Z","data":{"data":"test"}}
+(pass) Logger Sanitization > Log Levels > should log info messages with correct level [0.02ms]
+{"level":"warn","message":"Warning message","timestamp":"2026-07-10T23:48:25.201Z","data":{"data":"test"}}
+(pass) Logger Sanitization > Log Levels > should log warn messages with correct level [0.03ms]
+{"level":"error","message":"Error message","timestamp":"2026-07-10T23:48:25.201Z","data":{"context":"test"},"error":"Test error","stack":"Error: Test error\n    at <anonymous> (/Users/alancolver/dev/keyfate/frontend/src/lib/__tests__/logger.test.ts:202:26)"}
+(pass) Logger Sanitization > Log Levels > should log error messages with error details [0.04ms]
+{"level":"info","message":"Test message","timestamp":"2026-07-10T23:48:25.201Z"}
+(pass) Logger Sanitization > Log Levels > should include timestamp in all logs [0.12ms]
+{"level":"info","message":"Test message","timestamp":"2026-07-10T23:48:25.201Z","data":{"ServerShare":"[REDACTED]","SERVERCONNECTION":"sensitive","serverPassword":"[REDACTED]"}}
+(pass) Logger Sanitization > Case Insensitivity > should redact fields with different casing [0.03ms]
+{"level":"info","message":"Test message","timestamp":"2026-07-10T23:48:25.201Z","data":{"data":"test","requestId":"req-123"}}
+(pass) Logger Sanitization > Request ID Support > should support withRequestId helper [0.06ms]
+
+src/lib/auth/__tests__/redirects.test.ts:
+(pass) getSafeRedirectTarget > keeps internal relative paths [0.03ms]
+(pass) getSafeRedirectTarget > normalizes same-origin absolute URLs to internal paths [0.02ms]
+(pass) getSafeRedirectTarget > rejects external absolute URLs
+(pass) getSafeRedirectTarget > rejects protocol-relative URLs
+
+src/lib/auth/__tests__/auth-config.test.ts:
+(pass) auth config > passes GOOGLE_CLIENT_* env vars to the Google provider [0.03ms]
+(pass) auth config > stores the current session version in the JWT during sign-in [0.22ms]
+(pass) auth config > keeps a JWT valid when only updatedAt changed after token issuance [0.05ms]
+(pass) auth config > rejects a JWT when the database session version differs from the token session version [0.04ms]
+(pass) auth config > keeps a JWT valid when the database session version matches the token session version [0.03ms]
+(pass) auth config > keeps a fresh JWT valid even when emailVerified is false [0.03ms]
+(pass) auth config > keeps a JWT valid when revocation happened in the same second but the session version still matches [0.03ms]
+(pass) auth config > rejects a JWT when the user record no longer exists [0.03ms]
+[Auth] Error loading user for JWT validation: 242 | 		expect(mockGetDatabase).toHaveBeenCalledOnce();
+243 | 	});
+244 | 
+245 | 	it('rejects a JWT when the user lookup fails during session version validation', async () => {
+246 | 		const issuedAt = Math.floor(new Date('2026-04-12T12:00:00.000Z').getTime() / 1000);
+247 | 		const databaseError = new Error('database offline');
+                                  ^
+error: database offline
+      at <anonymous> (/Users/alancolver/dev/keyfate/frontend/src/lib/auth/__tests__/auth-config.test.ts:247:29)
+
+(pass) auth config > rejects a JWT when the user lookup fails during session version validation [0.13ms]
+(pass) auth config > uses the atomic verification token consumer for auto-login [0.36ms]
+
+src/lib/auth/__tests__/email-verification-token-storage.test.ts:
+[EmailVerification] Created verification token for: user@example.com
+(pass) email verification token storage > stores a hashed verification token while returning the raw token [0.30ms]
+(pass) email verification token storage > stores auto-login tokens hashed at rest with a dedicated purpose [0.11ms]
+(pass) email verification token storage > atomically consumes a verification token using email, hash, and purpose [0.05ms]
+(pass) email verification token storage > only exposes hashed-token purposes in the consume helper contract [0.01ms]
+(pass) email verification token storage > locks and validates a verification token without deleting it first [0.11ms]
+(pass) email verification token storage > only deletes a verification token when the explicit delete helper is called [0.06ms]
+
+src/lib/auth/__tests__/session-management.test.ts:
+(pass) invalidateAllUserSessions > increments the dedicated session version when invalidating sessions [0.12ms]
+
+src/lib/auth/__tests__/password-reset-token-storage.test.ts:
+(pass) password reset token storage > stores a hashed password reset token while returning the raw token [0.12ms]
+(pass) password reset token storage > validates a raw password reset token against its stored hash [0.10ms]
+(pass) password reset token storage > deletes a password reset token using the presented raw token [0.04ms]
+(pass) password reset token storage > atomically consumes a valid password reset token in one delete statement [0.07ms]
+(pass) password reset token storage > locks and validates a password reset token without deleting it first [0.07ms]
+(pass) password reset token storage > only deletes a password reset token when the explicit delete helper is called [0.03ms]
+
+src/lib/auth/__tests__/admin-guard.test.ts:
+(pass) requireAdmin > redirects to sign-in when session is null [0.04ms]
+(pass) requireAdmin > redirects to sign-in when session is undefined [0.01ms]
+(pass) requireAdmin > redirects to sign-in when session.user is undefined [0.02ms]
+(pass) requireAdmin > redirects to sign-in when session.user is null [0.01ms]
+(pass) requireAdmin > throws 403 when user exists but isAdmin is false [0.03ms]
+(pass) requireAdmin > throws 403 when user exists but isAdmin is not set [0.01ms]
+(pass) requireAdmin > does not throw when user is admin [0.01ms]
+(pass) requireAdmin > narrows session type to AdminSession after successful call [0.01ms]
+
+src/lib/auth/__tests__/redirect-callers.test.ts:
+(pass) redirect callers > buildSignUpRedirectUrl preserves only sanitized callbackUrl and next values [0.05ms]
+(pass) redirect callers > buildAuthLoginRedirectPath normalizes same-origin next values for sign-in [0.02ms]
+(pass) redirect callers > resolveEmailVerificationCallbackUrl prefers query callbackUrl when prop is absent [0.01ms]
+(pass) redirect callers > resolveEmailVerificationCallbackUrl prefers prop callbackUrl over query
+
+src/lib/schemas/__tests__/secret-nostr-fields.test.ts:
+(pass) secretSchema Nostr fields > should accept payload without Nostr fields (backward compatible) [1.05ms]
+(pass) secretSchema Nostr fields > should accept enable_nostr_shares: true [0.05ms]
+(pass) secretSchema Nostr fields > should accept enable_nostr_shares: false [0.03ms]
+(pass) secretSchema Nostr fields > should accept enable_bitcoin_timelock: true [0.04ms]
+(pass) secretSchema Nostr fields > should accept recipient_nostr_pubkeys array [0.12ms]
+(pass) secretSchema Nostr fields > should accept empty recipient_nostr_pubkeys array [0.03ms]
+(pass) secretSchema Nostr fields > should reject recipient_nostr_pubkeys with empty npub [0.20ms]
+(pass) secretSchema Nostr fields > should accept recipient_nostr_pubkeys with empty email [0.05ms]
+(pass) secretSchema Nostr fields > should reject enable_nostr_shares with non-boolean value [0.06ms]
+(pass) secretSchema Nostr fields > should leave Nostr fields undefined when not provided [0.04ms]
+
+src/lib/webhooks/__tests__/deduplication.test.ts:
+(pass) webhook deduplication > claims a webhook event atomically for the first delivery [0.31ms]
+(pass) webhook deduplication > reclaims a failed webhook event atomically [0.08ms]
+(pass) webhook deduplication > reclaims a stale processing webhook event atomically [0.06ms]
+(pass) webhook deduplication > rejects a duplicate delivery when another worker still owns the claim [0.04ms]
+(pass) webhook deduplication > marks a claimed webhook event as processed after side effects succeed [0.13ms]
+(pass) webhook deduplication > finalizes a webhook as processed when normal recording failed after side effects [0.09ms]
+(pass) webhook deduplication > marks a claimed webhook event as failed so a later delivery can retry [0.08ms]
+
+src/lib/email/__tests__/email-service.test.ts:
+(pass) email-service > sendEmail > delegates to the provider and returns result [0.29ms]
+(pass) email-service > sendEmail > passes email data through to provider [0.04ms]
+(pass) email-service > sendEmail > returns error when circuit breaker is open [0.14ms]
+(pass) email-service > sendEmail > uses dev mode logging when in development with mock provider [0.07ms]
+(pass) email-service > sendEmail > returns provider failure result [0.03ms]
+(pass) email-service > validateEmailConfig > returns valid when provider config is valid [0.06ms]
+(pass) email-service > validateEmailConfig > returns invalid when provider config fails [0.03ms]
+(pass) email-service > validateEmailConfig > returns dev mode when in development and config fails [0.03ms]
+(pass) email-service > sendReminderEmail > renders template and sends via provider [0.77ms]
+(pass) email-service > sendSecretDisclosureEmail > renders template and sends via provider [0.16ms]
+
+src/lib/services/__tests__/payment-records.test.ts:
+(pass) payment record replay safety > does not create or audit duplicate payment records for the same provider payment id [0.25ms]
+
+src/lib/services/__tests__/subscription-lifecycle.test.ts:
+(pass) subscription lifecycle replay safety > does not recreate or resend confirmation email for duplicate provider subscriptions [0.28ms]
+(pass) subscription lifecycle replay safety > does not resend cancellation email when subscription is already cancelled [0.15ms]
+
+src/lib/db/queries/__tests__/secrets-disclosure.test.ts:
+(pass) hasBeenDisclosed > returns false when sentCount is 0 [0.10ms]
+(pass) hasBeenDisclosed > returns true when sentCount > 0 [0.03ms]
+(pass) hasBeenDisclosed > returns false when query returns empty array (no log entries) [0.02ms]
+(pass) hasBeenDisclosed > returns false when sentCount is null [0.02ms]
+(pass) hasBeenDisclosed > passes the correct secretId to the query [0.03ms]
+
+src/lib/db/queries/__tests__/admin-metrics.test.ts:
+(pass) admin-metrics > getSecretStatusCounts > returns zeroed counts when no rows [0.13ms]
+(pass) admin-metrics > getSecretStatusCounts > aggregates counts correctly from grouped rows [0.04ms]
+(pass) admin-metrics > getSecretStatusCounts > counts total as sum of all statuses including unknown ones [0.04ms]
+(pass) admin-metrics > getSecretStatusCounts > handles string count values (SQL returns strings) [0.03ms]
+(pass) admin-metrics > getSecretStatusCounts > calls select → from → groupBy chain [0.07ms]
+(pass) admin-metrics > getUserCounts > returns all zeros when tables are empty [0.16ms]
+(pass) admin-metrics > getUserCounts > returns correct counts from parallel queries [0.03ms]
+(pass) admin-metrics > getUserCounts > handles missing count gracefully (undefined row) [0.03ms]
+(pass) admin-metrics > getUserCounts > runs three select calls for Promise.all [0.03ms]
+(pass) admin-metrics > getEmailDeliveryStats > returns all zeros when no disclosure log entries [0.09ms]
+(pass) admin-metrics > getEmailDeliveryStats > returns correct stats when row exists [0.03ms]
+(pass) admin-metrics > getEmailDeliveryStats > coerces string values to numbers [0.03ms]
+(pass) admin-metrics > getEmailDeliveryStats > handles null fields gracefully [0.03ms]
+(pass) admin-metrics > getFailedSecrets > returns empty array when no failed secrets [0.07ms]
+(pass) admin-metrics > getFailedSecrets > returns array of failed secret metadata [0.03ms]
+(pass) admin-metrics > getFailedSecrets > uses default limit of 20 [0.03ms]
+(pass) admin-metrics > getFailedSecrets > respects custom limit parameter [0.02ms]
+(pass) admin-metrics > getFailedSecrets > calls full chain: select → from → innerJoin → where → orderBy → limit [0.03ms]
+(pass) admin-metrics > getRecentEmailFailures > returns empty array when no unresolved failures [0.05ms]
+(pass) admin-metrics > getRecentEmailFailures > returns unresolved email failure records [0.03ms]
+(pass) admin-metrics > getRecentEmailFailures > uses default limit of 20 [0.03ms]
+(pass) admin-metrics > getRecentEmailFailures > respects custom limit parameter [0.03ms]
+(pass) admin-metrics > getRecentEmailFailures > filters by resolvedAt is null [0.04ms]
+(pass) admin-metrics > getRecentActivity > returns empty array when no activity [0.06ms]
+(pass) admin-metrics > getRecentActivity > returns checkin history with user email [0.04ms]
+(pass) admin-metrics > getRecentActivity > uses default limit of 20 [0.02ms]
+(pass) admin-metrics > getRecentActivity > respects custom limit parameter [0.02ms]
+(pass) admin-metrics > getRecentActivity > calls full chain: select → from → innerJoin → orderBy → limit [0.04ms]
+
+src/lib/email/providers/__tests__/SendGridAdapter.test.ts:
+(pass) SendGridAdapter > validateConfig > returns true when API key and admin email are set [0.06ms]
+(pass) SendGridAdapter > validateConfig > returns false when API key is missing [0.02ms]
+(pass) SendGridAdapter > validateConfig > returns false when admin email is missing [0.02ms]
+(pass) SendGridAdapter > validateConfig > returns false when API key is empty string [0.02ms]
+(pass) SendGridAdapter > validateConfig > returns false when API key is whitespace only [0.02ms]
+(pass) SendGridAdapter > getProviderName > returns sendgrid
+(pass) SendGridAdapter > sendEmail > sends email successfully via SendGrid Web API [0.18ms]
+(pass) SendGridAdapter > sendEmail > passes correct email data to SendGrid [0.06ms]
+(pass) SendGridAdapter > sendEmail > includes ASM unsubscribe group when specified [0.04ms]
+(pass) SendGridAdapter > sendEmail > returns config error when API key is missing [0.03ms]
+(pass) SendGridAdapter > sendEmail > retries on transient errors [3716.23ms]
+(pass) SendGridAdapter > sendEmail > does not retry on auth errors [0.19ms]
+(pass) SendGridAdapter > sendEmail > does not retry on 401 errors [0.07ms]
+(pass) SendGridAdapter > sendEmail > returns rate limit info on 429 errors [0.05ms]
+(pass) SendGridAdapter > sendEmail > returns failure after exhausting all retries [3598.84ms]
+(pass) SendGridAdapter > sendEmail > uses default sender name when SENDGRID_SENDER_NAME is not set [0.29ms]
+(pass) SendGridAdapter > sendEmail > generates fallback message ID when header is missing [0.11ms]
+(pass) SendGridAdapter > sendEmail > passes custom headers through [0.05ms]
+
+src/routes/api/check-in/__tests__/server.test.ts:
+(pass) POST /api/check-in logging > does not log raw token-bearing URLs or token values, and uses a fingerprint instead [103.04ms]
+
+src/routes/api/health/__tests__/health.test.ts:
+(pass) Health Endpoint (SvelteKit) > Basic Health Check (non-detailed) > should return 200 for healthy services [0.76ms]
+(pass) Health Endpoint (SvelteKit) > Basic Health Check (non-detailed) > should include timestamp in response [0.07ms]
+(pass) Health Endpoint (SvelteKit) > Basic Health Check (non-detailed) > should return degraded when database is unhealthy [0.05ms]
+(pass) Health Endpoint (SvelteKit) > Basic Health Check (non-detailed) > should return degraded when email is unconfigured [0.05ms]
+(pass) Health Endpoint (SvelteKit) > Error Handling > should return 500 on unexpected error [0.09ms]
+(pass) Health Endpoint (SvelteKit) > Response Structure > should have correct response structure for healthy state [0.11ms]
+
+src/routes/(admin)/admin/__tests__/page-server.test.ts:
+(pass) Admin page.server load > happy path > returns all metrics data from queries and cronMonitor [0.18ms]
+(pass) Admin page.server load > happy path > calls all six query functions [0.04ms]
+(pass) Admin page.server load > happy path > calls cronMonitor.getAllStats() [0.02ms]
+(pass) Admin page.server load > happy path > returns cronStats from cronMonitor.getAllStats() [0.03ms]
+(pass) Admin page.server load > return shape > has all expected top-level keys [0.04ms]
+[Admin] Failed to load admin metrics: 159 | 		});
+160 | 	});
+161 | 
+162 | 	describe('error handling', () => {
+163 | 		it('returns fallback zeroed data when getSecretStatusCounts throws', async () => {
+164 | 			mockGetSecretStatusCounts.mockRejectedValue(new Error('DB connection lost'));
+                                                         ^
+error: DB connection lost
+      at <anonymous> (/Users/alancolver/dev/keyfate/frontend/src/routes/(admin)/admin/__tests__/page-server.test.ts:164:52)
+
+(pass) Admin page.server load > error handling > returns fallback zeroed data when getSecretStatusCounts throws [0.11ms]
+[Admin] Failed to load admin metrics: 173 | 			expect(result.recentActivity).toEqual([]);
+174 | 			expect(result.cronStats).toEqual({});
+175 | 		});
+176 | 
+177 | 		it('returns fallback data when getUserCounts throws', async () => {
+178 | 			mockGetUserCounts.mockRejectedValue(new Error('query timeout'));
+                                                 ^
+error: query timeout
+      at <anonymous> (/Users/alancolver/dev/keyfate/frontend/src/routes/(admin)/admin/__tests__/page-server.test.ts:178:44)
+
+(pass) Admin page.server load > error handling > returns fallback data when getUserCounts throws [0.05ms]
+[Admin] Failed to load admin metrics: 182 | 			expect(result.secretCounts).toEqual(FALLBACK_SECRET_COUNTS);
+183 | 			expect(result.userCounts).toEqual(FALLBACK_USER_COUNTS);
+184 | 		});
+185 | 
+186 | 		it('returns fallback data when getRecentActivity throws', async () => {
+187 | 			mockGetRecentActivity.mockRejectedValue(new Error('table missing'));
+                                                     ^
+error: table missing
+      at <anonymous> (/Users/alancolver/dev/keyfate/frontend/src/routes/(admin)/admin/__tests__/page-server.test.ts:187:48)
+
+(pass) Admin page.server load > error handling > returns fallback data when getRecentActivity throws [0.05ms]
+(pass) Admin page.server load > error handling > logs error to console.error on failure [0.05ms]
+(pass) Admin page.server load > error handling > does not log when queries succeed [0.03ms]
+[Admin] Failed to load admin metrics: 215 | 		});
+216 | 
+217 | 		it('returns fallback even when cronMonitor.getAllStats throws', async () => {
+218 | 			// getAllStats is called outside Promise.all but inside the try block
+219 | 			mockGetAllStats.mockImplementation(() => {
+220 | 				throw new Error('monitor broken');
+                    ^
+error: monitor broken
+      at <anonymous> (/Users/alancolver/dev/keyfate/frontend/src/routes/(admin)/admin/__tests__/page-server.test.ts:220:15)
+      at <anonymous> (/Users/alancolver/dev/keyfate/frontend/src/routes/(admin)/admin/+page.server.ts:24:33)
+      at async loadAdmin (/Users/alancolver/dev/keyfate/frontend/src/routes/(admin)/admin/__tests__/page-server.test.ts:34:23)
+      at async <anonymous> (/Users/alancolver/dev/keyfate/frontend/src/routes/(admin)/admin/__tests__/page-server.test.ts:223:25)
+
+(pass) Admin page.server load > error handling > returns fallback even when cronMonitor.getAllStats throws [0.06ms]
+[Admin] Failed to load admin metrics: 224 | 
+225 | 			expect(result.cronStats).toEqual({});
+226 | 		});
+227 | 
+228 | 		it('fallback secretCounts has correct shape', async () => {
+229 | 			mockGetSecretStatusCounts.mockRejectedValue(new Error('fail'));
+                                                         ^
+error: fail
+      at <anonymous> (/Users/alancolver/dev/keyfate/frontend/src/routes/(admin)/admin/__tests__/page-server.test.ts:229:52)
+
+(pass) Admin page.server load > error handling > fallback secretCounts has correct shape [0.06ms]
+[Admin] Failed to load admin metrics: 236 | 			expect(result.secretCounts).toHaveProperty('failed', 0);
+237 | 			expect(result.secretCounts).toHaveProperty('total', 0);
+238 | 		});
+239 | 
+240 | 		it('fallback userCounts has correct shape', async () => {
+241 | 			mockGetUserCounts.mockRejectedValue(new Error('fail'));
+                                                 ^
+error: fail
+      at <anonymous> (/Users/alancolver/dev/keyfate/frontend/src/routes/(admin)/admin/__tests__/page-server.test.ts:241:44)
+
+(pass) Admin page.server load > error handling > fallback userCounts has correct shape [0.05ms]
+[Admin] Failed to load admin metrics: 246 | 			expect(result.userCounts).toHaveProperty('withActiveSecrets', 0);
+247 | 			expect(result.userCounts).toHaveProperty('proUsers', 0);
+248 | 		});
+249 | 
+250 | 		it('fallback emailStats has correct shape', async () => {
+251 | 			mockGetEmailDeliveryStats.mockRejectedValue(new Error('fail'));
+                                                         ^
+error: fail
+      at <anonymous> (/Users/alancolver/dev/keyfate/frontend/src/routes/(admin)/admin/__tests__/page-server.test.ts:251:52)
+
+(pass) Admin page.server load > error handling > fallback emailStats has correct shape [0.06ms]
+
+src/routes/api/admin/metrics/__tests__/metrics-api.test.ts:
+(pass) GET /api/admin/metrics > authentication > calls event.locals.auth() to get session [0.20ms]
+(pass) GET /api/admin/metrics > authentication > passes session to requireAdmin [0.04ms]
+(pass) GET /api/admin/metrics > authentication > throws when requireAdmin rejects non-admin [0.04ms]
+(pass) GET /api/admin/metrics > authentication > redirects when requireAdmin rejects no session [0.03ms]
+(pass) GET /api/admin/metrics > happy path > returns 200 JSON response [0.04ms]
+(pass) GET /api/admin/metrics > happy path > returns all metrics in response body [0.06ms]
+(pass) GET /api/admin/metrics > happy path > calls all six query functions [0.04ms]
+(pass) GET /api/admin/metrics > happy path > includes cronStats from cronMonitor [0.03ms]
+(pass) GET /api/admin/metrics > response shape > has all expected top-level keys [0.04ms]
+
+src/routes/api/admin/email-failures/__tests__/auth.test.ts:
+(pass) admin email-failure route authorization > rejects the list route without an authenticated admin session [0.23ms]
+(pass) admin email-failure route authorization > rejects the detail route even when ADMIN_TOKEN is unset and Bearer admin-secret is sent [0.10ms]
+(pass) admin email-failure route authorization > rejects the resolve route without an authenticated admin session [0.08ms]
+(pass) admin email-failure route authorization > rejects the single retry route without an authenticated admin session [0.10ms]
+(pass) admin email-failure route authorization > rejects the batch retry route without an authenticated admin session [0.10ms]
+
+src/routes/api/webhooks/btcpay/__tests__/server.test.ts:
+(pass) POST /api/webhooks/btcpay > claims with original delivery id before side effects and skips duplicates [0.97ms]
+(pass) POST /api/webhooks/btcpay > marks a claimed BTCPay event as failed when business logic throws [0.19ms]
+(pass) POST /api/webhooks/btcpay > attempts explicit processed finalization when recording fails after side effects [0.11ms]
+
+src/routes/api/webhooks/stripe/__tests__/server.test.ts:
+(pass) POST /api/webhooks/stripe > claims before side effects and skips duplicate deliveries [1.11ms]
+(pass) POST /api/webhooks/stripe > marks a claimed event as failed when business logic throws [0.19ms]
+(pass) POST /api/webhooks/stripe > does not execute side effects twice when persistence fails after side effects complete [0.11ms]
+(pass) POST /api/webhooks/stripe > does not let bookkeeping failure mask the original webhook error [0.08ms]
+
+src/routes/api/secrets/[id]/check-in/__tests__/check-in.test.ts:
+(pass) POST /api/secrets/[id]/check-in > CSRF protection > returns 403 if CSRF validation fails [0.79ms]
+(pass) POST /api/secrets/[id]/check-in > Authentication > returns 401 if no session [0.07ms]
+(pass) POST /api/secrets/[id]/check-in > Authentication > returns 401 if session has no user id [0.04ms]
+[Check-in API] User verification failed: 252 | 	// ---------------------------------------------------------------
+253 | 	// 3. User verification
+254 | 	// ---------------------------------------------------------------
+255 | 	describe('User verification', () => {
+256 | 		it('returns 500 if ensureUserExists throws', async () => {
+257 | 			mockEnsureUserExists.mockRejectedValue(new Error('DB connection lost'));
+                                                    ^
+error: DB connection lost
+      at <anonymous> (/Users/alancolver/dev/keyfate/frontend/src/routes/api/secrets/[id]/check-in/__tests__/check-in.test.ts:257:47)
+
+(pass) POST /api/secrets/[id]/check-in > User verification > returns 500 if ensureUserExists throws [0.17ms]
+(pass) POST /api/secrets/[id]/check-in > Secret lookup > returns 404 if secret not found in transaction [0.20ms]
+(pass) POST /api/secrets/[id]/check-in > Normal check-in (active secret) > successfully checks in an active secret [0.17ms]
+(pass) POST /api/secrets/[id]/check-in > Normal check-in (active secret) > passes correct update payload for active secret (no status reset) [0.16ms]
+(pass) POST /api/secrets/[id]/check-in > Recovery check-in (failed secret) > resets status to active, retryCount to 0, lastRetryAt and lastError to null [0.16ms]
+(pass) POST /api/secrets/[id]/check-in > Recovery check-in (failed secret) > returns success with mapped secret after recovery [0.10ms]
+(pass) POST /api/secrets/[id]/check-in > Check-in history > inserts check-in history for normal check-in [0.13ms]
+(pass) POST /api/secrets/[id]/check-in > Check-in history > inserts check-in history for recovery check-in [0.11ms]
+(pass) POST /api/secrets/[id]/check-in > Check-in history > computes nextCheckIn based on checkInDays [0.12ms]
+(pass) POST /api/secrets/[id]/check-in > Side effects > calls logCheckIn after successful check-in [0.08ms]
+(pass) POST /api/secrets/[id]/check-in > Side effects > calls scheduleRemindersForSecret after successful check-in [0.07ms]
+(pass) POST /api/secrets/[id]/check-in > Side effects > does not call side effects when secret not found [0.05ms]
+(pass) POST /api/secrets/[id]/check-in > Response shape > returns { success, secret, next_check_in } on success [0.08ms]
+(pass) POST /api/secrets/[id]/check-in > Response shape > returns 404 if getSecretWithRecipients returns null after update [0.06ms]
+Error in POST /api/secrets/[id]/check-in: 684 | 	// ---------------------------------------------------------------
+685 | 	// 10. General error handling
+686 | 	// ---------------------------------------------------------------
+687 | 	describe('Error handling', () => {
+688 | 		it('returns 500 on unexpected transaction error', async () => {
+689 | 			mockTransaction.mockRejectedValue(new Error('Connection reset'));
+                                               ^
+error: Connection reset
+      at <anonymous> (/Users/alancolver/dev/keyfate/frontend/src/routes/api/secrets/[id]/check-in/__tests__/check-in.test.ts:689:42)
+
+(pass) POST /api/secrets/[id]/check-in > Error handling > returns 500 on unexpected transaction error [0.09ms]
+
+src/routes/api/secrets/[id]/publish-nostr/__tests__/publish-nostr.test.ts:
+(pass) POST /api/secrets/[id]/publish-nostr > Authentication > should throw 401 when not authenticated [1.44ms]
+(pass) POST /api/secrets/[id]/publish-nostr > Validation > should return 400 for empty shares array [0.36ms]
+(pass) POST /api/secrets/[id]/publish-nostr > Validation > should return 400 for missing threshold [0.20ms]
+(pass) POST /api/secrets/[id]/publish-nostr > Validation > should return 400 for invalid recipientId format [0.09ms]
+(pass) POST /api/secrets/[id]/publish-nostr > Validation > should return 400 for threshold below minimum [0.06ms]
+(pass) POST /api/secrets/[id]/publish-nostr > Validation > should return 400 for totalShares above maximum [0.07ms]
+(pass) POST /api/secrets/[id]/publish-nostr > Validation > should return 400 for negative shareIndex [0.07ms]
+(pass) POST /api/secrets/[id]/publish-nostr > Authorization > should return 404 when secret does not belong to user [0.10ms]
+(pass) POST /api/secrets/[id]/publish-nostr > Authorization > should return 400 when recipientId does not belong to secret [0.07ms]
+(pass) POST /api/secrets/[id]/publish-nostr > Publishing > should call publishSharesToNostr with correct params [0.21ms]
+(pass) POST /api/secrets/[id]/publish-nostr > Publishing > should return 422 when no shares were published [0.07ms]
+(pass) POST /api/secrets/[id]/publish-nostr > Publishing > should use NOSTR_SERVER_SECRET_KEY from env when set [0.11ms]
+(pass) POST /api/secrets/[id]/publish-nostr > Publishing > should handle publish errors gracefully [0.07ms]
+(pass) POST /api/secrets/[id]/publish-nostr > Publishing > should handle multiple shares for multiple recipients [0.09ms]
+Error in POST /api/secrets/[id]/publish-nostr: 484 | 			setupDbChain([
+485 | 				[{ id: TEST_SECRET_ID }],
+486 | 				[{ id: TEST_RECIPIENT_ID, nostrPubkey: TEST_NOSTR_PUBKEY }]
+487 | 			]);
+488 | 
+489 | 			mockPublishSharesToNostr.mockRejectedValue(new Error('Unexpected crypto failure'));
+                                                        ^
+error: Unexpected crypto failure
+      at <anonymous> (/Users/alancolver/dev/keyfate/frontend/src/routes/api/secrets/[id]/publish-nostr/__tests__/publish-nostr.test.ts:489:51)
+
+(pass) POST /api/secrets/[id]/publish-nostr > Error handling > should return 500 on unexpected errors [0.13ms]
+
+src/routes/api/secrets/[id]/send-now/__tests__/send-now.test.ts:
+(pass) POST /api/secrets/[id]/send-now > CSRF validation > returns 403 if CSRF validation fails [1.10ms]
+(pass) POST /api/secrets/[id]/send-now > Authentication > returns 401 if no session [0.07ms]
+(pass) POST /api/secrets/[id]/send-now > Authentication > returns 401 if session has no user id [0.04ms]
+(pass) POST /api/secrets/[id]/send-now > Secret lookup > returns 404 if secret not found [0.12ms]
+(pass) POST /api/secrets/[id]/send-now > Status validation > returns 400 if secret status is not 'failed' [0.05ms]
+(pass) POST /api/secrets/[id]/send-now > Status validation > returns 400 for triggered status [0.04ms]
+(pass) POST /api/secrets/[id]/send-now > Disclosure check > returns 400 if secret has already been disclosed [0.06ms]
+(pass) POST /api/secrets/[id]/send-now > User lookup > returns 404 if user record not found [0.05ms]
+(pass) POST /api/secrets/[id]/send-now > Concurrency lock > returns 409 if concurrent status change (lock fails) [0.08ms]
+(pass) POST /api/secrets/[id]/send-now > Recipients check > returns 400 if no recipients configured [0.07ms]
+(pass) POST /api/secrets/[id]/send-now > Decryption > returns 500 if decryption fails [0.32ms]
+(pass) POST /api/secrets/[id]/send-now > Successful send > sends to all recipients and returns success with triggered status [0.16ms]
+(pass) POST /api/secrets/[id]/send-now > Successful send > uses user email as sender name when user.name is null [0.08ms]
+(pass) POST /api/secrets/[id]/send-now > Successful send > sends to multiple recipients successfully [0.11ms]
+(pass) POST /api/secrets/[id]/send-now > Partial failure > handles partial failure when some emails fail [0.12ms]
+(pass) POST /api/secrets/[id]/send-now > Partial failure > handles email send throwing an exception [0.09ms]
+(pass) POST /api/secrets/[id]/send-now > Partial failure > skips recipients with empty email [0.06ms]
+(pass) POST /api/secrets/[id]/send-now > Partial failure > counts already-disclosed recipient (conflict) as sent [0.05ms]
+(pass) POST /api/secrets/[id]/send-now > Unexpected errors > returns 500 on unexpected error [0.05ms]
+
+ 549 pass
+ 0 fail
+ 1319 expect() calls
+Ran 549 tests across 42 files. [9.10s]

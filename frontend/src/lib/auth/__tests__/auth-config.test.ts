@@ -55,7 +55,10 @@ vi.mock('$lib/db/schema', () => ({
 		sessionsInvalidatedAt: 'users.sessions_invalidated_at',
 		sessionVersion: 'users.session_version'
 	},
-	verificationTokens: { token: 'verification_tokens.token', identifier: 'verification_tokens.identifier' }
+	verificationTokens: {
+		token: 'verification_tokens.token',
+		identifier: 'verification_tokens.identifier'
+	}
 }));
 vi.mock('$lib/auth/password', () => ({ validatePassword: vi.fn() }));
 vi.mock('$lib/auth/users', () => ({ authenticateUser: vi.fn() }));

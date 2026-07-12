@@ -1,0 +1,13 @@
+- description: KeyFate run-all — official JavaScript security and quality queries
+- import: codeql-suites/javascript-security-and-quality.qls
+  from: codeql/javascript-queries
+- include:
+    kind:
+      - problem
+      - path-problem
+- exclude:
+    deprecated: //
+- exclude:
+    tags contain:
+      - modeleditor
+      - modelgenerator

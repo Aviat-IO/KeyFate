@@ -14,7 +14,17 @@ export const load: PageServerLoad = async (event) => {
 	const db = await getDatabase();
 
 	const recentExports = await db
-		.select()
+		.select({
+			id: dataExportJobs.id,
+			userId: dataExportJobs.userId,
+			status: dataExportJobs.status,
+			fileSize: dataExportJobs.fileSize,
+			downloadCount: dataExportJobs.downloadCount,
+			expiresAt: dataExportJobs.expiresAt,
+			createdAt: dataExportJobs.createdAt,
+			completedAt: dataExportJobs.completedAt,
+			errorMessage: dataExportJobs.errorMessage
+		})
 		.from(dataExportJobs)
 		.where(eq(dataExportJobs.userId, userId))
 		.orderBy(desc(dataExportJobs.createdAt))

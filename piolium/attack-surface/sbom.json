@@ -1,0 +1,4686 @@
+{
+  "schema_version": "keyfate-sbom-1",
+  "generated_at": "2026-07-10T23:21:09Z",
+  "repository": "Aviat-IO/KeyFate",
+  "commit": "b7b7aef1a897c418e0402acd211fecf0206d8217",
+  "package_manager": "Bun 1.3.14",
+  "manifests": [
+    "frontend/package.json",
+    "frontend/bun.lock",
+    "package.json",
+    ".github/workflows/ci.yml",
+    "frontend/Dockerfile",
+    "docker-compose.yml"
+  ],
+  "component_count": 636,
+  "components": [
+    {
+      "type": "npm",
+      "name": "@adobe/css-tools",
+      "version": "4.4.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@ark/schema",
+      "version": "0.56.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@ark/util",
+      "version": "0.56.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@asamuzakjp/css-color",
+      "version": "5.1.11",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@asamuzakjp/dom-selector",
+      "version": "7.1.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@asamuzakjp/generational-cache",
+      "version": "1.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@asamuzakjp/nwsapi",
+      "version": "2.3.9",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@auth/core",
+      "version": "0.41.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@auth/sveltekit",
+      "version": "1.11.2",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@babel/code-frame",
+      "version": "7.29.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@babel/helper-validator-identifier",
+      "version": "7.28.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@babel/runtime",
+      "version": "7.28.6",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@bramus/specificity",
+      "version": "2.4.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@csstools/color-helpers",
+      "version": "6.0.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@csstools/css-calc",
+      "version": "3.2.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@csstools/css-color-parser",
+      "version": "4.1.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@csstools/css-parser-algorithms",
+      "version": "4.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@csstools/css-syntax-patches-for-csstree",
+      "version": "1.1.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@csstools/css-tokenizer",
+      "version": "4.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@drizzle-team/brocli",
+      "version": "0.10.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@emnapi/core",
+      "version": "1.10.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@emnapi/runtime",
+      "version": "1.10.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@emnapi/runtime",
+      "version": "1.8.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@emnapi/wasi-threads",
+      "version": "1.2.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild-kit/core-utils",
+      "version": "3.3.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild-kit/esm-loader",
+      "version": "2.6.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/aix-ppc64",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/aix-ppc64",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/android-arm",
+      "version": "0.18.20",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/android-arm",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/android-arm",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/android-arm64",
+      "version": "0.18.20",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/android-arm64",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/android-arm64",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/android-x64",
+      "version": "0.18.20",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/android-x64",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/android-x64",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/darwin-arm64",
+      "version": "0.18.20",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/darwin-arm64",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/darwin-arm64",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/darwin-x64",
+      "version": "0.18.20",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/darwin-x64",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/darwin-x64",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/freebsd-arm64",
+      "version": "0.18.20",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/freebsd-arm64",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/freebsd-arm64",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/freebsd-x64",
+      "version": "0.18.20",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/freebsd-x64",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/freebsd-x64",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-arm",
+      "version": "0.18.20",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-arm",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-arm",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-arm64",
+      "version": "0.18.20",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-arm64",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-arm64",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-ia32",
+      "version": "0.18.20",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-ia32",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-ia32",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-loong64",
+      "version": "0.18.20",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-loong64",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-loong64",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-mips64el",
+      "version": "0.18.20",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-mips64el",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-mips64el",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-ppc64",
+      "version": "0.18.20",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-ppc64",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-ppc64",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-riscv64",
+      "version": "0.18.20",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-riscv64",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-riscv64",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-s390x",
+      "version": "0.18.20",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-s390x",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-s390x",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-x64",
+      "version": "0.18.20",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-x64",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/linux-x64",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/netbsd-arm64",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/netbsd-arm64",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/netbsd-x64",
+      "version": "0.18.20",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/netbsd-x64",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/netbsd-x64",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/openbsd-arm64",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/openbsd-arm64",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/openbsd-x64",
+      "version": "0.18.20",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/openbsd-x64",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/openbsd-x64",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/openharmony-arm64",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/openharmony-arm64",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/sunos-x64",
+      "version": "0.18.20",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/sunos-x64",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/sunos-x64",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/win32-arm64",
+      "version": "0.18.20",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/win32-arm64",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/win32-arm64",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/win32-ia32",
+      "version": "0.18.20",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/win32-ia32",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/win32-ia32",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/win32-x64",
+      "version": "0.18.20",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/win32-x64",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@esbuild/win32-x64",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@eslint-community/eslint-utils",
+      "version": "4.9.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@eslint-community/regexpp",
+      "version": "4.12.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@eslint/config-array",
+      "version": "0.23.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@eslint/config-helpers",
+      "version": "0.5.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@eslint/core",
+      "version": "1.2.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@eslint/js",
+      "version": "10.0.1",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "@eslint/object-schema",
+      "version": "3.0.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@eslint/plugin-kit",
+      "version": "0.7.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@exodus/bytes",
+      "version": "1.14.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@exodus/bytes",
+      "version": "1.15.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@exodus/schemasafe",
+      "version": "1.3.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@floating-ui/core",
+      "version": "1.7.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@floating-ui/dom",
+      "version": "1.7.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@floating-ui/utils",
+      "version": "0.2.10",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@hapi/hoek",
+      "version": "9.3.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@hapi/topo",
+      "version": "5.1.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@humanfs/core",
+      "version": "0.19.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@humanfs/node",
+      "version": "0.16.7",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@humanwhocodes/module-importer",
+      "version": "1.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@humanwhocodes/retry",
+      "version": "0.4.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@img/colour",
+      "version": "1.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@img/sharp-darwin-arm64",
+      "version": "0.34.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@img/sharp-darwin-x64",
+      "version": "0.34.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@img/sharp-libvips-darwin-arm64",
+      "version": "1.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@img/sharp-libvips-darwin-x64",
+      "version": "1.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@img/sharp-libvips-linux-arm",
+      "version": "1.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@img/sharp-libvips-linux-arm64",
+      "version": "1.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@img/sharp-libvips-linux-ppc64",
+      "version": "1.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@img/sharp-libvips-linux-riscv64",
+      "version": "1.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@img/sharp-libvips-linux-s390x",
+      "version": "1.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@img/sharp-libvips-linux-x64",
+      "version": "1.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@img/sharp-libvips-linuxmusl-arm64",
+      "version": "1.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@img/sharp-libvips-linuxmusl-x64",
+      "version": "1.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@img/sharp-linux-arm",
+      "version": "0.34.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@img/sharp-linux-arm64",
+      "version": "0.34.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@img/sharp-linux-ppc64",
+      "version": "0.34.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@img/sharp-linux-riscv64",
+      "version": "0.34.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@img/sharp-linux-s390x",
+      "version": "0.34.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@img/sharp-linux-x64",
+      "version": "0.34.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@img/sharp-linuxmusl-arm64",
+      "version": "0.34.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@img/sharp-linuxmusl-x64",
+      "version": "0.34.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@img/sharp-wasm32",
+      "version": "0.34.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@img/sharp-win32-arm64",
+      "version": "0.34.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@img/sharp-win32-ia32",
+      "version": "0.34.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@img/sharp-win32-x64",
+      "version": "0.34.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@internationalized/date",
+      "version": "3.12.1",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "@jridgewell/gen-mapping",
+      "version": "0.3.13",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@jridgewell/remapping",
+      "version": "2.3.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@jridgewell/resolve-uri",
+      "version": "3.1.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@jridgewell/sourcemap-codec",
+      "version": "1.5.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@jridgewell/trace-mapping",
+      "version": "0.3.31",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@lucide/svelte",
+      "version": "1.11.0",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "@napi-rs/wasm-runtime",
+      "version": "1.1.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@neondatabase/serverless",
+      "version": "1.1.0",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@noble/ciphers",
+      "version": "2.1.1",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@noble/ciphers",
+      "version": "2.2.0",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@noble/curves",
+      "version": "2.0.1",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@noble/curves",
+      "version": "2.2.0",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@noble/hashes",
+      "version": "2.0.1",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@noble/hashes",
+      "version": "2.2.0",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@oxc-project/types",
+      "version": "0.127.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@panva/hkdf",
+      "version": "1.2.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@polka/url",
+      "version": "1.0.0-next.29",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@poppinss/macroable",
+      "version": "1.1.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rolldown/binding-android-arm64",
+      "version": "1.0.0-rc.17",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rolldown/binding-darwin-arm64",
+      "version": "1.0.0-rc.17",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rolldown/binding-darwin-x64",
+      "version": "1.0.0-rc.17",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rolldown/binding-freebsd-x64",
+      "version": "1.0.0-rc.17",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rolldown/binding-linux-arm-gnueabihf",
+      "version": "1.0.0-rc.17",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rolldown/binding-linux-arm64-gnu",
+      "version": "1.0.0-rc.17",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rolldown/binding-linux-arm64-musl",
+      "version": "1.0.0-rc.17",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rolldown/binding-linux-ppc64-gnu",
+      "version": "1.0.0-rc.17",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rolldown/binding-linux-s390x-gnu",
+      "version": "1.0.0-rc.17",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rolldown/binding-linux-x64-gnu",
+      "version": "1.0.0-rc.17",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rolldown/binding-linux-x64-musl",
+      "version": "1.0.0-rc.17",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rolldown/binding-openharmony-arm64",
+      "version": "1.0.0-rc.17",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rolldown/binding-wasm32-wasi",
+      "version": "1.0.0-rc.17",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rolldown/binding-win32-arm64-msvc",
+      "version": "1.0.0-rc.17",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rolldown/binding-win32-x64-msvc",
+      "version": "1.0.0-rc.17",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rolldown/pluginutils",
+      "version": "1.0.0-rc.17",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/plugin-commonjs",
+      "version": "29.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/plugin-json",
+      "version": "6.1.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/plugin-node-resolve",
+      "version": "16.0.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/pluginutils",
+      "version": "5.3.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/rollup-android-arm-eabi",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/rollup-android-arm64",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/rollup-darwin-arm64",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/rollup-darwin-x64",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/rollup-freebsd-arm64",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/rollup-freebsd-x64",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/rollup-linux-arm-gnueabihf",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/rollup-linux-arm-musleabihf",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/rollup-linux-arm64-gnu",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/rollup-linux-arm64-musl",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/rollup-linux-loong64-gnu",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/rollup-linux-loong64-musl",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/rollup-linux-ppc64-gnu",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/rollup-linux-ppc64-musl",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/rollup-linux-riscv64-gnu",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/rollup-linux-riscv64-musl",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/rollup-linux-s390x-gnu",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/rollup-linux-x64-gnu",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/rollup-linux-x64-musl",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/rollup-openbsd-x64",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/rollup-openharmony-arm64",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/rollup-win32-arm64-msvc",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/rollup-win32-ia32-msvc",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/rollup-win32-x64-gnu",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@rollup/rollup-win32-x64-msvc",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@scure/base",
+      "version": "2.0.0",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@scure/base",
+      "version": "2.2.0",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@scure/bip32",
+      "version": "2.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@scure/bip39",
+      "version": "2.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@scure/btc-signer",
+      "version": "2.0.1",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@sendgrid/client",
+      "version": "8.1.6",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@sendgrid/helpers",
+      "version": "8.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@sendgrid/mail",
+      "version": "8.1.6",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@sideway/address",
+      "version": "4.1.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@sideway/formula",
+      "version": "3.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@sideway/pinpoint",
+      "version": "2.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@standard-schema/spec",
+      "version": "1.1.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@sveltejs/acorn-typescript",
+      "version": "1.0.9",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@sveltejs/adapter-node",
+      "version": "5.5.4",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "@sveltejs/enhanced-img",
+      "version": "0.10.4",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "@sveltejs/kit",
+      "version": "2.58.0",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "@sveltejs/vite-plugin-svelte",
+      "version": "7.0.0",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "@swc/helpers",
+      "version": "0.5.19",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@tailwindcss/node",
+      "version": "4.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@tailwindcss/oxide",
+      "version": "4.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@tailwindcss/oxide-android-arm64",
+      "version": "4.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@tailwindcss/oxide-darwin-arm64",
+      "version": "4.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@tailwindcss/oxide-darwin-x64",
+      "version": "4.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@tailwindcss/oxide-freebsd-x64",
+      "version": "4.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@tailwindcss/oxide-linux-arm-gnueabihf",
+      "version": "4.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@tailwindcss/oxide-linux-arm64-gnu",
+      "version": "4.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@tailwindcss/oxide-linux-arm64-musl",
+      "version": "4.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@tailwindcss/oxide-linux-x64-gnu",
+      "version": "4.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@tailwindcss/oxide-linux-x64-musl",
+      "version": "4.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@tailwindcss/oxide-wasm32-wasi",
+      "version": "4.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@tailwindcss/oxide-win32-arm64-msvc",
+      "version": "4.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@tailwindcss/oxide-win32-x64-msvc",
+      "version": "4.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@tailwindcss/typography",
+      "version": "0.5.19",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@tailwindcss/vite",
+      "version": "4.2.4",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "@testing-library/dom",
+      "version": "10.4.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@testing-library/jest-dom",
+      "version": "6.9.1",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "@testing-library/svelte",
+      "version": "5.3.1",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "@testing-library/svelte-core",
+      "version": "1.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@tybys/wasm-util",
+      "version": "0.10.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@types/aria-query",
+      "version": "5.0.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@types/bcryptjs",
+      "version": "3.0.0",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "@types/canvas-confetti",
+      "version": "1.9.0",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "@types/chai",
+      "version": "5.2.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@types/cookie",
+      "version": "0.6.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@types/deep-eql",
+      "version": "4.0.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@types/esrecurse",
+      "version": "4.3.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@types/estree",
+      "version": "1.0.8",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@types/file-saver",
+      "version": "2.0.7",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "@types/json-schema",
+      "version": "7.0.15",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@types/node",
+      "version": "25.6.0",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "@types/node-cron",
+      "version": "3.0.11",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "@types/nodemailer",
+      "version": "8.0.0",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "@types/resolve",
+      "version": "1.20.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@types/sanitize-html",
+      "version": "2.16.1",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "@types/trusted-types",
+      "version": "2.0.7",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@types/validator",
+      "version": "13.15.10",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@typeschema/class-validator",
+      "version": "0.3.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@typeschema/core",
+      "version": "0.14.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@typescript-eslint/eslint-plugin",
+      "version": "8.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@typescript-eslint/parser",
+      "version": "8.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@typescript-eslint/project-service",
+      "version": "8.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@typescript-eslint/scope-manager",
+      "version": "8.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@typescript-eslint/tsconfig-utils",
+      "version": "8.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@typescript-eslint/type-utils",
+      "version": "8.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@typescript-eslint/types",
+      "version": "8.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@typescript-eslint/typescript-estree",
+      "version": "8.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@typescript-eslint/utils",
+      "version": "8.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@typescript-eslint/visitor-keys",
+      "version": "8.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@valibot/to-json-schema",
+      "version": "1.6.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@vinejs/compiler",
+      "version": "3.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@vinejs/vine",
+      "version": "3.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@vitest/expect",
+      "version": "4.1.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@vitest/mocker",
+      "version": "4.1.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@vitest/pretty-format",
+      "version": "4.1.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@vitest/runner",
+      "version": "4.1.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@vitest/snapshot",
+      "version": "4.1.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@vitest/spy",
+      "version": "4.1.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@vitest/utils",
+      "version": "4.1.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "acorn",
+      "version": "8.16.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "acorn-jsx",
+      "version": "5.3.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "ajv",
+      "version": "6.14.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "ansi-regex",
+      "version": "5.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "ansi-styles",
+      "version": "5.2.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "aria-query",
+      "version": "5.3.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "aria-query",
+      "version": "5.3.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "arkregex",
+      "version": "0.0.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "arktype",
+      "version": "2.2.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "assertion-error",
+      "version": "2.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "asynckit",
+      "version": "0.4.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "axios",
+      "version": "1.13.6",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "axobject-query",
+      "version": "4.1.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "balanced-match",
+      "version": "4.0.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "base64-js",
+      "version": "1.5.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "bcryptjs",
+      "version": "3.0.3",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "bidi-js",
+      "version": "1.0.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "bits-ui",
+      "version": "2.18.0",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "brace-expansion",
+      "version": "5.0.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "buffer",
+      "version": "6.0.3",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "buffer-from",
+      "version": "1.1.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "call-bind-apply-helpers",
+      "version": "1.0.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "camelcase",
+      "version": "8.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "canvas-confetti",
+      "version": "1.9.4",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "chai",
+      "version": "6.2.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "chokidar",
+      "version": "4.0.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "class-validator",
+      "version": "0.14.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "class-variance-authority",
+      "version": "0.7.1",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "clsx",
+      "version": "2.1.1",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "combined-stream",
+      "version": "1.0.8",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "commondir",
+      "version": "1.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "convert-source-map",
+      "version": "2.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "cookie",
+      "version": "0.6.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "core-util-is",
+      "version": "1.0.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "cross-spawn",
+      "version": "7.0.6",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "css-tree",
+      "version": "3.1.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "css-tree",
+      "version": "3.2.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "css.escape",
+      "version": "1.5.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "cssesc",
+      "version": "3.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "data-urls",
+      "version": "7.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "dayjs",
+      "version": "1.11.19",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "debug",
+      "version": "4.4.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "decimal.js",
+      "version": "10.6.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "deep-is",
+      "version": "0.1.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "deepmerge",
+      "version": "4.3.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "delayed-stream",
+      "version": "1.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "dequal",
+      "version": "2.0.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "detect-libc",
+      "version": "2.1.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "devalue",
+      "version": "5.7.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "dlv",
+      "version": "1.1.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "dom-accessibility-api",
+      "version": "0.5.16",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "dom-accessibility-api",
+      "version": "0.6.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "dom-serializer",
+      "version": "2.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "domelementtype",
+      "version": "2.3.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "domhandler",
+      "version": "5.0.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "domutils",
+      "version": "3.2.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "dotenv",
+      "version": "17.4.2",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "drizzle-kit",
+      "version": "0.31.10",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "drizzle-orm",
+      "version": "0.45.2",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "dunder-proto",
+      "version": "1.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "effect",
+      "version": "3.21.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "enhanced-resolve",
+      "version": "5.19.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "entities",
+      "version": "4.5.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "entities",
+      "version": "6.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "entities",
+      "version": "7.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "es-define-property",
+      "version": "1.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "es-errors",
+      "version": "1.3.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "es-module-lexer",
+      "version": "2.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "es-object-atoms",
+      "version": "1.1.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "es-set-tostringtag",
+      "version": "2.1.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "esbuild",
+      "version": "0.18.20",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "esbuild",
+      "version": "0.25.12",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "esbuild",
+      "version": "0.27.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "escape-string-regexp",
+      "version": "4.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "eslint",
+      "version": "10.2.1",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "eslint-config-prettier",
+      "version": "10.1.8",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "eslint-plugin-svelte",
+      "version": "3.17.1",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "eslint-scope",
+      "version": "8.4.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "eslint-scope",
+      "version": "9.1.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "eslint-visitor-keys",
+      "version": "3.4.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "eslint-visitor-keys",
+      "version": "4.2.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "eslint-visitor-keys",
+      "version": "5.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "esm-env",
+      "version": "1.2.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "espree",
+      "version": "10.4.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "espree",
+      "version": "11.2.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "esquery",
+      "version": "1.7.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "esrap",
+      "version": "2.2.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "esrecurse",
+      "version": "4.3.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "estraverse",
+      "version": "5.3.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "estree-walker",
+      "version": "2.0.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "estree-walker",
+      "version": "3.0.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "esutils",
+      "version": "2.0.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "expect-type",
+      "version": "1.3.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "fast-check",
+      "version": "3.23.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "fast-deep-equal",
+      "version": "3.1.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "fast-json-stable-stringify",
+      "version": "2.1.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "fast-levenshtein",
+      "version": "2.0.6",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "fdir",
+      "version": "6.5.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "file-entry-cache",
+      "version": "8.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "file-saver",
+      "version": "2.0.5",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "find-up",
+      "version": "5.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "flat-cache",
+      "version": "4.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "flatted",
+      "version": "3.3.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "follow-redirects",
+      "version": "1.15.11",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "form-data",
+      "version": "4.0.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "formsnap",
+      "version": "2.0.1",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "fsevents",
+      "version": "2.3.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "function-bind",
+      "version": "1.1.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "get-intrinsic",
+      "version": "1.3.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "get-proto",
+      "version": "1.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "get-tsconfig",
+      "version": "4.13.6",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "glob-parent",
+      "version": "6.0.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "globals",
+      "version": "16.5.0",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "globals",
+      "version": "17.5.0",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "gopd",
+      "version": "1.2.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "graceful-fs",
+      "version": "4.2.11",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "has-symbols",
+      "version": "1.1.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "has-tostringtag",
+      "version": "1.0.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "hasown",
+      "version": "2.0.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "html-encoding-sniffer",
+      "version": "6.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "htmlparser2",
+      "version": "10.1.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "ieee754",
+      "version": "1.2.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "ignore",
+      "version": "5.3.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "ignore",
+      "version": "7.0.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "imagetools-core",
+      "version": "9.1.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "immediate",
+      "version": "3.0.6",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "imurmurhash",
+      "version": "0.1.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "indent-string",
+      "version": "4.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "inherits",
+      "version": "2.0.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "inline-style-parser",
+      "version": "0.2.7",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "is-core-module",
+      "version": "2.16.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "is-extglob",
+      "version": "2.1.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "is-glob",
+      "version": "4.0.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "is-module",
+      "version": "1.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "is-plain-object",
+      "version": "5.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "is-potential-custom-element-name",
+      "version": "1.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "is-reference",
+      "version": "1.2.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "is-reference",
+      "version": "3.0.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "isarray",
+      "version": "1.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "isexe",
+      "version": "2.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "jiti",
+      "version": "2.6.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "joi",
+      "version": "17.13.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "jose",
+      "version": "6.1.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "js-tokens",
+      "version": "4.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "jsdom",
+      "version": "29.0.2",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "json-buffer",
+      "version": "3.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "json-schema-to-ts",
+      "version": "3.1.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "json-schema-traverse",
+      "version": "0.4.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "json-stable-stringify-without-jsonify",
+      "version": "1.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "jszip",
+      "version": "3.10.1",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "keyv",
+      "version": "4.5.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "kleur",
+      "version": "4.1.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "known-css-properties",
+      "version": "0.37.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "levn",
+      "version": "0.4.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "libphonenumber-js",
+      "version": "1.12.38",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "lie",
+      "version": "3.3.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "lightningcss",
+      "version": "1.32.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "lightningcss-android-arm64",
+      "version": "1.32.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "lightningcss-darwin-arm64",
+      "version": "1.32.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "lightningcss-darwin-x64",
+      "version": "1.32.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "lightningcss-freebsd-x64",
+      "version": "1.32.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "lightningcss-linux-arm-gnueabihf",
+      "version": "1.32.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "lightningcss-linux-arm64-gnu",
+      "version": "1.32.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "lightningcss-linux-arm64-musl",
+      "version": "1.32.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "lightningcss-linux-x64-gnu",
+      "version": "1.32.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "lightningcss-linux-x64-musl",
+      "version": "1.32.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "lightningcss-win32-arm64-msvc",
+      "version": "1.32.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "lightningcss-win32-x64-msvc",
+      "version": "1.32.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "lilconfig",
+      "version": "2.1.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "locate-character",
+      "version": "3.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "locate-path",
+      "version": "6.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "lru-cache",
+      "version": "11.3.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "lucide-svelte",
+      "version": "1.0.1",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "lz-string",
+      "version": "1.5.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "magic-string",
+      "version": "0.30.21",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "marked",
+      "version": "18.0.2",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "math-intrinsics",
+      "version": "1.1.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "mdn-data",
+      "version": "2.12.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "mdn-data",
+      "version": "2.27.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "memoize-weak",
+      "version": "1.0.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "micro-packed",
+      "version": "0.8.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "mime-db",
+      "version": "1.52.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "mime-types",
+      "version": "2.1.35",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "min-indent",
+      "version": "1.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "minimatch",
+      "version": "10.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "mode-watcher",
+      "version": "1.1.0",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "mri",
+      "version": "1.2.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "mrmime",
+      "version": "2.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "ms",
+      "version": "2.1.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "nanoid",
+      "version": "3.3.11",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "natural-compare",
+      "version": "1.4.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "node-cron",
+      "version": "4.2.1",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "nodemailer",
+      "version": "8.0.6",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "normalize-url",
+      "version": "8.1.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "nostr-tools",
+      "version": "2.23.3",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "nostr-wasm",
+      "version": "0.1.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "oauth4webapi",
+      "version": "3.8.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "obug",
+      "version": "2.1.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "optionator",
+      "version": "0.9.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "p-limit",
+      "version": "3.1.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "p-locate",
+      "version": "5.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "pako",
+      "version": "1.0.11",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "parse-srcset",
+      "version": "1.0.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "parse5",
+      "version": "8.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "path-exists",
+      "version": "4.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "path-key",
+      "version": "3.1.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "path-parse",
+      "version": "1.0.7",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "pathe",
+      "version": "2.0.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "picocolors",
+      "version": "1.1.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "picomatch",
+      "version": "4.0.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "picomatch",
+      "version": "4.0.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "postcss",
+      "version": "8.5.10",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "postcss",
+      "version": "8.5.6",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "postcss-load-config",
+      "version": "3.1.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "postcss-safe-parser",
+      "version": "7.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "postcss-scss",
+      "version": "4.0.9",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "postcss-selector-parser",
+      "version": "6.0.10",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "postcss-selector-parser",
+      "version": "7.1.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "postgres",
+      "version": "3.4.9",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "preact",
+      "version": "10.24.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "preact-render-to-string",
+      "version": "6.5.11",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "prelude-ls",
+      "version": "1.2.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "prettier",
+      "version": "3.8.3",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "prettier-plugin-svelte",
+      "version": "3.5.1",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "prettier-plugin-tailwindcss",
+      "version": "0.7.3",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "pretty-format",
+      "version": "27.5.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "process-nextick-args",
+      "version": "2.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "property-expr",
+      "version": "2.0.6",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "proxy-from-env",
+      "version": "1.1.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "punycode",
+      "version": "2.3.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "pure-rand",
+      "version": "6.1.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "react-is",
+      "version": "17.0.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "readable-stream",
+      "version": "2.3.8",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "readdirp",
+      "version": "4.1.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "redent",
+      "version": "3.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "require-from-string",
+      "version": "2.0.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "resolve",
+      "version": "1.22.11",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "resolve-pkg-maps",
+      "version": "1.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "rolldown",
+      "version": "1.0.0-rc.17",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "rollup",
+      "version": "4.59.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "runed",
+      "version": "0.23.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "runed",
+      "version": "0.25.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "runed",
+      "version": "0.28.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "runed",
+      "version": "0.35.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "sade",
+      "version": "1.8.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "safe-buffer",
+      "version": "5.1.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "sanitize-html",
+      "version": "2.17.3",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "saxes",
+      "version": "6.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "semver",
+      "version": "7.7.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "set-cookie-parser",
+      "version": "2.7.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "set-cookie-parser",
+      "version": "3.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "setimmediate",
+      "version": "1.0.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "shamirs-secret-sharing",
+      "version": "2.0.1",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "sharp",
+      "version": "0.34.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "shebang-command",
+      "version": "2.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "shebang-regex",
+      "version": "3.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "siginfo",
+      "version": "2.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "sirv",
+      "version": "3.0.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "source-map",
+      "version": "0.6.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "source-map-js",
+      "version": "1.2.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "source-map-support",
+      "version": "0.5.21",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "stackback",
+      "version": "0.0.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "std-env",
+      "version": "4.1.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "string_decoder",
+      "version": "1.1.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "strip-indent",
+      "version": "3.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "stripe",
+      "version": "22.1.0",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "style-to-object",
+      "version": "1.0.14",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "superstruct",
+      "version": "2.0.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "supports-preserve-symlinks-flag",
+      "version": "1.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "svelte",
+      "version": "5.55.5",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "svelte-check",
+      "version": "4.4.6",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "svelte-eslint-parser",
+      "version": "1.5.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "svelte-parse-markup",
+      "version": "0.1.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "svelte-sonner",
+      "version": "1.1.1",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "svelte-toolbelt",
+      "version": "0.10.6",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "svelte-toolbelt",
+      "version": "0.5.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "svelte-toolbelt",
+      "version": "0.7.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "sveltekit-superforms",
+      "version": "2.30.1",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "symbol-tree",
+      "version": "3.2.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "tabbable",
+      "version": "6.4.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "tailwind-merge",
+      "version": "3.5.0",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "tailwind-variants",
+      "version": "3.2.2",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "tailwindcss",
+      "version": "4.2.4",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "tailwindcss-animate",
+      "version": "1.0.7",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "tapable",
+      "version": "2.3.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "timeago.js",
+      "version": "4.0.2",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "tiny-case",
+      "version": "1.0.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "tinybench",
+      "version": "2.9.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "tinyexec",
+      "version": "1.0.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "tinyglobby",
+      "version": "0.2.16",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "tinyrainbow",
+      "version": "3.1.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "tldts",
+      "version": "7.0.23",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "tldts-core",
+      "version": "7.0.23",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "toposort",
+      "version": "2.0.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "totalist",
+      "version": "3.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "tough-cookie",
+      "version": "6.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "tr46",
+      "version": "6.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "ts-algebra",
+      "version": "2.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "ts-api-utils",
+      "version": "2.5.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "ts-deepmerge",
+      "version": "7.0.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "tslib",
+      "version": "2.8.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "tsx",
+      "version": "4.21.0",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "type-check",
+      "version": "0.4.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "type-fest",
+      "version": "2.19.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "typebox",
+      "version": "1.1.33",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "typescript",
+      "version": "6.0.3",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "typescript-eslint",
+      "version": "8.59.0",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "undici",
+      "version": "7.25.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "undici-types",
+      "version": "7.19.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "uri-js",
+      "version": "4.4.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "util-deprecate",
+      "version": "1.0.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "valibot",
+      "version": "1.3.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "validator",
+      "version": "13.15.26",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "vite",
+      "version": "8.0.10",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "vite-imagetools",
+      "version": "9.0.3",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "vitefu",
+      "version": "1.1.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "vitest",
+      "version": "4.1.5",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "w3c-xmlserializer",
+      "version": "5.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "webidl-conversions",
+      "version": "8.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "whatwg-mimetype",
+      "version": "5.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "whatwg-url",
+      "version": "16.0.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "which",
+      "version": "2.0.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "why-is-node-running",
+      "version": "2.3.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "word-wrap",
+      "version": "1.2.5",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "xml-name-validator",
+      "version": "5.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "xmlchars",
+      "version": "2.2.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "yaml",
+      "version": "1.10.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "yocto-queue",
+      "version": "0.1.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "yup",
+      "version": "1.7.1",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "zimmerframe",
+      "version": "1.1.4",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "zod",
+      "version": "4.3.6",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "zod-v3-to-json-schema",
+      "version": "4.0.0",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "runtime",
+      "name": "Bun",
+      "version": "Docker tag oven/bun:1 (mutable); local 1.3.14",
+      "scope": "production"
+    },
+    {
+      "type": "framework",
+      "name": "SvelteKit",
+      "version": "2.58.0",
+      "scope": "production"
+    },
+    {
+      "type": "framework",
+      "name": "Svelte",
+      "version": "5.55.5",
+      "scope": "production build"
+    },
+    {
+      "type": "database",
+      "name": "PostgreSQL",
+      "version": "16-alpine in local compose; Railway managed version not pinned in repo",
+      "scope": "production external"
+    },
+    {
+      "type": "cache",
+      "name": "Redis",
+      "version": "7-alpine in local compose; currently optional/not referenced by production rate limiter",
+      "scope": "development/optional"
+    },
+    {
+      "type": "container-base",
+      "name": "oven/bun",
+      "version": "1 and 1-slim mutable tags",
+      "scope": "build and production"
+    },
+    {
+      "type": "ci-action",
+      "name": "actions/checkout",
+      "version": "v4 mutable major tag",
+      "scope": "CI"
+    },
+    {
+      "type": "ci-action",
+      "name": "oven-sh/setup-bun",
+      "version": "v2 mutable major tag; bun-version latest",
+      "scope": "CI"
+    },
+    {
+      "type": "hosting",
+      "name": "Railway",
+      "version": "managed platform",
+      "scope": "production"
+    },
+    {
+      "type": "external-service",
+      "name": "Google OAuth",
+      "version": "Auth.js provider",
+      "scope": "production identity"
+    },
+    {
+      "type": "external-service",
+      "name": "SendGrid",
+      "version": "Web API",
+      "scope": "production email"
+    },
+    {
+      "type": "external-service",
+      "name": "Stripe",
+      "version": "API via stripe 22.1.0",
+      "scope": "production billing"
+    },
+    {
+      "type": "external-service",
+      "name": "BTCPay Server",
+      "version": "REST/webhooks",
+      "scope": "production billing"
+    },
+    {
+      "type": "external-service",
+      "name": "Cloudflare Turnstile",
+      "version": "siteverify API",
+      "scope": "optional bot defense"
+    },
+    {
+      "type": "external-service",
+      "name": "Nostr relays",
+      "version": "nostr-tools 2.23.3; configured relay set",
+      "scope": "optional recovery"
+    },
+    {
+      "type": "external-service",
+      "name": "mempool.space / Blockstream",
+      "version": "HTTP APIs",
+      "scope": "Bitcoin transaction/status"
+    },
+    {
+      "type": "external-service",
+      "name": "CoinGecko",
+      "version": "HTTP API",
+      "scope": "BTC price conversion"
+    }
+  ],
+  "security_relevant": [
+    {
+      "type": "npm",
+      "name": "@auth/core",
+      "version": "0.41.2",
+      "scope": "transitive",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@auth/sveltekit",
+      "version": "1.11.2",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@noble/ciphers",
+      "version": "2.1.1",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@noble/ciphers",
+      "version": "2.2.0",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@noble/curves",
+      "version": "2.0.1",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@noble/curves",
+      "version": "2.2.0",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@noble/hashes",
+      "version": "2.0.1",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@noble/hashes",
+      "version": "2.2.0",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@scure/btc-signer",
+      "version": "2.0.1",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@sendgrid/mail",
+      "version": "8.1.6",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "@sveltejs/kit",
+      "version": "2.58.0",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "npm",
+      "name": "bcryptjs",
+      "version": "3.0.3",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "drizzle-orm",
+      "version": "0.45.2",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "marked",
+      "version": "18.0.2",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "node-cron",
+      "version": "4.2.1",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "nodemailer",
+      "version": "8.0.6",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "nostr-tools",
+      "version": "2.23.3",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "postgres",
+      "version": "3.4.9",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "sanitize-html",
+      "version": "2.17.3",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "stripe",
+      "version": "22.1.0",
+      "scope": "runtime-direct",
+      "runtime_context": "production image"
+    },
+    {
+      "type": "npm",
+      "name": "svelte",
+      "version": "5.55.5",
+      "scope": "development-direct",
+      "runtime_context": "installed in production image but declared devDependency"
+    },
+    {
+      "type": "runtime",
+      "name": "Bun",
+      "version": "Docker tag oven/bun:1 (mutable); local 1.3.14",
+      "scope": "production"
+    },
+    {
+      "type": "database",
+      "name": "PostgreSQL",
+      "version": "16-alpine in local compose; Railway managed version not pinned in repo",
+      "scope": "production external"
+    },
+    {
+      "type": "cache",
+      "name": "Redis",
+      "version": "7-alpine in local compose; currently optional/not referenced by production rate limiter",
+      "scope": "development/optional"
+    },
+    {
+      "type": "container-base",
+      "name": "oven/bun",
+      "version": "1 and 1-slim mutable tags",
+      "scope": "build and production"
+    },
+    {
+      "type": "ci-action",
+      "name": "actions/checkout",
+      "version": "v4 mutable major tag",
+      "scope": "CI"
+    },
+    {
+      "type": "ci-action",
+      "name": "oven-sh/setup-bun",
+      "version": "v2 mutable major tag; bun-version latest",
+      "scope": "CI"
+    },
+    {
+      "type": "external-service",
+      "name": "Google OAuth",
+      "version": "Auth.js provider",
+      "scope": "production identity"
+    },
+    {
+      "type": "external-service",
+      "name": "SendGrid",
+      "version": "Web API",
+      "scope": "production email"
+    },
+    {
+      "type": "external-service",
+      "name": "Stripe",
+      "version": "API via stripe 22.1.0",
+      "scope": "production billing"
+    },
+    {
+      "type": "external-service",
+      "name": "BTCPay Server",
+      "version": "REST/webhooks",
+      "scope": "production billing"
+    },
+    {
+      "type": "external-service",
+      "name": "Cloudflare Turnstile",
+      "version": "siteverify API",
+      "scope": "optional bot defense"
+    },
+    {
+      "type": "external-service",
+      "name": "Nostr relays",
+      "version": "nostr-tools 2.23.3; configured relay set",
+      "scope": "optional recovery"
+    },
+    {
+      "type": "external-service",
+      "name": "mempool.space / Blockstream",
+      "version": "HTTP APIs",
+      "scope": "Bitcoin transaction/status"
+    },
+    {
+      "type": "external-service",
+      "name": "CoinGecko",
+      "version": "HTTP API",
+      "scope": "BTC price conversion"
+    }
+  ]
+}

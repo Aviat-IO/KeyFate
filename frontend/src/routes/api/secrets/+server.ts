@@ -8,7 +8,7 @@ import { canUserCreateSecret, getUserTierInfo, isIntervalAllowed } from '$lib/su
 import { isValidThreshold } from '$lib/tier-validation';
 import { logSecretCreated } from '$lib/services/audit-logger';
 import { scheduleRemindersForSecret } from '$lib/services/reminder-scheduler';
-import { checkRateLimit, getRateLimitHeaders } from '$lib/rate-limit';
+import { checkRateLimit, createRateLimitResponse } from '$lib/rate-limit';
 import { APIError, handleAPIError } from '$lib/errors/api-error';
 import { ZodError } from 'zod';
 import { getAllSecretsWithRecipients } from '$lib/db/queries/secrets';
@@ -56,18 +56,7 @@ export const POST: RequestHandler = async (event) => {
 
 		const rateLimitResult = await checkRateLimit('secretCreation', session.user.id, 5);
 		if (!rateLimitResult.success) {
-			return new Response(
-				JSON.stringify({
-					error: 'Too many secrets created. Please try again later.'
-				}),
-				{
-					status: 429,
-					headers: {
-						'Content-Type': 'application/json',
-						...getRateLimitHeaders(rateLimitResult)
-					}
-				}
-			);
+			return createRateLimitResponse(rateLimitResult);
 		}
 
 		const canCreate = await canUserCreateSecret(session.user.id);
@@ -138,6 +127,40 @@ export const POST: RequestHandler = async (event) => {
 			);
 		}
 
+		if (
+			validatedData.enable_bitcoin_timelock &&
+			process.env.BITCOIN_ENROLLMENT_ENABLED !== 'true'
+		) {
+			return json(
+				{
+					error: 'Bitcoin enrollment is disabled until the signet recovery gate passes',
+					code: 'BITCOIN_ENROLLMENT_DISABLED'
+				},
+				{ status: 503 }
+			);
+		}
+
+		const nostrPubkeyByEmail = new Map<string, string>();
+		for (const entry of validatedData.recipient_nostr_pubkeys ?? []) {
+			if (!entry.email || !entry.npub || !isValidNpub(entry.npub)) continue;
+			try {
+				nostrPubkeyByEmail.set(entry.email, npubToHex(entry.npub));
+			} catch {
+				// Rejected by the complete-coverage validation below.
+			}
+		}
+		if (
+			validatedData.enable_nostr_shares &&
+			validatedData.recipients.some(
+				(recipient) => !recipient.email || !nostrPubkeyByEmail.has(recipient.email)
+			)
+		) {
+			return json(
+				{ error: 'Every Nostr recipient must have a valid npub', code: 'NOSTR_RECIPIENT_REQUIRED' },
+				{ status: 400 }
+			);
+		}
+
 		// Encrypt the server share before storing (only if not already provided)
 		let encryptedServerShare: string;
 		let iv: string;
@@ -157,6 +180,9 @@ export const POST: RequestHandler = async (event) => {
 		}
 
 		// Create secret without recipients (they'll be added separately)
+		const recoverySetupPending = Boolean(
+			validatedData.enable_nostr_shares || validatedData.enable_bitcoin_timelock
+		);
 		insertData = {
 			title: validatedData.title,
 			checkInDays: validatedData.check_in_days,
@@ -166,7 +192,9 @@ export const POST: RequestHandler = async (event) => {
 			userId: session.user.id,
 			sssSharesTotal: validatedData.sss_shares_total,
 			sssThreshold: validatedData.sss_threshold,
-			status: 'active' as const,
+			status: recoverySetupPending ? ('paused' as const) : ('active' as const),
+			nostrDeliveryStatus: validatedData.enable_nostr_shares ? 'pending' : null,
+			bitcoinDeliveryStatus: validatedData.enable_bitcoin_timelock ? 'pending' : null,
 			nextCheckIn: new Date(Date.now() + validatedData.check_in_days * 24 * 60 * 60 * 1000)
 		};
 
@@ -180,20 +208,6 @@ export const POST: RequestHandler = async (event) => {
 				.insert(secretsTable)
 				.values(insertData as typeof secretsTable.$inferInsert)
 				.returning();
-
-			// Build a lookup of email -> hex nostr pubkey from the optional recipient_nostr_pubkeys
-			const nostrPubkeyByEmail = new Map<string, string>();
-			if (validatedData.recipient_nostr_pubkeys) {
-				for (const entry of validatedData.recipient_nostr_pubkeys) {
-					if (entry.email && entry.npub && isValidNpub(entry.npub)) {
-						try {
-							nostrPubkeyByEmail.set(entry.email, npubToHex(entry.npub));
-						} catch {
-							// Skip invalid npubs silently
-						}
-					}
-				}
-			}
 
 			// Insert recipients - this MUST succeed or the entire transaction rolls back
 			const insertedRecipients = await tx
@@ -222,11 +236,13 @@ export const POST: RequestHandler = async (event) => {
 			event
 		);
 
-		await scheduleRemindersForSecret(
-			data.secret.id,
-			data.secret.nextCheckIn!,
-			validatedData.check_in_days
-		);
+		if (data.secret.status === 'active') {
+			await scheduleRemindersForSecret(
+				data.secret.id,
+				data.secret.nextCheckIn!,
+				validatedData.check_in_days
+			);
+		}
 
 		const warning = undefined;
 

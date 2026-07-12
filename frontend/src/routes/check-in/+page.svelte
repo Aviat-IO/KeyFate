@@ -1,20 +1,30 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { onMount } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { toast } from 'svelte-sonner';
 
 	let isLoading = $state(false);
 	let isSuccessful = $state(false);
+	let initialized = $state(false);
+	let token = $state<string | null>(null);
 
-	let token = $derived($page.url.searchParams.get('token'));
+	onMount(() => {
+		const fragment = new URLSearchParams(window.location.hash.slice(1));
+		// Legacy query links remain usable during the migration, but all newly
+		// issued links use fragments so proxies never receive the capability.
+		token = fragment.get('token') ?? new URL(window.location.href).searchParams.get('token');
+		window.history.replaceState({}, '', window.location.pathname);
+		initialized = true;
+	});
 
 	async function handleCheckIn() {
 		if (!token) return;
 		isLoading = true;
 		try {
-			const response = await fetch(`/api/check-in?token=${encodeURIComponent(token)}`, {
+			const response = await fetch('/api/check-in', {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json' }
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ token })
 			});
 
 			const contentType = response.headers.get('content-type');
@@ -47,7 +57,9 @@
 </svelte:head>
 
 <div class="mx-auto py-8 sm:px-4">
-	{#if !token}
+	{#if !initialized}
+		<div class="text-muted-foreground mx-auto max-w-md pt-16 text-center">Loading…</div>
+	{:else if !token}
 		<div class="mx-auto max-w-md pt-16 text-center">
 			<h1 class="text-destructive mb-4 text-2xl font-bold">Invalid Check-In Link</h1>
 			<p class="text-muted-foreground">This check-in link is missing required information.</p>

@@ -1,7 +1,8 @@
 import { getDatabase } from '$lib/db/drizzle';
-import { accountLockouts, otpRateLimits, verificationTokens } from '$lib/db/schema';
-import { and, eq, gt, lt } from 'drizzle-orm';
+import { verificationTokens } from '$lib/db/schema';
+import { and, eq, gt } from 'drizzle-orm';
 import crypto from 'crypto';
+import { timingSafeStringEqual } from '$lib/crypto/timing-safe';
 import { logger } from '$lib/logger';
 
 const OTP_EXPIRATION_MINUTES = 5;
@@ -10,9 +11,6 @@ const MAX_COLLISION_RETRIES = 3;
 
 const isProduction = process.env.NODE_ENV === 'production';
 const OTP_RATE_LIMIT_REQUESTS = isProduction ? 3 : 10;
-const OTP_RATE_LIMIT_WINDOW_HOURS = 1;
-const OTP_RATE_LIMIT_VALIDATION_ATTEMPTS = 5;
-const OTP_RATE_LIMIT_VALIDATION_WINDOW_MINUTES = 15;
 
 export function generateOTP(): string {
 	const code = crypto.randomInt(0, 100000000);
@@ -23,6 +21,8 @@ interface CreateOTPTokenResult {
 	success: boolean;
 	code?: string;
 	error?: string;
+	remaining?: number;
+	reason?: 'rate_limited' | 'unavailable' | 'internal';
 }
 
 export async function createOTPToken(
@@ -36,10 +36,13 @@ export async function createOTPToken(
 		const ipRateLimit = await checkRateLimit('ip', ipAddress, 5);
 
 		if (!ipRateLimit.success) {
-			logger.warn('OTP IP rate limit exceeded', { ipAddress, email });
+			logger.warn('OTP IP rate limit denied', { rateLimiterAvailable: ipRateLimit.available });
 			return {
 				success: false,
-				error: 'Too many OTP requests from this IP address. Please try again later.'
+				reason: ipRateLimit.available ? 'rate_limited' : 'unavailable',
+				error: ipRateLimit.available
+					? 'Too many OTP requests from this IP address. Please try again later.'
+					: 'OTP request protection is temporarily unavailable. Please try again.'
 			};
 		}
 	}
@@ -49,7 +52,10 @@ export async function createOTPToken(
 	if (!rateLimit.allowed) {
 		return {
 			success: false,
-			error: `Too many requests. Try again after ${rateLimit.resetAt?.toISOString()}`
+			reason: rateLimit.available ? 'rate_limited' : 'unavailable',
+			error: rateLimit.available
+				? `Too many requests. Try again after ${rateLimit.resetAt?.toISOString()}`
+				: 'OTP request protection is temporarily unavailable. Please try again.'
 		};
 	}
 
@@ -100,13 +106,15 @@ export async function createOTPToken(
 		if (result.length > 0) {
 			return {
 				success: true,
-				code
+				code,
+				remaining: rateLimit.remaining
 			};
 		}
 	}
 
 	return {
 		success: false,
+		reason: 'internal',
 		error: 'Failed to generate unique OTP after collision retries'
 	};
 }
@@ -124,187 +132,86 @@ export async function validateOTPToken(
 	const db = await getDatabase();
 
 	return await db.transaction(async (tx) => {
-		// Check for account lockout first
-		const lockout = await tx
-			.select()
-			.from(accountLockouts)
-			.where(eq(accountLockouts.email, email))
-			.limit(1);
-
-		if (lockout.length > 0) {
-			const lock = lockout[0];
-
-			if (lock.permanentlyLocked) {
-				logger.warn('Permanently locked account attempted login', { email });
-
-				return {
-					success: false,
-					valid: false,
-					error: 'Account locked. Please contact support.'
-				};
-			}
-
-			if (lock.lockedUntil && lock.lockedUntil > new Date()) {
-				return {
-					success: false,
-					valid: false,
-					error: `Account temporarily locked until ${lock.lockedUntil.toISOString()}`
-				};
-			}
-		}
-
 		const now = new Date();
-		const validationWindowStart = new Date(
-			now.getTime() - OTP_RATE_LIMIT_VALIDATION_WINDOW_MINUTES * 60 * 1000
-		);
-
-		const recentAttempts = await tx
+		const [token] = await tx
 			.select()
 			.from(verificationTokens)
 			.where(
 				and(
 					eq(verificationTokens.identifier, email),
 					eq(verificationTokens.purpose, 'authentication'),
-					gt(verificationTokens.attemptCount, 0),
-					gt(verificationTokens.expires, validationWindowStart)
-				)
-			);
-
-		const totalAttempts = recentAttempts.reduce((sum, token) => sum + (token.attemptCount ?? 0), 0);
-
-		if (totalAttempts >= OTP_RATE_LIMIT_VALIDATION_ATTEMPTS) {
-			return {
-				success: false,
-				valid: false,
-				error: 'Too many validation attempts. Please try again later.'
-			};
-		}
-
-		const tokens = await tx
-			.select()
-			.from(verificationTokens)
-			.where(
-				and(
-					eq(verificationTokens.identifier, email),
-					eq(verificationTokens.token, code),
-					eq(verificationTokens.purpose, 'authentication')
+					gt(verificationTokens.expires, now)
 				)
 			)
 			.limit(1)
 			.for('update');
 
-		if (tokens.length === 0) {
-			// Invalid code - track failed attempt
-			await trackFailedAttempt(tx, email);
-
+		if (!token) {
 			return {
 				success: false,
 				valid: false,
-				error: 'Invalid OTP code'
-			};
-		}
-
-		const token = tokens[0];
-
-		if (token.expires && token.expires < new Date()) {
-			// Expired code - track failed attempt
-			await trackFailedAttempt(tx, email);
-
-			return {
-				success: false,
-				valid: false,
-				error: 'OTP code has expired'
+				error: 'Invalid or expired OTP code'
 			};
 		}
 
 		const attemptCount = token.attemptCount ?? 0;
 		if (attemptCount >= OTP_MAX_VALIDATION_ATTEMPTS) {
-			// Too many attempts on this OTP - track failed attempt
-			await trackFailedAttempt(tx, email);
+			await tx
+				.update(verificationTokens)
+				.set({ expires: now })
+				.where(
+					and(
+						eq(verificationTokens.identifier, token.identifier),
+						eq(verificationTokens.token, token.token)
+					)
+				);
+			return {
+				success: false,
+				valid: false,
+				error: 'Invalid or expired OTP code'
+			};
+		}
+
+		if (!timingSafeStringEqual(token.token, code)) {
+			const nextAttemptCount = attemptCount + 1;
+			const updates =
+				nextAttemptCount >= OTP_MAX_VALIDATION_ATTEMPTS
+					? { attemptCount: nextAttemptCount, expires: now }
+					: { attemptCount: nextAttemptCount };
+
+			await tx
+				.update(verificationTokens)
+				.set(updates)
+				.where(
+					and(
+						eq(verificationTokens.identifier, token.identifier),
+						eq(verificationTokens.token, token.token)
+					)
+				);
 
 			return {
 				success: false,
 				valid: false,
-				error: 'Too many validation attempts for this OTP'
+				error: 'Invalid or expired OTP code'
 			};
 		}
 
-		// Success - expire the token and reset lockout
 		await tx
 			.update(verificationTokens)
-			.set({ expires: new Date() })
-			.where(and(eq(verificationTokens.identifier, email), eq(verificationTokens.token, code)));
-
-		// Reset lockout on successful validation
-		if (lockout.length > 0) {
-			await tx.delete(accountLockouts).where(eq(accountLockouts.email, email));
-			logger.info('Account lockout reset after successful login', { email });
-		}
+			.set({ expires: now })
+			.where(
+				and(
+					eq(verificationTokens.identifier, token.identifier),
+					eq(verificationTokens.token, token.token),
+					gt(verificationTokens.expires, now)
+				)
+			);
 
 		return {
 			success: true,
 			valid: true
 		};
 	});
-}
-
-async function trackFailedAttempt(
-	tx: Parameters<Parameters<Awaited<ReturnType<typeof getDatabase>>['transaction']>[0]>[0],
-	email: string
-): Promise<void> {
-	const existingLockout = await tx
-		.select()
-		.from(accountLockouts)
-		.where(eq(accountLockouts.email, email))
-		.limit(1);
-
-	const currentAttempts = existingLockout.length > 0 ? existingLockout[0].failedAttempts : 0;
-	const newFailedAttempts = currentAttempts + 1;
-
-	let lockedUntil: Date | null = null;
-	let permanentlyLocked = false;
-
-	if (newFailedAttempts >= 20) {
-		// Permanent lockout after 20 failed attempts
-		permanentlyLocked = true;
-		logger.warn('Account permanently locked due to excessive failed attempts', {
-			email,
-			failedAttempts: newFailedAttempts
-		});
-	} else if (newFailedAttempts >= 10) {
-		// 24-hour lockout after 10 failed attempts
-		lockedUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
-		logger.warn('Account locked for 24 hours', {
-			email,
-			failedAttempts: newFailedAttempts
-		});
-	} else if (newFailedAttempts >= 5) {
-		// 1-hour lockout after 5 failed attempts
-		lockedUntil = new Date(Date.now() + 60 * 60 * 1000);
-		logger.warn('Account locked for 1 hour', {
-			email,
-			failedAttempts: newFailedAttempts
-		});
-	}
-
-	if (existingLockout.length > 0) {
-		await tx
-			.update(accountLockouts)
-			.set({
-				failedAttempts: newFailedAttempts,
-				lockedUntil,
-				permanentlyLocked,
-				updatedAt: new Date()
-			})
-			.where(eq(accountLockouts.email, email));
-	} else {
-		await tx.insert(accountLockouts).values({
-			email,
-			failedAttempts: newFailedAttempts,
-			lockedUntil,
-			permanentlyLocked
-		});
-	}
 }
 
 export async function invalidateOTPTokens(email: string): Promise<void> {
@@ -324,73 +231,19 @@ export async function invalidateOTPTokens(email: string): Promise<void> {
 
 interface CheckOTPRateLimitResult {
 	allowed: boolean;
+	available: boolean;
 	remaining: number;
 	resetAt?: Date;
 }
 
 export async function checkOTPRateLimit(email: string): Promise<CheckOTPRateLimitResult> {
-	const db = await getDatabase();
-
-	const now = new Date();
-	const windowEnd = new Date(now.getTime() + OTP_RATE_LIMIT_WINDOW_HOURS * 60 * 60 * 1000);
-
-	const existingLimits = await db
-		.select()
-		.from(otpRateLimits)
-		.where(and(eq(otpRateLimits.email, email), gt(otpRateLimits.windowEnd, now)))
-		.limit(1);
-
-	if (existingLimits.length === 0) {
-		await db.insert(otpRateLimits).values({
-			email,
-			requestCount: 1,
-			windowStart: now,
-			windowEnd
-		});
-
-		return {
-			allowed: true,
-			remaining: OTP_RATE_LIMIT_REQUESTS - 1
-		};
-	}
-
-	const limit = existingLimits[0];
-
-	if (limit.windowEnd < now) {
-		await db
-			.update(otpRateLimits)
-			.set({
-				requestCount: 1,
-				windowStart: now,
-				windowEnd,
-				updatedAt: now
-			})
-			.where(eq(otpRateLimits.id, limit.id));
-
-		return {
-			allowed: true,
-			remaining: OTP_RATE_LIMIT_REQUESTS - 1
-		};
-	}
-
-	if (limit.requestCount >= OTP_RATE_LIMIT_REQUESTS) {
-		return {
-			allowed: false,
-			remaining: 0,
-			resetAt: limit.windowEnd
-		};
-	}
-
-	await db
-		.update(otpRateLimits)
-		.set({
-			requestCount: limit.requestCount + 1,
-			updatedAt: now
-		})
-		.where(eq(otpRateLimits.id, limit.id));
+	const { checkRateLimit } = await import('$lib/rate-limit');
+	const result = await checkRateLimit('otp', email.toLowerCase().trim(), OTP_RATE_LIMIT_REQUESTS);
 
 	return {
-		allowed: true,
-		remaining: OTP_RATE_LIMIT_REQUESTS - limit.requestCount - 1
+		allowed: result.success,
+		available: result.available,
+		remaining: result.remaining,
+		resetAt: result.reset > 0 ? new Date(result.reset * 1000) : undefined
 	};
 }

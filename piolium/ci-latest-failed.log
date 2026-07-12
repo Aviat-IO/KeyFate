@@ -1,0 +1,1469 @@
+Lint & Type Check	UNKNOWN STEP	﻿2026-04-25T17:57:50.9141603Z Current runner version: '2.333.1'
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9172893Z ##[group]Runner Image Provisioner
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9173923Z Hosted Compute Agent
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9174824Z Version: 20260213.493
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9176001Z Commit: 5c115507f6dd24b8de37d8bbe0bb4509d0cc0fa3
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9177052Z Build Date: 2026-02-13T00:28:41Z
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9178086Z Worker ID: {5705e9f7-dca3-4d7d-b89e-d5c4dfe5e397}
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9179048Z Azure Region: centralus
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9179823Z ##[endgroup]
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9181659Z ##[group]Operating System
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9182545Z Ubuntu
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9183167Z 24.04.4
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9183884Z LTS
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9184541Z ##[endgroup]
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9185199Z ##[group]Runner Image
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9186149Z Image: ubuntu-24.04
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9186907Z Version: 20260413.86.1
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9188725Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260413.86/images/ubuntu/Ubuntu2404-Readme.md
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9190967Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260413.86
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9192277Z ##[endgroup]
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9194006Z ##[group]GITHUB_TOKEN Permissions
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9196884Z Contents: read
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9197682Z Metadata: read
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9198400Z Packages: read
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9199049Z ##[endgroup]
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9201631Z Secret source: Actions
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9203045Z Prepare workflow directory
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9636830Z Prepare all required actions
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:50.9690371Z Getting action download info
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:51.3078328Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:51.3900805Z Download action repository 'oven-sh/setup-bun@v2' (SHA:0c5077e51419868618aeaa5fe8019c62421857d6)
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:51.9895681Z Complete job name: Lint & Type Check
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.0542800Z ##[group]Run actions/checkout@v4
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.0543822Z with:
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.0544351Z   repository: Aviat-IO/KeyFate
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.0545180Z   token: ***
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.0545703Z   ssh-strict: true
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.0546406Z   ssh-user: git
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.0546897Z   persist-credentials: true
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.0547728Z   clean: true
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.0548223Z   sparse-checkout-cone-mode: true
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.0548810Z   fetch-depth: 1
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.0549373Z   fetch-tags: false
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.0549874Z   show-progress: true
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.0550396Z   lfs: false
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.0550890Z   submodules: false
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.0551432Z   set-safe-directory: true
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.0552268Z ##[endgroup]
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1543054Z Syncing repository: Aviat-IO/KeyFate
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1546626Z ##[group]Getting Git version info
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1548127Z Working directory is '/home/runner/work/KeyFate/KeyFate'
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1549838Z [command]/usr/bin/git version
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1562275Z git version 2.53.0
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1586310Z ##[endgroup]
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1608527Z Temporarily overriding HOME='/home/runner/work/_temp/82edb1ab-05cf-4cbd-96ac-55100fd37a81' before making global git config changes
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1611340Z Adding repository directory to the temporary git global config as a safe directory
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1614934Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/KeyFate/KeyFate
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1642954Z Deleting the contents of '/home/runner/work/KeyFate/KeyFate'
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1645453Z ##[group]Initializing the repository
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1650912Z [command]/usr/bin/git init /home/runner/work/KeyFate/KeyFate
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1721402Z hint: Using 'master' as the name for the initial branch. This default branch name
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1722677Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1724022Z hint: to use in all of your new repositories, which will suppress this warning,
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1725874Z hint: call:
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1726687Z hint:
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1727660Z hint: 	git config --global init.defaultBranch <name>
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1728855Z hint:
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1729503Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1730520Z hint: 'development'. The just-created branch can be renamed via this command:
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1731353Z hint:
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1732028Z hint: 	git branch -m <name>
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1732807Z hint:
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1733476Z hint: Disable this message with "git config set advice.defaultBranchName false"
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1734655Z Initialized empty Git repository in /home/runner/work/KeyFate/KeyFate/.git/
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1736937Z [command]/usr/bin/git remote add origin https://github.com/Aviat-IO/KeyFate
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1757025Z ##[endgroup]
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1758049Z ##[group]Disabling automatic garbage collection
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1760739Z [command]/usr/bin/git config --local gc.auto 0
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1783123Z ##[endgroup]
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1783954Z ##[group]Setting up auth
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1788924Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.1812139Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.2039800Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.2063569Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.2227059Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.2252374Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.2413254Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.2439026Z ##[endgroup]
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.2447084Z ##[group]Fetching the repository
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.2449717Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +b7b7aef1a897c418e0402acd211fecf0206d8217:refs/remotes/origin/main
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.9529413Z From https://github.com/Aviat-IO/KeyFate
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.9532036Z  * [new ref]         b7b7aef1a897c418e0402acd211fecf0206d8217 -> origin/main
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.9558026Z ##[endgroup]
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.9560205Z ##[group]Determining the checkout info
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.9562825Z ##[endgroup]
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.9564181Z [command]/usr/bin/git sparse-checkout disable
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.9594985Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.9618279Z ##[group]Checking out the ref
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:52.9621097Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:53.0054597Z Switched to a new branch 'main'
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:53.0056027Z branch 'main' set up to track 'origin/main'.
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:53.0061930Z ##[endgroup]
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:53.0090015Z [command]/usr/bin/git log -1 --format=%H
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:53.0107214Z b7b7aef1a897c418e0402acd211fecf0206d8217
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:53.0383283Z ##[group]Run oven-sh/setup-bun@v2
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:53.0384366Z with:
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:53.0385145Z   bun-version: latest
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:53.0386129Z   no-cache: false
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:53.0387283Z   token: ***
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:53.0388078Z ##[endgroup]
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:53.5478969Z Downloading a new version of Bun: https://github.com/oven-sh/bun/releases/download/bun-v1.3.13/bun-linux-x64.zip
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:53.9145362Z [command]/usr/bin/unzip -o -q /home/runner/work/_temp/4200a278-a9ad-4aed-a558-3e6d68ff837c.zip
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:54.6412331Z [command]/home/runner/.bun/bin/bun --revision
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:54.6445240Z 1.3.13+bf2e2cecf
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:54.6550065Z ##[group]Run bun install --frozen-lockfile
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:54.6550512Z ^[[36;1mbun install --frozen-lockfile^[[0m
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:54.6571205Z shell: /usr/bin/bash -e {0}
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:54.6571626Z ##[endgroup]
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:54.6646772Z bun install v1.3.13 (bf2e2cec)
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:54.6691230Z Resolving dependencies
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:55.0798592Z Resolved, downloaded and extracted [142]
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6790416Z 
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6790876Z + @eslint/js@10.0.1
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6791525Z + @internationalized/date@3.12.1
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6792002Z + @lucide/svelte@1.11.0
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6792426Z + @sveltejs/adapter-node@5.5.4
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6792989Z + @sveltejs/enhanced-img@0.10.4
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6793531Z + @sveltejs/kit@2.58.0
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6794048Z + @sveltejs/vite-plugin-svelte@7.0.0
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6794614Z + @tailwindcss/vite@4.2.4
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6795169Z + @testing-library/jest-dom@6.9.1
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6795903Z + @testing-library/svelte@5.3.1
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6796375Z + @types/bcryptjs@3.0.0
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6796820Z + @types/canvas-confetti@1.9.0
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6797302Z + @types/file-saver@2.0.7
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6797712Z + @types/node@25.6.0
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6798098Z + @types/node-cron@3.0.11
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6798502Z + @types/nodemailer@8.0.0
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6798941Z + @types/sanitize-html@2.16.1
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6799371Z + dotenv@17.4.2
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6799743Z + drizzle-kit@0.31.10
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6800158Z + eslint@10.2.1
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6800555Z + eslint-config-prettier@10.1.8
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6801113Z + eslint-plugin-svelte@3.17.1
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6801608Z + globals@17.5.0
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6802062Z + jsdom@29.0.2
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6802455Z + mode-watcher@1.1.0
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6802917Z + prettier@3.8.3
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6803363Z + prettier-plugin-svelte@3.5.1
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6803912Z + prettier-plugin-tailwindcss@0.7.3
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6804376Z + svelte@5.55.5
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6804744Z + svelte-check@4.4.6
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6805162Z + svelte-sonner@1.1.1
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6805597Z + tailwind-variants@3.2.2
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6806489Z + tailwindcss@4.2.4
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6807000Z + tailwindcss-animate@1.0.7
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6807429Z + tsx@4.21.0
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6807769Z + typescript@6.0.3
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6808181Z + typescript-eslint@8.59.0
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6808606Z + vitest@4.1.5
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6808980Z + @auth/sveltekit@1.11.2
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6809414Z + @neondatabase/serverless@1.1.0
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6809901Z + @noble/ciphers@2.2.0
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6810321Z + @noble/curves@2.2.0
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6810735Z + @noble/hashes@2.2.0
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6811140Z + @scure/base@2.2.0
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6811546Z + @scure/btc-signer@2.0.1
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6811991Z + @sendgrid/mail@8.1.6
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6812445Z + @tailwindcss/typography@0.5.19
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6812933Z + bcryptjs@3.0.3
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6813327Z + bits-ui@2.18.0
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6813704Z + buffer@6.0.3
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6814107Z + canvas-confetti@1.9.4
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6814582Z + class-variance-authority@0.7.1
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6815058Z + clsx@2.1.1
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6815420Z + drizzle-orm@0.45.2
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6846210Z + file-saver@2.0.5
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6846779Z + formsnap@2.0.1
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6846983Z + jszip@3.10.1
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6847195Z + lucide-svelte@1.0.1
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6847424Z + marked@18.0.2
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6847607Z + node-cron@4.2.1
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6847803Z + nodemailer@8.0.6
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6847985Z + nostr-tools@2.23.3
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6848214Z + postgres@3.4.9
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6848437Z + sanitize-html@2.17.3
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6848670Z + shamirs-secret-sharing@2.0.1
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6848923Z + stripe@22.1.0
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6849155Z + sveltekit-superforms@2.30.1
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6849387Z + tailwind-merge@3.5.0
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6849862Z + timeago.js@4.0.2
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6850217Z + vite@8.0.10
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6850384Z + zod@4.3.6
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6850488Z 
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6850584Z 466 packages installed [2.02s]
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6980107Z ##[group]Run bun run lint
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6980372Z ^[[36;1mbun run lint^[[0m
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6993200Z shell: /usr/bin/bash -e {0}
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.6993443Z ##[endgroup]
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.7040777Z $ prettier --check . && eslint .
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:56.7780818Z Checking formatting...
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:57.2091785Z [^[[33mwarn^[[39m] drizzle/meta/_journal.json
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:57.6218035Z [^[[33mwarn^[[39m] drizzle/meta/0004_snapshot.json
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:57.6595607Z [^[[33mwarn^[[39m] drizzle/meta/0005_snapshot.json
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:57.7210913Z [^[[33mwarn^[[39m] drizzle/meta/0006_snapshot.json
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:57.7615618Z [^[[33mwarn^[[39m] drizzle/meta/0007_snapshot.json
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:57.8177797Z [^[[33mwarn^[[39m] drizzle/meta/0008_snapshot.json
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:59.0347513Z [^[[33mwarn^[[39m] src/lib/auth/__tests__/auth-config.test.ts
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:59.0508372Z [^[[33mwarn^[[39m] src/lib/auth/__tests__/email-verification-token-storage.test.ts
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:59.0756047Z [^[[33mwarn^[[39m] src/lib/auth/__tests__/redirect-callers.test.ts
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:59.0802238Z [^[[33mwarn^[[39m] src/lib/auth/__tests__/redirects.test.ts
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:59.0868988Z [^[[33mwarn^[[39m] src/lib/auth/__tests__/session-management.test.ts
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:59.1326469Z [^[[33mwarn^[[39m] src/lib/auth/email-verification.ts
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:57:59.2897787Z [^[[33mwarn^[[39m] src/lib/auth/session-management.ts
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:58:02.3567059Z [^[[33mwarn^[[39m] src/lib/db/schema.ts
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:58:03.2561374Z [^[[33mwarn^[[39m] src/lib/webhooks/__tests__/deduplication.test.ts
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:58:03.7019243Z [^[[33mwarn^[[39m] src/routes/api/admin/email-failures/__tests__/auth.test.ts
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:58:03.8528397Z [^[[33mwarn^[[39m] src/routes/api/auth/verify-email/+server.ts
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:58:04.4468521Z [^[[33mwarn^[[39m] src/routes/api/webhooks/btcpay/+server.ts
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:58:05.0072184Z [^[[33mwarn^[[39m] Code style issues found in 18 files. Run Prettier with --write to fix.
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:58:05.0244960Z error: script "lint" exited with code 1
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:58:05.0260533Z ##[error]Process completed with exit code 1.
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:58:05.0365488Z Post job cleanup.
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:58:05.1210991Z [command]/usr/bin/git version
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:58:05.1241613Z git version 2.53.0
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:58:05.1278224Z Temporarily overriding HOME='/home/runner/work/_temp/a839604c-4319-4e7b-899f-c4c4101c1671' before making global git config changes
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:58:05.1278901Z Adding repository directory to the temporary git global config as a safe directory
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:58:05.1283117Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/KeyFate/KeyFate
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:58:05.1312329Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:58:05.1337955Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:58:05.1505035Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:58:05.1520979Z http.https://github.com/.extraheader
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:58:05.1530849Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:58:05.1553695Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:58:05.1716636Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:58:05.1741392Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:58:05.2002244Z Cleaning up orphan processes
+Lint & Type Check	UNKNOWN STEP	2026-04-25T17:58:05.2199521Z ##[warning]Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Test	UNKNOWN STEP	﻿2026-04-25T17:57:50.7793399Z Current runner version: '2.333.1'
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7817261Z ##[group]Runner Image Provisioner
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7818005Z Hosted Compute Agent
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7818715Z Version: 20260213.493
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7819297Z Commit: 5c115507f6dd24b8de37d8bbe0bb4509d0cc0fa3
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7820255Z Build Date: 2026-02-13T00:28:41Z
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7820966Z Worker ID: {bd15398d-884d-4db8-bede-d6fb1b16f7b9}
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7821675Z Azure Region: eastus
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7822192Z ##[endgroup]
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7823563Z ##[group]Operating System
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7824165Z Ubuntu
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7824606Z 24.04.4
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7825147Z LTS
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7825586Z ##[endgroup]
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7826105Z ##[group]Runner Image
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7826695Z Image: ubuntu-24.04
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7827257Z Version: 20260413.86.1
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7828401Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260413.86/images/ubuntu/Ubuntu2404-Readme.md
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7830212Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260413.86
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7831140Z ##[endgroup]
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7832311Z ##[group]GITHUB_TOKEN Permissions
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7834152Z Contents: read
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7834768Z Metadata: read
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7835271Z Packages: read
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7835791Z ##[endgroup]
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7838218Z Secret source: Actions
+Test	UNKNOWN STEP	2026-04-25T17:57:50.7839041Z Prepare workflow directory
+Test	UNKNOWN STEP	2026-04-25T17:57:50.8223000Z Prepare all required actions
+Test	UNKNOWN STEP	2026-04-25T17:57:50.8267314Z Getting action download info
+Test	UNKNOWN STEP	2026-04-25T17:57:51.1910908Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+Test	UNKNOWN STEP	2026-04-25T17:57:51.3083521Z Download action repository 'oven-sh/setup-bun@v2' (SHA:0c5077e51419868618aeaa5fe8019c62421857d6)
+Test	UNKNOWN STEP	2026-04-25T17:57:51.6122110Z Complete job name: Test
+Test	UNKNOWN STEP	2026-04-25T17:57:51.6813420Z ##[group]Run actions/checkout@v4
+Test	UNKNOWN STEP	2026-04-25T17:57:51.6814246Z with:
+Test	UNKNOWN STEP	2026-04-25T17:57:51.6814693Z   repository: Aviat-IO/KeyFate
+Test	UNKNOWN STEP	2026-04-25T17:57:51.6815404Z   token: ***
+Test	UNKNOWN STEP	2026-04-25T17:57:51.6815817Z   ssh-strict: true
+Test	UNKNOWN STEP	2026-04-25T17:57:51.6816243Z   ssh-user: git
+Test	UNKNOWN STEP	2026-04-25T17:57:51.6816673Z   persist-credentials: true
+Test	UNKNOWN STEP	2026-04-25T17:57:51.6817149Z   clean: true
+Test	UNKNOWN STEP	2026-04-25T17:57:51.6817566Z   sparse-checkout-cone-mode: true
+Test	UNKNOWN STEP	2026-04-25T17:57:51.6818074Z   fetch-depth: 1
+Test	UNKNOWN STEP	2026-04-25T17:57:51.6818485Z   fetch-tags: false
+Test	UNKNOWN STEP	2026-04-25T17:57:51.6818914Z   show-progress: true
+Test	UNKNOWN STEP	2026-04-25T17:57:51.6819354Z   lfs: false
+Test	UNKNOWN STEP	2026-04-25T17:57:51.6819997Z   submodules: false
+Test	UNKNOWN STEP	2026-04-25T17:57:51.6820445Z   set-safe-directory: true
+Test	UNKNOWN STEP	2026-04-25T17:57:51.6821126Z ##[endgroup]
+Test	UNKNOWN STEP	2026-04-25T17:57:51.7908877Z Syncing repository: Aviat-IO/KeyFate
+Test	UNKNOWN STEP	2026-04-25T17:57:51.7911476Z ##[group]Getting Git version info
+Test	UNKNOWN STEP	2026-04-25T17:57:51.7912238Z Working directory is '/home/runner/work/KeyFate/KeyFate'
+Test	UNKNOWN STEP	2026-04-25T17:57:51.7913315Z [command]/usr/bin/git version
+Test	UNKNOWN STEP	2026-04-25T17:57:51.7978349Z git version 2.53.0
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8013389Z ##[endgroup]
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8040732Z Temporarily overriding HOME='/home/runner/work/_temp/e6b493c3-8522-47d1-bba8-64876bb6b326' before making global git config changes
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8042384Z Adding repository directory to the temporary git global config as a safe directory
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8047477Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/KeyFate/KeyFate
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8088021Z Deleting the contents of '/home/runner/work/KeyFate/KeyFate'
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8092320Z ##[group]Initializing the repository
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8097932Z [command]/usr/bin/git init /home/runner/work/KeyFate/KeyFate
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8159333Z hint: Using 'master' as the name for the initial branch. This default branch name
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8161286Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8162447Z hint: to use in all of your new repositories, which will suppress this warning,
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8163324Z hint: call:
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8164064Z hint:
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8164698Z hint: 	git config --global init.defaultBranch <name>
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8165428Z hint:
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8166125Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8167190Z hint: 'development'. The just-created branch can be renamed via this command:
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8168041Z hint:
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8168531Z hint: 	git branch -m <name>
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8169110Z hint:
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8170186Z hint: Disable this message with "git config set advice.defaultBranchName false"
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8171646Z Initialized empty Git repository in /home/runner/work/KeyFate/KeyFate/.git/
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8174253Z [command]/usr/bin/git remote add origin https://github.com/Aviat-IO/KeyFate
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8214059Z ##[endgroup]
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8214854Z ##[group]Disabling automatic garbage collection
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8215561Z [command]/usr/bin/git config --local gc.auto 0
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8254245Z ##[endgroup]
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8255336Z ##[group]Setting up auth
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8260259Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8299161Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8609736Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8643815Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8876275Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Test	UNKNOWN STEP	2026-04-25T17:57:51.8908689Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Test	UNKNOWN STEP	2026-04-25T17:57:51.9143076Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Test	UNKNOWN STEP	2026-04-25T17:57:51.9179477Z ##[endgroup]
+Test	UNKNOWN STEP	2026-04-25T17:57:51.9181777Z ##[group]Fetching the repository
+Test	UNKNOWN STEP	2026-04-25T17:57:51.9188935Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +b7b7aef1a897c418e0402acd211fecf0206d8217:refs/remotes/origin/main
+Test	UNKNOWN STEP	2026-04-25T17:57:52.2846334Z From https://github.com/Aviat-IO/KeyFate
+Test	UNKNOWN STEP	2026-04-25T17:57:52.2848594Z  * [new ref]         b7b7aef1a897c418e0402acd211fecf0206d8217 -> origin/main
+Test	UNKNOWN STEP	2026-04-25T17:57:52.2876618Z ##[endgroup]
+Test	UNKNOWN STEP	2026-04-25T17:57:52.2878097Z ##[group]Determining the checkout info
+Test	UNKNOWN STEP	2026-04-25T17:57:52.2880009Z ##[endgroup]
+Test	UNKNOWN STEP	2026-04-25T17:57:52.2884946Z [command]/usr/bin/git sparse-checkout disable
+Test	UNKNOWN STEP	2026-04-25T17:57:52.2923830Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+Test	UNKNOWN STEP	2026-04-25T17:57:52.2950372Z ##[group]Checking out the ref
+Test	UNKNOWN STEP	2026-04-25T17:57:52.2954824Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+Test	UNKNOWN STEP	2026-04-25T17:57:52.3586810Z Switched to a new branch 'main'
+Test	UNKNOWN STEP	2026-04-25T17:57:52.3587882Z branch 'main' set up to track 'origin/main'.
+Test	UNKNOWN STEP	2026-04-25T17:57:52.3596576Z ##[endgroup]
+Test	UNKNOWN STEP	2026-04-25T17:57:52.3632842Z [command]/usr/bin/git log -1 --format=%H
+Test	UNKNOWN STEP	2026-04-25T17:57:52.3655217Z b7b7aef1a897c418e0402acd211fecf0206d8217
+Test	UNKNOWN STEP	2026-04-25T17:57:52.3956954Z ##[group]Run oven-sh/setup-bun@v2
+Test	UNKNOWN STEP	2026-04-25T17:57:52.3958020Z with:
+Test	UNKNOWN STEP	2026-04-25T17:57:52.3958808Z   bun-version: latest
+Test	UNKNOWN STEP	2026-04-25T17:57:52.3959944Z   no-cache: false
+Test	UNKNOWN STEP	2026-04-25T17:57:52.3961049Z   token: ***
+Test	UNKNOWN STEP	2026-04-25T17:57:52.3961844Z ##[endgroup]
+Test	UNKNOWN STEP	2026-04-25T17:57:52.7824568Z Downloading a new version of Bun: https://github.com/oven-sh/bun/releases/download/bun-v1.3.13/bun-linux-x64.zip
+Test	UNKNOWN STEP	2026-04-25T17:57:53.0265650Z [command]/usr/bin/unzip -o -q /home/runner/work/_temp/65c1bdf0-8db4-4ad0-be13-a282ad575091.zip
+Test	UNKNOWN STEP	2026-04-25T17:57:53.8378549Z [command]/home/runner/.bun/bin/bun --revision
+Test	UNKNOWN STEP	2026-04-25T17:57:53.8429857Z 1.3.13+bf2e2cecf
+Test	UNKNOWN STEP	2026-04-25T17:57:53.8596738Z ##[group]Run bun install --frozen-lockfile
+Test	UNKNOWN STEP	2026-04-25T17:57:53.8597169Z ^[[36;1mbun install --frozen-lockfile^[[0m
+Test	UNKNOWN STEP	2026-04-25T17:57:53.8626029Z shell: /usr/bin/bash -e {0}
+Test	UNKNOWN STEP	2026-04-25T17:57:53.8626339Z ##[endgroup]
+Test	UNKNOWN STEP	2026-04-25T17:57:53.8720886Z bun install v1.3.13 (bf2e2cec)
+Test	UNKNOWN STEP	2026-04-25T17:57:53.8776909Z Resolving dependencies
+Test	UNKNOWN STEP	2026-04-25T17:57:54.3792008Z Resolved, downloaded and extracted [142]
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3695221Z 
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3695724Z + @eslint/js@10.0.1
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3696136Z + @internationalized/date@3.12.1
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3696554Z + @lucide/svelte@1.11.0
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3696939Z + @sveltejs/adapter-node@5.5.4
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3697342Z + @sveltejs/enhanced-img@0.10.4
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3697687Z + @sveltejs/kit@2.58.0
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3698033Z + @sveltejs/vite-plugin-svelte@7.0.0
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3698431Z + @tailwindcss/vite@4.2.4
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3698771Z + @testing-library/jest-dom@6.9.1
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3699315Z + @testing-library/svelte@5.3.1
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3699918Z + @types/bcryptjs@3.0.0
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3700270Z + @types/canvas-confetti@1.9.0
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3700615Z + @types/file-saver@2.0.7
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3700951Z + @types/node@25.6.0
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3701239Z + @types/node-cron@3.0.11
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3701640Z + @types/nodemailer@8.0.0
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3701966Z + @types/sanitize-html@2.16.1
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3702281Z + dotenv@17.4.2
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3702563Z + drizzle-kit@0.31.10
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3702891Z + eslint@10.2.1
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3703220Z + eslint-config-prettier@10.1.8
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3703629Z + eslint-plugin-svelte@3.17.1
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3703976Z + globals@17.5.0
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3704297Z + jsdom@29.0.2
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3704583Z + mode-watcher@1.1.0
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3704895Z + prettier@3.8.3
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3705224Z + prettier-plugin-svelte@3.5.1
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3705633Z + prettier-plugin-tailwindcss@0.7.3
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3706050Z + svelte@5.55.5
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3706354Z + svelte-check@4.4.6
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3706669Z + svelte-sonner@1.1.1
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3707011Z + tailwind-variants@3.2.2
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3707349Z + tailwindcss@4.2.4
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3707683Z + tailwindcss-animate@1.0.7
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3708028Z + tsx@4.21.0
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3708315Z + typescript@6.0.3
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3708624Z + typescript-eslint@8.59.0
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3708972Z + vitest@4.1.5
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3709259Z + @auth/sveltekit@1.11.2
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3710501Z + @neondatabase/serverless@1.1.0
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3710882Z + @noble/ciphers@2.2.0
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3711190Z + @noble/curves@2.2.0
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3711537Z + @noble/hashes@2.2.0
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3711819Z + @scure/base@2.2.0
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3712122Z + @scure/btc-signer@2.0.1
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3712457Z + @sendgrid/mail@8.1.6
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3712782Z + @tailwindcss/typography@0.5.19
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3713129Z + bcryptjs@3.0.3
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3713409Z + bits-ui@2.18.0
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3713686Z + buffer@6.0.3
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3713985Z + canvas-confetti@1.9.4
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3714330Z + class-variance-authority@0.7.1
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3714699Z + clsx@2.1.1
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3714975Z + drizzle-orm@0.45.2
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3715297Z + file-saver@2.0.5
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3715595Z + formsnap@2.0.1
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3715862Z + jszip@3.10.1
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3716156Z + lucide-svelte@1.0.1
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3716458Z + marked@18.0.2
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3716755Z + node-cron@4.2.1
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3717048Z + nodemailer@8.0.6
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3717362Z + nostr-tools@2.23.3
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3717666Z + postgres@3.4.9
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3717969Z + sanitize-html@2.17.3
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3718299Z + shamirs-secret-sharing@2.0.1
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3718696Z + stripe@22.1.0
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3719090Z + sveltekit-superforms@2.30.1
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3719462Z + tailwind-merge@3.5.0
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3720523Z + timeago.js@4.0.2
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3721055Z + vite@8.0.10
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3721343Z + zod@4.3.6
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3721504Z 
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3721652Z 466 packages installed [3.50s]
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3902782Z ##[group]Run bun run test
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3903072Z ^[[36;1mbun run test^[[0m
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3925264Z shell: /usr/bin/bash -e {0}
+Test	UNKNOWN STEP	2026-04-25T17:57:57.3925522Z ##[endgroup]
+Test	UNKNOWN STEP	2026-04-25T17:57:57.4028769Z $ vitest run
+Test	UNKNOWN STEP	2026-04-25T17:57:58.8867625Z 
+Test	UNKNOWN STEP	2026-04-25T17:57:58.8871293Z ^[[1m^[[30m^[[46m RUN ^[[49m^[[39m^[[22m ^[[36mv4.1.5 ^[[39m^[[90m/home/runner/work/KeyFate/KeyFate/frontend^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:57:58.8872330Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:00.6535765Z  ^[[31m❯^[[39m src/lib/__tests__/bitcoin.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:00.7382428Z  ^[[31m❯^[[39m src/routes/api/secrets/[id]/send-now/__tests__/send-now.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:02.7975778Z  ^[[31m❯^[[39m src/lib/__tests__/double-encryption.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:02.8764793Z  ^[[31m❯^[[39m src/lib/__tests__/e2e-bitcoin-nostr.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:03.6161924Z  ^[[31m❯^[[39m src/routes/api/secrets/[id]/check-in/__tests__/check-in.test.ts ^[[2m(^[[22m^[[2m18 tests^[[22m^[[2m | ^[[22m^[[31m18 failed^[[39m^[[2m)^[[22m^[[33m 2737^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:03.6221423Z ^[[31m       ^[[31m×^[[31m returns 403 if CSRF validation fails^[[39m^[[32m 236^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:03.6280581Z ^[[31m       ^[[31m×^[[31m returns 401 if no session^[[39m^[[32m 88^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:03.6297725Z ^[[31m       ^[[31m×^[[31m returns 401 if session has no user id^[[39m^[[32m 236^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:03.6298827Z ^[[31m       ^[[31m×^[[31m returns 500 if ensureUserExists throws^[[39m^[[32m 230^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:03.6341713Z ^[[31m       ^[[31m×^[[31m returns 404 if secret not found in transaction^[[39m^[[32m 99^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:03.6342873Z ^[[31m       ^[[31m×^[[31m successfully checks in an active secret^[[39m^[[32m 236^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:03.6349890Z ^[[31m       ^[[31m×^[[31m passes correct update payload for active secret (no status reset)^[[39m^[[32m 210^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:03.6359275Z ^[[31m       ^[[31m×^[[31m resets status to active, retryCount to 0, lastRetryAt and lastError to null^[[39m^[[32m 103^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:03.6362957Z ^[[31m       ^[[31m×^[[31m returns success with mapped secret after recovery^[[39m^[[32m 243^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:03.6364246Z ^[[31m       ^[[31m×^[[31m inserts check-in history for normal check-in^[[39m^[[32m 73^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:03.6365394Z ^[[31m       ^[[31m×^[[31m inserts check-in history for recovery check-in^[[39m^[[32m 11^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:03.6366555Z ^[[31m       ^[[31m×^[[31m computes nextCheckIn based on checkInDays^[[39m^[[32m 15^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:03.6367667Z ^[[31m       ^[[31m×^[[31m calls logCheckIn after successful check-in^[[39m^[[32m 10^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:03.6369001Z ^[[31m       ^[[31m×^[[31m calls scheduleRemindersForSecret after successful check-in^[[39m^[[33m 353^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:03.6370693Z ^[[31m       ^[[31m×^[[31m does not call side effects when secret not found^[[39m^[[32m 207^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:03.6372020Z ^[[31m       ^[[31m×^[[31m returns { success, secret, next_check_in } on success^[[39m^[[32m 271^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:03.6373233Z ^[[31m       ^[[31m×^[[31m returns 404 if getSecretWithRecipients returns null after update^[[39m^[[32m 96^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:03.6374436Z ^[[31m       ^[[31m×^[[31m returns 500 on unexpected transaction error^[[39m^[[32m 14^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:04.1086207Z  ^[[31m❯^[[39m src/lib/__tests__/recovery-ui.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:04.1781988Z  ^[[31m❯^[[39m src/lib/__tests__/secret-bitcoin-flow.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:04.9361511Z  ^[[31m❯^[[39m src/lib/__tests__/nostr.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:05.4453655Z  ^[[31m❯^[[39m src/lib/__tests__/bitcoin-service.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:06.7563771Z  ^[[31m❯^[[39m src/routes/api/secrets/[id]/publish-nostr/__tests__/publish-nostr.test.ts ^[[2m(^[[22m^[[2m15 tests^[[22m^[[2m | ^[[22m^[[31m15 failed^[[39m^[[2m)^[[22m^[[33m 1050^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:06.7565038Z ^[[31m       ^[[31m×^[[31m should throw 401 when not authenticated^[[39m^[[32m 21^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:06.7565867Z ^[[31m       ^[[31m×^[[31m should return 400 for empty shares array^[[39m^[[32m 7^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:06.7566667Z ^[[31m       ^[[31m×^[[31m should return 400 for missing threshold^[[39m^[[32m 12^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:06.7567706Z ^[[31m       ^[[31m×^[[31m should return 400 for invalid recipientId format^[[39m^[[32m 9^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:06.7568629Z ^[[31m       ^[[31m×^[[31m should return 400 for threshold below minimum^[[39m^[[32m 8^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:06.7569477Z ^[[31m       ^[[31m×^[[31m should return 400 for totalShares above maximum^[[39m^[[32m 11^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:06.7570419Z ^[[31m       ^[[31m×^[[31m should return 400 for negative shareIndex^[[39m^[[32m 9^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:06.7571039Z ^[[31m       ^[[31m×^[[31m should return 404 when secret does not belong to user^[[39m^[[32m 7^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:06.7571700Z ^[[31m       ^[[31m×^[[31m should return 400 when recipientId does not belong to secret^[[39m^[[32m 8^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:06.7572371Z ^[[31m       ^[[31m×^[[31m should call publishSharesToNostr with correct params^[[39m^[[32m 7^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:06.7572985Z ^[[31m       ^[[31m×^[[31m should return 422 when no shares were published^[[39m^[[32m 7^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:06.7573597Z ^[[31m       ^[[31m×^[[31m should use NOSTR_SERVER_SECRET_KEY from env when set^[[39m^[[33m 842^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:06.7574186Z ^[[31m       ^[[31m×^[[31m should handle publish errors gracefully^[[39m^[[32m 80^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:06.7574775Z ^[[31m       ^[[31m×^[[31m should handle multiple shares for multiple recipients^[[39m^[[32m 8^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:06.7575366Z ^[[31m       ^[[31m×^[[31m should return 500 on unexpected errors^[[39m^[[32m 13^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:06.8784615Z  ^[[31m❯^[[39m src/lib/db/queries/__tests__/admin-metrics.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:06.9687013Z  ^[[31m❯^[[39m src/lib/__tests__/client-operations.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:08.0438584Z  ^[[31m❯^[[39m src/lib/auth/__tests__/auth-config.test.ts ^[[2m(^[[22m^[[2m10 tests^[[22m^[[2m | ^[[22m^[[33m10 skipped^[[39m^[[2m)^[[22m^[[32m 21^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:08.0443484Z      ^[[2m^[[90m↓^[[39m^[[22m passes GOOGLE_CLIENT_* env vars to the Google provider
+Test	UNKNOWN STEP	2026-04-25T17:58:08.0444705Z      ^[[2m^[[90m↓^[[39m^[[22m stores the current session version in the JWT during sign-in
+Test	UNKNOWN STEP	2026-04-25T17:58:08.0445863Z      ^[[2m^[[90m↓^[[39m^[[22m keeps a JWT valid when only updatedAt changed after token issuance
+Test	UNKNOWN STEP	2026-04-25T17:58:08.0447042Z      ^[[2m^[[90m↓^[[39m^[[22m rejects a JWT when the database session version differs from the token session version
+Test	UNKNOWN STEP	2026-04-25T17:58:08.0448166Z      ^[[2m^[[90m↓^[[39m^[[22m keeps a JWT valid when the database session version matches the token session version
+Test	UNKNOWN STEP	2026-04-25T17:58:08.0449138Z      ^[[2m^[[90m↓^[[39m^[[22m keeps a fresh JWT valid even when emailVerified is false
+Test	UNKNOWN STEP	2026-04-25T17:58:08.0450395Z      ^[[2m^[[90m↓^[[39m^[[22m keeps a JWT valid when revocation happened in the same second but the session version still matches
+Test	UNKNOWN STEP	2026-04-25T17:58:08.0451383Z      ^[[2m^[[90m↓^[[39m^[[22m rejects a JWT when the user record no longer exists
+Test	UNKNOWN STEP	2026-04-25T17:58:08.0452263Z      ^[[2m^[[90m↓^[[39m^[[22m rejects a JWT when the user lookup fails during session version validation
+Test	UNKNOWN STEP	2026-04-25T17:58:08.0453209Z      ^[[2m^[[90m↓^[[39m^[[22m uses the atomic verification token consumer for auto-login
+Test	UNKNOWN STEP	2026-04-25T17:58:08.3183506Z  ^[[31m❯^[[39m src/routes/(admin)/admin/__tests__/page-server.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:09.1336229Z  ^[[31m❯^[[39m src/lib/__tests__/logger.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:09.3711619Z  ^[[31m❯^[[39m src/lib/webhooks/__tests__/deduplication.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:10.1485304Z  ^[[31m❯^[[39m src/lib/email/__tests__/email-service.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:10.3945051Z  ^[[31m❯^[[39m src/lib/__tests__/confirm-utxos.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:11.3973730Z  ^[[31m❯^[[39m src/routes/api/webhooks/stripe/__tests__/server.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m | ^[[22m^[[31m4 failed^[[39m^[[2m)^[[22m^[[32m 45^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:11.3974689Z ^[[31m     ^[[31m×^[[31m claims before side effects and skips duplicate deliveries^[[39m^[[32m 20^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:11.3975480Z ^[[31m     ^[[31m×^[[31m marks a claimed event as failed when business logic throws^[[39m^[[32m 7^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:11.3976686Z ^[[31m     ^[[31m×^[[31m does not execute side effects twice when persistence fails after side effects complete^[[39m^[[32m 7^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:11.3977957Z ^[[31m     ^[[31m×^[[31m does not let bookkeeping failure mask the original webhook error^[[39m^[[32m 9^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:11.5434266Z  ^[[31m❯^[[39m src/lib/__tests__/subscription.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:12.4495576Z  ^[[31m❯^[[39m src/routes/api/admin/metrics/__tests__/metrics-api.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:12.5865913Z  ^[[31m❯^[[39m src/routes/api/health/__tests__/health.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:13.4691670Z  ^[[31m❯^[[39m src/lib/__tests__/client-wallet.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:13.6195702Z  ^[[31m❯^[[39m src/lib/__tests__/encryption.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:14.6351431Z  ^[[31m❯^[[39m src/routes/api/webhooks/btcpay/__tests__/server.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m | ^[[22m^[[31m3 failed^[[39m^[[2m)^[[22m^[[32m 23^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:14.6352889Z ^[[31m     ^[[31m×^[[31m claims with original delivery id before side effects and skips duplicates^[[39m^[[32m 12^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:14.6353782Z ^[[31m     ^[[31m×^[[31m marks a claimed BTCPay event as failed when business logic throws^[[39m^[[32m 5^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:14.6354662Z ^[[31m     ^[[31m×^[[31m attempts explicit processed finalization when recording fails after side effects^[[39m^[[32m 5^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:14.7852133Z  ^[[31m❯^[[39m src/routes/api/admin/email-failures/__tests__/auth.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:15.7162684Z  ^[[31m❯^[[39m src/lib/auth/__tests__/email-verification-token-storage.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:15.8473788Z  ^[[31m❯^[[39m src/lib/__tests__/time-utils.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:16.3731671Z  ^[[32m✓^[[39m src/lib/email/providers/__tests__/SendGridAdapter.test.ts ^[[2m(^[[22m^[[2m18 tests^[[22m^[[2m)^[[22m^[[33m 8161^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:16.3790794Z        ^[[33m^[[2m✓^[[22m^[[39m retries on transient errors ^[[33m 4242^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:16.3847024Z        ^[[33m^[[2m✓^[[22m^[[39m returns failure after exhausting all retries ^[[33m 3902^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:16.8684009Z  ^[[31m❯^[[39m src/lib/services/__tests__/subscription-lifecycle.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:17.0599893Z  ^[[31m❯^[[39m src/lib/auth/__tests__/password-reset-token-storage.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:17.6918801Z  ^[[31m❯^[[39m src/lib/__tests__/pricing.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:18.1527406Z  ^[[31m❯^[[39m src/lib/__tests__/tier-validation.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:18.4037139Z  ^[[32m✓^[[39m src/lib/schemas/__tests__/secret-nostr-fields.test.ts ^[[2m(^[[22m^[[2m10 tests^[[22m^[[2m)^[[22m^[[32m 19^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:18.9273176Z  ^[[32m✓^[[39m src/lib/auth/__tests__/admin-guard.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[32m 9^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:19.5486154Z  ^[[31m❯^[[39m src/routes/api/check-in/__tests__/server.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m | ^[[22m^[[31m1 failed^[[39m^[[2m)^[[22m^[[32m 23^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:19.5491611Z ^[[31m     ^[[31m×^[[31m does not log raw token-bearing URLs or token values, and uses a fingerprint instead^[[39m^[[32m 21^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:19.7755817Z  ^[[31m❯^[[39m src/lib/services/__tests__/payment-records.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:20.2483682Z  ^[[31m❯^[[39m src/lib/db/queries/__tests__/secrets-disclosure.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:20.8893152Z  ^[[31m❯^[[39m src/lib/__tests__/scheduler.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.0521438Z  ^[[32m✓^[[39m src/lib/auth/__tests__/redirect-callers.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 7^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.4549690Z  ^[[31m❯^[[39m src/lib/auth/__tests__/session-management.test.ts ^[[2m(^[[22m^[[2m0 test^[[22m^[[2m)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8856264Z  ^[[32m✓^[[39m src/lib/auth/__tests__/redirects.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 4^[[2mms^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8883137Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8883870Z ^[[31m⎯⎯⎯⎯⎯⎯^[[39m^[[1m^[[41m Failed Suites 32 ^[[49m^[[22m^[[31m⎯⎯⎯⎯⎯⎯^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8884297Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8888320Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/__tests__/bitcoin-service.test.ts^[[2m [ src/lib/__tests__/bitcoin-service.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8894480Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/services/bitcoin-service" from "src/lib/__tests__/bitcoin-service.test.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8895820Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8896995Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/__tests__/bitcoin-service.test.ts^[[39m:66:0
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8897867Z ^[[33m  34 |  }));
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8900539Z   35 |  const __vi_import_0__ = await import("@scure/base");
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8901186Z   36 |  const __vi_import_1__ = await import("$lib/services/bitcoin-service");
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8901774Z      |                                       ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8902288Z   37 |  import { describe, it, expect, vi, beforeEach } from "vitest";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8902895Z   38 |  ^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8903777Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8905092Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8906234Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8907150Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8908289Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8909657Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8910874Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8911446Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8911718Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8912016Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8912569Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/__tests__/bitcoin.test.ts^[[2m [ src/lib/__tests__/bitcoin.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8913908Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/bitcoin/script" from "src/lib/__tests__/bitcoin.test.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8914887Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8915726Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/__tests__/bitcoin.test.ts^[[39m:178:47
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8916651Z ^[[33m  149 |  	describe("blocksToApproxDays", () => {
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8917173Z   150 |  		it("converts 144 blocks to 1 day", async () => {
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8917798Z   151 |  			const { blocksToApproxDays } = await import("$lib/bitcoin/script");
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8918694Z       |                                                 ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8919389Z   152 |  			expect(blocksToApproxDays(144)).toBe(1);
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8920005Z   153 |  		});^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8920830Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8922131Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8923246Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8924166Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8925247Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8926596Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8927853Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8928437Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8928681Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8928981Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8929780Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/__tests__/client-operations.test.ts^[[2m [ src/lib/__tests__/client-operations.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8931364Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/bitcoin/client-operations" from "src/lib/__tests__/client-operations.test.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8932435Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8933354Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/__tests__/client-operations.test.ts^[[39m:35:47
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8934158Z ^[[33m  28 |  	});
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8934623Z   29 |  	it("creates timelock UTXO, broadcasts, and returns result", async () => {
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8935443Z   30 |  		const { enableBitcoinClient } = await import("$lib/bitcoin/client-operations");
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8936110Z      |                                                 ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8936540Z   31 |  		// Mock broadcast to return a fake txId
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8937119Z   32 |  		const fakeBroadcastTxId = "ab".repeat(32);^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8938091Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8939382Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8940614Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8941521Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8942481Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8943843Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8945062Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8945617Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8945871Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8946152Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8946752Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/__tests__/client-wallet.test.ts^[[2m [ src/lib/__tests__/client-wallet.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8948203Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/bitcoin/client-wallet" from "src/lib/__tests__/client-wallet.test.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8949206Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8950204Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/__tests__/client-wallet.test.ts^[[39m:24:50
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8950984Z ^[[33m  18 |  	});
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8951829Z   19 |  	it("generates a valid secp256k1 public key matching the private key", async () => {
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8952945Z   20 |  		const { generateBitcoinKeypair } = await import("$lib/bitcoin/client-wallet");
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8953576Z      |                                                    ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8953886Z   21 |  		const keypair = generateBitcoinKeypair();
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8954352Z   22 |  		// Independently derive pubkey from privkey and compare^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8955559Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8956911Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8957672Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8958787Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8960116Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8960991Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8962458Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8963055Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8963386Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8963581Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8963978Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/__tests__/confirm-utxos.test.ts^[[2m [ src/lib/__tests__/confirm-utxos.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8965641Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/cron/confirm-utxos" from "src/lib/__tests__/confirm-utxos.test.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8966547Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8967200Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/__tests__/confirm-utxos.test.ts^[[39m:82:47
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8967848Z ^[[33m  67 |  	it("returns early when no pending UTXOs exist", async () => {
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8968416Z   68 |  		mockSelectChain.limit.mockResolvedValue([]);
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8969194Z   69 |  		const { confirmPendingUtxos } = await import("$lib/cron/confirm-utxos");
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8970011Z      |                                                 ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8970429Z   70 |  		const result = await confirmPendingUtxos();
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8970806Z   71 |  		expect(result.success).toBe(true);^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8971520Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8972440Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8973422Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8974540Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8975578Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8976669Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8978130Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8978623Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8978789Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8978982Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8979766Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/__tests__/double-encryption.test.ts^[[2m [ src/lib/__tests__/double-encryption.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8981560Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/crypto/symmetric" from "src/lib/__tests__/double-encryption.test.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8982416Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8983431Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/__tests__/double-encryption.test.ts^[[39m:25:7
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8984763Z ^[[33m  17 |  	expect(Array.from(actual)).toEqual(Array.from(expected));
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8985093Z   18 |  }
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8985663Z   19 |  import { generateSymmetricKey, encryptWithSymmetricKey, decryptWithSymmetricKey } from "$lib/crypto/symmetric";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8986592Z      |                                                                                          ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8987560Z   20 |  import { deriveKeyFromPassphrase, encryptWithDerivedKey, decryptWithDerivedKey } from "$lib/crypto/passphrase";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8988711Z   21 |  import { doubleEncryptShare } from "$lib/crypto/double-encrypt";^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8989980Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8991277Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8992357Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8993270Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8994331Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8995660Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8996842Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8997425Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8997682Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8997975Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.8998666Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/__tests__/e2e-bitcoin-nostr.test.ts^[[2m [ src/lib/__tests__/e2e-bitcoin-nostr.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9000410Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/crypto/symmetric" from "src/lib/__tests__/e2e-bitcoin-nostr.test.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9001266Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9002103Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/__tests__/e2e-bitcoin-nostr.test.ts^[[39m:22:7
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9003066Z ^[[33m  14 |  import * as btc from "@scure/btc-signer";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9003563Z   15 |  // Crypto modules
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9004204Z   16 |  import { generateSymmetricKey, encryptWithSymmetricKey, decryptWithSymmetricKey } from "$lib/crypto/symmetric";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9004957Z      |                                                                                          ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9005739Z   17 |  import { deriveKeyFromPassphrase, encryptWithDerivedKey } from "$lib/crypto/passphrase";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9006743Z   18 |  import { doubleEncryptShare } from "$lib/crypto/double-encrypt";^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9007864Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9009148Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9010400Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9011323Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9012426Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9013775Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9014993Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9015860Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9016162Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9016447Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9017171Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/__tests__/encryption.test.ts^[[2m [ src/lib/__tests__/encryption.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9018540Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/encryption" from "src/lib/__tests__/encryption.test.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9019133Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9019966Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/__tests__/encryption.test.ts^[[39m:39:43
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9020823Z ^[[33m  28 |  	describe("encryptMessage", () => {
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9021542Z   29 |  		it("should encrypt a message and return encrypted data with IV and auth tag", async () => {
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9022357Z   30 |  			const { encryptMessage } = await import("$lib/encryption");
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9022880Z      |                                             ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9023333Z   31 |  			const testMessage = "Hello, World!";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9023931Z   32 |  			const result = await encryptMessage(testMessage);^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9024963Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9026236Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9027361Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9028275Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9029344Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9030800Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9032012Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9032585Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9032853Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9033147Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9033668Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/__tests__/logger.test.ts^[[2m [ src/lib/__tests__/logger.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9034858Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/logger" from "src/lib/__tests__/logger.test.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9035727Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9036530Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/__tests__/logger.test.ts^[[39m:9:38
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9037244Z ^[[33m  6  |  */
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9037657Z   7  |  import { describe, it, expect, vi, beforeEach } from "vitest";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9038242Z   8  |  import { logger, withRequestId } from "$lib/logger";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9038711Z      |                                         ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9039133Z   9  |  describe("Logger Sanitization", () => {
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9039736Z   10 |  	beforeEach(() => {^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9040621Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9041885Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9043009Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9043929Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9044707Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9046054Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9047252Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9048049Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9048311Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9048748Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9049242Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/__tests__/nostr.test.ts^[[2m [ src/lib/__tests__/nostr.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9050616Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/nostr/keypair" from "src/lib/__tests__/nostr.test.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9051518Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9052336Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/__tests__/nostr.test.ts^[[39m:17:43
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9053135Z ^[[33m  13 |  describe("Nostr Keypair", () => {
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9053661Z   14 |  	it("generates a valid keypair with all fields", async () => {
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9054313Z   15 |  		const { generateKeypair } = await import("$lib/nostr/keypair");
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9054858Z      |                                             ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9055270Z   16 |  		const kp = generateKeypair();
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9055847Z   17 |  		expect(kp.secretKey).toBeInstanceOf(Uint8Array);^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9056865Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9058146Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9059259Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9060347Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9061452Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9062797Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9064023Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9064583Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9064837Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9065129Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9065672Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/__tests__/pricing.test.ts^[[2m [ src/lib/__tests__/pricing.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9066904Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/pricing" from "src/lib/__tests__/pricing.test.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9067577Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9068098Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/__tests__/pricing.test.ts^[[39m:10:53
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9068549Z ^[[33m  7  |  */
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9068780Z   8  |  import { describe, it, expect } from "vitest";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9069155Z   9  |  import { getPricing, getAmount, isTestPricing } from "$lib/pricing";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9069704Z      |                                                        ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9070146Z   10 |  describe("Pricing Utility", () => {
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9070667Z   11 |  	describe("Pricing Tiers", () => {^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9071304Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9072080Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9072762Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9073320Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9074327Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9075663Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9076644Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9077254Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9077661Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9077917Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9078284Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/__tests__/recovery-ui.test.ts^[[2m [ src/lib/__tests__/recovery-ui.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9079155Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/nostr/keypair" from "src/lib/__tests__/recovery-ui.test.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9080249Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9080856Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/__tests__/recovery-ui.test.ts^[[39m:28:32
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9081408Z ^[[33m  15 |  import { describe, it, expect } from "vitest";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9082005Z   16 |  import { isValidNsec, nsecToSecretKey, unwrapGiftWrap, parseOpReturnFromTx, parseEncryptedKBundle, recoverKWithPassph...
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9082629Z   17 |  import { generateKeypair } from "$lib/nostr/keypair";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9082928Z      |                                   ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9083267Z   18 |  import { wrapShareForRecipient } from "$lib/nostr/gift-wrap";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9083878Z   19 |  import { generateSymmetricKey, encryptWithSymmetricKey } from "$lib/crypto/symmetric";^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9084639Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9085428Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9086105Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9086670Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9087315Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9088111Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9088837Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9089165Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9089331Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9089687Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9090068Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/__tests__/scheduler.test.ts^[[2m [ src/lib/__tests__/scheduler.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9090875Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/cron/scheduler" from "src/lib/__tests__/scheduler.test.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9091452Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9091991Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/__tests__/scheduler.test.ts^[[39m:34:42
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9092516Z ^[[33m  23 |  		process.env.CRON_ENABLED = "false";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9092910Z   24 |  		const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9093360Z   25 |  		const { startScheduler } = await import("$lib/cron/scheduler");
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9093692Z      |                                            ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9093949Z   26 |  		startScheduler();
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9094398Z   27 |  		expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("disabled"));^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9095119Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9095875Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9096545Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9097102Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9097894Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9098801Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9099717Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9100098Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9100263Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9100447Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9100875Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/__tests__/secret-bitcoin-flow.test.ts^[[2m [ src/lib/__tests__/secret-bitcoin-flow.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9102218Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/services/nostr-publisher" from "src/lib/__tests__/secret-bitcoin-flow.test.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9103046Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9103615Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/__tests__/secret-bitcoin-flow.test.ts^[[39m:55:48
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9104127Z ^[[33m  49 |  	});
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9104434Z   50 |  	it("publishes gift wraps for recipients with nostrPubkey", async () => {
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9104928Z   51 |  		const { publishSharesToNostr } = await import("$lib/services/nostr-publisher");
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9105335Z      |                                                  ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9105665Z   52 |  		const { generateKeypair } = await import("$lib/nostr/keypair");
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9106066Z   53 |  		const sender = generateKeypair();^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9106639Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9107405Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9108079Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9108639Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9109294Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9110292Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9111018Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9111350Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9111515Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9111691Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9112059Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/__tests__/subscription.test.ts^[[2m [ src/lib/__tests__/subscription.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9112878Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/subscription" from "src/lib/__tests__/subscription.test.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9113647Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9114292Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/__tests__/subscription.test.ts^[[39m:23:0
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9114799Z ^[[33m  6  |  	secretRecipients: {}
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9115027Z   7  |  }));
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9115279Z   8  |  const __vi_import_0__ = await import("$lib/subscription");
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9115597Z      |                                       ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9115902Z   9  |  const __vi_import_1__ = await import("$lib/db/drizzle");
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9116259Z   10 |  /**^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9116764Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9117520Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9118176Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9118743Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9119385Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9120409Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9121153Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9121488Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9121646Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9121830Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9122227Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/__tests__/tier-validation.test.ts^[[2m [ src/lib/__tests__/tier-validation.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9123093Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/tier-validation" from "src/lib/__tests__/tier-validation.test.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9123719Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9124272Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/__tests__/tier-validation.test.ts^[[39m:17:7
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9124751Z ^[[33m  6  |  */
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9124982Z   7  |  import { describe, expect, it } from "vitest";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9125417Z   8  |  ... getMaxThreshold, getMinThreshold, isValidThreshold } from "$lib/tier-validation";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9125855Z      |                                                                 ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9126172Z   9  |  describe("canAccessMessageTemplates", () => {
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9126565Z   10 |  	it("should return true for Pro tier", () => {^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9127171Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9127930Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9128617Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9129182Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9129935Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9131030Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9132220Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9132785Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9133028Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9133322Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9134060Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/__tests__/time-utils.test.ts^[[2m [ src/lib/__tests__/time-utils.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9135412Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/time-utils" from "src/lib/__tests__/time-utils.test.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9136705Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9137727Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/__tests__/time-utils.test.ts^[[39m:9:36
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9138514Z ^[[33m  6  |  */
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9138865Z   7  |  import { describe, it, expect } from "vitest";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9139444Z   8  |  import { formatTimeRemaining } from "$lib/time-utils";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9140133Z      |                                       ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9140563Z   9  |  describe("formatTimeRemaining", () => {
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9141141Z   10 |  	describe("Days formatting", () => {^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9142138Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9143499Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9144699Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9145664Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9146793Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9148196Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9149480Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9150266Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9150536Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9150820Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9151219Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/auth/__tests__/auth-config.test.ts^[[2m > ^[[22mauth config
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9152197Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/db/drizzle" from "src/auth.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9153001Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9153693Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/auth.ts^[[39m:4:28
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9154448Z ^[[33m  2  |  import Google from "@auth/sveltekit/providers/google";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9155078Z   3  |  import Credentials from "@auth/sveltekit/providers/credentials";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9155683Z   4  |  import { getDatabase } from "$lib/db/drizzle";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9156118Z      |                               ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9156520Z   5  |  import { users } from "$lib/db/schema";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9157040Z   6  |  import { eq } from "drizzle-orm";^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9158012Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9159359Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9160760Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9161736Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9162873Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9164269Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9165522Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9166141Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9166404Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9166719Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9167771Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/auth/__tests__/email-verification-token-storage.test.ts^[[2m [ src/lib/auth/__tests__/email-verification-token-storage.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9169439Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/db/drizzle" from "src/lib/auth/email-verification.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9170888Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9171938Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/auth/email-verification.ts^[[39m:1:28
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9172874Z ^[[33m  1  |  import { getDatabase } from "$lib/db/drizzle";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9173358Z      |                               ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9173860Z   2  |  import { users, verificationTokens } from "$lib/db/schema";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9174559Z   3  |  import { and, eq, gt, lte } from "drizzle-orm";^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9175604Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9176964Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9178151Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9179125Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9180425Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9181800Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9183083Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9183670Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9183938Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9184243Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9185192Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/auth/__tests__/password-reset-token-storage.test.ts^[[2m [ src/lib/auth/__tests__/password-reset-token-storage.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9186882Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/db/schema" from "src/lib/auth/password-reset.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9187859Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9188737Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/auth/password-reset.ts^[[39m:2:43
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9189805Z ^[[33m  1  |  import { getDatabase } from "$lib/db/drizzle";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9190415Z   2  |  import { passwordResetTokens, users } from "$lib/db/schema";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9190971Z      |                                              ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9191428Z   3  |  import { and, eq, gt } from "drizzle-orm";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9192196Z   4  |  import { generateHexToken, hashToken } from "$lib/auth/token-utils";^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9193364Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9194727Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9195911Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9196879Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9198031Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9199433Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9200854Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9201434Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9201698Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9201998Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9202777Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/auth/__tests__/session-management.test.ts^[[2m [ src/lib/auth/__tests__/session-management.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9204282Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/db/schema" from "src/lib/auth/session-management.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9205533Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9206595Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/auth/session-management.ts^[[39m:8:22
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9207385Z ^[[33m  5  |  */
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9207738Z   6  |  import { getDatabase } from "$lib/db/drizzle";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9208225Z   7  |  import { users } from "$lib/db/schema";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9208660Z      |                         ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9209042Z   8  |  import { eq, sql } from "drizzle-orm";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9209818Z   9  |  import { logger } from "$lib/logger";^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9210836Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9212207Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9213389Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9214369Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9215505Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9216998Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9218304Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9218907Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9219174Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9219480Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9220395Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/email/__tests__/email-service.test.ts^[[2m [ src/lib/email/__tests__/email-service.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9222027Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/circuit-breaker" from "src/lib/email/__tests__/email-service.test.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9223160Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9224156Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/email/__tests__/email-service.test.ts^[[39m:110:43
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9225244Z ^[[33m  82 |  			mockProvider.validateConfig.mockResolvedValue(true);
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9225845Z   83 |  			// Make the circuit breaker throw
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9226424Z   84 |  			const { CircuitBreaker } = await import("$lib/circuit-breaker");
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9227022Z      |                                             ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9227566Z   85 |  			const cbInstance = new CircuitBreaker("test");
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9228732Z   86 |  			cbInstance.execute.mockRejectedValueOnce(new Error("Circuit breaker is OPEN - EmailService service unavailable"));^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9230393Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9231715Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9232902Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9233898Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9235059Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9236488Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9237776Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9238380Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9238641Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9238947Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9239938Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/services/__tests__/payment-records.test.ts^[[2m [ src/lib/services/__tests__/payment-records.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9242121Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/services/payment-records" from "src/lib/services/__tests__/payment-records.test.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9243324Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9244334Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/services/__tests__/payment-records.test.ts^[[39m:38:0
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9245269Z ^[[33m  23 |  	debug: vi.fn()
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9245606Z   24 |  } }));
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9246058Z   25 |  const __vi_import_0__ = await import("$lib/services/payment-records");
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9246666Z      |                                       ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9247203Z   26 |  import { beforeEach, describe, expect, it, vi } from "vitest";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9247864Z   27 |  const mockGetDatabase = vi.fn();^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9248865Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9250410Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9251605Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9252595Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9253760Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9255177Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9256456Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9257050Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9257315Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9257629Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9258582Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/services/__tests__/subscription-lifecycle.test.ts^[[2m [ src/lib/services/__tests__/subscription-lifecycle.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9260752Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/services/subscription-lifecycle" from "src/lib/services/__tests__/subscription-lifecycle.test.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9262036Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9263111Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/services/__tests__/subscription-lifecycle.test.ts^[[39m:61:0
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9264087Z ^[[33m  35 |  	debug: vi.fn()
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9264421Z   36 |  } }));
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9264930Z   37 |  const __vi_import_0__ = await import("$lib/services/subscription-lifecycle");
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9265559Z      |                                       ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9266100Z   38 |  import { beforeEach, describe, expect, it, vi } from "vitest";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9266755Z   39 |  const mockGetDatabase = vi.fn();^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9267764Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9269124Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9270550Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9271533Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9272654Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9274052Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9275314Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9275904Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9276428Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9276737Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9277707Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/webhooks/__tests__/deduplication.test.ts^[[2m [ src/lib/webhooks/__tests__/deduplication.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9279480Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/webhooks/deduplication" from "src/lib/webhooks/__tests__/deduplication.test.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9280898Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9281902Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/webhooks/__tests__/deduplication.test.ts^[[39m:44:0
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9282818Z ^[[33m  35 |  	debug: vi.fn()
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9283145Z   36 |  } }));
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9283594Z   37 |  const __vi_import_0__ = await import("$lib/webhooks/deduplication");
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9284181Z      |                                       ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9284718Z   38 |  import { beforeEach, describe, expect, it, vi } from "vitest";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9285390Z   39 |  const mockGetDatabase = vi.fn();^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9286388Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9287738Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9288949Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9290067Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9291195Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9292561Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9293795Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9294378Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9294641Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9294937Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9295708Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/db/queries/__tests__/admin-metrics.test.ts^[[2m [ src/lib/db/queries/__tests__/admin-metrics.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9297246Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/db/drizzle" from "src/lib/db/queries/admin-metrics.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9298261Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9299139Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/db/queries/admin-metrics.ts^[[39m:1:28
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9300240Z ^[[33m  1  |  import { getDatabase } from "$lib/db/drizzle";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9300721Z      |                               ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9301621Z   2  |  import { secrets, users, disclosureLog, emailFailures, userSubscriptions, subscriptionTiers, checkinHistory } from "$...
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9302821Z   3  |  import { eq, sql, and, desc, isNull, inArray } from "drizzle-orm";^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9303977Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9305329Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9306490Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9307459Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9308566Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9310125Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9311382Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9312202Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9312459Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9312774Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9313781Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/lib/db/queries/__tests__/secrets-disclosure.test.ts^[[2m [ src/lib/db/queries/__tests__/secrets-disclosure.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9315534Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/db/schema" from "src/lib/db/queries/__tests__/secrets-disclosure.test.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9316695Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9317724Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/lib/db/queries/__tests__/secrets-disclosure.test.ts^[[39m:36:0
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9318787Z ^[[33m  25 |  const __vi_import_0__ = await import("../secrets");
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9319375Z   26 |  const __vi_import_1__ = await import("drizzle-orm");
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9320109Z   27 |  const __vi_import_2__ = await import("$lib/db/schema");
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9320637Z      |                                       ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9321177Z   28 |  import { describe, it, expect, vi, beforeEach } from "vitest";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9321813Z   29 |  const mockWhere = vi.fn();^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9322783Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9324138Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9325339Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9326327Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9327467Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9328902Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9330378Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9331003Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9331268Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9331579Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9332443Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/(admin)/admin/__tests__/page-server.test.ts^[[2m [ src/routes/(admin)/admin/__tests__/page-server.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9334175Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/db/queries/admin-metrics" from "src/routes/(admin)/admin/+page.server.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9335267Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9336181Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/routes/(admin)/admin/+page.server.ts^[[39m:9:7
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9337467Z ^[[33m  1  |  ...dSecrets, getRecentEmailFailures, getRecentActivity } from "$lib/db/queries/admin-metrics";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9338308Z      |                                                                 ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9338892Z   2  |  import { cronMonitor } from "$lib/monitoring/cron-monitor";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9339704Z   3  |  export const load = async () => {^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9340691Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9341548Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9342237Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9343385Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9344343Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9345395Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9346344Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9346793Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9347198Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9347404Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9347841Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/health/__tests__/health.test.ts^[[2m [ src/routes/api/health/__tests__/health.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9348753Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/db/connection" from "src/routes/api/health/__tests__/health.test.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9349411Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9350408Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/routes/api/health/__tests__/health.test.ts^[[39m:43:0
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9351105Z ^[[33m  9  |  	});
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9351378Z   10 |  } }));
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9351645Z   11 |  const __vi_import_0__ = await import("$lib/db/connection");
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9352041Z      |                                       ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9352556Z   12 |  const __vi_import_1__ = await import("$lib/db/drizzle");
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9353336Z   13 |  const __vi_import_2__ = await import("$lib/email/email-service");^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9354481Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9355519Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9356686Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9357629Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9358699Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9360185Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9361416Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9361984Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9362234Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9362551Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9363350Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/admin/email-failures/__tests__/auth.test.ts^[[2m [ src/routes/api/admin/email-failures/__tests__/auth.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9364652Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/email/dead-letter-queue" from "src/routes/api/admin/email-failures/+server.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9365312Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9365888Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/routes/api/admin/email-failures/+server.ts^[[39m:10:32
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9366380Z ^[[33m  6  |  */
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9366606Z   7  |  import { json } from "@sveltejs/kit";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9366949Z   8  |  import { DeadLetterQueue } from "$lib/email/dead-letter-queue";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9367291Z      |                                   ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9367585Z   9  |  import { requireAdmin } from "$lib/auth/admin-guard";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9367903Z   10 |  /**^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9368409Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9369178Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9370064Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9370623Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9371297Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9372307Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9373160Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9373499Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9373672Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9373852Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9374390Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/admin/metrics/__tests__/metrics-api.test.ts^[[2m [ src/routes/api/admin/metrics/__tests__/metrics-api.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9375378Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/auth/admin-guard" from "src/routes/api/admin/metrics/+server.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9376040Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9376587Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/routes/api/admin/metrics/+server.ts^[[39m:3:29
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9377143Z ^[[33m  1  |  import { json, error } from "@sveltejs/kit";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9377498Z   2  |  import { requireAdmin } from "$lib/auth/admin-guard";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9377800Z      |                                ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9378338Z   3  |  import { getSecretStatusCounts, getUserCounts, getEmailDeliveryStats, getFailedSecrets, getRecentEmailFailures, getRe...
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9379034Z   4  |  import { cronMonitor } from "$lib/monitoring/cron-monitor";^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9379870Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9380673Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9381358Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9381921Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9382592Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9383410Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9384145Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9384491Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9384655Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9384838Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9385387Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/send-now/__tests__/send-now.test.ts^[[2m [ src/routes/api/secrets/[id]/send-now/__tests__/send-now.test.ts ]^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9386428Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/db/drizzle" from "src/routes/api/secrets/[id]/send-now/__tests__/send-now.test.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9387075Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9387913Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/routes/api/secrets/[id]/send-now/__tests__/send-now.test.ts^[[39m:696:40
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9388689Z ^[[33m  677 |  		it("returns 500 on unexpected error", async () => {
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9389004Z   678 |  			// Make getDatabase throw
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9389320Z   679 |  			const { getDatabase } = await import("$lib/db/drizzle");
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9389840Z       |                                          ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9390218Z   680 |  			getDatabase.mockRejectedValueOnce(new Error("DB connection lost"));
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9390676Z   681 |  			// Need CSRF + auth to pass first^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9391250Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9392014Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9392690Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9393260Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9393912Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9394704Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9395429Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9395762Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9395921Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9396113Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9396116Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9396333Z ^[[31m⎯⎯⎯⎯⎯⎯^[[39m^[[1m^[[41m Failed Tests 41 ^[[49m^[[22m^[[31m⎯⎯⎯⎯⎯⎯⎯^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9396566Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9397300Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/check-in/__tests__/server.test.ts^[[2m > ^[[22mPOST /api/check-in logging^[[2m > ^[[22mdoes not log raw token-bearing URLs or token values, and uses a fingerprint instead
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9398414Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/db/drizzle" from "src/routes/api/check-in/+server.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9398983Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9399654Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/routes/api/check-in/+server.ts^[[39m:3:28
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9400196Z ^[[33m  1  |  import { json } from "@sveltejs/kit";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9400512Z   2  |  import { getDatabase } from "$lib/db/drizzle";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9400785Z      |                               ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9401134Z   3  |  import { checkInTokens, secrets, checkinHistory } from "$lib/db/schema";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9401716Z   4  |  import { scheduleRemindersForSecret } from "$lib/services/reminder-scheduler";^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9402454Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9403238Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9403919Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9404487Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9405133Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9405972Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9406694Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9407023Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9407185Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9407373Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9408061Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/webhooks/btcpay/__tests__/server.test.ts^[[2m > ^[[22mPOST /api/webhooks/btcpay^[[2m > ^[[22mclaims with original delivery id before side effects and skips duplicates
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9409495Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/payment" from "src/routes/api/webhooks/btcpay/+server.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9410291Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9410851Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/routes/api/webhooks/btcpay/+server.ts^[[39m:4:41
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9411386Z ^[[33m  1  |  import { json } from "@sveltejs/kit";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9411674Z   2  |  import { logger } from "$lib/logger";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9412003Z   3  |  import { getCryptoPaymentProvider } from "$lib/payment";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9412330Z      |                                            ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9412623Z   4  |  import { serverEnv } from "$lib/server-env";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9413098Z   5  |  import { subscriptionService } from "$lib/services/subscription-service";^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9413815Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9414584Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9415266Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9415837Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9416521Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9417318Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9418034Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9418387Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9418548Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9418730Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9419414Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/webhooks/btcpay/__tests__/server.test.ts^[[2m > ^[[22mPOST /api/webhooks/btcpay^[[2m > ^[[22mmarks a claimed BTCPay event as failed when business logic throws
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9420886Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/webhooks/btcpay/__tests__/server.test.ts^[[2m > ^[[22mPOST /api/webhooks/btcpay^[[2m > ^[[22mattempts explicit processed finalization when recording fails after side effects
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9421995Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/logger" from "src/routes/api/webhooks/btcpay/+server.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9422591Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9423132Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/routes/api/webhooks/btcpay/+server.ts^[[39m:3:23
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9423677Z ^[[33m  1  |  import { json } from "@sveltejs/kit";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9423965Z   2  |  import { logger } from "$lib/logger";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9443606Z      |                          ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9444093Z   3  |  import { getCryptoPaymentProvider } from "$lib/payment";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9444618Z   4  |  import { serverEnv } from "$lib/server-env";^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9445268Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9446072Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9446749Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9447301Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9447944Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9448954Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9450010Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9450646Z ^[[90m ^[[2m❯^[[22m fetchModule node_modules/vite/dist/node/chunks/node.js:^[[2m23103:15^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9450966Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9451142Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9451339Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9452039Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/webhooks/stripe/__tests__/server.test.ts^[[2m > ^[[22mPOST /api/webhooks/stripe^[[2m > ^[[22mclaims before side effects and skips duplicate deliveries
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9453150Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/db/drizzle" from "src/routes/api/webhooks/stripe/+server.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9453754Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9454310Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/routes/api/webhooks/stripe/+server.ts^[[39m:15:28
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9454919Z ^[[33m  6  |  import { emailService } from "$lib/email/email-service";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9455555Z   7  |  import { claimWebhookEvent, finalizeWebhookEventProcessing, markWebhookEventFailed, recordWebhookEvent } from "$lib/w...
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9456134Z   8  |  import { getDatabase } from "$lib/db/drizzle";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9456420Z      |                               ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9456707Z   9  |  import { userSubscriptions } from "$lib/db/schema";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9457069Z   10 |  import { eq, or } from "drizzle-orm";^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9457670Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9458429Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9459101Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9459877Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9460606Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9461399Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9462109Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9462580Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9462817Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9463093Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9464069Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/webhooks/stripe/__tests__/server.test.ts^[[2m > ^[[22mPOST /api/webhooks/stripe^[[2m > ^[[22mmarks a claimed event as failed when business logic throws
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9466182Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/webhooks/stripe/__tests__/server.test.ts^[[2m > ^[[22mPOST /api/webhooks/stripe^[[2m > ^[[22mdoes not execute side effects twice when persistence fails after side effects complete
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9468500Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/webhooks/stripe/__tests__/server.test.ts^[[2m > ^[[22mPOST /api/webhooks/stripe^[[2m > ^[[22mdoes not let bookkeeping failure mask the original webhook error
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9470512Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/logger" from "src/routes/api/webhooks/stripe/+server.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9471568Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9472501Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/routes/api/webhooks/stripe/+server.ts^[[39m:3:23
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9473471Z ^[[33m  1  |  import { json } from "@sveltejs/kit";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9473941Z   2  |  import { logger } from "$lib/logger";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9474381Z      |                          ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9474927Z   3  |  import { getFiatPaymentProvider } from "$lib/payment";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9476126Z   4  |  import { serverEnv } from "$lib/server-env";^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9477309Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9478624Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9479311Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9480097Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9480748Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9481544Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9482278Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9482911Z ^[[90m ^[[2m❯^[[22m fetchModule node_modules/vite/dist/node/chunks/node.js:^[[2m23103:15^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9483236Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9483408Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9483592Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9484283Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/check-in/__tests__/check-in.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/check-in^[[2m > ^[[22mCSRF protection^[[2m > ^[[22mreturns 403 if CSRF validation fails
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9485347Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/csrf" from "src/routes/api/secrets/[id]/check-in/+server.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9485937Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9486559Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/routes/api/secrets/[id]/check-in/+server.ts^[[39m:3:63
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9487529Z ^[[33m  1  |  import { json } from "@sveltejs/kit";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9488284Z   2  |  import { requireCSRFProtection, createCSRFErrorResponse } from "$lib/csrf";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9488853Z      |                                                                  ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9489334Z   3  |  import { ensureUserExists } from "$lib/auth/user-verification";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9490078Z   4  |  import { getDatabase } from "$lib/db/drizzle";^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9490949Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9492024Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9492992Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9493556Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9494203Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9495052Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9495825Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9496213Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9496382Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9496582Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9497231Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/check-in/__tests__/check-in.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/check-in^[[2m > ^[[22mAuthentication^[[2m > ^[[22mreturns 401 if no session
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9498496Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/check-in/__tests__/check-in.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/check-in^[[2m > ^[[22mAuthentication^[[2m > ^[[22mreturns 401 if session has no user id
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9500209Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/check-in/__tests__/check-in.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/check-in^[[2m > ^[[22mUser verification^[[2m > ^[[22mreturns 500 if ensureUserExists throws
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9501974Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/check-in/__tests__/check-in.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/check-in^[[2m > ^[[22mNormal check-in (active secret)^[[2m > ^[[22msuccessfully checks in an active secret
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9503508Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/check-in/__tests__/check-in.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/check-in^[[2m > ^[[22mRecovery check-in (failed secret)^[[2m > ^[[22mreturns success with mapped secret after recovery
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9505004Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/check-in/__tests__/check-in.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/check-in^[[2m > ^[[22mCheck-in history^[[2m > ^[[22minserts check-in history for normal check-in
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9506404Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/check-in/__tests__/check-in.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/check-in^[[2m > ^[[22mCheck-in history^[[2m > ^[[22minserts check-in history for recovery check-in
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9507785Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/check-in/__tests__/check-in.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/check-in^[[2m > ^[[22mCheck-in history^[[2m > ^[[22mcomputes nextCheckIn based on checkInDays
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9509136Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/check-in/__tests__/check-in.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/check-in^[[2m > ^[[22mSide effects^[[2m > ^[[22mcalls logCheckIn after successful check-in
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9510713Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/check-in/__tests__/check-in.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/check-in^[[2m > ^[[22mSide effects^[[2m > ^[[22mcalls scheduleRemindersForSecret after successful check-in
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9512116Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/check-in/__tests__/check-in.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/check-in^[[2m > ^[[22mSide effects^[[2m > ^[[22mdoes not call side effects when secret not found
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9513517Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/check-in/__tests__/check-in.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/check-in^[[2m > ^[[22mResponse shape^[[2m > ^[[22mreturns { success, secret, next_check_in } on success
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9514980Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/check-in/__tests__/check-in.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/check-in^[[2m > ^[[22mResponse shape^[[2m > ^[[22mreturns 404 if getSecretWithRecipients returns null after update
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9516422Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/check-in/__tests__/check-in.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/check-in^[[2m > ^[[22mError handling^[[2m > ^[[22mreturns 500 on unexpected transaction error
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9517583Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/csrf" from "src/routes/api/secrets/[id]/check-in/+server.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9518227Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9518820Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/routes/api/secrets/[id]/check-in/+server.ts^[[39m:3:63
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9519419Z ^[[33m  1  |  import { json } from "@sveltejs/kit";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9520009Z   2  |  import { requireCSRFProtection, createCSRFErrorResponse } from "$lib/csrf";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9520463Z      |                                                                  ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9520851Z   3  |  import { ensureUserExists } from "$lib/auth/user-verification";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9521301Z   4  |  import { getDatabase } from "$lib/db/drizzle";^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9521959Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9522792Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9523672Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9524286Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9525100Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9525961Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9526733Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9527420Z ^[[90m ^[[2m❯^[[22m fetchModule node_modules/vite/dist/node/chunks/node.js:^[[2m23103:15^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9527772Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9527954Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9528160Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9528908Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/check-in/__tests__/check-in.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/check-in^[[2m > ^[[22mSecret lookup^[[2m > ^[[22mreturns 404 if secret not found in transaction
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9530679Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/check-in/__tests__/check-in.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/check-in^[[2m > ^[[22mNormal check-in (active secret)^[[2m > ^[[22mpasses correct update payload for active secret (no status reset)
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9532373Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/check-in/__tests__/check-in.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/check-in^[[2m > ^[[22mRecovery check-in (failed secret)^[[2m > ^[[22mresets status to active, retryCount to 0, lastRetryAt and lastError to null
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9533769Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/auth/user-verification" from "src/routes/api/secrets/[id]/check-in/+server.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9534475Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9535096Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/routes/api/secrets/[id]/check-in/+server.ts^[[39m:4:33
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9535705Z ^[[33m  1  |  import { json } from "@sveltejs/kit";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9536136Z   2  |  import { requireCSRFProtection, createCSRFErrorResponse } from "$lib/csrf";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9536643Z   3  |  import { ensureUserExists } from "$lib/auth/user-verification";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9536996Z      |                                    ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9537290Z   4  |  import { getDatabase } from "$lib/db/drizzle";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9537728Z   5  |  import { checkinHistory, secrets } from "$lib/db/schema";^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9538428Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9539245Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9540184Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9540794Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9541487Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9542336Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9543113Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9543811Z ^[[90m ^[[2m❯^[[22m fetchModule node_modules/vite/dist/node/chunks/node.js:^[[2m23103:15^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9544144Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9544330Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9544522Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9545350Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/publish-nostr/__tests__/publish-nostr.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/publish-nostr^[[2m > ^[[22mAuthentication^[[2m > ^[[22mshould throw 401 when not authenticated
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9546777Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/csrf" from "src/routes/api/secrets/[id]/publish-nostr/+server.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9547528Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9548175Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/routes/api/secrets/[id]/publish-nostr/+server.ts^[[39m:26:63
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9548745Z ^[[33m  22 |  */
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9548980Z   23 |  import { json } from "@sveltejs/kit";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9549401Z   24 |  import { requireCSRFProtection, createCSRFErrorResponse } from "$lib/csrf";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9550023Z      |                                                                  ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9550375Z   25 |  import { requireSession } from "$lib/server/auth";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9550807Z   26 |  import { getDatabase } from "$lib/db/drizzle";^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9551464Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9552300Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9553046Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9553642Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9554353Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9555195Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9555987Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9556356Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9556525Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9556725Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9557541Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/publish-nostr/__tests__/publish-nostr.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/publish-nostr^[[2m > ^[[22mValidation^[[2m > ^[[22mshould return 400 for empty shares array
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9559028Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/publish-nostr/__tests__/publish-nostr.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/publish-nostr^[[2m > ^[[22mValidation^[[2m > ^[[22mshould return 400 for invalid recipientId format
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9560732Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/publish-nostr/__tests__/publish-nostr.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/publish-nostr^[[2m > ^[[22mValidation^[[2m > ^[[22mshould return 400 for totalShares above maximum
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9562287Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/publish-nostr/__tests__/publish-nostr.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/publish-nostr^[[2m > ^[[22mAuthorization^[[2m > ^[[22mshould return 404 when secret does not belong to user
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9563876Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/publish-nostr/__tests__/publish-nostr.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/publish-nostr^[[2m > ^[[22mAuthorization^[[2m > ^[[22mshould return 400 when recipientId does not belong to secret
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9565447Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/publish-nostr/__tests__/publish-nostr.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/publish-nostr^[[2m > ^[[22mPublishing^[[2m > ^[[22mshould call publishSharesToNostr with correct params
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9566964Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/publish-nostr/__tests__/publish-nostr.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/publish-nostr^[[2m > ^[[22mPublishing^[[2m > ^[[22mshould return 422 when no shares were published
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9568448Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/publish-nostr/__tests__/publish-nostr.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/publish-nostr^[[2m > ^[[22mPublishing^[[2m > ^[[22mshould use NOSTR_SERVER_SECRET_KEY from env when set
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9570572Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/publish-nostr/__tests__/publish-nostr.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/publish-nostr^[[2m > ^[[22mPublishing^[[2m > ^[[22mshould handle multiple shares for multiple recipients
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9571841Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/csrf" from "src/routes/api/secrets/[id]/publish-nostr/+server.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9572491Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9573133Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/routes/api/secrets/[id]/publish-nostr/+server.ts^[[39m:26:63
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9573694Z ^[[33m  22 |  */
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9573919Z   23 |  import { json } from "@sveltejs/kit";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9574332Z   24 |  import { requireCSRFProtection, createCSRFErrorResponse } from "$lib/csrf";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9574757Z      |                                                                  ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9575134Z   25 |  import { requireSession } from "$lib/server/auth";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9575551Z   26 |  import { getDatabase } from "$lib/db/drizzle";^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9576203Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9577049Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9577765Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9578371Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9579092Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9580127Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9580937Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9581641Z ^[[90m ^[[2m❯^[[22m fetchModule node_modules/vite/dist/node/chunks/node.js:^[[2m23103:15^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9582014Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9582185Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9582404Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9583226Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/publish-nostr/__tests__/publish-nostr.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/publish-nostr^[[2m > ^[[22mValidation^[[2m > ^[[22mshould return 400 for missing threshold
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9584749Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/publish-nostr/__tests__/publish-nostr.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/publish-nostr^[[2m > ^[[22mError handling^[[2m > ^[[22mshould return 500 on unexpected errors
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9586027Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/server/auth" from "src/routes/api/secrets/[id]/publish-nostr/+server.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9586683Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9587287Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/routes/api/secrets/[id]/publish-nostr/+server.ts^[[39m:27:31
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9587855Z ^[[33m  23 |  import { json } from "@sveltejs/kit";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9588256Z   24 |  import { requireCSRFProtection, createCSRFErrorResponse } from "$lib/csrf";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9588689Z   25 |  import { requireSession } from "$lib/server/auth";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9589000Z      |                                  ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9589285Z   26 |  import { getDatabase } from "$lib/db/drizzle";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9589946Z   27 |  import { secrets, secretRecipients } from "$lib/db/schema";^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9590602Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9591398Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9592247Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9592945Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9593628Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9594504Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9595271Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9595919Z ^[[90m ^[[2m❯^[[22m fetchModule node_modules/vite/dist/node/chunks/node.js:^[[2m23103:15^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9596228Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9596387Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9596571Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9597361Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/publish-nostr/__tests__/publish-nostr.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/publish-nostr^[[2m > ^[[22mValidation^[[2m > ^[[22mshould return 400 for threshold below minimum
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9598864Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/publish-nostr/__tests__/publish-nostr.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/publish-nostr^[[2m > ^[[22mValidation^[[2m > ^[[22mshould return 400 for negative shareIndex
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9600414Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/routes/api/secrets/[id]/publish-nostr/__tests__/publish-nostr.test.ts^[[2m > ^[[22mPOST /api/secrets/[id]/publish-nostr^[[2m > ^[[22mPublishing^[[2m > ^[[22mshould handle publish errors gracefully
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9601599Z ^[[31m^[[1mError^[[22m: Failed to resolve import "$lib/db/schema" from "src/routes/api/secrets/[id]/publish-nostr/+server.ts". Does the file exist?^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9602223Z   Plugin: ^[[35mvite:import-analysis^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9602823Z   File: ^[[36m/home/runner/work/KeyFate/KeyFate/frontend/src/routes/api/secrets/[id]/publish-nostr/+server.ts^[[39m:29:42
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9603452Z ^[[33m  25 |  import { requireSession } from "$lib/server/auth";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9603789Z   26 |  import { getDatabase } from "$lib/db/drizzle";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9604142Z   27 |  import { secrets, secretRecipients } from "$lib/db/schema";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9604473Z      |                                             ^
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9604747Z   28 |  import { and, eq } from "drizzle-orm";
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9605057Z   29 |  import { z } from "zod";^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9605611Z ^[[90m ^[[2m❯^[[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:^[[2m30375:39^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9606420Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:^[[2m30372:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9607091Z ^[[90m ^[[2m❯^[[22m normalizeUrl node_modules/vite/dist/node/chunks/node.js:^[[2m27654:18^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9607777Z ^[[90m ^[[2m❯^[[22m node_modules/vite/dist/node/chunks/node.js:^[[2m27717:30^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9608749Z ^[[90m ^[[2m❯^[[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:^[[2m27685:4^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9610130Z ^[[90m ^[[2m❯^[[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:^[[2m30164:14^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9611168Z ^[[90m ^[[2m❯^[[22m loadAndTransform node_modules/vite/dist/node/chunks/node.js:^[[2m24512:26^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9611906Z ^[[90m ^[[2m❯^[[22m fetchModule node_modules/vite/dist/node/chunks/node.js:^[[2m23103:15^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9612267Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9612452Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/73]⎯^[[22m^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9612655Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9612661Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9613033Z ^[[2m Test Files ^[[22m ^[[1m^[[31m37 failed^[[39m^[[22m^[[2m | ^[[22m^[[1m^[[32m5 passed^[[39m^[[22m^[[90m (42)^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9613814Z ^[[2m      Tests ^[[22m ^[[1m^[[31m41 failed^[[39m^[[22m^[[2m | ^[[22m^[[1m^[[32m44 passed^[[39m^[[22m^[[2m | ^[[22m^[[33m10 skipped^[[39m^[[90m (95)^[[39m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9614576Z ^[[2m   Start at ^[[22m 17:57:58
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9615287Z ^[[2m   Duration ^[[22m 22.98s^[[2m (transform 445ms, setup 3.63s, import 449ms, tests 12.10s, environment 37.20s)^[[22m
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9615729Z 
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9728764Z error: script "test" exited with code 1
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9746724Z ##[error]Process completed with exit code 1.
+Test	UNKNOWN STEP	2026-04-25T17:58:21.9865904Z Post job cleanup.
+Test	UNKNOWN STEP	2026-04-25T17:58:22.0792376Z [command]/usr/bin/git version
+Test	UNKNOWN STEP	2026-04-25T17:58:22.0827566Z git version 2.53.0
+Test	UNKNOWN STEP	2026-04-25T17:58:22.0869890Z Temporarily overriding HOME='/home/runner/work/_temp/5c01661f-1480-4f54-8941-76890674d534' before making global git config changes
+Test	UNKNOWN STEP	2026-04-25T17:58:22.0871366Z Adding repository directory to the temporary git global config as a safe directory
+Test	UNKNOWN STEP	2026-04-25T17:58:22.0876856Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/KeyFate/KeyFate
+Test	UNKNOWN STEP	2026-04-25T17:58:22.0916257Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Test	UNKNOWN STEP	2026-04-25T17:58:22.0950268Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Test	UNKNOWN STEP	2026-04-25T17:58:22.1192308Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Test	UNKNOWN STEP	2026-04-25T17:58:22.1213976Z http.https://github.com/.extraheader
+Test	UNKNOWN STEP	2026-04-25T17:58:22.1226496Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+Test	UNKNOWN STEP	2026-04-25T17:58:22.1260909Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Test	UNKNOWN STEP	2026-04-25T17:58:22.1496062Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Test	UNKNOWN STEP	2026-04-25T17:58:22.1527208Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Test	UNKNOWN STEP	2026-04-25T17:58:22.1876075Z Cleaning up orphan processes
+Test	UNKNOWN STEP	2026-04-25T17:58:22.2131993Z ##[warning]Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

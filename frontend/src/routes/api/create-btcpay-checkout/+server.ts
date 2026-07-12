@@ -1,52 +1,21 @@
-import { json, redirect } from '@sveltejs/kit';
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { requireCSRFProtection, createCSRFErrorResponse } from '$lib/csrf';
 import { SITE_URL } from '$lib/env';
+import { logger } from '$lib/logger';
 import { getCryptoPaymentProvider } from '$lib/payment';
-import type { Subscription } from '$lib/payment/interfaces/PaymentProvider';
-import { getAmount } from '$lib/pricing';
+import { getPaidPlan, PAID_PLAN_IDS } from '$lib/payment/plans';
+import { z } from 'zod';
+
+const checkoutRequestSchema = z
+	.object({
+		plan: z.enum(PAID_PLAN_IDS)
+	})
+	.strict();
 
 /**
- * GET /api/create-btcpay-checkout
- *
- * Handle post-authentication redirects for BTCPay checkout.
- */
-export const GET: RequestHandler = async (event) => {
-	const amount = Number(event.url.searchParams.get('amount'));
-	const currency = (event.url.searchParams.get('currency') || 'BTC').toUpperCase();
-	const mode = (event.url.searchParams.get('mode') || 'payment') as 'payment' | 'subscription';
-	const interval = event.url.searchParams.get('interval') as Subscription['interval'];
-	const redirectAfterAuth = event.url.searchParams.get('redirect_after_auth');
-
-	if (!amount || !redirectAfterAuth) {
-		return redirect(303, `${SITE_URL}/pricing`);
-	}
-
-	const result = await createBTCPayCheckoutSession(event, {
-		amount,
-		currency,
-		mode,
-		interval
-	});
-
-	// After auth redirect, we should redirect to the BTCPay URL instead of returning JSON
-	if (redirectAfterAuth === 'true') {
-		const responseJson = await result.json();
-		if (responseJson.url) {
-			return redirect(303, responseJson.url);
-		}
-		// If there's an error, redirect to pricing with error message
-		return redirect(303, `${SITE_URL}/pricing?error=checkout_failed`);
-	}
-
-	return result;
-};
-
-/**
- * POST /api/create-btcpay-checkout
- *
- * Create a BTCPay checkout session via AJAX.
- * Requires CSRF protection and authentication.
+ * Create a BTCPay invoice for one server-owned paid plan.
+ * Checkout creation is intentionally POST-only.
  */
 export const POST: RequestHandler = async (event) => {
 	try {
@@ -55,77 +24,51 @@ export const POST: RequestHandler = async (event) => {
 			return createCSRFErrorResponse();
 		}
 
-		const { amount, currency = 'BTC', mode = 'payment', interval } = await event.request.json();
-		return createBTCPayCheckoutSession(event, {
-			amount: Number(amount),
-			currency,
-			mode,
-			interval
-		});
-	} catch (error) {
-		console.error('Error parsing request body:', error);
-		return json({ error: 'Invalid request body' }, { status: 400 });
-	}
-};
+		const parsed = checkoutRequestSchema.safeParse(await event.request.json());
+		if (!parsed.success) {
+			return json({ error: 'Invalid checkout plan' }, { status: 400 });
+		}
 
-async function createBTCPayCheckoutSession(
-	event: Parameters<RequestHandler>[0],
-	params: {
-		amount: number;
-		currency: string;
-		mode: 'payment' | 'subscription';
-		interval?: Subscription['interval'];
-	}
-) {
-	try {
+		const plan = getPaidPlan(parsed.data.plan);
 		const session = await event.locals.auth();
 		const user = session?.user;
-		if (!user?.email || !user?.id) {
+		if (!user?.email || !user.id) {
 			return json({ error: 'Unauthorized' }, { status: 401 });
 		}
 
-		const cryptoPaymentProvider = getCryptoPaymentProvider();
-
-		// Use environment-specific pricing
-		let actualAmount = params.amount;
-		if (params.interval) {
-			actualAmount = getAmount(params.interval === 'month' ? 'monthly' : 'yearly');
-		}
-
-		let btcAmount = actualAmount;
-		if (
-			params.currency.toUpperCase() !== 'BTC' &&
-			cryptoPaymentProvider.convertToProviderCurrency
-		) {
-			btcAmount = await cryptoPaymentProvider.convertToProviderCurrency(
-				actualAmount,
-				params.currency.toUpperCase()
-			);
-		}
-
-		const customerId = await cryptoPaymentProvider.createCustomer(user.email, {
+		const provider = getCryptoPaymentProvider();
+		const customerId = await provider.createCustomer(user.email, {
 			user_id: user.id
 		});
-
-		const checkoutSession = await cryptoPaymentProvider.createCheckoutSession({
+		const checkoutSession = await provider.createCheckoutSession({
 			customerId,
-			amount: btcAmount,
-			currency: 'BTC',
-			mode: params.mode,
+			amount: plan.amount,
+			currency: plan.currency,
+			mode: 'subscription',
 			successUrl: `${SITE_URL}/dashboard?success=true&provider=btcpay&session_id={CHECKOUT_SESSION_ID}`,
 			cancelUrl: `${SITE_URL}/pricing?canceled=true&provider=btcpay`,
 			expiresInMinutes: 60,
 			metadata: {
 				user_id: user.id,
-				original_amount: String(actualAmount),
-				original_currency: params.currency.toUpperCase(),
-				...(params.interval && { billing_interval: params.interval })
+				plan_id: plan.id,
+				expected_amount: String(plan.amount),
+				expected_currency: plan.currency,
+				billing_interval: plan.interval
 			}
 		});
 
-		return json({ url: checkoutSession.url });
+		logger.info('BTCPay checkout session created', {
+			userId: user.id,
+			planId: plan.id,
+			sessionId: checkoutSession.id
+		});
+
+		return json({ url: checkoutSession.url, sessionId: checkoutSession.id });
 	} catch (error) {
-		console.error('Error creating BTCPay checkout session:', error);
-		return json({ error: 'Internal server error' }, { status: 500 });
+		logger.error(
+			'Failed to create BTCPay checkout session',
+			error instanceof Error ? error : undefined
+		);
+		return json({ error: 'Checkout is temporarily unavailable' }, { status: 503 });
 	}
-}
+};

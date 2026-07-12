@@ -1,0 +1,2 @@
+{"outputContainsScript":true,"outputContainsEventHandler":false,"output":"<script>audit()</script>"}
+{"outputContainsScript":false,"outputContainsEventHandler":true,"output":"<img src=x onerror=audit()>"}

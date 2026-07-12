@@ -1,0 +1,9 @@
+bun test v1.3.14 (0d9b296a)
+
+.audit-decrypt-oracle.test.ts:
+error: Cannot find module '$env/dynamic/private' from '/Users/alancolver/dev/keyfate/frontend/src/lib/server-env.ts'
+(fail) global decrypt oracle > decrypts attacker-supplied ciphertext for any authenticated user without object binding [4.82ms]
+
+ 0 pass
+ 1 fail
+Ran 1 test across 1 file. [17.00ms]

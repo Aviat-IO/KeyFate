@@ -9,7 +9,6 @@ import { getDatabase } from '$lib/db/get-database';
 import { dataExportJobs } from '$lib/db/schema';
 import { lt, eq } from 'drizzle-orm';
 import { logger } from '$lib/logger';
-import { deleteExportFile } from '$lib/gdpr/export-service';
 
 export interface CleanupExportsResult {
 	success: boolean;
@@ -51,11 +50,8 @@ export async function runCleanupExports(): Promise<CleanupExportsResult> {
 
 	for (const job of expiredJobs) {
 		try {
-			if (job.fileUrl) {
-				await deleteExportFile(job.fileUrl);
-				logger.info('Deleted export file', { jobId: job.id });
-			}
-
+			// The artifact is stored in this row, so deleting the row is the
+			// durable cross-replica cleanup operation.
 			await db.delete(dataExportJobs).where(eq(dataExportJobs.id, job.id));
 
 			deletedCount++;

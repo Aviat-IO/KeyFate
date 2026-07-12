@@ -2,44 +2,9 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { ArrowLeft, Calendar, Clock, User } from '@lucide/svelte';
-	import { marked } from 'marked';
-	import sanitizeHtml from 'sanitize-html';
+	import { formatMarkdownContent } from '$lib/blog/format-markdown';
 
 	let { data } = $props();
-
-	marked.setOptions({ gfm: true, breaks: false });
-
-	function formatMarkdownContent(content: string): string {
-		const rawHtml = marked.parse(content) as string;
-		return sanitizeHtml(rawHtml, {
-			allowedTags: [
-				'h1',
-				'h2',
-				'h3',
-				'h4',
-				'h5',
-				'h6',
-				'p',
-				'ul',
-				'ol',
-				'li',
-				'strong',
-				'em',
-				'a',
-				'code',
-				'pre',
-				'blockquote',
-				'hr',
-				'br',
-				'div',
-				'span'
-			],
-			allowedAttributes: {
-				a: ['href', 'target', 'rel'],
-				'*': ['class']
-			}
-		});
-	}
 
 	const siteUrl = 'https://keyfate.com';
 
@@ -62,8 +27,9 @@
 				name: 'KeyFate',
 				url: siteUrl
 			}
-		})
+		}).replace(/</g, '\\u003c')
 	);
+	const jsonLdTag = $derived(`<script type="application/ld+json">${jsonLd}<${'/script'}>`);
 
 	const htmlContent = $derived(formatMarkdownContent(data.post.content));
 </script>
@@ -76,7 +42,9 @@
 	<meta property="og:description" content={data.post.description} />
 	<meta property="og:type" content="article" />
 	<meta property="og:url" content="{siteUrl}/blog/{data.post.slug}" />
-	{@html `<script type="application/ld+json">${jsonLd}</script>`}
+	<!-- JSON.stringify plus explicit '<' escaping above prevents script-breakout injection. -->
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+	{@html jsonLdTag}
 </svelte:head>
 
 <article class="container mx-auto max-w-4xl px-4 py-16">
@@ -88,7 +56,7 @@
 
 		<div class="mb-4 flex flex-wrap items-center gap-2">
 			<Badge variant="secondary">{data.post.category}</Badge>
-			{#each data.post.tags.slice(0, 3) as tag}
+			{#each data.post.tags.slice(0, 3) as tag (tag)}
 				<Badge variant="outline">{tag}</Badge>
 			{/each}
 		</div>
@@ -136,6 +104,8 @@
       prose-th:text-foreground
       prose-td:text-foreground/90 max-w-none"
 	>
+		<!-- formatMarkdownContent applies a strict sanitize-html allowlist. -->
+		<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 		{@html htmlContent}
 	</div>
 

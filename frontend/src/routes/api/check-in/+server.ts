@@ -3,157 +3,94 @@ import type { RequestHandler } from './$types';
 import { getDatabase } from '$lib/db/drizzle';
 import { checkInTokens, secrets, checkinHistory } from '$lib/db/schema';
 import { scheduleRemindersForSecret } from '$lib/services/reminder-scheduler';
-import { checkRateLimit, getRateLimitHeaders, getClientIdentifier } from '$lib/rate-limit';
-import { eq } from 'drizzle-orm';
-import { createHash } from 'node:crypto';
+import { checkRateLimit, createRateLimitResponse, getClientIdentifier } from '$lib/rate-limit';
+import { fingerprintCapability, hashCheckInToken } from '$lib/server/capability-token';
+import { and, eq, gt, isNull, or } from 'drizzle-orm';
 
-function getTokenFingerprint(token: string | null): string | undefined {
-	if (!token) {
-		return undefined;
-	}
+class CheckInConflict extends Error {}
 
-	return `sha256:${createHash('sha256').update(token).digest('hex').slice(0, 12)}`;
+function invalidTokenResponse() {
+	return json(
+		{ error: 'Invalid or expired token' },
+		{ status: 400, headers: { 'Content-Type': 'application/json' } }
+	);
 }
 
-/**
- * GET /api/check-in
- *
- * Debug/info endpoint for check-in status.
- * No auth required.
- */
-export const GET: RequestHandler = async (event) => {
-	const token = event.url.searchParams.get('token');
+async function readToken(request: Request): Promise<string | null> {
+	try {
+		const body: unknown = await request.json();
+		if (
+			typeof body === 'object' &&
+			body !== null &&
+			'token' in body &&
+			typeof body.token === 'string' &&
+			body.token.length >= 32 &&
+			body.token.length <= 256
+		) {
+			return body.token;
+		}
+	} catch {
+		// The caller receives the same response as any other invalid capability.
+	}
+	return null;
+}
 
-	return json(
-		{
-			message: 'Check-in endpoint is active. Use POST method to check in.',
-			hasToken: !!token,
-			method: 'GET',
-			timestamp: new Date().toISOString()
-		},
-		{ status: 200 }
-	);
-};
+/** Process-only endpoint information; capabilities are accepted only in POST bodies. */
+export const GET: RequestHandler = async () =>
+	json({
+		message: 'Check-in endpoint is active. Use POST method to check in.',
+		method: 'GET',
+		timestamp: new Date().toISOString()
+	});
 
-/**
- * POST /api/check-in
- *
- * Token-based check-in endpoint. No session auth required.
- * Uses check-in tokens for authentication.
- */
 export const POST: RequestHandler = async (event) => {
 	const startTime = Date.now();
+	const token = await readToken(event.request);
+
+	console.log('[CHECK-IN] Attempt received', {
+		timestamp: new Date().toISOString(),
+		hasToken: Boolean(token),
+		tokenFingerprint: token ? fingerprintCapability(token) : undefined,
+		method: event.request.method,
+		url: event.url.pathname
+	});
+
+	if (!token) {
+		console.warn('[CHECK-IN] Missing or malformed token');
+		return invalidTokenResponse();
+	}
+
+	if (!process.env.DATABASE_URL) {
+		console.error('[CHECK-IN] DATABASE_URL not configured');
+		return json({ error: 'Database configuration error' }, { status: 500 });
+	}
+
+	const clientIp = getClientIdentifier(event.request);
+	const rateLimitResult = await checkRateLimit('checkIn', clientIp, 10);
+	if (!rateLimitResult.success) return createRateLimitResponse(rateLimitResult);
 
 	try {
-		// Validate environment
-		if (!process.env.DATABASE_URL) {
-			console.error('[CHECK-IN] DATABASE_URL not configured');
-			return json({ error: 'Database configuration error' }, { status: 500 });
-		}
-
 		const db = await getDatabase();
-		const token = event.url.searchParams.get('token');
-
-		// Log check-in attempt (security monitoring)
-		console.log('[CHECK-IN] Attempt received', {
-			timestamp: new Date().toISOString(),
-			hasToken: !!token,
-			tokenFingerprint: getTokenFingerprint(token),
-			ip:
-				event.request.headers.get('x-forwarded-for') ||
-				event.request.headers.get('x-real-ip') ||
-				'unknown',
-			method: event.request.method,
-			url: event.url.pathname
-		});
-
-		if (!token) {
-			console.warn('[CHECK-IN] Missing token parameter');
-			return json(
-				{ error: 'Missing token' },
-				{
-					status: 400,
-					headers: { 'Content-Type': 'application/json' }
-				}
-			);
-		}
-
-		const clientIp = getClientIdentifier(event.request);
-		const rateLimitResult = await checkRateLimit('checkIn', clientIp, 10);
-		if (!rateLimitResult.success) {
-			return new Response(
-				JSON.stringify({
-					error: 'Too many check-in attempts. Please try again later.'
-				}),
-				{
-					status: 429,
-					headers: {
-						'Content-Type': 'application/json',
-						...getRateLimitHeaders(rateLimitResult)
-					}
-				}
-			);
-		}
-
+		const storedHash = hashCheckInToken(token);
 		const [tokenRow] = await db
 			.select()
 			.from(checkInTokens)
-			.where(eq(checkInTokens.token, token))
+			.where(
+				or(
+					and(eq(checkInTokens.tokenVersion, 2), eq(checkInTokens.token, storedHash)),
+					and(eq(checkInTokens.tokenVersion, 1), eq(checkInTokens.token, token))
+				)
+			)
 			.limit(1);
 
-		if (!tokenRow) {
-			// Use constant-time delay to prevent timing attacks
+		if (!tokenRow || tokenRow.usedAt || tokenRow.expiresAt <= new Date()) {
 			const elapsed = Date.now() - startTime;
-			if (elapsed < 100) {
-				await new Promise((resolve) => setTimeout(resolve, 100 - elapsed));
-			}
-
+			if (elapsed < 100) await new Promise((resolve) => setTimeout(resolve, 100 - elapsed));
 			console.warn('[CHECK-IN] Invalid token attempt', {
 				timestamp: new Date().toISOString(),
-				tokenFingerprint: getTokenFingerprint(token)
+				tokenFingerprint: fingerprintCapability(token)
 			});
-
-			return json(
-				{ error: 'Invalid or expired token' },
-				{
-					status: 400,
-					headers: { 'Content-Type': 'application/json' }
-				}
-			);
-		}
-
-		if (tokenRow.usedAt) {
-			console.warn('[CHECK-IN] Token reuse attempt', {
-				timestamp: new Date().toISOString(),
-				tokenId: tokenRow.id,
-				secretId: tokenRow.secretId,
-				originalUse: tokenRow.usedAt.toISOString()
-			});
-
-			return json(
-				{ error: 'Token has already been used' },
-				{
-					status: 400,
-					headers: { 'Content-Type': 'application/json' }
-				}
-			);
-		}
-
-		if (new Date(tokenRow.expiresAt) < new Date()) {
-			console.warn('[CHECK-IN] Expired token attempt', {
-				timestamp: new Date().toISOString(),
-				tokenId: tokenRow.id,
-				secretId: tokenRow.secretId,
-				expiresAt: tokenRow.expiresAt.toISOString()
-			});
-
-			return json(
-				{ error: 'Token has expired' },
-				{
-					status: 400,
-					headers: { 'Content-Type': 'application/json' }
-				}
-			);
+			return invalidTokenResponse();
 		}
 
 		const [secret] = await db
@@ -161,116 +98,89 @@ export const POST: RequestHandler = async (event) => {
 				id: secrets.id,
 				userId: secrets.userId,
 				title: secrets.title,
-				checkInDays: secrets.checkInDays,
-				triggeredAt: secrets.triggeredAt,
-				status: secrets.status
+				checkInDays: secrets.checkInDays
 			})
 			.from(secrets)
 			.where(eq(secrets.id, tokenRow.secretId))
 			.limit(1);
 
-		if (!secret) {
-			return json(
-				{ error: 'Secret not found' },
-				{
-					status: 404,
-					headers: { 'Content-Type': 'application/json' }
-				}
-			);
-		}
+		if (!secret?.checkInDays) return invalidTokenResponse();
 
-		if (secret.triggeredAt || secret.status === 'triggered') {
-			console.warn('[CHECK-IN] Attempt to check in on triggered secret', {
-				timestamp: new Date().toISOString(),
-				tokenId: tokenRow.id,
-				secretId: secret.id,
-				secretTitle: secret.title,
-				triggeredAt: secret.triggeredAt?.toISOString()
-			});
-
-			return json(
-				{
-					error:
-						'This secret has already been triggered and can no longer be checked in. The secret was disclosed to the recipient.'
-				},
-				{
-					status: 400,
-					headers: { 'Content-Type': 'application/json' }
-				}
-			);
-		}
-
-		if (!secret.checkInDays) {
-			console.error('[CHECK-IN] Secret missing checkInDays', {
-				secretId: secret.id,
-				secretTitle: secret.title
-			});
-			return json(
-				{ error: 'Secret configuration error: missing check-in interval' },
-				{ status: 500 }
-			);
-		}
-
-		// Calculate next check-in using milliseconds to avoid DST issues
 		const now = new Date();
 		const nextCheckIn = new Date(now.getTime() + secret.checkInDays * 24 * 60 * 60 * 1000);
 
-		await db.update(checkInTokens).set({ usedAt: now }).where(eq(checkInTokens.id, tokenRow.id));
+		try {
+			await db.transaction(async (tx) => {
+				const [claimedToken] = await tx
+					.update(checkInTokens)
+					.set({ usedAt: now })
+					.where(
+						and(
+							eq(checkInTokens.id, tokenRow.id),
+							isNull(checkInTokens.usedAt),
+							gt(checkInTokens.expiresAt, now)
+						)
+					)
+					.returning({ id: checkInTokens.id });
+				if (!claimedToken) throw new CheckInConflict('Token was consumed concurrently');
 
-		await db
-			.update(secrets)
-			.set({ lastCheckIn: now, nextCheckIn })
-			.where(eq(secrets.id, tokenRow.secretId));
+				const [updatedSecret] = await tx
+					.update(secrets)
+					.set({ lastCheckIn: now, nextCheckIn, updatedAt: now })
+					.where(
+						and(
+							eq(secrets.id, tokenRow.secretId),
+							eq(secrets.status, 'active'),
+							isNull(secrets.triggeredAt)
+						)
+					)
+					.returning({ id: secrets.id });
+				if (!updatedSecret) throw new CheckInConflict('Secret is no longer active');
 
-		await db.insert(checkinHistory).values({
-			secretId: tokenRow.secretId,
-			userId: secret.userId,
-			checkedInAt: now,
-			nextCheckIn: nextCheckIn
-		});
+				// Consume every still-valid sibling link issued for this timer cycle.
+				await tx
+					.update(checkInTokens)
+					.set({ usedAt: now })
+					.where(and(eq(checkInTokens.secretId, tokenRow.secretId), isNull(checkInTokens.usedAt)));
 
-		await scheduleRemindersForSecret(tokenRow.secretId, nextCheckIn, secret.checkInDays);
+				await tx.insert(checkinHistory).values({
+					secretId: tokenRow.secretId,
+					userId: secret.userId,
+					checkedInAt: now,
+					nextCheckIn
+				});
+			});
+		} catch (error) {
+			if (error instanceof CheckInConflict) return invalidTokenResponse();
+			throw error;
+		}
 
-		// Log successful check-in for security monitoring
+		try {
+			await scheduleRemindersForSecret(tokenRow.secretId, nextCheckIn, secret.checkInDays);
+		} catch (error) {
+			console.error('[CHECK-IN] Check-in committed but reminder scheduling failed', {
+				secretId: tokenRow.secretId,
+				error: error instanceof Error ? error.message : 'Unknown error'
+			});
+		}
+
 		console.log('[CHECK-IN] Success', {
 			timestamp: new Date().toISOString(),
-			tokenId: tokenRow.id,
 			secretId: secret.id,
+			nextCheckIn: nextCheckIn.toISOString(),
+			processingTime: `${Date.now() - startTime}ms`
+		});
+
+		return json({
+			success: true,
 			secretTitle: secret.title,
 			nextCheckIn: nextCheckIn.toISOString(),
-			processingTime: Date.now() - startTime + 'ms'
+			message: `Your secret "${secret.title}" timer has been reset.`
 		});
-
-		return json(
-			{
-				success: true,
-				secretTitle: secret.title,
-				nextCheckIn: nextCheckIn.toISOString(),
-				message: `Your secret "${secret.title}" timer has been reset.`
-			},
-			{
-				status: 200,
-				headers: { 'Content-Type': 'application/json' }
-			}
-		);
 	} catch (error) {
-		console.error('[CHECK-IN] Error:', {
-			error,
-			message: error instanceof Error ? error.message : 'Unknown error',
-			stack: error instanceof Error ? error.stack : undefined,
-			timestamp: new Date().toISOString()
+		console.error('[CHECK-IN] Internal error', {
+			error: error instanceof Error ? error.message : 'Unknown error'
 		});
-
-		return json(
-			{
-				error: 'Internal Server Error'
-			},
-			{
-				status: 500,
-				headers: {
-					'Content-Type': 'application/json'
-				}
-			}
-		);
+		return json({ error: 'Internal server error' }, { status: 500 });
 	}
 };

@@ -1,0 +1,14 @@
+{"#select":{"columns":[
+   {"name":"src","kind":"Entity"}
+  ,{"kind":"String"}]
+ ,"tuples":[
+   [{"label":"message"},"src/lib/encryption.ts:94"]
+  ,[{"label":"iv"},"src/lib/encryption.ts:95"]
+  ,[{"label":"keyVersion"},"src/lib/encryption.ts:96"]
+  ,[{"label":"cipherText"},"src/lib/encryption.ts:122"]
+  ,[{"label":"ivBuffer"},"src/lib/encryption.ts:123"]
+  ,[{"label":"authTag"},"src/lib/encryption.ts:124"]
+  ,[{"label":"keyVersion"},"src/lib/encryption.ts:125"]
+  ,[{"label":"window.location"},"src/lib/pricing.ts:35"]
+  ,[{"label":"window.location"},"src/lib/pricing.ts:35"]]
+ }}

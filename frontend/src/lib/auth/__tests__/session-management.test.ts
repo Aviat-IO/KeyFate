@@ -54,6 +54,8 @@ describe('invalidateAllUserSessions', () => {
 				sessionVersion: expect.anything()
 			})
 		);
-		expect(mockSet).not.toHaveBeenCalledWith(expect.objectContaining({ updatedAt: expect.any(Date) }));
+		expect(mockSet).not.toHaveBeenCalledWith(
+			expect.objectContaining({ updatedAt: expect.any(Date) })
+		);
 	});
 });

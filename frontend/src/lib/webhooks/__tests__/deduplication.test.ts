@@ -99,7 +99,7 @@ describe('webhook deduplication', () => {
 		);
 		expect(claimConfig.setWhere).toEqual(
 			expect.objectContaining({
-				strings: ["", " = 'failed' or (", " = 'processing' and ", ' < ', ')'],
+				strings: ['', " = 'failed' or (", " = 'processing' and ", ' < ', ')'],
 				values: [
 					'webhook_events.status',
 					'webhook_events.status',
@@ -130,7 +130,7 @@ describe('webhook deduplication', () => {
 		const claimConfig = getClaimConfig(mockOnConflictDoUpdate);
 		expect(claimConfig.setWhere).toEqual(
 			expect.objectContaining({
-				strings: ["", " = 'failed' or (", " = 'processing' and ", ' < ', ')'],
+				strings: ['', " = 'failed' or (", " = 'processing' and ", ' < ', ')'],
 				values: [
 					'webhook_events.status',
 					'webhook_events.status',
@@ -159,7 +159,7 @@ describe('webhook deduplication', () => {
 		const claimConfig = getClaimConfig(mockOnConflictDoUpdate);
 		expect(claimConfig.setWhere).toEqual(
 			expect.objectContaining({
-				strings: ["", " = 'failed' or (", " = 'processing' and ", ' < ', ')'],
+				strings: ['', " = 'failed' or (", " = 'processing' and ", ' < ', ')'],
 				values: [
 					'webhook_events.status',
 					'webhook_events.status',

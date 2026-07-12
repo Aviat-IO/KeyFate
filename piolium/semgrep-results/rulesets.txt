@@ -1,0 +1,17 @@
+Approved by user on 2026-07-10
+Engine: Semgrep OSS 1.168.0 (Pro unavailable: authentication required)
+Mode: run all
+Target: /Users/alancolver/dev/keyfate
+Exclusions: .git, .worktrees, node_modules, frontend/build, frontend/.svelte-kit, piolium, generated output
+Rulesets:
+- p/security-audit
+- p/secrets
+- p/typescript
+- p/javascript
+- p/nodejs
+- p/dockerfile
+- p/github-actions
+- p/yaml
+- local Trail of Bits semgrep-rules clone
+- piolium/semgrep-rules/keyfate-security.yml
+Every Semgrep command uses --metrics=off.

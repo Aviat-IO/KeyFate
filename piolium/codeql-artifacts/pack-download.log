@@ -1,0 +1,10 @@
+=== OFFICIAL PACK ===
+Package specifications to check for download: codeql/javascript-queries
+Did not need to download any packs.
+Package install location: /Users/alancolver/.codeql/packages
+Already installed codeql/javascript-queries@2.4.0
+OFFICIAL_EXIT=0
+=== COMMUNITY PACK ===
+Package specifications to check for download: GitHubSecurityLab/CodeQL-Community-Packs-JavaScript
+A fatal error occurred: Could not create access credentials for githubsecuritylab/codeql-community-packs-javascript. Does this CodeQL pack exist on the public GitHub Container registry, or do you need to authenticate to access it? HTTP/1.1 403 Forbidden
+COMMUNITY_EXIT=2

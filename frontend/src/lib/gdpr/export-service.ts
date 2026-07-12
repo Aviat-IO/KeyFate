@@ -1,4 +1,3 @@
-import { SITE_URL } from '$lib/env';
 import { getDatabase } from '$lib/db/drizzle';
 import {
 	users,
@@ -12,11 +11,6 @@ import {
 	ExportJobStatus
 } from '$lib/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
-import { mkdir, writeFile, unlink } from 'node:fs/promises';
-import { join } from 'node:path';
-
-const EXPORT_DIR = process.env.EXPORT_DIR || '/tmp/keyfate-exports';
-const EXPORT_EXPIRY_HOURS = 24;
 
 export interface UserDataExport {
 	exportedAt: string;
@@ -30,7 +24,6 @@ export interface UserDataExport {
 	secrets: Array<{
 		id: string;
 		title: string;
-		serverShare: string | null;
 		checkInDays: number;
 		status: string;
 		createdAt: Date;
@@ -88,7 +81,6 @@ export async function generateUserDataExport(userId: string): Promise<UserDataEx
 			return {
 				id: secret.id,
 				title: secret.title,
-				serverShare: secret.serverShare,
 				checkInDays: secret.checkInDays,
 				status: secret.status,
 				createdAt: secret.createdAt,
@@ -165,64 +157,6 @@ export async function generateUserDataExport(userId: string): Promise<UserDataEx
 	};
 }
 
-export async function uploadExportFile(
-	userId: string,
-	exportData: UserDataExport
-): Promise<{ fileUrl: string; fileSize: number }> {
-	const userDir = join(EXPORT_DIR, userId);
-	await mkdir(userDir, { recursive: true });
-
-	const fileName = `${Date.now()}.json`;
-	const filePath = join(userDir, fileName);
-	const jsonContent = JSON.stringify(exportData, null, 2);
-	const fileSize = Buffer.byteLength(jsonContent, 'utf8');
-
-	await writeFile(filePath, jsonContent, 'utf8');
-
-	const siteUrl = SITE_URL || 'https://keyfate.com';
-	const fileUrl = `${siteUrl}/api/user/export-data/download?user=${userId}&file=${fileName}`;
-
-	return {
-		fileUrl,
-		fileSize
-	};
-}
-
-export async function deleteExportFile(fileUrl: string): Promise<void> {
-	try {
-		const url = new URL(fileUrl);
-		const params = new URLSearchParams(url.search);
-		const userId = params.get('user');
-		const fileName = params.get('file');
-
-		if (userId && fileName) {
-			const filePath = join(EXPORT_DIR, userId, fileName);
-			await unlink(filePath).catch(() => {});
-		}
-	} catch {
-		// File may already be deleted
-	}
-}
-
-export async function recordExportJob(userId: string, fileUrl: string, fileSize: number) {
-	const db = await getDatabase();
-	const expiresAt = new Date(Date.now() + EXPORT_EXPIRY_HOURS * 60 * 60 * 1000);
-
-	const [job] = await db
-		.insert(dataExportJobs)
-		.values({
-			userId,
-			status: ExportJobStatus.COMPLETED,
-			fileUrl,
-			fileSize,
-			expiresAt,
-			completedAt: new Date()
-		})
-		.returning();
-
-	return job;
-}
-
 export async function hasRecentExportRequest(userId: string): Promise<boolean> {
 	const db = await getDatabase();
 	const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -253,26 +187,22 @@ export async function createPendingExportJob(userId: string) {
 	return job;
 }
 
-export async function getExportJob(jobId: string) {
+export async function getExportJob(jobId: string, userId: string) {
 	const db = await getDatabase();
-	const [job] = await db.select().from(dataExportJobs).where(eq(dataExportJobs.id, jobId));
+	const [job] = await db
+		.select({
+			id: dataExportJobs.id,
+			userId: dataExportJobs.userId,
+			status: dataExportJobs.status,
+			fileSize: dataExportJobs.fileSize,
+			downloadCount: dataExportJobs.downloadCount,
+			expiresAt: dataExportJobs.expiresAt,
+			createdAt: dataExportJobs.createdAt,
+			completedAt: dataExportJobs.completedAt,
+			errorMessage: dataExportJobs.errorMessage
+		})
+		.from(dataExportJobs)
+		.where(and(eq(dataExportJobs.id, jobId), eq(dataExportJobs.userId, userId)));
 
 	return job;
-}
-
-export async function incrementDownloadCount(jobId: string) {
-	const db = await getDatabase();
-
-	const [job] = await db.select().from(dataExportJobs).where(eq(dataExportJobs.id, jobId));
-
-	if (!job) {
-		throw new Error('Export job not found');
-	}
-
-	await db
-		.update(dataExportJobs)
-		.set({
-			downloadCount: (job.downloadCount || 0) + 1
-		})
-		.where(eq(dataExportJobs.id, jobId));
 }

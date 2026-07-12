@@ -1,0 +1,5 @@
+name: keyfate/security-audit-queries
+version: 0.0.1
+library: false
+dependencies:
+  codeql/javascript-all: "*"

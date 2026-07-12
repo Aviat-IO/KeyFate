@@ -66,7 +66,10 @@ import { GET as getEmailFailure, PATCH as resolveEmailFailure } from '../[id]/+s
 import { POST as retryEmailFailure } from '../[id]/retry/+server';
 import { POST as batchRetryEmailFailures } from '../batch-retry/+server';
 
-function makeEvent(path: string, options?: { method?: string; body?: unknown; session?: unknown; id?: string }) {
+function makeEvent(
+	path: string,
+	options?: { method?: string; body?: unknown; session?: unknown; id?: string }
+) {
 	const request = new Request(`http://localhost${path}`, {
 		method: options?.method ?? 'GET',
 		headers: {
@@ -118,7 +121,10 @@ describe('admin email-failure route authorization', () => {
 	it('rejects the list route without an authenticated admin session', async () => {
 		const event = makeEvent('/api/admin/email-failures');
 
-		await expect(listEmailFailures(event)).rejects.toMatchObject({ status: 303, location: '/sign-in' });
+		await expect(listEmailFailures(event)).rejects.toMatchObject({
+			status: 303,
+			location: '/sign-in'
+		});
 		expect(event.locals.auth).toHaveBeenCalledOnce();
 		expect(mockRequireAdmin).toHaveBeenCalledWith(null);
 	});
@@ -127,7 +133,10 @@ describe('admin email-failure route authorization', () => {
 		delete process.env.ADMIN_TOKEN;
 		const event = makeEvent('/api/admin/email-failures/failure-1');
 
-		await expect(getEmailFailure(event)).rejects.toMatchObject({ status: 303, location: '/sign-in' });
+		await expect(getEmailFailure(event)).rejects.toMatchObject({
+			status: 303,
+			location: '/sign-in'
+		});
 		expect(event.locals.auth).toHaveBeenCalledOnce();
 		expect(mockRequireAdmin).toHaveBeenCalledWith(null);
 	});
@@ -146,7 +155,10 @@ describe('admin email-failure route authorization', () => {
 	it('rejects the single retry route without an authenticated admin session', async () => {
 		const event = makeEvent('/api/admin/email-failures/failure-1/retry', { method: 'POST' });
 
-		await expect(retryEmailFailure(event)).rejects.toMatchObject({ status: 303, location: '/sign-in' });
+		await expect(retryEmailFailure(event)).rejects.toMatchObject({
+			status: 303,
+			location: '/sign-in'
+		});
 		expect(event.locals.auth).toHaveBeenCalledOnce();
 		expect(mockRequireAdmin).toHaveBeenCalledWith(null);
 	});

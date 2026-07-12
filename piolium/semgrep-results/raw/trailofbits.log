@@ -1,0 +1,54 @@
+               
+               
+┌─────────────┐
+│ Scan Status │
+└─────────────┘
+  Scanning 871 files tracked by git with 34 Code rules:
+                                                                                                                        
+  Language      Rules   Files          Origin   Rules                                                                   
+ ─────────────────────────────        ────────────────                                                                  
+  <multilang>      17     871          Custom      34                                                                   
+  ts                9     294                                                                                           
+  js                9      10                                                                                           
+  yaml              8       3                                                                                           
+                                                                                                                        
+                   
+                   
+┌─────────────────┐
+│ 4 Code Findings │
+└─────────────────┘
+                                                                 
+    /Users/alancolver/dev/keyfate/btcpayserver/docker-compose.yml
+    ❯❱ piolium.semgrep-results.repos.trailofbits-semgrep-rules.yaml.docker-compose.port-all-interfaces
+          ❰❰ Blocking ❱❱
+          Service port is exposed on all interfaces
+                                                   
+            8┆ - "8080:80"
+                                                    
+    /Users/alancolver/dev/keyfate/docker-compose.yml
+    ❯❱ piolium.semgrep-results.repos.trailofbits-semgrep-rules.yaml.docker-compose.port-all-interfaces
+          ❰❰ Blocking ❱❱
+          Service port is exposed on all interfaces
+                                                   
+           12┆ - "${POSTGRES_PORT:-5432}:5432"
+            ⋮┆----------------------------------------
+           32┆ - "${REDIS_PORT:-6379}:6379"
+            ⋮┆----------------------------------------
+           54┆ - "${PGADMIN_PORT:-5050}:80"
+
+                
+                
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 4 (4 blocking)
+ • Rules run: 34
+ • Targets scanned: 871
+ • Parsed lines: ~100.0%
+ • Scan skipped: 
+   ◦ Matching --exclude patterns: 2718
+   ◦ Files matching .semgrepignore patterns: 3
+ • Scan was limited to files tracked by git
+ • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+Ran 34 rules on 871 files: 4 findings.

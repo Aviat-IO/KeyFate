@@ -43,10 +43,11 @@ export interface BTCPayWebhookEventRaw {
 	originalDeliveryId?: string;
 	isRedelivery: boolean;
 	type: string;
-	timestamp: string;
+	timestamp: string | number;
 	storeId: string;
 	invoiceId: string;
-	data: Record<string, unknown>;
+	metadata?: Record<string, unknown>;
+	data?: Record<string, unknown>;
 }
 
 export class BTCPayProvider implements PaymentProvider {
@@ -221,39 +222,23 @@ export class BTCPayProvider implements PaymentProvider {
 
 		const expected = createHmac('sha256', secret).update(payload, 'utf8').digest('hex');
 
-		console.log('🔐 Webhook signature verification:', {
-			signatureFormat: signature.startsWith('sha256=') ? 'sha256=' : 'raw',
-			actualSignatureLength: actualSignature.length,
-			expectedSignatureLength: expected.length,
-			secretLength: secret.length,
-			payloadLength: payload.length,
-			signaturesMatch: actualSignature === expected
-		});
-
 		if (!timingSafeStringEqual(actualSignature, expected)) {
-			console.error('❌ Signature mismatch:', {
-				received: actualSignature.substring(0, 20) + '...',
-				expected: expected.substring(0, 20) + '...'
-			});
 			throw new Error('Invalid webhook signature');
 		}
 
 		const raw: BTCPayWebhookEventRaw = JSON.parse(payload);
-
-		console.log('📦 Raw BTCPay webhook data:', {
-			deliveryId: raw.deliveryId,
-			type: raw.type,
-			hasData: !!raw.data,
-			dataKeys: raw.data ? Object.keys(raw.data) : [],
-			dataType: typeof raw.data,
-			rawDataSample: raw.data ? JSON.stringify(raw.data).substring(0, 200) : 'null'
-		});
+		const timestamp =
+			typeof raw.timestamp === 'number' && raw.timestamp < 1_000_000_000_000
+				? raw.timestamp * 1000
+				: raw.timestamp;
 
 		return {
 			id: raw.deliveryId,
 			type: raw.type,
-			data: { object: raw.data },
-			created: new Date(raw.timestamp)
+			// Official invoice webhook metadata is top-level. Preserve the complete
+			// verified payload; the route replaces it with the canonical fetched invoice.
+			data: { object: raw as unknown as Record<string, unknown> },
+			created: new Date(timestamp)
 		};
 	}
 

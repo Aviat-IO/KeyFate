@@ -1,45 +1,41 @@
-# Stage 1: Install dependencies
-FROM oven/bun:1 AS deps
+# Bun version and OCI digests are pinned together; update deliberately with CI evidence.
+FROM oven/bun:1.3.14@sha256:e10577f0db68676a7024391c6e5cb4b879ebd17188ab750cf10024a6d700e5c4 AS deps
 WORKDIR /app
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
-# Stage 2: Build
-FROM oven/bun:1 AS builder
+FROM oven/bun:1.3.14@sha256:e10577f0db68676a7024391c6e5cb4b879ebd17188ab750cf10024a6d700e5c4 AS prod-deps
+WORKDIR /app
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile --production --omit peer
+
+FROM oven/bun:1.3.14@sha256:e10577f0db68676a7024391c6e5cb4b879ebd17188ab750cf10024a6d700e5c4 AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN bun run build
 
-# Stage 3: Production
-FROM oven/bun:1-slim AS runner
+FROM oven/bun:1.3.14-slim@sha256:d56a2534ffd262e92c12fd3249d3924d296d97086da773f821d7d0477435ea04 AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Run as non-root user for security (groupadd/useradd for slim images)
+ARG GIT_SHA=unknown
+LABEL org.opencontainers.image.source="https://github.com/Aviat-IO/KeyFate" \
+      org.opencontainers.image.revision="$GIT_SHA"
+
 RUN groupadd --system --gid 1001 keyfate && \
     useradd --system --uid 1001 --gid keyfate --no-create-home keyfate
 
-# Copy build output, dependencies, and migration files
-COPY --from=builder /app/build ./build
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/drizzle ./drizzle
-COPY --from=builder /app/drizzle.config.ts ./
+COPY --chown=keyfate:keyfate --from=builder /app/build ./build
+COPY --chown=keyfate:keyfate --from=prod-deps /app/node_modules ./node_modules
+COPY --chown=keyfate:keyfate --from=builder /app/package.json ./
+COPY --chown=keyfate:keyfate --from=builder /app/drizzle ./drizzle
+COPY --chown=keyfate:keyfate --from=builder /app/scripts/migrate.ts ./scripts/migrate.ts
 
-# Copy and prepare startup script
-COPY migrate-and-start.sh ./
-RUN chmod +x migrate-and-start.sh
-
-# Create exports directory for GDPR data exports
-RUN mkdir -p /tmp/keyfate-exports
-
-# Set ownership and switch to non-root user
-RUN chown -R keyfate:keyfate /app /tmp/keyfate-exports
 USER keyfate
 
-# Railway sets PORT dynamically; default to 3000
 ENV PORT=3000
 EXPOSE 3000
 
-CMD ["./migrate-and-start.sh"]
+# Railway runs `bun run db:migrate:production` as its pre-deploy command.
+CMD ["bun", "run", "build/index.js"]

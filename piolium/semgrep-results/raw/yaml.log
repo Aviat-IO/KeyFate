@@ -1,0 +1,2 @@
+[ERROR] Failed to download configuration from https://semgrep.dev/c/p/yaml HTTP 404.
+[ERROR] invalid configuration file found (1 configs were invalid)

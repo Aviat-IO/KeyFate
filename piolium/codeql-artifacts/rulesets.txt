@@ -1,0 +1,7 @@
+Official: codeql/javascript-queries@2.4.0 codeql-suites/javascript-security-and-quality.qls
+Community: GitHubSecurityLab/CodeQL-Community-Packs-JavaScript unavailable (GHCR 403)
+Custom queries:
+- piolium/codeql-queries/list-sources.ql
+- piolium/codeql-queries/list-sinks.ql
+- piolium/codeql-queries/keyfate-sensitive-url-token.ql
+- piolium/codeql-queries/keyfate-sensitive-browser-storage.ql

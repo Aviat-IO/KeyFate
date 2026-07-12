@@ -5,38 +5,38 @@
 	import { page } from '$app/stores';
 
 	let {
-		amount,
-		currency = 'USD',
-		mode = 'payment',
-		interval,
+		interval = 'monthly',
 		children,
 		disabled = false
 	}: {
-		amount: number;
-		currency?: string;
-		mode?: 'payment' | 'subscription';
 		interval?: 'monthly' | 'yearly';
 		children: Snippet;
 		disabled?: boolean;
 	} = $props();
 
 	let loading = $state(false);
+	let resumeStarted = $state(false);
 
 	const session = $derived($page.data.session);
+	const plan = $derived(interval === 'yearly' ? 'pro_yearly' : 'pro_monthly');
+
+	$effect(() => {
+		const shouldResume =
+			session?.user &&
+			$page.url.searchParams.get('resume_checkout') === 'btcpay' &&
+			$page.url.searchParams.get('plan') === plan;
+		if (shouldResume && !resumeStarted) {
+			resumeStarted = true;
+			void handleCheckout();
+		}
+	});
 
 	async function handleCheckout() {
 		loading = true;
 
 		try {
 			if (!session?.user) {
-				const params = new URLSearchParams({
-					amount: String(amount),
-					currency,
-					mode,
-					redirect_after_auth: 'true'
-				});
-				if (interval) params.set('interval', interval);
-				const returnUrl = `${window.location.origin}/api/create-btcpay-checkout?${params.toString()}`;
+				const returnUrl = `/pricing?resume_checkout=btcpay&plan=${plan}`;
 				const loginUrl = `/auth/signin?callbackUrl=${encodeURIComponent(returnUrl)}`;
 				window.location.href = loginUrl;
 				return;
@@ -51,21 +51,14 @@
 					'Content-Type': 'application/json',
 					'x-csrf-token': token
 				},
-				body: JSON.stringify({ amount, currency, mode, interval })
+				body: JSON.stringify({ plan })
 			});
 
 			if (response.ok) {
 				const { url } = await response.json();
 				window.location.href = url;
 			} else if (response.status === 401) {
-				const params = new URLSearchParams({
-					amount: String(amount),
-					currency,
-					mode,
-					redirect_after_auth: 'true'
-				});
-				if (interval) params.set('interval', interval);
-				const returnUrl = `${window.location.origin}/api/create-btcpay-checkout?${params.toString()}`;
+				const returnUrl = `/pricing?resume_checkout=btcpay&plan=${plan}`;
 				const loginUrl = `/auth/signin?callbackUrl=${encodeURIComponent(returnUrl)}`;
 				window.location.href = loginUrl;
 			} else {
