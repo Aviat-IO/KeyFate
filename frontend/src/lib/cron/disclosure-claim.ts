@@ -3,7 +3,7 @@ import { getDatabase } from '$lib/db/get-database';
 import { secrets, type Secret, type SecretUpdate } from '$lib/db/schema';
 import { and, eq, isNull, lt, or } from 'drizzle-orm';
 
-const PROCESSING_LEASE_MS = 15 * 60 * 1000;
+export const PROCESSING_LEASE_MS = 15 * 60 * 1000;
 type Database = Awaited<ReturnType<typeof getDatabase>>;
 
 export async function claimDisclosureSecret(
@@ -12,6 +12,7 @@ export async function claimDisclosureSecret(
 	claimTime: Date = new Date()
 ): Promise<{ secret: Secret; leaseId: string } | null> {
 	const leaseId = randomUUID();
+	const staleBefore = new Date(claimTime.getTime() - PROCESSING_LEASE_MS);
 	const [claimed] = await db
 		.update(secrets)
 		.set({
@@ -31,8 +32,14 @@ export async function claimDisclosureSecret(
 						eq(secrets.status, 'triggered'),
 						isNull(secrets.triggeredAt),
 						or(
-							isNull(secrets.processingLeaseExpiresAt),
-							lt(secrets.processingLeaseExpiresAt, claimTime)
+							lt(secrets.processingLeaseExpiresAt, claimTime),
+							and(
+								isNull(secrets.processingLeaseExpiresAt),
+								or(
+									isNull(secrets.processingStartedAt),
+									lt(secrets.processingStartedAt, staleBefore)
+								)
+							)
 						)
 					)
 				)

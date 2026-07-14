@@ -76,9 +76,18 @@ describe.skipIf(!testDatabaseUrl)('PostgreSQL concurrency and fencing', () => {
 		const originalLease = acquired[0]!.leaseId;
 		expect(await claimDisclosureSecret(db, secretId, new Date())).toBeNull();
 
+		// Simulate a mixed-version worker that writes processing_started_at but
+		// cannot populate the new lease columns. A recent worker must not be
+		// reclaimed; after the stale threshold it can be taken over safely.
 		await database()`
 			update secrets
-			set processing_lease_expires_at = now() - interval '1 second'
+			set processing_lease_expires_at = null, processing_started_at = now()
+			where id = ${secretId}
+		`;
+		expect(await claimDisclosureSecret(db, secretId, new Date())).toBeNull();
+		await database()`
+			update secrets
+			set processing_started_at = now() - interval '16 minutes'
 			where id = ${secretId}
 		`;
 		const takeover = await claimDisclosureSecret(db, secretId, new Date());

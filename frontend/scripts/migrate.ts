@@ -2,28 +2,59 @@ import { fileURLToPath } from 'node:url';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import postgres from 'postgres';
+import {
+	parseDatabaseConnection,
+	type ParsedDatabaseConnection
+} from '../src/lib/db/connection-policy';
 
-export function getMigrationDatabaseUrl(): string {
+const MIGRATION_LOCK_NAME = 'keyfate:migrations';
+
+export function getMigrationDatabaseConnection(): ParsedDatabaseConnection {
 	const databaseUrl = process.env.DATABASE_URL;
 	if (!databaseUrl) {
 		throw new Error('DATABASE_URL is required for production migrations');
 	}
-	return databaseUrl;
+	return parseDatabaseConnection(databaseUrl);
+}
+
+export function getMigrationDatabaseUrl(): string {
+	return getMigrationDatabaseConnection().url;
 }
 
 export async function runMigrations(): Promise<void> {
-	const client = postgres(getMigrationDatabaseUrl(), {
-		max: 1,
+	const parsed = getMigrationDatabaseConnection();
+	const client = postgres(parsed.url, {
+		...parsed.options,
+		// One dedicated session holds the advisory lock while Drizzle uses the
+		// second session for its own migration transaction.
+		max: 2,
 		prepare: false,
-		connect_timeout: 15,
-		idle_timeout: 5
+		connection: {
+			...parsed.options.connection,
+			application_name: 'keyfate-migration'
+		}
 	});
 	const database = drizzle(client);
 	const migrationsFolder = fileURLToPath(new URL('../drizzle', import.meta.url));
+	let reserved: Awaited<ReturnType<typeof client.reserve>> | null = null;
+	let locked = false;
 
 	try {
+		reserved = await client.reserve();
+		await reserved.unsafe("SET lock_timeout = '30s'");
+		await reserved`SELECT pg_advisory_lock(hashtext(${MIGRATION_LOCK_NAME}))`;
+		locked = true;
 		await migrate(database, { migrationsFolder });
 	} finally {
+		if (reserved) {
+			try {
+				if (locked) {
+					await reserved`SELECT pg_advisory_unlock(hashtext(${MIGRATION_LOCK_NAME}))`;
+				}
+			} finally {
+				reserved.release();
+			}
+		}
 		await client.end({ timeout: 5 });
 	}
 }

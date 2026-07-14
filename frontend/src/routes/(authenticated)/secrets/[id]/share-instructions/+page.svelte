@@ -260,6 +260,7 @@
 								type="button"
 								size="icon"
 								variant="outline"
+								aria-label={`${copiedIndex === index ? 'Copied' : 'Copy'} recovery share for ${recipient.name}`}
 								onclick={() => handleCopy(assignedShare, index)}
 							>
 								{#if copiedIndex === index}
@@ -292,6 +293,7 @@
 									type="button"
 									size="icon"
 									variant="outline"
+									aria-label={`${copiedIndex === recipients.length + index ? 'Copied' : 'Copy'} backup recovery share ${index + 1}`}
 									onclick={() => handleCopy(share, recipients.length + index)}
 								>
 									{#if copiedIndex === recipients.length + index}

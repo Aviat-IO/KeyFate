@@ -23,7 +23,7 @@ import {
 	updateDisclosureLog,
 	shouldRetrySecret
 } from '$lib/cron/disclosure-helpers';
-import { claimDisclosureSecret } from '$lib/cron/disclosure-claim';
+import { claimDisclosureSecret, PROCESSING_LEASE_MS } from '$lib/cron/disclosure-claim';
 
 export interface ProcessRemindersResult {
 	processed: number;
@@ -618,6 +618,7 @@ export async function runProcessReminders(): Promise<ProcessRemindersResult> {
 
 	const now = new Date();
 	const nowIso = now.toISOString();
+	const staleProcessingStartedAt = new Date(now.getTime() - PROCESSING_LEASE_MS);
 
 	// Fetch active overdue secrets and in-flight disclosures whose durable lease
 	// expired after a worker crash. Backoff still applies to explicit retries.
@@ -635,7 +636,16 @@ export async function runProcessReminders(): Promise<ProcessRemindersResult> {
 					and(
 						eq(secrets.status, 'triggered'),
 						isNull(secrets.triggeredAt),
-						or(isNull(secrets.processingLeaseExpiresAt), lt(secrets.processingLeaseExpiresAt, now))
+						or(
+							lt(secrets.processingLeaseExpiresAt, now),
+							and(
+								isNull(secrets.processingLeaseExpiresAt),
+								or(
+									isNull(secrets.processingStartedAt),
+									lt(secrets.processingStartedAt, staleProcessingStartedAt)
+								)
+							)
+						)
 					)
 				),
 				lt(secrets.nextCheckIn, now),

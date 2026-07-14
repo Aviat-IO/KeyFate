@@ -1,13 +1,34 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getDatabase } from '$lib/db/drizzle';
-import { checkInTokens, secrets, checkinHistory } from '$lib/db/schema';
-import { scheduleRemindersForSecret } from '$lib/services/reminder-scheduler';
-import { checkRateLimit, createRateLimitResponse, getClientIdentifier } from '$lib/rate-limit';
-import { fingerprintCapability, hashCheckInToken } from '$lib/server/capability-token';
-import { and, eq, gt, isNull, or } from 'drizzle-orm';
+import { capabilityCheckInDependencies } from '$lib/server/capability-check-in-dependencies';
+
+const {
+	and,
+	checkInTokens,
+	checkinHistory,
+	checkRateLimit,
+	createRateLimitResponse,
+	eq,
+	fingerprintCapability,
+	getClientIdentifier,
+	getDatabase,
+	gt,
+	hashCheckInToken,
+	isNull,
+	ne,
+	or,
+	scheduleRemindersForSecret,
+	secrets
+} = capabilityCheckInDependencies;
 
 class CheckInConflict extends Error {}
+
+function bitcoinRefreshRequiredResponse() {
+	return json(
+		{ error: 'Refresh the Bitcoin continuity generation to complete this check-in' },
+		{ status: 409 }
+	);
+}
 
 function invalidTokenResponse() {
 	return json(
@@ -98,13 +119,15 @@ export const POST: RequestHandler = async (event) => {
 				id: secrets.id,
 				userId: secrets.userId,
 				title: secrets.title,
-				checkInDays: secrets.checkInDays
+				checkInDays: secrets.checkInDays,
+				bitcoinDeliveryStatus: secrets.bitcoinDeliveryStatus
 			})
 			.from(secrets)
 			.where(eq(secrets.id, tokenRow.secretId))
 			.limit(1);
 
 		if (!secret?.checkInDays) return invalidTokenResponse();
+		if (secret.bitcoinDeliveryStatus === 'ready') return bitcoinRefreshRequiredResponse();
 
 		const now = new Date();
 		const nextCheckIn = new Date(now.getTime() + secret.checkInDays * 24 * 60 * 60 * 1000);
@@ -131,7 +154,8 @@ export const POST: RequestHandler = async (event) => {
 						and(
 							eq(secrets.id, tokenRow.secretId),
 							eq(secrets.status, 'active'),
-							isNull(secrets.triggeredAt)
+							isNull(secrets.triggeredAt),
+							or(isNull(secrets.bitcoinDeliveryStatus), ne(secrets.bitcoinDeliveryStatus, 'ready'))
 						)
 					)
 					.returning({ id: secrets.id });

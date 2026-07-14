@@ -11,6 +11,52 @@ import {
 	ExportJobStatus
 } from '$lib/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
+import { unlink } from 'node:fs/promises';
+import { resolve, sep } from 'node:path';
+
+const LEGACY_EXPORT_DIR = process.env.EXPORT_DIR || '/tmp/keyfate-exports';
+
+function isSafeLegacyExportSegment(value: string): boolean {
+	return (
+		value.length > 0 &&
+		value !== '.' &&
+		value !== '..' &&
+		!value.includes('/') &&
+		!value.includes('\\') &&
+		!value.includes('\0')
+	);
+}
+
+export async function deleteExportFile(fileUrl: string): Promise<void> {
+	let url: URL;
+	try {
+		url = new URL(fileUrl);
+	} catch {
+		return;
+	}
+
+	const userId = url.searchParams.get('user');
+	const fileName = url.searchParams.get('file');
+	if (
+		!userId ||
+		!fileName ||
+		!isSafeLegacyExportSegment(userId) ||
+		!isSafeLegacyExportSegment(fileName) ||
+		!/^\d+\.json$/.test(fileName)
+	) {
+		return;
+	}
+
+	const exportRoot = resolve(LEGACY_EXPORT_DIR);
+	const filePath = resolve(exportRoot, userId, fileName);
+	if (!filePath.startsWith(`${exportRoot}${sep}`)) return;
+
+	try {
+		await unlink(filePath);
+	} catch (error) {
+		if (!(error instanceof Error && 'code' in error && error.code === 'ENOENT')) throw error;
+	}
+}
 
 export interface UserDataExport {
 	exportedAt: string;

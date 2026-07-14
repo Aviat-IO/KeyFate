@@ -248,7 +248,11 @@
 	>
 	{#if ownerAddress}
 		<div class="space-y-2">
-			<Label>Owner Signet funding address</Label><Input readonly value={ownerAddress} />
+			<Label for="owner-signet-funding-address">Owner Signet funding address</Label><Input
+				id="owner-signet-funding-address"
+				readonly
+				value={ownerAddress}
+			/>
 		</div>
 		<Button type="button" variant="outline" onclick={discoverFunding} disabled={busy || stored}
 			>Discover confirmed outpoints</Button

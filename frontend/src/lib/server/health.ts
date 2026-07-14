@@ -1,6 +1,5 @@
 import { json } from '@sveltejs/kit';
 import { connectionManager } from '$lib/db/connection-manager';
-import { getDatabaseStats } from '$lib/db/drizzle';
 import { getEmailServiceHealth } from '$lib/email/email-service';
 import { authorizeRequest } from '$lib/cron/utils';
 import { logger } from '$lib/logger';
@@ -48,7 +47,7 @@ export async function createReadinessResponse(request: Request, url: URL): Promi
 			return json({ status: healthy ? 'healthy' : 'unavailable' }, { status: healthy ? 200 : 503 });
 		}
 
-		const dbStats = getDatabaseStats();
+		const dbStats = connectionManager.getStats();
 		return json(
 			{
 				status: healthy ? 'healthy' : 'unavailable',

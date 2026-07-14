@@ -5,6 +5,8 @@
 		"dockerfilePath": "Dockerfile"
 	},
 	"deploy": {
-		"preDeployCommand": ["bun run db:migrate:production"]
+		"preDeployCommand": ["bun run db:migrate:production"],
+		"healthcheckPath": "/api/health/ready",
+		"healthcheckTimeout": 300
 	}
 }
