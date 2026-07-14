@@ -4,6 +4,7 @@ import { createOTPToken } from '$lib/auth/otp';
 import { sendOTPEmail } from '$lib/email/email-service';
 import { verifyTurnstileToken } from '$lib/auth/turnstile';
 import { getClientIdentifier } from '$lib/rate-limit';
+import { logger } from '$lib/logger';
 
 export const POST: RequestHandler = async (event) => {
 	try {
@@ -24,14 +25,18 @@ export const POST: RequestHandler = async (event) => {
 			);
 		}
 
-		// Verify Turnstile token (bot protection)
-		// Only enforce in production when TURNSTILE_SECRET_KEY is set
-		if (process.env.TURNSTILE_SECRET_KEY) {
-			if (!turnstileToken) {
+		const clientIp = getClientIdentifier(event.request);
+		const turnstileRequired =
+			process.env.NODE_ENV === 'production' || Boolean(process.env.TURNSTILE_SECRET_KEY);
+		if (turnstileRequired) {
+			if (!turnstileToken || typeof turnstileToken !== 'string') {
 				return json({ error: 'Please complete the security check' }, { status: 400 });
 			}
 
-			const isValidToken = await verifyTurnstileToken(turnstileToken);
+			const isValidToken = await verifyTurnstileToken(turnstileToken, {
+				expectedAction: 'request-otp',
+				remoteIp: clientIp
+			});
 			if (!isValidToken) {
 				return json({ error: 'Security verification failed. Please try again.' }, { status: 400 });
 			}
@@ -44,7 +49,6 @@ export const POST: RequestHandler = async (event) => {
 			return json({ error: 'Invalid email format' }, { status: 400 });
 		}
 
-		const clientIp = getClientIdentifier(event.request);
 		const otpResult = await createOTPToken(normalizedEmail, 'authentication', clientIp);
 		if (!otpResult.success || !otpResult.code) {
 			if (otpResult.reason === 'rate_limited') {
@@ -53,13 +57,16 @@ export const POST: RequestHandler = async (event) => {
 			if (otpResult.reason === 'unavailable') {
 				return json({ error: otpResult.error }, { status: 503, headers: { 'Retry-After': '60' } });
 			}
-			console.error('[OTP] Failed to create OTP:', otpResult.error);
+			logger.error('OTP challenge creation failed', undefined, { reason: otpResult.reason });
 			return json({ error: 'Failed to generate OTP. Please try again.' }, { status: 500 });
 		}
 
 		const emailResult = await sendOTPEmail(normalizedEmail, otpResult.code, 5);
 		if (!emailResult.success) {
-			console.error('[OTP] Failed to send email:', emailResult.error);
+			logger.error('OTP delivery failed', undefined, {
+				provider: emailResult.provider,
+				retryable: emailResult.retryable
+			});
 			return json({ error: 'Failed to send email. Please try again later.' }, { status: 500 });
 		}
 
@@ -69,7 +76,7 @@ export const POST: RequestHandler = async (event) => {
 			remaining: otpResult.remaining
 		});
 	} catch (error) {
-		console.error('[OTP] Request OTP error:', error);
+		logger.error('OTP request failed', error instanceof Error ? error : undefined);
 		return json({ error: 'An unexpected error occurred' }, { status: 500 });
 	}
 };

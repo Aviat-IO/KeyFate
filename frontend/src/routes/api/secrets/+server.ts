@@ -14,6 +14,7 @@ import { ZodError } from 'zod';
 import { getAllSecretsWithRecipients } from '$lib/db/queries/secrets';
 import { mapDrizzleSecretToApiShape } from '$lib/db/secret-mapper';
 import { npubToHex, isValidNpub } from '$lib/nostr/keypair';
+import { isBitcoinEnrollmentEnabled } from '$lib/server/bitcoin-enrollment';
 
 export const GET: RequestHandler = async (event) => {
 	try {
@@ -127,10 +128,16 @@ export const POST: RequestHandler = async (event) => {
 			);
 		}
 
-		if (
-			validatedData.enable_bitcoin_timelock &&
-			process.env.BITCOIN_ENROLLMENT_ENABLED !== 'true'
-		) {
+		if (validatedData.enable_bitcoin_timelock && !validatedData.enable_nostr_shares) {
+			return json(
+				{
+					error: 'Bitcoin enrollment requires Nostr v2 recipient enrollment',
+					code: 'BITCOIN_NOSTR_REQUIRED'
+				},
+				{ status: 400 }
+			);
+		}
+		if (validatedData.enable_bitcoin_timelock && !isBitcoinEnrollmentEnabled()) {
 			return json(
 				{
 					error: 'Bitcoin enrollment is disabled until the signet recovery gate passes',

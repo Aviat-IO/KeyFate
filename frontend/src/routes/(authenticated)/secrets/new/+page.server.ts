@@ -1,5 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import { getUserTierInfo } from '$lib/subscription';
+import { isBitcoinEnrollmentEnabled } from '$lib/server/bitcoin-enrollment';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
@@ -10,15 +11,19 @@ export const load: PageServerLoad = async (event) => {
 
 	const tierInfo = await getUserTierInfo(session.user.id);
 
+	const bitcoinEnrollmentEnabled = isBitcoinEnrollmentEnabled();
+
 	if (!tierInfo) {
 		return {
 			session,
-			tierInfo: null
+			tierInfo: null,
+			bitcoinEnrollmentEnabled
 		};
 	}
 
 	return {
 		session,
+		bitcoinEnrollmentEnabled,
 		tierInfo: {
 			isPaid: tierInfo.tier.tiers.name === 'pro',
 			secretsUsed: tierInfo.limits.secrets.current,

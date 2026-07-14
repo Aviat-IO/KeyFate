@@ -30,6 +30,7 @@
 	import {
 		clearEphemeralRecoveryState,
 		partitionRecoveryShares,
+		setEphemeralBitcoinSetup,
 		setEphemeralNostrMetadata,
 		setEphemeralRecoveryState
 	} from '$lib/client/ephemeral-recovery-state';
@@ -40,9 +41,11 @@
 
 	let {
 		isPaid = false,
+		bitcoinEnrollmentEnabled = false,
 		tierInfo
 	}: {
 		isPaid?: boolean;
+		bitcoinEnrollmentEnabled?: boolean;
 		tierInfo?: {
 			secretsUsed: number;
 			secretsLimit: number;
@@ -68,6 +71,7 @@
 	// Bitcoin & Nostr settings (Pro only)
 	let enableNostrShares = $state(false);
 	let enableBitcoinTimelock = $state(false);
+	let bitcoinRecipientIndex = $state<number | null>(null);
 
 	// Validation errors
 	let fieldErrors = $state<Record<string, string>>({});
@@ -156,6 +160,13 @@
 		}
 		if (enableNostrShares && recipients.length > sssSharesTotal - 1) {
 			errors.nostrRecipients = 'Increase total shares so each recipient has a distinct share';
+		}
+		if (enableBitcoinTimelock) {
+			if (!bitcoinEnrollmentEnabled) errors.bitcoinRecipient = 'Bitcoin enrollment is disabled';
+			if (!enableNostrShares) errors.bitcoinRecipient = 'Bitcoin recovery requires Nostr v2';
+			if (bitcoinRecipientIndex === null || !recipients[bitcoinRecipientIndex]) {
+				errors.bitcoinRecipient = 'Select exactly one Nostr recipient for Bitcoin recovery';
+			}
 		}
 
 		fieldErrors = errors;
@@ -290,6 +301,25 @@
 						eventIds: publication.published.map((item) => item.nostrEventId),
 						manifests: publication.published.map((item) => item.manifestEvent)
 					});
+					if (enableBitcoinTimelock && bitcoinRecipientIndex !== null) {
+						const selectedRecipient = nostrRecipients[bitcoinRecipientIndex];
+						const selectedPublication = publication.published.find(
+							(item) => item.recipientId === selectedRecipient.id
+						);
+						if (!selectedPublication || !selectedRecipient.nostrPubkey) {
+							throw new Error('Selected Bitcoin recipient publication is unavailable');
+						}
+						setEphemeralBitcoinSetup(result.secretId, {
+							recipientId: selectedRecipient.id,
+							recipientName: recipients[bitcoinRecipientIndex].name,
+							recipientNostrPubkey: selectedRecipient.nostrPubkey,
+							nostrCapsuleEventId: selectedPublication.capsuleEventId,
+							nostrManifestEvent: selectedPublication.manifestEvent,
+							nostrCapsuleEvent: selectedPublication.capsuleEvent,
+							plaintextK: selectedPublication.plaintextK
+						});
+						selectedPublication.plaintextK.fill(0);
+					}
 				} catch (nostrError) {
 					clearEphemeralRecoveryState(result.secretId);
 					await fetch(`/api/secrets/${result.secretId}`, {
@@ -433,7 +463,7 @@
 		{/if}
 
 		<div class="space-y-3">
-			{#each recipients as recipient, index}
+			{#each recipients as recipient, index (recipient)}
 				<div class="border-border/50 space-y-3 rounded-md border p-4">
 					<div class="flex items-center justify-between">
 						<div class="text-muted-foreground text-xs font-medium">Recipient {index + 1}</div>
@@ -520,7 +550,7 @@
 					<span>{selectedCheckInLabel}</span>
 				</Select.Trigger>
 				<Select.Content>
-					{#each availableOptions as option}
+					{#each availableOptions as option (option.value)}
 						<Select.Item value={option.value}>{option.label}</Select.Item>
 					{/each}
 				</Select.Content>
@@ -574,7 +604,7 @@
 
 						{#if enableNostrShares}
 							<div class="space-y-3 pl-6">
-								{#each recipients as recipient, index}
+								{#each recipients as recipient, index (recipient)}
 									<div class="bg-muted/30 rounded-md border p-3">
 										<p class="text-muted-foreground mb-2 text-xs font-medium">
 											{recipient.name || `Recipient ${index + 1}`} — Nostr Pubkey
@@ -590,17 +620,45 @@
 
 						<!-- Bitcoin timelock toggle -->
 						<div class="flex items-start gap-3 rounded-md border p-3">
-							<Checkbox id="enable-bitcoin" checked={false} disabled={true} />
-							<div class="space-y-1">
+							<Checkbox
+								id="enable-bitcoin"
+								bind:checked={enableBitcoinTimelock}
+								disabled={isSubmitting || !bitcoinEnrollmentEnabled}
+								onCheckedChange={(checked) => {
+									enableBitcoinTimelock = checked === true;
+									if (enableBitcoinTimelock) enableNostrShares = true;
+									if (!enableBitcoinTimelock) bitcoinRecipientIndex = null;
+								}}
+							/>
+							<div class="space-y-2">
 								<Label for="enable-bitcoin" class="flex items-center gap-1.5 text-sm font-medium">
 									<Bitcoin class="h-3.5 w-3.5" />
-									Bitcoin Timelock (Staging Gate)
+									Bitcoin Timelock (Signet)
 								</Label>
 								<p class="text-muted-foreground text-xs">
-									Recipient-encrypted transaction support is implemented, but enrollment remains
-									disabled until the credentialed signet funding, refresh, and broadcast gate
-									passes.
+									{bitcoinEnrollmentEnabled
+										? 'Configure owner-funded Signet recovery after Nostr publication.'
+										: 'Enrollment is server-disabled pending the funded Signet gate.'}
 								</p>
+								{#if enableBitcoinTimelock}
+									<div class="space-y-2">
+										<p class="text-xs font-medium">Select exactly one Bitcoin recipient:</p>
+										{#each recipients as recipient, index (recipient)}
+											<label class="flex items-center gap-2 text-xs">
+												<input
+													type="radio"
+													name="bitcoin-recipient"
+													checked={bitcoinRecipientIndex === index}
+													onchange={() => (bitcoinRecipientIndex = index)}
+												/>
+												{recipient.name || `Recipient ${index + 1}`}
+											</label>
+										{/each}
+									</div>
+								{/if}
+								{#if fieldErrors.bitcoinRecipient}
+									<p class="text-destructive text-xs">{fieldErrors.bitcoinRecipient}</p>
+								{/if}
 							</div>
 						</div>
 					</Accordion.Content>

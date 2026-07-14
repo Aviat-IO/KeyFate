@@ -106,8 +106,8 @@ describe.skipIf(!testDatabaseUrl)('PostgreSQL concurrency and fencing', () => {
 		`;
 		expect(stillOwnedByTakeover.lease_id).toBe(takeover!.leaseId);
 
-		expect(await updateDisclosureLog(db, logId, originalLease, 'sent')).toBe(false);
-		expect(await updateDisclosureLog(db, logId, takeover!.leaseId, 'sent')).toBe(true);
+		expect(await updateDisclosureLog(db, secretId, logId, originalLease, 'sent')).toBe(false);
+		expect(await updateDisclosureLog(db, secretId, logId, takeover!.leaseId, 'sent')).toBe(true);
 		const [log] = await database()<[{ status: string; lease_id: string | null }]>`
 			select status, lease_id from disclosure_log where id = ${logId}
 		`;
@@ -131,7 +131,9 @@ describe.skipIf(!testDatabaseUrl)('PostgreSQL concurrency and fencing', () => {
 			recipientName: null,
 			leaseId: takeover!.leaseId
 		});
-		expect(await updateDisclosureLog(db, failedClaim.id, takeover!.leaseId, 'failed')).toBe(true);
+		expect(
+			await updateDisclosureLog(db, secretId, failedClaim.id, takeover!.leaseId, 'failed')
+		).toBe(true);
 		await database()`
 			update secrets
 			set processing_lease_expires_at = now() - interval '1 second'

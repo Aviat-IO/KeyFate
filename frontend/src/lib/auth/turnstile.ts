@@ -1,46 +1,73 @@
-/**
- * Server-side Turnstile token verification
- */
-export async function verifyTurnstileToken(token: string): Promise<boolean> {
-	const secretKey = process.env.TURNSTILE_SECRET_KEY;
-	const isDev = process.env.NODE_ENV === 'development';
+import { logger } from '$lib/logger';
 
-	// Only allow bypass in development when no secret key is configured
-	if (isDev && !secretKey) {
-		console.warn('[Turnstile] No secret key configured, bypassing in development');
-		return true;
-	}
+const VERIFY_TIMEOUT_MS = 5_000;
 
-	// In production, require secret key
-	if (!secretKey) {
-		console.error('[Turnstile] TURNSTILE_SECRET_KEY not configured');
-		return false;
-	}
+interface TurnstileVerificationResponse {
+	success?: boolean;
+	hostname?: string;
+	action?: string;
+	'error-codes'?: string[];
+}
 
-	// Never accept dev bypass token in production
-	if (token === 'dev-bypass-token') {
-		return isDev;
-	}
+export interface TurnstileVerificationOptions {
+	expectedHostname?: string;
+	expectedAction?: string;
+	remoteIp?: string;
+	fetchImplementation?: typeof fetch;
+}
 
+function configuredHostname(): string | undefined {
+	const value = process.env.ORIGIN || process.env.PUBLIC_SITE_URL;
+	if (!value) return undefined;
 	try {
-		const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				secret: secretKey,
-				response: token
-			})
-		});
+		return new URL(value).hostname;
+	} catch {
+		return undefined;
+	}
+}
 
-		if (!response.ok) {
-			console.error(`[Turnstile] API error: ${response.status}`);
-			return false;
-		}
+export async function verifyTurnstileToken(
+	token: string,
+	options: TurnstileVerificationOptions = {}
+): Promise<boolean> {
+	const secretKey = process.env.TURNSTILE_SECRET_KEY;
+	const isDevelopment = process.env.NODE_ENV === 'development';
 
-		const data = await response.json();
-		return data.success === true;
+	if (isDevelopment && !secretKey) return token === 'dev-bypass-token';
+	if (!secretKey || !token || token === 'dev-bypass-token') return false;
+
+	const controller = new AbortController();
+	const timeout = setTimeout(() => controller.abort(), VERIFY_TIMEOUT_MS);
+	try {
+		const body = new URLSearchParams({ secret: secretKey, response: token });
+		if (options.remoteIp && options.remoteIp !== 'unknown') body.set('remoteip', options.remoteIp);
+		const response = await (options.fetchImplementation ?? fetch)(
+			'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+			{
+				method: 'POST',
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+				body,
+				signal: controller.signal
+			}
+		);
+		if (!response.ok) return false;
+
+		const result = (await response.json()) as TurnstileVerificationResponse;
+		const expectedHostname = options.expectedHostname ?? configuredHostname();
+		const expectedAction = options.expectedAction ?? 'request-otp';
+		return (
+			result.success === true &&
+			Boolean(expectedHostname) &&
+			result.hostname === expectedHostname &&
+			result.action === expectedAction
+		);
 	} catch (error) {
-		console.error('[Turnstile] Verification error:', error);
+		logger.warn('Turnstile verification failed', {
+			timedOut: controller.signal.aborted,
+			errorType: error instanceof Error ? error.name : 'unknown'
+		});
 		return false;
+	} finally {
+		clearTimeout(timeout);
 	}
 }

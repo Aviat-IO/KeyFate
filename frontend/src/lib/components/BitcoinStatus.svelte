@@ -1,12 +1,21 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Card from '$lib/components/ui/card';
 	import { Separator } from '$lib/components/ui/separator';
 	import { AlertTriangle, Bitcoin, Clock } from '@lucide/svelte';
 	import { untrack } from 'svelte';
+	import type { BitcoinNetwork } from '$lib/bitcoin/network';
+	import BitcoinOwnerRefresh from '$lib/components/bitcoin/BitcoinOwnerRefresh.svelte';
 
-	let { secretId }: { secretId: string } = $props();
+	let {
+		secretId,
+		bitcoinEnrollmentEnabled = false
+	}: {
+		secretId: string;
+		bitcoinEnrollmentEnabled?: boolean;
+	} = $props();
 
 	interface BitcoinStatusData {
 		enabled: boolean;
@@ -14,14 +23,21 @@
 			id: string;
 			txId: string;
 			amountSats: number;
+			outputIndex: number;
 			ttlBlocks: number;
 			status: string;
-			generation?: number;
+			timelockScript: string;
+			ownerPubkey: string;
+			recipientAddress: string;
+			recipientId: string;
+			recipientNostrPubkey: string;
+			nostrCapsuleEventId: string;
+			generation: number;
 		} | null;
 		estimatedDaysRemaining: number | null;
 		refreshesRemaining: number | null;
 		hasPreSignedTx: boolean;
-		network: 'mainnet' | 'testnet' | null;
+		network: BitcoinNetwork | null;
 	}
 
 	let statusData = $state<BitcoinStatusData | null>(null);
@@ -55,6 +71,11 @@
 		} finally {
 			loading = false;
 		}
+	}
+
+	async function handleRefreshed(): Promise<void> {
+		await fetchStatus();
+		await invalidateAll();
 	}
 
 	$effect(() => {
@@ -110,9 +131,17 @@
 					</div>
 				{/if}
 				<p class="text-muted-foreground text-xs">
-					Refreshes require importing the encrypted owner continuity kit into the dedicated Bitcoin
-					workflow. Session-stored keys are not supported.
+					Refreshes require importing the encrypted owner continuity kit. Session-stored keys are
+					not supported.
 				</p>
+				{#if bitcoinEnrollmentEnabled && statusData.network}
+					<BitcoinOwnerRefresh
+						{secretId}
+						network={statusData.network}
+						status={statusData.utxo}
+						onrefreshed={handleRefreshed}
+					/>
+				{/if}
 			</div>
 		{/if}
 	</Card.Content>

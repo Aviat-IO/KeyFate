@@ -68,7 +68,7 @@ Keep the CSV script's owner and delayed branches, but treat the delayed-branch k
 
 The delayed transaction pays a network-valid Bitcoin address supplied for and confirmed by the actual recipient; it does not pay an address derived from an owner-held recipient key. The complete transaction is encrypted to the recipient Nostr pubkey before upload. The server stores ciphertext plus public lifecycle metadata only.
 
-Owner refresh continuity uses an owner-controlled encrypted continuity kit, not sessionStorage as the sole copy. Each refresh creates a new UTXO generation, one-time branch key, signed transaction, and recipient-encrypted envelope. Persistence/publication of the new generation must succeed before the previous generation is marked superseded.
+Owner refresh continuity uses an owner-controlled encrypted continuity kit, not sessionStorage as the sole copy. Each setup/refresh first creates the new generation, complete recipient-encrypted envelope, and encrypted owner kit; the owner must make the kit durable before broadcast. The server then persists a non-ready prepared transition, broadcast uses the locally computed transaction ID, and an idempotent exact-output finalizer advances readiness/check-in and supersedes the old database generation. Accepted-then-timeout or process failure remains an explicit prepared/ambiguous state that can be retried from durable encrypted kit plus public prepared metadata without the destroyed one-time branch key.
 
 The recipient browser decrypts the current transaction and validates network, input outpoint, sequence, witness script, OP_RETURN capsule binding, and payment output/address before broadcast.
 

@@ -48,3 +48,16 @@ export {
 	decryptBitcoinContinuityKit,
 	type BitcoinContinuityData
 } from './continuity-kit.js';
+
+export {
+	BITCOIN_NETWORKS,
+	bitcoinNetworkSchema,
+	getBitcoinNetworkParams,
+	getBitcoinExplorerBaseUrl,
+	getBitcoinBroadcastUrls,
+	getBitcoinStatusBaseUrls,
+	isBitcoinNetwork,
+	type BitcoinNetwork
+} from './network.js';
+
+export { discoverAddressUtxos, UTXO_DISCOVERY_LIMITS } from './utxo-discovery.js';

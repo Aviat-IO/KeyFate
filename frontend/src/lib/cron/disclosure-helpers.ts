@@ -88,6 +88,7 @@ export async function claimDisclosureRecipient(
  */
 export async function updateDisclosureLog(
 	db: Database,
+	secretId: string,
 	logId: string,
 	leaseId: string,
 	status: 'sent' | 'failed',
@@ -104,7 +105,18 @@ export async function updateDisclosureLog(
 				error: error ?? null,
 				updatedAt: now
 			})
-			.where(and(eq(disclosureLog.id, logId), eq(disclosureLog.leaseId, leaseId)))
+			.where(
+				and(
+					eq(disclosureLog.id, logId),
+					eq(disclosureLog.leaseId, leaseId),
+					sql`exists (
+						select 1 from ${secrets}
+						where ${secrets.id} = ${secretId}::uuid
+							and ${secrets.processingLeaseId} = ${leaseId}::uuid
+							and ${secrets.processingLeaseExpiresAt} > CURRENT_TIMESTAMP
+					)`
+				)
+			)
 			.returning({ id: disclosureLog.id });
 
 		return Boolean(updated);

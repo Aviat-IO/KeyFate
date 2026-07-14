@@ -10,6 +10,9 @@ import { bitcoinUtxos } from '$lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { logger } from '$lib/logger';
 import { getUTXOStatus } from '$lib/bitcoin/broadcast';
+import { isBitcoinNetwork } from '$lib/bitcoin/network';
+import { getP2WSHOutputScript } from '$lib/bitcoin/script';
+import { hex } from '@scure/base';
 
 /** Max UTXOs to process per run to avoid hammering mempool.space */
 export const MAX_UTXOS_PER_RUN = 10;
@@ -24,7 +27,9 @@ export interface ConfirmUtxosResult {
 	errors?: string[];
 }
 
-export async function confirmPendingUtxos(): Promise<ConfirmUtxosResult> {
+export async function confirmPendingUtxos(
+	getStatus: typeof getUTXOStatus = getUTXOStatus
+): Promise<ConfirmUtxosResult> {
 	const db = await getDatabase();
 
 	// Query all pending UTXOs, limited to MAX_UTXOS_PER_RUN
@@ -52,9 +57,16 @@ export async function confirmPendingUtxos(): Promise<ConfirmUtxosResult> {
 
 	for (const utxo of pendingUtxos) {
 		try {
-			// TODO: The UTXO record doesn't store the network. Defaulting to "mainnet".
-			// This should be made configurable or stored per-UTXO when multi-network support is added.
-			const status = await getUTXOStatus(utxo.txId, utxo.outputIndex, 'mainnet');
+			if (!isBitcoinNetwork(utxo.network))
+				throw new Error('UTXO has no recognized Bitcoin network');
+			const expectedScriptPubKey = hex.encode(
+				getP2WSHOutputScript(hex.decode(utxo.timelockScript), utxo.network)
+			);
+			const status = await getStatus(utxo.txId, utxo.outputIndex, utxo.network, {
+				amountSats: utxo.amountSats,
+				scriptPubKey: expectedScriptPubKey
+			});
+			if (status.spent) throw new Error('Persisted Bitcoin outpoint is already spent');
 
 			if (status.confirmed) {
 				await db

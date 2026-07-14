@@ -1,8 +1,5 @@
 {
 	"src/auth.ts": {
-		"@typescript-eslint/no-explicit-any": {
-			"count": 2
-		},
 		"no-useless-assignment": {
 			"count": 1
 		}
@@ -99,16 +96,6 @@
 			"count": 4
 		}
 	},
-	"src/lib/auth/validate-env.ts": {
-		"@typescript-eslint/no-unused-vars": {
-			"count": 1
-		}
-	},
-	"src/lib/bitcoin/refresh.ts": {
-		"@typescript-eslint/no-unused-vars": {
-			"count": 1
-		}
-	},
 	"src/lib/bitcoin/transaction.ts": {
 		"@typescript-eslint/no-unused-vars": {
 			"count": 1
@@ -180,9 +167,6 @@
 		},
 		"svelte/no-useless-mustaches": {
 			"count": 2
-		},
-		"svelte/require-each-key": {
-			"count": 3
 		}
 	},
 	"src/lib/components/OtpInput.svelte": {
@@ -260,11 +244,6 @@
 			"count": 1
 		}
 	},
-	"src/lib/components/Turnstile.svelte": {
-		"@typescript-eslint/no-explicit-any": {
-			"count": 6
-		}
-	},
 	"src/lib/components/recovery/RecoveryResultStep.svelte": {
 		"svelte/require-each-key": {
 			"count": 1
@@ -281,19 +260,6 @@
 		},
 		"preserve-caught-error": {
 			"count": 1
-		}
-	},
-	"src/lib/csrf.ts": {
-		"@typescript-eslint/no-explicit-any": {
-			"count": 1
-		}
-	},
-	"src/lib/db/connection-manager.ts": {
-		"@typescript-eslint/no-explicit-any": {
-			"count": 2
-		},
-		"preserve-caught-error": {
-			"count": 2
 		}
 	},
 	"src/lib/db/connection-parser.ts": {
@@ -501,17 +467,7 @@
 			"count": 1
 		}
 	},
-	"src/routes/api/health/__tests__/health.test.ts": {
-		"@typescript-eslint/no-explicit-any": {
-			"count": 8
-		}
-	},
 	"src/routes/api/secrets/[id]/+server.ts": {
-		"@typescript-eslint/no-explicit-any": {
-			"count": 1
-		}
-	},
-	"src/routes/api/secrets/[id]/check-in/+server.ts": {
 		"@typescript-eslint/no-explicit-any": {
 			"count": 1
 		}
@@ -626,9 +582,6 @@
 		}
 	},
 	"src/routes/sign-in/+page.svelte": {
-		"@typescript-eslint/no-unused-vars": {
-			"count": 1
-		},
 		"svelte/no-navigation-without-resolve": {
 			"count": 2
 		}

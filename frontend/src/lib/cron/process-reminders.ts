@@ -16,7 +16,7 @@ import { logEmailFailure } from '$lib/email/email-failure-logger';
 import { calculateBackoffDelay } from '$lib/email/email-retry-service';
 import { sendSecretDisclosureEmail } from '$lib/email/email-service';
 import { decryptMessage } from '$lib/encryption';
-import { and, desc, eq, lt, inArray, isNull, or, sql } from 'drizzle-orm';
+import { and, desc, eq, gt, lt, inArray, isNull, or, sql } from 'drizzle-orm';
 import { sanitizeError, CRON_CONFIG, isApproachingTimeout, logCronMetrics } from '$lib/cron/utils';
 import {
 	claimDisclosureRecipient,
@@ -120,7 +120,13 @@ async function processOverdueSecret(
 					lastError: `Max retries (${CRON_CONFIG.MAX_SECRET_RETRIES}) exceeded`,
 					updatedAt: new Date()
 				} as SecretUpdate)
-				.where(and(eq(secrets.id, secret.id), eq(secrets.processingLeaseId, leaseId)));
+				.where(
+					and(
+						eq(secrets.id, secret.id),
+						eq(secrets.processingLeaseId, leaseId),
+						gt(secrets.processingLeaseExpiresAt, new Date())
+					)
+				);
 
 			return { success: false, sent: 0, failed: 0 };
 		}
@@ -146,7 +152,13 @@ async function processOverdueSecret(
 					lastRetryAt: new Date(),
 					updatedAt: new Date()
 				} as SecretUpdate)
-				.where(and(eq(secrets.id, secret.id), eq(secrets.processingLeaseId, leaseId)));
+				.where(
+					and(
+						eq(secrets.id, secret.id),
+						eq(secrets.processingLeaseId, leaseId),
+						gt(secrets.processingLeaseExpiresAt, new Date())
+					)
+				);
 
 			return { success: false, sent: 0, failed: 0 };
 		}
@@ -242,7 +254,13 @@ async function processOverdueSecret(
 					lastRetryAt: new Date(),
 					updatedAt: new Date()
 				} as SecretUpdate)
-				.where(and(eq(secrets.id, secret.id), eq(secrets.processingLeaseId, leaseId)));
+				.where(
+					and(
+						eq(secrets.id, secret.id),
+						eq(secrets.processingLeaseId, leaseId),
+						gt(secrets.processingLeaseExpiresAt, new Date())
+					)
+				);
 
 			return { success: false, sent: 0, failed: 0 };
 		}
@@ -382,7 +400,7 @@ async function processOverdueSecret(
 							durationMs: emailDuration
 						});
 
-						if (await updateDisclosureLog(db, logEntry.id, leaseId, 'sent')) {
+						if (await updateDisclosureLog(db, secret.id, logEntry.id, leaseId, 'sent')) {
 							sentEmails.add(contactEmail);
 							sent++;
 						} else {
@@ -403,6 +421,7 @@ async function processOverdueSecret(
 
 						await updateDisclosureLog(
 							db,
+							secret.id,
 							logEntry.id,
 							leaseId,
 							'failed',
@@ -447,7 +466,7 @@ async function processOverdueSecret(
 						}
 					);
 
-					await updateDisclosureLog(db, logEntry.id, leaseId, 'failed', errorMsg);
+					await updateDisclosureLog(db, secret.id, logEntry.id, leaseId, 'failed', errorMsg);
 
 					await logEmailFailure({
 						emailType: 'disclosure',
@@ -493,7 +512,13 @@ async function processOverdueSecret(
 					lastRetryAt: new Date(),
 					updatedAt: new Date()
 				} as SecretUpdate)
-				.where(and(eq(secrets.id, secret.id), eq(secrets.processingLeaseId, leaseId)));
+				.where(
+					and(
+						eq(secrets.id, secret.id),
+						eq(secrets.processingLeaseId, leaseId),
+						gt(secrets.processingLeaseExpiresAt, new Date())
+					)
+				);
 
 			return { success: false, sent, failed };
 		}
@@ -526,7 +551,13 @@ async function processOverdueSecret(
 				lastRetryAt: allSent ? null : new Date(),
 				updatedAt: new Date()
 			} as SecretUpdate)
-			.where(and(eq(secrets.id, secret.id), eq(secrets.processingLeaseId, leaseId)));
+			.where(
+				and(
+					eq(secrets.id, secret.id),
+					eq(secrets.processingLeaseId, leaseId),
+					gt(secrets.processingLeaseExpiresAt, new Date())
+				)
+			);
 
 		return { success: allSent, sent, failed };
 	} catch (error) {
@@ -558,7 +589,13 @@ async function processOverdueSecret(
 						lastRetryAt: new Date(),
 						updatedAt: new Date()
 					} as SecretUpdate)
-					.where(and(eq(secrets.id, secret.id), eq(secrets.processingLeaseId, leaseId)));
+					.where(
+						and(
+							eq(secrets.id, secret.id),
+							eq(secrets.processingLeaseId, leaseId),
+							gt(secrets.processingLeaseExpiresAt, new Date())
+						)
+					);
 			}
 		} catch {
 			logger.error('Error rolling back secret status', undefined, {

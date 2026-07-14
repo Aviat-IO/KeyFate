@@ -1,3 +1,4 @@
+import { createHmac } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const verificationTokens = {
@@ -35,7 +36,8 @@ const fromSelect = vi.fn((table: unknown) => {
 	return { where: vi.fn(() => whereSelect) };
 });
 const select = vi.fn(() => ({ from: fromSelect }));
-const whereUpdate = vi.fn(async () => []);
+const returningUpdate = vi.fn(async (): Promise<Array<{ token: string }>> => []);
+const whereUpdate = vi.fn(() => ({ returning: returningUpdate }));
 const setUpdate = vi.fn((values: Record<string, unknown>) => {
 	updateSets.push(values);
 	return { where: whereUpdate };
@@ -73,8 +75,10 @@ import { validateOTPToken } from '$lib/auth/otp';
 describe('validateOTPToken', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		process.env.AUTH_SECRET = 'test-auth-secret-at-least-32-characters';
 		activeTokens = [];
 		updateSets.length = 0;
+		returningUpdate.mockResolvedValue([]);
 	});
 
 	it('does not mutate durable account state when no active challenge exists', async () => {
@@ -130,10 +134,59 @@ describe('validateOTPToken', () => {
 				attemptCount: 0
 			}
 		];
+		returningUpdate.mockResolvedValueOnce([{ token: '12345678' }]);
 
 		const result = await validateOTPToken('owner@example.com', '12345678');
 
 		expect(result).toEqual({ success: true, valid: true });
 		expect(updateSets).toEqual([expect.objectContaining({ expires: expect.any(Date) })]);
+	});
+
+	it('accepts a new challenge after the client network address changes', async () => {
+		const email = 'mobile@example.com';
+		const code = '87654321';
+		const hash = createHmac('sha256', process.env.AUTH_SECRET!)
+			.update(`keyfate:otp:${`authentication:${email}:${code}`}`)
+			.digest('hex');
+		activeTokens = [
+			{
+				identifier: email,
+				token: `v3$${hash}`,
+				expires: new Date(Date.now() + 60_000),
+				purpose: 'authentication',
+				attemptCount: 0
+			}
+		];
+		returningUpdate.mockResolvedValueOnce([{ token: activeTokens[0].token }]);
+
+		const result = await validateOTPToken(email, code, '203.0.113.99');
+
+		expect(result).toEqual({ success: true, valid: true });
+	});
+
+	it('keeps already-issued v2 challenges bound during a rolling deployment', async () => {
+		const email = 'legacy@example.com';
+		const code = '11223344';
+		const codeHash = createHmac('sha256', process.env.AUTH_SECRET!)
+			.update(`keyfate:otp:${`authentication:${email}:${code}`}`)
+			.digest('hex');
+		const clientHash = createHmac('sha256', process.env.AUTH_SECRET!)
+			.update('keyfate:otp-client:198.51.100.10')
+			.digest('hex');
+		activeTokens = [
+			{
+				identifier: email,
+				token: `v2$${codeHash}$${clientHash}`,
+				expires: new Date(Date.now() + 60_000),
+				purpose: 'authentication',
+				attemptCount: 0
+			}
+		];
+		returningUpdate.mockResolvedValueOnce([{ token: activeTokens[0].token }]);
+
+		expect(await validateOTPToken(email, code, '198.51.100.10')).toEqual({
+			success: true,
+			valid: true
+		});
 	});
 });

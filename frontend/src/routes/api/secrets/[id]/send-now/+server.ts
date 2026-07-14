@@ -14,7 +14,7 @@ import {
 	updateDisclosureLog,
 	type DisclosureRecipientClaim
 } from '$lib/cron/disclosure-helpers';
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { logger } from '$lib/logger';
 
 const PROCESSING_LEASE_MS = 15 * 60 * 1000;
@@ -219,7 +219,7 @@ export const POST: RequestHandler = async (event) => {
 				});
 
 				if (emailResult.success) {
-					if (await updateDisclosureLog(db, logEntry.id, leaseId, 'sent')) sent++;
+					if (await updateDisclosureLog(db, id, logEntry.id, leaseId, 'sent')) sent++;
 					else failed++;
 					logger.info('Send-now disclosure email sent', {
 						secretId: id,
@@ -229,6 +229,7 @@ export const POST: RequestHandler = async (event) => {
 				} else {
 					await updateDisclosureLog(
 						db,
+						id,
 						logEntry.id,
 						leaseId,
 						'failed',
@@ -250,7 +251,7 @@ export const POST: RequestHandler = async (event) => {
 				}
 			} catch (error) {
 				const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-				await updateDisclosureLog(db, logEntry.id, leaseId, 'failed', errorMsg);
+				await updateDisclosureLog(db, id, logEntry.id, leaseId, 'failed', errorMsg);
 				await logEmailFailure({
 					emailType: 'disclosure',
 					provider: 'sendgrid',
@@ -267,8 +268,13 @@ export const POST: RequestHandler = async (event) => {
 
 		const allSent = sent === recipients.length && failed === 0;
 
+		const leaseIsStillValid = and(
+			eq(secrets.id, id),
+			eq(secrets.processingLeaseId, leaseId),
+			sql`${secrets.processingLeaseExpiresAt} > now()`
+		);
 		if (allSent) {
-			await db
+			const finalized = await db
 				.update(secrets)
 				.set({
 					status: 'triggered',
@@ -279,11 +285,22 @@ export const POST: RequestHandler = async (event) => {
 					lastError: null,
 					updatedAt: new Date()
 				} as SecretUpdate)
-				.where(and(eq(secrets.id, id), eq(secrets.processingLeaseId, leaseId)));
+				.where(leaseIsStillValid)
+				.returning({ id: secrets.id });
+			if (finalized.length !== 1) {
+				return json(
+					{
+						error: 'Disclosure lease was lost after delivery; reconciliation required',
+						sent,
+						failed
+					},
+					{ status: 409 }
+				);
+			}
 
 			return json({ success: true, sent, failed });
 		} else {
-			await db
+			const finalized = await db
 				.update(secrets)
 				.set({
 					status: 'failed',
@@ -293,7 +310,18 @@ export const POST: RequestHandler = async (event) => {
 					lastError: `Send now: sent ${sent}, failed ${failed}`,
 					updatedAt: new Date()
 				} as SecretUpdate)
-				.where(and(eq(secrets.id, id), eq(secrets.processingLeaseId, leaseId)));
+				.where(leaseIsStillValid)
+				.returning({ id: secrets.id });
+			if (finalized.length !== 1) {
+				return json(
+					{
+						error: 'Disclosure lease was lost after delivery; reconciliation required',
+						sent,
+						failed
+					},
+					{ status: 409 }
+				);
+			}
 
 			return json(
 				{

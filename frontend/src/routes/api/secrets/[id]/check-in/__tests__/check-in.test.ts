@@ -8,91 +8,42 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// --- Mocks ---
+// --- Isolated check-in dependency boundary ---
 
-// Mock @sveltejs/kit
-vi.mock('@sveltejs/kit', () => ({
-	json: (data: unknown, init?: { status?: number }) =>
-		new Response(JSON.stringify(data), {
-			status: init?.status ?? 200,
-			headers: { 'Content-Type': 'application/json' }
-		})
-}));
-
-// Mock CSRF protection
 const mockRequireCSRFProtection = vi.fn();
 const mockCreateCSRFErrorResponse = vi.fn();
-vi.mock('$lib/csrf', () => ({
-	requireCSRFProtection: (...args: unknown[]) => mockRequireCSRFProtection(...args),
-	createCSRFErrorResponse: (...args: unknown[]) => mockCreateCSRFErrorResponse(...args)
-}));
-
-// Mock user verification
 const mockEnsureUserExists = vi.fn();
-vi.mock('$lib/auth/user-verification', () => ({
-	ensureUserExists: (...args: unknown[]) => mockEnsureUserExists(...args)
-}));
-
-// Mock database — transaction is the key piece
 const mockTransaction = vi.fn();
-const mockDb = {
-	transaction: mockTransaction
-};
-vi.mock('$lib/db/drizzle', () => ({
-	getDatabase: vi.fn(async () => mockDb)
-}));
-
-// Mock schema table references
-vi.mock('$lib/db/schema', () => ({
-	secrets: {
-		id: 'id',
-		userId: 'user_id',
-		status: 'status',
-		checkInDays: 'check_in_days',
-		lastCheckIn: 'last_check_in',
-		nextCheckIn: 'next_check_in',
-		retryCount: 'retry_count',
-		lastRetryAt: 'last_retry_at',
-		lastError: 'last_error',
-		updatedAt: 'updated_at'
-	},
-	checkinHistory: {
-		id: 'id',
-		secretId: 'secret_id',
-		userId: 'user_id',
-		checkedInAt: 'checked_in_at',
-		nextCheckIn: 'next_check_in'
-	}
-}));
-
-// Mock drizzle-orm operators
-vi.mock('drizzle-orm', () => ({
-	eq: vi.fn((a, b) => ({ op: 'eq', a, b })),
-	and: vi.fn((...args: unknown[]) => ({ op: 'and', args }))
-}));
-
-// Mock secret-mapper
+const mockDb = { transaction: mockTransaction };
 const mockMapDrizzleSecretToApiShape = vi.fn();
-vi.mock('$lib/db/secret-mapper', () => ({
-	mapDrizzleSecretToApiShape: (...args: unknown[]) => mockMapDrizzleSecretToApiShape(...args)
-}));
-
-// Mock getSecretWithRecipients
 const mockGetSecretWithRecipients = vi.fn();
-vi.mock('$lib/db/queries/secrets', () => ({
-	getSecretWithRecipients: (...args: unknown[]) => mockGetSecretWithRecipients(...args)
-}));
-
-// Mock audit logger
 const mockLogCheckIn = vi.fn();
-vi.mock('$lib/services/audit-logger', () => ({
-	logCheckIn: (...args: unknown[]) => mockLogCheckIn(...args)
-}));
-
-// Mock reminder scheduler
 const mockScheduleRemindersForSecret = vi.fn();
-vi.mock('$lib/services/reminder-scheduler', () => ({
-	scheduleRemindersForSecret: (...args: unknown[]) => mockScheduleRemindersForSecret(...args)
+
+vi.mock('$lib/server/check-in-dependencies', () => ({
+	checkInDependencies: {
+		and: (...args: unknown[]) => ({ op: 'and', args }),
+		checkinHistory: {
+			secretId: 'checkin_history.secret_id',
+			userId: 'checkin_history.user_id',
+			checkedInAt: 'checkin_history.checked_in_at',
+			nextCheckIn: 'checkin_history.next_check_in'
+		},
+		createCSRFErrorResponse: (...args: unknown[]) => mockCreateCSRFErrorResponse(...args),
+		ensureUserExists: (...args: unknown[]) => mockEnsureUserExists(...args),
+		eq: (left: unknown, right: unknown) => ({ op: 'eq', left, right }),
+		getDatabase: vi.fn(async () => mockDb),
+		getSecretWithRecipients: (...args: unknown[]) => mockGetSecretWithRecipients(...args),
+		logCheckIn: (...args: unknown[]) => mockLogCheckIn(...args),
+		logger: { error: vi.fn() },
+		mapDrizzleSecretToApiShape: (...args: unknown[]) => mockMapDrizzleSecretToApiShape(...args),
+		requireCSRFProtection: (...args: unknown[]) => mockRequireCSRFProtection(...args),
+		scheduleRemindersForSecret: (...args: unknown[]) => mockScheduleRemindersForSecret(...args),
+		secrets: {
+			id: 'secrets.id',
+			userId: 'secrets.user_id'
+		}
+	}
 }));
 
 // --- Constants ---
@@ -122,6 +73,10 @@ function makeSecretRow(overrides: Record<string, unknown> = {}) {
 		title: 'Test Secret',
 		checkInDays: 30,
 		status: 'active',
+		bitcoinDeliveryStatus: null,
+		triggeredAt: null,
+		processingLeaseId: null,
+		processingLeaseExpiresAt: null,
 		retryCount: 0,
 		lastRetryAt: null,
 		lastError: null,
@@ -282,7 +237,39 @@ describe('POST /api/secrets/[id]/check-in', () => {
 	});
 
 	// ---------------------------------------------------------------
-	// 5. Normal check-in (active secret)
+	// 5. Concurrency and Bitcoin lifecycle guards
+	// ---------------------------------------------------------------
+	describe('Check-in lifecycle guards', () => {
+		it('rejects check-in while a disclosure lease is live', async () => {
+			setupTransaction([
+				makeSecretRow({
+					processingLeaseId: '550e8400-e29b-41d4-a716-446655440001',
+					processingLeaseExpiresAt: new Date(Date.now() + 60_000)
+				})
+			]);
+
+			const { POST } = await import('../+server');
+			const response = await POST(createEvent());
+
+			expect(response.status).toBe(409);
+			expect(await response.json()).toEqual({ error: 'Secret disclosure is already in progress' });
+		});
+
+		it('requires an atomic Bitcoin generation refresh instead of ordinary check-in', async () => {
+			setupTransaction([makeSecretRow({ bitcoinDeliveryStatus: 'ready' })]);
+
+			const { POST } = await import('../+server');
+			const response = await POST(createEvent());
+
+			expect(response.status).toBe(409);
+			expect(await response.json()).toEqual({
+				error: 'Refresh the Bitcoin continuity generation to complete this check-in'
+			});
+		});
+	});
+
+	// ---------------------------------------------------------------
+	// 6. Normal check-in (active secret)
 	// ---------------------------------------------------------------
 	describe('Normal check-in (active secret)', () => {
 		it('successfully checks in an active secret', async () => {
@@ -308,7 +295,7 @@ describe('POST /api/secrets/[id]/check-in', () => {
 			expect(data.next_check_in).toBe(mapped.next_check_in);
 		});
 
-		it('passes correct update payload for active secret (no status reset)', async () => {
+		it('clears stale processing and failure state for an active secret', async () => {
 			const secretRow = makeSecretRow({ status: 'active' });
 			const updatedRow = makeSecretRow({ status: 'active' });
 
@@ -347,16 +334,21 @@ describe('POST /api/secrets/[id]/check-in', () => {
 			expect(capturedPayload!.lastCheckIn).toBeInstanceOf(Date);
 			expect(capturedPayload!.nextCheckIn).toBeInstanceOf(Date);
 			expect(capturedPayload!.updatedAt).toBeInstanceOf(Date);
-			// Active secret should NOT have status/retryCount/lastRetryAt/lastError in payload
-			expect(capturedPayload!.status).toBeUndefined();
-			expect(capturedPayload!.retryCount).toBeUndefined();
-			expect(capturedPayload!.lastRetryAt).toBeUndefined();
-			expect(capturedPayload!.lastError).toBeUndefined();
+			expect(capturedPayload).toMatchObject({
+				status: 'active',
+				processingStartedAt: null,
+				processingLeaseId: null,
+				processingLeaseExpiresAt: null,
+				triggeredAt: null,
+				retryCount: 0,
+				lastRetryAt: null,
+				lastError: null
+			});
 		});
 	});
 
 	// ---------------------------------------------------------------
-	// 6. Recovery check-in (failed secret)
+	// 7. Recovery check-in (failed secret)
 	// ---------------------------------------------------------------
 	describe('Recovery check-in (failed secret)', () => {
 		it('resets status to active, retryCount to 0, lastRetryAt and lastError to null', async () => {

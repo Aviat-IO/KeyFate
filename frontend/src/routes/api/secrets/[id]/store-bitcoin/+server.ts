@@ -12,6 +12,12 @@ import { requireCSRFProtection, createCSRFErrorResponse } from '$lib/csrf';
 import { encryptedBitcoinEnvelopeSchema } from '$lib/bitcoin/recovery-envelope';
 import { decodeCSVTimelockScript, MIN_UTXO_SATS } from '$lib/bitcoin/script';
 import { scheduleRemindersForSecret } from '$lib/services/reminder-scheduler';
+import { isBitcoinEnrollmentEnabled } from '$lib/server/bitcoin-enrollment';
+import {
+	bitcoinNetworkSchema,
+	getBitcoinNetworkParams,
+	type BitcoinNetwork
+} from '$lib/bitcoin/network';
 
 const hex64 = z.string().regex(/^[0-9a-f]{64}$/);
 const compressedPubkey = z.string().regex(/^(?:02|03)[0-9a-f]{64}$/);
@@ -26,16 +32,15 @@ const bodySchema = z
 		branchPubkey: compressedPubkey,
 		ttlBlocks: z.number().int().min(1).max(65535),
 		recipientAddress: z.string().min(14).max(100),
-		network: z.enum(['mainnet', 'testnet']),
+		network: bitcoinNetworkSchema,
 		generation: z.literal(1),
 		nostrCapsuleEventId: hex64,
 		encryptedRecoveryEnvelope: encryptedBitcoinEnvelopeSchema
 	})
 	.strict();
 
-function validateAddress(address: string, network: 'mainnet' | 'testnet'): void {
-	const selected = network === 'mainnet' ? btc.NETWORK : btc.TEST_NETWORK;
-	btc.Address(selected).decode(address);
+function validateAddress(address: string, network: BitcoinNetwork): void {
+	btc.Address(getBitcoinNetworkParams(network)).decode(address);
 }
 
 export const POST: RequestHandler = async (event) => {
@@ -44,6 +49,9 @@ export const POST: RequestHandler = async (event) => {
 
 	const session = await event.locals.auth();
 	if (!session?.user?.id) return json({ error: 'Unauthorized' }, { status: 401 });
+	if (!isBitcoinEnrollmentEnabled()) {
+		return json({ error: 'Bitcoin enrollment is disabled' }, { status: 503 });
+	}
 
 	const parsed = bodySchema.safeParse(await event.request.json());
 	if (!parsed.success) {
@@ -55,6 +63,7 @@ export const POST: RequestHandler = async (event) => {
 
 	try {
 		const body = parsed.data;
+		if (body.network !== 'signet') throw new Error('Bitcoin enrollment is restricted to Signet');
 		validateAddress(body.recipientAddress, body.network);
 		const decodedScript = decodeCSVTimelockScript(hex.decode(body.timelockScript));
 		if (
@@ -131,6 +140,7 @@ export const POST: RequestHandler = async (event) => {
 					generationKey: `${event.params.id}:${body.generation}`,
 					recoveryManifest: {
 						recipientId: body.recipientId,
+						recipientNostrPubkey: recipient.nostrPubkey,
 						nostrCapsuleEventId: body.nostrCapsuleEventId
 					}
 				})

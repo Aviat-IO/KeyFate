@@ -10,6 +10,7 @@ import * as btc from '@scure/btc-signer';
 import { hex } from '@scure/base';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { createCSVTimelockScript, getP2WSHOutputScript, MIN_UTXO_SATS } from './script.js';
+import type { BitcoinNetwork } from './network.js';
 
 /** Result of refreshing a timelock UTXO */
 export interface RefreshResult {
@@ -39,7 +40,7 @@ export function refreshTimelockUTXO(params: {
 	recipientPubkey: Uint8Array;
 	ttlBlocks: number;
 	feeRateSatsPerVbyte: number;
-	network: 'mainnet' | 'testnet';
+	network: BitcoinNetwork;
 }): RefreshResult {
 	const {
 		currentUtxo,
@@ -52,7 +53,6 @@ export function refreshTimelockUTXO(params: {
 		network
 	} = params;
 
-	const net = network === 'testnet' ? btc.TEST_NETWORK : btc.NETWORK;
 	const currentP2WSHScript = getP2WSHOutputScript(currentScript, network);
 
 	// Create new timelock script (may have same or different TTL)

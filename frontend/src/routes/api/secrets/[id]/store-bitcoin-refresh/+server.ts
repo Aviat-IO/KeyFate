@@ -7,10 +7,18 @@ import { hex } from '@scure/base';
 import { and, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { getDatabase } from '$lib/db/drizzle';
-import { bitcoinUtxos, secretRecipients, secrets } from '$lib/db/schema';
+import { bitcoinUtxos, checkinHistory, secretRecipients, secrets } from '$lib/db/schema';
 import { requireCSRFProtection, createCSRFErrorResponse } from '$lib/csrf';
 import { encryptedBitcoinEnvelopeSchema } from '$lib/bitcoin/recovery-envelope';
 import { decodeCSVTimelockScript, MIN_UTXO_SATS } from '$lib/bitcoin/script';
+import { isBitcoinEnrollmentEnabled } from '$lib/server/bitcoin-enrollment';
+import { scheduleRemindersForSecret } from '$lib/services/reminder-scheduler';
+import { logCheckIn } from '$lib/services/audit-logger';
+import {
+	bitcoinNetworkSchema,
+	getBitcoinNetworkParams,
+	type BitcoinNetwork
+} from '$lib/bitcoin/network';
 
 const hex64 = z.string().regex(/^[0-9a-f]{64}$/);
 const compressedPubkey = z.string().regex(/^(?:02|03)[0-9a-f]{64}$/);
@@ -24,15 +32,15 @@ const bodySchema = z
 		newBranchPubkey: compressedPubkey,
 		ttlBlocks: z.number().int().min(1).max(65535),
 		recipientAddress: z.string().min(14).max(100),
-		network: z.enum(['mainnet', 'testnet']),
+		network: bitcoinNetworkSchema,
 		generation: z.number().int().min(2),
 		nostrCapsuleEventId: hex64,
 		encryptedRecoveryEnvelope: encryptedBitcoinEnvelopeSchema
 	})
 	.strict();
 
-function validateAddress(address: string, network: 'mainnet' | 'testnet'): void {
-	btc.Address(network === 'mainnet' ? btc.NETWORK : btc.TEST_NETWORK).decode(address);
+function validateAddress(address: string, network: BitcoinNetwork): void {
+	btc.Address(getBitcoinNetworkParams(network)).decode(address);
 }
 
 export const POST: RequestHandler = async (event) => {
@@ -40,6 +48,10 @@ export const POST: RequestHandler = async (event) => {
 	if (!csrfCheck.valid) return createCSRFErrorResponse();
 	const session = await event.locals.auth();
 	if (!session?.user?.id) return json({ error: 'Unauthorized' }, { status: 401 });
+	const userId = session.user.id;
+	if (!isBitcoinEnrollmentEnabled()) {
+		return json({ error: 'Bitcoin enrollment is disabled' }, { status: 503 });
+	}
 
 	const parsed = bodySchema.safeParse(await event.request.json());
 	if (!parsed.success) {
@@ -51,12 +63,13 @@ export const POST: RequestHandler = async (event) => {
 
 	try {
 		const body = parsed.data;
+		if (body.network !== 'signet') throw new Error('Bitcoin refresh is restricted to Signet');
 		validateAddress(body.recipientAddress, body.network);
 		const db = await getDatabase();
 		const [secret] = await db
 			.select({ id: secrets.id })
 			.from(secrets)
-			.where(and(eq(secrets.id, event.params.id), eq(secrets.userId, session.user.id)));
+			.where(and(eq(secrets.id, event.params.id), eq(secrets.userId, userId)));
 		if (!secret) return json({ error: 'Secret not found' }, { status: 404 });
 
 		const [current] = await db
@@ -107,8 +120,31 @@ export const POST: RequestHandler = async (event) => {
 			throw new Error('Recovery envelope recipient continuity mismatch');
 		}
 
-		const [newRecord] = await db.transaction(async (tx) => {
-			const inserted = await tx
+		const transition = await db.transaction(async (tx) => {
+			const [lockedSecret] = await tx
+				.select({
+					id: secrets.id,
+					checkInDays: secrets.checkInDays,
+					status: secrets.status,
+					triggeredAt: secrets.triggeredAt,
+					processingLeaseId: secrets.processingLeaseId,
+					processingLeaseExpiresAt: secrets.processingLeaseExpiresAt
+				})
+				.from(secrets)
+				.where(and(eq(secrets.id, event.params.id), eq(secrets.userId, userId)))
+				.for('update');
+			if (!lockedSecret) return { kind: 'not_found' as const };
+
+			const now = new Date();
+			if (lockedSecret.triggeredAt || lockedSecret.status === 'triggered') {
+				return { kind: 'already_disclosed' as const };
+			}
+			const hasLiveDisclosureLease =
+				Boolean(lockedSecret.processingLeaseId) &&
+				(!lockedSecret.processingLeaseExpiresAt || lockedSecret.processingLeaseExpiresAt > now);
+			if (hasLiveDisclosureLease) return { kind: 'disclosure_in_progress' as const };
+
+			const [newRecord] = await tx
 				.insert(bitcoinUtxos)
 				.values({
 					secretId: event.params.id,
@@ -129,6 +165,7 @@ export const POST: RequestHandler = async (event) => {
 					generationKey: `${event.params.id}:${body.generation}`,
 					recoveryManifest: {
 						recipientId,
+						recipientNostrPubkey: recipient.nostrPubkey,
 						nostrCapsuleEventId: body.nostrCapsuleEventId
 					}
 				})
@@ -138,9 +175,9 @@ export const POST: RequestHandler = async (event) => {
 				.update(bitcoinUtxos)
 				.set({
 					status: 'spent',
-					spentAt: new Date(),
+					spentAt: now,
 					spentByTxId: body.newTxId,
-					updatedAt: new Date()
+					updatedAt: now
 				})
 				.where(
 					and(
@@ -150,14 +187,80 @@ export const POST: RequestHandler = async (event) => {
 				)
 				.returning({ id: bitcoinUtxos.id });
 			if (superseded.length !== 1) throw new Error('Bitcoin generation changed concurrently');
-			return inserted;
+
+			const nextCheckIn = new Date(now.getTime() + lockedSecret.checkInDays * 24 * 60 * 60 * 1000);
+			await tx
+				.update(secrets)
+				.set({
+					lastCheckIn: now,
+					nextCheckIn,
+					status: lockedSecret.status === 'paused' ? 'paused' : 'active',
+					processingStartedAt: null,
+					processingLeaseId: null,
+					processingLeaseExpiresAt: null,
+					retryCount: 0,
+					lastRetryAt: null,
+					lastError: null,
+					updatedAt: now
+				})
+				.where(and(eq(secrets.id, event.params.id), eq(secrets.userId, userId)));
+			await tx.insert(checkinHistory).values({
+				secretId: event.params.id,
+				userId,
+				checkedInAt: now,
+				nextCheckIn
+			});
+
+			return {
+				kind: 'success' as const,
+				newRecord,
+				nextCheckIn,
+				checkInDays: lockedSecret.checkInDays
+			};
 		});
 
+		if (transition.kind === 'not_found') {
+			return json({ error: 'Secret not found' }, { status: 404 });
+		}
+		if (transition.kind === 'already_disclosed') {
+			return json({ error: 'Secret disclosure is already complete' }, { status: 409 });
+		}
+		if (transition.kind === 'disclosure_in_progress') {
+			return json({ error: 'Secret disclosure is already in progress' }, { status: 409 });
+		}
+
+		const warnings: string[] = [];
+		try {
+			await logCheckIn(
+				userId,
+				event.params.id,
+				{
+					nextCheckIn: transition.nextCheckIn.toISOString(),
+					checkInDays: transition.checkInDays,
+					bitcoinGeneration: transition.newRecord.generation
+				},
+				event
+			);
+		} catch {
+			warnings.push('audit_reconciliation_required');
+		}
+		try {
+			await scheduleRemindersForSecret(
+				event.params.id,
+				transition.nextCheckIn,
+				transition.checkInDays
+			);
+		} catch {
+			warnings.push('reminder_reconciliation_required');
+		}
+
 		return json({
-			utxoId: newRecord.id,
-			newTxId: newRecord.txId,
-			generation: newRecord.generation,
-			previousUtxoId: current.id
+			utxoId: transition.newRecord.id,
+			newTxId: transition.newRecord.txId,
+			generation: transition.newRecord.generation,
+			previousUtxoId: current.id,
+			nextCheckIn: transition.nextCheckIn.toISOString(),
+			...(warnings.length > 0 ? { warnings } : {})
 		});
 	} catch (error) {
 		return json(

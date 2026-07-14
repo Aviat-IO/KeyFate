@@ -14,6 +14,10 @@
 		partitionRecoveryShares
 	} from '$lib/client/ephemeral-recovery-state';
 	import { encryptRecoveryKit } from '$lib/crypto/recovery-kit';
+	import BitcoinOwnerSetup from '$lib/components/bitcoin/BitcoinOwnerSetup.svelte';
+	import type { EphemeralBitcoinSetup } from '$lib/client/ephemeral-recovery-state';
+
+	let { data } = $props();
 
 	let userManagedShares = $state<string[]>([]);
 	let recipientShares = $state<string[]>([]);
@@ -29,6 +33,8 @@
 	let kitPassphraseConfirmation = $state('');
 	let exportingKit = $state(false);
 	let kitDownloaded = $state(false);
+	let bitcoinSetup = $state<EphemeralBitcoinSetup | null>(null);
+	let bitcoinKitDownloaded = $state(false);
 
 	onMount(() => {
 		const searchParams = $page.url.searchParams;
@@ -80,6 +86,11 @@
 		sssSharesTotal = total;
 		sssThreshold = threshold;
 		recipients = parsedRecipients;
+		bitcoinSetup = recoveryState.bitcoin ?? null;
+		if (bitcoinSetup && !data.bitcoinEnrollmentEnabled) {
+			error =
+				'Bitcoin enrollment became unavailable. Delete and re-create this secret without Bitcoin.';
+		}
 	});
 
 	function handleCopy(shareHex: string, index: number) {
@@ -140,7 +151,7 @@
 	}
 
 	function handleProceed() {
-		if (confirmedSent && kitDownloaded && secretId) {
+		if (confirmedSent && kitDownloaded && (!bitcoinSetup || bitcoinKitDownloaded) && secretId) {
 			clearEphemeralRecoveryState(secretId);
 			userManagedShares = [];
 			recipientShares = [];
@@ -295,6 +306,14 @@
 				</div>
 			{/if}
 
+			{#if bitcoinSetup && data.bitcoinEnrollmentEnabled && secretId}
+				<BitcoinOwnerSetup
+					{secretId}
+					setup={bitcoinSetup}
+					oncomplete={() => (bitcoinKitDownloaded = true)}
+				/>
+			{/if}
+
 			<div class="border-border space-y-4 rounded-md border p-4">
 				<div>
 					<h3 class="font-space font-bold tracking-tight">Download Encrypted Owner Kit</h3>
@@ -385,13 +404,16 @@
 			<div class="flex justify-end pt-8">
 				<Button
 					onclick={handleProceed}
-					disabled={!confirmedSent || !kitDownloaded || userManagedShares.length === 0}
+					disabled={!confirmedSent ||
+						!kitDownloaded ||
+						(!!bitcoinSetup && !bitcoinKitDownloaded) ||
+						userManagedShares.length === 0}
 					size="lg"
 					class="w-full font-semibold md:w-auto"
 				>
-					{confirmedSent && kitDownloaded
+					{confirmedSent && kitDownloaded && (!bitcoinSetup || bitcoinKitDownloaded)
 						? 'Clear Plaintext and Proceed'
-						: 'Complete Distribution and Kit Download'}
+						: 'Complete Distribution and Required Kit Downloads'}
 				</Button>
 			</div>
 		</div>

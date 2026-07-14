@@ -1,4 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
+import { hex } from '@scure/base';
+import { createCSVTimelockScript } from '$lib/bitcoin/script';
+
+const ownerPrivateKey = new Uint8Array(32);
+ownerPrivateKey[31] = 1;
+const recipientPrivateKey = new Uint8Array(32);
+recipientPrivateKey[31] = 2;
+const VALID_TIMELOCK_SCRIPT = hex.encode(
+	createCSVTimelockScript(
+		secp256k1.getPublicKey(ownerPrivateKey, true),
+		secp256k1.getPublicKey(recipientPrivateKey, true),
+		144
+	)
+);
 
 // Mock getDatabase
 const mockDb = {
@@ -23,16 +38,11 @@ mockDb.select.mockReturnValue(mockSelectChain);
 mockDb.update.mockReturnValue(mockUpdateChain);
 
 vi.mock('$lib/db/get-database', () => ({
-	getDatabase: vi.fn().mockResolvedValue(mockDb)
+	getDatabase: vi.fn().mockResolvedValue(mockDb),
+	closeDatabaseConnection: vi.fn()
 }));
 
-// Mock getUTXOStatus — include all exports to avoid breaking bitcoin.test.ts
-// in Bun's shared module cache
 const mockGetUTXOStatus = vi.fn();
-vi.mock('$lib/bitcoin/broadcast', () => ({
-	getUTXOStatus: (...args: unknown[]) => mockGetUTXOStatus(...args),
-	broadcastTransaction: vi.fn()
-}));
 
 // Note: $lib/logger is NOT mocked here to avoid polluting logger.test.ts
 // in Bun's shared module cache. The real logger runs (writes to console)
@@ -46,12 +56,13 @@ function makePendingUtxo(overrides: Record<string, unknown> = {}) {
 		txId: 'abc123',
 		outputIndex: 0,
 		amountSats: 50000,
-		timelockScript: 'deadbeef',
+		timelockScript: VALID_TIMELOCK_SCRIPT,
 		ownerPubkey: 'aabb',
 		recipientPubkey: 'ccdd',
 		ttlBlocks: 144,
 		status: 'pending',
 		preSignedRecipientTx: null,
+		network: 'signet',
 		confirmedAt: null,
 		spentAt: null,
 		spentByTxId: null,
@@ -80,7 +91,7 @@ describe('confirm-utxos cron logic', () => {
 		mockSelectChain.limit.mockResolvedValue([]);
 
 		const { confirmPendingUtxos } = await import('$lib/cron/confirm-utxos');
-		const result = await confirmPendingUtxos();
+		const result = await confirmPendingUtxos(mockGetUTXOStatus);
 
 		expect(result.success).toBe(true);
 		expect(result.processed).toBe(0);
@@ -100,7 +111,7 @@ describe('confirm-utxos cron logic', () => {
 		});
 
 		const { confirmPendingUtxos } = await import('$lib/cron/confirm-utxos');
-		const result = await confirmPendingUtxos();
+		const result = await confirmPendingUtxos(mockGetUTXOStatus);
 
 		expect(result.success).toBe(true);
 		expect(result.processed).toBe(1);
@@ -108,7 +119,10 @@ describe('confirm-utxos cron logic', () => {
 		expect(result.stillPending).toBe(0);
 		expect(result.failed).toBe(0);
 
-		expect(mockGetUTXOStatus).toHaveBeenCalledWith('abc123', 0, 'mainnet');
+		expect(mockGetUTXOStatus).toHaveBeenCalledWith('abc123', 0, 'signet', {
+			amountSats: 50000,
+			scriptPubKey: expect.stringMatching(/^[0-9a-f]+$/)
+		});
 		expect(mockDb.update).toHaveBeenCalled();
 		expect(mockUpdateChain.set).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -117,6 +131,19 @@ describe('confirm-utxos cron logic', () => {
 				updatedAt: expect.any(Date)
 			})
 		);
+	});
+
+	it('does not confirm a persisted outpoint that is already spent', async () => {
+		mockSelectChain.limit.mockResolvedValue([makePendingUtxo()]);
+		mockGetUTXOStatus.mockResolvedValue({ confirmed: true, spent: true });
+
+		const { confirmPendingUtxos } = await import('$lib/cron/confirm-utxos');
+		const result = await confirmPendingUtxos(mockGetUTXOStatus);
+
+		expect(result.succeeded).toBe(0);
+		expect(result.failed).toBe(1);
+		expect(result.errors?.[0]).toContain('already spent');
+		expect(mockDb.update).not.toHaveBeenCalled();
 	});
 
 	it('leaves unconfirmed UTXOs as pending', async () => {
@@ -128,7 +155,7 @@ describe('confirm-utxos cron logic', () => {
 		});
 
 		const { confirmPendingUtxos } = await import('$lib/cron/confirm-utxos');
-		const result = await confirmPendingUtxos();
+		const result = await confirmPendingUtxos(mockGetUTXOStatus);
 
 		expect(result.success).toBe(true);
 		expect(result.processed).toBe(1);
@@ -152,7 +179,7 @@ describe('confirm-utxos cron logic', () => {
 		});
 
 		const { confirmPendingUtxos } = await import('$lib/cron/confirm-utxos');
-		const result = await confirmPendingUtxos();
+		const result = await confirmPendingUtxos(mockGetUTXOStatus);
 
 		expect(result.processed).toBe(10);
 		expect(result.succeeded).toBe(10);
@@ -176,7 +203,7 @@ describe('confirm-utxos cron logic', () => {
 			.mockResolvedValueOnce({ confirmed: false, spent: false });
 
 		const { confirmPendingUtxos } = await import('$lib/cron/confirm-utxos');
-		const result = await confirmPendingUtxos();
+		const result = await confirmPendingUtxos(mockGetUTXOStatus);
 
 		expect(result.success).toBe(true);
 		expect(result.processed).toBe(3);
@@ -203,7 +230,7 @@ describe('confirm-utxos cron logic', () => {
 			.mockResolvedValueOnce({ confirmed: false, spent: false });
 
 		const { confirmPendingUtxos } = await import('$lib/cron/confirm-utxos');
-		const result = await confirmPendingUtxos();
+		const result = await confirmPendingUtxos(mockGetUTXOStatus);
 
 		expect(result.succeeded).toBe(2);
 		expect(result.stillPending).toBe(2);

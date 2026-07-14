@@ -1,137 +1,146 @@
 import cron from 'node-cron';
+import { connectionManager } from '$lib/db/connection-manager';
+import { logger } from '$lib/logger';
+
+interface CronResult {
+	processed: number;
+	succeeded: number;
+	failed: number;
+}
 
 interface CronJob {
 	name: string;
 	schedule: string;
-	handler: () => Promise<{ processed: number; succeeded: number; failed: number }>;
+	handler: () => Promise<CronResult>;
 }
 
-const runningJobs = new Set<string>();
+const runningJobs = new Map<string, Promise<void>>();
+const scheduledTasks: ReturnType<typeof cron.schedule>[] = [];
 
-/**
- * Lazily builds the cron job list. Handler functions are imported at call time
- * to avoid top-level module resolution (which breaks test mocking in Bun).
- */
 function getCronJobs(): CronJob[] {
 	return [
 		{
 			name: 'check-secrets',
 			schedule: '*/15 * * * *',
-			handler: async () => {
-				const { runCheckSecrets } = await import('./check-secrets');
-				return runCheckSecrets();
-			}
+			handler: async () => (await import('./check-secrets')).runCheckSecrets()
 		},
 		{
 			name: 'process-reminders',
 			schedule: '*/15 * * * *',
-			handler: async () => {
-				const { runProcessReminders } = await import('./process-reminders');
-				return runProcessReminders();
-			}
+			handler: async () => (await import('./process-reminders')).runProcessReminders()
 		},
 		{
 			name: 'process-exports',
 			schedule: '0 2 * * *',
-			handler: async () => {
-				const { runProcessExports } = await import('./process-exports');
-				return runProcessExports();
-			}
+			handler: async () => (await import('./process-exports')).runProcessExports()
 		},
 		{
 			name: 'process-deletions',
 			schedule: '0 3 * * *',
-			handler: async () => {
-				const { runProcessDeletions } = await import('./process-deletions');
-				return runProcessDeletions();
-			}
+			handler: async () => (await import('./process-deletions')).runProcessDeletions()
 		},
 		{
 			name: 'process-subscription-downgrades',
 			schedule: '0 4 * * *',
-			handler: async () => {
-				const { runProcessSubscriptionDowngrades } =
-					await import('./process-subscription-downgrades');
-				return runProcessSubscriptionDowngrades();
-			}
+			handler: async () =>
+				(await import('./process-subscription-downgrades')).runProcessSubscriptionDowngrades()
 		},
 		{
 			name: 'cleanup-tokens',
 			schedule: '0 5 * * *',
-			handler: async () => {
-				const { runCleanupTokens } = await import('./cleanup-tokens');
-				return runCleanupTokens();
-			}
+			handler: async () => (await import('./cleanup-tokens')).runCleanupTokens()
 		},
 		{
 			name: 'confirm-utxos',
 			schedule: '*/10 * * * *',
-			handler: async () => {
-				const { confirmPendingUtxos } = await import('./confirm-utxos');
-				return confirmPendingUtxos();
-			}
+			handler: async () => (await import('./confirm-utxos')).confirmPendingUtxos()
 		},
 		{
 			name: 'cleanup-exports',
 			schedule: '0 6 * * *',
-			handler: async () => {
-				const { runCleanupExports } = await import('./cleanup-exports');
-				return runCleanupExports();
-			}
+			handler: async () => (await import('./cleanup-exports')).runCleanupExports()
 		}
 	];
 }
 
 async function invokeCronJob(job: CronJob): Promise<void> {
 	if (runningJobs.has(job.name)) {
-		console.warn(`[scheduler] ${job.name} is still running, skipping this invocation`);
+		logger.warn('Cron invocation skipped because the local job is still running', {
+			jobName: job.name
+		});
 		return;
 	}
 
-	runningJobs.add(job.name);
+	const execution = connectionManager.withReservedConnection(async (connection) => {
+		const lockKey = `keyfate:cron:${job.name}`;
+		const [lock] = await connection<{ acquired: boolean }[]>`
+			select pg_try_advisory_lock(hashtextextended(${lockKey}, 0)) as acquired
+		`;
+		if (!lock?.acquired) {
+			logger.info('Cron invocation skipped because another replica owns the job', {
+				jobName: job.name
+			});
+			return;
+		}
+
+		try {
+			const result = await job.handler();
+			logger.info('Cron job completed', {
+				jobName: job.name,
+				processed: result.processed ?? 0,
+				succeeded: result.succeeded ?? 0,
+				failed: result.failed ?? 0
+			});
+		} catch (error) {
+			logger.error('Cron job failed', error instanceof Error ? error : undefined, {
+				jobName: job.name
+			});
+		} finally {
+			await connection`select pg_advisory_unlock(hashtextextended(${lockKey}, 0))`;
+		}
+	});
+
+	runningJobs.set(job.name, execution);
 	try {
-		const result = await job.handler();
-		console.log(
-			`[scheduler] ${job.name} completed: processed=${result.processed ?? 0}, succeeded=${result.succeeded ?? 0}, failed=${result.failed ?? 0}`
-		);
-	} catch (error) {
-		console.error(
-			`[scheduler] ${job.name} error:`,
-			error instanceof Error ? error.message : String(error)
-		);
+		await execution;
 	} finally {
 		runningJobs.delete(job.name);
 	}
 }
 
-const scheduledTasks: ReturnType<typeof cron.schedule>[] = [];
-
 export function startScheduler(): void {
-	const enabled = process.env.CRON_ENABLED !== 'false';
-	if (!enabled) {
-		console.log('[scheduler] Cron scheduler disabled (CRON_ENABLED=false)');
+	if (process.env.CRON_ENABLED !== 'true') {
+		logger.info('Cron scheduler disabled', { explicitlyEnabled: false });
 		return;
 	}
+	if (scheduledTasks.length > 0) return;
 
-	const jobs = getCronJobs();
-
-	console.log(`[scheduler] Starting cron scheduler with ${jobs.length} jobs`);
-
-	for (const job of jobs) {
+	for (const job of getCronJobs()) {
 		const task = cron.schedule(job.schedule, () => {
-			invokeCronJob(job).catch((err) => {
-				console.error(`[scheduler] Unhandled error in ${job.name}:`, err);
-			});
+			void invokeCronJob(job);
 		});
 		scheduledTasks.push(task);
-		console.log(`[scheduler] Registered: ${job.name} (${job.schedule})`);
 	}
+	logger.info('Cron scheduler started', { jobCount: scheduledTasks.length });
 }
 
-export function stopScheduler(): void {
-	for (const task of scheduledTasks) {
-		task.stop();
-	}
+export async function stopScheduler(drainTimeoutMs: number = 10_000): Promise<void> {
+	for (const task of scheduledTasks) task.stop();
 	scheduledTasks.length = 0;
-	console.log('[scheduler] All cron jobs stopped');
+
+	const active = [...runningJobs.values()];
+	if (active.length > 0) {
+		let timeout: ReturnType<typeof setTimeout> | undefined;
+		try {
+			await Promise.race([
+				Promise.allSettled(active),
+				new Promise<void>((resolve) => {
+					timeout = setTimeout(resolve, drainTimeoutMs);
+				})
+			]);
+		} finally {
+			if (timeout) clearTimeout(timeout);
+		}
+	}
+	logger.info('Cron scheduler stopped', { remainingJobs: runningJobs.size });
 }

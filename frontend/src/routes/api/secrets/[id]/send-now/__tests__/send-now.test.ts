@@ -54,7 +54,9 @@ vi.mock('$lib/db/schema', () => ({
 	secrets: {
 		id: 'secrets.id',
 		userId: 'secrets.userId',
-		status: 'secrets.status'
+		status: 'secrets.status',
+		processingLeaseId: 'secrets.processingLeaseId',
+		processingLeaseExpiresAt: 'secrets.processingLeaseExpiresAt'
 	},
 	users: { id: 'users.id' },
 	disclosureLog: {
@@ -223,7 +225,7 @@ function setupDbSequence(
 			where: (..._args: unknown[]) => {
 				const call = updateCalls[updateIdx++];
 				if (call?.type === 'update-no-return') {
-					return { returning: () => call.result ?? [] };
+					return { returning: () => call.result ?? [{ id: TEST_SECRET_ID }] };
 				}
 				return {
 					returning: () => call?.result ?? []
@@ -515,13 +517,35 @@ describe('POST /api/secrets/[id]/send-now', () => {
 				secretCreatedAt: BASE_SECRET.createdAt
 			});
 
-			// Verify disclosure log was updated to "sent"
+			// Verify disclosure log was updated to "sent" under the active secret lease.
 			expect(mockUpdateDisclosureLog).toHaveBeenCalledWith(
 				mockDb,
+				TEST_SECRET_ID,
 				'log-1',
 				expect.any(String),
 				'sent'
 			);
+		});
+
+		it('does not report success when the terminal disclosure lease update is lost', async () => {
+			setupDbSequence([
+				{ type: 'select', result: [BASE_SECRET] },
+				{ type: 'select', result: [BASE_USER] },
+				{ type: 'update', result: [{ id: TEST_SECRET_ID }] },
+				{ type: 'insert', result: [{ id: 'log-1' }] },
+				{ type: 'update', result: [] }
+			]);
+			mockGetAllRecipients.mockResolvedValue([BASE_RECIPIENT]);
+
+			const { POST } = await import('../+server');
+			const response = await POST(createEvent());
+
+			expect(response.status).toBe(409);
+			expect(await response.json()).toEqual({
+				error: 'Disclosure lease was lost after delivery; reconciliation required',
+				sent: 1,
+				failed: 0
+			});
 		});
 
 		it('includes the current Bitcoin generation separately from the encrypted envelope', async () => {
@@ -662,15 +686,17 @@ describe('POST /api/secrets/[id]/send-now', () => {
 			expect(data.failed).toBe(1);
 			expect(data.error).toBe('Failed to send to 1 recipient(s)');
 
-			// Verify first log updated as sent, second as failed
+			// Verify first log updated as sent, second as failed under the same fenced lease.
 			expect(mockUpdateDisclosureLog).toHaveBeenCalledWith(
 				mockDb,
+				TEST_SECRET_ID,
 				'log-1',
 				expect.any(String),
 				'sent'
 			);
 			expect(mockUpdateDisclosureLog).toHaveBeenCalledWith(
 				mockDb,
+				TEST_SECRET_ID,
 				'log-2',
 				expect.any(String),
 				'failed',
@@ -707,9 +733,10 @@ describe('POST /api/secrets/[id]/send-now', () => {
 			expect(data.sent).toBe(0);
 			expect(data.failed).toBe(1);
 
-			// Verify disclosure log updated with error
+			// Verify disclosure log updated with error under the active secret lease.
 			expect(mockUpdateDisclosureLog).toHaveBeenCalledWith(
 				mockDb,
+				TEST_SECRET_ID,
 				'log-1',
 				expect.any(String),
 				'failed',

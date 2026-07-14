@@ -19,9 +19,10 @@ FROM oven/bun:1.3.14-slim@sha256:d56a2534ffd262e92c12fd3249d3924d296d97086da773f
 WORKDIR /app
 ENV NODE_ENV=production
 
-ARG GIT_SHA=unknown
+# Railway exposes Git deployment variables at build time when declared as ARG.
+ARG RAILWAY_GIT_COMMIT_SHA=unknown
 LABEL org.opencontainers.image.source="https://github.com/Aviat-IO/KeyFate" \
-      org.opencontainers.image.revision="$GIT_SHA"
+      org.opencontainers.image.revision="$RAILWAY_GIT_COMMIT_SHA"
 
 RUN groupadd --system --gid 1001 keyfate && \
     useradd --system --uid 1001 --gid keyfate --no-create-home keyfate

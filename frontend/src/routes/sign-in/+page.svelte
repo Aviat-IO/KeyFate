@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { getSafeRedirectTarget } from '$lib/auth/redirects';
+	import Turnstile from '$lib/components/Turnstile.svelte';
 	import { signIn } from '@auth/sveltekit/client';
 
 	type AuthStep = 'email' | 'otp';
@@ -13,6 +14,7 @@
 	let successMessage = $state('');
 	let resendCountdown = $state(0);
 	let turnstileToken = $state<string | null>(null);
+	let turnstileRef = $state<{ reset(): void } | null>(null);
 
 	let emailInputRef = $state<HTMLInputElement | null>(null);
 
@@ -62,8 +64,17 @@
 		}
 	}
 
+	function resetTurnstile(): void {
+		turnstileToken = null;
+		turnstileRef?.reset();
+	}
+
 	async function handleRequestOTP(e: SubmitEvent) {
 		e.preventDefault();
+		if (!turnstileToken) {
+			errorMessage = 'Please complete the security check.';
+			return;
+		}
 		isLoading = true;
 		errorMessage = '';
 		successMessage = '';
@@ -85,6 +96,7 @@
 				successMessage = `Code sent to ${email}\nCheck your email`;
 				authStep = 'otp';
 				resendCountdown = 60;
+				turnstileToken = null;
 			} else if (response.status === 429) {
 				errorMessage = data.resetAt
 					? `Too many requests. Please try again in ${Math.ceil((new Date(data.resetAt).getTime() - Date.now()) / 60000)} minutes.`
@@ -97,6 +109,7 @@
 			errorMessage = 'An unexpected error occurred. Please try again.';
 		} finally {
 			isLoading = false;
+			if (authStep === 'email') resetTurnstile();
 		}
 	}
 
@@ -105,45 +118,20 @@
 		errorMessage = '';
 
 		try {
-			const csrfResponse = await fetch('/api/auth/csrf');
-			const { csrfToken } = await csrfResponse.json();
-
-			const formData = new URLSearchParams({
-				csrfToken,
+			const result = await signIn('credentials', {
 				email: email.toLowerCase().trim(),
 				otpCode: code,
 				action: 'otp',
-				callbackUrl
+				redirect: false,
+				redirectTo: callbackUrl
 			});
 
-			const authResponse = await fetch('/api/auth/callback/credentials', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded'
-				},
-				body: formData
-			});
-
-			if (authResponse.url.includes(callbackUrl) || authResponse.url.includes('/dashboard')) {
-				window.location.href = callbackUrl;
-			} else if (
-				authResponse.url.includes('/sign-in') ||
-				authResponse.url.includes('/auth/signin') ||
-				authResponse.url.includes('error=')
-			) {
-				errorMessage = 'Invalid or expired code. Please try again.';
-				otpCode = '';
-			} else {
-				const sessionResponse = await fetch('/api/auth/session');
-				const session = await sessionResponse.json();
-
-				if (session?.user) {
-					window.location.href = callbackUrl;
-				} else {
-					errorMessage = 'Invalid or expired code. Please try again.';
-					otpCode = '';
-				}
+			if (result.ok && result.url) {
+				window.location.assign(result.url);
+				return;
 			}
+			errorMessage = 'Invalid or expired code. Please try again.';
+			otpCode = '';
 		} catch (error) {
 			console.error('Verify OTP error:', error);
 			errorMessage = 'An unexpected error occurred. Please try again.';
@@ -152,16 +140,11 @@
 		}
 	}
 
-	function handleEditEmail() {
-		authStep = 'email';
-		otpCode = '';
-		errorMessage = '';
-		successMessage = '';
-	}
-
 	async function handleResendOTP() {
-		if (resendCountdown > 0) return;
-		turnstileToken = null;
+		if (resendCountdown > 0 || !turnstileToken) {
+			errorMessage = 'Please complete the security check before resending.';
+			return;
+		}
 
 		isLoading = true;
 		errorMessage = '';
@@ -174,7 +157,7 @@
 				body: JSON.stringify({
 					email: email.toLowerCase().trim(),
 					acceptedPrivacyPolicy: true,
-					turnstileToken: null
+					turnstileToken
 				})
 			});
 
@@ -195,6 +178,7 @@
 			errorMessage = 'An unexpected error occurred. Please try again.';
 		} finally {
 			isLoading = false;
+			resetTurnstile();
 		}
 	}
 
@@ -202,7 +186,7 @@
 		isLoading = true;
 		errorMessage = '';
 		try {
-			await signIn('google', { callbackUrl });
+			await signIn('google', { redirectTo: callbackUrl });
 		} catch (error) {
 			console.error('Google sign in error:', error);
 			errorMessage = 'Google sign-in failed. Please try again.';
@@ -265,11 +249,22 @@
 						/>
 					</div>
 
-					<!-- Turnstile placeholder - implement when component is ported -->
+					<Turnstile
+						bind:this={turnstileRef}
+						onSuccess={(token) => {
+							turnstileToken = token;
+							errorMessage = '';
+						}}
+						onError={() => {
+							turnstileToken = null;
+							errorMessage = 'Security verification is unavailable. Please try again.';
+						}}
+						onExpire={() => (turnstileToken = null)}
+					/>
 
 					<button
 						type="submit"
-						disabled={isLoading}
+						disabled={isLoading || !turnstileToken}
 						class="bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-ring group relative flex w-full justify-center rounded-lg border border-transparent px-4 py-2 text-sm font-semibold focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 					>
 						{isLoading ? 'Sending code...' : 'Continue with Email'}
@@ -306,13 +301,22 @@
 						/>
 					</div>
 
-					<div class="text-center">
+					<div class="space-y-3 text-center">
 						{#if resendCountdown > 0}
 							<p class="text-muted-foreground text-xs">Resend code in {resendCountdown}s</p>
 						{:else}
+							<Turnstile
+								bind:this={turnstileRef}
+								onSuccess={(token) => (turnstileToken = token)}
+								onError={() => {
+									turnstileToken = null;
+									errorMessage = 'Security verification is unavailable. Please try again.';
+								}}
+								onExpire={() => (turnstileToken = null)}
+							/>
 							<button
 								onclick={handleResendOTP}
-								disabled={isLoading}
+								disabled={isLoading || !turnstileToken}
 								class="text-primary hover:text-primary/80 text-xs font-medium disabled:opacity-50"
 							>
 								Resend code

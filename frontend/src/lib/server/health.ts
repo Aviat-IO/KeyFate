@@ -1,30 +1,29 @@
 import { json } from '@sveltejs/kit';
-import { checkDatabaseConnection } from '$lib/db/connection';
+import { connectionManager } from '$lib/db/connection-manager';
 import { getDatabaseStats } from '$lib/db/drizzle';
 import { getEmailServiceHealth } from '$lib/email/email-service';
 import { authorizeRequest } from '$lib/cron/utils';
 import { logger } from '$lib/logger';
+import { validateProductionConfig } from '$lib/server/production-config';
 
 const READINESS_TIMEOUT_MS = 3_000;
+const DATABASE_STATEMENT_TIMEOUT_MS = 2_500;
+let databaseCheckInFlight: Promise<boolean> | null = null;
 
-function checkEmailConfigured(): boolean {
-	return Boolean(process.env.SENDGRID_API_KEY);
-}
-
-function checkEncryptionKey(): boolean {
-	try {
-		const key = process.env.ENCRYPTION_KEY;
-		return Boolean(key) && Buffer.from(key!, 'base64').length === 32;
-	} catch {
-		return false;
-	}
+function getDatabaseCheck(): Promise<boolean> {
+	if (databaseCheckInFlight) return databaseCheckInFlight;
+	const check = connectionManager.healthCheck(DATABASE_STATEMENT_TIMEOUT_MS).finally(() => {
+		if (databaseCheckInFlight === check) databaseCheckInFlight = null;
+	});
+	databaseCheckInFlight = check;
+	return check;
 }
 
 async function checkDatabaseWithTimeout(): Promise<boolean> {
 	let timeout: ReturnType<typeof setTimeout> | undefined;
 	try {
 		return await Promise.race([
-			checkDatabaseConnection(),
+			getDatabaseCheck(),
 			new Promise<boolean>((resolve) => {
 				timeout = setTimeout(() => resolve(false), READINESS_TIMEOUT_MS);
 			})
@@ -41,46 +40,36 @@ export async function createReadinessResponse(request: Request, url: URL): Promi
 	}
 
 	try {
-		const dbConnected = await checkDatabaseWithTimeout();
-		const emailConfigured = checkEmailConfigured();
-		const encryptionKeyValid = checkEncryptionKey();
-		const healthy = dbConnected && emailConfigured && encryptionKeyValid;
-		const checks = {
-			database: dbConnected ? 'healthy' : 'unhealthy',
-			email: emailConfigured ? 'configured' : 'unconfigured',
-			encryption: encryptionKeyValid ? 'healthy' : 'unhealthy'
-		};
-		const dbStats = getDatabaseStats();
-		const emailCircuitStats = getEmailServiceHealth();
+		const config = validateProductionConfig();
+		const databaseHealthy = config.valid ? await checkDatabaseWithTimeout() : false;
+		const healthy = config.valid && databaseHealthy;
 
+		if (!detailed) {
+			return json({ status: healthy ? 'healthy' : 'unavailable' }, { status: healthy ? 200 : 503 });
+		}
+
+		const dbStats = getDatabaseStats();
 		return json(
 			{
-				status: healthy ? 'healthy' : 'degraded',
-				timestamp: new Date().toISOString(),
-				checks,
-				...(detailed && {
-					environment: process.env.NODE_ENV || 'unknown',
-					region: process.env.RAILWAY_REGION || 'unknown',
-					version: {
-						deploymentHash:
-							process.env.RAILWAY_DEPLOYMENT_ID || process.env.DEPLOYMENT_HASH || 'unknown',
-						gitCommit: process.env.RAILWAY_GIT_COMMIT_SHA || 'unknown'
-					},
-					database: {
-						connected: dbStats.connected,
-						activeQueries: dbStats.activeQueries,
-						totalConnections: dbStats.totalConnections,
-						totalErrors: dbStats.totalErrors,
-						circuitBreakerOpen: dbStats.circuitBreakerOpen,
-						isShuttingDown: dbStats.isShuttingDown
-					},
-					email: { circuitBreaker: emailCircuitStats }
-				})
+				status: healthy ? 'healthy' : 'unavailable',
+				revision: process.env.RAILWAY_GIT_COMMIT_SHA || process.env.APP_REVISION || 'unavailable',
+				checks: {
+					configuration: config.valid ? 'healthy' : 'unhealthy',
+					database: databaseHealthy ? 'healthy' : 'unhealthy'
+				},
+				database: {
+					connected: dbStats.connected,
+					activeQueries: dbStats.activeQueries,
+					totalConnections: dbStats.totalConnections,
+					totalErrors: dbStats.totalErrors,
+					isShuttingDown: dbStats.isShuttingDown
+				},
+				email: { circuitBreaker: getEmailServiceHealth() }
 			},
 			{ status: healthy ? 200 : 503 }
 		);
 	} catch (error) {
 		logger.error('Readiness check failed', error instanceof Error ? error : undefined);
-		return json({ status: 'error', timestamp: new Date().toISOString() }, { status: 500 });
+		return json({ status: 'unavailable' }, { status: 503 });
 	}
 }

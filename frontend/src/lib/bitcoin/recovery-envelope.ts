@@ -1,6 +1,7 @@
 import { getPublicKey } from 'nostr-tools/pure';
 import { getConversationKey, decrypt, encrypt } from '$lib/nostr/encryption';
 import { z } from 'zod';
+import { bitcoinNetworkSchema } from './network.js';
 
 const hex64 = z.string().regex(/^[0-9a-f]{64}$/);
 const boundedHex = z
@@ -14,7 +15,7 @@ export const bitcoinRecoveryContentSchema = z
 		version: z.literal(1),
 		secretId: z.string().uuid(),
 		generation: z.number().int().positive(),
-		network: z.enum(['mainnet', 'testnet']),
+		network: bitcoinNetworkSchema,
 		txHex: boundedHex,
 		fundingTxId: hex64,
 		fundingOutputIndex: z.number().int().nonnegative(),

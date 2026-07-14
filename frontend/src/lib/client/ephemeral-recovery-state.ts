@@ -5,11 +5,22 @@ export interface EphemeralNostrMetadata {
 	manifests: NostrEvent[];
 }
 
+export interface EphemeralBitcoinSetup {
+	recipientId: string;
+	recipientName: string;
+	recipientNostrPubkey: string;
+	nostrCapsuleEventId: string;
+	nostrManifestEvent: NostrEvent;
+	nostrCapsuleEvent: NostrEvent;
+	plaintextK: Uint8Array;
+}
+
 export interface EphemeralRecoveryState {
 	secretId: string;
 	shares: string[];
 	createdAt: number;
 	nostr?: EphemeralNostrMetadata;
+	bitcoin?: EphemeralBitcoinSetup;
 }
 
 const MAX_AGE_MS = 30 * 60 * 1000;
@@ -42,6 +53,13 @@ export function setEphemeralNostrMetadata(secretId: string, nostr: EphemeralNost
 	states.set(secretId, structuredClone({ ...current, nostr }));
 }
 
+export function setEphemeralBitcoinSetup(secretId: string, bitcoin: EphemeralBitcoinSetup): void {
+	const current = getEphemeralRecoveryState(secretId);
+	if (!current) throw new Error('Ephemeral recovery state expired');
+	states.set(secretId, structuredClone({ ...current, bitcoin }));
+	bitcoin.plaintextK.fill(0);
+}
+
 export function getEphemeralRecoveryState(secretId: string): EphemeralRecoveryState | null {
 	const state = states.get(secretId);
 	if (!state) return null;
@@ -56,6 +74,7 @@ export function clearEphemeralRecoveryState(secretId: string): void {
 	const state = states.get(secretId);
 	if (state) {
 		for (let index = 0; index < state.shares.length; index++) state.shares[index] = '';
+		state.bitcoin?.plaintextK.fill(0);
 	}
 	states.delete(secretId);
 }

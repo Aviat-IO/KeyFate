@@ -20,7 +20,11 @@ const BASE_UTXO: BitcoinUtxo = {
 	network: 'testnet',
 	generation: 2,
 	generationKey: 'secret:2',
-	recoveryManifest: { recipientId: 'recipient-1' },
+	recoveryManifest: {
+		recipientId: '33333333-3333-4333-8333-333333333333',
+		recipientNostrPubkey: '44'.repeat(32),
+		nostrCapsuleEventId: '55'.repeat(32)
+	},
 	confirmedAt: new Date('2026-01-01T00:00:00Z'),
 	spentAt: null,
 	spentByTxId: null,

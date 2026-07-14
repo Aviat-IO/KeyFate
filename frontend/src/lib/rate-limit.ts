@@ -1,3 +1,4 @@
+import { isIP } from 'node:net';
 import { checkRateLimitDB, type RateLimitResult, type RateLimitType } from '$lib/rate-limit-db';
 
 export type { RateLimitType } from '$lib/rate-limit-db';
@@ -34,10 +35,19 @@ export function getRateLimitHeaders(result: RateLimitResult) {
 
 export function getClientIdentifier(request: Request): string {
 	const forwarded = request.headers.get('x-forwarded-for');
-	const realIp = request.headers.get('x-real-ip');
-	const ip = forwarded?.split(',')[0] || realIp || 'unknown';
+	const forwardedChain = forwarded
+		?.split(',')
+		.map((value) => value.trim())
+		.filter(Boolean);
+	const attested = forwardedChain?.at(-1);
+	if (attested && attested.length <= 45 && isIP(attested)) return attested;
 
-	return ip;
+	if (process.env.NODE_ENV !== 'production') {
+		const realIp = request.headers.get('x-real-ip')?.trim();
+		if (realIp && realIp.length <= 45 && isIP(realIp)) return realIp;
+	}
+
+	return 'unknown';
 }
 
 export function createRateLimitResponse(result: RateLimitResult): Response {

@@ -29,13 +29,29 @@ The system SHALL keep all Bitcoin private keys client-side, SHALL NOT generate/s
 
 ### Requirement: UTXO Refresh (Check-In)
 
-The system SHALL create and persist a complete new recovery generation before marking the previous generation superseded.
+The system SHALL couple a service check-in to a recoverable Bitcoin generation transition and SHALL create and persist a complete new recovery generation before marking the previous generation superseded.
 
-#### Scenario: Refresh failure
+#### Scenario: Bitcoin-enabled service check-in
 
-- **WHEN** signing, publication, encryption, broadcast, or persistence of the new generation fails
-- **THEN** the prior generation SHALL remain current
-- **AND** no partially provisioned generation SHALL be reported as ready
+- **GIVEN** a secret has a current Bitcoin recovery generation
+- **WHEN** the owner attempts an ordinary service check-in without refreshing that generation
+- **THEN** the server SHALL reject the check-in
+- **AND** SHALL advance the service deadline only in the atomic finalization of the next Bitcoin generation
+
+#### Scenario: Recoverable transition ordering
+
+- **WHEN** the owner prepares setup or refresh
+- **THEN** the complete recipient-encrypted envelope and encrypted owner continuity kit SHALL exist before broadcast
+- **AND** the server SHALL persist a prepared, non-ready transition before broadcast
+- **AND** finalization SHALL verify the exact network, transaction ID, outpoint, amount, and script before advancing readiness or the service deadline
+
+#### Scenario: Ambiguous broadcast or persistence failure
+
+- **WHEN** broadcast is accepted but its response times out, final persistence fails, or the process stops between prepare and finalize
+- **THEN** retry SHALL be idempotent for the same prepared transaction and generation
+- **AND** the durable encrypted kit and prepared public state SHALL be sufficient to reconcile without the destroyed one-time branch key
+- **AND** the server SHALL distinguish the prepared/ambiguous transition from both the prior generation and finalized readiness
+- **AND** SHALL NOT falsely report the potentially spent prior outpoint or the partially provisioned next generation as ready
 
 ### Requirement: Server-Side Bitcoin UTXO Lifecycle
 

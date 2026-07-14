@@ -5,6 +5,7 @@ import { getDatabase } from '$lib/db/drizzle';
 import { bitcoinUtxos, secrets, type BitcoinUtxo } from '$lib/db/schema';
 import { estimateRefreshesRemaining } from '$lib/bitcoin/refresh';
 import { blocksToApproxDays } from '$lib/bitcoin/script';
+import { isBitcoinNetwork, type BitcoinNetwork } from '$lib/bitcoin/network';
 
 export interface BitcoinStatus {
 	enabled: boolean;
@@ -20,13 +21,17 @@ export interface BitcoinStatus {
 		timelockScript: string;
 		ownerPubkey: string;
 		branchPubkey: string;
+		recipientAddress: string;
+		recipientId: string;
+		recipientNostrPubkey: string;
+		nostrCapsuleEventId: string;
 		generation: number;
 	} | null;
 	estimatedDaysRemaining: number | null;
 	refreshesRemaining: number | null;
 	/** Compatibility name; true means a recipient-encrypted v2 envelope exists. */
 	hasPreSignedTx: boolean;
-	network: 'mainnet' | 'testnet' | null;
+	network: BitcoinNetwork | null;
 }
 
 export function buildBitcoinStatus(latestUtxo?: BitcoinUtxo): BitcoinStatus {
@@ -42,10 +47,27 @@ export function buildBitcoinStatus(latestUtxo?: BitcoinUtxo): BitcoinStatus {
 	}
 
 	const active = latestUtxo.status === 'confirmed' || latestUtxo.status === 'pending';
-	const network =
-		latestUtxo.network === 'mainnet' || latestUtxo.network === 'testnet'
-			? latestUtxo.network
-			: null;
+	const network = isBitcoinNetwork(latestUtxo.network) ? latestUtxo.network : null;
+	const manifest = latestUtxo.recoveryManifest as {
+		recipientId?: string;
+		recipientNostrPubkey?: string;
+		nostrCapsuleEventId?: string;
+	} | null;
+	if (
+		!latestUtxo.recipientAddress ||
+		!manifest?.recipientId ||
+		!manifest.recipientNostrPubkey ||
+		!manifest.nostrCapsuleEventId
+	) {
+		return {
+			enabled: false,
+			utxo: null,
+			estimatedDaysRemaining: null,
+			refreshesRemaining: null,
+			hasPreSignedTx: false,
+			network: null
+		};
+	}
 	return {
 		enabled: true,
 		utxo: {
@@ -60,6 +82,10 @@ export function buildBitcoinStatus(latestUtxo?: BitcoinUtxo): BitcoinStatus {
 			timelockScript: latestUtxo.timelockScript,
 			ownerPubkey: latestUtxo.ownerPubkey,
 			branchPubkey: latestUtxo.recipientPubkey,
+			recipientAddress: latestUtxo.recipientAddress,
+			recipientId: manifest.recipientId,
+			recipientNostrPubkey: manifest.recipientNostrPubkey,
+			nostrCapsuleEventId: manifest.nostrCapsuleEventId,
 			generation: latestUtxo.generation
 		},
 		estimatedDaysRemaining: active ? blocksToApproxDays(latestUtxo.ttlBlocks) : null,

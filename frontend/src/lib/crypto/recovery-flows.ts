@@ -11,6 +11,7 @@
 
 import { getConversationKey, decrypt as nip44Decrypt } from '$lib/nostr/encryption';
 import type { Event as NostrEvent } from 'nostr-tools/core';
+import type { BitcoinNetwork } from '$lib/bitcoin/network';
 import * as nip19 from 'nostr-tools/nip19';
 import { getEventHash, getPublicKey, verifyEvent } from 'nostr-tools/pure';
 import { z } from 'zod';
@@ -222,7 +223,7 @@ export function unwrapGiftWrap(
 
 export interface RecoveredBitcoinShare extends DecryptedShareResult {
 	transactionHex: string;
-	network: 'mainnet' | 'testnet';
+	network: BitcoinNetwork;
 	recipientAddress: string;
 	generation: number;
 }

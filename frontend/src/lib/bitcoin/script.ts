@@ -17,6 +17,7 @@
 
 import * as btc from '@scure/btc-signer';
 import { hex } from '@scure/base';
+import { getBitcoinNetworkParams, type BitcoinNetwork } from './network.js';
 
 /** Maximum CSV value using 16-bit encoding (~388 days at 144 blocks/day) */
 export const MAX_CSV_BLOCKS = 65535;
@@ -107,9 +108,9 @@ export function createCSVTimelockScript(
  */
 export function createP2WSHAddress(
 	script: Uint8Array,
-	network: 'mainnet' | 'testnet' = 'mainnet'
+	network: BitcoinNetwork = 'mainnet'
 ): string {
-	const net = network === 'testnet' ? btc.TEST_NETWORK : btc.NETWORK;
+	const net = getBitcoinNetworkParams(network);
 	const p2wshResult = btc.p2wsh({ type: 'unknown' as const, script }, net);
 	if (!p2wshResult.address) {
 		throw new Error('Failed to generate P2WSH address');
@@ -123,9 +124,9 @@ export function createP2WSHAddress(
  */
 export function getP2WSHOutputScript(
 	script: Uint8Array,
-	network: 'mainnet' | 'testnet' = 'mainnet'
+	network: BitcoinNetwork = 'mainnet'
 ): Uint8Array {
-	const net = network === 'testnet' ? btc.TEST_NETWORK : btc.NETWORK;
+	const net = getBitcoinNetworkParams(network);
 	const p2wshResult = btc.p2wsh({ type: 'unknown' as const, script }, net);
 	return p2wshResult.script;
 }

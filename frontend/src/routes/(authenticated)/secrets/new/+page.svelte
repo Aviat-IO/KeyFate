@@ -15,6 +15,7 @@
 	{:else}
 		<NewSecretForm
 			isPaid={data.tierInfo.isPaid}
+			bitcoinEnrollmentEnabled={data.bitcoinEnrollmentEnabled}
 			tierInfo={{
 				secretsUsed: data.tierInfo.secretsUsed,
 				secretsLimit: data.tierInfo.secretsLimit,

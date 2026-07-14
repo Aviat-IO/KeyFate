@@ -38,24 +38,24 @@
 
 - [x] 4.1 Add tests for recipient-controlled address validation, one-time branch key destruction, output address, complete signature, encrypted envelope, generation fencing, and local recovery validation.
 - [x] 4.2 Replace owner-held recipient wallet keypair with recipient Bitcoin address and an in-memory one-time branch signing key.
-- [ ] 4.3 Add an explicit encrypted owner continuity kit for refresh; sessionStorage is not the sole launch copy. **Partial:** the encrypted continuity-kit format and crypto tests exist, but no production owner download/import workflow calls them.
+- [x] 4.3 Add an explicit encrypted owner continuity kit for refresh; sessionStorage is not the sole launch copy. The owner setup requires an encrypted v2 kit download, and refresh imports it after browser restart with strict binding checks; v1 has an explicit re-enrollment error path.
 - [x] 4.4 Upload/store only recipient-encrypted complete transactions plus public metadata; reject private keys, K, and plaintext transaction fields.
-- [ ] 4.5 Make refresh persist/publish the new generation before superseding old state and reject stale generations. **Partial:** the client operation and atomic generation-fenced endpoint exist, but no production owner workflow invokes them.
+- [ ] 4.5 Make refresh persist/publish the new generation before superseding old state and reject stale generations. **Partial:** generation fencing and atomic Bitcoin-generation/service-check-in persistence are implemented, and ordinary check-in is rejected for Bitcoin-enabled secrets. A recoverable prepare → encrypted-kit download → broadcast → exact-output finalize lifecycle with idempotent retry is still required to eliminate broadcast/persist ambiguity.
 - [x] 4.6 Update recovery UI to require the current generation printed separately in the latest disclosure notice, then decrypt and validate the matching transaction before broadcast.
-- [ ] 4.7 Remove the hard-disable only after a signet E2E proves funding, delayed transaction validity, recipient spendability, refresh, and recovery after browser restart. **Blocked:** `BITCOIN_ENROLLMENT_ENABLED` remains fail-closed pending credentialed signet evidence.
+- [ ] 4.7 Remove the hard-disable only after a signet E2E proves funding, delayed transaction validity, recipient spendability, refresh, and recovery after browser restart. **Blocked:** first close the local two-phase reconciliation gap in 4.5; then obtain credentialed funded-Signet evidence. Production remains fail-closed.
 
 ## 5. Browser/runtime hardening and probes
 
 - [x] 5.1 Pin the fixed `sanitize-html` version, extract the blog formatter, and add allowlist regression tests.
-- [ ] 5.2 Configure enforcing SvelteKit CSP and add header/browser smoke tests for sign-in/Turnstile, blog, creation/export, Nostr, and Bitcoin. **Partial:** enforcing CSP and policy regression tests pass; credentialed browser flows remain.
+- [ ] 5.2 Configure enforcing SvelteKit CSP and add header/browser smoke tests for sign-in/Turnstile, blog, creation/export, Nostr, and Bitcoin. **Partial:** enforcing CSP, liveness/readiness, public content, Turnstile fail-closed, and local Nostr/Bitcoin recovery-surface Chromium tests pass; authenticated creation/export and credentialed provider/recovery journeys remain.
 - [x] 5.3 Minimize Web Storage retention and ensure durable owner recovery material is encrypted explicit-download content.
 - [x] 5.4 Add process-only `/api/health/live`, bounded dependency/config `/api/health/ready`, and `/api/health` compatibility tests.
 - [x] 5.5 Add a runtime migration script, configure app-only `CMD`, and document/configure Railway pre-deploy migration.
-- [x] 5.6 Split build/prod dependencies, preserve only required migration/runtime packages, pin exact Bun image digests/version, and pass non-root Docker/probe smoke.
+- [x] 5.6 Split build/prod dependencies, preserve only required migration/runtime packages, pin exact Bun image digests/version, and pass non-root Docker/probe smoke. Current local image `sha256:6f56daaba972e04589b6ce4c9199104fb768e5c4892bf9b875fa63c0b94c00bb` passes UID 1001, app-only command, revision-label, pruned dependency, liveness, and fail-closed readiness checks.
 
 ## 6. CI, release, and operations
 
-- [ ] 6.1 Fix current formatting/lint failures and make format/lint, check, tests, build, migration, Docker, and probe jobs required and ordered. **Partial:** formatting and the incremental lint gate pass and CI is ordered; the audited commit's legacy ESLint violations remain in a count-based baseline rather than being silently regenerated.
+- [ ] 6.1 Fix current formatting/lint failures and make format/lint, check, tests, dependency audit, browser smoke, build, migration, Docker, and probe jobs required and ordered. **Partial:** local gates pass and CI defines the ordered checks; the legacy ESLint violations remain in a count-based baseline, and GitHub required-check enforcement still needs credentialed configuration.
 - [x] 6.2 Pin GitHub actions to full commit SHAs, set least-privilege permissions/concurrency, and prove frozen lockfile consistency.
 - [ ] 6.3 Configure and evidence GitHub branch protection plus Railway Wait-for-CI or an explicit post-CI deploy with production environment approval.
 - [ ] 6.4 Run credentialed staging E2E for OAuth, Turnstile, SendGrid, Stripe, BTCPay, all scheduled jobs, exports, Nostr, and Bitcoin under enforcing CSP.
@@ -64,7 +64,7 @@
 
 ## 7. Final validation
 
-- [x] 7.1 Run focused tests after each tranche, then `bun run lint`, `bun run check`, `bun test`, and `bun run build`.
-- [x] 7.2 Run Drizzle schema/migration checks and a PostgreSQL multi-worker failure-injection suite.
-- [x] 7.3 Run Docker build/start/live/ready/non-root/migration smoke on Linux.
-- [x] 7.4 Verify every task and release gate; document any external blocker without marking production ready.
+- [x] 7.1 Run focused tests after each tranche, then `bun run lint`, `bun run check`, `bun test`, and `bun run build`. Current local result: lint/check/build pass; 626 default tests pass with 5 PostgreSQL tests explicitly skipped.
+- [x] 7.2 Run Drizzle schema/migration checks and a PostgreSQL multi-worker failure-injection suite. Current PostgreSQL 16.9 result: 5 tests and 34 expectations pass; fresh/retry migration remains exactly 11 journal rows.
+- [x] 7.3 Run Docker build/start/live/ready/non-root/migration smoke on Linux. Current local result: production image build, UID/pruning/provenance, fail-closed readiness, migration, verified-TLS readiness 200, and observed SSL application connection pass.
+- [ ] 7.4 Verify every task and release gate; document any external blocker without marking production ready. **Current status: NO-GO.**

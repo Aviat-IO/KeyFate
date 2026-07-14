@@ -22,6 +22,16 @@ function makeKeyPair(seed: number) {
 let owner = makeKeyPair(1);
 let recipient = makeKeyPair(2);
 
+function mockSuccessfulBroadcast(): void {
+	globalThis.fetch = vi.fn(async (_input: string | URL | Request, init?: RequestInit) => {
+		if (init?.method !== 'POST' || typeof init.body !== 'string') {
+			return new Response('not found', { status: 404 });
+		}
+		const localTxId = btc.Transaction.fromRaw(hex.decode(init.body)).id;
+		return new Response(localTxId, { status: 200 });
+	}) as unknown as typeof fetch;
+}
+
 // ─── enableBitcoinClient tests ────────────────────────────────────────────────
 
 describe('Client Operations - enableBitcoinClient', () => {
@@ -36,12 +46,7 @@ describe('Client Operations - enableBitcoinClient', () => {
 	it('creates timelock UTXO, broadcasts, and returns result', async () => {
 		const { enableBitcoinClient } = await import('$lib/bitcoin/client-operations');
 
-		// Mock broadcast to return a fake txId
-		const fakeBroadcastTxId = 'ab'.repeat(32);
-		globalThis.fetch = vi.fn().mockResolvedValueOnce({
-			ok: true,
-			text: async () => fakeBroadcastTxId
-		}) as unknown as typeof fetch;
+		mockSuccessfulBroadcast();
 
 		const ownerP2wpkh = btc.p2wpkh(owner.pubkey, btc.TEST_NETWORK);
 		const recipientP2wpkh = btc.p2wpkh(recipient.pubkey, btc.TEST_NETWORK);
@@ -64,7 +69,7 @@ describe('Client Operations - enableBitcoinClient', () => {
 			network: 'testnet'
 		});
 
-		expect(result.txId).toBe(fakeBroadcastTxId);
+		expect(result.txId).toMatch(/^[0-9a-f]{64}$/);
 		expect(result.outputIndex).toBe(0);
 		expect(result.timelockScript).toBeInstanceOf(Uint8Array);
 		expect(result.timelockScript.length).toBeGreaterThan(0);
@@ -85,11 +90,7 @@ describe('Client Operations - enableBitcoinClient', () => {
 	it('pre-signed tx contains OP_RETURN with symmetric key', async () => {
 		const { enableBitcoinClient } = await import('$lib/bitcoin/client-operations');
 
-		const fakeTxId = 'ee'.repeat(32);
-		globalThis.fetch = vi.fn().mockResolvedValueOnce({
-			ok: true,
-			text: async () => fakeTxId
-		}) as unknown as typeof fetch;
+		mockSuccessfulBroadcast();
 
 		const ownerP2wpkh = btc.p2wpkh(owner.pubkey, btc.TEST_NETWORK);
 		const recipientP2wpkh = btc.p2wpkh(recipient.pubkey, btc.TEST_NETWORK);
@@ -162,11 +163,7 @@ describe('Client Operations - enableBitcoinClient', () => {
 		const { enableBitcoinClient } = await import('$lib/bitcoin/client-operations');
 		const { decodeCSVTimelockScript } = await import('$lib/bitcoin/script');
 
-		const fakeTxId = '11'.repeat(32);
-		globalThis.fetch = vi.fn().mockResolvedValueOnce({
-			ok: true,
-			text: async () => fakeTxId
-		}) as unknown as typeof fetch;
+		mockSuccessfulBroadcast();
 
 		const ownerP2wpkh = btc.p2wpkh(owner.pubkey, btc.TEST_NETWORK);
 		const recipientP2wpkh = btc.p2wpkh(recipient.pubkey, btc.TEST_NETWORK);
@@ -215,11 +212,7 @@ describe('Client Operations - refreshBitcoinClient', () => {
 
 		const currentScript = createCSVTimelockScript(owner.pubkey, recipient.pubkey, 144);
 
-		const fakeBroadcastTxId = 'bb'.repeat(32);
-		globalThis.fetch = vi.fn().mockResolvedValueOnce({
-			ok: true,
-			text: async () => fakeBroadcastTxId
-		}) as unknown as typeof fetch;
+		mockSuccessfulBroadcast();
 
 		const recipientP2wpkh = btc.p2wpkh(recipient.pubkey, btc.TEST_NETWORK);
 
@@ -240,7 +233,7 @@ describe('Client Operations - refreshBitcoinClient', () => {
 			network: 'testnet'
 		});
 
-		expect(result.newTxId).toBe(fakeBroadcastTxId);
+		expect(result.newTxId).toMatch(/^[0-9a-f]{64}$/);
 		expect(result.newOutputIndex).toBe(0);
 		expect(result.newTimelockScript).toBeInstanceOf(Uint8Array);
 		expect(result.newAmountSats).toBeLessThan(50000);
@@ -263,10 +256,7 @@ describe('Client Operations - refreshBitcoinClient', () => {
 
 		const currentScript = createCSVTimelockScript(owner.pubkey, recipient.pubkey, 144);
 
-		globalThis.fetch = vi.fn().mockResolvedValueOnce({
-			ok: true,
-			text: async () => 'cc'.repeat(32)
-		}) as unknown as typeof fetch;
+		mockSuccessfulBroadcast();
 
 		const recipientP2wpkh = btc.p2wpkh(recipient.pubkey, btc.TEST_NETWORK);
 
@@ -338,10 +328,7 @@ describe('Client Operations - refreshBitcoinClient', () => {
 
 		const currentScript = createCSVTimelockScript(owner.pubkey, recipient.pubkey, 144);
 
-		globalThis.fetch = vi.fn().mockResolvedValueOnce({
-			ok: true,
-			text: async () => 'ee'.repeat(32)
-		}) as unknown as typeof fetch;
+		mockSuccessfulBroadcast();
 
 		const recipientP2wpkh = btc.p2wpkh(recipient.pubkey, btc.TEST_NETWORK);
 

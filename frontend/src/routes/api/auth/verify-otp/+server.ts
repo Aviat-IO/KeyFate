@@ -7,6 +7,7 @@ import { eq } from 'drizzle-orm';
 import { APIError, handleAPIError } from '$lib/errors/api-error';
 import { validateBody, commonSchemas } from '$lib/api/validation';
 import { z } from 'zod';
+import { getClientIdentifier } from '$lib/rate-limit';
 
 const verifyOTPSchema = z.object({
 	email: commonSchemas.email,
@@ -26,7 +27,11 @@ export const POST: RequestHandler = async (event) => {
 		const normalizedEmail = email.toLowerCase().trim();
 		const normalizedCode = code.trim();
 
-		const validationResult = await validateOTPToken(normalizedEmail, normalizedCode);
+		const validationResult = await validateOTPToken(
+			normalizedEmail,
+			normalizedCode,
+			getClientIdentifier(event.request)
+		);
 
 		if (!validationResult.success || !validationResult.valid) {
 			throw APIError.validation(validationResult.error || 'Invalid or expired code', {

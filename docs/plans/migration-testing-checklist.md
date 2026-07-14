@@ -1,5 +1,7 @@
 # Railway Migration & Feature Testing Checklist
 
+> **Historical snapshot, not promotion evidence.** Checked items below were not recorded against the current candidate SHA/image and must not be used to approve a release. Current gates live in `TODO.md`, `DEPLOYMENT_CHECKLIST.md`, and `docs/plans/railway-deployment-runbook.md`. Executable legacy-provider teardown commands have been removed.
+
 Generated: 2026-03-26
 
 ## 1. Grant Admin Access
@@ -86,128 +88,11 @@ Requires Railway paid plan (Pro at $20/month). Includes:
 - Point-in-time recovery
 - 7-day retention
 
-## 7. GCP Teardown
+## 7. Historical GCP decommissioning
 
-**Only proceed after production on Railway is fully verified.**
+The original checklist contained executable infrastructure-deletion commands. They have been removed because they are not a safe or current KeyFate operating procedure.
 
-Replace `PROJECT_ID` with your GCP project ID in all commands below. Run for
-both staging and production projects if they're separate, or once if shared.
-
-```bash
-# Set your project
-export PROJECT_ID="your-gcp-project-id"
-gcloud config set project $PROJECT_ID
-```
-
-### 7.1 Disable and Delete Cloud Scheduler Jobs
-
-```bash
-# List all jobs
-gcloud scheduler jobs list --location=us-central1
-
-# Pause all jobs first (safe — reversible)
-gcloud scheduler jobs pause check-secrets --location=us-central1
-gcloud scheduler jobs pause process-reminders --location=us-central1
-gcloud scheduler jobs pause confirm-utxos --location=us-central1
-
-# Delete after confirming Railway cron works
-gcloud scheduler jobs delete check-secrets --location=us-central1
-gcloud scheduler jobs delete process-reminders --location=us-central1
-gcloud scheduler jobs delete confirm-utxos --location=us-central1
-```
-
-- [ ] Cloud Scheduler jobs paused
-- [ ] Cloud Scheduler jobs deleted
-
-### 7.2 Delete Cloud Run Services
-
-```bash
-# List services
-gcloud run services list
-
-# Delete staging
-gcloud run services delete dead-mans-switch --region=us-central1 --platform=managed
-
-# If you have a separate production service
-gcloud run services delete dead-mans-switch-production --region=us-central1 --platform=managed
-```
-
-- [ ] Cloud Run services deleted
-
-### 7.3 Delete Cloud SQL Instances (DESTRUCTIVE)
-
-**WARNING:** This permanently deletes all data. Only do this after confirming
-Railway PostgreSQL has all your data.
-
-```bash
-# List instances
-gcloud sql instances list
-
-# Verify you have a recent backup if needed
-gcloud sql backups list --instance=INSTANCE_NAME
-
-# Delete (replace INSTANCE_NAME with actual name)
-gcloud sql instances delete INSTANCE_NAME
-```
-
-- [ ] Verified Railway DB has all data
-- [ ] Cloud SQL instance(s) deleted
-
-### 7.4 Delete Bastion VMs
-
-```bash
-# List VMs
-gcloud compute instances list
-
-# Delete bastion(s)
-gcloud compute instances delete bastion --zone=us-central1-a
-```
-
-- [ ] Bastion VMs deleted
-
-### 7.5 Delete Artifact Registry Repositories
-
-```bash
-# List repos
-gcloud artifacts repositories list --location=us-central1
-
-# Delete
-gcloud artifacts repositories delete REPO_NAME --location=us-central1
-```
-
-- [ ] Artifact Registry repositories deleted
-
-### 7.6 Remove VPC and Networking
-
-```bash
-# Delete firewall rules first
-gcloud compute firewall-rules list --filter="network=NETWORK_NAME"
-gcloud compute firewall-rules delete RULE_NAME
-
-# Delete VPC connector (if using Serverless VPC Access)
-gcloud compute networks vpc-access connectors delete CONNECTOR_NAME --region=us-central1
-
-# Delete subnets
-gcloud compute networks subnets delete SUBNET_NAME --region=us-central1
-
-# Delete VPC network
-gcloud compute networks delete NETWORK_NAME
-```
-
-- [ ] Firewall rules deleted
-- [ ] VPC connector deleted
-- [ ] Subnets deleted
-- [ ] VPC network deleted
-
-### 7.7 Verify Billing
-
-```bash
-# Check remaining active resources
-gcloud asset search-all-resources --scope=projects/$PROJECT_ID --format="table(assetType, name)"
-```
-
-- [ ] GCP billing console shows $0 projected spend
-- [ ] No remaining active resources
+Any legacy-provider decommission must use a separately reviewed change record with a complete resource inventory, isolated restore proof, retention and billing owners, explicit production identifiers, and two-person approval. This historical document is not authorization to inspect, pause, mutate, or delete cloud resources.
 
 ## 8. New Feature Testing
 

@@ -512,7 +512,7 @@ describe('Bitcoin API endpoint validation logic', () => {
 	});
 
 	it('validates network parameter', () => {
-		const valid = ['mainnet', 'testnet'];
+		const valid = ['mainnet', 'testnet', 'signet'];
 		expect(valid.includes('mainnet')).toBe(true);
 		expect(valid.includes('testnet')).toBe(true);
 		expect(valid.includes('regtest')).toBe(false);

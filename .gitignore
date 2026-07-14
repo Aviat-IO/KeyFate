@@ -59,9 +59,7 @@ frontend/drizzle-production.config.ts
 
 # Reproducible or sensitive audit working artifacts
 piolium/codeql-artifacts/db/
-.pi-subagents/artifacts/*_transcript.jsonl
-.pi-subagents/artifacts/*_input.md
-.pi-subagents/artifacts/*_meta.json
+.pi-subagents/
 
 MARKETING_GUIDE.md
 .mcp.json

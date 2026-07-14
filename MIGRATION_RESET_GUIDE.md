@@ -1,117 +1,51 @@
-# Migration Reset Guide
+# Historical Migration Reset Record
 
-## Context
+> **Do not use this file as an operating procedure.** It records a past development-only migration-chain repair. Deleting migration artifacts, resetting staging/production, editing generated SQL, or manually changing Drizzle's journal is prohibited for the current application.
 
-The Drizzle migration history was corrupted with missing snapshot files for
-migrations 0018-0021 and incorrectly named snapshots for migrations 0022,
-0030-0033. This caused `drizzle-kit generate` to fail.
+## Historical context
 
-**Solution:** Reset all migrations and create a single initial migration from
-the current schema state.
+An earlier migration chain had missing or incorrectly named snapshots. At that time, before the current production chain existed, the development artifacts were rebuilt into a new baseline.
 
-## What Was Done
+That event does not authorize another reset. The current repository contains an ordered generated migration chain and deployed environments may contain data written by older application versions.
 
-1. **Removed all old migrations:**
+## Current migration procedure
 
-   ```bash
-   rm -rf frontend/drizzle/meta/*.json frontend/drizzle/*.sql
-   ```
-
-2. **Created fresh migration from current schema:**
+1. Modify `frontend/src/lib/db/schema.ts`.
+2. Generate the migration with Drizzle Kit:
 
    ```bash
    cd frontend
-   mkdir -p drizzle/meta
-   echo '{"version": "7", "dialect": "postgresql", "entries": []}' > drizzle/meta/_journal.json
-   npx drizzle-kit generate --name="initial_schema_with_rate_limits"
+   bunx drizzle-kit generate --name='description_of_change'
    ```
 
-3. **Made rate_limits table UNLOGGED:**
-   ```bash
-   sed -i 's/CREATE TABLE IF NOT EXISTS "rate_limits"/CREATE UNLOGGED TABLE IF NOT EXISTS "rate_limits"/' \
-     frontend/drizzle/0000_initial_schema_with_rate_limits.sql
-   ```
-
-## Files Created
-
-✅ Three required files per Drizzle best practices:
-
-1. `frontend/drizzle/0000_initial_schema_with_rate_limits.sql` (24KB)
-2. `frontend/drizzle/meta/0000_snapshot.json` (79KB)
-3. `frontend/drizzle/meta/_journal.json` (updated)
-
-## Applying to Staging
-
-**⚠️ THIS WILL DROP ALL DATA IN STAGING DATABASE**
-
-```bash
-cd frontend
-./reset-staging-db.sh
-npm run db:migrate -- --config=drizzle.config.ts
-```
-
-## Applying to Production
-
-**⚠️ THIS WILL DROP ALL DATA IN PRODUCTION DATABASE**
-
-1. **Backup (optional but recommended):**
+3. Review the generated SQL without editing it.
+4. Commit all three artifact classes together:
+   - `drizzle/NNNN_name.sql`
+   - `drizzle/meta/NNNN_name_snapshot.json`
+   - `drizzle/meta/_journal.json`
+5. Validate against an isolated PostgreSQL 16 database:
 
    ```bash
-   # From Cloud SQL console or gcloud
-   gcloud sql backups create --instance=YOUR_INSTANCE_NAME
+   DATABASE_URL='<isolated-postgresql-url>' bunx drizzle-kit check
+   DATABASE_URL='<isolated-postgresql-url>' bun run db:migrate:production
+   DATABASE_URL='<isolated-postgresql-url>' bun run db:migrate:production
    ```
 
-2. **Connect to production database:**
+6. Run upgrade/mixed-version and isolated restore tests.
+7. Let Railway run the migration once as the deployment-level pre-deploy command.
 
-   ```bash
-   gcloud sql connect YOUR_INSTANCE_NAME --user=postgres
-   ```
+## Prohibited actions
 
-3. **Drop and recreate database:**
+- deleting the current SQL/snapshot/journal chain;
+- manually creating or editing migration artifacts;
+- `drizzle-kit push` in staging or production;
+- dropping or recreating a staging/production database for deployment;
+- restoring a backup over its source database;
+- writing an ad hoc down migration;
+- changing the journal to make a failed deployment appear successful.
 
-   ```sql
-   DROP DATABASE IF EXISTS keyfate_prod;
-   CREATE DATABASE keyfate_prod;
-   \c keyfate_prod
-   ```
+## Recovery
 
-4. **Run migrations:**
-   ```bash
-   cd frontend
-   DATABASE_URL=<prod-connection-string> npm run db:migrate -- --config=drizzle.config.ts
-   ```
+If a migration fails, stop promotion and investigate. Roll application code back to the prior compatible image while leaving additive migrations in place. If destructive recovery is required, first restore a verified backup into an isolated database and follow the approved incident procedure.
 
-## Verification
-
-After applying migrations, verify:
-
-```sql
--- Check rate_limits table exists and is UNLOGGED
-SELECT relname, relpersistence FROM pg_class WHERE relname = 'rate_limits';
--- relpersistence should be 'u' for UNLOGGED
-
--- Check all tables exist
-\dt
-
--- Check all indexes exist
-\di
-
--- Verify migration journal
-SELECT * FROM drizzle.__drizzle_migrations;
-```
-
-## Future Migrations
-
-From now on, always follow the Drizzle workflow from `@AGENTS.md`:
-
-1. Modify `src/lib/db/schema.ts`
-2. Run `npx drizzle-kit generate --name="description_of_change"`
-3. Review generated SQL
-4. Test locally
-5. Commit ALL three files (SQL, snapshot JSON, \_journal.json)
-
-**Never:**
-
-- ❌ Manually create SQL files
-- ❌ Edit migration files after generation
-- ❌ Skip `drizzle-kit generate`
+See [`DEPLOYMENT_CHECKLIST.md`](DEPLOYMENT_CHECKLIST.md) and [`docs/plans/railway-deployment-runbook.md`](docs/plans/railway-deployment-runbook.md).

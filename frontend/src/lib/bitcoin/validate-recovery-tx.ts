@@ -2,6 +2,7 @@ import * as btc from '@scure/btc-signer';
 import { hex } from '@scure/base';
 import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { decodeCSVTimelockScript } from './script';
+import { getBitcoinNetworkParams, type BitcoinNetwork } from './network';
 
 export interface BitcoinRecoveryTxExpectations {
 	fundingTxId: string;
@@ -10,7 +11,7 @@ export interface BitcoinRecoveryTxExpectations {
 	timelockScriptHex: string;
 	ttlBlocks: number;
 	recipientAddress: string;
-	network: 'mainnet' | 'testnet';
+	network: BitcoinNetwork;
 	nostrCapsuleEventId: string;
 	maxFeeSats: number;
 }
@@ -60,7 +61,7 @@ export function validateBitcoinRecoveryTransaction(
 	let opReturnPayload: Uint8Array | null = null;
 	let recipientAmount = 0n;
 	let recipientAddress: string | undefined;
-	const network = expected.network === 'mainnet' ? btc.NETWORK : btc.TEST_NETWORK;
+	const network = getBitcoinNetworkParams(expected.network);
 	const tx = btc.Transaction.fromRaw(bytes, {
 		allowUnknownInputs: true,
 		allowUnknownOutputs: true

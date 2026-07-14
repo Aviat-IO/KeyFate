@@ -10,122 +10,6 @@ import * as btc from '@scure/btc-signer';
 import { hex } from '@scure/base';
 import { secp256k1 } from '@noble/curves/secp256k1.js';
 
-// Override any vi.mock("$lib/bitcoin/broadcast") from other test files.
-// Bun's test runner shares the module cache, so confirm-utxos.test.ts's mock
-// would replace the real module. This mock provides the real fetch-based
-// implementations for broadcastTransaction and getUTXOStatus.
-vi.mock('$lib/bitcoin/broadcast', () => {
-	// Inline the real implementations since vi.importActual is not available in Bun
-	async function broadcastTransaction(
-		txHex: string,
-		network: 'mainnet' | 'testnet' = 'mainnet'
-	): Promise<string> {
-		const endpoints =
-			network === 'testnet'
-				? [
-						{ name: 'mempool.space', url: 'https://mempool.space/testnet/api/tx' },
-						{ name: 'blockstream.info', url: 'https://blockstream.info/testnet/api/tx' }
-					]
-				: [
-						{ name: 'mempool.space', url: 'https://mempool.space/api/tx' },
-						{ name: 'blockstream.info', url: 'https://blockstream.info/api/tx' }
-					];
-		const errors: string[] = [];
-		for (const endpoint of endpoints) {
-			try {
-				const response = await fetch(endpoint.url, {
-					method: 'POST',
-					headers: { 'Content-Type': 'text/plain' },
-					body: txHex
-				});
-				if (response.ok) return (await response.text()).trim();
-				const errorText = await response.text();
-				errors.push(`${endpoint.name}: HTTP ${response.status} - ${errorText}`);
-			} catch (err) {
-				errors.push(`${endpoint.name}: ${err instanceof Error ? err.message : String(err)}`);
-			}
-		}
-		throw new Error(`Failed to broadcast transaction via all endpoints:\n${errors.join('\n')}`);
-	}
-
-	async function getUTXOStatus(
-		txId: string,
-		outputIndex: number,
-		network: 'mainnet' | 'testnet' = 'mainnet'
-	) {
-		const endpoints =
-			network === 'testnet'
-				? {
-						mempool: 'https://mempool.space/testnet/api',
-						blockstream: 'https://blockstream.info/testnet/api'
-					}
-				: { mempool: 'https://mempool.space/api', blockstream: 'https://blockstream.info/api' };
-		const errors: string[] = [];
-
-		try {
-			const txResponse = await fetch(`${endpoints.mempool}/tx/${txId}`);
-			if (txResponse.ok) {
-				const txData = (await txResponse.json()) as {
-					status?: { confirmed?: boolean; block_height?: number };
-				};
-				const confirmed = txData.status?.confirmed ?? false;
-				const blockHeight = txData.status?.block_height;
-				const outspendResponse = await fetch(
-					`${endpoints.mempool}/tx/${txId}/outspend/${outputIndex}`
-				);
-				if (outspendResponse.ok) {
-					const outspendData = (await outspendResponse.json()) as {
-						spent?: boolean;
-						txid?: string;
-					};
-					return {
-						confirmed,
-						blockHeight,
-						spent: outspendData.spent ?? false,
-						spentByTxId: outspendData.txid
-					};
-				}
-			}
-			errors.push(`mempool.space: HTTP ${txResponse.status}`);
-		} catch (err) {
-			errors.push(`mempool.space: ${err instanceof Error ? err.message : String(err)}`);
-		}
-
-		try {
-			const txResponse = await fetch(`${endpoints.blockstream}/tx/${txId}`);
-			if (txResponse.ok) {
-				const txData = (await txResponse.json()) as {
-					status?: { confirmed?: boolean; block_height?: number };
-				};
-				const confirmed = txData.status?.confirmed ?? false;
-				const blockHeight = txData.status?.block_height;
-				const outspendResponse = await fetch(
-					`${endpoints.blockstream}/tx/${txId}/outspend/${outputIndex}`
-				);
-				if (outspendResponse.ok) {
-					const outspendData = (await outspendResponse.json()) as {
-						spent?: boolean;
-						txid?: string;
-					};
-					return {
-						confirmed,
-						blockHeight,
-						spent: outspendData.spent ?? false,
-						spentByTxId: outspendData.txid
-					};
-				}
-			}
-			errors.push(`blockstream.info: HTTP ${txResponse.status}`);
-		} catch (err) {
-			errors.push(`blockstream.info: ${err instanceof Error ? err.message : String(err)}`);
-		}
-
-		throw new Error(`Failed to get UTXO status from all endpoints:\n${errors.join('\n')}`);
-	}
-
-	return { broadcastTransaction, getUTXOStatus };
-});
-
 // ─── Test key pairs ───────────────────────────────────────────────────────────
 
 function makeKeyPair(seed: number) {
@@ -825,13 +709,14 @@ describe('Bitcoin CSV Timelock - Broadcast', () => {
 		it('broadcasts via mempool.space on success', async () => {
 			const { broadcastTransaction } = await import('$lib/bitcoin/broadcast');
 
+			const expectedTxId = 'ab'.repeat(32);
 			globalThis.fetch = vi.fn().mockResolvedValueOnce({
 				ok: true,
-				text: async () => 'abc123txid'
+				text: async () => expectedTxId
 			}) as unknown as typeof fetch;
 
 			const txId = await broadcastTransaction('deadbeef', 'mainnet');
-			expect(txId).toBe('abc123txid');
+			expect(txId).toBe(expectedTxId);
 
 			const mockFetch = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
 			expect(mockFetch).toHaveBeenCalledWith(
@@ -848,6 +733,7 @@ describe('Bitcoin CSV Timelock - Broadcast', () => {
 		it('falls back to blockstream on mempool failure', async () => {
 			const { broadcastTransaction } = await import('$lib/bitcoin/broadcast');
 
+			const fallbackTxId = 'cd'.repeat(32);
 			globalThis.fetch = vi
 				.fn()
 				.mockResolvedValueOnce({
@@ -857,11 +743,11 @@ describe('Bitcoin CSV Timelock - Broadcast', () => {
 				})
 				.mockResolvedValueOnce({
 					ok: true,
-					text: async () => 'fallback_txid'
+					text: async () => fallbackTxId
 				}) as unknown as typeof fetch;
 
 			const txId = await broadcastTransaction('deadbeef', 'mainnet');
-			expect(txId).toBe('fallback_txid');
+			expect(txId).toBe(fallbackTxId);
 
 			const mockFetch = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
 			expect(mockFetch).toHaveBeenCalledTimes(2);
@@ -890,7 +776,7 @@ describe('Bitcoin CSV Timelock - Broadcast', () => {
 
 			globalThis.fetch = vi.fn().mockResolvedValueOnce({
 				ok: true,
-				text: async () => 'testnet_txid'
+				text: async () => 'ef'.repeat(32)
 			}) as unknown as typeof fetch;
 
 			await broadcastTransaction('deadbeef', 'testnet');
@@ -914,7 +800,8 @@ describe('Bitcoin CSV Timelock - Broadcast', () => {
 				.mockResolvedValueOnce({
 					ok: true,
 					json: async () => ({
-						status: { confirmed: true, block_height: 800000 }
+						status: { confirmed: true, block_height: 800000 },
+						vout: [{ value: 20_000, scriptpubkey: '0014' + '11'.repeat(20) }]
 					})
 				})
 				.mockResolvedValueOnce({
@@ -922,7 +809,7 @@ describe('Bitcoin CSV Timelock - Broadcast', () => {
 					json: async () => ({ spent: false })
 				}) as unknown as typeof fetch;
 
-			const status = await getUTXOStatus('abc123', 0, 'mainnet');
+			const status = await getUTXOStatus('ab'.repeat(32), 0, 'mainnet');
 			expect(status.confirmed).toBe(true);
 			expect(status.blockHeight).toBe(800000);
 			expect(status.spent).toBe(false);
@@ -938,17 +825,18 @@ describe('Bitcoin CSV Timelock - Broadcast', () => {
 				.mockResolvedValueOnce({
 					ok: true,
 					json: async () => ({
-						status: { confirmed: true, block_height: 800000 }
+						status: { confirmed: true, block_height: 800000 },
+						vout: [{ value: 20_000, scriptpubkey: '0014' + '11'.repeat(20) }]
 					})
 				})
 				.mockResolvedValueOnce({
 					ok: true,
-					json: async () => ({ spent: true, txid: 'spending_txid' })
+					json: async () => ({ spent: true, txid: 'bc'.repeat(32) })
 				}) as unknown as typeof fetch;
 
-			const status = await getUTXOStatus('abc123', 0, 'mainnet');
+			const status = await getUTXOStatus('ab'.repeat(32), 0, 'mainnet');
 			expect(status.spent).toBe(true);
-			expect(status.spentByTxId).toBe('spending_txid');
+			expect(status.spentByTxId).toBe('bc'.repeat(32));
 
 			globalThis.fetch = originalFetch;
 		});
@@ -964,7 +852,8 @@ describe('Bitcoin CSV Timelock - Broadcast', () => {
 				.mockResolvedValueOnce({
 					ok: true,
 					json: async () => ({
-						status: { confirmed: true, block_height: 800001 }
+						status: { confirmed: true, block_height: 800001 },
+						vout: [{ value: 20_000, scriptpubkey: '0014' + '11'.repeat(20) }]
 					})
 				})
 				.mockResolvedValueOnce({
@@ -972,7 +861,7 @@ describe('Bitcoin CSV Timelock - Broadcast', () => {
 					json: async () => ({ spent: false })
 				}) as unknown as typeof fetch;
 
-			const status = await getUTXOStatus('abc123', 0, 'mainnet');
+			const status = await getUTXOStatus('ab'.repeat(32), 0, 'mainnet');
 			expect(status.confirmed).toBe(true);
 			expect(status.blockHeight).toBe(800001);
 

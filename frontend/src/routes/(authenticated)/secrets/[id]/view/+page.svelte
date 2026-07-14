@@ -48,6 +48,7 @@
 			new Date(data.secret.nextCheckIn).getTime() < Date.now()
 	);
 	let isInactive = $derived(isTriggered || isFailed || serverShareDeleted);
+	let bitcoinRefreshRequired = $derived(data.secret.bitcoinDeliveryStatus === 'ready');
 	let isRecoverable = $derived(isFailed && !data.hasBeenDisclosed && !!data.secret.serverShare);
 
 	let statusLabel = $derived.by(() => {
@@ -91,7 +92,8 @@
 	});
 
 	let canCheckIn = $derived.by(() => {
-		// Recoverable failed secrets can always check in
+		if (bitcoinRefreshRequired) return false;
+		// Recoverable failed secrets can check in only when no Bitcoin refresh is required.
 		if (isRecoverable) return true;
 		if (isInactive || data.secret.status === 'paused' || isOverdue) return false;
 		if (!data.secret.lastCheckIn) return true;
@@ -358,6 +360,16 @@
 		</div>
 	</div>
 
+	{#if bitcoinRefreshRequired && !isInactive && data.secret.status !== 'paused'}
+		<div class="border-border bg-muted/40 mt-6 rounded-lg border p-4">
+			<p class="text-sm font-medium">Bitcoin refresh required for check-in</p>
+			<p class="text-muted-foreground mt-1 text-sm">
+				Use the encrypted continuity kit in the Bitcoin Timelock section. The service check-in
+				advances only when the next Bitcoin generation is persisted.
+			</p>
+		</div>
+	{/if}
+
 	{#if actionError}
 		<div class="border-destructive/50 bg-destructive/10 mt-6 rounded-lg border p-4">
 			<div class="flex items-center gap-2">
@@ -448,7 +460,10 @@
 
 		<!-- Bitcoin Timelock -->
 		<section>
-			<BitcoinStatus secretId={data.secret.id} />
+			<BitcoinStatus
+				secretId={data.secret.id}
+				bitcoinEnrollmentEnabled={data.bitcoinEnrollmentEnabled}
+			/>
 		</section>
 
 		<!-- Check-in History -->

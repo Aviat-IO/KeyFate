@@ -1,4 +1,5 @@
 import { redirect, error } from '@sveltejs/kit';
+import { isBitcoinEnrollmentEnabled } from '$lib/server/bitcoin-enrollment';
 import type { PageServerLoad } from './$types';
 import { getSecret } from '$lib/db/operations';
 import { getDatabase } from '$lib/db/drizzle';
@@ -34,12 +35,14 @@ export const load: PageServerLoad = async (event) => {
 
 		return {
 			session,
+			bitcoinEnrollmentEnabled: isBitcoinEnrollmentEnabled(),
 			hasBeenDisclosed: disclosed,
 			secret: {
 				id: secret.id,
 				userId: secret.userId,
 				title: secret.title,
 				status: secret.status,
+				bitcoinDeliveryStatus: secret.bitcoinDeliveryStatus,
 				checkInDays: secret.checkInDays,
 				lastCheckIn: secret.lastCheckIn?.toISOString() ?? null,
 				nextCheckIn: secret.nextCheckIn?.toISOString() ?? null,

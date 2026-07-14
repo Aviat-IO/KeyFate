@@ -31,8 +31,8 @@ export function validateOAuthConfig(config?: OAuthConfig): ValidationResult {
 	const warnings: string[] = [];
 
 	// Use provided config or environment variables
-	const googleClientId = config ? config.googleClientId : process.env.GOOGLE_CLIENT_ID;
-	const googleClientSecret = config ? config.googleClientSecret : process.env.GOOGLE_CLIENT_SECRET;
+	const googleClientId = config ? config.googleClientId : process.env.AUTH_GOOGLE_ID;
+	const googleClientSecret = config ? config.googleClientSecret : process.env.AUTH_GOOGLE_SECRET;
 	const authSecret = config
 		? config.authSecret || config.nextAuthSecret
 		: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
@@ -42,17 +42,17 @@ export function validateOAuthConfig(config?: OAuthConfig): ValidationResult {
 
 	// Required environment variables
 	if (!googleClientId) {
-		errors.push('GOOGLE_CLIENT_ID is required for Google OAuth');
+		errors.push('AUTH_GOOGLE_ID is required for Google OAuth');
 	} else if (!googleClientId.endsWith('.apps.googleusercontent.com')) {
 		errors.push(
-			'GOOGLE_CLIENT_ID must be a valid Google OAuth client ID ending with .apps.googleusercontent.com'
+			'AUTH_GOOGLE_ID must be a valid Google OAuth client ID ending with .apps.googleusercontent.com'
 		);
 	}
 
 	if (!googleClientSecret) {
-		errors.push('GOOGLE_CLIENT_SECRET is required for Google OAuth');
+		errors.push('AUTH_GOOGLE_SECRET is required for Google OAuth');
 	} else if (googleClientSecret.length < 24) {
-		warnings.push('GOOGLE_CLIENT_SECRET seems too short, verify it is correct');
+		warnings.push('AUTH_GOOGLE_SECRET seems too short, verify it is correct');
 	}
 
 	if (!authSecret) {
@@ -121,8 +121,8 @@ export function assertValidOAuthConfig(config?: OAuthConfig): void {
  */
 export function getCurrentOAuthConfig(): OAuthConfig {
 	return {
-		googleClientId: process.env.GOOGLE_CLIENT_ID,
-		googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
+		googleClientId: process.env.AUTH_GOOGLE_ID,
+		googleClientSecret: process.env.AUTH_GOOGLE_SECRET,
 		authSecret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
 		siteUrl: process.env.PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_SITE_URL
 	};

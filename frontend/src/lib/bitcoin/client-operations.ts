@@ -11,6 +11,7 @@ import { createTimelockUTXO, createPreSignedRecipientTx, type UTXO } from './tra
 import { refreshTimelockUTXO } from './refresh.js';
 import { broadcastTransaction } from './broadcast.js';
 import { zeroBitcoinKeypair, type BitcoinKeypair } from './client-wallet.js';
+import type { BitcoinNetwork } from './network.js';
 
 export interface EnableBitcoinClientParams {
 	ownerKeypair: BitcoinKeypair;
@@ -22,7 +23,7 @@ export interface EnableBitcoinClientParams {
 	nostrEventId: string;
 	recipientAddress: string;
 	ttlBlocks: number;
-	network: 'mainnet' | 'testnet';
+	network: BitcoinNetwork;
 }
 
 export interface EnableBitcoinClientResult {
@@ -49,7 +50,7 @@ export async function enableBitcoinClient(
 			network: params.network
 		});
 
-		const txId = await broadcastTransaction(utxoResult.txHex, params.network);
+		const txId = await broadcastTransaction(utxoResult.txHex, params.network, utxoResult.txId);
 		const preSignedResult = createPreSignedRecipientTx({
 			timelockUtxo: {
 				txId,
@@ -89,7 +90,7 @@ export interface RefreshBitcoinClientParams {
 	symmetricKeyK: Uint8Array;
 	nostrEventId: string;
 	recipientAddress: string;
-	network: 'mainnet' | 'testnet';
+	network: BitcoinNetwork;
 }
 
 export interface RefreshBitcoinClientResult {
@@ -116,7 +117,11 @@ export async function refreshBitcoinClient(
 			network: params.network
 		});
 
-		const newTxId = await broadcastTransaction(refreshResult.txHex, params.network);
+		const newTxId = await broadcastTransaction(
+			refreshResult.txHex,
+			params.network,
+			refreshResult.newTxId
+		);
 		const estimatedFee = Math.ceil(204 * params.feeRateSatsPerVbyte);
 		const newAmountSats = params.currentUtxo.amountSats - estimatedFee;
 		const preSignedResult = createPreSignedRecipientTx({

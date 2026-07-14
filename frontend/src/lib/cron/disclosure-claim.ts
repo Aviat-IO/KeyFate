@@ -24,6 +24,7 @@ export async function claimDisclosureSecret(
 		.where(
 			and(
 				eq(secrets.id, secretId),
+				lt(secrets.nextCheckIn, claimTime),
 				or(
 					eq(secrets.status, 'active'),
 					and(

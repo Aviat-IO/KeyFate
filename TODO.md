@@ -4,14 +4,7 @@
 
 **Release verdict: NO-GO. Do not promote to production yet.**
 
-The audited revision is `b7b7aef1a897c418e0402acd211fecf0206d8217`. The current remediation tree is an uncommitted local candidate, not a releasable artifact.
-
-Local candidate image:
-
-```text
-sha256:24ccc60c9f454482da6788eb0a6f5ae911d00517da119beb7f107605b269165e
-label: uncommitted-remediation-candidate
-```
+The last audited revision was `b7b7aef1a897c418e0402acd211fecf0206d8217`. The current `review/production-remediation` tree contains further uncommitted work and is not a releasable artifact. A current local image exists, but there is no immutable source SHA or exact-SHA CI artifact.
 
 ### Completed locally
 
@@ -24,18 +17,22 @@ label: uncommitted-remediation-candidate
 - [x] Bitcoin recovery envelopes, branch-key zeroization, generation checks, and atomic storage endpoints tested.
 - [x] Enforcing CSP, fixed Markdown sanitization, liveness/readiness separation, non-root runtime, and production dependency pruning.
 - [x] Railway Config-as-Code uses one deployment-level migration command; replicas do not run migrations at startup.
-- [x] 581 default tests passed, 5 PostgreSQL tests were explicitly skipped in the default run, and 0 failed.
-- [x] The separate PostgreSQL suite passed 5 tests and 34 expectations.
-- [x] All 11 generated migrations passed fresh install, retry, `0008` upgrade, mixed-version, legacy-duplicate convergence, and isolated logical restore tests.
-- [x] Lint, Svelte/TypeScript check, build, Drizzle check, Docker smoke, TLS database readiness, strict OpenSpec validation, and Piolium phase 15 passed.
-- [x] Independent follow-up review found no blocker/high/medium residual in the final stale-lease, migration, or Bitcoin-generation fixes.
+- [x] The current default suite passes 626 tests with 5 PostgreSQL tests explicitly skipped and 0 failures.
+- [x] The current local lint, Svelte/TypeScript check, production build, Drizzle metadata check, production dependency audit, and 4 non-credentialed Chromium security journeys pass.
+- [x] CI now defines migration metadata/retry checks, browser smoke, OCI revision verification, and successful Docker readiness over verified PostgreSQL TLS.
+- [x] Strict OpenSpec validation passes for the current local tree.
+- [x] Independent follow-up review verified the targeted Bitcoin/backend/operations fixes; no new blocker or high finding was found. The known two-phase Bitcoin lifecycle remains release-blocking before enablement.
+- [x] PostgreSQL concurrency/fencing and migration compatibility pass: 5 tests, 34 expectations, and 11 idempotent migration journal rows.
+- [x] The current local Docker image passes non-root/pruning/provenance checks, fail-closed readiness, and successful production readiness over verified PostgreSQL TLS.
+- [x] An isolated logical dump/restore preserved the fixture user, secret, and all 11 migration rows; Railway managed backup/PITR proof remains external.
+- [ ] Run the Piolium gate and exact-SHA GitHub workflow after the final diff is committed.
 
 ### Known incomplete work
 
-- [ ] The production owner Bitcoin setup workflow is not wired.
-- [ ] The encrypted Bitcoin continuity-kit download/import workflow is not wired.
-- [ ] The production Bitcoin refresh workflow does not invoke the implemented client operation and atomic endpoint.
-- [ ] Bitcoin enrollment remains hard-disabled pending the owner workflow and funded signet evidence.
+- [x] The owner Bitcoin setup workflow is wired behind the server-owned fail-closed Signet gate.
+- [x] The encrypted Bitcoin continuity-kit v2 download/import workflow is wired with strict restart bindings and a v1 re-enrollment path.
+- [x] The Bitcoin refresh workflow invokes the client broadcast operation and atomic generation-fenced endpoint, then requires a replacement kit download.
+- [ ] Bitcoin enrollment remains hard-disabled in production pending funded Signet evidence and approval.
 - [ ] The legacy ESLint baseline remains and must be retired incrementally.
 - [ ] Credentialed CSP browser journeys have not been completed.
 - [ ] GitHub, Railway, provider, live-relay, backup/PITR, monitoring, and production-promotion controls remain unverified.
@@ -59,18 +56,19 @@ These tasks can be implemented and tested by an engineering agent, but must stil
 
 ### P0 — complete the Bitcoin owner workflow
 
-- [ ] Build an owner-only Bitcoin setup UI behind the disabled feature gate.
-- [ ] Require a recipient-controlled Bitcoin address; never create or retain a recipient wallet private key for the owner.
-- [ ] Use the real browser-held K and Nostr capsule/event binding. Do not reintroduce placeholder or all-zero values.
-- [ ] Generate a fresh one-time branch key for each setup/refresh and zero it on every success and failure path.
-- [ ] Create the complete delayed recipient transaction and encrypt it for the intended recipient before upload.
-- [ ] Upload only public lifecycle metadata and the recipient-encrypted envelope to `/store-bitcoin`.
-- [ ] Require an encrypted owner continuity-kit download before setup is considered complete.
-- [ ] Add continuity-kit import with passphrase validation entirely in the browser.
-- [ ] Wire refresh to `refreshBitcoinClient` and `/store-bitcoin-refresh`.
-- [ ] Preserve ordering: create and broadcast the refresh, persist the new generation, then allow the server transaction to supersede the old generation atomically.
-- [ ] Add browser tests for setup, explicit download, tab/browser restart, continuity import, refresh, stale-generation rejection, and recipient recovery.
-- [ ] Keep enrollment disabled after implementation until the human-funded signet gate passes.
+- [x] Build an owner-only Bitcoin setup UI behind the disabled feature gate.
+- [x] Require a recipient-controlled Bitcoin address; never create or retain a recipient wallet private key for the owner.
+- [x] Use the real browser-held K and Nostr capsule/event binding. Do not reintroduce placeholder or all-zero values.
+- [x] Generate a fresh one-time branch key for each setup/refresh and zero it on every success and failure path.
+- [x] Create the complete delayed recipient transaction and encrypt it for the intended recipient before upload.
+- [x] Upload only public lifecycle metadata and the recipient-encrypted envelope to `/store-bitcoin`.
+- [x] Require an encrypted owner continuity-kit download before setup is considered complete.
+- [x] Add continuity-kit import with passphrase validation entirely in the browser.
+- [x] Wire refresh to `refreshBitcoinClient` and `/store-bitcoin-refresh`.
+- [x] Couple a Bitcoin-enabled service check-in to atomic persistence of the next Bitcoin generation; reject ordinary check-in and live-disclosure races.
+- [ ] Replace broadcast-first setup/refresh with an idempotent prepare → encrypted-kit download → broadcast → exact-output finalize lifecycle that survives accepted-then-timeout, persistence failure, and retry without stranding a generation.
+- [ ] Add browser tests for setup, explicit download, tab/browser restart, continuity import, refresh, stale-generation rejection, accepted-then-timeout reconciliation, and recipient recovery.
+- [ ] Keep production enrollment disabled after implementation until the human-funded Signet gate passes.
 
 ### P1 — retire the lint baseline
 
@@ -106,7 +104,7 @@ The following work requires account authority, credentials, funds, private keys,
 
 ### 2. Configure GitHub release controls
 
-- [ ] **[HUMAN — GitHub admin]** Require the lint/typecheck, test, migration, build, and Docker/runtime jobs on protected branches.
+- [ ] **[HUMAN — GitHub admin]** Require the lint/typecheck, test, dependency-audit, migration, build, browser, and Docker/runtime jobs on protected branches.
 - [ ] **[HUMAN — GitHub admin]** Enable branch protection/rulesets, prevent bypass where appropriate, and require review.
 - [ ] **[HUMAN — GitHub admin]** Configure the production environment approval gate.
 - [ ] **[HUMAN — GitHub admin]** Retain the green workflow URL and exact Git SHA used for staging.
@@ -196,6 +194,8 @@ bun install --frozen-lockfile
 bun run lint
 bun run check
 bun test
+bun run test:browser
+bun run audit:production
 bun run build
 ```
 

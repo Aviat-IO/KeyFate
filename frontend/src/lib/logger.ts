@@ -31,8 +31,25 @@ const SENSITIVE_FIELDS = [
 	'secret_key',
 	'secretkey',
 	'signature',
-	'hash'
+	'hash',
+	'title',
+	'recipient',
+	'recipientName',
+	'contactEmail',
+	'address',
+	'passphrase',
+	'envelope',
+	'providerBody'
 ];
+
+const LOG_LEVELS = { debug: 10, info: 20, warn: 30, error: 40 } as const;
+
+function shouldLog(level: keyof typeof LOG_LEVELS): boolean {
+	const configured = (
+		process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug')
+	).toLowerCase() as keyof typeof LOG_LEVELS;
+	return LOG_LEVELS[level] >= (LOG_LEVELS[configured] ?? LOG_LEVELS.info);
+}
 
 function isSensitiveKey(key: string): boolean {
 	const lowerKey = key.toLowerCase();
@@ -54,9 +71,12 @@ function sanitize(data: unknown): unknown {
 
 	// Handle primitives
 	if (typeof data !== 'object') {
-		// Truncate very long strings
-		if (typeof data === 'string' && data.length > 1000) {
-			return data.substring(0, 100) + '...[truncated]';
+		if (typeof data === 'string') {
+			const redacted = data
+				.replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[REDACTED_EMAIL]')
+				.replace(/\b(?:nsec1|npub1)[023456789acdefghjklmnpqrstuvwxyz]{20,}\b/gi, '[REDACTED_NOSTR]')
+				.replace(/\b(?:sk|pk)_(?:live|test)_[A-Za-z0-9_]+\b/g, '[REDACTED_PROVIDER_KEY]');
+			return redacted.length > 1000 ? `${redacted.substring(0, 100)}...[truncated]` : redacted;
 		}
 		return data;
 	}
@@ -127,7 +147,7 @@ function createLogEntry(
 	}
 
 	if (error) {
-		entry.error = error.message;
+		entry.error = String(sanitize(error.message));
 		if (process.env.NODE_ENV !== 'production') {
 			entry.stack = error.stack;
 		}
@@ -138,25 +158,23 @@ function createLogEntry(
 
 export const logger = {
 	debug: (message: string, data?: unknown) => {
-		if (process.env.NODE_ENV === 'development') {
-			const entry = createLogEntry('debug', message, data);
-			console.debug(JSON.stringify(entry));
-		}
+		if (!shouldLog('debug')) return;
+		console.debug(JSON.stringify(createLogEntry('debug', message, data)));
 	},
 
 	info: (message: string, data?: unknown) => {
-		const entry = createLogEntry('info', message, data);
-		console.log(JSON.stringify(entry));
+		if (!shouldLog('info')) return;
+		console.log(JSON.stringify(createLogEntry('info', message, data)));
 	},
 
 	warn: (message: string, data?: unknown) => {
-		const entry = createLogEntry('warn', message, data);
-		console.warn(JSON.stringify(entry));
+		if (!shouldLog('warn')) return;
+		console.warn(JSON.stringify(createLogEntry('warn', message, data)));
 	},
 
 	error: (message: string, error?: Error, data?: unknown) => {
-		const entry = createLogEntry('error', message, data, error);
-		console.error(JSON.stringify(entry));
+		if (!shouldLog('error')) return;
+		console.error(JSON.stringify(createLogEntry('error', message, data, error)));
 	}
 };
 

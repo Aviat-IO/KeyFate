@@ -8,7 +8,7 @@
 import { randomUUID } from 'node:crypto';
 import { getDatabase } from '$lib/db/get-database';
 import { dataExportJobs, users, ExportJobStatus } from '$lib/db/schema';
-import { and, eq, isNull, lt, or } from 'drizzle-orm';
+import { and, eq, gt, isNull, lt, or } from 'drizzle-orm';
 import { logger } from '$lib/logger';
 import { generateUserDataExport } from '$lib/gdpr/export-service';
 import { createExportArtifact, type ExportArtifact } from '$lib/gdpr/export-artifact';
@@ -88,7 +88,13 @@ export async function completeExportClaim(
 			errorMessage: null,
 			updatedAt: completedAt
 		})
-		.where(and(eq(dataExportJobs.id, jobId), eq(dataExportJobs.leaseId, leaseId)))
+		.where(
+			and(
+				eq(dataExportJobs.id, jobId),
+				eq(dataExportJobs.leaseId, leaseId),
+				gt(dataExportJobs.leaseExpiresAt, completedAt)
+			)
+		)
 		.returning({ id: dataExportJobs.id });
 
 	return completed.length > 0;
@@ -152,7 +158,13 @@ async function processClaim(db: Database, job: ExportJob, leaseId: string): Prom
 				leaseExpiresAt: null,
 				updatedAt: new Date()
 			})
-			.where(and(eq(dataExportJobs.id, job.id), eq(dataExportJobs.leaseId, leaseId)));
+			.where(
+				and(
+					eq(dataExportJobs.id, job.id),
+					eq(dataExportJobs.leaseId, leaseId),
+					gt(dataExportJobs.leaseExpiresAt, new Date())
+				)
+			);
 		return false;
 	}
 }

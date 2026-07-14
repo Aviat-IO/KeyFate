@@ -4,6 +4,8 @@
  * Uses mempool.space recommended fees API as primary source.
  */
 
+import { getBitcoinExplorerBaseUrl, type BitcoinNetwork } from './network.js';
+
 /** Fee priority levels */
 export type FeePriority = 'low' | 'medium' | 'high';
 
@@ -28,10 +30,9 @@ interface MempoolFeeEstimate {
  */
 export async function estimateFeeRate(
 	priority: FeePriority = 'medium',
-	network: 'mainnet' | 'testnet' = 'mainnet'
+	network: BitcoinNetwork = 'mainnet'
 ): Promise<number> {
-	const baseUrl =
-		network === 'testnet' ? 'https://mempool.space/testnet/api' : 'https://mempool.space/api';
+	const baseUrl = getBitcoinExplorerBaseUrl(network);
 
 	try {
 		const response = await fetch(`${baseUrl}/v1/fees/recommended`);
@@ -76,10 +77,9 @@ export async function estimateFeeRate(
  * @returns Object with fee rates for each priority level
  */
 export async function getAllFeeRates(
-	network: 'mainnet' | 'testnet' = 'mainnet'
+	network: BitcoinNetwork = 'mainnet'
 ): Promise<Record<FeePriority, number>> {
-	const baseUrl =
-		network === 'testnet' ? 'https://mempool.space/testnet/api' : 'https://mempool.space/api';
+	const baseUrl = getBitcoinExplorerBaseUrl(network);
 
 	try {
 		const response = await fetch(`${baseUrl}/v1/fees/recommended`);

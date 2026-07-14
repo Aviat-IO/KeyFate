@@ -102,18 +102,18 @@
 			]
 		},
 		{
-			category: 'Future Features',
+			category: 'Recovery Capabilities',
 			icon: Clock,
 			questions: [
 				{
 					question: "What's on your roadmap?",
 					answer:
-						"We're actively working on: Share export/backup functionality, Nostr integration for censorship-resistant disclosure, Offline reconstruction tools, SMS notifications, Multi-provider storage redundancy."
+						'Credentialed production validation is still in progress. SMS delivery and multi-provider storage are future work. Bitcoin enrollment remains disabled until the funded Signet recovery gate passes.'
 				},
 				{
 					question: 'What is Nostr integration?',
 					answer:
-						"Nostr is a decentralized protocol for censorship-resistant communication. We're building integration that allows secret disclosure through the Nostr network."
+						'Nostr recovery uses owner-signed, recipient-encrypted artifacts created in your browser. KeyFate stores public bindings only; recipient private keys and plaintext shares never go to the service. Successful delivery still depends on the selected relays being available.'
 				}
 			]
 		}
