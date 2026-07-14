@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import type { Options as PostgresOptions } from 'postgres';
 
 export type PostgresConnectionOptions = Partial<PostgresOptions<Record<string, never>>>;
@@ -15,6 +16,41 @@ function parsePositiveInteger(value: string | undefined, fallback: number, name:
 		throw new Error(`${name} must be a positive integer`);
 	}
 	return parsed;
+}
+
+function parseVerifiedTlsOptions(
+	environment: NodeJS.ProcessEnv
+): NonNullable<PostgresConnectionOptions['ssl']> {
+	const encodedCa = environment.DATABASE_CA_CERT_BASE64?.trim();
+	const servername = environment.DATABASE_TLS_SERVER_NAME?.trim();
+
+	if (!encodedCa && !servername) return 'verify-full';
+	if (!encodedCa || !servername) {
+		throw new Error(
+			'DATABASE_CA_CERT_BASE64 and DATABASE_TLS_SERVER_NAME must be configured together'
+		);
+	}
+	if (
+		servername.length > 253 ||
+		!/[a-z0-9]/i.test(servername) ||
+		!/^[a-z0-9.-]+$/i.test(servername) ||
+		servername.startsWith('.') ||
+		servername.endsWith('.')
+	) {
+		throw new Error('DATABASE_TLS_SERVER_NAME must be a valid DNS name');
+	}
+
+	let ca: string;
+	try {
+		ca = Buffer.from(encodedCa, 'base64').toString('utf8').trim();
+	} catch {
+		throw new Error('DATABASE_CA_CERT_BASE64 must contain a base64-encoded PEM certificate');
+	}
+	if (!/^-----BEGIN CERTIFICATE-----[\s\S]+-----END CERTIFICATE-----$/.test(ca)) {
+		throw new Error('DATABASE_CA_CERT_BASE64 must contain a base64-encoded PEM certificate');
+	}
+
+	return { ca, servername, rejectUnauthorized: true };
 }
 
 export function parseDatabaseConnection(
@@ -100,7 +136,7 @@ export function parseDatabaseConnection(
 		url: connectionString,
 		transport: 'tcp',
 		options: {
-			ssl: isProduction ? 'verify-full' : undefined,
+			ssl: isProduction ? parseVerifiedTlsOptions(environment) : undefined,
 			max: parsePositiveInteger(environment.DB_POOL_MAX, 5, 'DB_POOL_MAX'),
 			idle_timeout: parsePositiveInteger(environment.DB_IDLE_TIMEOUT, 20, 'DB_IDLE_TIMEOUT'),
 			connect_timeout: parsePositiveInteger(

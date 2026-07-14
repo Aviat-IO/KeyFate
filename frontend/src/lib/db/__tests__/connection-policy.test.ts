@@ -1,5 +1,10 @@
+import { Buffer } from 'node:buffer';
 import { describe, expect, it } from 'vitest';
 import { parseDatabaseConnection } from '$lib/db/connection-policy';
+
+const TEST_CA = `-----BEGIN CERTIFICATE-----
+ZmFrZS10ZXN0LWNh
+-----END CERTIFICATE-----`;
 
 describe('PostgreSQL transport policy', () => {
 	it('requires verified TLS for production TCP connections', () => {
@@ -15,6 +20,47 @@ describe('PostgreSQL transport policy', () => {
 		);
 		expect(parsed.transport).toBe('tcp');
 		expect(parsed.options.ssl).toBe('verify-full');
+	});
+
+	it('supports an explicitly pinned CA and certificate server name', () => {
+		const parsed = parseDatabaseConnection(
+			'postgresql://user:pass@postgres.railway.internal/keyfate?sslmode=verify-full',
+			{
+				NODE_ENV: 'production',
+				DATABASE_CA_CERT_BASE64: Buffer.from(TEST_CA).toString('base64'),
+				DATABASE_TLS_SERVER_NAME: 'localhost'
+			}
+		);
+
+		expect(parsed.options.ssl).toEqual({
+			ca: TEST_CA,
+			servername: 'localhost',
+			rejectUnauthorized: true
+		});
+	});
+
+	it('rejects incomplete or malformed certificate pinning', () => {
+		const url = 'postgresql://user:pass@db.example/keyfate?sslmode=verify-full';
+		expect(() =>
+			parseDatabaseConnection(url, {
+				NODE_ENV: 'production',
+				DATABASE_TLS_SERVER_NAME: 'localhost'
+			})
+		).toThrow('must be configured together');
+		expect(() =>
+			parseDatabaseConnection(url, {
+				NODE_ENV: 'production',
+				DATABASE_CA_CERT_BASE64: Buffer.from('not a certificate').toString('base64'),
+				DATABASE_TLS_SERVER_NAME: 'localhost'
+			})
+		).toThrow('base64-encoded PEM certificate');
+		expect(() =>
+			parseDatabaseConnection(url, {
+				NODE_ENV: 'production',
+				DATABASE_CA_CERT_BASE64: Buffer.from(TEST_CA).toString('base64'),
+				DATABASE_TLS_SERVER_NAME: '../invalid'
+			})
+		).toThrow('valid DNS name');
 	});
 
 	it('rejects an explicit TLS bypass on TCP in every environment', () => {
