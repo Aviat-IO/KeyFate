@@ -209,8 +209,8 @@ jobs:
             -CA .ci-tls/ca.crt -CAkey .ci-tls/ca.key -CAcreateserial \
             -copy_extensions copy -out .ci-tls/server.crt
           postgres_uid="$(docker run --rm postgres:16.9-alpine3.22 id -u postgres)"
-          sudo chown "$postgres_uid:$postgres_uid" .ci-tls/server.key .ci-tls/server.crt .ci-tls/ca.crt
           chmod 600 .ci-tls/server.key
+          sudo chown "$postgres_uid:$postgres_uid" .ci-tls/server.key .ci-tls/server.crt .ci-tls/ca.crt
           docker network create keyfate-ci
           docker run -d --name postgres --network keyfate-ci \
             -e POSTGRES_USER=keyfate \
