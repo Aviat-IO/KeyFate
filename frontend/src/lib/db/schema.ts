@@ -310,6 +310,8 @@ export const secrets = pgTable(
 		title: text('title').notNull(),
 		checkInDays: integer('check_in_days').notNull().default(30),
 		status: secretStatusEnum('status').notNull().default('active'),
+		nostrDeliveryStatus: text('nostr_delivery_status'),
+		bitcoinDeliveryStatus: text('bitcoin_delivery_status'),
 		serverShare: text('server_share'),
 		iv: text('iv'),
 		authTag: text('auth_tag'),
@@ -319,6 +321,8 @@ export const secrets = pgTable(
 		nextCheckIn: timestamp('next_check_in'),
 		triggeredAt: timestamp('triggered_at'),
 		processingStartedAt: timestamp('processing_started_at'),
+		processingLeaseId: uuid('processing_lease_id'),
+		processingLeaseExpiresAt: timestamp('processing_lease_expires_at'),
 		lastError: text('last_error'),
 		retryCount: integer('retry_count').notNull().default(0),
 		lastRetryAt: timestamp('last_retry_at'),
@@ -333,7 +337,11 @@ export const secrets = pgTable(
 			table.status,
 			table.nextCheckIn
 		),
-		processingStartedIdx: index('idx_secrets_processing_started').on(table.processingStartedAt)
+		processingStartedIdx: index('idx_secrets_processing_started').on(table.processingStartedAt),
+		processingLeaseIdx: index('idx_secrets_processing_lease').on(
+			table.status,
+			table.processingLeaseExpiresAt
+		)
 	})
 );
 
@@ -348,6 +356,11 @@ export const secretRecipients = pgTable(
 		email: text('email'),
 		phone: text('phone'),
 		nostrPubkey: text('nostr_pubkey'),
+		nostrPublisherPubkey: text('nostr_publisher_pubkey'),
+		nostrGiftWrapEventId: text('nostr_gift_wrap_event_id'),
+		nostrCapsuleEventId: text('nostr_capsule_event_id'),
+		nostrManifestEvent: jsonb('nostr_manifest_event'),
+		nostrSchemeVersion: integer('nostr_scheme_version'),
 		createdAt: timestamp('created_at').defaultNow().notNull(),
 		updatedAt: timestamp('updated_at').defaultNow().notNull()
 	},
@@ -376,6 +389,7 @@ export const checkInTokens = pgTable(
 			.notNull()
 			.references(() => secrets.id, { onDelete: 'cascade' }),
 		token: text('token').notNull().unique(),
+		tokenVersion: integer('token_version').notNull().default(1),
 		expiresAt: timestamp('expires_at').notNull(),
 		usedAt: timestamp('used_at'),
 		createdAt: timestamp('created_at').defaultNow().notNull()
@@ -495,6 +509,8 @@ export const disclosureLog = pgTable(
 		sentAt: timestamp('sent_at'),
 		error: text('error'),
 		retryCount: integer('retry_count').notNull().default(0),
+		leaseId: uuid('lease_id'),
+		dedupeKey: text('dedupe_key').unique(),
 		createdAt: timestamp('created_at').defaultNow().notNull(),
 		updatedAt: timestamp('updated_at').defaultNow().notNull()
 	},
@@ -577,7 +593,7 @@ export const userSubscriptions = pgTable(
 			'user_subscriptions_provider_provider_subscription_id_unique'
 		).on(table.provider, table.providerSubscriptionId)
 	})
-	);
+);
 
 export const webhookEvents = pgTable(
 	'webhook_events',
@@ -721,14 +737,23 @@ export const dataExportJobs = pgTable(
 		status: exportJobStatusEnum('status').notNull().default(ExportJobStatus.PENDING),
 		fileUrl: text('file_url'),
 		fileSize: integer('file_size'),
+		artifactData: text('artifact_data'),
+		artifactSha256: text('artifact_sha256'),
+		artifactStoredSize: integer('artifact_stored_size'),
+		contentType: text('content_type'),
 		downloadCount: integer('download_count').notNull().default(0),
+		leaseId: uuid('lease_id'),
+		leaseExpiresAt: timestamp('lease_expires_at', { mode: 'date' }),
+		processingStartedAt: timestamp('processing_started_at', { mode: 'date' }),
 		expiresAt: timestamp('expires_at', { mode: 'date' }).notNull(),
 		createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
 		completedAt: timestamp('completed_at', { mode: 'date' }),
-		errorMessage: text('error_message')
+		errorMessage: text('error_message'),
+		updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull()
 	},
 	(table) => ({
-		userStatusIdx: index('idx_export_jobs_user_status').on(table.userId, table.status)
+		userStatusIdx: index('idx_export_jobs_user_status').on(table.userId, table.status),
+		claimIdx: index('idx_export_jobs_claim').on(table.status, table.leaseExpiresAt)
 	})
 );
 
@@ -780,10 +805,17 @@ export const bitcoinUtxos = pgTable(
 		amountSats: bigint('amount_sats', { mode: 'number' }).notNull(),
 		timelockScript: text('timelock_script').notNull(), // hex-encoded
 		ownerPubkey: text('owner_pubkey').notNull(), // hex
-		recipientPubkey: text('recipient_pubkey').notNull(), // hex
+		recipientPubkey: text('recipient_pubkey').notNull(), // legacy column name: one-time delayed-branch pubkey
 		ttlBlocks: integer('ttl_blocks').notNull(),
 		status: bitcoinUtxoStatusEnum('status').notNull().default('pending'),
-		preSignedRecipientTx: text('pre_signed_recipient_tx'), // hex-encoded pre-signed tx
+		preSignedRecipientTx: text('pre_signed_recipient_tx'), // legacy plaintext; v2 writes are forbidden
+		encryptedRecoveryTx: text('encrypted_recovery_tx'),
+		recoverySenderPubkey: text('recovery_sender_pubkey'),
+		recipientAddress: text('recipient_address'),
+		network: text('network'),
+		generation: integer('generation').notNull().default(1),
+		generationKey: text('generation_key').unique(),
+		recoveryManifest: jsonb('recovery_manifest'),
 		confirmedAt: timestamp('confirmed_at'),
 		spentAt: timestamp('spent_at'),
 		spentByTxId: text('spent_by_tx_id'),

@@ -1,16 +1,23 @@
+import { randomUUID } from 'node:crypto';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { requireCSRFProtection, createCSRFErrorResponse } from '$lib/csrf';
 import { getDatabase } from '$lib/db/drizzle';
-import { secrets, users, disclosureLog } from '$lib/db/schema';
+import { bitcoinUtxos, secrets, users } from '$lib/db/schema';
 import type { SecretUpdate } from '$lib/db/schema';
 import { getAllRecipients, hasBeenDisclosed } from '$lib/db/queries/secrets';
 import { sendSecretDisclosureEmail } from '$lib/email/email-service';
 import { logEmailFailure } from '$lib/email/email-failure-logger';
 import { decryptMessage } from '$lib/encryption';
-import { updateDisclosureLog } from '$lib/cron/disclosure-helpers';
-import { and, eq } from 'drizzle-orm';
+import {
+	claimDisclosureRecipient,
+	updateDisclosureLog,
+	type DisclosureRecipientClaim
+} from '$lib/cron/disclosure-helpers';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { logger } from '$lib/logger';
+
+const PROCESSING_LEASE_MS = 15 * 60 * 1000;
 
 export const POST: RequestHandler = async (event) => {
 	try {
@@ -57,13 +64,17 @@ export const POST: RequestHandler = async (event) => {
 			return json({ error: 'User not found' }, { status: 404 });
 		}
 
-		// Set status to triggered for processing
+		// Set status to triggered with the same fenced lease used by cron workers.
+		const leaseId = randomUUID();
+		const processingStartedAt = new Date();
 		const [locked] = await db
 			.update(secrets)
 			.set({
 				status: 'triggered',
-				processingStartedAt: new Date(),
-				updatedAt: new Date()
+				processingStartedAt,
+				processingLeaseId: leaseId,
+				processingLeaseExpiresAt: new Date(processingStartedAt.getTime() + PROCESSING_LEASE_MS),
+				updatedAt: processingStartedAt
 			} as SecretUpdate)
 			.where(and(eq(secrets.id, id), eq(secrets.status, 'failed')))
 			.returning({ id: secrets.id });
@@ -80,13 +91,48 @@ export const POST: RequestHandler = async (event) => {
 				.set({
 					status: 'failed',
 					processingStartedAt: null,
+					processingLeaseId: null,
+					processingLeaseExpiresAt: null,
 					lastError: 'No recipients configured',
 					updatedAt: new Date()
 				} as SecretUpdate)
-				.where(eq(secrets.id, id));
+				.where(and(eq(secrets.id, id), eq(secrets.processingLeaseId, leaseId)));
 
 			return json({ error: 'No recipients configured' }, { status: 400 });
 		}
+
+		let bitcoinRecovery:
+			| {
+					encryptedRecoveryTx: string | null;
+					recoverySenderPubkey: string | null;
+					recoveryManifest: unknown;
+					generation: number;
+			  }
+			| undefined;
+		try {
+			[bitcoinRecovery] = await db
+				.select({
+					encryptedRecoveryTx: bitcoinUtxos.encryptedRecoveryTx,
+					recoverySenderPubkey: bitcoinUtxos.recoverySenderPubkey,
+					recoveryManifest: bitcoinUtxos.recoveryManifest,
+					generation: bitcoinUtxos.generation
+				})
+				.from(bitcoinUtxos)
+				.where(
+					and(eq(bitcoinUtxos.secretId, id), inArray(bitcoinUtxos.status, ['pending', 'confirmed']))
+				)
+				.orderBy(desc(bitcoinUtxos.generation))
+				.limit(1);
+		} catch {
+			// Bitcoin recovery is optional and must not block the server-share disclosure.
+		}
+		const bitcoinRecipientId =
+			bitcoinRecovery?.recoveryManifest &&
+			typeof bitcoinRecovery.recoveryManifest === 'object' &&
+			'recipientId' in bitcoinRecovery.recoveryManifest &&
+			typeof bitcoinRecovery.recoveryManifest.recipientId === 'string'
+				? bitcoinRecovery.recoveryManifest.recipientId
+				: null;
 
 		// Decrypt the server share
 		let decryptedContent: string;
@@ -105,10 +151,12 @@ export const POST: RequestHandler = async (event) => {
 				.set({
 					status: 'failed',
 					processingStartedAt: null,
+					processingLeaseId: null,
+					processingLeaseExpiresAt: null,
 					lastError: 'Decryption failed',
 					updatedAt: new Date()
 				} as SecretUpdate)
-				.where(eq(secrets.id, id));
+				.where(and(eq(secrets.id, id), eq(secrets.processingLeaseId, leaseId)));
 
 			return json({ error: 'Failed to decrypt secret' }, { status: 500 });
 		}
@@ -121,26 +169,25 @@ export const POST: RequestHandler = async (event) => {
 			const contactEmail = recipient.email || '';
 			if (!contactEmail) continue;
 
-			// Create disclosure log entry
-			let logEntry;
+			let logEntry: DisclosureRecipientClaim;
 			try {
-				const inserted = await db
-					.insert(disclosureLog)
-					.values({
-						secretId: id,
-						recipientEmail: contactEmail,
-						recipientName: recipient.name
-					})
-					.returning({ id: disclosureLog.id })
-					.onConflictDoNothing();
+				logEntry = await claimDisclosureRecipient(db, {
+					secretId: id,
+					recipientEmail: contactEmail,
+					recipientName: recipient.name,
+					leaseId
+				});
 
-				if (inserted.length === 0) {
+				if (logEntry.status === 'sent') {
 					sent++;
 					continue;
 				}
-				logEntry = inserted[0];
-			} catch {
-				sent++;
+			} catch (error) {
+				logger.error('Failed to claim disclosure log', error instanceof Error ? error : undefined, {
+					secretId: id,
+					recipient: contactEmail
+				});
+				failed++;
 				continue;
 			}
 
@@ -154,12 +201,26 @@ export const POST: RequestHandler = async (event) => {
 					secretContent: decryptedContent,
 					disclosureReason: 'manual',
 					senderLastSeen: secret.lastCheckIn || undefined,
-					secretCreatedAt: secret.createdAt || undefined
+					secretCreatedAt: secret.createdAt || undefined,
+					nostrManifest:
+						recipient.nostrSchemeVersion === 2 && recipient.nostrManifestEvent
+							? JSON.stringify(recipient.nostrManifestEvent)
+							: undefined,
+					bitcoinRecoveryEnvelope:
+						bitcoinRecipientId === recipient.id && bitcoinRecovery?.encryptedRecoveryTx
+							? bitcoinRecovery.encryptedRecoveryTx
+							: undefined,
+					bitcoinRecoverySenderPubkey:
+						bitcoinRecipientId === recipient.id && bitcoinRecovery?.recoverySenderPubkey
+							? bitcoinRecovery.recoverySenderPubkey
+							: undefined,
+					bitcoinRecoveryGeneration:
+						bitcoinRecipientId === recipient.id ? bitcoinRecovery?.generation : undefined
 				});
 
 				if (emailResult.success) {
-					await updateDisclosureLog(db, logEntry.id, 'sent');
-					sent++;
+					if (await updateDisclosureLog(db, id, logEntry.id, leaseId, 'sent')) sent++;
+					else failed++;
 					logger.info('Send-now disclosure email sent', {
 						secretId: id,
 						recipient: contactEmail,
@@ -168,7 +229,9 @@ export const POST: RequestHandler = async (event) => {
 				} else {
 					await updateDisclosureLog(
 						db,
+						id,
 						logEntry.id,
+						leaseId,
 						'failed',
 						emailResult.error || 'Unknown error'
 					);
@@ -188,7 +251,7 @@ export const POST: RequestHandler = async (event) => {
 				}
 			} catch (error) {
 				const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-				await updateDisclosureLog(db, logEntry.id, 'failed', errorMsg);
+				await updateDisclosureLog(db, id, logEntry.id, leaseId, 'failed', errorMsg);
 				await logEmailFailure({
 					emailType: 'disclosure',
 					provider: 'sendgrid',
@@ -205,29 +268,60 @@ export const POST: RequestHandler = async (event) => {
 
 		const allSent = sent === recipients.length && failed === 0;
 
+		const leaseIsStillValid = and(
+			eq(secrets.id, id),
+			eq(secrets.processingLeaseId, leaseId),
+			sql`${secrets.processingLeaseExpiresAt} > now()`
+		);
 		if (allSent) {
-			await db
+			const finalized = await db
 				.update(secrets)
 				.set({
 					status: 'triggered',
 					triggeredAt: new Date(),
 					processingStartedAt: null,
+					processingLeaseId: null,
+					processingLeaseExpiresAt: null,
 					lastError: null,
 					updatedAt: new Date()
 				} as SecretUpdate)
-				.where(eq(secrets.id, id));
+				.where(leaseIsStillValid)
+				.returning({ id: secrets.id });
+			if (finalized.length !== 1) {
+				return json(
+					{
+						error: 'Disclosure lease was lost after delivery; reconciliation required',
+						sent,
+						failed
+					},
+					{ status: 409 }
+				);
+			}
 
 			return json({ success: true, sent, failed });
 		} else {
-			await db
+			const finalized = await db
 				.update(secrets)
 				.set({
 					status: 'failed',
 					processingStartedAt: null,
+					processingLeaseId: null,
+					processingLeaseExpiresAt: null,
 					lastError: `Send now: sent ${sent}, failed ${failed}`,
 					updatedAt: new Date()
 				} as SecretUpdate)
-				.where(eq(secrets.id, id));
+				.where(leaseIsStillValid)
+				.returning({ id: secrets.id });
+			if (finalized.length !== 1) {
+				return json(
+					{
+						error: 'Disclosure lease was lost after delivery; reconciliation required',
+						sent,
+						failed
+					},
+					{ status: 409 }
+				);
+			}
 
 			return json(
 				{

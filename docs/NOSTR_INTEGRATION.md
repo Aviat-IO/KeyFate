@@ -1,5 +1,7 @@
 # Nostr Integration Design Document
 
+> **Historical design.** Server-side publication and proposed endpoint contracts in this file are superseded by the browser-owned, owner-signed recovery-v2 implementation and the active `harden-production-readiness` OpenSpec. Do not use this document to reintroduce server custody of shares, K, or publisher keys.
+
 ## Overview
 
 This document outlines how KeyFate can integrate with the Nostr protocol to provide

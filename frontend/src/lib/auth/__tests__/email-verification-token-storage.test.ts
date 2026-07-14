@@ -118,7 +118,10 @@ describe('email verification token storage', () => {
 			purpose: 'email_verification_login'
 		});
 
-		expect(result).toEqual({ success: true, consumed: expect.objectContaining({ identifier: 'user@example.com' }) });
+		expect(result).toEqual({
+			success: true,
+			consumed: expect.objectContaining({ identifier: 'user@example.com' })
+		});
 		expect(mockSelect).not.toHaveBeenCalled();
 		expect(mockDeleteReturning).toHaveBeenCalledOnce();
 	});

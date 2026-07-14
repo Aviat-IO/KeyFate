@@ -1,0 +1,4 @@
+Found 9 SARIF files to merge in piolium/semgrep-results/raw
+Using pure Python merge (SARIF Multitool not available or failed)
+Merged SARIF contains 13 findings
+Written to piolium/semgrep-results/results/results.sarif

@@ -1,5 +1,7 @@
 # Phase 1.1 Implementation Summary: PostgreSQL-Based Rate Limiting
 
+> **Historical implementation record.** Commands, migration counts, and completion statements below describe an earlier phase and are not current deployment instructions or production evidence. Follow `AGENTS.md`, `README.md`, `DEPLOYMENT_CHECKLIST.md`, and the generated Drizzle migration process.
+
 ## ✅ Completed Tasks
 
 ### 1.1.1 - Added rate_limits table to schema.ts ✅
@@ -166,41 +168,15 @@ CREATE UNLOGGED TABLE IF NOT EXISTS "rate_limits" (
 
 ## 📋 Next Steps (Remaining Tasks)
 
-### Task 1.1.8 - Deploy to staging ⏳
+### Historical remaining tasks
 
-```bash
-cd frontend
-./reset-staging-db.sh
-npm run db:migrate -- --config=drizzle.config.ts
-```
+This phase originally proposed a staging reset, npm-era migration command, synthetic load target, and later production enablement. Those commands and reset instructions are obsolete and have been removed.
 
-### Task 1.1.9 - Load test ⏳
+Current deployments must follow `DEPLOYMENT_CHECKLIST.md`: generated Drizzle migrations run once through Railway pre-deploy, existing data is preserved, and any restore is performed only into an isolated destination. Current validation uses Bun and SvelteKit, not npm or Next.js.
 
-- Run load test with 10k rate limit checks/second
-- Measure p50, p95, p99 latency
-- Verify <5ms target achieved
+## ⚠️ Historical context
 
-### Task 1.1.10 - Enable in production ⏳
-
-- Apply migration to production (see `MIGRATION_RESET_GUIDE.md`)
-- Monitor error rates
-- Verify distributed rate limiting works across instances
-
-## ⚠️ Important Notes
-
-### Migration Reset Required
-
-The migration history was corrupted. All staging and production databases must
-be reset before applying the new migration. See `MIGRATION_RESET_GUIDE.md` for
-detailed instructions.
-
-**Impact:** All existing data will be lost. User confirmed this is acceptable.
-
-### TypeScript Compilation
-
-Standalone TypeScript compilation shows path alias errors (`@/lib/*`). This is
-normal - the code will compile correctly when built with Next.js which has the
-path aliases configured in `tsconfig.json`.
+The earlier migration-reset conclusion is not a current operating decision and is not authorization to destroy data. See `MIGRATION_RESET_GUIDE.md` for the current no-reset policy.
 
 ### Testing Dependencies
 

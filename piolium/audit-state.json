@@ -1,0 +1,224 @@
+{
+  "audits": [
+    {
+      "audit_id": "2026-07-10T23:21:09Z",
+      "commit": "b7b7aef1a897c418e0402acd211fecf0206d8217",
+      "branch": "main",
+      "repository": "Aviat-IO/KeyFate",
+      "started_at": "2026-07-10T23:21:09Z",
+      "completed_at": "2026-07-11T07:08:42Z",
+      "status": "complete",
+      "phases": {
+        "1": {
+          "status": "complete",
+          "started_at": "2026-07-10T23:21:09Z",
+          "completed_at": "2026-07-11T07:08:42Z",
+          "metrics": {
+            "findings_count": 0,
+            "reports_generated": [
+              "attack-surface/knowledge-base-report.md"
+            ],
+            "validation_passed": true,
+            "error": null
+          }
+        },
+        "2": {
+          "status": "complete",
+          "started_at": "2026-07-10T23:21:09Z",
+          "completed_at": "2026-07-11T07:08:42Z",
+          "metrics": {
+            "findings_count": 0,
+            "reports_generated": [
+              "attack-surface/knowledge-base-report.md"
+            ],
+            "validation_passed": true,
+            "error": null
+          }
+        },
+        "3": {
+          "status": "complete",
+          "started_at": "2026-07-10T23:21:09Z",
+          "completed_at": "2026-07-11T07:08:42Z",
+          "metrics": {
+            "findings_count": 0,
+            "reports_generated": [
+              "attack-surface/knowledge-base-report.md",
+              "attack-surface/sbom.json"
+            ],
+            "validation_passed": true,
+            "error": null
+          }
+        },
+        "4": {
+          "status": "complete",
+          "started_at": "2026-07-10T23:21:09Z",
+          "completed_at": "2026-07-11T07:08:42Z",
+          "metrics": {
+            "findings_count": 0,
+            "reports_generated": [
+              "attack-surface/knowledge-base-report.md",
+              "codeql-artifacts/entry-points.json",
+              "codeql-artifacts/sinks.json",
+              "codeql-artifacts/call-graph-slices.json",
+              "codeql-artifacts/flow-paths-all-severities.md"
+            ],
+            "validation_passed": true,
+            "error": null
+          }
+        },
+        "5": {
+          "status": "complete",
+          "started_at": "2026-07-10T23:21:09Z",
+          "completed_at": "2026-07-11T07:08:42Z",
+          "metrics": {
+            "findings_count": 0,
+            "reports_generated": [
+              "attack-surface/knowledge-base-report.md"
+            ],
+            "validation_passed": true,
+            "error": null
+          }
+        },
+        "6": {
+          "status": "complete",
+          "started_at": "2026-07-10T23:21:09Z",
+          "completed_at": "2026-07-11T07:08:42Z",
+          "metrics": {
+            "findings_count": 0,
+            "reports_generated": [
+              "attack-surface/knowledge-base-report.md"
+            ],
+            "validation_passed": true,
+            "error": null
+          }
+        },
+        "7": {
+          "status": "complete",
+          "started_at": "2026-07-10T23:21:09Z",
+          "completed_at": "2026-07-11T07:08:42Z",
+          "metrics": {
+            "findings_count": 8,
+            "reports_generated": [
+              "findings-draft/",
+              "attack-pattern-registry.json"
+            ],
+            "validation_passed": true,
+            "error": null
+          }
+        },
+        "8": {
+          "status": "complete",
+          "started_at": "2026-07-10T23:21:09Z",
+          "completed_at": "2026-07-11T07:08:42Z",
+          "metrics": {
+            "findings_count": 8,
+            "reports_generated": [
+              "adversarial-reviews/"
+            ],
+            "validation_passed": true,
+            "error": null
+          }
+        },
+        "9": {
+          "status": "complete",
+          "started_at": "2026-07-10T23:21:09Z",
+          "completed_at": "2026-07-11T07:08:42Z",
+          "metrics": {
+            "findings_count": 8,
+            "reports_generated": [
+              "variant-analysis-report.md"
+            ],
+            "validation_passed": true,
+            "error": null
+          }
+        },
+        "10": {
+          "status": "complete",
+          "started_at": "2026-07-10T23:21:09Z",
+          "completed_at": "2026-07-11T07:08:42Z",
+          "metrics": {
+            "findings_count": 8,
+            "reports_generated": [
+              "chamber-workspace/",
+              "attack-surface/knowledge-base-report.md"
+            ],
+            "validation_passed": true,
+            "error": null
+          }
+        },
+        "11": {
+          "status": "complete",
+          "started_at": "2026-07-10T23:21:09Z",
+          "completed_at": "2026-07-11T07:08:42Z",
+          "metrics": {
+            "findings_count": 8,
+            "reports_generated": [
+              "findings-draft/",
+              "adversarial-reviews/"
+            ],
+            "validation_passed": true,
+            "error": null
+          }
+        },
+        "12": {
+          "status": "complete",
+          "started_at": "2026-07-10T23:21:09Z",
+          "completed_at": "2026-07-11T07:08:42Z",
+          "metrics": {
+            "findings_count": 8,
+            "reports_generated": [
+              "variant-analysis-report.md"
+            ],
+            "validation_passed": true,
+            "error": null
+          }
+        },
+        "13": {
+          "status": "complete",
+          "started_at": "2026-07-10T23:21:09Z",
+          "completed_at": "2026-07-11T07:08:42Z",
+          "metrics": {
+            "findings_count": 8,
+            "reports_generated": [
+              "penetration-test-report.md"
+            ],
+            "validation_passed": true,
+            "error": null
+          }
+        },
+        "14": {
+          "status": "complete",
+          "started_at": "2026-07-10T23:21:09Z",
+          "completed_at": "2026-07-11T07:08:42Z",
+          "metrics": {
+            "findings_count": 8,
+            "reports_generated": [
+              "findings/"
+            ],
+            "validation_passed": true,
+            "error": null
+          }
+        },
+        "15": {
+          "status": "complete",
+          "started_at": "2026-07-10T23:21:09Z",
+          "completed_at": "2026-07-11T07:08:42Z",
+          "metrics": {
+            "findings_count": 8,
+            "reports_generated": [
+              "final-audit-report.md"
+            ],
+            "validation_passed": true,
+            "error": null
+          }
+        }
+      },
+      "completion_notes": [
+        "All individual phase validators 1 through 15 passed on 2026-07-11.",
+        "Phase 15 final-report validation passed after remediation evidence was added.",
+        "The aggregate cleanup lint remains intentionally inapplicable because the user required preservation of working evidence under piolium/, including scanner outputs and SBOM artifacts.",
+        "Audit completion does not mean production release approval; credentialed external gates remain NO-GO blockers."
+      ]
+    }
+  ]
+}

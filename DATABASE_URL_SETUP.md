@@ -1,108 +1,71 @@
 # Database URL Configuration
 
-## Overview
+> KeyFate uses one canonical `DATABASE_URL`. The application does not assemble production credentials from `DB_HOST`/`DB_PASSWORD` fragments. Do not print connection strings in logs, CI output, evidence, or chat.
 
-The application can construct `DATABASE_URL` from component parts, so you don't
-need to store the full connection string in Doppler.
+## Railway
 
-## Required Doppler Secrets
+Railway injects `DATABASE_URL` from the PostgreSQL service into the `dead-mans-switch` service. Configure a variable reference in each environment rather than copying a credential into the repository.
 
-Add these secrets to your Doppler project for the `dev` config:
+Production and staging use separate PostgreSQL services and databases. Verify the effective value from Railway's variable controls without exposing it.
 
-```bash
-# Required (DB_PASSWORD already exists)
-DB_HOST=127.0.0.1        # For local/bastion tunnel, or actual Cloud SQL host
-DB_PORT=54321            # Bastion tunnel port, or 5432 for direct connection
-DB_USER=postgres
-DB_NAME=keyfate
-DB_PASSWORD=<already-exists-in-doppler>
+## Transport policy
+
+`frontend/src/lib/db/connection-policy.ts` enforces:
+
+- `postgresql://` or `postgres://`;
+- explicit username and database name;
+- `sslmode=verify-full` for production TCP connections;
+- no `sslmode=disable` on TCP;
+- bounded pool/connect/statement timeouts;
+- Unix sockets only through the explicitly validated `host=/absolute/socket` representation.
+
+A production TCP example, with placeholders only:
+
+```text
+postgresql://USER:PASSWORD@HOST:5432/DATABASE?sslmode=verify-full
 ```
 
-## How It Works
+The runtime trust store must validate the server certificate. Do not weaken certificate verification to make readiness pass.
 
-The code in `frontend/src/lib/db/index.ts` constructs the DATABASE_URL
-automatically:
+## Local development
 
-```typescript
-function getDatabaseUrl(): string {
-  if (process.env.DATABASE_URL) {
-    return process.env.DATABASE_URL; // Use if provided directly
-  }
+The repository Docker Compose PostgreSQL service may use a local non-production URL in an ignored `.env.local` file:
 
-  // Construct from parts
-  const dbHost = process.env.DB_HOST || "localhost";
-  const dbPort = process.env.DB_PORT || "5432";
-  const dbUser = process.env.DB_USER || "postgres";
-  const dbPassword = process.env.DB_PASSWORD || "dev_password_change_in_prod";
-  const dbName = process.env.DB_NAME || "keyfate_dev";
-
-  return `postgresql://${dbUser}:${dbPassword}@${dbHost}:${dbPort}/${dbName}`;
-}
+```text
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/keyfate_dev
 ```
 
-## Environment-Specific Values
-
-### Local Development
-
-```
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_NAME=keyfate_dev
-DB_PASSWORD=dev_password_change_in_prod
-```
-
-### Staging (via Bastion Tunnel)
-
-```
-DB_HOST=127.0.0.1
-DB_PORT=54321                    # Bastion tunnel port
-DB_USER=postgres
-DB_NAME=keyfate
-DB_PASSWORD=<staging-password>
-```
-
-### Production (via Bastion Tunnel)
-
-```
-DB_HOST=127.0.0.1
-DB_PORT=54321                    # Bastion tunnel port
-DB_USER=postgres
-DB_NAME=keyfate_prod
-DB_PASSWORD=<prod-password>
-```
+Never reuse local credentials in staging or production.
 
 ## Validation
 
-The validation script (`scripts/validate-env.js`) accepts either:
-
-1. `DATABASE_URL` alone, OR
-2. All four component parts: `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
-
-## Testing
-
-After adding secrets to Doppler:
-
-```bash
-# Test that DATABASE_URL is constructed correctly
-cd frontend
-doppler run -p keyfate -c dev -- node -e "console.log(process.env.DATABASE_URL)"
-
-# Should output something like:
-# postgresql://postgres:hM65ANes82sH+hAmtmmhMB9@127.0.0.1:54321/keyfate
-```
-
-## Build
-
-Once Doppler secrets are configured:
+Run connection-policy tests and an isolated database gate:
 
 ```bash
 cd frontend
-make build
+bun test src/lib/db/__tests__/connection-policy.test.ts
+
+DATABASE_URL='<isolated-postgresql-url>' bun run db:migrate:production
+DATABASE_URL='<isolated-postgresql-url>' bunx drizzle-kit check
 ```
 
-This will:
+Production readiness additionally requires:
 
-1. Run `doppler run -p keyfate -c dev -- pnpm install`
-2. Run `doppler run -p keyfate -c dev -- pnpm build:local`
-3. Validation will pass because DB\_\* variables construct DATABASE_URL
+- `/api/health/live` returns 200 without checking PostgreSQL;
+- `/api/health/ready` returns 503 for invalid configuration or unavailable PostgreSQL;
+- `/api/health/ready` returns 200 against migrated PostgreSQL over verified TLS;
+- `pg_stat_ssl` confirms the application connection uses TLS;
+- no connection string or password appears in retained output.
+
+## Rotation
+
+When rotating database credentials:
+
+1. name the database and release owners;
+2. create the replacement credential in Railway/provider controls;
+3. update the service variable reference;
+4. deploy and verify readiness plus critical queries;
+5. revoke the old credential;
+6. record identifiers/timestamps only, never secret values.
+
+See [`DEPLOYMENT_CHECKLIST.md`](DEPLOYMENT_CHECKLIST.md) and [`docs/database-backup-procedures.md`](docs/database-backup-procedures.md).

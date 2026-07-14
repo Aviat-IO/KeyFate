@@ -9,16 +9,21 @@
 import { logger } from '$lib/logger';
 import { getDatabase } from '$lib/db/get-database';
 import { getAllRecipients } from '$lib/db/queries/secrets';
-import { secrets, users, disclosureLog } from '$lib/db/schema';
+import { bitcoinUtxos, secrets, users, disclosureLog } from '$lib/db/schema';
 import type { Secret, SecretUpdate, User } from '$lib/db/schema';
 import { sendAdminNotification } from '$lib/email/admin-notification-service';
 import { logEmailFailure } from '$lib/email/email-failure-logger';
 import { calculateBackoffDelay } from '$lib/email/email-retry-service';
 import { sendSecretDisclosureEmail } from '$lib/email/email-service';
 import { decryptMessage } from '$lib/encryption';
-import { and, eq, lt, inArray, sql } from 'drizzle-orm';
+import { and, desc, eq, gt, lt, inArray, isNull, or, sql } from 'drizzle-orm';
 import { sanitizeError, CRON_CONFIG, isApproachingTimeout, logCronMetrics } from '$lib/cron/utils';
-import { updateDisclosureLog, shouldRetrySecret } from '$lib/cron/disclosure-helpers';
+import {
+	claimDisclosureRecipient,
+	updateDisclosureLog,
+	shouldRetrySecret
+} from '$lib/cron/disclosure-helpers';
+import { claimDisclosureSecret, PROCESSING_LEASE_MS } from '$lib/cron/disclosure-claim';
 
 export interface ProcessRemindersResult {
 	processed: number;
@@ -67,6 +72,7 @@ async function processOverdueSecret(
 	alreadyProcessing?: boolean;
 }> {
 	const db = await getDatabase();
+	let leaseId: string | null = null;
 
 	try {
 		logger.info('Processing overdue secret', {
@@ -76,6 +82,23 @@ async function processOverdueSecret(
 			nextCheckIn: secret.nextCheckIn?.toISOString(),
 			lastRetryAt: secret.lastRetryAt?.toISOString(),
 			lastError: secret.lastError
+		});
+
+		const claim = await claimDisclosureSecret(db, secret.id);
+
+		if (!claim) {
+			logger.info('Secret already being processed by another worker', {
+				secretId: secret.id
+			});
+			return { success: false, sent: 0, failed: 0, alreadyProcessing: true };
+		}
+
+		secret = claim.secret;
+		leaseId = claim.leaseId;
+		logger.info('Acquired disclosure lease for secret', {
+			secretId: secret.id,
+			leaseId,
+			leaseExpiresAt: secret.processingLeaseExpiresAt?.toISOString()
 		});
 
 		if (!shouldRetrySecret(secret.retryCount)) {
@@ -91,34 +114,22 @@ async function processOverdueSecret(
 				.update(secrets)
 				.set({
 					status: 'failed',
+					processingStartedAt: null,
+					processingLeaseId: null,
+					processingLeaseExpiresAt: null,
 					lastError: `Max retries (${CRON_CONFIG.MAX_SECRET_RETRIES}) exceeded`,
 					updatedAt: new Date()
 				} as SecretUpdate)
-				.where(eq(secrets.id, secret.id));
+				.where(
+					and(
+						eq(secrets.id, secret.id),
+						eq(secrets.processingLeaseId, leaseId),
+						gt(secrets.processingLeaseExpiresAt, new Date())
+					)
+				);
 
 			return { success: false, sent: 0, failed: 0 };
 		}
-
-		const updated = await db
-			.update(secrets)
-			.set({
-				status: 'triggered',
-				processingStartedAt: new Date(),
-				updatedAt: new Date()
-			} as SecretUpdate)
-			.where(and(eq(secrets.id, secret.id), eq(secrets.status, 'active')))
-			.returning({ id: secrets.id });
-
-		if (updated.length === 0) {
-			logger.info('Secret already being processed by another worker', {
-				secretId: secret.id
-			});
-			return { success: false, sent: 0, failed: 0, alreadyProcessing: true };
-		}
-
-		logger.info('Acquired processing lock for secret', {
-			secretId: secret.id
-		});
 
 		const recipients = await getAllRecipients(secret.id);
 
@@ -134,15 +145,62 @@ async function processOverdueSecret(
 				.set({
 					status: 'active',
 					processingStartedAt: null,
+					processingLeaseId: null,
+					processingLeaseExpiresAt: null,
 					lastError: 'No recipients configured',
 					retryCount: secret.retryCount + 1,
 					lastRetryAt: new Date(),
 					updatedAt: new Date()
 				} as SecretUpdate)
-				.where(eq(secrets.id, secret.id));
+				.where(
+					and(
+						eq(secrets.id, secret.id),
+						eq(secrets.processingLeaseId, leaseId),
+						gt(secrets.processingLeaseExpiresAt, new Date())
+					)
+				);
 
 			return { success: false, sent: 0, failed: 0 };
 		}
+
+		let bitcoinRecovery:
+			| {
+					encryptedRecoveryTx: string | null;
+					recoverySenderPubkey: string | null;
+					recoveryManifest: unknown;
+					generation: number;
+			  }
+			| undefined;
+		try {
+			[bitcoinRecovery] = await db
+				.select({
+					encryptedRecoveryTx: bitcoinUtxos.encryptedRecoveryTx,
+					recoverySenderPubkey: bitcoinUtxos.recoverySenderPubkey,
+					recoveryManifest: bitcoinUtxos.recoveryManifest,
+					generation: bitcoinUtxos.generation
+				})
+				.from(bitcoinUtxos)
+				.where(
+					and(
+						eq(bitcoinUtxos.secretId, secret.id),
+						inArray(bitcoinUtxos.status, ['pending', 'confirmed'])
+					)
+				)
+				.orderBy(desc(bitcoinUtxos.generation))
+				.limit(1);
+		} catch (error) {
+			logger.warn('Bitcoin recovery metadata unavailable for disclosure', {
+				secretId: secret.id,
+				error: sanitizeError(error)
+			});
+		}
+		const bitcoinRecipientId =
+			bitcoinRecovery?.recoveryManifest &&
+			typeof bitcoinRecovery.recoveryManifest === 'object' &&
+			'recipientId' in bitcoinRecovery.recoveryManifest &&
+			typeof bitcoinRecovery.recoveryManifest.recipientId === 'string'
+				? bitcoinRecovery.recoveryManifest.recipientId
+				: null;
 
 		logger.info('Found recipients for disclosure', {
 			secretId: secret.id,
@@ -189,30 +247,47 @@ async function processOverdueSecret(
 				.set({
 					status: 'active',
 					processingStartedAt: null,
+					processingLeaseId: null,
+					processingLeaseExpiresAt: null,
 					lastError: 'Decryption failed',
 					retryCount: secret.retryCount + 1,
 					lastRetryAt: new Date(),
 					updatedAt: new Date()
 				} as SecretUpdate)
-				.where(eq(secrets.id, secret.id));
+				.where(
+					and(
+						eq(secrets.id, secret.id),
+						eq(secrets.processingLeaseId, leaseId),
+						gt(secrets.processingLeaseExpiresAt, new Date())
+					)
+				);
 
 			return { success: false, sent: 0, failed: 0 };
 		}
 
-		const recipientEmails = recipients
-			.map((r) => r.email)
-			.filter((email): email is string => !!email);
+		const recipientsByEmail = new Map<string, (typeof recipients)[number]>();
+		for (const recipient of recipients) {
+			if (recipient.email && !recipientsByEmail.has(recipient.email)) {
+				recipientsByEmail.set(recipient.email, recipient);
+			}
+		}
+		const deliveryRecipients = Array.from(recipientsByEmail.values());
+		const undeliverableCount = recipients.filter((recipient) => !recipient.email).length;
+		const recipientEmails = Array.from(recipientsByEmail.keys());
 
-		const existingLogs = await db
-			.select()
-			.from(disclosureLog)
-			.where(
-				and(
-					eq(disclosureLog.secretId, secret.id),
-					inArray(disclosureLog.recipientEmail, recipientEmails),
-					eq(disclosureLog.status, 'sent')
-				)
-			);
+		const existingLogs =
+			recipientEmails.length > 0
+				? await db
+						.select()
+						.from(disclosureLog)
+						.where(
+							and(
+								eq(disclosureLog.secretId, secret.id),
+								inArray(disclosureLog.recipientEmail, recipientEmails),
+								eq(disclosureLog.status, 'sent')
+							)
+						)
+				: [];
 
 		const sentEmails = new Set(existingLogs.map((log) => log.recipientEmail));
 
@@ -228,13 +303,13 @@ async function processOverdueSecret(
 		let timedOut = false;
 
 		try {
-			for (const recipient of recipients) {
+			for (const recipient of deliveryRecipients) {
 				if (isApproachingTimeout(startTimeMs)) {
 					logger.warn('Approaching timeout, stopping email processing', {
 						secretId: secret.id,
 						elapsedMs: Date.now() - startTimeMs,
 						sent,
-						remaining: recipients.length - sent - failed
+						remaining: deliveryRecipients.length - sent - failed
 					});
 					timedOut = true;
 					break;
@@ -257,29 +332,15 @@ async function processOverdueSecret(
 					continue;
 				}
 
-				let logEntry;
-				try {
-					const inserted = await db
-						.insert(disclosureLog)
-						.values({
-							secretId: secret.id,
-							recipientEmail: contactEmail,
-							recipientName: recipient.name
-						})
-						.returning({ id: disclosureLog.id })
-						.onConflictDoNothing();
+				const logEntry = await claimDisclosureRecipient(db, {
+					secretId: secret.id,
+					recipientEmail: contactEmail,
+					recipientName: recipient.name,
+					leaseId
+				});
 
-					if (inserted.length === 0) {
-						logger.info('Disclosure log conflict (already exists), counting as sent', {
-							secretId: secret.id,
-							recipient: contactEmail
-						});
-						sent++;
-						continue;
-					}
-
-					logEntry = inserted[0];
-				} catch {
+				if (logEntry.status === 'sent') {
+					sentEmails.add(contactEmail);
 					sent++;
 					continue;
 				}
@@ -307,7 +368,21 @@ async function processOverdueSecret(
 								secretContent: decryptedBuffer!.toString('utf8'),
 								disclosureReason: 'scheduled',
 								senderLastSeen: secret.lastCheckIn || undefined,
-								secretCreatedAt: secret.createdAt || undefined
+								secretCreatedAt: secret.createdAt || undefined,
+								nostrManifest:
+									recipient.nostrSchemeVersion === 2 && recipient.nostrManifestEvent
+										? JSON.stringify(recipient.nostrManifestEvent)
+										: undefined,
+								bitcoinRecoveryEnvelope:
+									bitcoinRecipientId === recipient.id && bitcoinRecovery?.encryptedRecoveryTx
+										? bitcoinRecovery.encryptedRecoveryTx
+										: undefined,
+								bitcoinRecoverySenderPubkey:
+									bitcoinRecipientId === recipient.id && bitcoinRecovery?.recoverySenderPubkey
+										? bitcoinRecovery.recoverySenderPubkey
+										: undefined,
+								bitcoinRecoveryGeneration:
+									bitcoinRecipientId === recipient.id ? bitcoinRecovery?.generation : undefined
 							});
 						},
 						CRON_CONFIG.MAX_RETRIES,
@@ -325,11 +400,11 @@ async function processOverdueSecret(
 							durationMs: emailDuration
 						});
 
-						try {
-							await updateDisclosureLog(db, logEntry.id, 'sent');
+						if (await updateDisclosureLog(db, secret.id, logEntry.id, leaseId, 'sent')) {
+							sentEmails.add(contactEmail);
 							sent++;
-						} catch {
-							sent++;
+						} else {
+							failed++;
 						}
 					} else {
 						logger.error('Disclosure email failed', undefined, {
@@ -346,7 +421,9 @@ async function processOverdueSecret(
 
 						await updateDisclosureLog(
 							db,
+							secret.id,
 							logEntry.id,
+							leaseId,
 							'failed',
 							emailResult.error || 'Unknown error'
 						);
@@ -389,7 +466,7 @@ async function processOverdueSecret(
 						}
 					);
 
-					await updateDisclosureLog(db, logEntry.id, 'failed', errorMsg);
+					await updateDisclosureLog(db, secret.id, logEntry.id, leaseId, 'failed', errorMsg);
 
 					await logEmailFailure({
 						emailType: 'disclosure',
@@ -428,17 +505,25 @@ async function processOverdueSecret(
 				.set({
 					status: 'active',
 					processingStartedAt: null,
+					processingLeaseId: null,
+					processingLeaseExpiresAt: null,
 					lastError: `Timeout after sending ${sent}/${recipients.length} emails`,
 					retryCount: secret.retryCount + 1,
 					lastRetryAt: new Date(),
 					updatedAt: new Date()
 				} as SecretUpdate)
-				.where(eq(secrets.id, secret.id));
+				.where(
+					and(
+						eq(secrets.id, secret.id),
+						eq(secrets.processingLeaseId, leaseId),
+						gt(secrets.processingLeaseExpiresAt, new Date())
+					)
+				);
 
 			return { success: false, sent, failed };
 		}
 
-		const allSent = sent === recipients.length && failed === 0;
+		const allSent = sent === deliveryRecipients.length && failed === 0 && undeliverableCount === 0;
 		const finalStatus = allSent ? 'triggered' : 'active';
 
 		logger.info('Secret disclosure processing complete', {
@@ -459,12 +544,20 @@ async function processOverdueSecret(
 				status: finalStatus as 'triggered' | 'active',
 				triggeredAt: allSent ? new Date() : null,
 				processingStartedAt: null,
+				processingLeaseId: null,
+				processingLeaseExpiresAt: null,
 				lastError: allSent ? null : `Sent: ${sent}, Failed: ${failed}`,
 				retryCount: allSent ? secret.retryCount : secret.retryCount + 1,
 				lastRetryAt: allSent ? null : new Date(),
 				updatedAt: new Date()
 			} as SecretUpdate)
-			.where(eq(secrets.id, secret.id));
+			.where(
+				and(
+					eq(secrets.id, secret.id),
+					eq(secrets.processingLeaseId, leaseId),
+					gt(secrets.processingLeaseExpiresAt, new Date())
+				)
+			);
 
 		return { success: allSent, sent, failed };
 	} catch (error) {
@@ -483,17 +576,27 @@ async function processOverdueSecret(
 		);
 
 		try {
-			await db
-				.update(secrets)
-				.set({
-					status: 'active',
-					processingStartedAt: null,
-					lastError: errorMsg,
-					retryCount: secret.retryCount + 1,
-					lastRetryAt: new Date(),
-					updatedAt: new Date()
-				} as SecretUpdate)
-				.where(eq(secrets.id, secret.id));
+			if (leaseId) {
+				await db
+					.update(secrets)
+					.set({
+						status: 'active',
+						processingStartedAt: null,
+						processingLeaseId: null,
+						processingLeaseExpiresAt: null,
+						lastError: errorMsg,
+						retryCount: secret.retryCount + 1,
+						lastRetryAt: new Date(),
+						updatedAt: new Date()
+					} as SecretUpdate)
+					.where(
+						and(
+							eq(secrets.id, secret.id),
+							eq(secrets.processingLeaseId, leaseId),
+							gt(secrets.processingLeaseExpiresAt, new Date())
+						)
+					);
+			}
 		} catch {
 			logger.error('Error rolling back secret status', undefined, {
 				secretId: secret.id
@@ -515,10 +618,10 @@ export async function runProcessReminders(): Promise<ProcessRemindersResult> {
 
 	const now = new Date();
 	const nowIso = now.toISOString();
+	const staleProcessingStartedAt = new Date(now.getTime() - PROCESSING_LEASE_MS);
 
-	// Fetch overdue secrets that are either:
-	// 1. First attempt (retryCount = 0 or lastRetryAt is null), OR
-	// 2. Past their exponential backoff window (lastRetryAt + backoff delay)
+	// Fetch active overdue secrets and in-flight disclosures whose durable lease
+	// expired after a worker crash. Backoff still applies to explicit retries.
 	const overdueSecrets = await db
 		.select({
 			secret: secrets,
@@ -528,7 +631,23 @@ export async function runProcessReminders(): Promise<ProcessRemindersResult> {
 		.innerJoin(users, eq(secrets.userId, users.id))
 		.where(
 			and(
-				eq(secrets.status, 'active'),
+				or(
+					eq(secrets.status, 'active'),
+					and(
+						eq(secrets.status, 'triggered'),
+						isNull(secrets.triggeredAt),
+						or(
+							lt(secrets.processingLeaseExpiresAt, now),
+							and(
+								isNull(secrets.processingLeaseExpiresAt),
+								or(
+									isNull(secrets.processingStartedAt),
+									lt(secrets.processingStartedAt, staleProcessingStartedAt)
+								)
+							)
+						)
+					)
+				),
 				lt(secrets.nextCheckIn, now),
 				sql`(
             ${secrets.lastRetryAt} IS NULL 

@@ -3,8 +3,10 @@ import { connectionManager } from './connection-manager';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from './schema';
 
-// Singleton instance
+// Singleton instance. The promise prevents concurrent first-use callers from
+// creating competing pools before dbInstance is assigned.
 let dbInstance: PostgresJsDatabase<typeof schema> | null = null;
+let initializationPromise: Promise<PostgresJsDatabase<typeof schema>> | null = null;
 
 /**
  * Get a database instance with proper connection management.
@@ -20,10 +22,9 @@ let dbInstance: PostgresJsDatabase<typeof schema> | null = null;
  * @throws Error if DATABASE_URL is not set or connection fails after retries
  */
 export async function getDatabase(): Promise<PostgresJsDatabase<typeof schema>> {
-	// Return existing instance if available
-	if (dbInstance) {
-		return dbInstance;
-	}
+	// Return the established instance or share one in-flight initialization.
+	if (dbInstance) return dbInstance;
+	if (initializationPromise) return initializationPromise;
 
 	// Skip during build phase to prevent database connection attempts
 	const isBuildTime = process.env.NODE_ENV === undefined;
@@ -39,34 +40,26 @@ export async function getDatabase(): Promise<PostgresJsDatabase<typeof schema>> 
 		throw new Error('Database not available during build phase - this should not be called');
 	}
 
-	try {
-		// Get connection with retry logic and circuit breaker
-		const client = await connectionManager.getConnection(connectionString!, {
-			max: 5, // Conservative pool size for Cloud Run
-			idle_timeout: 20, // Close idle connections quickly
-			connect_timeout: 10, // Fail fast on connection issues
-			max_lifetime: 60 * 5 // Recycle connections every 5 minutes
-		});
+	initializationPromise = (async () => {
+		try {
+			connectionManager.beginStartup();
+			const client = await connectionManager.getConnection(connectionString!);
 
-		// Create Drizzle instance
-		dbInstance = drizzle(client, { schema });
-
-		// Log success in development
-		if (process.env.NODE_ENV === 'development') {
-			console.log('✅ Database connection established');
+			dbInstance = drizzle(client, { schema });
+			if (process.env.NODE_ENV === 'development') {
+				console.log('✅ Database connection established');
+			}
+			return dbInstance;
+		} catch (error) {
+			dbInstance = null;
+			console.error('❌ Database connection failed:', error);
+			throw error;
+		} finally {
+			initializationPromise = null;
 		}
+	})();
 
-		return dbInstance;
-	} catch (error) {
-		// Reset instance on failure
-		dbInstance = null;
-
-		// Log error details
-		console.error('❌ Database connection failed:', error);
-
-		// Re-throw for caller to handle
-		throw error;
-	}
+	return initializationPromise;
 }
 
 /**
@@ -80,6 +73,8 @@ export function getDatabaseStats() {
  * Close database connection (for cleanup)
  */
 export async function closeDatabaseConnection() {
+	await initializationPromise?.catch(() => undefined);
+	initializationPromise = null;
 	dbInstance = null;
 	await connectionManager.closeConnection();
 }

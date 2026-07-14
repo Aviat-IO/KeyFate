@@ -6,15 +6,12 @@
 
 	import * as Dialog from '$lib/components/ui/dialog';
 
-	import { Textarea } from '$lib/components/ui/textarea';
 	import BitcoinStatus from '$lib/components/BitcoinStatus.svelte';
-	import { toast } from 'svelte-sonner';
 	import {
 		AlertCircle,
 		AlertTriangle,
 		Calendar,
 		Clock,
-		Eye,
 		Mail,
 		Phone,
 		Shield,
@@ -49,9 +46,7 @@
 
 	let loading = $state(false);
 	let error = $state<string | null>(null);
-	let serverShare = $state<string | null>(null);
 	let showDeleteDialog = $state(false);
-	let showRevealDialog = $state(false);
 	let serverShareDeletedLocally = $state(false);
 	let serverShareDeleted = $derived(serverShareDeletedLocally || !secret.server_share);
 	let hasBitcoin = $state(false);
@@ -74,35 +69,6 @@
 	$effect(() => {
 		checkBitcoinStatus();
 	});
-
-	async function handleRevealServerShare() {
-		loading = true;
-		error = null;
-
-		try {
-			const csrfRes = await fetch('/api/csrf-token');
-			const { token: csrfToken } = await csrfRes.json();
-
-			const response = await fetch(`/api/secrets/${secret.id}/reveal-server-share`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken }
-			});
-
-			if (!response.ok) {
-				const data = await response.json();
-				throw new Error(data.error || 'Failed to reveal server share');
-			}
-
-			const { serverShare: share } = await response.json();
-			serverShare = share;
-			showRevealDialog = false;
-		} catch (err) {
-			console.error('Error revealing server share:', err);
-			error = err instanceof Error ? err.message : 'Failed to reveal server share';
-		} finally {
-			loading = false;
-		}
-	}
 
 	async function handleDeleteServerShare() {
 		loading = true;
@@ -130,11 +96,6 @@
 		} finally {
 			loading = false;
 		}
-	}
-
-	function copyToClipboard(text: string) {
-		navigator.clipboard.writeText(text);
-		toast.success('Copied to clipboard');
 	}
 </script>
 
@@ -263,43 +224,10 @@
 				{#if !serverShareDeleted}
 					<div class="space-y-4">
 						<p class="text-muted-foreground text-sm">
-							The server holds one of your {secret.sss_shares_total} shares.
+							The service stores one encrypted share for recipient disclosure. It cannot be revealed
+							or exported through the owner account.
 						</p>
 						<div class="flex flex-col gap-2 sm:flex-row">
-							<Dialog.Root bind:open={showRevealDialog}>
-								<Dialog.Trigger>
-									{#snippet child({ props })}
-										<Button variant="outline" class="flex-1" {...props}>
-											<Eye class="mr-2 h-4 w-4" />
-											Reveal Server Share
-										</Button>
-									{/snippet}
-								</Dialog.Trigger>
-								<Dialog.Content>
-									<Dialog.Header>
-										<Dialog.Title>Reveal Server Share</Dialog.Title>
-										<Dialog.Description>
-											This will decrypt and show you the server's share.
-										</Dialog.Description>
-									</Dialog.Header>
-									<Alert.Root variant="destructive">
-										<AlertTriangle class="h-4 w-4" />
-										<Alert.Description>
-											<strong>Warning:</strong> Once revealed, this share can be combined with
-											{secret.sss_threshold - 1} other share(s) to reconstruct your secret.
-										</Alert.Description>
-									</Alert.Root>
-									<Dialog.Footer>
-										<Button variant="outline" onclick={() => (showRevealDialog = false)}>
-											Cancel
-										</Button>
-										<Button onclick={handleRevealServerShare} disabled={loading}>
-											{loading ? 'Revealing...' : 'Yes, Reveal Share'}
-										</Button>
-									</Dialog.Footer>
-								</Dialog.Content>
-							</Dialog.Root>
-
 							<Dialog.Root bind:open={showDeleteDialog}>
 								<Dialog.Trigger>
 									{#snippet child({ props })}
@@ -348,24 +276,6 @@
 					</Alert.Root>
 				{/if}
 			</div>
-
-			<!-- Revealed Server Share -->
-			{#if serverShare}
-				<div>
-					<h3
-						class="font-space text-destructive mb-3 flex items-center text-lg font-bold tracking-tight"
-					>
-						<Eye class="mr-2 h-4 w-4" />
-						Revealed Server Share
-					</h3>
-					<div class="space-y-2">
-						<Textarea value={serverShare} readonly class="font-mono text-xs" rows={3} />
-						<Button variant="outline" size="sm" onclick={() => copyToClipboard(serverShare!)}>
-							Copy Share
-						</Button>
-					</div>
-				</div>
-			{/if}
 
 			<div class="text-muted-foreground text-xs">
 				<div class="flex items-center">

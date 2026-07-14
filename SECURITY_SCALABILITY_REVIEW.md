@@ -1,5 +1,7 @@
 # Security & Scalability Review: Dead Man's Switch Application
 
+> **Historical review, not current release evidence.** Findings and GCP-era assumptions in this November 2025 snapshot may have been remediated or superseded. Use `TODO.md`, `TELOS.md`, the active OpenSpec change, and `docs/plans/2026-07-11-production-readiness-evidence.md` for the current NO-GO/GO state.
+
 **Review Date:** November 24, 2025\
 **Reviewer:** Security & Scalability Analysis\
 **Scope:** Full codebase including authentication, payment integration, cron

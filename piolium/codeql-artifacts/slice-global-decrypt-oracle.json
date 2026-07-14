@@ -1,0 +1,6 @@
+{"#select":{"columns":[
+   {"name":"call","kind":"Entity"}
+  ,{"kind":"String"}]
+ ,"tuples":[
+   [{"label":"decrypt ... Buffer)"},"The authenticated generic route reaches decryptMessage in src/routes/api/decrypt/+server.ts."]]
+ }}

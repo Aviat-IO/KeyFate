@@ -1,0 +1,9 @@
+{"#select":{"columns":[
+   {"name":"call","kind":"Entity"}
+  ,{"kind":"String"}]
+ ,"tuples":[
+   [{"label":"event.u ... token')"},"Credential-like URL parameter 'token' is accepted here."]
+  ,[{"label":"event.u ... token')"},"Credential-like URL parameter 'token' is accepted here."]
+  ,[{"label":"event.u ... token')"},"Credential-like URL parameter 'token' is accepted here."]
+  ,[{"label":"event.r ... token')"},"Credential-like URL parameter 'x-reauth-token' is accepted here."]]
+ }}

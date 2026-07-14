@@ -68,6 +68,8 @@ process.env.DATABASE_URL =
 	'postgresql://postgres:dev_password_change_in_prod@localhost:5432/keyfate_dev';
 process.env.NODE_ENV = 'test';
 process.env.ENCRYPTION_KEY = Buffer.from('test-encryption-key-32-bytes-long').toString('base64');
+process.env.STRIPE_PRICE_ID_PRO_MONTHLY = 'price_test_pro_monthly';
+process.env.STRIPE_PRICE_ID_PRO_YEARLY = 'price_test_pro_yearly';
 
 // Global test utilities
 global.ResizeObserver = vi.fn().mockImplementation(() => ({

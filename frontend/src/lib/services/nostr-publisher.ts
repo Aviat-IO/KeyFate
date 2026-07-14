@@ -8,9 +8,16 @@
 import { hex } from '@scure/base';
 import { doubleEncryptShare } from '$lib/crypto/double-encrypt';
 import { getConversationKey, encrypt, decrypt as nip44Decrypt } from '$lib/nostr/encryption';
-import { wrapShareForRecipient, type SharePayload } from '$lib/nostr/gift-wrap';
+import { wrapCapsuleForRecipient } from '$lib/nostr/gift-wrap';
+import {
+	createRecoveryCapsule,
+	createRecoveryManifest,
+	RECOVERY_CAPSULE_VERSION
+} from '$lib/nostr/recovery-capsule';
 import { createNostrClient } from '$lib/nostr/client';
 import type { Nip44Ops } from '$lib/crypto/double-encrypt';
+import { getPublicKey } from 'nostr-tools/pure';
+import type { Event as NostrEvent } from 'nostr-tools/core';
 
 /** Input for a single share to publish */
 export interface ShareInput {
@@ -23,6 +30,11 @@ export interface ShareInput {
 export interface PublishedShare {
 	recipientId: string;
 	nostrEventId: string;
+	capsuleEventId: string;
+	publisherPubkey: string;
+	giftWrapEvent: NostrEvent;
+	capsuleEvent: NostrEvent;
+	manifestEvent: NostrEvent;
 	/** Plaintext symmetric key K (for OP_RETURN embedding) */
 	plaintextK: Uint8Array;
 	/** K encrypted with passphrase-derived key (if passphrase was provided) */
@@ -63,6 +75,11 @@ function createNip44Ops(): Nip44Ops {
 	};
 }
 
+export interface NostrPublisherClient {
+	publish(event: NostrEvent): Promise<void>;
+	close(): void;
+}
+
 /**
  * Publish encrypted shares to Nostr relays for recipients that have a nostrPubkey.
  *
@@ -87,15 +104,27 @@ export async function publishSharesToNostr(params: {
 	threshold: number;
 	totalShares: number;
 	passphrase?: string;
+	relays?: string[];
+	client?: NostrPublisherClient;
 }): Promise<PublishResult> {
-	const { secretId, shares, recipients, senderSecretKey, threshold, totalShares, passphrase } =
-		params;
+	const {
+		secretId,
+		shares,
+		recipients,
+		senderSecretKey,
+		threshold,
+		totalShares,
+		passphrase,
+		relays,
+		client: providedClient
+	} = params;
 
 	const result: PublishResult = {
 		published: [],
 		skipped: [],
 		errors: []
 	};
+	const publisherPubkey = getPublicKey(senderSecretKey);
 
 	// Build a lookup of recipient ID -> nostrPubkey
 	const recipientMap = new Map<string, string>();
@@ -106,7 +135,7 @@ export async function publishSharesToNostr(params: {
 	}
 
 	const nip44Ops = createNip44Ops();
-	const client = createNostrClient();
+	const client = providedClient ?? createNostrClient(relays ? { relays } : undefined);
 
 	try {
 		for (const shareInput of shares) {
@@ -130,28 +159,48 @@ export async function publishSharesToNostr(params: {
 				const encryptedShareHex = hex.encode(encrypted.encryptedShare);
 				const nonceHex = hex.encode(encrypted.nonce);
 
-				const payload: SharePayload = {
-					share: JSON.stringify({
-						encryptedShare: encryptedShareHex,
-						nonce: nonceHex,
+				const capsule = createRecoveryCapsule(
+					{
+						version: RECOVERY_CAPSULE_VERSION,
+						secretId,
+						recipientId: shareInput.recipientId,
+						recipientNostrPubkey: nostrPubkey,
+						shareIndex: shareInput.shareIndex,
+						threshold,
+						totalShares,
+						encryptedShareHex,
+						nonceHex,
 						encryptedKNostr: encrypted.encryptedKNostr
-					}),
-					secretId,
-					shareIndex: shareInput.shareIndex,
-					threshold,
-					totalShares,
-					version: 1
-				};
+					},
+					senderSecretKey
+				);
 
-				// 3. Create gift wrap
-				const giftWrap = wrapShareForRecipient(payload, senderSecretKey, nostrPubkey);
+				// The signed capsule is embedded in the encrypted rumor. The service
+				// and relays see only the already-signed outer event.
+				const giftWrap = wrapCapsuleForRecipient(capsule, senderSecretKey, nostrPubkey);
+				const manifestEvent = createRecoveryManifest(
+					{
+						version: RECOVERY_CAPSULE_VERSION,
+						secretId,
+						recipientId: shareInput.recipientId,
+						recipientNostrPubkey: nostrPubkey,
+						publisherPubkey,
+						giftWrapEventId: giftWrap.id,
+						capsuleEventId: capsule.id
+					},
+					senderSecretKey
+				);
 
-				// 4. Publish to relays
 				await client.publish(giftWrap);
 
 				result.published.push({
 					recipientId: shareInput.recipientId,
 					nostrEventId: giftWrap.id,
+					capsuleEventId: capsule.id,
+					publisherPubkey,
+					giftWrapEvent: giftWrap,
+					capsuleEvent: capsule,
+					manifestEvent,
 					plaintextK: encrypted.plaintextK,
 					encryptedKPassphrase: encrypted.encryptedKPassphrase
 				});
@@ -165,6 +214,8 @@ export async function publishSharesToNostr(params: {
 		}
 	} finally {
 		client.close();
+		// The per-secret publisher key is one-shot and never leaves the browser.
+		senderSecretKey.fill(0);
 	}
 
 	return result;

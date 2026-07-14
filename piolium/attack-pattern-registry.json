@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "commit": "b7b7aef1a897c418e0402acd211fecf0206d8217",
+  "patterns": [
+    {
+      "id": "AP-001",
+      "title": "Cross-tenant global cryptographic primitive",
+      "bug_class": "authorization/custody",
+      "root_cause": "A generic route invokes a process-wide decryption key without binding ciphertext to owner, object, or purpose.",
+      "detection_signature": {
+        "codeql": "CallNode.getCalleeName() = decryptMessage under a route module",
+        "grep": "decryptMessage\\(|/api/decrypt|server-share",
+        "semgrep": "$PLAINTEXT = decryptMessage($C, $IV, $TAG, $V)"
+      },
+      "confirmed_instances": [
+        {"finding_ref": "H1-server-reaches-shamir-threshold", "file": "frontend/src/routes/api/secrets/[id]/publish-nostr/+server.ts"},
+        {"finding_ref": "M1-global-decryption-oracle", "file": "frontend/src/routes/api/decrypt/+server.ts"},
+        {"finding_ref": "M7-db-token-unlocks-server-share", "file": "frontend/src/routes/api/secrets/[id]/server-share/+server.ts"}
+      ],
+      "untested_candidates": []
+    },
+    {
+      "id": "AP-002",
+      "title": "Protocol confidentiality without identity binding",
+      "bug_class": "protocol-authentication",
+      "root_cause": "Encrypted Nostr envelopes are accepted without validating every signature, ID, author, recipient, kind, and application-trusted identity.",
+      "detection_signature": {
+        "codeql": "Calls to JSON.parse after nip44 decrypt without verifyEvent",
+        "grep": "unwrapGiftWrap|nip44.decrypt|kind !== 1059|kind !== 13",
+        "semgrep": "nip44.v2.decrypt(...)"
+      },
+      "confirmed_instances": [
+        {"finding_ref": "M2-nip59-unverified-recovery-events", "file": "frontend/src/lib/crypto/recovery-flows.ts"}
+      ],
+      "untested_candidates": []
+    },
+    {
+      "id": "AP-003",
+      "title": "Durable state claimed without crash-recovery lease",
+      "bug_class": "state-machine/availability",
+      "root_cause": "A durable processing status removes work from future queries before irreversible effects complete, without a stale lease recovery path.",
+      "detection_signature": {
+        "codeql": "Database update to triggered or processing followed by provider/file effects",
+        "grep": "status.*triggered|status.*processing|runningJobs|status.*pending",
+        "semgrep": "await $DB.update($T).set({ status: $S })"
+      },
+      "confirmed_instances": [
+        {"finding_ref": "production-blocker-B0", "file": "frontend/src/lib/cron/process-reminders.ts"},
+        {"finding_ref": "production-blocker-B4", "file": "frontend/src/lib/cron/process-exports.ts"}
+      ],
+      "untested_candidates": []
+    },
+    {
+      "id": "AP-004",
+      "title": "Non-atomic absolute counter update",
+      "bug_class": "race-condition",
+      "root_cause": "Concurrent requests read the same count and write the same absolute increment; errors authorize.",
+      "detection_signature": {
+        "codeql": "Select count then update count with local arithmetic",
+        "grep": "count: entry.count + 1|Fail open",
+        "semgrep": "count: $ENTRY.count + 1"
+      },
+      "confirmed_instances": [
+        {"finding_ref": "M5-rate-limit-race", "file": "frontend/src/lib/rate-limit-db.ts"}
+      ],
+      "untested_candidates": []
+    },
+    {
+      "id": "AP-005",
+      "title": "Safe HTTP method performs third-party side effect",
+      "bug_class": "csrf/business-logic",
+      "root_cause": "GET handlers create billable provider objects while Lax cookies allow top-level cross-site navigation.",
+      "detection_signature": {
+        "codeql": "Exported GET calling createCustomer, createCheckoutSession, or createInvoice",
+        "grep": "export const GET|createCheckoutSession|createInvoice|createCustomer",
+        "semgrep": "export const GET = $HANDLER"
+      },
+      "confirmed_instances": [
+        {"finding_ref": "M4-state-changing-checkout-get", "file": "frontend/src/routes/api/create-checkout-session/+server.ts"},
+        {"finding_ref": "M4-state-changing-checkout-get", "file": "frontend/src/routes/api/create-btcpay-checkout/+server.ts"}
+      ],
+      "untested_candidates": []
+    },
+    {
+      "id": "AP-006",
+      "title": "Entitlement not bound to canonical paid item",
+      "bug_class": "payment/business-logic",
+      "root_cause": "Signed provider events are trusted for entitlement without validating an allowlisted product, amount, currency, and interval.",
+      "detection_signature": {
+        "codeql": "Webhook handler writes pro tier without reading validated provider price",
+        "grep": "lookup_key|tier: 'pro'|billing_interval|currency",
+        "semgrep": "createUserSubscription(... tier: 'pro' ...)"
+      },
+      "confirmed_instances": [
+        {"finding_ref": "M6-stripe-price-allowlist-bypass", "file": "frontend/src/lib/services/webhook-handlers.ts"},
+        {"finding_ref": "production-blocker-B7", "file": "frontend/src/routes/api/create-btcpay-checkout/+server.ts"}
+      ],
+      "untested_candidates": []
+    },
+    {
+      "id": "AP-007",
+      "title": "Arbitrary subject security-state mutation",
+      "bug_class": "denial-of-service/authentication",
+      "root_cause": "An unauthenticated caller selects another user's email and invalid input mutates durable lockout state.",
+      "detection_signature": {
+        "codeql": "Remote email source flows to failedAttempts/lockedUntil update",
+        "grep": "verify-otp|failedAttempts|lockedUntil|permanentlyLocked",
+        "semgrep": "await verifyOtp($EMAIL, $CODE)"
+      },
+      "confirmed_instances": [
+        {"finding_ref": "M3-otp-lockout-dos", "file": "frontend/src/lib/auth/otp.ts"}
+      ],
+      "untested_candidates": []
+    },
+    {
+      "id": "AP-008",
+      "title": "Script-readable recovery material adjacent to raw HTML sink",
+      "bug_class": "client-secret-exposure",
+      "root_cause": "High-value shares and keys persist in Web Storage while the origin lacks CSP and ships a demonstrably vulnerable sanitizer at a raw HTML sink.",
+      "detection_signature": {
+        "codeql": "Web Storage write of share/key/privateKey plus raw HTML sink",
+        "grep": "localStorage.setItem|sessionStorage.setItem|{@html}|sanitizeHtml",
+        "semgrep": "$STORAGE.setItem($K, $V)"
+      },
+      "confirmed_instances": [
+        {"finding_ref": "production-blocker-B6", "file": "frontend/src/lib/components/NewSecretForm.svelte"},
+        {"finding_ref": "production-blocker-B6", "file": "frontend/src/routes/blog/[slug]/+page.svelte"}
+      ],
+      "untested_candidates": []
+    }
+  ]
+}

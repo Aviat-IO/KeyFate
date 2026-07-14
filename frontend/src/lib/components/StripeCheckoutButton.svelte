@@ -14,15 +14,27 @@
 	} = $props();
 
 	let loading = $state(false);
+	let resumeStarted = $state(false);
 
 	const session = $derived($page.data.session);
+
+	$effect(() => {
+		const shouldResume =
+			session?.user &&
+			$page.url.searchParams.get('resume_checkout') === 'stripe' &&
+			$page.url.searchParams.get('plan') === lookupKey;
+		if (shouldResume && !resumeStarted) {
+			resumeStarted = true;
+			void handleCheckout();
+		}
+	});
 
 	async function handleCheckout() {
 		loading = true;
 
 		try {
 			if (!session?.user) {
-				const checkoutUrl = `/api/create-checkout-session?lookup_key=${lookupKey}&redirect_after_auth=true`;
+				const checkoutUrl = `/pricing?resume_checkout=stripe&plan=${encodeURIComponent(lookupKey)}`;
 				const loginUrl = `/auth/signin?callbackUrl=${encodeURIComponent(checkoutUrl)}`;
 				window.location.href = loginUrl;
 				return;
@@ -37,7 +49,7 @@
 					'Content-Type': 'application/json',
 					'x-csrf-token': token
 				},
-				body: JSON.stringify({ lookup_key: lookupKey })
+				body: JSON.stringify({ plan: lookupKey })
 			});
 
 			if (!response.ok) {

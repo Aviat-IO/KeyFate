@@ -1,0 +1,23 @@
+[
+  {
+    "label": "userDir",
+    "kind": "file-access",
+    "file": "src/lib/gdpr/export-service.ts",
+    "line": 173,
+    "coverage": "codeql-recognized"
+  },
+  {
+    "label": "filePath",
+    "kind": "file-access",
+    "file": "src/lib/gdpr/export-service.ts",
+    "line": 180,
+    "coverage": "codeql-recognized"
+  },
+  {
+    "label": "filePath",
+    "kind": "file-access",
+    "file": "src/lib/gdpr/export-service.ts",
+    "line": 200,
+    "coverage": "codeql-recognized"
+  }
+]

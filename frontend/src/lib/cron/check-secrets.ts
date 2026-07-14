@@ -23,8 +23,9 @@ import { sendAdminNotification } from '$lib/email/admin-notification-service';
 import { logEmailFailure } from '$lib/email/email-failure-logger';
 import { sendReminderEmail } from '$lib/email/email-service';
 import { withRequestContext } from '$lib/request-context';
+import { hashCheckInToken } from '$lib/server/capability-token';
 import { randomBytes } from 'crypto';
-import { and, desc, eq, gt, isNotNull, isNull, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, gt, isNotNull, lt, sql } from 'drizzle-orm';
 
 type ReminderType =
 	| '1_hour'
@@ -139,39 +140,15 @@ async function generateCheckInToken(
 	db: DatabaseConnection,
 	secretId: string
 ): Promise<{ token: string; url: string }> {
-	const now = new Date();
-
-	const existingToken = await db
-		.select()
-		.from(checkInTokens)
-		.where(
-			and(
-				eq(checkInTokens.secretId, secretId),
-				isNull(checkInTokens.usedAt),
-				gt(checkInTokens.expiresAt, now)
-			)
-		)
-		.limit(1);
-
-	if (existingToken.length > 0) {
-		const baseUrl = SITE_URL || 'https://keyfate.com';
-		if (!SITE_URL) {
-			logger.error(
-				'PUBLIC_SITE_URL is not set, using fallback https://keyfate.com for check-in URL'
-			);
-		}
-		const url = `${baseUrl}/check-in?token=${existingToken[0].token}`;
-		return { token: existingToken[0].token, url };
-	}
-
+	// Each notification gets a new high-entropy capability. Only its hash is
+	// persisted; all sibling capabilities are consumed after a successful check-in.
 	const token = randomBytes(32).toString('hex');
-
-	const expiresAt = new Date();
-	expiresAt.setDate(expiresAt.getDate() + 30);
+	const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
 	await db.insert(checkInTokens).values({
 		secretId,
-		token,
+		token: hashCheckInToken(token),
+		tokenVersion: 2,
 		expiresAt
 	});
 
@@ -179,7 +156,8 @@ async function generateCheckInToken(
 	if (!SITE_URL) {
 		logger.error('PUBLIC_SITE_URL is not set, using fallback https://keyfate.com for check-in URL');
 	}
-	const url = `${baseUrl}/check-in?token=${token}`;
+	// Fragments are not sent in HTTP requests or reverse-proxy access logs.
+	const url = `${baseUrl}/check-in#token=${encodeURIComponent(token)}`;
 
 	return { token, url };
 }

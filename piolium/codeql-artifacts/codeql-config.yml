@@ -1,0 +1,13 @@
+name: KeyFate security audit
+paths:
+  - src
+paths-ignore:
+  - src/**/__tests__/**
+  - src/**/*.test.ts
+  - src/**/*.test.js
+  - src/**/*.spec.ts
+  - src/**/*.spec.js
+  - build/**
+  - .svelte-kit/**
+  - node_modules/**
+  - coverage/**

@@ -17,7 +17,15 @@ import {
 } from './subscription-lifecycle';
 import { createPaymentRecord } from './payment-records';
 import type { SubscriptionStatus, CreateSubscriptionData } from './subscription-service.types';
-import type { WebhookEvent } from '$lib/payment/interfaces/PaymentProvider';
+import { getFiatPaymentProvider } from '$lib/payment';
+import type {
+	Subscription as ProviderSubscription,
+	WebhookEvent
+} from '$lib/payment/interfaces/PaymentProvider';
+import {
+	validateBTCPaySettledEntitlement,
+	validateStripeCheckoutEntitlement
+} from '$lib/payment/validate-entitlement';
 
 /**
  * Convenience alias – webhook data.object fields are loosely typed because
@@ -93,52 +101,72 @@ export async function handleBTCPayWebhook(event: WebhookEvent, userId: string) {
 
 async function handleCheckoutSessionCompleted(event: WebhookEvent, userId: string) {
 	const session: EventObject = event.data.object as EventObject;
+	if (session.mode !== 'subscription' || !session.subscription) {
+		return;
+	}
 
-	if (session.mode === 'subscription' && session.subscription) {
-		logger.info('Checkout completed', {
-			userId,
-			subscription:
-				typeof session.subscription === 'string' ? session.subscription : session.subscription.id
-		});
+	const subscriptionId =
+		typeof session.subscription === 'string' ? session.subscription : session.subscription.id;
+	if (typeof subscriptionId !== 'string' || subscriptionId.length === 0) {
+		throw new Error('Stripe checkout is missing a subscription');
+	}
 
-		const subscriptionId =
-			typeof session.subscription === 'string' ? session.subscription : session.subscription.id;
+	const provider = getFiatPaymentProvider();
+	const canonicalSubscription = await provider.getSubscription(subscriptionId);
+	validateStripeCheckoutEntitlement(session, canonicalSubscription, userId);
 
-		await createOrUpdateSubscriptionFromCheckout(userId, session.customer, subscriptionId, session);
+	await createOrUpdateSubscriptionFromCheckout(userId, canonicalSubscription);
+}
+
+function normalizeStripeStatus(status: ProviderSubscription['status']): SubscriptionStatus {
+	switch (status) {
+		case 'active':
+			return 'active';
+		case 'trialing':
+			return 'trial';
+		case 'past_due':
+			return 'past_due';
+		case 'canceled':
+			return 'cancelled';
+		default:
+			return 'inactive';
 	}
 }
 
 async function createOrUpdateSubscriptionFromCheckout(
 	userId: string,
-	customerId: string,
-	subscriptionId: string,
-	_session: EventObject
+	subscription: ProviderSubscription
 ) {
 	try {
+		const status = normalizeStripeStatus(subscription.status);
 		const existingSubscription = await getUserSubscription(userId);
 
 		if (existingSubscription) {
-			logger.info('Updating existing subscription from checkout', { userId });
 			return await updateSubscription(userId, {
-				status: 'active'
-			});
-		} else {
-			logger.info('Creating new subscription from checkout', { userId });
-
-			const subscriptionData: CreateSubscriptionData = {
-				userId,
 				provider: 'stripe',
-				providerCustomerId: customerId,
-				providerSubscriptionId: subscriptionId,
+				providerCustomerId: subscription.customerId,
+				providerSubscriptionId: subscription.id,
 				tierName: 'pro',
-				status: 'active',
-				currentPeriodStart: new Date(),
-				currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-				cancelAtPeriodEnd: false
-			};
-
-			return await createSubscription(subscriptionData);
+				status,
+				currentPeriodStart: subscription.currentPeriodStart,
+				currentPeriodEnd: subscription.currentPeriodEnd,
+				cancelAtPeriodEnd: subscription.cancelAtPeriodEnd
+			});
 		}
+
+		const subscriptionData: CreateSubscriptionData = {
+			userId,
+			provider: 'stripe',
+			providerCustomerId: subscription.customerId,
+			providerSubscriptionId: subscription.id,
+			tierName: 'pro',
+			status,
+			currentPeriodStart: subscription.currentPeriodStart,
+			currentPeriodEnd: subscription.currentPeriodEnd,
+			cancelAtPeriodEnd: subscription.cancelAtPeriodEnd
+		};
+
+		return await createSubscription(subscriptionData);
 	} catch (error) {
 		logger.error(
 			'Failed to create/update subscription from checkout',
@@ -264,69 +292,44 @@ async function handleTrialWillEnd(event: WebhookEvent, userId: string) {
 
 async function handleBitcoinPaymentSettled(event: WebhookEvent, userId: string) {
 	const invoice: EventObject = event.data.object as EventObject;
-	const metadata: EventObject = invoice.metadata || {};
+	const { invoiceId, invoiceAmount, plan } = validateBTCPaySettledEntitlement(invoice, userId);
 
-	logger.info('Bitcoin payment settled', {
+	logger.info('Validated Bitcoin subscription payment', {
 		userId,
-		invoiceId: invoice.id,
-		amount: invoice.amount,
-		currency: invoice.currency
+		invoiceId,
+		planId: plan.id
 	});
 
-	const isSubscription = !!metadata.billing_interval;
+	const subscriptionData: CreateSubscriptionData = {
+		userId,
+		provider: 'btcpay',
+		providerCustomerId: null,
+		providerSubscriptionId: invoiceId,
+		tierName: 'pro',
+		status: 'active',
+		currentPeriodStart: new Date(),
+		currentPeriodEnd: calculateNextBillingDate(plan.interval)
+	};
 
-	if (isSubscription) {
-		const billingInterval = metadata.billing_interval as string;
-		const tierName = 'pro';
+	const subscription = await createSubscription(subscriptionData);
 
-		logger.info('Creating subscription for Bitcoin payment', {
-			userId,
-			tierName,
-			billingInterval
-		});
+	await createPaymentRecord({
+		userId,
+		subscriptionId: subscription.id,
+		provider: 'btcpay',
+		providerPaymentId: invoiceId,
+		amount: invoiceAmount,
+		currency: plan.currency,
+		status: 'succeeded',
+		metadata: {
+			invoiceId,
+			btcpayInvoiceId: invoiceId,
+			billingInterval: plan.interval,
+			planId: plan.id
+		}
+	});
 
-		const subscriptionData: CreateSubscriptionData = {
-			userId,
-			provider: 'btcpay',
-			providerCustomerId: null,
-			providerSubscriptionId: invoice.id,
-			tierName,
-			status: 'active',
-			currentPeriodStart: new Date(),
-			currentPeriodEnd: calculateNextBillingDate(billingInterval)
-		};
-
-		const subscription = await createSubscription(subscriptionData);
-
-		const amountNumber = parseFloat(invoice.amount) || 0;
-
-		await createPaymentRecord({
-			userId,
-			subscriptionId: subscription.id,
-			provider: 'btcpay',
-			providerPaymentId: invoice.id,
-			amount: amountNumber,
-			currency: invoice.currency || 'USD',
-			status: 'succeeded',
-			metadata: {
-				invoiceId: invoice.id,
-				btcpayInvoiceId: invoice.id,
-				billingInterval,
-				originalAmount: metadata.original_amount,
-				originalCurrency: metadata.original_currency
-			}
-		});
-
-		logger.info('Subscription created successfully', {
-			subscriptionId: subscription.id,
-			userId,
-			tierName
-		});
-
-		return subscription;
-	} else {
-		logger.info('BTCPay payment settled but not a subscription (no billing_interval)');
-	}
+	return subscription;
 }
 
 async function handleBitcoinInvoiceExpired(_event: WebhookEvent, userId: string) {

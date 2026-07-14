@@ -1,0 +1,16 @@
+Dependencies resolved. Installing packages...
+Install location: /Users/alancolver/.codeql/packages
+Package install location: /Users/alancolver/.codeql/packages
+Installed fresh codeql/concepts@0.0.26 (library)
+Installed fresh codeql/controlflow@2.0.36 (library)
+Installed fresh codeql/dataflow@2.1.8 (library)
+Installed fresh codeql/javascript-all@2.8.0 (library)
+Installed fresh codeql/mad@1.0.52 (library)
+Installed fresh codeql/regex@1.0.52 (library)
+Installed fresh codeql/ssa@2.0.28 (library)
+Installed fresh codeql/threat-models@1.0.52 (library)
+Installed fresh codeql/tutorial@1.0.52 (library)
+Installed fresh codeql/typetracking@2.0.36 (library)
+Installed fresh codeql/util@2.0.39 (library)
+Installed fresh codeql/xml@1.0.52 (library)
+Installed fresh codeql/yaml@1.0.52 (library)

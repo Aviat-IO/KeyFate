@@ -1,0 +1,131 @@
+[
+  {
+    "slice": "authenticated-ciphertext-to-global-decrypt",
+    "source_type": "SvelteKit authenticated JSON body",
+    "sink_kind": "cryptographic-decryption",
+    "reachable": true,
+    "manual_reachable": true,
+    "path_count": 1,
+    "shortest_paths": [
+      [
+        "src/routes/api/decrypt/+server.ts:17",
+        "src/routes/api/decrypt/+server.ts:27",
+        "src/lib/encryption.ts:121"
+      ]
+    ],
+    "evidence": "custom CodeQL slice-global-decrypt-oracle.ql returned 1 row; SvelteKit source itself is not modeled"
+  },
+  {
+    "slice": "url-token-to-plaintext-server-share",
+    "source_type": "URLSearchParams token",
+    "sink_kind": "plaintext recovery-share response",
+    "reachable": false,
+    "manual_reachable": true,
+    "path_count": 0,
+    "shortest_paths": [
+      [
+        "src/routes/api/secrets/[id]/server-share/+server.ts:10",
+        "src/routes/api/secrets/[id]/server-share/+server.ts:25",
+        "src/lib/encryption.ts:121",
+        "src/routes/api/secrets/[id]/server-share/+server.ts:95"
+      ]
+    ],
+    "evidence": "custom URL-token query found the source; CodeQL lacks SvelteKit/Drizzle/response modeling"
+  },
+  {
+    "slice": "session-user-to-gdpr-filesystem",
+    "source_type": "authenticated session user id",
+    "sink_kind": "file-access",
+    "reachable": true,
+    "manual_reachable": true,
+    "path_count": 3,
+    "shortest_paths": [
+      [
+        "src/routes/api/user/export-data/+server.ts",
+        "src/lib/cron/process-exports.ts:67",
+        "src/lib/gdpr/export-service.ts:172"
+      ]
+    ],
+    "evidence": "CodeQL js/path-injection results at export-service.ts:173,180,200; enriched as false positive for traversal because userId is generated/stored identity"
+  },
+  {
+    "slice": "blog-markdown-to-html",
+    "source_type": "source-controlled blog post",
+    "sink_kind": "Svelte @html",
+    "reachable": false,
+    "manual_reachable": true,
+    "path_count": 0,
+    "shortest_paths": [
+      [
+        "src/lib/blog/posts.ts",
+        "src/routes/blog/[slug]/+page.svelte:13",
+        "src/routes/blog/[slug]/+page.svelte:139"
+      ]
+    ],
+    "evidence": "Svelte files are outside CodeQL extraction; source is trusted at HEAD"
+  },
+  {
+    "slice": "relay-event-to-recovery-share",
+    "source_type": "untrusted Nostr relay event",
+    "sink_kind": "accepted recovery share",
+    "reachable": false,
+    "manual_reachable": true,
+    "path_count": 0,
+    "shortest_paths": [
+      [
+        "src/lib/components/recovery/NostrRecoveryStep.svelte:90",
+        "src/lib/crypto/recovery-flows.ts:110",
+        "src/lib/components/recovery/NostrRecoveryStep.svelte:122"
+      ]
+    ],
+    "evidence": "SvelteKit/Nostr boundary not modeled by CodeQL; executed local PoC confirmed invalid seal acceptance"
+  },
+  {
+    "slice": "email-to-otp-lockout",
+    "source_type": "unauthenticated JSON email/code",
+    "sink_kind": "persistent account lockout",
+    "reachable": false,
+    "manual_reachable": true,
+    "path_count": 0,
+    "shortest_paths": [
+      [
+        "src/routes/api/auth/verify-otp/+server.ts:16",
+        "src/lib/auth/otp.ts:183",
+        "src/lib/auth/otp.ts:251"
+      ]
+    ],
+    "evidence": "SvelteKit/Drizzle flow not modeled; manual/cold verification confirmed"
+  },
+  {
+    "slice": "checkout-get-to-provider-side-effect",
+    "source_type": "cross-site top-level GET query",
+    "sink_kind": "Stripe/BTCPay object creation",
+    "reachable": false,
+    "manual_reachable": true,
+    "path_count": 0,
+    "shortest_paths": [
+      [
+        "src/routes/api/create-checkout-session/+server.ts:14",
+        "src/routes/api/create-checkout-session/+server.ts:64",
+        "src/lib/payment/providers/StripeProvider.ts:31"
+      ]
+    ],
+    "evidence": "SvelteKit/provider wrapper not modeled; manual/cold verification confirmed"
+  },
+  {
+    "slice": "cron-claim-to-stranded-triggered-state",
+    "source_type": "scheduler tick / deployment lifecycle",
+    "sink_kind": "permanent disclosure suppression",
+    "reachable": false,
+    "manual_reachable": true,
+    "path_count": 0,
+    "shortest_paths": [
+      [
+        "src/lib/cron/scheduler.ts:109",
+        "src/lib/cron/process-reminders.ts:102",
+        "src/lib/cron/process-reminders.ts:519"
+      ]
+    ],
+    "evidence": "operational control flow, not a remote taint path; no stale triggered recovery found"
+  }
+]

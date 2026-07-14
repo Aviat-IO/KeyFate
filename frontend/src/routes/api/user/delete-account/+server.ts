@@ -4,6 +4,8 @@ import { requireSession } from '$lib/server/auth';
 import { initiateAccountDeletion, getActiveDeletionRequest } from '$lib/gdpr/deletion-service';
 import { getDatabase } from '$lib/db/drizzle';
 import { auditLogs } from '$lib/db/schema';
+import { requireCSRFProtection, createCSRFErrorResponse } from '$lib/csrf';
+import { getClientIdentifier } from '$lib/rate-limit';
 
 /**
  * DELETE /api/user/delete-account
@@ -11,6 +13,8 @@ import { auditLogs } from '$lib/db/schema';
  */
 export const DELETE: RequestHandler = async (event) => {
 	try {
+		const csrf = await requireCSRFProtection(event);
+		if (!csrf.valid) return createCSRFErrorResponse();
 		const session = await requireSession(event);
 		const userId = session.user.id;
 
@@ -33,7 +37,11 @@ export const DELETE: RequestHandler = async (event) => {
 		}
 
 		const { validateOTPToken } = await import('$lib/auth/otp');
-		const otpValidation = await validateOTPToken(userEmail, reauthToken);
+		const otpValidation = await validateOTPToken(
+			userEmail,
+			reauthToken,
+			getClientIdentifier(event.request)
+		);
 		if (!otpValidation.success || !otpValidation.valid) {
 			return json(
 				{

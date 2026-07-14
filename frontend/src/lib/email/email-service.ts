@@ -329,6 +329,10 @@ export async function sendSecretDisclosureEmail(disclosureData: {
 	disclosureReason?: 'scheduled' | 'manual';
 	senderLastSeen?: Date;
 	secretCreatedAt?: Date;
+	nostrManifest?: string;
+	bitcoinRecoveryEnvelope?: string;
+	bitcoinRecoverySenderPubkey?: string;
+	bitcoinRecoveryGeneration?: number;
 }): Promise<EmailResult & { templateUsed?: string }> {
 	logger.info('Preparing disclosure email', {
 		recipient: disclosureData.contactEmail,

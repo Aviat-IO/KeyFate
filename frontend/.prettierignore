@@ -8,3 +8,6 @@ bun.lockb
 .svelte-kit
 build
 dist
+
+# Drizzle-generated migration metadata (do not reformat generated snapshots)
+drizzle/meta

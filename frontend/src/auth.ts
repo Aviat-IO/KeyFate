@@ -10,11 +10,11 @@ import { validateOTPToken } from '$lib/auth/otp';
 import { consumeVerificationToken } from '$lib/auth/email-verification';
 import { recordPrivacyPolicyAcceptance } from '$lib/auth/privacy-policy';
 import { logLogin } from '$lib/services/audit-logger';
+import { getClientIdentifier } from '$lib/rate-limit';
+import { logger } from '$lib/logger';
 
 // Auth.js automatically reads AUTH_SECRET from env.
-// Explicitly wire Google credentials so Railway deployments using
-// GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET work without relying on Auth.js env naming.
-// We use trustHost: true for proxy environments (Cloud Run, etc.).
+// Explicitly wire the canonical Auth.js Google variables used by Railway.
 
 export const { handle, signIn, signOut } = SvelteKitAuth({
 	trustHost: true,
@@ -23,8 +23,8 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 	},
 	providers: [
 		Google({
-			clientId: process.env.GOOGLE_CLIENT_ID,
-			clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+			clientId: process.env.AUTH_GOOGLE_ID,
+			clientSecret: process.env.AUTH_GOOGLE_SECRET,
 			authorization: {
 				params: {
 					prompt: 'consent',
@@ -44,7 +44,7 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 				verificationToken: { label: 'Verification Token', type: 'text' },
 				userId: { label: 'User ID', type: 'text' }
 			},
-			async authorize(credentials) {
+			async authorize(credentials, request) {
 				// Verification token flow (post-email-verification auto-login)
 				if (credentials?.verificationToken && credentials?.userId) {
 					try {
@@ -100,7 +100,11 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 				// OTP authentication flow
 				if (action === 'otp' && credentials.otpCode) {
 					try {
-						const validationResult = await validateOTPToken(email, credentials.otpCode as string);
+						const validationResult = await validateOTPToken(
+							email,
+							credentials.otpCode as string,
+							getClientIdentifier(request)
+						);
 
 						if (!validationResult.success || !validationResult.valid) {
 							return null;
@@ -141,7 +145,7 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 							image: user.image
 						};
 					} catch (error) {
-						console.error('OTP authentication error:', error);
+						logger.error('OTP authentication failed', error instanceof Error ? error : undefined);
 						return null;
 					}
 				}
@@ -374,8 +378,12 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 					session.user.email = token.email;
 				}
 				// Expose emailVerified and isAdmin on session user
-				(session.user as any).emailVerified = (token.emailVerified as Date | null) || null;
-				(session.user as any).isAdmin = token.isAdmin === true;
+				const sessionUser = session.user as typeof session.user & {
+					emailVerified: Date | null;
+					isAdmin: boolean;
+				};
+				sessionUser.emailVerified = (token.emailVerified as Date | null) || null;
+				sessionUser.isAdmin = token.isAdmin === true;
 			}
 			return session;
 		}

@@ -1,0 +1,33 @@
+
+ RUN  v4.1.5 /Users/alancolver/dev/keyfate/frontend
+
+ ❯ src/audit-decrypt-oracle.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/audit-decrypt-oracle.test.ts [ src/audit-decrypt-oracle.test.ts ]
+Error: Failed to resolve import "$lib/encryption" from "src/audit-decrypt-oracle.test.ts". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/alancolver/dev/keyfate/frontend/src/audit-decrypt-oracle.test.ts:8:44
+  4  |  	it("decrypts attacker-supplied ciphertext for any authenticated user without object binding", async () => {
+  5  |  		process.env.ENCRYPTION_KEY = Buffer.from(Array.from({ length: 32 }, (_, i) => i)).toString("base64");
+  6  |  		const { encryptMessage } = await import("$lib/encryption");
+     |                                            ^
+  7  |  		const encrypted = await encryptMessage("captured-victim-server-share");
+  8  |  		const { POST } = await import("./routes/api/decrypt/+server");
+ ❯ TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:30375:39
+ ❯ TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:30372:14
+ ❯ normalizeUrl node_modules/vite/dist/node/chunks/node.js:27654:18
+ ❯ node_modules/vite/dist/node/chunks/node.js:27717:30
+ ❯ TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:27685:4
+ ❯ EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:30164:14
+ ❯ loadAndTransform node_modules/vite/dist/node/chunks/node.js:24512:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  17:52:05
+   Duration  487ms (transform 16ms, setup 41ms, import 0ms, tests 0ms, environment 361ms)
+

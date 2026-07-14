@@ -1,322 +1,134 @@
-# Phase 1.1 Deployment Checklist
+# Railway Deployment Checklist
 
-## Prerequisites
+> **Canonical production procedure.** KeyFate deploys through Railway's linked Git branch. Do not use `railway up`, reset a database, run `drizzle-kit push`, execute a down migration, or restore over the source database.
 
-- [ ] GCP authentication configured (`gcloud auth login`)
-- [ ] Access to keyfate-dev project
-- [ ] Bastion host available for database connection
+See also:
 
-## Staging Deployment
+- [`TODO.md`](TODO.md) for release blockers and human ownership
+- [`docs/plans/railway-deployment-runbook.md`](docs/plans/railway-deployment-runbook.md) for the deployment contract
+- [`docs/database-backup-procedures.md`](docs/database-backup-procedures.md) for isolation-only restore drills
 
-### Step 1: Reset Staging Database
+## 1. Candidate identity
 
-```bash
-cd frontend
-./reset-staging-db.sh
-```
+- [ ] Worktree contains only intended release files.
+- [ ] All generated migration SQL, snapshot JSON, and `drizzle/meta/_journal.json` changes are committed together.
+- [ ] Candidate has an exact Git SHA and a green pull-request CI run for that SHA.
+- [ ] Required checks and production environment approval are enforced in GitHub/Railway.
+- [ ] Rollback target is an identified prior green image/SHA.
 
-**Expected output:**
+## 2. Local and CI gates
 
-```
-🔥 Resetting Staging Database
-==============================
-
-⚠️  This will DROP and RECREATE the database!
-
-Are you sure? Type 'yes' to continue: yes
-
-Connecting to Cloud SQL via gcloud...
-Database doesn't exist or already deleted
-Creating fresh database...
-✅ Database reset complete!
-```
-
-### Step 2: Start Bastion Tunnel
-
-In a **separate terminal**, keep this running:
+Run from `frontend/`:
 
 ```bash
-gcloud compute ssh bastion-host \
-  --zone=us-central1-a \
-  --project=keyfate-dev \
-  --tunnel-through-iap \
-  --ssh-flag='-L' \
-  --ssh-flag='54321:127.0.0.1:5432'
+bun install --frozen-lockfile
+bun run lint
+bun run check
+bun test
+bun run test:browser
+bun run audit:production
+bun run build
 ```
 
-**Keep this terminal open** - the tunnel must stay active for migrations.
-
-### Step 3: Apply Migrations
-
-In your **original terminal**:
+Against an isolated PostgreSQL 16 database:
 
 ```bash
-cd frontend
-npm run db:migrate -- --config=drizzle-staging.config.ts
+TEST_DATABASE_URL='<isolated-postgresql-url>' \
+DATABASE_URL='<isolated-postgresql-url>' \
+bun run test:postgres
+
+DATABASE_URL='<isolated-postgresql-url>' bun run db:migrate:production
+DATABASE_URL='<isolated-postgresql-url>' bunx drizzle-kit check
 ```
 
-**Expected output:**
+- [ ] Migration retry adds no duplicate journal rows.
+- [ ] Docker image runs as UID 1001 and starts only `build/index.js`.
+- [ ] `/api/health/live` returns 200 without dependencies.
+- [ ] `/api/health/ready` returns 503 when required configuration/database access is unavailable.
+- [ ] `/api/health/ready` returns 200 against migrated PostgreSQL over verified TLS.
+- [ ] OCI revision label matches the exact candidate SHA.
 
-```
-Applying migration: 0000_initial_schema_with_rate_limits
-✅ Migration complete
-```
+## 3. Staging configuration
 
-### Step 4: Verify Staging Database
+- [ ] Railway service root is `/frontend`.
+- [ ] Railway builds `frontend/Dockerfile`.
+- [ ] The deployment-level pre-deploy command is exactly `bun run db:migrate:production`.
+- [ ] Application replicas do not run migrations at startup.
+- [ ] `DATABASE_URL` is the staging Railway PostgreSQL connection and satisfies the verified transport policy.
+- [ ] Required application, OAuth, Turnstile, SendGrid, payment, cron, encryption, Nostr, and revision variables pass `/api/health/ready`.
+- [ ] `BITCOIN_ENROLLMENT_ENABLED=false`; do not run the funded Signet gate until the repository's two-phase Bitcoin reconciliation task is closed and the exact staging exercise is explicitly approved.
+- [ ] Secret values are stored only in approved provider/Railway secret stores, never in evidence or this repository.
 
-**Check rate_limits table exists and is UNLOGGED:**
+## 4. Staging evidence gate
+
+Retain evidence for the exact candidate SHA:
+
+- [ ] Railway build identifies the expected source revision and image digest.
+- [ ] One pre-deploy phase reports successful migrations.
+- [ ] A redeploy/retry leaves the migration journal unchanged.
+- [ ] Liveness and readiness are healthy.
+- [ ] Two overlapping replicas show no application-level migration execution.
+- [ ] Credentialed OAuth, Turnstile, SendGrid, Stripe, BTCPay, cron, export, and enforcing-CSP journeys pass.
+- [ ] Live Nostr publish/recover, tamper, retry, and outage cases pass.
+- [ ] After the local two-phase blocker is closed, funded Signet setup, maturity, browser restart/import, accepted-then-timeout retry, exact-output finalization, refresh, recipient recovery, and broadcast pass before Bitcoin enrollment can be enabled.
+- [ ] Backup/PITR capability and retention are verified from the actual Railway plan.
+- [ ] An isolated restore drill passes with measured RPO/RTO.
+- [ ] Alert delivery, rolling interruption, provider-accepted-then-crash, and rollback drills pass.
+
+Use the repository staging suite only after approved staging fixtures are configured:
 
 ```bash
-gcloud sql connect keyfate-postgres-staging \
-  --user=postgres \
-  --project=keyfate-dev
+PLAYWRIGHT_EXTERNAL_BASE_URL='https://staging.keyfate.com' \
+STAGING_CREDENTIALS_READY=true \
+STAGING_E2E_STORAGE_STATE='<approved-storage-state-path>' \
+bun run test:staging
 ```
 
-Then in psql:
+Repository tests do not substitute for funded, credentialed, or provider-side evidence.
 
-```sql
--- Connect to database
-\c keyfate
+## 5. Production promotion
 
--- Verify rate_limits table is UNLOGGED (relpersistence = 'u')
-SELECT relname, relpersistence
-FROM pg_class
-WHERE relname = 'rate_limits';
+- [ ] Named release, security, operations, database, provider, and business owners approved the retained evidence.
+- [ ] No unresolved blocker or high-severity finding remains.
+- [ ] The exact green staging SHA is the production candidate; no rebuild from a different revision is accepted.
+- [ ] Railway linked-branch promotion is approved. Do not use `railway up`.
+- [ ] The pre-deploy migration succeeds once before new replicas serve traffic.
+- [ ] Production liveness/readiness and critical owner/recipient journeys pass.
+- [ ] Deployed revision/digest, migration result, approver, timestamps, and rollback target are recorded.
 
--- Should show:
---   relname     | relpersistence
--- --------------+----------------
---  rate_limits  | u
-
--- Check all tables created
-\dt
-
--- Check indexes
-\di
-
--- Check migration history
-SELECT * FROM drizzle.__drizzle_migrations;
-
--- Exit
-\q
-```
-
-### Step 5: Test Rate Limiting on Staging
-
-**Deploy application to staging:**
+Inspect runtime logs without mutating the deployment:
 
 ```bash
-# Follow your normal staging deployment process
-# e.g., gcloud run deploy, docker deploy, etc.
+railway logs --service dead-mans-switch -e staging
+railway logs --service dead-mans-switch -e production
 ```
 
-**Test multi-instance rate limiting:**
+## 6. Rollback
 
-```bash
-# Make requests that should be rate limited
-for i in {1..10}; do
-  curl -X POST https://staging.keyfate.com/api/some-endpoint
-done
+If a pre-deploy migration fails, stop promotion. Do not start the new image manually.
 
-# Should see 429 responses after limit reached
-```
+For an application regression:
 
-### Step 6: Monitor Staging
+1. Pause promotion and identify the last green image/SHA.
+2. Roll back application code while leaving additive migrations in place.
+3. Verify liveness, readiness, scheduler ownership, disclosure/export leases, and critical journeys.
+4. Record the incident timeline and recovery result.
 
-Check logs for errors:
+Never write an ad hoc down migration. A destructive recovery requires an approved, verified backup restored into an isolated database first.
 
-```bash
-gcloud logging read "resource.type=cloud_run_revision" \
-  --project=keyfate-dev \
-  --limit=50 \
-  --format=json | jq '.[] | select(.severity=="ERROR")'
-```
+## Evidence record
 
-**Let staging run for 24 hours** before production deployment.
-
----
-
-## Production Deployment
-
-⚠️ **Only proceed after staging validation is successful**
-
-### Step 1: Backup Production Database (Optional)
-
-```bash
-gcloud sql backups create \
-  --instance=keyfate-postgres-prod \
-  --project=keyfate-prod
-```
-
-### Step 2: Reset Production Database
-
-**Manual process via Cloud SQL console:**
-
-1. Connect to Cloud SQL instance
-2. Open SQL editor
-3. Run:
-
-```sql
-DROP DATABASE IF EXISTS keyfate_prod;
-CREATE DATABASE keyfate_prod;
-```
-
-### Step 3: Start Production Bastion Tunnel
-
-```bash
-gcloud compute ssh bastion-host-prod \
-  --zone=us-central1-a \
-  --project=keyfate-prod \
-  --tunnel-through-iap \
-  --ssh-flag='-L' \
-  --ssh-flag='54321:127.0.0.1:5432'
-```
-
-### Step 4: Apply Migrations to Production
-
-```bash
-cd frontend
-DATABASE_URL=<prod-connection-string> npm run db:migrate -- --config=drizzle.config.ts
-```
-
-### Step 5: Verify Production Database
-
-Same verification steps as staging (Step 4 above).
-
-### Step 6: Deploy Application to Production
-
-```bash
-# Follow your production deployment process
-```
-
-### Step 7: Monitor Production
-
-**Watch for 30 minutes:**
-
-```bash
-gcloud logging read "resource.type=cloud_run_revision AND severity>=ERROR" \
-  --project=keyfate-prod \
-  --limit=100 \
-  --format=json
-```
-
-**Check metrics:**
-
-- Error rate should be <0.1%
-- Rate limit requests return 429 properly
-- Database queries complete in <5ms (p95)
-
----
-
-## Validation Criteria
-
-### Staging Must Show:
-
-- [ ] Migration applied successfully
-- [ ] rate_limits table exists and is UNLOGGED
-- [ ] All 29 tables created
-- [ ] Application starts without errors
-- [ ] Rate limiting works (429 responses)
-- [ ] No errors in logs for 24 hours
-
-### Production Must Show:
-
-- [ ] All staging validations pass
-- [ ] Migration applied successfully
-- [ ] Application deployed successfully
-- [ ] Rate limiting works across multiple instances
-- [ ] No increase in error rate
-- [ ] Database CPU usage <70%
-- [ ] API latency p95 <100ms
-
----
-
-## Rollback Procedure
-
-### If Issues in Staging:
-
-```bash
-# Revert code changes
-git revert <commit-hash>
-
-# Re-deploy old version
-# Staging data loss is acceptable
-```
-
-### If Issues in Production:
-
-```bash
-# Immediate: Revert application deployment
-# Restore database from backup:
-gcloud sql backups restore <backup-id> \
-  --backup-instance=keyfate-postgres-prod \
-  --project=keyfate-prod
-```
-
----
-
-## Success Metrics
-
-After 24 hours in production:
-
-- [ ] Zero rate limiting errors
-- [ ] Database query time <5ms (p95)
-- [ ] No duplicate requests due to race conditions
-- [ ] Rate limit cleanup job runs successfully
-- [ ] Application uptime >99.9%
-
----
-
-## Next Steps After Validation
-
-Once production is stable for 24 hours:
-
-1. Mark Phase 1.1 tasks complete in `tasks.md`
-2. Continue with Phase 1.2: Distributed Cron Job Locking
-3. Update `PHASE_1_IMPLEMENTATION_SUMMARY.md` with deployment results
-
----
-
-## Troubleshooting
-
-### Migration fails with "table already exists"
-
-```sql
--- Check existing schema
-\dt
--- If tables exist, manually drop database and recreate
-DROP DATABASE keyfate;
-CREATE DATABASE keyfate;
-```
-
-### Bastion tunnel connection refused
-
-```bash
-# Check bastion host is running
-gcloud compute instances list --project=keyfate-dev
-
-# Restart bastion if needed
-gcloud compute instances start bastion-host --zone=us-central1-a
-```
-
-### Rate limiting not working
-
-```sql
--- Check rate_limits table has data
-SELECT COUNT(*) FROM rate_limits;
-
--- Check for errors in application logs
--- Verify database connection pool not exhausted
-```
-
-### High database CPU
-
-```sql
--- Check for missing index
-EXPLAIN ANALYZE SELECT * FROM rate_limits WHERE expires_at < NOW();
--- Should use idx_rate_limits_expires
-
--- Check cleanup job is running
-SELECT COUNT(*) FROM rate_limits;
--- Should be <1000 entries
+```text
+Gate:
+Environment:
+Named owner:
+Date/time (UTC):
+Exact Git SHA:
+Deployed image/revision digest:
+Command or workflow URL:
+Sanitized output/log location:
+Pass/fail result:
+Observed limitations:
+Rollback target:
+Approver:
 ```

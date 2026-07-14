@@ -30,16 +30,20 @@ describe('redirect callers', () => {
 	it('resolveEmailVerificationCallbackUrl prefers query callbackUrl when prop is absent', () => {
 		const searchParams = new URLSearchParams('callbackUrl=/secrets/new');
 
-		expect(resolveEmailVerificationCallbackUrl(undefined, searchParams, 'https://keyfate.com')).toBe(
-			'/secrets/new'
-		);
+		expect(
+			resolveEmailVerificationCallbackUrl(undefined, searchParams, 'https://keyfate.com')
+		).toBe('/secrets/new');
 	});
 
 	it('resolveEmailVerificationCallbackUrl prefers prop callbackUrl over query', () => {
 		const searchParams = new URLSearchParams('callbackUrl=/secrets/new');
 
 		expect(
-			resolveEmailVerificationCallbackUrl('/dashboard?tab=billing', searchParams, 'https://keyfate.com')
+			resolveEmailVerificationCallbackUrl(
+				'/dashboard?tab=billing',
+				searchParams,
+				'https://keyfate.com'
+			)
 		).toBe('/dashboard?tab=billing');
 	});
 });

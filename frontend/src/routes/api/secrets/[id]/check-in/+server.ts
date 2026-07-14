@@ -1,14 +1,22 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { requireCSRFProtection, createCSRFErrorResponse } from '$lib/csrf';
-import { ensureUserExists } from '$lib/auth/user-verification';
-import { getDatabase } from '$lib/db/drizzle';
-import { checkinHistory, secrets } from '$lib/db/schema';
-import { and, eq } from 'drizzle-orm';
-import { mapDrizzleSecretToApiShape } from '$lib/db/secret-mapper';
-import { getSecretWithRecipients } from '$lib/db/queries/secrets';
-import { logCheckIn } from '$lib/services/audit-logger';
-import { scheduleRemindersForSecret } from '$lib/services/reminder-scheduler';
+import { checkInDependencies } from '$lib/server/check-in-dependencies';
+
+const {
+	and,
+	checkinHistory,
+	createCSRFErrorResponse,
+	ensureUserExists,
+	eq,
+	getDatabase,
+	getSecretWithRecipients: getSecretAfterCheckIn,
+	logCheckIn,
+	logger,
+	mapDrizzleSecretToApiShape,
+	requireCSRFProtection,
+	scheduleRemindersForSecret,
+	secrets
+} = checkInDependencies;
 
 export const POST: RequestHandler = async (event) => {
 	try {
@@ -24,16 +32,14 @@ export const POST: RequestHandler = async (event) => {
 			return json({ error: 'Unauthorized' }, { status: 401 });
 		}
 
-		// Ensure user exists in database before creating check-in history
+		// Ensure user exists in database before creating check-in history.
 		try {
-			const userVerification = await ensureUserExists(session as any);
-			console.log('[Check-in API] User verification result:', {
-				exists: userVerification.exists,
-				created: userVerification.created,
-				userId: session.user.id
-			});
+			await ensureUserExists(session);
 		} catch (userError) {
-			console.error('[Check-in API] User verification failed:', userError);
+			logger.error(
+				'Check-in user verification failed',
+				userError instanceof Error ? userError : undefined
+			);
 			return json({ error: 'Failed to verify user account' }, { status: 500 });
 		}
 
@@ -50,26 +56,36 @@ export const POST: RequestHandler = async (event) => {
 				.where(and(eq(secrets.id, id), eq(secrets.userId, userId)))
 				.for('update');
 
-			if (!secret) {
-				return null;
-			}
+			if (!secret) return { kind: 'not_found' as const };
 
 			const now = new Date();
+			if (secret.triggeredAt || secret.status === 'triggered') {
+				return { kind: 'already_disclosed' as const };
+			}
+			const hasLiveDisclosureLease =
+				Boolean(secret.processingLeaseId) &&
+				(!secret.processingLeaseExpiresAt || secret.processingLeaseExpiresAt > now);
+			if (hasLiveDisclosureLease) return { kind: 'disclosure_in_progress' as const };
+			if (secret.bitcoinDeliveryStatus === 'ready') {
+				return { kind: 'bitcoin_refresh_required' as const };
+			}
+
 			const nextCheckIn = new Date(now.getTime() + secret.checkInDays * 24 * 60 * 60 * 1000);
 
 			// Build update payload — reset failure fields if recovering from failed status
 			const updatePayload: Record<string, unknown> = {
 				lastCheckIn: now,
 				nextCheckIn,
+				status: secret.status === 'paused' ? 'paused' : 'active',
+				processingStartedAt: null,
+				processingLeaseId: null,
+				processingLeaseExpiresAt: null,
+				triggeredAt: null,
+				retryCount: 0,
+				lastRetryAt: null,
+				lastError: null,
 				updatedAt: now
 			};
-
-			if (secret.status === 'failed') {
-				updatePayload.status = 'active';
-				updatePayload.retryCount = 0;
-				updatePayload.lastRetryAt = null;
-				updatePayload.lastError = null;
-			}
 
 			// Update the secret with new check-in times
 			const [updatedSecret] = await tx
@@ -86,28 +102,53 @@ export const POST: RequestHandler = async (event) => {
 				nextCheckIn: nextCheckIn
 			});
 
-			return { secret: updatedSecret, nextCheckIn, checkInDays: secret.checkInDays };
+			return {
+				kind: 'success' as const,
+				secret: updatedSecret,
+				nextCheckIn,
+				checkInDays: secret.checkInDays
+			};
 		});
 
-		if (!result) {
+		if (result.kind === 'not_found') {
 			return json({ error: 'Secret not found' }, { status: 404 });
 		}
+		if (result.kind === 'already_disclosed') {
+			return json({ error: 'Secret disclosure is already complete' }, { status: 409 });
+		}
+		if (result.kind === 'disclosure_in_progress') {
+			return json({ error: 'Secret disclosure is already in progress' }, { status: 409 });
+		}
+		if (result.kind === 'bitcoin_refresh_required') {
+			return json(
+				{ error: 'Refresh the Bitcoin continuity generation to complete this check-in' },
+				{ status: 409 }
+			);
+		}
 
-		// Non-critical side effects outside the transaction
-		await logCheckIn(
-			session.user.id,
-			id,
-			{
-				nextCheckIn: result.nextCheckIn.toISOString(),
-				checkInDays: result.checkInDays
-			},
-			event
-		);
+		const warnings: string[] = [];
+		try {
+			await logCheckIn(
+				session.user.id,
+				id,
+				{
+					nextCheckIn: result.nextCheckIn.toISOString(),
+					checkInDays: result.checkInDays
+				},
+				event
+			);
+		} catch {
+			warnings.push('audit_reconciliation_required');
+		}
 
-		await scheduleRemindersForSecret(id, result.nextCheckIn, result.checkInDays);
+		try {
+			await scheduleRemindersForSecret(id, result.nextCheckIn, result.checkInDays);
+		} catch {
+			warnings.push('reminder_reconciliation_required');
+		}
 
 		// Get the updated secret with recipients
-		const updatedSecretWithRecipients = await getSecretWithRecipients(id, session.user.id);
+		const updatedSecretWithRecipients = await getSecretAfterCheckIn(id, session.user.id);
 		if (!updatedSecretWithRecipients) {
 			return json({ error: 'Secret not found after update' }, { status: 404 });
 		}
@@ -116,10 +157,11 @@ export const POST: RequestHandler = async (event) => {
 		return json({
 			success: true,
 			secret: mapped,
-			next_check_in: mapped.next_check_in
+			next_check_in: mapped.next_check_in,
+			...(warnings.length > 0 ? { warnings } : {})
 		});
 	} catch (error) {
-		console.error('Error in POST /api/secrets/[id]/check-in:', error);
+		logger.error('Check-in request failed', error instanceof Error ? error : undefined);
 		return json({ error: 'Internal server error' }, { status: 500 });
 	}
 };

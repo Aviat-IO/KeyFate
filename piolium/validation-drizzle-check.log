@@ -1,0 +1,6 @@
+No config path provided, using default 'drizzle.config.ts'
+Reading config file '/Users/alancolver/dev/keyfate/frontend/drizzle.config.ts'
+☁️  Running in Cloud Run, using environment variables from Secret Manager
+✅ DATABASE_URL is configured for migrations
+Drizzle config created with URL length: 43
+Everything's fine 🐶🔥

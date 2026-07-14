@@ -12,6 +12,13 @@ on:
       - "frontend/**"
       - ".github/workflows/ci.yml"
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 defaults:
   run:
     working-directory: frontend
@@ -19,63 +26,261 @@ defaults:
 jobs:
   lint-typecheck:
     name: Lint & Type Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
-          bun-version: latest
-
-      - name: Install dependencies
+          bun-version: 1.3.14
+      - name: Install frozen dependencies
         run: bun install --frozen-lockfile
-
-      - name: Lint
+      - name: Lint and format check
         run: bun run lint
-
-      - name: Type check
+      - name: Svelte and TypeScript check
         run: bun run check
 
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
-          bun-version: latest
-
-      - name: Install dependencies
+          bun-version: 1.3.14
+      - name: Install frozen dependencies
         run: bun install --frozen-lockfile
-
       - name: Run tests
         run: bun run test
 
+  dependency-audit:
+    name: Production Dependency Audit
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.3.14
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile
+      - name: Reject runtime dependency advisories
+        run: bun run audit:production
+
+  migration:
+    name: Migration Smoke
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16.9-alpine3.22
+        env:
+          POSTGRES_USER: keyfate
+          POSTGRES_PASSWORD: keyfate
+          POSTGRES_DB: keyfate
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U keyfate -d keyfate"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://keyfate:keyfate@127.0.0.1:5432/keyfate
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.3.14
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile
+      - name: Validate generated migration metadata
+        run: bunx drizzle-kit check
+      - name: Run overlapping generated migrations and verify journal idempotency
+        run: |
+          bun run db:migrate:production > /tmp/keyfate-migrate-1.log 2>&1 & first_pid=$!
+          bun run db:migrate:production > /tmp/keyfate-migrate-2.log 2>&1 & second_pid=$!
+          first_status=0
+          second_status=0
+          wait "$first_pid" || first_status=$?
+          wait "$second_pid" || second_status=$?
+          if [ "$first_status" -ne 0 ] || [ "$second_status" -ne 0 ]; then
+            cat /tmp/keyfate-migrate-1.log /tmp/keyfate-migrate-2.log
+            exit 1
+          fi
+          expected="$(bun -e "console.log(JSON.parse(await Bun.file('drizzle/meta/_journal.json').text()).entries.length)")"
+          actual="$(psql "$DATABASE_URL" -Atc 'SELECT count(*) FROM drizzle.__drizzle_migrations')"
+          test "$actual" = "$expected"
+      - name: Run PostgreSQL concurrency, fencing, and upgrade tests
+        env:
+          TEST_DATABASE_URL: ${{ env.DATABASE_URL }}
+        run: bun run test:postgres
+
   build:
     name: Build
-    runs-on: ubuntu-latest
-    needs: [lint-typecheck, test]
+    runs-on: ubuntu-24.04
+    needs: [lint-typecheck, test, dependency-audit, migration]
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
-          bun-version: latest
-
-      - name: Install dependencies
+          bun-version: 1.3.14
+      - name: Install frozen dependencies
         run: bun install --frozen-lockfile
-
-      - name: Build
+      - name: Build production server
         run: bun run build
 
-  docker:
-    name: Docker Build
-    runs-on: ubuntu-latest
+  browser:
+    name: Browser Security Smoke
+    runs-on: ubuntu-24.04
     needs: [build]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.3.14
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile
+      - name: Install pinned Chromium runtime
+        run: bunx playwright install --with-deps chromium
+      - name: Run non-credentialed CSP and probe journeys
+        run: bun run test:browser
 
-      - name: Build Docker image
-        run: docker build -t keyfate:test .
-        working-directory: frontend
+  docker:
+    name: Docker & Runtime Smoke
+    runs-on: ubuntu-24.04
+    needs: [build, browser]
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Build pinned production image
+        run: >-
+          docker build
+          --build-arg RAILWAY_GIT_COMMIT_SHA=${{ github.sha }}
+          -t keyfate:test .
+      - name: Verify non-root app-only runtime and pruned dependencies
+        run: |
+          test "$(docker run --rm --entrypoint id keyfate:test -u)" = "1001"
+          test "$(docker image inspect keyfate:test --format '{{json .Config.Cmd}}')" = '["bun","run","build/index.js"]'
+          test "$(docker image inspect keyfate:test --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}')" = "${{ github.sha }}"
+          docker run --rm --entrypoint sh keyfate:test -c '
+            set -eu
+            for package in vite @sveltejs/vite-plugin-svelte @sveltejs/adapter-node typescript eslint prettier drizzle-kit vitest esbuild yaml; do
+              test ! -e "node_modules/$package"
+            done
+            for package in @sveltejs/kit svelte drizzle-orm postgres; do
+              test -e "node_modules/$package"
+            done
+          '
+      - name: Start runtime without migrations
+        run: >-
+          docker run -d --name keyfate-smoke -p 3000:3000
+          -e NODE_ENV=test
+          -e PORT=3000
+          -e CRON_ENABLED=false
+          -e AUTH_SECRET=test-auth-secret-at-least-32-characters
+          -e AUTH_TRUST_HOST=true
+          -e ORIGIN=http://127.0.0.1:3000
+          -e ENCRYPTION_KEY=YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE=
+          -e SENDGRID_API_KEY=SG.test
+          keyfate:test
+      - name: Verify process liveness
+        run: |
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3000/api/health/live; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs keyfate-smoke
+          exit 1
+      - name: Verify readiness fails closed without PostgreSQL
+        run: test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:3000/api/health/ready)" = "503"
+      - name: Stop fail-closed runtime
+        run: docker rm -f keyfate-smoke
+      - name: Create TLS PostgreSQL test network
+        run: |
+          mkdir -p .ci-tls
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 \
+            -subj '/CN=KeyFate CI CA' \
+            -keyout .ci-tls/ca.key -out .ci-tls/ca.crt
+          openssl req -newkey rsa:2048 -nodes \
+            -subj '/CN=postgres' \
+            -addext 'subjectAltName=DNS:postgres' \
+            -keyout .ci-tls/server.key -out .ci-tls/server.csr
+          openssl x509 -req -days 1 \
+            -in .ci-tls/server.csr \
+            -CA .ci-tls/ca.crt -CAkey .ci-tls/ca.key -CAcreateserial \
+            -copy_extensions copy -out .ci-tls/server.crt
+          postgres_uid="$(docker run --rm postgres:16.9-alpine3.22 id -u postgres)"
+          chmod 600 .ci-tls/server.key
+          sudo chown "$postgres_uid:$postgres_uid" .ci-tls/server.key .ci-tls/server.crt .ci-tls/ca.crt
+          docker network create keyfate-ci
+          docker run -d --name postgres --network keyfate-ci \
+            -e POSTGRES_USER=keyfate \
+            -e POSTGRES_PASSWORD=keyfate \
+            -e POSTGRES_DB=keyfate \
+            -v "$PWD/.ci-tls:/certs:ro" \
+            postgres:16.9-alpine3.22 \
+            -c ssl=on \
+            -c ssl_cert_file=/certs/server.crt \
+            -c ssl_key_file=/certs/server.key \
+            -c ssl_ca_file=/certs/ca.crt
+          for attempt in {1..30}; do
+            if docker exec postgres pg_isready -U keyfate -d keyfate; then exit 0; fi
+            sleep 1
+          done
+          docker logs postgres
+          exit 1
+      - name: Migrate and start production image with verified PostgreSQL TLS
+        run: |
+          database_url='postgresql://keyfate:keyfate@postgres:5432/keyfate?sslmode=verify-full'
+          common_env=(
+            -e NODE_ENV=production
+            -e DATABASE_URL="$database_url"
+            -e NODE_EXTRA_CA_CERTS=/certs/ca.crt
+            -e ORIGIN=https://keyfate.test
+            -e PUBLIC_SITE_URL=https://keyfate.test
+            -e AUTH_SECRET=test-auth-secret-at-least-32-characters
+            -e AUTH_GOOGLE_ID=test.apps.googleusercontent.com
+            -e AUTH_GOOGLE_SECRET=test-google-secret-at-least-24-characters
+            -e EMAIL_PROVIDER=sendgrid
+            -e SENDGRID_API_KEY=SG.test
+            -e SENDGRID_SENDER_EMAIL=noreply@keyfate.test
+            -e TURNSTILE_SECRET_KEY=test-turnstile-secret
+            -e PUBLIC_TURNSTILE_SITE_KEY=test-turnstile-site
+            -e CRON_ENABLED=true
+            -e CRON_SECRET=test-cron-secret-at-least-32-characters
+            -e ENCRYPTION_KEY=YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE=
+            -e ENCRYPTION_KEY_VERSION=1
+            -e OTP_PEPPER=test-otp-pepper-at-least-32-characters
+            -e ACCOUNT_DELETION_PEPPER=test-deletion-pepper-at-least-32-chars
+            -e PAYMENT_PROVIDERS=stripe
+            -e STRIPE_SECRET_KEY=sk_test_ci
+            -e STRIPE_WEBHOOK_SECRET=whsec_ci
+            -e STRIPE_PRICE_ID_PRO_MONTHLY=price_monthly
+            -e STRIPE_PRICE_ID_PRO_YEARLY=price_yearly
+            -e PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_ci
+            -e BITCOIN_ENROLLMENT_ENABLED=false
+            -e BITCOIN_NETWORK=signet
+            -e NOSTR_PUBLISHING_ENABLED=true
+            -e NOSTR_RELAY_ALLOWLIST=wss://relay-1.test,wss://relay-2.test,wss://relay-3.test
+            -e APP_REVISION=${{ github.sha }}
+            -v "$PWD/.ci-tls:/certs:ro"
+          )
+          docker run --rm --network keyfate-ci "${common_env[@]}" \
+            keyfate:test bun run db:migrate:production
+          docker run -d --name keyfate-ready --network keyfate-ci -p 3000:3000 \
+            "${common_env[@]}" -e PORT=3000 keyfate:test
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3000/api/health/ready; then exit 0; fi
+            sleep 1
+          done
+          docker logs keyfate-ready
+          exit 1
+      - name: Verify application connection uses TLS
+        run: |
+          ssl_count="$(docker exec postgres psql -U keyfate -d keyfate -Atc \
+            "SELECT count(*) FROM pg_stat_activity a JOIN pg_stat_ssl s USING (pid) WHERE a.application_name = 'keyfate-app' AND s.ssl")"
+          test "$ssl_count" -ge 1
+      - name: Stop runtime and database
+        if: always()
+        run: |
+          docker rm -f keyfate-smoke keyfate-ready postgres 2>/dev/null || true
+          docker network rm keyfate-ci 2>/dev/null || true

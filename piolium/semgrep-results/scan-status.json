@@ -1,0 +1,62 @@
+[
+  {
+    "name": "security-audit",
+    "config": "p/security-audit",
+    "exit": 0,
+    "log_tail": "   \u25e6 Files matching .semgrepignore patterns: 3\n \u2022 Scan was limited to files tracked by git\n \u2022 For a detailed list of skipped files and lines, run semgrep with the --verbose flag\nRan 31 rules on 871 files: 0 findings.\n(need more rules? `semgrep login` for additional free Semgrep Registry rules)\n\nIf Semgrep missed a finding, please send us feedback to let us know!\nSee https://semgrep.dev/docs/reporting-false-negatives/"
+  },
+  {
+    "name": "secrets",
+    "config": "p/secrets",
+    "exit": 0,
+    "log_tail": " \u2022 Targets scanned: 871\n \u2022 Parsed lines: ~100.0%\n \u2022 Scan skipped: \n   \u25e6 Matching --exclude patterns: 2687\n   \u25e6 Files matching .semgrepignore patterns: 3\n \u2022 Scan was limited to files tracked by git\n \u2022 For a detailed list of skipped files and lines, run semgrep with the --verbose flag\nRan 42 rules on 871 files: 1 finding."
+  },
+  {
+    "name": "typescript",
+    "config": "p/typescript",
+    "exit": 0,
+    "log_tail": " \u2022 Targets scanned: 304\n \u2022 Parsed lines: ~100.0%\n \u2022 Scan skipped: \n   \u25e6 Matching --exclude patterns: 2687\n   \u25e6 Files matching .semgrepignore patterns: 3\n \u2022 Scan was limited to files tracked by git\n \u2022 For a detailed list of skipped files and lines, run semgrep with the --verbose flag\nRan 74 rules on 304 files: 1 finding."
+  },
+  {
+    "name": "javascript",
+    "config": "p/javascript",
+    "exit": 0,
+    "log_tail": " \u2022 Targets scanned: 304\n \u2022 Parsed lines: ~100.0%\n \u2022 Scan skipped: \n   \u25e6 Matching --exclude patterns: 2687\n   \u25e6 Files matching .semgrepignore patterns: 3\n \u2022 Scan was limited to files tracked by git\n \u2022 For a detailed list of skipped files and lines, run semgrep with the --verbose flag\nRan 74 rules on 304 files: 1 finding."
+  },
+  {
+    "name": "nodejs",
+    "config": "p/nodejs",
+    "exit": 0,
+    "log_tail": "   \u25e6 Files matching .semgrepignore patterns: 3\n \u2022 Scan was limited to files tracked by git\n \u2022 For a detailed list of skipped files and lines, run semgrep with the --verbose flag\nRan 36 rules on 304 files: 0 findings.\n(need more rules? `semgrep login` for additional free Semgrep Registry rules)\n\nIf Semgrep missed a finding, please send us feedback to let us know!\nSee https://semgrep.dev/docs/reporting-false-negatives/"
+  },
+  {
+    "name": "dockerfile",
+    "config": "p/dockerfile",
+    "exit": 0,
+    "log_tail": "   \u25e6 Files matching .semgrepignore patterns: 3\n \u2022 Scan was limited to files tracked by git\n \u2022 For a detailed list of skipped files and lines, run semgrep with the --verbose flag\nRan 7 rules on 4 files: 0 findings.\n(need more rules? `semgrep login` for additional free Semgrep Registry rules)\n\nIf Semgrep missed a finding, please send us feedback to let us know!\nSee https://semgrep.dev/docs/reporting-false-negatives/"
+  },
+  {
+    "name": "github-actions",
+    "config": "p/github-actions",
+    "exit": 0,
+    "log_tail": "   \u25e6 Files matching .semgrepignore patterns: 3\n \u2022 Scan was limited to files tracked by git\n \u2022 For a detailed list of skipped files and lines, run semgrep with the --verbose flag\nRan 5 rules on 3 files: 0 findings.\n(need more rules? `semgrep login` for additional free Semgrep Registry rules)\n\nIf Semgrep missed a finding, please send us feedback to let us know!\nSee https://semgrep.dev/docs/reporting-false-negatives/"
+  },
+  {
+    "name": "yaml",
+    "config": "p/yaml",
+    "exit": 7,
+    "log_tail": "[ERROR] Failed to download configuration from https://semgrep.dev/c/p/yaml HTTP 404.\n[ERROR] invalid configuration file found (1 configs were invalid)"
+  },
+  {
+    "name": "trailofbits",
+    "config": "/Users/alancolver/dev/keyfate/piolium/semgrep-results/repos/trailofbits-semgrep-rules",
+    "exit": 7,
+    "log_tail": "2 | on:\n3 |   pull_request:\n  |                ^\n4 |   push:\n\nIn semgrep YAML configuration, null values are prohibited\n\n[ERROR] invalid configuration file found (1 configs were invalid)"
+  },
+  {
+    "name": "keyfate-custom",
+    "config": "/Users/alancolver/dev/keyfate/piolium/semgrep-rules/keyfate-security.yml",
+    "exit": 7,
+    "log_tail": "[ERROR] Invalid YAML file /Users/alancolver/dev/keyfate/piolium/semgrep-rules/keyfate-security.yml:\n\tmapping values are not allowed here\n\t  in \"<file>\", line 12, column 43\n[ERROR] invalid configuration file found (1 configs were invalid)"
+  }
+]

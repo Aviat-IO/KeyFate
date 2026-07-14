@@ -21,10 +21,14 @@ function getEnvVar(name: string, required: boolean = true): string {
 	return value || '';
 }
 
-const SITE_URL = getEnvVar('PUBLIC_SITE_URL', false) || getEnvVar('NEXT_PUBLIC_SITE_URL', false);
+const SITE_URL =
+	getEnvVar('ORIGIN', false) ||
+	getEnvVar('PUBLIC_SITE_URL', false) ||
+	getEnvVar('NEXT_PUBLIC_SITE_URL', false);
 const AUTH_SECRET = getEnvVar('AUTH_SECRET', false) || getEnvVar('NEXTAUTH_SECRET', false);
-const GOOGLE_CLIENT_ID = getEnvVar('GOOGLE_CLIENT_ID', false);
-const GOOGLE_CLIENT_SECRET = getEnvVar('GOOGLE_CLIENT_SECRET', false);
+const AUTH_GOOGLE_ID = getEnvVar('AUTH_GOOGLE_ID', false) || getEnvVar('GOOGLE_CLIENT_ID', false);
+const AUTH_GOOGLE_SECRET =
+	getEnvVar('AUTH_GOOGLE_SECRET', false) || getEnvVar('GOOGLE_CLIENT_SECRET', false);
 const SUPPORT_EMAIL =
 	getEnvVar('PUBLIC_SUPPORT_EMAIL', false) ||
 	getEnvVar('NEXT_PUBLIC_SUPPORT_EMAIL', false) ||
@@ -54,8 +58,8 @@ export {
 	// New canonical names
 	AUTH_SECRET,
 	COMPANY,
-	GOOGLE_CLIENT_ID,
-	GOOGLE_CLIENT_SECRET,
+	AUTH_GOOGLE_ID,
+	AUTH_GOOGLE_SECRET,
 	PARENT_COMPANY,
 	SITE_URL,
 	STRIPE_PUBLISHABLE_KEY,

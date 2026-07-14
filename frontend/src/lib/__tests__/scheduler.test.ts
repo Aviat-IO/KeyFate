@@ -39,8 +39,18 @@ describe('Cron Scheduler', () => {
 		consoleSpy.mockRestore();
 	});
 
-	it('should register all 8 cron jobs when enabled', async () => {
+	it('should remain disabled when CRON_ENABLED is unset', async () => {
 		delete process.env.CRON_ENABLED;
+
+		const cron = await import('node-cron');
+		const { startScheduler } = await import('$lib/cron/scheduler');
+		startScheduler();
+
+		expect(cron.default.schedule).not.toHaveBeenCalled();
+	});
+
+	it('should register all 8 cron jobs only when explicitly enabled', async () => {
+		process.env.CRON_ENABLED = 'true';
 
 		const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
@@ -61,13 +71,13 @@ describe('Cron Scheduler', () => {
 	});
 
 	it('should stop all tasks when stopScheduler is called', async () => {
-		delete process.env.CRON_ENABLED;
+		process.env.CRON_ENABLED = 'true';
 
 		const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
 		const { startScheduler, stopScheduler } = await import('$lib/cron/scheduler');
 		startScheduler();
-		stopScheduler();
+		await stopScheduler();
 
 		expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('stopped'));
 

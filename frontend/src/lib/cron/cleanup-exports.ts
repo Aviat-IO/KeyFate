@@ -51,11 +51,13 @@ export async function runCleanupExports(): Promise<CleanupExportsResult> {
 
 	for (const job of expiredJobs) {
 		try {
-			if (job.fileUrl) {
+			if (job.fileUrl && !job.artifactData) {
 				await deleteExportFile(job.fileUrl);
-				logger.info('Deleted export file', { jobId: job.id });
+				logger.info('Deleted legacy export file', { jobId: job.id });
 			}
 
+			// New artifacts are stored in this row, so deleting the row is the
+			// durable cross-replica cleanup operation.
 			await db.delete(dataExportJobs).where(eq(dataExportJobs.id, job.id));
 
 			deletedCount++;

@@ -26,7 +26,13 @@ import {
 	bytesToHex
 } from '$lib/crypto/recovery-flows';
 import { generateKeypair } from '$lib/nostr/keypair';
-import { wrapShareForRecipient, type SharePayload } from '$lib/nostr/gift-wrap';
+import { wrapCapsuleForRecipient, wrapShareForRecipient } from '$lib/nostr/gift-wrap';
+import {
+	createRecoveryCapsule,
+	createRecoveryManifest,
+	RECOVERY_CAPSULE_VERSION
+} from '$lib/nostr/recovery-capsule';
+import { doubleEncryptShare } from '$lib/crypto/double-encrypt';
 import { generateSymmetricKey, encryptWithSymmetricKey } from '$lib/crypto/symmetric';
 import { deriveKeyFromPassphrase, encryptWithDerivedKey } from '$lib/crypto/passphrase';
 import * as nip19 from 'nostr-tools/nip19';
@@ -85,96 +91,102 @@ describe('nsecToSecretKey', () => {
 
 // ─── Gift wrap unwrapping ────────────────────────────────────────────────────
 
-describe('unwrapGiftWrap', () => {
-	it('unwraps a gift-wrapped share event', () => {
-		const sender = generateKeypair();
-		const recipient = generateKeypair();
+const SECRET_ID = '11111111-1111-4111-8111-111111111111';
+const RECIPIENT_ID = '22222222-2222-4222-8222-222222222222';
 
-		const payload: SharePayload = {
-			share: 'encrypted-share-data-hex',
-			secretId: 'secret-uuid-123',
+async function createV2RecoveryChain(share = '801122334455') {
+	const sender = generateKeypair();
+	const recipient = generateKeypair();
+	const encrypted = await doubleEncryptShare(share, recipient.publicKey, sender.secretKey);
+	const capsule = createRecoveryCapsule(
+		{
+			version: RECOVERY_CAPSULE_VERSION,
+			secretId: SECRET_ID,
+			recipientId: RECIPIENT_ID,
+			recipientNostrPubkey: recipient.publicKey,
 			shareIndex: 1,
 			threshold: 2,
 			totalShares: 3,
-			version: 1
-		};
+			encryptedShareHex: bytesToHex(encrypted.encryptedShare),
+			nonceHex: bytesToHex(encrypted.nonce),
+			encryptedKNostr: encrypted.encryptedKNostr
+		},
+		sender.secretKey
+	);
+	const giftWrap = wrapCapsuleForRecipient(capsule, sender.secretKey, recipient.publicKey);
+	const manifest = createRecoveryManifest(
+		{
+			version: RECOVERY_CAPSULE_VERSION,
+			secretId: SECRET_ID,
+			recipientId: RECIPIENT_ID,
+			recipientNostrPubkey: recipient.publicKey,
+			publisherPubkey: sender.publicKey,
+			giftWrapEventId: giftWrap.id,
+			capsuleEventId: capsule.id
+		},
+		sender.secretKey
+	);
+	return { sender, recipient, capsule, giftWrap, manifest, share };
+}
 
-		const giftWrap = wrapShareForRecipient(payload, sender.secretKey, recipient.publicKey);
+describe('unwrapGiftWrap v2 verification', () => {
+	it('verifies the complete chain, recovers K, and decrypts the share', async () => {
+		const chain = await createV2RecoveryChain();
+		const result = unwrapGiftWrap(chain.giftWrap, chain.recipient.secretKey, chain.manifest);
 
-		const result = unwrapGiftWrap(giftWrap, recipient.secretKey);
-
-		expect(result.share).toBe(payload.share);
-		expect(result.secretId).toBe(payload.secretId);
-		expect(result.shareIndex).toBe(payload.shareIndex);
-		expect(result.threshold).toBe(payload.threshold);
-		expect(result.totalShares).toBe(payload.totalShares);
-		expect(result.version).toBe(payload.version);
+		expect(result).toEqual({
+			share: chain.share,
+			secretId: SECRET_ID,
+			shareIndex: 1,
+			threshold: 2,
+			totalShares: 3,
+			version: 2
+		});
 	});
 
-	it('fails with wrong recipient key', () => {
-		const sender = generateKeypair();
-		const recipient = generateKeypair();
+	it('rejects a wrong recipient before accepting the capsule', async () => {
+		const chain = await createV2RecoveryChain();
 		const wrongRecipient = generateKeypair();
+		expect(() => unwrapGiftWrap(chain.giftWrap, wrongRecipient.secretKey, chain.manifest)).toThrow(
+			'does not belong to this recipient'
+		);
+	});
 
-		const giftWrap = wrapShareForRecipient(
+	it('rejects a modified outer event signature', async () => {
+		const chain = await createV2RecoveryChain();
+		const modified = { ...chain.giftWrap, content: `${chain.giftWrap.content}x` };
+		expect(() => unwrapGiftWrap(modified, chain.recipient.secretKey, chain.manifest)).toThrow(
+			'Invalid gift wrap signature'
+		);
+	});
+
+	it('rejects a valid legacy v1 event rather than interpreting it as v2', async () => {
+		const chain = await createV2RecoveryChain();
+		const legacy = wrapShareForRecipient(
 			{
-				share: 'data',
-				secretId: 's1',
+				share: 'aabb',
+				secretId: SECRET_ID,
 				shareIndex: 1,
 				threshold: 2,
 				totalShares: 3,
 				version: 1
 			},
-			sender.secretKey,
-			recipient.publicKey
+			chain.sender.secretKey,
+			chain.recipient.publicKey
 		);
-
-		expect(() => unwrapGiftWrap(giftWrap, wrongRecipient.secretKey)).toThrow();
-	});
-
-	it('rejects non-1059 events', () => {
-		const fakeEvent = {
-			kind: 1,
-			content: 'not a gift wrap',
-			created_at: Math.floor(Date.now() / 1000),
-			tags: [],
-			pubkey: 'a'.repeat(64),
-			id: 'b'.repeat(64),
-			sig: 'c'.repeat(128)
-		};
-
-		const kp = generateKeypair();
-		expect(() => unwrapGiftWrap(fakeEvent as any, kp.secretKey)).toThrow('Expected kind 1059');
-	});
-
-	it('unwraps multiple different shares from same sender', () => {
-		const sender = generateKeypair();
-		const recipient = generateKeypair();
-
-		const shares = [1, 2, 3].map((i) =>
-			wrapShareForRecipient(
-				{
-					share: `share-${i}`,
-					secretId: 'secret-1',
-					shareIndex: i,
-					threshold: 2,
-					totalShares: 3,
-					version: 1
-				},
-				sender.secretKey,
-				recipient.publicKey
-			)
+		const legacyManifest = createRecoveryManifest(
+			{
+				version: RECOVERY_CAPSULE_VERSION,
+				secretId: SECRET_ID,
+				recipientId: RECIPIENT_ID,
+				recipientNostrPubkey: chain.recipient.publicKey,
+				publisherPubkey: chain.sender.publicKey,
+				giftWrapEventId: legacy.id,
+				capsuleEventId: chain.capsule.id
+			},
+			chain.sender.secretKey
 		);
-
-		const results = shares.map((gw) => unwrapGiftWrap(gw, recipient.secretKey));
-
-		expect(results).toHaveLength(3);
-		expect(results[0].shareIndex).toBe(1);
-		expect(results[1].shareIndex).toBe(2);
-		expect(results[2].shareIndex).toBe(3);
-		expect(results[0].share).toBe('share-1');
-		expect(results[1].share).toBe('share-2');
-		expect(results[2].share).toBe('share-3');
+		expect(() => unwrapGiftWrap(legacy, chain.recipient.secretKey, legacyManifest)).toThrow();
 	});
 });
 
@@ -495,36 +507,11 @@ describe('hex utilities', () => {
 // ─── End-to-end integration ──────────────────────────────────────────────────
 
 describe('end-to-end recovery flow', () => {
-	it('Nostr: wrap → unwrap → decrypt share', () => {
-		const sender = generateKeypair();
-		const recipient = generateKeypair();
-
-		// Encrypt a share with a symmetric key
-		const K = generateSymmetricKey();
-		const shareText = 'shamir-share-hex-data-12345';
-		const shareBytes = new TextEncoder().encode(shareText);
-		const { ciphertext, nonce } = encryptWithSymmetricKey(shareBytes, K);
-
-		// Wrap the encrypted share reference in a gift wrap
-		const payload: SharePayload = {
-			share: bytesToHex(ciphertext),
-			secretId: 'secret-uuid',
-			shareIndex: 1,
-			threshold: 2,
-			totalShares: 3,
-			version: 1
-		};
-
-		const giftWrap = wrapShareForRecipient(payload, sender.secretKey, recipient.publicKey);
-
-		// Recipient unwraps
-		const unwrapped = unwrapGiftWrap(giftWrap, recipient.secretKey);
-		expect(unwrapped.share).toBe(bytesToHex(ciphertext));
-		expect(unwrapped.secretId).toBe('secret-uuid');
-
-		// Decrypt the share with K
-		const decrypted = decryptShareWithK(unwrapped.share, bytesToHex(nonce), K);
-		expect(decrypted).toBe(shareText);
+	it('Nostr: owner publish artifact → recipient verified plaintext share', async () => {
+		const chain = await createV2RecoveryChain('80deadbeef');
+		const recovered = unwrapGiftWrap(chain.giftWrap, chain.recipient.secretKey, chain.manifest);
+		expect(recovered.share).toBe('80deadbeef');
+		expect(recovered.secretId).toBe(SECRET_ID);
 	});
 
 	it('Passphrase: encrypt K → bundle → recover K → decrypt share', async () => {

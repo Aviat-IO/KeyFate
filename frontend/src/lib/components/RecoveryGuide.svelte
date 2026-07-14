@@ -61,7 +61,7 @@
 							<span class="flex items-center gap-2">
 								<Bitcoin class="h-4 w-4" />
 								Path 1: Bitcoin OP_RETURN
-								<Badge variant="default" class="ml-2 text-xs">Trustless</Badge>
+								<Badge variant="default" class="ml-2 text-xs">Bitcoin-enforced</Badge>
 								<Badge variant="secondary" class="text-xs">Quantum-safe</Badge>
 							</span>
 						</Accordion.Trigger>
@@ -73,19 +73,13 @@
 									becomes valid and can be broadcast.
 								</p>
 								<ol class="text-muted-foreground list-inside list-decimal space-y-2">
+									<li>Open the recipient-encrypted envelope from the disclosure notice.</li>
 									<li>
-										Wait for the CSV timelock to expire (check the <code
-											class="bg-muted rounded px-1">timelockDays</code
-										> field in your recovery kit).
+										Use the Bitcoin recovery screen to decrypt it locally and verify the network,
+										funding outpoint, CSV sequence, witness script, recipient address, fee,
+										signature, and capsule binding.
 									</li>
-									<li>
-										Broadcast the <code class="bg-muted rounded px-1">preSignedRecipientTx</code> hex
-										using any Bitcoin node or service (e.g., mempool.space/tx/push).
-									</li>
-									<li>
-										Once confirmed, find the OP_RETURN output in the transaction. The first 32 bytes
-										are the symmetric key K.
-									</li>
+									<li>After the CSV delay matures, broadcast the verified transaction.</li>
 									<li>
 										Use K to decrypt each share with ChaCha20-Poly1305 (the nonce is stored
 										alongside the encrypted share).
@@ -99,8 +93,8 @@
 									<div class="flex gap-2">
 										<AlertCircle class="text-destructive h-4 w-4 shrink-0" />
 										<p class="text-muted-foreground text-xs">
-											This path requires no trust in any third party. The Bitcoin network enforces
-											the timelock. K is revealed on-chain only after the owner fails to check in.
+											The Bitcoin network enforces the delay and transaction validity. The recovery
+											envelope remains encrypted to the recipient until they open it locally.
 										</p>
 									</div>
 								</div>

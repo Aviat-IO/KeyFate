@@ -27,21 +27,13 @@ function makeKeyPair(seed: number) {
 const owner = makeKeyPair(1);
 const recipient = makeKeyPair(2);
 
-// ─── Mock only the Nostr client (to avoid network calls) ─────────────────────
+// ─── Inject a relay boundary instead of globally mocking the Nostr module ────
 
 const mockPublish = vi.fn().mockResolvedValue(undefined);
-
-vi.mock('$lib/nostr/client', () => ({
-	createNostrClient: vi.fn().mockImplementation(() => ({
-		publish: (...args: unknown[]) => mockPublish(...args),
-		query: vi.fn().mockResolvedValue([]),
-		get: vi.fn().mockResolvedValue(null),
-		close: vi.fn(),
-		getRelays: vi.fn().mockReturnValue(['wss://test.relay']),
-		setRelays: vi.fn()
-	})),
-	NostrClient: vi.fn()
-}));
+const testClient = {
+	publish: (event: unknown) => mockPublish(event),
+	close: vi.fn()
+};
 
 // ─── Nostr Publisher Tests ────────────────────────────────────────────────────
 
@@ -59,16 +51,25 @@ describe('Nostr Publisher Service', () => {
 		const recipientKp = generateKeypair();
 
 		const result = await publishSharesToNostr({
-			secretId: 'secret-123',
-			shares: [{ recipientId: 'r1', share: 'share-data-1', shareIndex: 1 }],
-			recipients: [{ id: 'r1', nostrPubkey: recipientKp.publicKey }],
+			secretId: '11111111-1111-4111-8111-111111111111',
+			shares: [
+				{
+					recipientId: '22222222-2222-4222-8222-222222222222',
+					share: 'share-data-1',
+					shareIndex: 1
+				}
+			],
+			recipients: [
+				{ id: '22222222-2222-4222-8222-222222222222', nostrPubkey: recipientKp.publicKey }
+			],
 			senderSecretKey: sender.secretKey,
 			threshold: 2,
-			totalShares: 3
+			totalShares: 3,
+			client: testClient
 		});
 
 		expect(result.published).toHaveLength(1);
-		expect(result.published[0].recipientId).toBe('r1');
+		expect(result.published[0].recipientId).toBe('22222222-2222-4222-8222-222222222222');
 		expect(result.published[0].nostrEventId).toMatch(/^[0-9a-f]{64}$/);
 		expect(result.published[0].plaintextK).toBeInstanceOf(Uint8Array);
 		expect(result.published[0].plaintextK.length).toBe(32);
@@ -87,22 +88,34 @@ describe('Nostr Publisher Service', () => {
 		const sender = generateKeypair();
 
 		const result = await publishSharesToNostr({
-			secretId: 'secret-123',
+			secretId: '11111111-1111-4111-8111-111111111111',
 			shares: [
-				{ recipientId: 'r1', share: 'share-data-1', shareIndex: 1 },
-				{ recipientId: 'r2', share: 'share-data-2', shareIndex: 2 }
+				{
+					recipientId: '22222222-2222-4222-8222-222222222222',
+					share: 'share-data-1',
+					shareIndex: 1
+				},
+				{
+					recipientId: '33333333-3333-4333-8333-333333333333',
+					share: 'share-data-2',
+					shareIndex: 2
+				}
 			],
 			recipients: [
-				{ id: 'r1', nostrPubkey: null },
-				{ id: 'r2', nostrPubkey: null }
+				{ id: '22222222-2222-4222-8222-222222222222', nostrPubkey: null },
+				{ id: '33333333-3333-4333-8333-333333333333', nostrPubkey: null }
 			],
 			senderSecretKey: sender.secretKey,
 			threshold: 2,
-			totalShares: 3
+			totalShares: 3,
+			client: testClient
 		});
 
 		expect(result.published).toHaveLength(0);
-		expect(result.skipped).toEqual(['r1', 'r2']);
+		expect(result.skipped).toEqual([
+			'22222222-2222-4222-8222-222222222222',
+			'33333333-3333-4333-8333-333333333333'
+		]);
 	});
 
 	it('handles mixed recipients (some with, some without nostrPubkey)', async () => {
@@ -113,23 +126,24 @@ describe('Nostr Publisher Service', () => {
 		const recipientKp = generateKeypair();
 
 		const result = await publishSharesToNostr({
-			secretId: 'secret-123',
+			secretId: '11111111-1111-4111-8111-111111111111',
 			shares: [
-				{ recipientId: 'r1', share: 'share-1', shareIndex: 1 },
-				{ recipientId: 'r2', share: 'share-2', shareIndex: 2 }
+				{ recipientId: '22222222-2222-4222-8222-222222222222', share: 'share-1', shareIndex: 1 },
+				{ recipientId: '33333333-3333-4333-8333-333333333333', share: 'share-2', shareIndex: 2 }
 			],
 			recipients: [
-				{ id: 'r1', nostrPubkey: recipientKp.publicKey },
-				{ id: 'r2', nostrPubkey: null }
+				{ id: '22222222-2222-4222-8222-222222222222', nostrPubkey: recipientKp.publicKey },
+				{ id: '33333333-3333-4333-8333-333333333333', nostrPubkey: null }
 			],
 			senderSecretKey: sender.secretKey,
 			threshold: 2,
-			totalShares: 3
+			totalShares: 3,
+			client: testClient
 		});
 
 		expect(result.published).toHaveLength(1);
-		expect(result.published[0].recipientId).toBe('r1');
-		expect(result.skipped).toEqual(['r2']);
+		expect(result.published[0].recipientId).toBe('22222222-2222-4222-8222-222222222222');
+		expect(result.skipped).toEqual(['33333333-3333-4333-8333-333333333333']);
 	});
 
 	it('records errors for failed publishes without crashing', async () => {
@@ -142,17 +156,22 @@ describe('Nostr Publisher Service', () => {
 		const recipientKp = generateKeypair();
 
 		const result = await publishSharesToNostr({
-			secretId: 'secret-123',
-			shares: [{ recipientId: 'r1', share: 'share-1', shareIndex: 1 }],
-			recipients: [{ id: 'r1', nostrPubkey: recipientKp.publicKey }],
+			secretId: '11111111-1111-4111-8111-111111111111',
+			shares: [
+				{ recipientId: '22222222-2222-4222-8222-222222222222', share: 'share-1', shareIndex: 1 }
+			],
+			recipients: [
+				{ id: '22222222-2222-4222-8222-222222222222', nostrPubkey: recipientKp.publicKey }
+			],
 			senderSecretKey: sender.secretKey,
 			threshold: 2,
-			totalShares: 3
+			totalShares: 3,
+			client: testClient
 		});
 
 		expect(result.published).toHaveLength(0);
 		expect(result.errors).toHaveLength(1);
-		expect(result.errors[0].recipientId).toBe('r1');
+		expect(result.errors[0].recipientId).toBe('22222222-2222-4222-8222-222222222222');
 		expect(result.errors[0].error).toContain('Relay refused');
 	});
 
@@ -165,18 +184,19 @@ describe('Nostr Publisher Service', () => {
 		const r2 = generateKeypair();
 
 		const result = await publishSharesToNostr({
-			secretId: 'secret-123',
+			secretId: '11111111-1111-4111-8111-111111111111',
 			shares: [
-				{ recipientId: 'r1', share: 'share-1', shareIndex: 1 },
-				{ recipientId: 'r2', share: 'share-2', shareIndex: 2 }
+				{ recipientId: '22222222-2222-4222-8222-222222222222', share: 'share-1', shareIndex: 1 },
+				{ recipientId: '33333333-3333-4333-8333-333333333333', share: 'share-2', shareIndex: 2 }
 			],
 			recipients: [
-				{ id: 'r1', nostrPubkey: r1.publicKey },
-				{ id: 'r2', nostrPubkey: r2.publicKey }
+				{ id: '22222222-2222-4222-8222-222222222222', nostrPubkey: r1.publicKey },
+				{ id: '33333333-3333-4333-8333-333333333333', nostrPubkey: r2.publicKey }
 			],
 			senderSecretKey: sender.secretKey,
 			threshold: 2,
-			totalShares: 3
+			totalShares: 3,
+			client: testClient
 		});
 
 		expect(result.published).toHaveLength(2);
@@ -302,12 +322,21 @@ describe('Bitcoin-Enabled Secret Lifecycle', () => {
 
 		// Step 1: Publish shares to Nostr
 		const publishResult = await publishSharesToNostr({
-			secretId: 'secret-456',
-			shares: [{ recipientId: 'r1', share: 'shamir-share-data', shareIndex: 1 }],
-			recipients: [{ id: 'r1', nostrPubkey: recipientKp.publicKey }],
+			secretId: '44444444-4444-4444-8444-444444444444',
+			shares: [
+				{
+					recipientId: '22222222-2222-4222-8222-222222222222',
+					share: 'shamir-share-data',
+					shareIndex: 1
+				}
+			],
+			recipients: [
+				{ id: '22222222-2222-4222-8222-222222222222', nostrPubkey: recipientKp.publicKey }
+			],
 			senderSecretKey: sender.secretKey,
 			threshold: 2,
-			totalShares: 3
+			totalShares: 3,
+			client: testClient
 		});
 
 		expect(publishResult.published).toHaveLength(1);
@@ -459,11 +488,10 @@ describe('Bitcoin-Enabled Secret Lifecycle', () => {
 // ─── Bitcoin Service Module Tests (type/interface validation) ─────────────────
 
 describe('Bitcoin Service types and interfaces', () => {
-	it('EnableBitcoinParams interface is correctly typed', async () => {
-		// Verify the service module exports the expected types
+	it('keeps private-key operations out of the server service', async () => {
 		const mod = await import('$lib/services/bitcoin-service');
-		expect(typeof mod.enableBitcoin).toBe('function');
-		expect(typeof mod.refreshBitcoin).toBe('function');
+		expect(mod).not.toHaveProperty('enableBitcoin');
+		expect(mod).not.toHaveProperty('refreshBitcoin');
 		expect(typeof mod.getBitcoinStatus).toBe('function');
 		expect(typeof mod.getActiveUtxo).toBe('function');
 	});
@@ -484,29 +512,31 @@ describe('Bitcoin API endpoint validation logic', () => {
 	});
 
 	it('validates network parameter', () => {
-		const valid = ['mainnet', 'testnet'];
+		const valid = ['mainnet', 'testnet', 'signet'];
 		expect(valid.includes('mainnet')).toBe(true);
 		expect(valid.includes('testnet')).toBe(true);
 		expect(valid.includes('regtest')).toBe(false);
 	});
 
-	it('validates required fields for enable-bitcoin', () => {
-		const requiredFields = [
-			'ownerPrivkey',
-			'ownerPubkey',
-			'recipientPubkey',
-			'fundingUtxo',
+	it('keeps server artifact fields public or recipient-encrypted', () => {
+		const allowedFields = [
+			'recipientId',
+			'txId',
+			'outputIndex',
 			'amountSats',
-			'feeRateSatsPerVbyte',
-			'symmetricKeyK',
-			'nostrEventId',
+			'timelockScript',
+			'ownerPubkey',
+			'branchPubkey',
+			'ttlBlocks',
 			'recipientAddress',
-			'recipientPrivkey',
-			'network'
+			'network',
+			'generation',
+			'nostrCapsuleEventId',
+			'encryptedRecoveryEnvelope'
 		];
-		const body: Record<string, unknown> = { ownerPrivkey: 'aa'.repeat(32) };
-		const missing = requiredFields.filter((f) => body[f] === undefined);
-		expect(missing.length).toBe(10); // All except ownerPrivkey
+		for (const forbidden of ['ownerPrivkey', 'recipientPrivkey', 'symmetricKeyK', 'txHex']) {
+			expect(allowedFields).not.toContain(forbidden);
+		}
 	});
 
 	it('validates fundingUtxo structure', () => {

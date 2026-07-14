@@ -64,6 +64,20 @@
       "when": 1776044955028,
       "tag": "0008_add_email_verification_login_token_purpose",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1783748738306,
+      "tag": "0009_production_readiness_leases_exports_tokens",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1783751455499,
+      "tag": "0010_recovery_v2_public_metadata",
+      "breakpoints": true
     }
   ]
 }

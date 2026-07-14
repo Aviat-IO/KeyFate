@@ -53,8 +53,18 @@ reset_databases.sh
 **/metrics/*.json
 **/metrics/*.log
 
+# Playwright
+frontend/test-results/
+frontend/playwright-report/
+frontend/blob-report/
+
 # Drizzle
 frontend/drizzle-staging.config.ts
 frontend/drizzle-production.config.ts
+
+# Reproducible or sensitive audit working artifacts
+piolium/codeql-artifacts/db/
+.pi-subagents/
+
 MARKETING_GUIDE.md
 .mcp.json

@@ -160,7 +160,9 @@ export const POST: RequestHandler = async (event) => {
 			);
 		}
 
-		console.log(`[VerifyEmail] Successfully verified email for user: ${verificationResult.user.id}`);
+		console.log(
+			`[VerifyEmail] Successfully verified email for user: ${verificationResult.user.id}`
+		);
 
 		return new Response(
 			JSON.stringify({

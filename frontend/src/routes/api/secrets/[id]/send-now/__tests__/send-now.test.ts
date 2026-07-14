@@ -54,21 +54,38 @@ vi.mock('$lib/db/schema', () => ({
 	secrets: {
 		id: 'secrets.id',
 		userId: 'secrets.userId',
-		status: 'secrets.status'
+		status: 'secrets.status',
+		processingLeaseId: 'secrets.processingLeaseId',
+		processingLeaseExpiresAt: 'secrets.processingLeaseExpiresAt'
 	},
 	users: { id: 'users.id' },
 	disclosureLog: {
 		id: 'disclosureLog.id',
 		secretId: 'disclosureLog.secretId',
 		recipientEmail: 'disclosureLog.recipientEmail',
-		recipientName: 'disclosureLog.recipientName'
+		recipientName: 'disclosureLog.recipientName',
+		dedupeKey: 'disclosureLog.dedupeKey',
+		status: 'disclosureLog.status',
+		retryCount: 'disclosureLog.retryCount',
+		leaseId: 'disclosureLog.leaseId'
+	},
+	bitcoinUtxos: {
+		secretId: 'bitcoinUtxos.secretId',
+		status: 'bitcoinUtxos.status',
+		generation: 'bitcoinUtxos.generation',
+		encryptedRecoveryTx: 'bitcoinUtxos.encryptedRecoveryTx',
+		recoverySenderPubkey: 'bitcoinUtxos.recoverySenderPubkey',
+		recoveryManifest: 'bitcoinUtxos.recoveryManifest'
 	}
 }));
 
 // Mock drizzle-orm operators
 vi.mock('drizzle-orm', () => ({
 	eq: vi.fn((a, b) => ({ op: 'eq', a, b })),
-	and: vi.fn((...args: unknown[]) => ({ op: 'and', args }))
+	and: vi.fn((...args: unknown[]) => ({ op: 'and', args })),
+	inArray: vi.fn((a, b) => ({ op: 'inArray', a, b })),
+	desc: vi.fn((value) => ({ op: 'desc', value })),
+	sql: vi.fn()
 }));
 
 // Mock queries
@@ -98,8 +115,10 @@ vi.mock('$lib/encryption', () => ({
 }));
 
 // Mock disclosure helpers
+const mockClaimDisclosureRecipient = vi.fn();
 const mockUpdateDisclosureLog = vi.fn();
 vi.mock('$lib/cron/disclosure-helpers', () => ({
+	claimDisclosureRecipient: (...args: unknown[]) => mockClaimDisclosureRecipient(...args),
 	updateDisclosureLog: (...args: unknown[]) => mockUpdateDisclosureLog(...args)
 }));
 
@@ -186,7 +205,18 @@ function setupDbSequence(
 
 	mockSelect.mockImplementation(() => ({
 		from: () => ({
-			where: () => selectCalls[selectIdx++]?.result ?? []
+			where: () => {
+				const result = selectCalls[selectIdx++]?.result ?? [];
+				if (!Array.isArray(result)) return result;
+				const rows = [...result] as unknown[] & {
+					orderBy?: () => { limit: () => unknown[] };
+				};
+				Object.defineProperty(rows, 'orderBy', {
+					enumerable: false,
+					value: () => ({ limit: () => rows })
+				});
+				return rows;
+			}
 		})
 	}));
 
@@ -195,7 +225,7 @@ function setupDbSequence(
 			where: (..._args: unknown[]) => {
 				const call = updateCalls[updateIdx++];
 				if (call?.type === 'update-no-return') {
-					return { returning: () => call.result ?? [] };
+					return { returning: () => call.result ?? [{ id: TEST_SECRET_ID }] };
 				}
 				return {
 					returning: () => call?.result ?? []
@@ -206,6 +236,9 @@ function setupDbSequence(
 
 	mockInsert.mockImplementation(() => ({
 		values: () => ({
+			onConflictDoUpdate: () => ({
+				returning: () => insertCalls[insertIdx++]?.result ?? []
+			}),
 			returning: () => ({
 				onConflictDoNothing: () => insertCalls[insertIdx++]?.result ?? []
 			})
@@ -239,7 +272,14 @@ describe('POST /api/secrets/[id]/send-now', () => {
 			messageId: 'msg-123'
 		});
 
-		// Defaults: disclosure log update succeeds
+		// Defaults: recipient claim and disclosure log update succeed
+		mockClaimDisclosureRecipient.mockImplementation(
+			(_db: unknown, params: { recipientEmail: string }) =>
+				Promise.resolve({
+					id: params.recipientEmail === 'bob@example.com' ? 'log-2' : 'log-1',
+					status: 'pending'
+				})
+		);
 		mockUpdateDisclosureLog.mockResolvedValue(true);
 
 		// Defaults: email failure logger succeeds
@@ -477,8 +517,64 @@ describe('POST /api/secrets/[id]/send-now', () => {
 				secretCreatedAt: BASE_SECRET.createdAt
 			});
 
-			// Verify disclosure log was updated to "sent"
-			expect(mockUpdateDisclosureLog).toHaveBeenCalledWith(mockDb, 'log-1', 'sent');
+			// Verify disclosure log was updated to "sent" under the active secret lease.
+			expect(mockUpdateDisclosureLog).toHaveBeenCalledWith(
+				mockDb,
+				TEST_SECRET_ID,
+				'log-1',
+				expect.any(String),
+				'sent'
+			);
+		});
+
+		it('does not report success when the terminal disclosure lease update is lost', async () => {
+			setupDbSequence([
+				{ type: 'select', result: [BASE_SECRET] },
+				{ type: 'select', result: [BASE_USER] },
+				{ type: 'update', result: [{ id: TEST_SECRET_ID }] },
+				{ type: 'insert', result: [{ id: 'log-1' }] },
+				{ type: 'update', result: [] }
+			]);
+			mockGetAllRecipients.mockResolvedValue([BASE_RECIPIENT]);
+
+			const { POST } = await import('../+server');
+			const response = await POST(createEvent());
+
+			expect(response.status).toBe(409);
+			expect(await response.json()).toEqual({
+				error: 'Disclosure lease was lost after delivery; reconciliation required',
+				sent: 1,
+				failed: 0
+			});
+		});
+
+		it('includes the current Bitcoin generation separately from the encrypted envelope', async () => {
+			const bitcoinRecovery = {
+				encryptedRecoveryTx: '{"ciphertext":"encrypted"}',
+				recoverySenderPubkey: 'a'.repeat(64),
+				recoveryManifest: { recipientId: BASE_RECIPIENT.id },
+				generation: 4
+			};
+			setupDbSequence([
+				{ type: 'select', result: [BASE_SECRET] },
+				{ type: 'select', result: [BASE_USER] },
+				{ type: 'select', result: [bitcoinRecovery] },
+				{ type: 'update', result: [{ id: TEST_SECRET_ID }] },
+				{ type: 'update-no-return', result: undefined }
+			]);
+			mockGetAllRecipients.mockResolvedValue([BASE_RECIPIENT]);
+
+			const { POST } = await import('../+server');
+			const response = await POST(createEvent());
+
+			expect(response.status).toBe(200);
+			expect(mockSendSecretDisclosureEmail).toHaveBeenCalledWith(
+				expect.objectContaining({
+					bitcoinRecoveryEnvelope: bitcoinRecovery.encryptedRecoveryTx,
+					bitcoinRecoverySenderPubkey: bitcoinRecovery.recoverySenderPubkey,
+					bitcoinRecoveryGeneration: 4
+				})
+			);
 		});
 
 		it('uses user email as sender name when user.name is null', async () => {
@@ -522,8 +618,8 @@ describe('POST /api/secrets/[id]/send-now', () => {
 			// Override insert to return different log IDs per call
 			mockInsert.mockImplementation(() => ({
 				values: () => ({
-					returning: () => ({
-						onConflictDoNothing: () => insertResults[insertIdx++] ?? []
+					onConflictDoUpdate: () => ({
+						returning: () => insertResults[insertIdx++] ?? []
 					})
 				})
 			}));
@@ -564,8 +660,8 @@ describe('POST /api/secrets/[id]/send-now', () => {
 			]);
 			mockInsert.mockImplementation(() => ({
 				values: () => ({
-					returning: () => ({
-						onConflictDoNothing: () => insertResults[insertIdx++] ?? []
+					onConflictDoUpdate: () => ({
+						returning: () => insertResults[insertIdx++] ?? []
 					})
 				})
 			}));
@@ -590,11 +686,19 @@ describe('POST /api/secrets/[id]/send-now', () => {
 			expect(data.failed).toBe(1);
 			expect(data.error).toBe('Failed to send to 1 recipient(s)');
 
-			// Verify first log updated as sent, second as failed
-			expect(mockUpdateDisclosureLog).toHaveBeenCalledWith(mockDb, 'log-1', 'sent');
+			// Verify first log updated as sent, second as failed under the same fenced lease.
 			expect(mockUpdateDisclosureLog).toHaveBeenCalledWith(
 				mockDb,
+				TEST_SECRET_ID,
+				'log-1',
+				expect.any(String),
+				'sent'
+			);
+			expect(mockUpdateDisclosureLog).toHaveBeenCalledWith(
+				mockDb,
+				TEST_SECRET_ID,
 				'log-2',
+				expect.any(String),
 				'failed',
 				'Mailbox full'
 			);
@@ -629,10 +733,12 @@ describe('POST /api/secrets/[id]/send-now', () => {
 			expect(data.sent).toBe(0);
 			expect(data.failed).toBe(1);
 
-			// Verify disclosure log updated with error
+			// Verify disclosure log updated with error under the active secret lease.
 			expect(mockUpdateDisclosureLog).toHaveBeenCalledWith(
 				mockDb,
+				TEST_SECRET_ID,
 				'log-1',
+				expect.any(String),
 				'failed',
 				'Network timeout'
 			);
@@ -670,15 +776,16 @@ describe('POST /api/secrets/[id]/send-now', () => {
 				{ type: 'select', result: [BASE_SECRET] },
 				{ type: 'select', result: [BASE_USER] },
 				{ type: 'update', result: [{ id: TEST_SECRET_ID }] },
-				{ type: 'insert', result: [] }, // onConflictDoNothing returns empty
+				{ type: 'insert', result: [{ id: 'log-1', status: 'sent' }] },
 				{ type: 'update-no-return', result: undefined }
 			]);
 			mockGetAllRecipients.mockResolvedValue([BASE_RECIPIENT]);
+			mockClaimDisclosureRecipient.mockResolvedValue({ id: 'log-1', status: 'sent' });
 
 			const { POST } = await import('../+server');
 			const response = await POST(createEvent());
 
-			// Conflict means already sent — counted as sent, no email dispatched
+			// Upsert returns the committed sent row, so no duplicate email is dispatched.
 			expect(response.status).toBe(200);
 			const data = await response.json();
 			expect(data.success).toBe(true);

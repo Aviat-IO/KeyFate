@@ -1,17 +1,11 @@
-/**
- * Rate limiting service for email verification operations.
- * Implements in-memory rate limiting with configurable limits per operation type.
- *
- * NOTE: This uses an in-memory Map, so all rate limit state is lost on server
- * restart. For a single-server Railway deployment this is acceptable — the
- * worst case is that a restart resets the counters, briefly allowing a burst
- * of requests. A DB-backed alternative exists in `$lib/rate-limit-db.ts` and
- * is used by the general `$lib/rate-limit.ts` module. If abuse becomes an
- * issue, migrate these operations to the DB-backed rate limiter.
- */
+import { checkRateLimit as checkSharedRateLimit, type RateLimitType } from '$lib/rate-limit';
+import { cleanupExpiredRateLimits as cleanupSharedRateLimits } from '$lib/rate-limit-db';
+import { rateLimits } from '$lib/db/schema';
+import { eq } from 'drizzle-orm';
 
 interface RateLimitResult {
 	allowed: boolean;
+	available: boolean;
 	remaining: number;
 	resetTime: Date;
 	retryAfter?: number;
@@ -22,119 +16,76 @@ interface RateLimitConfig {
 	windowMs: number;
 }
 
-interface RateLimitEntry {
-	count: number;
-	resetTime: Date;
-}
+type AuthRateLimitOperation =
+	| 'verify-email'
+	| 'resend-verification'
+	| 'request-password-reset'
+	| 'reset-password-attempt';
 
-// In-memory storage for rate limits (in production, use Redis or similar)
-const rateLimitStore = new Map<string, RateLimitEntry>();
-
-// Rate limit configurations for different operations
-const RATE_LIMIT_CONFIGS: Record<string, RateLimitConfig> = {
+const RATE_LIMIT_CONFIGS: Record<AuthRateLimitOperation, RateLimitConfig> = {
 	'verify-email': {
 		maxAttempts: 5,
-		windowMs: 15 * 60 * 1000 // 15 minutes
+		windowMs: 15 * 60 * 1000
 	},
 	'resend-verification': {
 		maxAttempts: 3,
-		windowMs: 60 * 60 * 1000 // 1 hour
+		windowMs: 60 * 60 * 1000
 	},
 	'request-password-reset': {
 		maxAttempts: 3,
-		windowMs: 60 * 60 * 1000 // 1 hour
+		windowMs: 60 * 60 * 1000
 	},
 	'reset-password-attempt': {
 		maxAttempts: 5,
-		windowMs: 60 * 60 * 1000 // 1 hour
+		windowMs: 60 * 60 * 1000
 	}
 };
 
-/**
- * Get rate limit configuration for an operation
- */
+function isAuthRateLimitOperation(operation: string): operation is AuthRateLimitOperation {
+	return Object.prototype.hasOwnProperty.call(RATE_LIMIT_CONFIGS, operation);
+}
+
 export function getRateLimitConfig(operation: string): RateLimitConfig {
-	const config = RATE_LIMIT_CONFIGS[operation];
-	if (!config) {
+	if (!isAuthRateLimitOperation(operation)) {
 		throw new Error(`Unknown rate limit operation: ${operation}`);
 	}
-	return config;
+	return RATE_LIMIT_CONFIGS[operation];
 }
 
-/**
- * Generate rate limit key
- */
-function getRateLimitKey(operation: string, identifier: string): string {
-	const normalizedIdentifier = identifier.toLowerCase().trim();
-	return `${operation}:${normalizedIdentifier}`;
+function normalizeIdentifier(identifier: string): string {
+	return identifier.toLowerCase().trim();
 }
 
-/**
- * Check if request is within rate limit
- */
 export async function checkRateLimit(
 	operation: string,
 	identifier: string
 ): Promise<RateLimitResult> {
 	const config = getRateLimitConfig(operation);
-	const key = getRateLimitKey(operation, identifier);
-	const now = new Date();
-
-	// Get current rate limit entry
-	let entry = rateLimitStore.get(key);
-
-	// If no entry exists or it's expired, create new one
-	if (!entry || now >= entry.resetTime) {
-		entry = {
-			count: 0,
-			resetTime: new Date(now.getTime() + config.windowMs)
-		};
-		rateLimitStore.set(key, entry);
-	}
-
-	// Check if limit exceeded
-	if (entry.count >= config.maxAttempts) {
-		const retryAfter = Math.ceil((entry.resetTime.getTime() - now.getTime()) / 1000);
-		return {
-			allowed: false,
-			remaining: 0,
-			resetTime: entry.resetTime,
-			retryAfter
-		};
-	}
-
-	// Increment count
-	entry.count++;
-	rateLimitStore.set(key, entry);
+	const result = await checkSharedRateLimit(
+		operation as RateLimitType,
+		normalizeIdentifier(identifier),
+		config.maxAttempts
+	);
+	const resetTime = new Date(result.reset * 1000);
+	const retryAfter = Math.max(1, Math.ceil((resetTime.getTime() - Date.now()) / 1000));
 
 	return {
-		allowed: true,
-		remaining: config.maxAttempts - entry.count,
-		resetTime: entry.resetTime
+		allowed: result.success,
+		available: result.available,
+		remaining: result.remaining,
+		resetTime,
+		retryAfter: result.success ? undefined : retryAfter
 	};
 }
 
-/**
- * Clear rate limit for testing purposes
- */
 export async function clearRateLimit(operation: string, identifier: string): Promise<void> {
-	const key = getRateLimitKey(operation, identifier);
-	rateLimitStore.delete(key);
+	getRateLimitConfig(operation);
+	const { getDatabase } = await import('$lib/db/drizzle');
+	const db = await getDatabase();
+	const key = `${operation}:${normalizeIdentifier(identifier)}`;
+	await db.delete(rateLimits).where(eq(rateLimits.key, key));
 }
 
-/**
- * Cleanup expired rate limit entries (should be called periodically)
- */
-export function cleanupExpiredRateLimits(): number {
-	const now = new Date();
-	let deletedCount = 0;
-
-	for (const [key, entry] of rateLimitStore.entries()) {
-		if (now >= entry.resetTime) {
-			rateLimitStore.delete(key);
-			deletedCount++;
-		}
-	}
-
-	return deletedCount;
+export async function cleanupExpiredRateLimits(): Promise<number> {
+	return cleanupSharedRateLimits();
 }

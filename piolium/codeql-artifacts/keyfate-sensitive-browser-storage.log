@@ -1,0 +1,9 @@
+Resolving data extensions.
+Finished resolving data extensions.
+Loading data extensions.
+Finished loading data extensions.
+Compiling query plan for /Users/alancolver/dev/keyfate/piolium/codeql-queries/keyfate-sensitive-browser-storage.ql.
+[1/1 comp 9.5s] Compiled /Users/alancolver/dev/keyfate/piolium/codeql-queries/keyfate-sensitive-browser-storage.ql.
+Starting evaluation of keyfate/security-audit-queries/keyfate-sensitive-browser-storage.ql.
+[1/1 eval 329ms] Evaluation done; writing results to /Users/alancolver/dev/keyfate/piolium/codeql-artifacts/keyfate-sensitive-browser-storage.bqrs.
+Shutting down query evaluator.

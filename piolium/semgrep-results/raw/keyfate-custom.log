@@ -1,0 +1,98 @@
+Rule piolium.semgrep-rules.keyfate-plaintext-server-share-response contains an include pattern 'frontend/src/routes/api/**/server-share/+server.ts' that will soon be interpreted as '/frontend/src/routes/api/**/server-share/+server.ts' to comply with the Semgrepignore v2 and Gitignore specifications. To make this pattern permanently unanchored, edit rule piolium.semgrep-rules.keyfate-plaintext-server-share-response and change it to '**/frontend/src/routes/api/**/server-share/+server.ts'. To confirm the anchored behavior and avoid this warning, change it to '/frontend/src/routes/api/**/server-share/+server.ts'.
+Rule piolium.semgrep-rules.keyfate-credential-in-url-parameter contains an include pattern 'frontend/src/routes/api/**' that will soon be interpreted as '/frontend/src/routes/api/**' to comply with the Semgrepignore v2 and Gitignore specifications. To make this pattern permanently unanchored, edit rule piolium.semgrep-rules.keyfate-credential-in-url-parameter and change it to '**/frontend/src/routes/api/**'. To confirm the anchored behavior and avoid this warning, change it to '/frontend/src/routes/api/**'.
+Rule piolium.semgrep-rules.keyfate-sensitive-browser-storage contains an include pattern 'frontend/src/**/*.ts' that will soon be interpreted as '/frontend/src/**/*.ts' to comply with the Semgrepignore v2 and Gitignore specifications. To make this pattern permanently unanchored, edit rule piolium.semgrep-rules.keyfate-sensitive-browser-storage and change it to '**/frontend/src/**/*.ts'. To confirm the anchored behavior and avoid this warning, change it to '/frontend/src/**/*.ts'.
+Rule piolium.semgrep-rules.keyfate-sensitive-browser-storage contains an include pattern 'frontend/src/**/*.svelte' that will soon be interpreted as '/frontend/src/**/*.svelte' to comply with the Semgrepignore v2 and Gitignore specifications. To make this pattern permanently unanchored, edit rule piolium.semgrep-rules.keyfate-sensitive-browser-storage and change it to '**/frontend/src/**/*.svelte'. To confirm the anchored behavior and avoid this warning, change it to '/frontend/src/**/*.svelte'.
+Rule piolium.semgrep-rules.keyfate-production-pricing-fails-open contains an include pattern 'frontend/src/lib/pricing.ts' that will soon be interpreted as '/frontend/src/lib/pricing.ts' to comply with the Semgrepignore v2 and Gitignore specifications. To make this pattern permanently unanchored, edit rule piolium.semgrep-rules.keyfate-production-pricing-fails-open and change it to '**/frontend/src/lib/pricing.ts'. To confirm the anchored behavior and avoid this warning, change it to '/frontend/src/lib/pricing.ts'.
+               
+               
+┌─────────────┐
+│ Scan Status │
+└─────────────┘
+  Scanning 871 files tracked by git with 4 Code rules:
+                                                                                                                        
+  Language      Rules   Files          Origin   Rules                                                                   
+ ─────────────────────────────        ────────────────                                                                  
+  <multilang>       1     489          Custom       4                                                                   
+  ts                3      79                                                                                           
+                                                                                                                        
+Rule piolium.semgrep-rules.keyfate-plaintext-server-share-response contains an include pattern 'frontend/src/routes/api/**/server-share/+server.ts' that will soon be interpreted as '/frontend/src/routes/api/**/server-share/+server.ts' to comply with the Semgrepignore v2 and Gitignore specifications. To make this pattern permanently unanchored, edit rule piolium.semgrep-rules.keyfate-plaintext-server-share-response and change it to '**/frontend/src/routes/api/**/server-share/+server.ts'. To confirm the anchored behavior and avoid this warning, change it to '/frontend/src/routes/api/**/server-share/+server.ts'.
+Rule piolium.semgrep-rules.keyfate-credential-in-url-parameter contains an include pattern 'frontend/src/routes/api/**' that will soon be interpreted as '/frontend/src/routes/api/**' to comply with the Semgrepignore v2 and Gitignore specifications. To make this pattern permanently unanchored, edit rule piolium.semgrep-rules.keyfate-credential-in-url-parameter and change it to '**/frontend/src/routes/api/**'. To confirm the anchored behavior and avoid this warning, change it to '/frontend/src/routes/api/**'.
+Rule piolium.semgrep-rules.keyfate-sensitive-browser-storage contains an include pattern 'frontend/src/**/*.ts' that will soon be interpreted as '/frontend/src/**/*.ts' to comply with the Semgrepignore v2 and Gitignore specifications. To make this pattern permanently unanchored, edit rule piolium.semgrep-rules.keyfate-sensitive-browser-storage and change it to '**/frontend/src/**/*.ts'. To confirm the anchored behavior and avoid this warning, change it to '/frontend/src/**/*.ts'.
+Rule piolium.semgrep-rules.keyfate-sensitive-browser-storage contains an include pattern 'frontend/src/**/*.svelte' that will soon be interpreted as '/frontend/src/**/*.svelte' to comply with the Semgrepignore v2 and Gitignore specifications. To make this pattern permanently unanchored, edit rule piolium.semgrep-rules.keyfate-sensitive-browser-storage and change it to '**/frontend/src/**/*.svelte'. To confirm the anchored behavior and avoid this warning, change it to '/frontend/src/**/*.svelte'.
+Rule piolium.semgrep-rules.keyfate-production-pricing-fails-open contains an include pattern 'frontend/src/lib/pricing.ts' that will soon be interpreted as '/frontend/src/lib/pricing.ts' to comply with the Semgrepignore v2 and Gitignore specifications. To make this pattern permanently unanchored, edit rule piolium.semgrep-rules.keyfate-production-pricing-fails-open and change it to '**/frontend/src/lib/pricing.ts'. To confirm the anchored behavior and avoid this warning, change it to '/frontend/src/lib/pricing.ts'.
+                   
+                   
+┌─────────────────┐
+│ 7 Code Findings │
+└─────────────────┘
+                                                                                  
+    /Users/alancolver/dev/keyfate/frontend/src/lib/components/NewSecretForm.svelte
+    ❯❱ piolium.semgrep-rules.keyfate-sensitive-browser-storage
+          ❰❰ Blocking ❱❱
+          KeyFate persists recovery shares, private keys, or decryption metadata in browser storage; any same-
+          origin script compromise can exfiltrate it.                                                         
+                                                                                                              
+          218┆ localStorage.setItem(
+          219┆    `keyfate:userManagedShares:${result.secretId}`,
+          220┆    JSON.stringify({ shares: userManagedShares, expiresAt })
+            ⋮┆----------------------------------------
+          260┆ localStorage.setItem(
+          261┆    `keyfate:nostrData:${result.secretId}`,
+          262┆    JSON.stringify({
+          263┆            eventIds: publishData.published.map(
+          264┆                    (p: { nostrEventId: string }) => p.nostrEventId
+          265┆            ),
+          266┆            plaintextKs: publishData.published.map(
+                                                             
+    /Users/alancolver/dev/keyfate/frontend/src/lib/pricing.ts
+    ❯❱ piolium.semgrep-rules.keyfate-production-pricing-fails-open
+          ❰❰ Blocking ❱❱
+          Production pricing is selected from a substring check of SITE_URL and falls back to test pricing
+          when configuration is absent or unexpected.                                                     
+                                                                                                          
+           40┆ return (
+           41┆    siteUrl.includes('keyfate.com') && !siteUrl.includes('staging') &&
+               !siteUrl.includes('dev')                                             
+           42┆ );
+                                                                             
+    /Users/alancolver/dev/keyfate/frontend/src/routes/api/check-in/+server.ts
+    ❯❱ piolium.semgrep-rules.keyfate-credential-in-url-parameter
+          ❰❰ Blocking ❱❱
+          A credential-like value is accepted from the URL, which can leak through request logs, browser
+          history, analytics, and referrers.                                                            
+                                                                                                        
+           25┆ const token = event.url.searchParams.get('token');
+            ⋮┆----------------------------------------
+           55┆ const token = event.url.searchParams.get('token');
+                                                                                              
+    /Users/alancolver/dev/keyfate/frontend/src/routes/api/secrets/[id]/server-share/+server.ts
+    ❯❱ piolium.semgrep-rules.keyfate-credential-in-url-parameter
+          ❰❰ Blocking ❱❱
+          A credential-like value is accepted from the URL, which can leak through request logs, browser
+          history, analytics, and referrers.                                                            
+                                                                                                        
+           10┆ const token = event.url.searchParams.get('token');
+   
+    ❯❱ piolium.semgrep-rules.keyfate-plaintext-server-share-response
+          ❰❰ Blocking ❱❱
+          A plaintext recovery share is returned from a public token-gated route; verify URL-token secrecy,
+          response caching, logging, and token replay controls.                                            
+                                                                                                           
+           95┆ return json({ serverShare: decryptedServerShare });
+
+                
+                
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 7 (7 blocking)
+ • Rules run: 4
+ • Targets scanned: 489
+ • Parsed lines: ~100.0%
+ • Scan skipped: 
+   ◦ Matching --exclude patterns: 2718
+   ◦ Files matching .semgrepignore patterns: 3
+ • Scan was limited to files tracked by git
+ • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+Ran 4 rules on 489 files: 7 findings.

@@ -25,8 +25,6 @@ describe('getSafeRedirectTarget', () => {
 	});
 
 	it('rejects protocol-relative URLs', () => {
-		expect(getSafeRedirectTarget('//evil.example/phish', 'https://keyfate.com')).toBe(
-			'/dashboard'
-		);
+		expect(getSafeRedirectTarget('//evil.example/phish', 'https://keyfate.com')).toBe('/dashboard');
 	});
 });

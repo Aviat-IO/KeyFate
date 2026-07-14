@@ -25,12 +25,27 @@
 	} from '@lucide/svelte';
 	import { Buffer } from 'buffer';
 	import sss from 'shamirs-secret-sharing';
+	import { generateSecretKey } from 'nostr-tools/pure';
+	import { publishSharesToNostr } from '$lib/services/nostr-publisher';
+	import {
+		clearEphemeralRecoveryState,
+		partitionRecoveryShares,
+		setEphemeralBitcoinSetup,
+		setEphemeralNostrMetadata,
+		setEphemeralRecoveryState
+	} from '$lib/client/ephemeral-recovery-state';
+	import {
+		buildNostrRegistrationPayload,
+		buildSecretCreationPayload
+	} from '$lib/client/secret-creation-payload';
 
 	let {
 		isPaid = false,
+		bitcoinEnrollmentEnabled = false,
 		tierInfo
 	}: {
 		isPaid?: boolean;
+		bitcoinEnrollmentEnabled?: boolean;
 		tierInfo?: {
 			secretsUsed: number;
 			secretsLimit: number;
@@ -56,6 +71,7 @@
 	// Bitcoin & Nostr settings (Pro only)
 	let enableNostrShares = $state(false);
 	let enableBitcoinTimelock = $state(false);
+	let bitcoinRecipientIndex = $state<number | null>(null);
 
 	// Validation errors
 	let fieldErrors = $state<Record<string, string>>({});
@@ -139,6 +155,19 @@
 		if (sssThreshold > sssSharesTotal) {
 			errors.sssThreshold = 'Threshold cannot exceed total shares';
 		}
+		if (enableNostrShares && recipients.some((recipient) => !recipient.nostrPubkey.trim())) {
+			errors.nostrRecipients = 'Every Nostr recipient requires a valid npub';
+		}
+		if (enableNostrShares && recipients.length > sssSharesTotal - 1) {
+			errors.nostrRecipients = 'Increase total shares so each recipient has a distinct share';
+		}
+		if (enableBitcoinTimelock) {
+			if (!bitcoinEnrollmentEnabled) errors.bitcoinRecipient = 'Bitcoin enrollment is disabled';
+			if (!enableNostrShares) errors.bitcoinRecipient = 'Bitcoin recovery requires Nostr v2';
+			if (bitcoinRecipientIndex === null || !recipients[bitcoinRecipientIndex]) {
+				errors.bitcoinRecipient = 'Select exactly one Nostr recipient for Bitcoin recovery';
+			}
+		}
 
 		fieldErrors = errors;
 		return Object.keys(errors).length === 0;
@@ -177,23 +206,16 @@
 			const csrfRes = await fetch('/api/csrf-token');
 			const { token: csrfToken } = await csrfRes.json();
 
-			const payload = {
+			const payload = buildSecretCreationPayload({
 				title,
-				server_share: serverSharePlainHex,
-				recipients: recipients.map((r) => ({ name: r.name, email: r.email })),
-				check_in_days: parseInt(checkInDays, 10),
-				sss_shares_total: sssSharesTotal,
-				sss_threshold: sssThreshold,
-				enable_nostr_shares: enableNostrShares,
-				enable_bitcoin_timelock: enableBitcoinTimelock,
-				...(enableNostrShares
-					? {
-							recipient_nostr_pubkeys: recipients
-								.filter((r) => r.nostrPubkey)
-								.map((r) => ({ email: r.email, npub: r.nostrPubkey }))
-						}
-					: {})
-			};
+				serverShare: serverSharePlainHex,
+				recipients,
+				checkInDays: parseInt(checkInDays, 10),
+				totalShares: sssSharesTotal,
+				threshold: sssThreshold,
+				enableNostrShares,
+				enableBitcoinTimelock
+			});
 
 			const response = await fetch('/api/secrets', {
 				method: 'POST',
@@ -213,71 +235,98 @@
 				error = result.warning;
 			}
 
-			// Store shares in localStorage with 24 hour expiry
-			const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
-			localStorage.setItem(
-				`keyfate:userManagedShares:${result.secretId}`,
-				JSON.stringify({ shares: userManagedShares, expiresAt })
-			);
+			// Plaintext owner/recipient shares live only in this tab's memory until
+			// the owner downloads an encrypted recovery kit or leaves the flow.
+			setEphemeralRecoveryState({
+				secretId: result.secretId,
+				shares: userManagedShares,
+				createdAt: Date.now()
+			});
 
-			// If Nostr shares are enabled, publish them and store the result for the recovery kit
-			if (
-				enableNostrShares &&
-				result.recipients?.some((r: { nostrPubkey: string | null }) => r.nostrPubkey)
-			) {
+			// Publish recipient shares entirely in this browser. Only signed outer
+			// events and public signed manifests are sent back to KeyFate.
+			if (enableNostrShares) {
 				try {
-					// Build share payloads for recipients that have nostr pubkeys
-					const nostrRecipients = result.recipients.filter(
-						(r: { nostrPubkey: string | null }) => r.nostrPubkey
-					);
-					const nostrShares = nostrRecipients.map((r: { id: string }, idx: number) => ({
-						share: userManagedShares[idx],
-						shareIndex: idx + 1,
-						recipientId: r.id
-					}));
+					const nostrRecipients = result.recipients as Array<{
+						id: string;
+						nostrPubkey: string | null;
+					}>;
+					if (nostrRecipients.some((recipient) => !recipient.nostrPubkey)) {
+						throw new Error('Server did not persist every recipient npub');
+					}
 
-					const publishRes = await fetch(`/api/secrets/${result.secretId}/publish-nostr`, {
+					const { recipientShares } = partitionRecoveryShares(
+						userManagedShares,
+						nostrRecipients.length
+					);
+					const publication = await publishSharesToNostr({
+						secretId: result.secretId,
+						shares: nostrRecipients.map((recipient, index) => ({
+							recipientId: recipient.id,
+							share: recipientShares[index],
+							shareIndex: index + 1
+						})),
+						recipients: nostrRecipients.map((recipient) => ({
+							id: recipient.id,
+							nostrPubkey: recipient.nostrPubkey
+						})),
+						senderSecretKey: generateSecretKey(),
+						threshold: sssThreshold,
+						totalShares: sssSharesTotal
+					});
+
+					if (
+						publication.errors.length > 0 ||
+						publication.published.length !== nostrRecipients.length
+					) {
+						throw new Error(
+							publication.errors[0]?.error || 'Not every recipient artifact reached a relay'
+						);
+					}
+
+					const registerResponse = await fetch(`/api/secrets/${result.secretId}/publish-nostr`, {
 						method: 'POST',
 						headers: {
 							'Content-Type': 'application/json',
 							'x-csrf-token': csrfToken
 						},
-						body: JSON.stringify({
-							shares: nostrShares,
-							threshold: sssThreshold,
-							totalShares: sssSharesTotal
-						})
+						body: JSON.stringify(buildNostrRegistrationPayload(publication.published))
 					});
-
-					if (publishRes.ok) {
-						const publishData = await publishRes.json();
-						if (publishData.published?.length > 0) {
-							// Take the first encryptedKPassphrase if any share has one
-							const firstWithPassphrase = publishData.published.find(
-								(p: { encryptedKPassphrase?: unknown }) => p.encryptedKPassphrase
-							);
-
-							localStorage.setItem(
-								`keyfate:nostrData:${result.secretId}`,
-								JSON.stringify({
-									eventIds: publishData.published.map(
-										(p: { nostrEventId: string }) => p.nostrEventId
-									),
-									plaintextKs: publishData.published.map(
-										(p: { recipientId: string; plaintextK: string }) => ({
-											recipientId: p.recipientId,
-											plaintextK: p.plaintextK
-										})
-									),
-									encryptedKPassphrase: firstWithPassphrase?.encryptedKPassphrase ?? null,
-									publishedAt: new Date().toISOString()
-								})
-							);
-						}
+					if (!registerResponse.ok) {
+						const registration = await registerResponse.json();
+						throw new Error(registration.error || 'Failed to register Nostr recovery artifacts');
 					}
-				} catch (nostrErr) {
-					// Nostr publishing failure is non-fatal — the secret was already created
-					console.error('Nostr publish failed (non-fatal):', nostrErr);
+
+					setEphemeralNostrMetadata(result.secretId, {
+						eventIds: publication.published.map((item) => item.nostrEventId),
+						manifests: publication.published.map((item) => item.manifestEvent)
+					});
+					if (enableBitcoinTimelock && bitcoinRecipientIndex !== null) {
+						const selectedRecipient = nostrRecipients[bitcoinRecipientIndex];
+						const selectedPublication = publication.published.find(
+							(item) => item.recipientId === selectedRecipient.id
+						);
+						if (!selectedPublication || !selectedRecipient.nostrPubkey) {
+							throw new Error('Selected Bitcoin recipient publication is unavailable');
+						}
+						setEphemeralBitcoinSetup(result.secretId, {
+							recipientId: selectedRecipient.id,
+							recipientName: recipients[bitcoinRecipientIndex].name,
+							recipientNostrPubkey: selectedRecipient.nostrPubkey,
+							nostrCapsuleEventId: selectedPublication.capsuleEventId,
+							nostrManifestEvent: selectedPublication.manifestEvent,
+							nostrCapsuleEvent: selectedPublication.capsuleEvent,
+							plaintextK: selectedPublication.plaintextK
+						});
+						selectedPublication.plaintextK.fill(0);
+					}
+				} catch (nostrError) {
+					clearEphemeralRecoveryState(result.secretId);
+					await fetch(`/api/secrets/${result.secretId}`, {
+						method: 'DELETE',
+						headers: { 'x-csrf-token': csrfToken }
+					}).catch(() => undefined);
+					throw nostrError;
 				}
 			}
 
@@ -414,7 +463,7 @@
 		{/if}
 
 		<div class="space-y-3">
-			{#each recipients as recipient, index}
+			{#each recipients as recipient, index (recipient)}
 				<div class="border-border/50 space-y-3 rounded-md border p-4">
 					<div class="flex items-center justify-between">
 						<div class="text-muted-foreground text-xs font-medium">Recipient {index + 1}</div>
@@ -501,7 +550,7 @@
 					<span>{selectedCheckInLabel}</span>
 				</Select.Trigger>
 				<Select.Content>
-					{#each availableOptions as option}
+					{#each availableOptions as option (option.value)}
 						<Select.Item value={option.value}>{option.label}</Select.Item>
 					{/each}
 				</Select.Content>
@@ -555,7 +604,7 @@
 
 						{#if enableNostrShares}
 							<div class="space-y-3 pl-6">
-								{#each recipients as recipient, index}
+								{#each recipients as recipient, index (recipient)}
 									<div class="bg-muted/30 rounded-md border p-3">
 										<p class="text-muted-foreground mb-2 text-xs font-medium">
 											{recipient.name || `Recipient ${index + 1}`} — Nostr Pubkey
@@ -563,6 +612,9 @@
 										<NostrPubkeyInput bind:value={recipient.nostrPubkey} />
 									</div>
 								{/each}
+								{#if fieldErrors.nostrRecipients}
+									<p class="text-destructive text-xs">{fieldErrors.nostrRecipients}</p>
+								{/if}
 							</div>
 						{/if}
 
@@ -571,29 +623,44 @@
 							<Checkbox
 								id="enable-bitcoin"
 								bind:checked={enableBitcoinTimelock}
-								disabled={isSubmitting}
+								disabled={isSubmitting || !bitcoinEnrollmentEnabled}
+								onCheckedChange={(checked) => {
+									enableBitcoinTimelock = checked === true;
+									if (enableBitcoinTimelock) enableNostrShares = true;
+									if (!enableBitcoinTimelock) bitcoinRecipientIndex = null;
+								}}
 							/>
-							<div class="space-y-1">
+							<div class="space-y-2">
 								<Label for="enable-bitcoin" class="flex items-center gap-1.5 text-sm font-medium">
 									<Bitcoin class="h-3.5 w-3.5" />
-									Enable Bitcoin Timelock
+									Bitcoin Timelock (Signet)
 								</Label>
 								<p class="text-muted-foreground text-xs">
-									Lock BTC with a CSV timelock as an additional dead man's switch mechanism. Can be
-									configured after secret creation.
+									{bitcoinEnrollmentEnabled
+										? 'Configure owner-funded Signet recovery after Nostr publication.'
+										: 'Enrollment is server-disabled pending the funded Signet gate.'}
 								</p>
+								{#if enableBitcoinTimelock}
+									<div class="space-y-2">
+										<p class="text-xs font-medium">Select exactly one Bitcoin recipient:</p>
+										{#each recipients as recipient, index (recipient)}
+											<label class="flex items-center gap-2 text-xs">
+												<input
+													type="radio"
+													name="bitcoin-recipient"
+													checked={bitcoinRecipientIndex === index}
+													onchange={() => (bitcoinRecipientIndex = index)}
+												/>
+												{recipient.name || `Recipient ${index + 1}`}
+											</label>
+										{/each}
+									</div>
+								{/if}
+								{#if fieldErrors.bitcoinRecipient}
+									<p class="text-destructive text-xs">{fieldErrors.bitcoinRecipient}</p>
+								{/if}
 							</div>
 						</div>
-
-						{#if enableBitcoinTimelock}
-							<Alert.Root>
-								<Info class="h-4 w-4" />
-								<Alert.Description class="text-xs">
-									Bitcoin timelock will be configured on the secret detail page after creation.
-									You'll set the lock amount and fee priority there.
-								</Alert.Description>
-							</Alert.Root>
-						{/if}
 					</Accordion.Content>
 				</Accordion.Item>
 			</Accordion.Root>

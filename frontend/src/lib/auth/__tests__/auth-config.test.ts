@@ -55,7 +55,17 @@ vi.mock('$lib/db/schema', () => ({
 		sessionsInvalidatedAt: 'users.sessions_invalidated_at',
 		sessionVersion: 'users.session_version'
 	},
-	verificationTokens: { token: 'verification_tokens.token', identifier: 'verification_tokens.identifier' }
+	verificationTokens: {
+		token: 'verification_tokens.token',
+		identifier: 'verification_tokens.identifier'
+	},
+	// auth.ts imports the rate-limit boundary, whose module graph references
+	// this table even though these auth-config tests never execute an upsert.
+	rateLimits: {
+		key: 'rate_limits.key',
+		count: 'rate_limits.count',
+		expiresAt: 'rate_limits.expires_at'
+	}
 }));
 vi.mock('$lib/auth/password', () => ({ validatePassword: vi.fn() }));
 vi.mock('$lib/auth/users', () => ({ authenticateUser: vi.fn() }));
@@ -70,8 +80,8 @@ vi.mock('drizzle-orm', () => ({ and: vi.fn(), eq: vi.fn(), gt: vi.fn(), lte: vi.
 
 describe('auth config', () => {
 	beforeAll(async () => {
-		process.env.GOOGLE_CLIENT_ID = 'test-client.apps.googleusercontent.com';
-		process.env.GOOGLE_CLIENT_SECRET = 'test-secret';
+		process.env.AUTH_GOOGLE_ID = 'test-client.apps.googleusercontent.com';
+		process.env.AUTH_GOOGLE_SECRET = 'test-secret';
 
 		await import('../../../auth');
 	});
@@ -90,7 +100,7 @@ describe('auth config', () => {
 		mockGetDatabase.mockClear();
 	});
 
-	it('passes GOOGLE_CLIENT_* env vars to the Google provider', () => {
+	it('passes canonical AUTH_GOOGLE_* env vars to the Google provider', () => {
 		expect(capturedConfig.providers[0]).toEqual(
 			expect.objectContaining({
 				clientId: 'test-client.apps.googleusercontent.com',

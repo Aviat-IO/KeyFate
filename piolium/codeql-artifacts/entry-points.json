@@ -1,0 +1,74 @@
+[
+  {
+    "label": "message",
+    "source_type": "RemoteFlowSource",
+    "file": "src/lib/encryption.ts",
+    "line": 94,
+    "threat_model": "remote",
+    "coverage": "codeql-recognized"
+  },
+  {
+    "label": "iv",
+    "source_type": "RemoteFlowSource",
+    "file": "src/lib/encryption.ts",
+    "line": 95,
+    "threat_model": "remote",
+    "coverage": "codeql-recognized"
+  },
+  {
+    "label": "keyVersion",
+    "source_type": "RemoteFlowSource",
+    "file": "src/lib/encryption.ts",
+    "line": 96,
+    "threat_model": "remote",
+    "coverage": "codeql-recognized"
+  },
+  {
+    "label": "cipherText",
+    "source_type": "RemoteFlowSource",
+    "file": "src/lib/encryption.ts",
+    "line": 122,
+    "threat_model": "remote",
+    "coverage": "codeql-recognized"
+  },
+  {
+    "label": "ivBuffer",
+    "source_type": "RemoteFlowSource",
+    "file": "src/lib/encryption.ts",
+    "line": 123,
+    "threat_model": "remote",
+    "coverage": "codeql-recognized"
+  },
+  {
+    "label": "authTag",
+    "source_type": "RemoteFlowSource",
+    "file": "src/lib/encryption.ts",
+    "line": 124,
+    "threat_model": "remote",
+    "coverage": "codeql-recognized"
+  },
+  {
+    "label": "keyVersion",
+    "source_type": "RemoteFlowSource",
+    "file": "src/lib/encryption.ts",
+    "line": 125,
+    "threat_model": "remote",
+    "coverage": "codeql-recognized"
+  },
+  {
+    "label": "window.location",
+    "source_type": "RemoteFlowSource",
+    "file": "src/lib/pricing.ts",
+    "line": 35,
+    "threat_model": "remote",
+    "coverage": "codeql-recognized"
+  },
+  {
+    "label": "window.location",
+    "source_type": "RemoteFlowSource",
+    "file": "src/lib/pricing.ts",
+    "line": 35,
+    "threat_model": "remote",
+    "coverage": "codeql-recognized"
+  }
+]

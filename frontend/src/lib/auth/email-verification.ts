@@ -133,13 +133,15 @@ export async function deleteVerificationTokenById(
 	}
 ): Promise<void> {
 	const normalizedEmail = email.toLowerCase().trim();
-	await executor.delete(verificationTokens).where(
-		and(
-			eq(verificationTokens.identifier, normalizedEmail),
-			eq(verificationTokens.token, hashToken(token)),
-			eq(verificationTokens.purpose, purpose)
-		)
-	);
+	await executor
+		.delete(verificationTokens)
+		.where(
+			and(
+				eq(verificationTokens.identifier, normalizedEmail),
+				eq(verificationTokens.token, hashToken(token)),
+				eq(verificationTokens.purpose, purpose)
+			)
+		);
 }
 
 export async function getConsumableVerificationToken(
@@ -154,13 +156,13 @@ export async function getConsumableVerificationToken(
 		purpose: VerificationTokenPurpose;
 	}
 ): Promise<{
-		success: boolean;
-		consumed?: {
-			identifier: string;
-			expires: Date;
-			purpose: VerificationTokenPurpose;
-		};
-		error?: string;
+	success: boolean;
+	consumed?: {
+		identifier: string;
+		expires: Date;
+		purpose: VerificationTokenPurpose;
+	};
+	error?: string;
 }> {
 	const normalizedEmail = email.toLowerCase().trim();
 	const tokenHash = hashToken(token);

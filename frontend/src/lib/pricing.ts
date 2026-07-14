@@ -35,11 +35,16 @@ function isProduction(): boolean {
 			window.location.hostname === 'keyfate.com' || window.location.hostname === 'www.keyfate.com'
 		);
 	}
-	// Server-side check
-	const siteUrl = SITE_URL || '';
-	return (
-		siteUrl.includes('keyfate.com') && !siteUrl.includes('staging') && !siteUrl.includes('dev')
-	);
+	// Server pricing fails safe: an optimized production runtime never receives test prices.
+	const explicitEnvironment = (process.env.PUBLIC_ENV || '').toLowerCase();
+	if (['development', 'dev', 'test', 'staging', 'stage'].includes(explicitEnvironment)) {
+		return false;
+	}
+	if (explicitEnvironment === 'production') {
+		return true;
+	}
+
+	return process.env.NODE_ENV === 'production' || SITE_URL.includes('keyfate.com');
 }
 
 /**

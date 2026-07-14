@@ -1,0 +1,8 @@
+{"#select":{"columns":[
+   {"name":"sink","kind":"Entity"}
+  ,{"kind":"String"}]
+ ,"tuples":[
+   [{"label":"userDir"},"file-access | src/lib/gdpr/export-service.ts:173"]
+  ,[{"label":"filePath"},"file-access | src/lib/gdpr/export-service.ts:180"]
+  ,[{"label":"filePath"},"file-access | src/lib/gdpr/export-service.ts:200"]]
+ }}

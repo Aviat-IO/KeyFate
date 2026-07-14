@@ -24,6 +24,9 @@ export interface CreateSubscriptionData {
 }
 
 export interface UpdateSubscriptionData {
+	provider?: SubscriptionProvider;
+	providerCustomerId?: string | null;
+	providerSubscriptionId?: string;
 	tierName?: SubscriptionTier;
 	status?: SubscriptionStatus;
 	currentPeriodStart?: Date;

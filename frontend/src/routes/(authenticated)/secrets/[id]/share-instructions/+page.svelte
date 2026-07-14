@@ -7,10 +7,21 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Checkbox } from '$lib/components/ui/checkbox';
-	import { Separator } from '$lib/components/ui/separator';
-	import { Copy, AlertTriangle, CheckCircle, Info, Send } from '@lucide/svelte';
+	import { Copy, AlertTriangle, CheckCircle, Download, Info, Loader2, Send } from '@lucide/svelte';
+	import {
+		clearEphemeralRecoveryState,
+		getEphemeralRecoveryState,
+		partitionRecoveryShares
+	} from '$lib/client/ephemeral-recovery-state';
+	import { encryptRecoveryKit } from '$lib/crypto/recovery-kit';
+	import BitcoinOwnerSetup from '$lib/components/bitcoin/BitcoinOwnerSetup.svelte';
+	import type { EphemeralBitcoinSetup } from '$lib/client/ephemeral-recovery-state';
+
+	let { data } = $props();
 
 	let userManagedShares = $state<string[]>([]);
+	let recipientShares = $state<string[]>([]);
+	let backupShares = $state<string[]>([]);
 	let recipients = $state<Array<{ name: string; email?: string | null }>>([]);
 	let sssSharesTotal = $state(0);
 	let sssThreshold = $state(0);
@@ -18,8 +29,12 @@
 	let error = $state<string | null>(null);
 	let confirmedSent = $state(false);
 	let copiedIndex = $state<number | null>(null);
-
-	const isMinimalShares = $derived(sssSharesTotal === 2);
+	let kitPassphrase = $state('');
+	let kitPassphraseConfirmation = $state('');
+	let exportingKit = $state(false);
+	let kitDownloaded = $state(false);
+	let bitcoinSetup = $state<EphemeralBitcoinSetup | null>(null);
+	let bitcoinKitDownloaded = $state(false);
 
 	onMount(() => {
 		const searchParams = $page.url.searchParams;
@@ -44,40 +59,38 @@
 			}
 		}
 
-		const local = localStorage.getItem(`keyfate:userManagedShares:${id}`);
-		if (!local) {
+		const recoveryState = getEphemeralRecoveryState(id);
+		if (!recoveryState) {
 			error =
-				'Could not find your shares in this browser. They may have expired or been cleared. Please re-create the secret.';
+				'Your in-memory recovery material is unavailable. Reloading intentionally clears it; delete and re-create this secret.';
 			return;
 		}
 
-		let parsed: { shares: string[]; expiresAt: number };
-		try {
-			parsed = JSON.parse(local);
-			if (!Array.isArray(parsed.shares) || typeof parsed.expiresAt !== 'number') {
-				throw new Error();
-			}
-		} catch {
-			error = 'Failed to parse your shares. Please re-create the secret.';
-			return;
-		}
-
-		if (Date.now() > parsed.expiresAt) {
-			localStorage.removeItem(`keyfate:userManagedShares:${id}`);
-			error = 'Your shares have expired (over 24 hours old). Please re-create the secret.';
-			return;
-		}
-
-		if (parsed.shares.length !== total - 1) {
+		if (recoveryState.shares.length !== total - 1) {
 			error = 'Share count mismatch. Please re-create the secret.';
 			return;
 		}
 
+		let partitionedShares: ReturnType<typeof partitionRecoveryShares>;
+		try {
+			partitionedShares = partitionRecoveryShares(recoveryState.shares, parsedRecipients.length);
+		} catch {
+			error = 'Recipient share count mismatch. Please re-create the secret.';
+			return;
+		}
+
 		secretId = id;
-		userManagedShares = parsed.shares;
+		userManagedShares = recoveryState.shares;
+		recipientShares = partitionedShares.recipientShares;
+		backupShares = partitionedShares.backupShares;
 		sssSharesTotal = total;
 		sssThreshold = threshold;
 		recipients = parsedRecipients;
+		bitcoinSetup = recoveryState.bitcoin ?? null;
+		if (bitcoinSetup && !data.bitcoinEnrollmentEnabled) {
+			error =
+				'Bitcoin enrollment became unavailable. Delete and re-create this secret without Bitcoin.';
+		}
 	});
 
 	function handleCopy(shareHex: string, index: number) {
@@ -86,8 +99,63 @@
 		setTimeout(() => (copiedIndex = null), 2000);
 	}
 
+	async function downloadEncryptedKit() {
+		if (!secretId || kitPassphrase.length < 12) {
+			error = 'Use a recovery-kit passphrase of at least 12 characters.';
+			return;
+		}
+		if (kitPassphrase !== kitPassphraseConfirmation) {
+			error = 'Recovery-kit passphrases do not match.';
+			return;
+		}
+		const state = getEphemeralRecoveryState(secretId);
+		if (!state) {
+			error = 'Recovery material expired. Delete and re-create this secret.';
+			return;
+		}
+
+		exportingKit = true;
+		error = null;
+		try {
+			const envelope = await encryptRecoveryKit(
+				{
+					metadata: {
+						secretId,
+						threshold: sssThreshold,
+						totalShares: sssSharesTotal,
+						recipients,
+						exportedAt: new Date().toISOString()
+					},
+					userManagedShares: state.shares,
+					nostr: state.nostr ?? null
+				},
+				kitPassphrase
+			);
+			const url = URL.createObjectURL(
+				new Blob([JSON.stringify(envelope, null, 2)], { type: 'application/json' })
+			);
+			const anchor = document.createElement('a');
+			anchor.href = url;
+			anchor.download = `keyfate-owner-recovery-kit-${secretId}.json`;
+			anchor.click();
+			URL.revokeObjectURL(url);
+			kitDownloaded = true;
+			kitPassphrase = '';
+			kitPassphraseConfirmation = '';
+		} catch (downloadError) {
+			error =
+				downloadError instanceof Error ? downloadError.message : 'Failed to encrypt recovery kit';
+		} finally {
+			exportingKit = false;
+		}
+	}
+
 	function handleProceed() {
-		if (confirmedSent) {
+		if (confirmedSent && kitDownloaded && (!bitcoinSetup || bitcoinKitDownloaded) && secretId) {
+			clearEphemeralRecoveryState(secretId);
+			userManagedShares = [];
+			recipientShares = [];
+			backupShares = [];
 			goto('/dashboard');
 		}
 	}
@@ -103,7 +171,7 @@
 			'',
 			`Here is your KeyFate secret share: ${share}`,
 			'',
-			'Please keep this very safe. You will need it (and one other share that KeyFate will provide if the secret expires) to reconstruct the original message.',
+			`Please keep this very safe. Recovery requires ${sssThreshold} distinct shares. KeyFate will provide its service share if the secret expires, but additional shares may still be required.`,
 			'',
 			"What is KeyFate? It's a dead man's switch service. The person who set this up has stored an encrypted message that will be made accessible to you if they fail to check in regularly.",
 			'',
@@ -150,73 +218,63 @@
 							<strong>Share 0 (KeyFate):</strong> Automatically sent to recipients when triggered.
 						</li>
 						<li>
-							<strong>Share 1 (Recipients):</strong> You must distribute this to each recipient via your
-							own secure channel.
+							<strong>Recipient shares:</strong> Each recipient gets only their assigned share. Sending
+							the same share over two channels does not create another recovery share.
 						</li>
-						{#if !isMinimalShares}
+						{#if backupShares.length > 0}
 							<li>
-								<strong>
-									{sssSharesTotal === 3
-										? 'Share 2 (Backup):'
-										: `Shares 2-${sssSharesTotal - 1} (Backup):`}
-								</strong>
-								Store {sssSharesTotal === 3 ? 'this' : 'these'} securely offline for redundancy.
+								<strong>Owner backup shares:</strong> Store the remaining {backupShares.length}
+								{backupShares.length === 1 ? 'share' : 'shares'} securely offline.
 							</li>
 						{/if}
 					</ul>
 				</Alert.Description>
 			</Alert.Root>
 
-			<!-- Share 1 display -->
-			<div class="space-y-2">
-				<Label class="font-space text-lg font-bold tracking-tight">
-					Share 1: For ALL Recipients ({recipients.map((r) => r.name).join(', ')})
-				</Label>
-				<div class="flex items-center space-x-2">
-					<Input readonly value={userManagedShares[0]} class="bg-muted truncate text-sm" />
-					<Button
-						type="button"
-						size="icon"
-						variant="outline"
-						onclick={() => handleCopy(userManagedShares[0], 0)}
-					>
-						{#if copiedIndex === 0}
-							<CheckCircle class="text-accent-foreground h-4 w-4" />
-						{:else}
-							<Copy class="h-4 w-4" />
-						{/if}
-					</Button>
-				</div>
-				{#if copiedIndex === 0}
-					<p class="text-accent-foreground text-xs">Copied!</p>
-				{/if}
-			</div>
-
 			<!-- Distribution Checklist -->
 			<div class="space-y-4">
 				<h3 class="font-space text-lg font-bold tracking-tight">Distribution Checklist</h3>
 				{#each recipients as recipient, index}
-					<div class="border-border/50 flex items-start gap-3 rounded-md border p-3">
-						<div class="flex-1">
-							<p class="font-medium">{recipient.name}</p>
-							<p class="text-muted-foreground text-sm">
-								{recipient.email || 'No email provided'}
-							</p>
-						</div>
-						{#if recipient.email}
-							{@const mailto = createMailto(recipient, userManagedShares[0])}
-							{#if mailto}
-								<Button variant="outline" size="sm" href={mailto} class="font-semibold">
-									<Send class="mr-2 h-4 w-4" />
-									Email Share
-								</Button>
+					{@const assignedShare = recipientShares[index]}
+					<div class="border-border/50 space-y-3 rounded-md border p-3">
+						<div class="flex items-start justify-between gap-3">
+							<div class="flex-1">
+								<p class="font-medium">Share {index + 1}: {recipient.name}</p>
+								<p class="text-muted-foreground text-sm">
+									{recipient.email || 'No email provided'}
+								</p>
+							</div>
+							{#if recipient.email}
+								{@const mailto = createMailto(recipient, assignedShare)}
+								{#if mailto}
+									<Button variant="outline" size="sm" href={mailto} class="font-semibold">
+										<Send class="mr-2 h-4 w-4" />
+										Email Share
+									</Button>
+								{/if}
 							{/if}
-						{/if}
+						</div>
+						<div class="flex items-center space-x-2">
+							<Input readonly value={assignedShare} class="bg-muted truncate text-sm" />
+							<Button
+								type="button"
+								size="icon"
+								variant="outline"
+								aria-label={`${copiedIndex === index ? 'Copied' : 'Copy'} recovery share for ${recipient.name}`}
+								onclick={() => handleCopy(assignedShare, index)}
+							>
+								{#if copiedIndex === index}
+									<CheckCircle class="text-accent-foreground h-4 w-4" />
+								{:else}
+									<Copy class="h-4 w-4" />
+								{/if}
+							</Button>
+						</div>
 					</div>
 				{/each}
 			</div>
 
-			{#if !isMinimalShares && userManagedShares.length > 1}
+			{#if backupShares.length > 0}
 				<div class="space-y-4">
 					<h3 class="font-space text-lg font-bold tracking-tight">Backup Shares</h3>
 					<p class="text-muted-foreground text-sm">
@@ -224,10 +282,10 @@
 							? 'These shares are REQUIRED for recovery. Store them securely offline.'
 							: 'Optional redundancy shares. Store securely offline.'}
 					</p>
-					{#each userManagedShares.slice(1) as share, index}
+					{#each backupShares as share, index}
 						<div class="space-y-2">
 							<Label class="font-space text-lg font-bold tracking-tight">
-								Share {index + 2}: Backup Share {index + 1}
+								Share {recipients.length + index + 1}: Backup Share {index + 1}
 							</Label>
 							<div class="flex items-center space-x-2">
 								<Input readonly value={share} class="bg-muted truncate text-sm" />
@@ -235,9 +293,10 @@
 									type="button"
 									size="icon"
 									variant="outline"
-									onclick={() => handleCopy(share, index + 1)}
+									aria-label={`${copiedIndex === recipients.length + index ? 'Copied' : 'Copy'} backup recovery share ${index + 1}`}
+									onclick={() => handleCopy(share, recipients.length + index)}
 								>
-									{#if copiedIndex === index + 1}
+									{#if copiedIndex === recipients.length + index}
 										<CheckCircle class="text-accent-foreground h-4 w-4" />
 									{:else}
 										<Copy class="h-4 w-4" />
@@ -248,6 +307,66 @@
 					{/each}
 				</div>
 			{/if}
+
+			{#if bitcoinSetup && data.bitcoinEnrollmentEnabled && secretId}
+				<BitcoinOwnerSetup
+					{secretId}
+					setup={bitcoinSetup}
+					oncomplete={() => (bitcoinKitDownloaded = true)}
+				/>
+			{/if}
+
+			<div class="border-border space-y-4 rounded-md border p-4">
+				<div>
+					<h3 class="font-space font-bold tracking-tight">Download Encrypted Owner Kit</h3>
+					<p class="text-muted-foreground mt-1 text-sm">
+						This is the only durable owner copy. The plaintext shares are held only in this tab's
+						memory.
+					</p>
+				</div>
+				<div class="grid gap-3 sm:grid-cols-2">
+					<div class="space-y-2">
+						<Label for="kit-passphrase">Kit passphrase</Label>
+						<Input
+							id="kit-passphrase"
+							type="password"
+							bind:value={kitPassphrase}
+							autocomplete="new-password"
+						/>
+					</div>
+					<div class="space-y-2">
+						<Label for="kit-passphrase-confirmation">Confirm passphrase</Label>
+						<Input
+							id="kit-passphrase-confirmation"
+							type="password"
+							bind:value={kitPassphraseConfirmation}
+							autocomplete="new-password"
+						/>
+					</div>
+				</div>
+				<Button
+					type="button"
+					variant="outline"
+					onclick={downloadEncryptedKit}
+					disabled={exportingKit || kitPassphrase.length < 12}
+				>
+					{#if exportingKit}
+						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+						Encrypting…
+					{:else if kitDownloaded}
+						<CheckCircle class="mr-2 h-4 w-4" />
+						Download another copy
+					{:else}
+						<Download class="mr-2 h-4 w-4" />
+						Encrypt and download kit
+					{/if}
+				</Button>
+				{#if kitDownloaded}
+					<p class="text-accent-foreground text-sm">
+						Encrypted kit downloaded. Store it separately from its passphrase.
+					</p>
+				{/if}
+			</div>
 
 			<Alert.Root variant="destructive" class="mt-6">
 				<AlertTriangle class="mt-0.5 h-5 w-5" />
@@ -278,19 +397,25 @@
 					for="confirm-sent"
 					class="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 				>
-					I have distributed {sssThreshold === sssSharesTotal ? 'all required shares' : 'Share 1'}
-					and understand that recipients cannot recover the secret without them.
+					I have distributed {sssThreshold === sssSharesTotal ? 'all required shares' : 'Share 1'},
+					downloaded the encrypted owner kit, and understand that this tab will clear its plaintext
+					copy.
 				</Label>
 			</div>
 
 			<div class="flex justify-end pt-8">
 				<Button
 					onclick={handleProceed}
-					disabled={!confirmedSent || userManagedShares.length === 0}
+					disabled={!confirmedSent ||
+						!kitDownloaded ||
+						(!!bitcoinSetup && !bitcoinKitDownloaded) ||
+						userManagedShares.length === 0}
 					size="lg"
 					class="w-full font-semibold md:w-auto"
 				>
-					{confirmedSent ? 'Proceed to Dashboard' : 'Confirm Shares Distributed to Proceed'}
+					{confirmedSent && kitDownloaded && (!bitcoinSetup || bitcoinKitDownloaded)
+						? 'Clear Plaintext and Proceed'
+						: 'Complete Distribution and Required Kit Downloads'}
 				</Button>
 			</div>
 		</div>

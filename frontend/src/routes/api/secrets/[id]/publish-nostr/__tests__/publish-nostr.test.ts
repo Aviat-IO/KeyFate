@@ -1,501 +1,231 @@
-/**
- * Tests for POST /api/secrets/[id]/publish-nostr
- *
- * Verifies that the endpoint correctly validates input, checks ownership,
- * calls publishSharesToNostr, and returns the expected response shape.
- */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { generateSecretKey, getPublicKey } from 'nostr-tools/pure';
+import {
+	createRecoveryCapsule,
+	createRecoveryManifest,
+	RECOVERY_CAPSULE_VERSION
+} from '$lib/nostr/recovery-capsule';
+import { wrapCapsuleForRecipient } from '$lib/nostr/gift-wrap';
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-
-// --- Mocks ---
-
-// Mock @sveltejs/kit
 vi.mock('@sveltejs/kit', () => ({
 	json: (data: unknown, init?: { status?: number }) =>
 		new Response(JSON.stringify(data), {
 			status: init?.status ?? 200,
-			headers: { 'Content-Type': 'application/json' }
-		}),
-	error: (status: number, message: string) => {
-		const err = new Error(message) as any;
-		err.status = status;
-		throw err;
-	}
+			headers: { 'content-type': 'application/json' }
+		})
 }));
 
-// Mock CSRF protection
 vi.mock('$lib/csrf', () => ({
 	requireCSRFProtection: vi.fn(async () => ({ valid: true })),
-	createCSRFErrorResponse: vi.fn(
-		() => new Response(JSON.stringify({ error: 'CSRF validation failed' }), { status: 403 })
-	)
+	createCSRFErrorResponse: vi.fn(() => new Response(null, { status: 403 }))
 }));
 
-// Mock requireSession
-const mockRequireSession = vi.fn();
+const requireSession = vi.fn(async () => ({ user: { id: 'user-1' } }));
 vi.mock('$lib/server/auth', () => ({
-	requireSession: (...args: unknown[]) => mockRequireSession(...args)
+	requireSession: () => requireSession()
 }));
 
-// Mock database
-const mockSelect = vi.fn();
-const mockFrom = vi.fn();
-const mockWhere = vi.fn();
-const mockDb = {
-	select: mockSelect
-};
-vi.mock('$lib/db/drizzle', () => ({
-	getDatabase: vi.fn(async () => mockDb)
-}));
+const updateWhere = vi.fn(async () => []);
+const updateSet = vi.fn(() => ({ where: updateWhere }));
+const update = vi.fn(() => ({ set: updateSet }));
+const transaction = vi.fn(async (callback: (tx: { update: typeof update }) => Promise<void>) =>
+	callback({ update })
+);
+const select = vi.fn();
+const db = { select, transaction };
+vi.mock('$lib/db/drizzle', () => ({ getDatabase: vi.fn(async () => db) }));
 
-// Mock schema (just need the table references for eq/and)
 vi.mock('$lib/db/schema', () => ({
-	secrets: { id: 'id', userId: 'user_id' },
+	secrets: {
+		id: 'secrets.id',
+		userId: 'secrets.user_id',
+		status: 'secrets.status',
+		checkInDays: 'secrets.check_in_days',
+		nostrDeliveryStatus: 'secrets.nostr_delivery_status',
+		bitcoinDeliveryStatus: 'secrets.bitcoin_delivery_status'
+	},
 	secretRecipients: {
-		id: 'id',
-		secretId: 'secret_id',
-		nostrPubkey: 'nostr_pubkey'
+		id: 'recipients.id',
+		secretId: 'recipients.secret_id',
+		nostrPubkey: 'recipients.nostr_pubkey'
 	}
 }));
 
-// Mock drizzle-orm operators
 vi.mock('drizzle-orm', () => ({
-	eq: vi.fn((a, b) => ({ op: 'eq', a, b })),
-	and: vi.fn((...args: unknown[]) => ({ op: 'and', args }))
+	eq: vi.fn((left: unknown, right: unknown) => ({ type: 'eq', left, right })),
+	and: vi.fn((...conditions: unknown[]) => ({ type: 'and', conditions }))
 }));
 
-// Mock publishSharesToNostr
-const mockPublishSharesToNostr = vi.fn();
-vi.mock('$lib/services/nostr-publisher', () => ({
-	publishSharesToNostr: (...args: unknown[]) => mockPublishSharesToNostr(...args)
+const relayPublish = vi.fn(async () => undefined);
+vi.mock('$lib/nostr/client', () => ({
+	createNostrClient: () => ({ publish: relayPublish, close: vi.fn() })
 }));
 
-// Mock nostr-tools
-vi.mock('nostr-tools/pure', () => ({
-	generateSecretKey: vi.fn(() => new Uint8Array(32).fill(0xab))
-}));
+const scheduleRemindersForSecret = vi.fn(async () => undefined);
+vi.mock('$lib/services/reminder-scheduler', () => ({ scheduleRemindersForSecret }));
 
-// Mock @scure/base
-vi.mock('@scure/base', () => ({
-	hex: {
-		decode: vi.fn((s: string) => {
-			// Simple hex decode for testing
-			const bytes = new Uint8Array(s.length / 2);
-			for (let i = 0; i < s.length; i += 2) {
-				bytes[i / 2] = parseInt(s.substring(i, i + 2), 16);
-			}
-			return bytes;
-		}),
-		encode: vi.fn((bytes: Uint8Array) =>
-			Array.from(bytes)
-				.map((b) => b.toString(16).padStart(2, '0'))
-				.join('')
-		)
-	}
-}));
+const SECRET_ID = '550e8400-e29b-41d4-a716-446655440000';
+const RECIPIENT_ID = '660e8400-e29b-41d4-a716-446655440001';
 
-// --- Helpers ---
-
-const TEST_USER_ID = 'user-123';
-const TEST_SECRET_ID = '550e8400-e29b-41d4-a716-446655440000';
-const TEST_RECIPIENT_ID = '660e8400-e29b-41d4-a716-446655440001';
-const TEST_RECIPIENT_ID_2 = '660e8400-e29b-41d4-a716-446655440002';
-const TEST_NOSTR_PUBKEY = 'a'.repeat(64); // 64-char hex pubkey
-
-function createMockEvent(body: unknown) {
-	return {
-		params: { id: TEST_SECRET_ID },
-		request: new Request('http://localhost/api/secrets/test/publish-nostr', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(body)
-		}),
-		locals: {
-			auth: vi.fn()
-		},
-		url: new URL('http://localhost/api/secrets/test/publish-nostr'),
-		cookies: {
-			get: () => undefined,
-			getAll: () => [],
-			set: () => {},
-			delete: () => {},
-			serialize: () => ''
-		},
-		fetch: globalThis.fetch,
-		getClientAddress: () => '127.0.0.1',
-		platform: {},
-		route: { id: '/api/secrets/[id]/publish-nostr' },
-		isDataRequest: false,
-		isSubRequest: false
-	};
+function createRequest(body: unknown): Request {
+	return new Request(`http://localhost/api/secrets/${SECRET_ID}/publish-nostr`, {
+		method: 'POST',
+		headers: { 'content-type': 'application/json' },
+		body: JSON.stringify(body)
+	});
 }
 
-function validPayload(overrides: Record<string, unknown> = {}) {
-	return {
-		shares: [
-			{
-				share: 'deadbeef01',
-				shareIndex: 1,
-				recipientId: TEST_RECIPIENT_ID
-			}
-		],
-		threshold: 2,
-		totalShares: 3,
-		...overrides
-	};
-}
-
-// --- Setup ---
-
-function setupDbChain(results: unknown[]) {
-	// Each call to db.select() starts a chain: .select(columns?).from(table).where(cond)
-	// We need to support multiple calls (one for secret, one for recipients)
-	let callIndex = 0;
-	mockSelect.mockImplementation((..._args: unknown[]) => ({
-		from: () => ({
-			where: () => results[callIndex++] ?? []
-		})
+function configureSelect(secretRows: unknown[], recipientRows: unknown[]) {
+	let call = 0;
+	select.mockImplementation(() => ({
+		from: () => ({ where: async () => (call++ === 0 ? secretRows : recipientRows) })
 	}));
+}
+
+function signedArtifacts() {
+	const publisherSecretKey = generateSecretKey();
+	const publisherPubkey = getPublicKey(publisherSecretKey);
+	const recipientPubkey = getPublicKey(generateSecretKey());
+	const capsule = createRecoveryCapsule(
+		{
+			version: RECOVERY_CAPSULE_VERSION,
+			secretId: SECRET_ID,
+			recipientId: RECIPIENT_ID,
+			recipientNostrPubkey: recipientPubkey,
+			shareIndex: 1,
+			threshold: 2,
+			totalShares: 3,
+			encryptedShareHex: 'aabb',
+			nonceHex: '00'.repeat(12),
+			encryptedKNostr: 'opaque-nip44-payload'
+		},
+		publisherSecretKey
+	);
+	const giftWrapEvent = wrapCapsuleForRecipient(capsule, publisherSecretKey, recipientPubkey);
+	const manifestEvent = createRecoveryManifest(
+		{
+			version: RECOVERY_CAPSULE_VERSION,
+			secretId: SECRET_ID,
+			recipientId: RECIPIENT_ID,
+			recipientNostrPubkey: recipientPubkey,
+			publisherPubkey,
+			giftWrapEventId: giftWrapEvent.id,
+			capsuleEventId: capsule.id
+		},
+		publisherSecretKey
+	);
+	return { recipientPubkey, giftWrapEvent, manifestEvent };
 }
 
 describe('POST /api/secrets/[id]/publish-nostr', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-
-		// Default: authenticated user
-		mockRequireSession.mockResolvedValue({
-			user: { id: TEST_USER_ID }
-		});
-
-		// Default: no NOSTR_SERVER_SECRET_KEY env var
-		delete process.env.NOSTR_SERVER_SECRET_KEY;
 	});
 
-	describe('Authentication', () => {
-		it('should throw 401 when not authenticated', async () => {
-			mockRequireSession.mockRejectedValue(
-				Object.assign(new Error('Unauthorized'), { status: 401 })
-			);
-
-			const { POST } = await import('../+server');
-			const event = createMockEvent(validPayload());
-
-			await expect(POST(event as any)).rejects.toMatchObject({ status: 401 });
-		});
-	});
-
-	describe('Validation', () => {
-		it('should return 400 for empty shares array', async () => {
-			const { POST } = await import('../+server');
-			const event = createMockEvent(validPayload({ shares: [] }));
-
-			const response = await POST(event as any);
-			expect(response.status).toBe(400);
-
-			const data = await response.json();
-			expect(data.error).toBe('Invalid request data');
-		});
-
-		it('should return 400 for missing threshold', async () => {
-			const { POST } = await import('../+server');
-			const payload = validPayload();
-			delete (payload as any).threshold;
-			const event = createMockEvent(payload);
-
-			const response = await POST(event as any);
-			expect(response.status).toBe(400);
-		});
-
-		it('should return 400 for invalid recipientId format', async () => {
-			const { POST } = await import('../+server');
-			const event = createMockEvent(
-				validPayload({
-					shares: [
-						{
-							share: 'deadbeef',
-							shareIndex: 1,
-							recipientId: 'not-a-uuid'
-						}
-					]
-				})
-			);
-
-			const response = await POST(event as any);
-			expect(response.status).toBe(400);
-		});
-
-		it('should return 400 for threshold below minimum', async () => {
-			const { POST } = await import('../+server');
-			const event = createMockEvent(validPayload({ threshold: 1, totalShares: 3 }));
-
-			const response = await POST(event as any);
-			expect(response.status).toBe(400);
-		});
-
-		it('should return 400 for totalShares above maximum', async () => {
-			const { POST } = await import('../+server');
-			const event = createMockEvent(validPayload({ threshold: 2, totalShares: 8 }));
-
-			const response = await POST(event as any);
-			expect(response.status).toBe(400);
-		});
-
-		it('should return 400 for negative shareIndex', async () => {
-			const { POST } = await import('../+server');
-			const event = createMockEvent(
-				validPayload({
-					shares: [
-						{
-							share: 'deadbeef',
-							shareIndex: -1,
-							recipientId: TEST_RECIPIENT_ID
-						}
-					]
-				})
-			);
-
-			const response = await POST(event as any);
-			expect(response.status).toBe(400);
-		});
-	});
-
-	describe('Authorization', () => {
-		it('should return 404 when secret does not belong to user', async () => {
-			setupDbChain([
-				[] // secret not found
-			]);
-
-			const { POST } = await import('../+server');
-			const event = createMockEvent(validPayload());
-
-			const response = await POST(event as any);
-			expect(response.status).toBe(404);
-
-			const data = await response.json();
-			expect(data.error).toBe('Secret not found');
-		});
-
-		it('should return 400 when recipientId does not belong to secret', async () => {
-			setupDbChain([
-				[{ id: TEST_SECRET_ID }], // secret found
-				[{ id: 'other-recipient-id', nostrPubkey: TEST_NOSTR_PUBKEY }] // different recipient
-			]);
-
-			const { POST } = await import('../+server');
-			const event = createMockEvent(validPayload());
-
-			const response = await POST(event as any);
-			expect(response.status).toBe(400);
-
-			const data = await response.json();
-			expect(data.error).toContain('does not belong to this secret');
-		});
-	});
-
-	describe('Publishing', () => {
-		it('should call publishSharesToNostr with correct params', async () => {
-			setupDbChain([
-				[{ id: TEST_SECRET_ID }], // secret found
-				[{ id: TEST_RECIPIENT_ID, nostrPubkey: TEST_NOSTR_PUBKEY }] // recipient
-			]);
-
-			mockPublishSharesToNostr.mockResolvedValue({
-				published: [
-					{
-						recipientId: TEST_RECIPIENT_ID,
-						nostrEventId: 'event-id-123',
-						plaintextK: new Uint8Array([0xde, 0xad])
-					}
-				],
-				skipped: [],
-				errors: []
-			});
-
-			const { POST } = await import('../+server');
-			const event = createMockEvent(validPayload());
-
-			const response = await POST(event as any);
-			expect(response.status).toBe(200);
-
-			const data = await response.json();
-			expect(data.published).toHaveLength(1);
-			expect(data.published[0].recipientId).toBe(TEST_RECIPIENT_ID);
-			expect(data.published[0].nostrEventId).toBe('event-id-123');
-			expect(data.published[0].plaintextK).toBe('dead');
-			expect(data.skipped).toEqual([]);
-			expect(data.errors).toEqual([]);
-
-			// Verify publishSharesToNostr was called with correct structure
-			expect(mockPublishSharesToNostr).toHaveBeenCalledTimes(1);
-			const callArgs = mockPublishSharesToNostr.mock.calls[0][0];
-			expect(callArgs.secretId).toBe(TEST_SECRET_ID);
-			expect(callArgs.shares).toEqual([
-				{
-					share: 'deadbeef01',
-					shareIndex: 1,
-					recipientId: TEST_RECIPIENT_ID
-				}
-			]);
-			expect(callArgs.threshold).toBe(2);
-			expect(callArgs.totalShares).toBe(3);
-			expect(callArgs.senderSecretKey).toBeInstanceOf(Uint8Array);
-			expect(callArgs.recipients).toEqual([
-				{ id: TEST_RECIPIENT_ID, nostrPubkey: TEST_NOSTR_PUBKEY }
-			]);
-		});
-
-		it('should return 422 when no shares were published', async () => {
-			setupDbChain([
-				[{ id: TEST_SECRET_ID }],
-				[{ id: TEST_RECIPIENT_ID, nostrPubkey: null }] // no nostr pubkey
-			]);
-
-			mockPublishSharesToNostr.mockResolvedValue({
-				published: [],
-				skipped: [TEST_RECIPIENT_ID],
-				errors: []
-			});
-
-			const { POST } = await import('../+server');
-			const event = createMockEvent(validPayload());
-
-			const response = await POST(event as any);
-			expect(response.status).toBe(422);
-
-			const data = await response.json();
-			expect(data.published).toEqual([]);
-			expect(data.skipped).toContain(TEST_RECIPIENT_ID);
-		});
-
-		it('should use NOSTR_SERVER_SECRET_KEY from env when set', async () => {
-			const testKey = 'ab'.repeat(32); // 64-char hex = 32 bytes
-			process.env.NOSTR_SERVER_SECRET_KEY = testKey;
-
-			setupDbChain([
-				[{ id: TEST_SECRET_ID }],
-				[{ id: TEST_RECIPIENT_ID, nostrPubkey: TEST_NOSTR_PUBKEY }]
-			]);
-
-			mockPublishSharesToNostr.mockResolvedValue({
-				published: [
-					{
-						recipientId: TEST_RECIPIENT_ID,
-						nostrEventId: 'event-456',
-						plaintextK: new Uint8Array([0xff])
-					}
-				],
-				skipped: [],
-				errors: []
-			});
-
-			const { POST } = await import('../+server');
-			const event = createMockEvent(validPayload());
-
-			await POST(event as any);
-
-			const callArgs = mockPublishSharesToNostr.mock.calls[0][0];
-			// The key should be decoded from the env var hex
-			expect(callArgs.senderSecretKey).toBeInstanceOf(Uint8Array);
-			expect(callArgs.senderSecretKey.length).toBe(32);
-		});
-
-		it('should handle publish errors gracefully', async () => {
-			setupDbChain([
-				[{ id: TEST_SECRET_ID }],
-				[{ id: TEST_RECIPIENT_ID, nostrPubkey: TEST_NOSTR_PUBKEY }]
-			]);
-
-			mockPublishSharesToNostr.mockResolvedValue({
-				published: [],
-				skipped: [],
-				errors: [
-					{
-						recipientId: TEST_RECIPIENT_ID,
-						error: 'Relay connection failed'
-					}
-				]
-			});
-
-			const { POST } = await import('../+server');
-			const event = createMockEvent(validPayload());
-
-			const response = await POST(event as any);
-			expect(response.status).toBe(422);
-
-			const data = await response.json();
-			expect(data.errors).toHaveLength(1);
-			expect(data.errors[0].error).toBe('Relay connection failed');
-		});
-
-		it('should handle multiple shares for multiple recipients', async () => {
-			setupDbChain([
-				[{ id: TEST_SECRET_ID }],
-				[
-					{ id: TEST_RECIPIENT_ID, nostrPubkey: TEST_NOSTR_PUBKEY },
-					{ id: TEST_RECIPIENT_ID_2, nostrPubkey: 'b'.repeat(64) }
-				]
-			]);
-
-			mockPublishSharesToNostr.mockResolvedValue({
-				published: [
-					{
-						recipientId: TEST_RECIPIENT_ID,
-						nostrEventId: 'event-1',
-						plaintextK: new Uint8Array([0x01])
-					},
-					{
-						recipientId: TEST_RECIPIENT_ID_2,
-						nostrEventId: 'event-2',
-						plaintextK: new Uint8Array([0x02])
-					}
-				],
-				skipped: [],
-				errors: []
-			});
-
-			const { POST } = await import('../+server');
-			const event = createMockEvent({
-				shares: [
-					{
-						share: 'share1hex',
-						shareIndex: 1,
-						recipientId: TEST_RECIPIENT_ID
-					},
-					{
-						share: 'share2hex',
-						shareIndex: 2,
-						recipientId: TEST_RECIPIENT_ID_2
-					}
-				],
+	it('rejects the legacy plaintext-share request shape', async () => {
+		const { POST } = await import('../+server');
+		const response = await POST({
+			params: { id: SECRET_ID },
+			request: createRequest({
+				shares: [{ recipientId: RECIPIENT_ID, share: 'plaintext-share', shareIndex: 1 }],
 				threshold: 2,
 				totalShares: 3
-			});
+			})
+		} as unknown as Parameters<typeof POST>[0]);
 
-			const response = await POST(event as any);
-			expect(response.status).toBe(200);
-
-			const data = await response.json();
-			expect(data.published).toHaveLength(2);
-		});
+		expect(response.status).toBe(400);
+		expect(select).not.toHaveBeenCalled();
 	});
 
-	describe('Error handling', () => {
-		it('should return 500 on unexpected errors', async () => {
-			setupDbChain([
-				[{ id: TEST_SECRET_ID }],
-				[{ id: TEST_RECIPIENT_ID, nostrPubkey: TEST_NOSTR_PUBKEY }]
-			]);
-
-			mockPublishSharesToNostr.mockRejectedValue(new Error('Unexpected crypto failure'));
-
+	it.each(['plaintextK', 'passphrase', 'publisherSecretKey'])(
+		'rejects the extra sensitive field %s before database access',
+		async (field) => {
+			const artifact = signedArtifacts();
 			const { POST } = await import('../+server');
-			const event = createMockEvent(validPayload());
+			const response = await POST({
+				params: { id: SECRET_ID },
+				request: createRequest({
+					artifacts: [
+						{
+							giftWrapEvent: artifact.giftWrapEvent,
+							manifestEvent: artifact.manifestEvent
+						}
+					],
+					[field]: 'must-not-cross-boundary'
+				})
+			} as unknown as Parameters<typeof POST>[0]);
 
-			const response = await POST(event as any);
-			expect(response.status).toBe(500);
+			expect(response.status).toBe(400);
+			expect(select).not.toHaveBeenCalled();
+		}
+	);
 
-			const data = await response.json();
-			expect(data.error).toBe('Internal server error');
-		});
+	it('verifies, relays, and registers one opaque artifact per recipient', async () => {
+		const artifact = signedArtifacts();
+		configureSelect(
+			[
+				{
+					id: SECRET_ID,
+					status: 'paused',
+					checkInDays: 30,
+					nostrDeliveryStatus: 'pending',
+					bitcoinDeliveryStatus: null
+				}
+			],
+			[{ id: RECIPIENT_ID, nostrPubkey: artifact.recipientPubkey }]
+		);
+
+		const { POST } = await import('../+server');
+		const response = await POST({
+			params: { id: SECRET_ID },
+			request: createRequest({
+				artifacts: [
+					{
+						giftWrapEvent: artifact.giftWrapEvent,
+						manifestEvent: artifact.manifestEvent
+					}
+				]
+			})
+		} as unknown as Parameters<typeof POST>[0]);
+		const body = await response.json();
+
+		expect(response.status).toBe(200);
+		expect(body.active).toBe(true);
+		expect(body.registered).toHaveLength(1);
+		expect(relayPublish).toHaveBeenCalledWith(artifact.giftWrapEvent);
+		expect(transaction).toHaveBeenCalledTimes(1);
+		expect(scheduleRemindersForSecret).toHaveBeenCalledTimes(1);
+	});
+
+	it('rejects an outer event modified after signing', async () => {
+		const artifact = signedArtifacts();
+		configureSelect(
+			[
+				{
+					id: SECRET_ID,
+					status: 'paused',
+					checkInDays: 30,
+					nostrDeliveryStatus: 'pending',
+					bitcoinDeliveryStatus: null
+				}
+			],
+			[{ id: RECIPIENT_ID, nostrPubkey: artifact.recipientPubkey }]
+		);
+
+		const { POST } = await import('../+server');
+		const response = await POST({
+			params: { id: SECRET_ID },
+			request: createRequest({
+				artifacts: [
+					{
+						giftWrapEvent: { ...artifact.giftWrapEvent, content: 'modified' },
+						manifestEvent: artifact.manifestEvent
+					}
+				]
+			})
+		} as unknown as Parameters<typeof POST>[0]);
+
+		expect(response.status).toBe(400);
+		expect(transaction).not.toHaveBeenCalled();
 	});
 });

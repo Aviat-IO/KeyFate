@@ -15,6 +15,7 @@ import {
 	getP2WSHOutputScript,
 	MIN_UTXO_SATS
 } from './script.js';
+import { getBitcoinNetworkParams, type BitcoinNetwork } from './network.js';
 
 /** A UTXO reference for spending */
 export interface UTXO {
@@ -43,8 +44,8 @@ export interface PreSignedRecipientTxResult {
 	txHex: string;
 }
 
-function getNetwork(network: 'mainnet' | 'testnet'): typeof btc.NETWORK | typeof btc.TEST_NETWORK {
-	return network === 'testnet' ? btc.TEST_NETWORK : btc.NETWORK;
+function getNetwork(network: BitcoinNetwork): typeof btc.NETWORK | typeof btc.TEST_NETWORK {
+	return getBitcoinNetworkParams(network);
 }
 
 /**
@@ -83,7 +84,7 @@ export function createTimelockUTXO(params: {
 	amountSats: number;
 	feeRateSatsPerVbyte: number;
 	fundingUtxo: UTXO;
-	network: 'mainnet' | 'testnet';
+	network: BitcoinNetwork;
 }): TimelockUTXOResult {
 	const {
 		ownerPrivkey,
@@ -186,7 +187,7 @@ export function createPreSignedRecipientTx(params: {
 	symmetricKeyK: Uint8Array;
 	nostrEventId: string;
 	feeRateSatsPerVbyte: number;
-	network: 'mainnet' | 'testnet';
+	network: BitcoinNetwork;
 }): PreSignedRecipientTxResult {
 	const {
 		timelockUtxo,

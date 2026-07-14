@@ -21,9 +21,8 @@ export async function generateCSRFToken(sessionId: string): Promise<string> {
 export async function validateCSRFToken(sessionId: string, token: string): Promise<boolean> {
 	const db = await getDatabase();
 
-	const stored = await db
-		.select()
-		.from(csrfTokens)
+	const [consumed] = await db
+		.delete(csrfTokens)
 		.where(
 			and(
 				eq(csrfTokens.sessionId, sessionId),
@@ -31,16 +30,9 @@ export async function validateCSRFToken(sessionId: string, token: string): Promi
 				gt(csrfTokens.expiresAt, new Date())
 			)
 		)
-		.limit(1);
+		.returning({ id: csrfTokens.id });
 
-	if (!stored.length) {
-		return false;
-	}
-
-	// Delete token after use (one-time use)
-	await db.delete(csrfTokens).where(eq(csrfTokens.id, stored[0].id));
-
-	return true;
+	return Boolean(consumed);
 }
 
 export async function requireCSRFProtection(
@@ -54,18 +46,18 @@ export async function requireCSRFProtection(
 	// 1. Origin validation
 	const request = event.request;
 	const origin = request.headers.get('origin');
-	const host = request.headers.get('host');
 
 	if (!origin || origin === 'null') {
 		return { valid: false, error: 'Missing or invalid origin header' };
 	}
 
-	const originHost = new URL(origin).host;
-	if (originHost !== host) {
-		return {
-			valid: false,
-			error: 'Origin mismatch - potential CSRF attack'
-		};
+	try {
+		const expectedOrigin = process.env.ORIGIN || event.url.origin;
+		if (new URL(origin).origin !== new URL(expectedOrigin).origin) {
+			return { valid: false, error: 'Origin mismatch - potential CSRF attack' };
+		}
+	} catch {
+		return { valid: false, error: 'Missing or invalid origin header' };
 	}
 
 	// 2. CSRF token validation
@@ -74,7 +66,7 @@ export async function requireCSRFProtection(
 		return { valid: false, error: 'Missing CSRF token' };
 	}
 
-	const userId = (session.user as any)?.id;
+	const userId = session.user?.id;
 	if (!userId) {
 		return { valid: false, error: 'Invalid session' };
 	}

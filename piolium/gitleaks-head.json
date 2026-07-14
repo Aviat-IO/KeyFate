@@ -1,0 +1,42 @@
+[
+ {
+  "RuleID": "generic-api-key",
+  "Description": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+  "StartLine": 190,
+  "EndLine": 190,
+  "StartColumn": 2,
+  "EndColumn": 31,
+  "Match": "HANDOFF_TOKEN=\"REDACTED\"",
+  "Secret": "REDACTED",
+  "File": "/tmp/keyfate-gitleaks-head/.claude/agents/hook-integration-agent.md",
+  "SymlinkFile": "",
+  "Commit": "",
+  "Entropy": 3.5216405,
+  "Author": "",
+  "Email": "",
+  "Date": "",
+  "Message": "",
+  "Tags": [],
+  "Fingerprint": "/tmp/keyfate-gitleaks-head/.claude/agents/hook-integration-agent.md:generic-api-key:190"
+ },
+ {
+  "RuleID": "generic-api-key",
+  "Description": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+  "StartLine": 95,
+  "EndLine": 95,
+  "StartColumn": 5,
+  "EndColumn": 31,
+  "Match": "secretId: 'REDACTED'",
+  "Secret": "REDACTED",
+  "File": "/tmp/keyfate-gitleaks-head/frontend/src/lib/__tests__/recovery-ui.test.ts",
+  "SymlinkFile": "",
+  "Commit": "",
+  "Entropy": 3.5068905,
+  "Author": "",
+  "Email": "",
+  "Date": "",
+  "Message": "",
+  "Tags": [],
+  "Fingerprint": "/tmp/keyfate-gitleaks-head/frontend/src/lib/__tests__/recovery-ui.test.ts:generic-api-key:95"
+ }
+]

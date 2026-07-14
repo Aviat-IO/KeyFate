@@ -12,6 +12,7 @@
 import { finalizeEvent, generateSecretKey, getPublicKey, getEventHash } from 'nostr-tools/pure';
 import type { UnsignedEvent, Event as NostrEvent, EventTemplate } from 'nostr-tools/core';
 import { getConversationKey, encrypt } from './encryption';
+import { RECOVERY_CAPSULE_VERSION } from './recovery-capsule';
 
 /** Custom kind for KeyFate share delivery via Nostr. */
 export const KEYFATE_SHARE_KIND = 21059;
@@ -129,5 +130,45 @@ export function wrapShareForRecipient(
 	const senderPubkey = getPublicKey(senderSecretKey);
 	const rumor = createRumor(payload, senderPubkey);
 	const seal = createSeal(rumor, senderSecretKey, recipientPublicKey);
+	return createGiftWrap(seal, recipientPublicKey);
+}
+
+/** Strict v2 rumor envelope containing an independently signed capsule. */
+export interface CapsuleEnvelopeV2 {
+	version: typeof RECOVERY_CAPSULE_VERSION;
+	capsule: NostrEvent;
+}
+
+export function createCapsuleRumor(
+	capsule: NostrEvent,
+	publisherPubkey: string,
+	recipientPublicKey: string
+): Rumor {
+	if (capsule.pubkey !== publisherPubkey) {
+		throw new Error('Capsule publisher does not match rumor publisher');
+	}
+	const envelope: CapsuleEnvelopeV2 = { version: RECOVERY_CAPSULE_VERSION, capsule };
+	const rumor: UnsignedEvent = {
+		kind: KEYFATE_SHARE_KIND,
+		created_at: now(),
+		tags: [
+			['p', recipientPublicKey],
+			['e', capsule.id]
+		],
+		content: JSON.stringify(envelope),
+		pubkey: publisherPubkey
+	};
+	return { ...rumor, id: getEventHash(rumor) };
+}
+
+/** Build a complete owner-signed NIP-59 v2 chain. */
+export function wrapCapsuleForRecipient(
+	capsule: NostrEvent,
+	publisherSecretKey: Uint8Array,
+	recipientPublicKey: string
+): NostrEvent {
+	const publisherPubkey = getPublicKey(publisherSecretKey);
+	const rumor = createCapsuleRumor(capsule, publisherPubkey, recipientPublicKey);
+	const seal = createSeal(rumor, publisherSecretKey, recipientPublicKey);
 	return createGiftWrap(seal, recipientPublicKey);
 }

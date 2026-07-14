@@ -1,24 +1,7 @@
 /**
- * POST /api/secrets/[id]/publish-nostr
- *
- * Publishes encrypted Shamir shares to Nostr relays via NIP-59 gift wraps.
- * The client sends shares (which it generated client-side) along with
- * recipient IDs. The server uses its Nostr keypair to double-encrypt
- * and gift-wrap each share for the corresponding recipient's nostr pubkey.
- *
- * Request body:
- * {
- *   shares: Array<{ share: string, shareIndex: number, recipientId: string }>
- *   threshold: number
- *   totalShares: number
- * }
- *
- * Response:
- * {
- *   published: Array<{ recipientId: string, nostrEventId: string, plaintextK: string }>
- *   skipped: string[]
- *   errors: Array<{ recipientId: string, error: string }>
- * }
+ * Register and optionally relay already-signed opaque Nostr v2 artifacts.
+ * Plaintext shares, K values, passphrases, and unsigned capsules are rejected by
+ * the strict request shape before any database mutation.
  */
 
 import { json } from '@sveltejs/kit';
@@ -26,165 +9,185 @@ import type { RequestHandler } from './$types';
 import { requireCSRFProtection, createCSRFErrorResponse } from '$lib/csrf';
 import { requireSession } from '$lib/server/auth';
 import { getDatabase } from '$lib/db/drizzle';
-import { secrets, secretRecipients } from '$lib/db/schema';
+import { secretRecipients, secrets } from '$lib/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { hex } from '@scure/base';
-import { generateSecretKey } from 'nostr-tools/pure';
-import { publishSharesToNostr } from '$lib/services/nostr-publisher';
-import type { RecipientInfo } from '$lib/services/nostr-publisher';
+import { getEventHash, verifyEvent } from 'nostr-tools/pure';
+import {
+	parseNostrEvent,
+	parseVerifiedManifest,
+	RECOVERY_CAPSULE_VERSION
+} from '$lib/nostr/recovery-capsule';
+import { createNostrClient } from '$lib/nostr/client';
+import { scheduleRemindersForSecret } from '$lib/services/reminder-scheduler';
 
-/** Get or generate the server's Nostr secret key. */
-function getServerNostrSecretKey(): Uint8Array {
-	const envKey = process.env.NOSTR_SERVER_SECRET_KEY;
-	if (envKey) {
-		const bytes = hex.decode(envKey);
-		if (bytes.length !== 32) {
-			throw new Error('NOSTR_SERVER_SECRET_KEY must be a 64-character hex string (32 bytes)');
-		}
-		return bytes;
-	}
-
-	if (process.env.NODE_ENV === 'production') {
-		throw new Error(
-			'NOSTR_SERVER_SECRET_KEY must be set in production. ' + 'Generate with: openssl rand -hex 32'
-		);
-	}
-
-	// Development only: generate ephemeral key with warning
-	console.warn(
-		'[publish-nostr] NOSTR_SERVER_SECRET_KEY not set — using ephemeral key. ' +
-			'Shares will be irrecoverable after restart. Set NOSTR_SERVER_SECRET_KEY for persistence.'
-	);
-	return generateSecretKey();
-}
-
-const publishNostrSchema = z.object({
-	shares: z
-		.array(
-			z.object({
-				share: z.string().min(1, 'Share data is required'),
-				shareIndex: z.number().int().min(0, 'Share index must be non-negative'),
-				recipientId: z.string().uuid('Invalid recipient ID')
-			})
-		)
-		.min(1, 'At least one share is required')
-		.max(10, 'Maximum 10 shares per request'),
-	threshold: z.number().int().min(2).max(7),
-	totalShares: z.number().int().min(3).max(7),
-	passphrase: z.string().min(8, 'Passphrase must be at least 8 characters').max(256).optional()
-});
+const requestSchema = z
+	.object({
+		artifacts: z
+			.array(
+				z
+					.object({
+						giftWrapEvent: z.unknown(),
+						manifestEvent: z.unknown()
+					})
+					.strict()
+			)
+			.min(1)
+			.max(10)
+	})
+	.strict();
 
 export const POST: RequestHandler = async (event) => {
+	const csrfCheck = await requireCSRFProtection(event);
+	if (!csrfCheck.valid) return createCSRFErrorResponse();
+
+	const session = await requireSession(event);
+	const parsed = requestSchema.safeParse(await event.request.json());
+	if (!parsed.success) {
+		return json({ error: 'Only signed opaque Nostr v2 artifacts are accepted' }, { status: 400 });
+	}
+
+	const db = await getDatabase();
+	const secretId = event.params.id;
+	const [secret] = await db
+		.select({
+			id: secrets.id,
+			status: secrets.status,
+			checkInDays: secrets.checkInDays,
+			nostrDeliveryStatus: secrets.nostrDeliveryStatus,
+			bitcoinDeliveryStatus: secrets.bitcoinDeliveryStatus
+		})
+		.from(secrets)
+		.where(and(eq(secrets.id, secretId), eq(secrets.userId, session.user.id)));
+
+	if (!secret) return json({ error: 'Secret not found' }, { status: 404 });
+	if (secret.nostrDeliveryStatus !== 'pending') {
+		return json({ error: 'Nostr v2 enrollment is not pending' }, { status: 409 });
+	}
+
+	const recipients = await db
+		.select({ id: secretRecipients.id, nostrPubkey: secretRecipients.nostrPubkey })
+		.from(secretRecipients)
+		.where(eq(secretRecipients.secretId, secretId));
+	const expected = new Map(
+		recipients
+			.filter(
+				(recipient): recipient is { id: string; nostrPubkey: string } =>
+					typeof recipient.nostrPubkey === 'string'
+			)
+			.map((recipient) => [recipient.id, recipient.nostrPubkey])
+	);
+
 	try {
-		const csrfCheck = await requireCSRFProtection(event);
-		if (!csrfCheck.valid) {
-			return createCSRFErrorResponse();
+		const verified = parsed.data.artifacts.map((artifact) => {
+			const giftWrapEvent = parseNostrEvent(artifact.giftWrapEvent);
+			const manifestEvent = parseNostrEvent(artifact.manifestEvent);
+			const manifest = parseVerifiedManifest(manifestEvent);
+			const expectedPubkey = expected.get(manifest.recipientId);
+
+			if (
+				manifest.version !== RECOVERY_CAPSULE_VERSION ||
+				manifest.secretId !== secretId ||
+				!expectedPubkey ||
+				manifest.recipientNostrPubkey !== expectedPubkey
+			) {
+				throw new Error('Recovery manifest context does not match the owned secret');
+			}
+			if (
+				!verifyEvent(giftWrapEvent) ||
+				giftWrapEvent.id !== getEventHash(giftWrapEvent) ||
+				giftWrapEvent.id !== manifest.giftWrapEventId ||
+				giftWrapEvent.kind !== 1059 ||
+				JSON.stringify(giftWrapEvent.tags) !== JSON.stringify([['p', expectedPubkey]])
+			) {
+				throw new Error('Invalid signed gift wrap');
+			}
+			if (giftWrapEvent.content.length > 131_072) throw new Error('Gift wrap is too large');
+
+			return { giftWrapEvent, manifestEvent, manifest };
+		});
+
+		const recipientIds = new Set(verified.map(({ manifest }) => manifest.recipientId));
+		const publishers = new Set(verified.map(({ manifest }) => manifest.publisherPubkey));
+		if (recipientIds.size !== expected.size || recipientIds.size !== verified.length) {
+			throw new Error('Exactly one artifact is required for every Nostr recipient');
+		}
+		if (publishers.size !== 1) throw new Error('All artifacts must use one per-secret publisher');
+
+		// Best-effort opaque relay retry. Direct browser publication already
+		// succeeded before registration, so relay availability does not control the
+		// durable manifest commit.
+		const relayWarnings: string[] = [];
+		const client = createNostrClient();
+		try {
+			for (const artifact of verified) {
+				try {
+					await client.publish(artifact.giftWrapEvent);
+				} catch (error) {
+					relayWarnings.push(error instanceof Error ? error.message : 'Opaque relay retry failed');
+				}
+			}
+		} finally {
+			client.close();
 		}
 
-		const session = await requireSession(event);
-		const secretId = event.params.id;
+		const activatedAt = new Date();
+		const shouldActivate = secret.bitcoinDeliveryStatus !== 'pending';
+		await db.transaction(async (tx) => {
+			for (const artifact of verified) {
+				await tx
+					.update(secretRecipients)
+					.set({
+						nostrPublisherPubkey: artifact.manifest.publisherPubkey,
+						nostrGiftWrapEventId: artifact.manifest.giftWrapEventId,
+						nostrCapsuleEventId: artifact.manifest.capsuleEventId,
+						nostrManifestEvent: artifact.manifestEvent,
+						nostrSchemeVersion: RECOVERY_CAPSULE_VERSION,
+						updatedAt: activatedAt
+					})
+					.where(
+						and(
+							eq(secretRecipients.id, artifact.manifest.recipientId),
+							eq(secretRecipients.secretId, secretId)
+						)
+					);
+			}
 
-		const body = await event.request.json();
-		const parsed = publishNostrSchema.safeParse(body);
+			await tx
+				.update(secrets)
+				.set({
+					nostrDeliveryStatus: 'ready',
+					...(shouldActivate
+						? {
+								status: 'active' as const,
+								lastCheckIn: activatedAt,
+								nextCheckIn: new Date(
+									activatedAt.getTime() + secret.checkInDays * 24 * 60 * 60 * 1000
+								)
+							}
+						: {}),
+					updatedAt: activatedAt
+				})
+				.where(eq(secrets.id, secretId));
+		});
 
-		if (!parsed.success) {
-			return json(
-				{
-					error: 'Invalid request data',
-					details: parsed.error.issues.map((i) => ({
-						path: i.path.join('.'),
-						message: i.message
-					}))
-				},
-				{ status: 400 }
+		if (shouldActivate) {
+			await scheduleRemindersForSecret(
+				secretId,
+				new Date(activatedAt.getTime() + secret.checkInDays * 24 * 60 * 60 * 1000),
+				secret.checkInDays
 			);
 		}
 
-		const { shares, threshold, totalShares } = parsed.data;
-
-		const db = await getDatabase();
-
-		// Verify the secret exists and belongs to the user
-		const [secret] = await db
-			.select({ id: secrets.id })
-			.from(secrets)
-			.where(and(eq(secrets.id, secretId), eq(secrets.userId, session.user.id)));
-
-		if (!secret) {
-			return json({ error: 'Secret not found' }, { status: 404 });
-		}
-
-		// Fetch recipients for this secret
-		const recipients = await db
-			.select({
-				id: secretRecipients.id,
-				nostrPubkey: secretRecipients.nostrPubkey
-			})
-			.from(secretRecipients)
-			.where(eq(secretRecipients.secretId, secretId));
-
-		// Validate that all share recipientIds belong to this secret
-		const recipientIds = new Set(recipients.map((r) => r.id));
-		for (const share of shares) {
-			if (!recipientIds.has(share.recipientId)) {
-				return json(
-					{
-						error: `Recipient ${share.recipientId} does not belong to this secret`
-					},
-					{ status: 400 }
-				);
-			}
-		}
-
-		const senderSecretKey = getServerNostrSecretKey();
-
-		const recipientInfos: RecipientInfo[] = recipients.map((r) => ({
-			id: r.id,
-			nostrPubkey: r.nostrPubkey
-		}));
-
-		const result = await publishSharesToNostr({
-			secretId,
-			shares,
-			recipients: recipientInfos,
-			senderSecretKey,
-			threshold,
-			totalShares,
-			passphrase: parsed.data.passphrase
+		return json({
+			registered: verified.map(({ manifest }) => manifest),
+			active: shouldActivate,
+			relayWarnings
 		});
-
-		// Convert Uint8Array plaintextK values to hex strings for JSON serialization
-		const published = result.published.map((p) => ({
-			recipientId: p.recipientId,
-			nostrEventId: p.nostrEventId,
-			plaintextK: hex.encode(p.plaintextK),
-			...(p.encryptedKPassphrase
-				? {
-						encryptedKPassphrase: {
-							ciphertext: hex.encode(p.encryptedKPassphrase.ciphertext),
-							nonce: hex.encode(p.encryptedKPassphrase.nonce),
-							salt: hex.encode(p.encryptedKPassphrase.salt)
-						}
-					}
-				: {})
-		}));
-
+	} catch (error) {
 		return json(
-			{
-				published,
-				skipped: result.skipped,
-				errors: result.errors
-			},
-			{ status: published.length > 0 ? 200 : 422 }
+			{ error: error instanceof Error ? error.message : 'Invalid Nostr artifact' },
+			{ status: 400 }
 		);
-	} catch (err) {
-		// SvelteKit HttpError (from requireSession) - re-throw
-		if (err && typeof err === 'object' && 'status' in err) {
-			throw err;
-		}
-
-		console.error('Error in POST /api/secrets/[id]/publish-nostr:', err);
-		return json({ error: 'Internal server error' }, { status: 500 });
 	}
 };

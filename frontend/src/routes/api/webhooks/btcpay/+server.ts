@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { logger } from '$lib/logger';
 import { getCryptoPaymentProvider } from '$lib/payment';
-import type { BTCPayProvider } from '$lib/payment/providers/BTCPayProvider';
+import type { BTCPayInvoice, BTCPayProvider } from '$lib/payment/providers/BTCPayProvider';
 import { serverEnv } from '$lib/server-env';
 import { subscriptionService } from '$lib/services/subscription-service';
 import { emailService } from '$lib/email/email-service';
@@ -51,7 +51,13 @@ export const POST: RequestHandler = async (event) => {
 			id: webhookEvent.id
 		});
 
-		const rawEvent = JSON.parse(body);
+		const rawEvent = JSON.parse(body) as {
+			originalDeliveryId?: string;
+			deliveryId?: string;
+			invoiceId?: string;
+			type?: string;
+			metadata?: Record<string, unknown>;
+		};
 		const deduplicationKey = rawEvent.originalDeliveryId || webhookEvent.id;
 
 		if (!deduplicationKey) {
@@ -92,8 +98,17 @@ export const POST: RequestHandler = async (event) => {
 			});
 		}
 
-		// Extract user ID from event metadata
-		const userId = await extractUserIdFromBTCPayEvent(webhookEvent, invoiceId);
+		if (!invoiceId) {
+			throw new Error('BTCPay invoice webhook missing invoiceId');
+		}
+
+		const provider = cryptoPaymentProvider as unknown as BTCPayProvider;
+		const invoice = await provider.getInvoice(invoiceId);
+		const canonicalEvent = {
+			...webhookEvent,
+			data: { object: invoice as unknown as Record<string, unknown> }
+		};
+		const userId = extractUserIdFromBTCPayInvoice(invoice);
 
 		if (!userId) {
 			logger.error('No user_id found in BTCPay webhook event metadata', undefined, {
@@ -122,16 +137,11 @@ export const POST: RequestHandler = async (event) => {
 			);
 		}
 
-		// Handle event using subscription service
-		await subscriptionService.handleBTCPayWebhook(webhookEvent, userId);
+		// Handle entitlement from the canonical invoice, not the abbreviated webhook.
+		await subscriptionService.handleBTCPayWebhook(canonicalEvent, userId);
 		sideEffectsCompleted = true;
 
-		await recordWebhookEvent(
-			'btcpay',
-			deduplicationKey,
-			webhookEvent.type,
-			webhookEvent
-		);
+		await recordWebhookEvent('btcpay', deduplicationKey, webhookEvent.type, canonicalEvent);
 
 		return json({ received: true });
 	} catch (error) {
@@ -209,61 +219,7 @@ async function safelyMarkWebhookEventFailed(
 	}
 }
 
-// Helper function to extract user ID from BTCPay webhook event
-async function extractUserIdFromBTCPayEvent(
-	event: any,
-	invoiceId: string | null
-): Promise<string | null> {
-	try {
-		logger.debug('Extracting user_id from BTCPay event');
-
-		// BTCPay webhooks don't include full invoice data in the webhook payload
-		// We need to fetch the invoice using the invoiceId to get metadata
-		if (invoiceId) {
-			try {
-				const cryptoPaymentProvider = getCryptoPaymentProvider();
-				const invoice = await (cryptoPaymentProvider as unknown as BTCPayProvider).getInvoice(
-					invoiceId
-				);
-
-				if (invoice.metadata?.user_id) {
-					const uid = invoice.metadata.user_id;
-					if (typeof uid === 'string') {
-						logger.debug('Found user_id in invoice metadata', { userId: uid });
-						return uid;
-					}
-				}
-			} catch (error) {
-				logger.error(
-					'Error fetching invoice from BTCPay',
-					error instanceof Error ? error : undefined,
-					{ invoiceId }
-				);
-			}
-		}
-
-		// Fallback: try to extract from event data (for backwards compatibility)
-		let eventData = event.data?.object as Record<string, unknown> | undefined;
-
-		if (!eventData && event.data) {
-			eventData = event.data as Record<string, unknown>;
-		}
-
-		if (eventData) {
-			const metadata = eventData.metadata as Record<string, string> | undefined;
-			if (metadata?.user_id) {
-				logger.debug('Found user_id in event metadata', { userId: metadata.user_id });
-				return metadata.user_id;
-			}
-		}
-
-		logger.warn('No user_id found in invoice or event');
-		return null;
-	} catch (error) {
-		logger.error(
-			'Error extracting user ID from BTCPay event',
-			error instanceof Error ? error : undefined
-		);
-		return null;
-	}
+function extractUserIdFromBTCPayInvoice(invoice: BTCPayInvoice): string | null {
+	const userId = invoice.metadata?.user_id;
+	return typeof userId === 'string' && userId.length > 0 ? userId : null;
 }
