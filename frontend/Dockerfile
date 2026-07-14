@@ -32,6 +32,7 @@ COPY --chown=keyfate:keyfate --from=prod-deps /app/node_modules ./node_modules
 COPY --chown=keyfate:keyfate --from=builder /app/package.json ./
 COPY --chown=keyfate:keyfate --from=builder /app/drizzle ./drizzle
 COPY --chown=keyfate:keyfate --from=builder /app/scripts/migrate.ts ./scripts/migrate.ts
+COPY --chown=keyfate:keyfate --from=builder /app/src/lib/db/connection-policy.ts ./src/lib/db/connection-policy.ts
 
 USER keyfate
 
