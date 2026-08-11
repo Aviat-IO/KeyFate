@@ -14,10 +14,18 @@ import {
 export const defaultNip44Ops: Nip44Ops = {
 	encrypt(plaintext: string, senderPrivkey: Uint8Array, recipientPubkey: string): string {
 		const convKey = getConversationKey(senderPrivkey, recipientPubkey);
-		return nip44Encrypt(plaintext, convKey);
+		try {
+			return nip44Encrypt(plaintext, convKey);
+		} finally {
+			convKey.fill(0);
+		}
 	},
 	decrypt(ciphertext: string, recipientPrivkey: Uint8Array, senderPubkey: string): string {
 		const convKey = getConversationKey(recipientPrivkey, senderPubkey);
-		return nip44Decrypt(ciphertext, convKey);
+		try {
+			return nip44Decrypt(ciphertext, convKey);
+		} finally {
+			convKey.fill(0);
+		}
 	}
 };

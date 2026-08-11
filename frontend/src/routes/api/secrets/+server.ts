@@ -15,6 +15,7 @@ import { getAllSecretsWithRecipients } from '$lib/db/queries/secrets';
 import { mapDrizzleSecretToApiShape } from '$lib/db/secret-mapper';
 import { npubToHex, isValidNpub } from '$lib/nostr/keypair';
 import { isBitcoinEnrollmentEnabled } from '$lib/server/bitcoin-enrollment';
+import { validateServerShareBoundary } from '$lib/server/recovery-v3-boundary';
 
 export const GET: RequestHandler = async (event) => {
 	try {
@@ -168,23 +169,23 @@ export const POST: RequestHandler = async (event) => {
 			);
 		}
 
-		// Encrypt the server share before storing (only if not already provided)
-		let encryptedServerShare: string;
-		let iv: string;
-		let authTag: string;
-
-		if (validatedData.iv && validatedData.auth_tag) {
-			// Use provided encrypted data (for testing/backward compatibility)
-			encryptedServerShare = validatedData.server_share;
-			iv = validatedData.iv;
-			authTag = validatedData.auth_tag;
-		} else {
-			// Encrypt the plain server share
-			const encrypted = await encryptMessage(validatedData.server_share);
-			encryptedServerShare = encrypted.encrypted;
-			iv = encrypted.iv;
-			authTag = encrypted.authTag;
+		try {
+			validateServerShareBoundary({
+				serverShare: validatedData.server_share,
+				threshold: validatedData.sss_threshold,
+				total: validatedData.sss_shares_total
+			});
+		} catch (error) {
+			throw APIError.validation(
+				error instanceof Error ? error.message : 'Invalid authenticated server share'
+			);
 		}
+
+		// Every accepted v3 service envelope is encrypted at rest by the server.
+		const encrypted = await encryptMessage(validatedData.server_share);
+		const encryptedServerShare = encrypted.encrypted;
+		const iv = encrypted.iv;
+		const authTag = encrypted.authTag;
 
 		// Create secret without recipients (they'll be added separately)
 		const recoverySetupPending = Boolean(

@@ -91,8 +91,6 @@ export const secretSchema = z
 				error: 'Missing server share.'
 			})
 			.min(1, 'Missing server share.'),
-		iv: z.string().optional(),
-		auth_tag: z.string().optional(),
 		recipients: z
 			.array(
 				z.object({
@@ -122,7 +120,9 @@ export const secretSchema = z
 		next_check_in: z.string().optional(),
 		status: z.enum(['active', 'paused', 'triggered']).default('active'),
 		sss_shares_total: z.number().min(3, 'Invalid SSS shares total or threshold parameters.').max(7),
-		sss_threshold: z.number().min(2, 'Invalid SSS shares total or threshold parameters.').max(7),
+		sss_threshold: z.literal(2, {
+			error: 'Authenticated recovery currently requires a threshold of 2.'
+		}),
 		enable_nostr_shares: z.boolean().optional(),
 		enable_bitcoin_timelock: z.boolean().optional(),
 		recipient_nostr_pubkeys: z
@@ -134,6 +134,7 @@ export const secretSchema = z
 			)
 			.optional()
 	})
+	.strict()
 	.refine(
 		(data) => {
 			return data.sss_threshold <= data.sss_shares_total;

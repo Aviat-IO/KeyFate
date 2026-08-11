@@ -35,8 +35,8 @@
 					<div>
 						<strong>Security Configuration:</strong> 2-of-3 shares (standard)
 						<p class="text-muted-foreground mt-1 text-sm">
-							Your secret will be split into 3 shares, requiring any 2 to reconstruct. Upgrade to
-							Pro for configurable threshold schemes up to 7 shares.
+							Your recovery key will be split into 3 shares, requiring 2 distinct shares. Upgrade to
+							Pro to retain additional owner backup shares, up to 7 total.
 						</p>
 					</div>
 					{#if onUpgradeClick}
@@ -58,10 +58,10 @@
 		<Alert.Root>
 			<Info class="h-4 w-4" />
 			<Alert.Description>
-				<strong>Pro Feature:</strong> Configure your security threshold
+				<strong>Authenticated recovery:</strong> Fixed 2-share threshold
 				<p class="text-muted-foreground mt-1 text-sm">
-					Choose how many shares to create (3-{maxShares}) and how many are required to reconstruct
-					your secret (2 to total shares).
+					Choose how many shares to create (3-{maxShares}). New service recovery always requires 2
+					distinct shares; higher thresholds are available only for legacy records.
 				</p>
 			</Alert.Description>
 		</Alert.Root>
@@ -91,12 +91,12 @@
 					id="sss_threshold"
 					type="number"
 					min={2}
-					max={maxShares}
-					disabled={isSubmitting}
+					max={2}
+					disabled={true}
 					bind:value={thresholdValue}
 				/>
 				<p class="text-muted-foreground text-xs">
-					Minimum shares to reconstruct. Min 2, Max {maxShares}. Must be &lt;= total shares.
+					Fixed at 2 distinct shares for every newly created authenticated recovery set.
 				</p>
 				{#if thresholdError}
 					<p class="text-destructive text-xs">{thresholdError}</p>

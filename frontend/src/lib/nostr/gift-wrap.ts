@@ -79,16 +79,18 @@ export function createSeal(
 	recipientPublicKey: string
 ): NostrEvent {
 	const conversationKey = getConversationKey(senderSecretKey, recipientPublicKey);
-	const encryptedRumor = encrypt(JSON.stringify(rumor), conversationKey);
-
-	const sealTemplate: EventTemplate = {
-		kind: 13,
-		content: encryptedRumor,
-		created_at: randomNow(),
-		tags: []
-	};
-
-	return finalizeEvent(sealTemplate, senderSecretKey) as NostrEvent;
+	try {
+		const encryptedRumor = encrypt(JSON.stringify(rumor), conversationKey);
+		const sealTemplate: EventTemplate = {
+			kind: 13,
+			content: encryptedRumor,
+			created_at: randomNow(),
+			tags: []
+		};
+		return finalizeEvent(sealTemplate, senderSecretKey) as NostrEvent;
+	} finally {
+		conversationKey.fill(0);
+	}
 }
 
 /**
@@ -102,17 +104,21 @@ export function createSeal(
  */
 export function createGiftWrap(seal: NostrEvent, recipientPublicKey: string): NostrEvent {
 	const ephemeralKey = generateSecretKey();
-	const conversationKey = getConversationKey(ephemeralKey, recipientPublicKey);
-	const encryptedSeal = encrypt(JSON.stringify(seal), conversationKey);
-
-	const wrapTemplate: EventTemplate = {
-		kind: 1059,
-		content: encryptedSeal,
-		created_at: randomNow(),
-		tags: [['p', recipientPublicKey]]
-	};
-
-	return finalizeEvent(wrapTemplate, ephemeralKey) as NostrEvent;
+	let conversationKey: Uint8Array | undefined;
+	try {
+		conversationKey = getConversationKey(ephemeralKey, recipientPublicKey);
+		const encryptedSeal = encrypt(JSON.stringify(seal), conversationKey);
+		const wrapTemplate: EventTemplate = {
+			kind: 1059,
+			content: encryptedSeal,
+			created_at: randomNow(),
+			tags: [['p', recipientPublicKey]]
+		};
+		return finalizeEvent(wrapTemplate, ephemeralKey) as NostrEvent;
+	} finally {
+		conversationKey?.fill(0);
+		ephemeralKey.fill(0);
+	}
 }
 
 /**

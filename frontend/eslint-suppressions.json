@@ -203,9 +203,6 @@
 		}
 	},
 	"src/lib/components/SSSDecryptor.svelte": {
-		"svelte/no-navigation-without-resolve": {
-			"count": 1
-		},
 		"svelte/require-each-key": {
 			"count": 1
 		}

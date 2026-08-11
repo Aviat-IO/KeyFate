@@ -1,4 +1,5 @@
 import type { Event as NostrEvent } from 'nostr-tools/core';
+import { validateRecoveryShareEnvelopeContext } from '$lib/crypto/recovery-v3';
 
 export interface SecretCreationRecipient {
 	name: string;
@@ -18,6 +19,15 @@ export interface SecretCreationPayloadInput {
 }
 
 export function buildSecretCreationPayload(input: SecretCreationPayloadInput) {
+	if (input.threshold !== 2) {
+		throw new Error('Authenticated recovery currently requires a threshold of 2');
+	}
+	validateRecoveryShareEnvelopeContext(input.serverShare, {
+		index: 1,
+		threshold: input.threshold,
+		total: input.totalShares
+	});
+
 	return {
 		title: input.title,
 		server_share: input.serverShare,
@@ -44,11 +54,22 @@ export function buildSecretCreationPayload(input: SecretCreationPayloadInput) {
 }
 
 export function buildNostrRegistrationPayload(
-	published: Array<{ giftWrapEvent: NostrEvent; manifestEvent: NostrEvent }>
-): { artifacts: Array<{ giftWrapEvent: NostrEvent; manifestEvent: NostrEvent }> } {
+	published: Array<{
+		giftWrapEvent: NostrEvent;
+		capsuleEvent: NostrEvent;
+		manifestEvent: NostrEvent;
+	}>
+): {
+	artifacts: Array<{
+		giftWrapEvent: NostrEvent;
+		capsuleEvent: NostrEvent;
+		manifestEvent: NostrEvent;
+	}>;
+} {
 	return {
-		artifacts: published.map(({ giftWrapEvent, manifestEvent }) => ({
+		artifacts: published.map(({ giftWrapEvent, capsuleEvent, manifestEvent }) => ({
 			giftWrapEvent,
+			capsuleEvent,
 			manifestEvent
 		}))
 	};

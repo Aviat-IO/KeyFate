@@ -17,6 +17,31 @@ The system SHALL provide separate process liveness and bounded dependency/config
 - **AND** SHALL return 503 on failure or timeout
 - **AND** SHALL NOT make readiness depend on live external provider network calls
 
+#### Scenario: Database connectivity check
+
+- **WHEN** readiness checks PostgreSQL
+- **THEN** the system SHALL execute a bounded simple query
+- **AND** SHALL return 503 when it fails or times out without exposing sensitive connection details
+
+#### Scenario: Email service validation
+
+- **WHEN** readiness validates required email configuration
+- **THEN** the system SHALL verify required local credentials and settings are present
+- **AND** SHALL NOT make a live SMTP or provider network call
+
+#### Scenario: Encryption key validation
+
+- **WHEN** readiness validates encryption configuration
+- **THEN** the system SHALL verify the required key format and perform bounded local cryptographic validation
+- **AND** SHALL return 503 without logging secret key material when validation fails
+
+#### Scenario: Readiness vs liveness
+
+- **WHEN** `/api/health/live` is called
+- **THEN** it SHALL report process-serving ability without dependency checks
+- **WHEN** `/api/health/ready` is called
+- **THEN** it SHALL report bounded required database and local configuration readiness
+
 ### Requirement: Database Schema Management
 
 The system SHALL execute generated forward-compatible migrations exactly once per Railway deployment before application replicas start.
@@ -33,6 +58,26 @@ The system SHALL execute generated forward-compatible migrations exactly once pe
 - **WHEN** schema changes are introduced
 - **THEN** `drizzle-kit generate` SHALL create SQL, snapshot, and journal entries
 - **AND** generated migration files SHALL NOT be hand-authored or modified
+
+#### Scenario: Migration execution
+
+- **GIVEN** a generated forward-compatible migration is ready
+- **WHEN** the Railway pre-deploy migrator applies it
+- **THEN** Drizzle SHALL record the migration in its schema journal
+- **AND** migration failure SHALL stop deployment before application replicas start
+
+#### Scenario: Migration validation
+
+- **WHEN** a migration is prepared for production
+- **THEN** its generated artifacts SHALL pass migration smoke and staging validation
+- **AND** the compatible code rollback and data-recovery procedure SHALL be documented and approved
+
+#### Scenario: Rollback execution
+
+- **GIVEN** an additive migration was applied and the new application revision fails
+- **WHEN** rollback is initiated
+- **THEN** the compatible prior application SHALL be restored without hand-reversing generated migrations
+- **AND** destructive recovery, when required, SHALL use the documented backup-restore and data-integrity verification procedure
 
 ## ADDED Requirements
 

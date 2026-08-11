@@ -1,6 +1,7 @@
 import { finalizeEvent, getEventHash, verifyEvent } from 'nostr-tools/pure';
 import type { Event as NostrEvent, EventTemplate } from 'nostr-tools/core';
 import { z } from 'zod';
+import { MAX_NOSTR_ENCRYPTED_SHARE_HEX_LENGTH } from '$lib/crypto/recovery-v3';
 
 export const RECOVERY_CAPSULE_VERSION = 2 as const;
 export const KEYFATE_CAPSULE_KIND = 21060;
@@ -21,7 +22,7 @@ const nostrEventSchema = z
 const boundedHex = z
 	.string()
 	.min(2)
-	.max(131_072)
+	.max(MAX_NOSTR_ENCRYPTED_SHARE_HEX_LENGTH)
 	.regex(/^(?:[0-9a-f]{2})+$/);
 
 export const recoveryCapsuleContentSchema = z

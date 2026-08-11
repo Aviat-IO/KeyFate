@@ -17,6 +17,25 @@ function getSupportEmail(): string {
 	return SUPPORT_EMAIL || 'support@keyfate.com';
 }
 
+function escapeHtml(value: string): string {
+	return value
+		.replaceAll('&', '&amp;')
+		.replaceAll('<', '&lt;')
+		.replaceAll('>', '&gt;')
+		.replaceAll('"', '&quot;')
+		.replaceAll("'", '&#39;');
+}
+
+function sanitizeHeaderValue(value: string): string {
+	return Array.from(value, (character) => {
+		const code = character.charCodeAt(0);
+		return code <= 31 || code === 127 ? ' ' : character;
+	})
+		.join('')
+		.replace(/\s+/g, ' ')
+		.trim();
+}
+
 // Template data interfaces
 interface VerificationTemplateData {
 	verificationUrl: string;
@@ -51,6 +70,7 @@ interface DisclosureTemplateData {
 	senderLastSeen?: Date;
 	secretCreatedAt?: Date;
 	nostrManifest?: string;
+	nostrSchemeVersion?: number;
 	bitcoinRecoveryEnvelope?: string;
 	bitcoinRecoverySenderPubkey?: string;
 	bitcoinRecoveryGeneration?: number;
@@ -296,31 +316,46 @@ export function renderDisclosureTemplate(data: DisclosureTemplateData): EmailTem
 		data.disclosureReason === 'manual'
 			? `${data.senderName} has chosen to share this information with you.`
 			: `${data.senderName} has not checked in as scheduled (last activity: ${lastSeenText}).`;
+	const escapedContactName = escapeHtml(data.contactName);
+	const escapedSenderName = escapeHtml(data.senderName);
+	const escapedSecretTitle = escapeHtml(data.secretTitle);
+	const escapedSecretContent = escapeHtml(data.secretContent);
+	const reasonHtml =
+		data.disclosureReason === 'manual'
+			? `${escapedSenderName} has chosen to share this information with you.`
+			: `${escapedSenderName} has not checked in as scheduled (last activity: ${lastSeenText}).`;
 
-	const subject = `${companyName}: Message from ${data.senderName} - ${data.secretTitle}`;
-	const escapedManifest = data.nostrManifest
-		?.replaceAll('&', '&amp;')
-		.replaceAll('<', '&lt;')
-		.replaceAll('>', '&gt;');
-	const nostrManifestHtml = escapedManifest
-		? `<li>Visit <a href="${recoveryUrl}" style="color: #2563eb;">${recoveryUrl}</a>, choose Nostr recovery, and paste this signed manifest:</li><pre style="background: #f5f5f5; padding: 12px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 11px; white-space: pre-wrap; word-break: break-word; color: #333; border: 1px solid #ddd;">${escapedManifest}</pre><li>Use the matching recipient nsec locally to recover the other share, then combine it with the share above.</li>`
-		: `<li>Locate the first share from ${data.senderName}${data.secretCreatedAt ? ` (shared around ${data.secretCreatedAt.toLocaleDateString()})` : ''}</li><li>Copy the share above</li><li>Visit <a href="${decryptUrl}" style="color: #2563eb;">${decryptUrl}</a> to combine both shares</li>`;
-	const nostrManifestText = data.nostrManifest
-		? `1. Visit ${recoveryUrl} and choose Nostr recovery.\n2. Paste this signed manifest:\n\n${data.nostrManifest}\n\n3. Use the matching recipient nsec locally to recover the other share, then combine it with the share above.`
-		: `1. Locate the first share from ${data.senderName}${data.secretCreatedAt ? ` (shared around ${data.secretCreatedAt.toLocaleDateString()})` : ''}\n2. Copy the share above\n3. Visit ${decryptUrl} to combine both shares`;
+	const subject = sanitizeHeaderValue(
+		`${companyName}: Message from ${data.senderName} - ${data.secretTitle}`
+	);
+	const escapedManifest = data.nostrManifest ? escapeHtml(data.nostrManifest) : undefined;
+	const nostrManifestHtml =
+		data.nostrSchemeVersion === 3
+			? `<li>Retrieve the owner-delivered setup bundle you retained before disclosure. Do not accept a replacement manifest from this email or from KeyFate.</li><li>Visit <a href="${recoveryUrl}" style="color: #2563eb;">${recoveryUrl}</a>, choose authenticated Nostr recovery, import that bundle, and use the matching recipient nsec locally to recover envelope index 2.</li><li>Paste the disclosed service envelope above as index 1 in the authenticated reconstruction form. Plaintext is shown only after v3 authentication succeeds.</li>`
+			: escapedManifest
+				? `<li>Visit <a href="${recoveryUrl}" style="color: #2563eb;">${recoveryUrl}</a>, deliberately enable <strong>Unverified legacy transport mode</strong>, choose Nostr, and paste this v2 signed manifest:</li><pre style="background: #f5f5f5; padding: 12px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 11px; white-space: pre-wrap; word-break: break-word; color: #333; border: 1px solid #ddd;">${escapedManifest}</pre><li>This legacy flow cannot detect disclosure-time publisher substitution. Use the matching recipient nsec locally, then combine the recovered share with the share above in unverified legacy mode.</li>`
+				: `<li>Locate the first share from ${escapedSenderName}${data.secretCreatedAt ? ` (shared around ${data.secretCreatedAt.toLocaleDateString()})` : ''}</li><li>Copy the share above</li><li>Visit <a href="${decryptUrl}" style="color: #2563eb;">${decryptUrl}</a> to combine both shares</li>`;
+	const nostrManifestText =
+		data.nostrSchemeVersion === 3
+			? `1. Retrieve the owner-delivered setup bundle retained before disclosure. Do not trust a replacement manifest from this notice or KeyFate.\n2. Visit ${recoveryUrl}, choose authenticated Nostr recovery, import the bundle, and use the matching nsec to recover envelope index 2.\n3. Paste the disclosed service envelope above as index 1 in the authenticated reconstruction form.`
+			: data.nostrManifest
+				? `1. Visit ${recoveryUrl}, deliberately enable Unverified legacy transport mode, and choose Nostr.\n2. Paste this v2 signed manifest:\n\n${data.nostrManifest}\n\n3. This legacy flow cannot detect disclosure-time publisher substitution. Use the matching recipient nsec, then combine the recovered share with the share above in unverified legacy mode.`
+				: `1. Locate the first share from ${data.senderName}${data.secretCreatedAt ? ` (shared around ${data.secretCreatedAt.toLocaleDateString()})` : ''}\n2. Copy the share above\n3. Visit ${decryptUrl} to combine both shares`;
 	const escapedBitcoinEnvelope = data.bitcoinRecoveryEnvelope
-		?.replaceAll('&', '&amp;')
-		.replaceAll('<', '&lt;')
-		.replaceAll('>', '&gt;');
+		? escapeHtml(data.bitcoinRecoveryEnvelope)
+		: undefined;
 	const bitcoinGeneration =
 		typeof data.bitcoinRecoveryGeneration === 'number' &&
 		Number.isInteger(data.bitcoinRecoveryGeneration) &&
 		data.bitcoinRecoveryGeneration >= 1
 			? data.bitcoinRecoveryGeneration
 			: null;
+	const escapedBitcoinSenderPubkey = data.bitcoinRecoverySenderPubkey
+		? escapeHtml(data.bitcoinRecoverySenderPubkey)
+		: undefined;
 	const bitcoinRecoveryHtml =
-		escapedBitcoinEnvelope && data.bitcoinRecoverySenderPubkey && bitcoinGeneration
-			? `<hr style="border: none; border-top: 1px solid #ddd; margin: 24px 0;"><p><strong>Bitcoin Delayed Recovery</strong></p><p style="font-size: 14px; color: #666;">At or after the Bitcoin CSV delay, visit <a href="${recoveryUrl}" style="color: #2563eb;">${recoveryUrl}</a>, choose Bitcoin recovery, and use the envelope, expected sender, and current generation below. Superseded generations must be rejected.</p><p><strong>Expected current generation:</strong> ${bitcoinGeneration}</p><p><strong>Expected sender:</strong></p><pre style="background: #f5f5f5; padding: 12px; font-size: 11px; word-break: break-all;">${data.bitcoinRecoverySenderPubkey}</pre><p><strong>Encrypted envelope:</strong></p><pre style="background: #f5f5f5; padding: 12px; font-size: 11px; white-space: pre-wrap; word-break: break-word;">${escapedBitcoinEnvelope}</pre>`
+		escapedBitcoinEnvelope && escapedBitcoinSenderPubkey && bitcoinGeneration
+			? `<hr style="border: none; border-top: 1px solid #ddd; margin: 24px 0;"><p><strong>Bitcoin Delayed Recovery</strong></p><p style="font-size: 14px; color: #666;">At or after the Bitcoin CSV delay, visit <a href="${recoveryUrl}" style="color: #2563eb;">${recoveryUrl}</a>, choose Bitcoin recovery, and use the envelope, expected sender, and current generation below. Superseded generations must be rejected.</p><p><strong>Expected current generation:</strong> ${bitcoinGeneration}</p><p><strong>Expected sender:</strong></p><pre style="background: #f5f5f5; padding: 12px; font-size: 11px; word-break: break-all;">${escapedBitcoinSenderPubkey}</pre><p><strong>Encrypted envelope:</strong></p><pre style="background: #f5f5f5; padding: 12px; font-size: 11px; white-space: pre-wrap; word-break: break-word;">${escapedBitcoinEnvelope}</pre>`
 			: '';
 	const bitcoinRecoveryText =
 		data.bitcoinRecoveryEnvelope && data.bitcoinRecoverySenderPubkey && bitcoinGeneration
@@ -333,19 +368,19 @@ export function renderDisclosureTemplate(data: DisclosureTemplateData): EmailTem
 <html lang="en">
 <head><meta charset="UTF-8"></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; color: #333; line-height: 1.5; margin: 0; padding: 20px;">
-  <p>Dear ${data.contactName},</p>
+  <p>Dear ${escapedContactName},</p>
 
-  <p>${data.senderName} has entrusted you with confidential information through ${companyName}, a secure information sharing platform.</p>
+  <p>${escapedSenderName} has entrusted you with confidential information through ${companyName}, a secure information sharing platform.</p>
 
-  <p>${reasonText}</p>
+  <p>${reasonHtml}</p>
 
-  <p><strong>Title:</strong> ${data.secretTitle}<br><strong>From:</strong> ${data.senderName}</p>
+  <p><strong>Title:</strong> ${escapedSecretTitle}<br><strong>From:</strong> ${escapedSenderName}</p>
 
   <hr style="border: none; border-top: 1px solid #ddd; margin: 24px 0;">
 
-  <p><strong>Your Secret Share</strong></p>
-  <p style="font-size: 14px; color: #666;">This is the second share needed to reconstruct the complete message.</p>
-  <pre style="background: #f5f5f5; padding: 12px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; white-space: pre-wrap; word-break: break-word; color: #333; border: 1px solid #ddd;">${data.secretContent}</pre>
+  <p><strong>${data.nostrSchemeVersion === 3 ? 'Authenticated Service Envelope (index 1)' : 'Your Secret Share'}</strong></p>
+  <p style="font-size: 14px; color: #666;">${data.nostrSchemeVersion === 3 ? 'Combine this with the independently recovered recipient envelope at index 2.' : 'This is the second share needed to reconstruct the complete message.'}</p>
+  <pre style="background: #f5f5f5; padding: 12px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; white-space: pre-wrap; word-break: break-word; color: #333; border: 1px solid #ddd;">${escapedSecretContent}</pre>
 
   <hr style="border: none; border-top: 1px solid #ddd; margin: 24px 0;">
 
@@ -373,8 +408,8 @@ From: ${data.senderName}
 
 ---
 
-Your Secret Share
-This is the second share needed to reconstruct the complete message.
+${data.nostrSchemeVersion === 3 ? 'Authenticated Service Envelope (index 1)' : 'Your Secret Share'}
+${data.nostrSchemeVersion === 3 ? 'Combine this with the independently recovered recipient envelope at index 2.' : 'This is the second share needed to reconstruct the complete message.'}
 
 ${data.secretContent}
 

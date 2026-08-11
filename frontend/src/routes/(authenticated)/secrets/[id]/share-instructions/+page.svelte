@@ -1,13 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Checkbox } from '$lib/components/ui/checkbox';
-	import { Copy, AlertTriangle, CheckCircle, Download, Info, Loader2, Send } from '@lucide/svelte';
+	import { Copy, AlertTriangle, CheckCircle, Download, Info, Loader2 } from '@lucide/svelte';
 	import {
 		clearEphemeralRecoveryState,
 		getEphemeralRecoveryState,
@@ -15,7 +14,12 @@
 	} from '$lib/client/ephemeral-recovery-state';
 	import { encryptRecoveryKit } from '$lib/crypto/recovery-kit';
 	import BitcoinOwnerSetup from '$lib/components/bitcoin/BitcoinOwnerSetup.svelte';
-	import type { EphemeralBitcoinSetup } from '$lib/client/ephemeral-recovery-state';
+	import type {
+		EphemeralBitcoinSetup,
+		EphemeralNostrArtifact
+	} from '$lib/client/ephemeral-recovery-state';
+	import { serializeRecoverySetupBundleV3 } from '$lib/nostr/recovery-v3-artifact';
+	import { buildNostrRegistrationPayload } from '$lib/client/secret-creation-payload';
 
 	let { data } = $props();
 
@@ -27,6 +31,7 @@
 	let sssThreshold = $state(0);
 	let secretId = $state<string | null>(null);
 	let error = $state<string | null>(null);
+	let actionError = $state<string | null>(null);
 	let confirmedSent = $state(false);
 	let copiedIndex = $state<number | null>(null);
 	let kitPassphrase = $state('');
@@ -35,30 +40,16 @@
 	let kitDownloaded = $state(false);
 	let bitcoinSetup = $state<EphemeralBitcoinSetup | null>(null);
 	let bitcoinKitDownloaded = $state(false);
+	let nostrArtifacts = $state<EphemeralNostrArtifact[]>([]);
+	let downloadedSetupRecipients = $state<string[]>([]);
+	let finalizing = $state(false);
+	let allSetupBundlesDownloaded = $derived(
+		nostrArtifacts.length === 0 ||
+			nostrArtifacts.every((artifact) => downloadedSetupRecipients.includes(artifact.recipientId))
+	);
 
 	onMount(() => {
-		const searchParams = $page.url.searchParams;
-		const id = searchParams.get('secretId');
-		const total = parseInt(searchParams.get('sss_shares_total') || '0', 10);
-		const threshold = parseInt(searchParams.get('sss_threshold') || '0', 10);
-		const recipientsParam = searchParams.get('recipients');
-
-		if (!id || total < 2 || threshold < 2 || threshold > total) {
-			error =
-				'Critical information missing or invalid. Unable to display share instructions. Please try creating the secret again.';
-			return;
-		}
-
-		let parsedRecipients: Array<{ name: string; email?: string | null }> = [];
-		if (recipientsParam) {
-			try {
-				parsedRecipients = JSON.parse(decodeURIComponent(recipientsParam));
-			} catch {
-				error = 'Failed to parse recipients. Please re-create the secret.';
-				return;
-			}
-		}
-
+		const id = data.secretId;
 		const recoveryState = getEphemeralRecoveryState(id);
 		if (!recoveryState) {
 			error =
@@ -66,14 +57,21 @@
 			return;
 		}
 
-		if (recoveryState.shares.length !== total - 1) {
+		if (
+			recoveryState.threshold !== 2 ||
+			recoveryState.totalShares < 3 ||
+			recoveryState.shares.length !== recoveryState.totalShares - 1
+		) {
 			error = 'Share count mismatch. Please re-create the secret.';
 			return;
 		}
 
 		let partitionedShares: ReturnType<typeof partitionRecoveryShares>;
 		try {
-			partitionedShares = partitionRecoveryShares(recoveryState.shares, parsedRecipients.length);
+			partitionedShares = partitionRecoveryShares(
+				recoveryState.shares,
+				recoveryState.recipients.length
+			);
 		} catch {
 			error = 'Recipient share count mismatch. Please re-create the secret.';
 			return;
@@ -83,10 +81,11 @@
 		userManagedShares = recoveryState.shares;
 		recipientShares = partitionedShares.recipientShares;
 		backupShares = partitionedShares.backupShares;
-		sssSharesTotal = total;
-		sssThreshold = threshold;
-		recipients = parsedRecipients;
+		sssSharesTotal = recoveryState.totalShares;
+		sssThreshold = recoveryState.threshold;
+		recipients = recoveryState.recipients;
 		bitcoinSetup = recoveryState.bitcoin ?? null;
+		nostrArtifacts = recoveryState.nostr?.artifacts ?? [];
 		if (bitcoinSetup && !data.bitcoinEnrollmentEnabled) {
 			error =
 				'Bitcoin enrollment became unavailable. Delete and re-create this secret without Bitcoin.';
@@ -101,21 +100,21 @@
 
 	async function downloadEncryptedKit() {
 		if (!secretId || kitPassphrase.length < 12) {
-			error = 'Use a recovery-kit passphrase of at least 12 characters.';
+			actionError = 'Use a recovery-kit passphrase of at least 12 characters.';
 			return;
 		}
 		if (kitPassphrase !== kitPassphraseConfirmation) {
-			error = 'Recovery-kit passphrases do not match.';
+			actionError = 'Recovery-kit passphrases do not match.';
 			return;
 		}
 		const state = getEphemeralRecoveryState(secretId);
 		if (!state) {
-			error = 'Recovery material expired. Delete and re-create this secret.';
+			actionError = 'Recovery material expired. Delete and re-create this secret.';
 			return;
 		}
 
 		exportingKit = true;
-		error = null;
+		actionError = null;
 		try {
 			const envelope = await encryptRecoveryKit(
 				{
@@ -143,42 +142,98 @@
 			kitPassphrase = '';
 			kitPassphraseConfirmation = '';
 		} catch (downloadError) {
-			error =
+			actionError =
 				downloadError instanceof Error ? downloadError.message : 'Failed to encrypt recovery kit';
 		} finally {
 			exportingKit = false;
 		}
 	}
 
-	function handleProceed() {
-		if (confirmedSent && kitDownloaded && (!bitcoinSetup || bitcoinKitDownloaded) && secretId) {
+	function downloadSetupBundle(artifact: EphemeralNostrArtifact, recipientName: string) {
+		const url = URL.createObjectURL(
+			new Blob([serializeRecoverySetupBundleV3(artifact.setupBundle)], {
+				type: 'application/json'
+			})
+		);
+		const anchor = document.createElement('a');
+		anchor.href = url;
+		anchor.download = `keyfate-recipient-setup-${recipientName.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.json`;
+		anchor.click();
+		URL.revokeObjectURL(url);
+		if (!downloadedSetupRecipients.includes(artifact.recipientId)) {
+			downloadedSetupRecipients = [...downloadedSetupRecipients, artifact.recipientId];
+		}
+	}
+
+	async function getCsrfToken(): Promise<string> {
+		const response = await fetch('/api/csrf-token');
+		if (!response.ok) throw new Error('Failed to initialize protected request');
+		const body: unknown = await response.json();
+		if (
+			!body ||
+			typeof body !== 'object' ||
+			typeof (body as { token?: unknown }).token !== 'string'
+		) {
+			throw new Error('Invalid CSRF token response');
+		}
+		return (body as { token: string }).token;
+	}
+
+	async function handleProceed() {
+		if (
+			!confirmedSent ||
+			!kitDownloaded ||
+			!allSetupBundlesDownloaded ||
+			(!!bitcoinSetup && !bitcoinKitDownloaded) ||
+			!secretId
+		)
+			return;
+		finalizing = true;
+		actionError = null;
+		try {
+			if (nostrArtifacts.length > 0) {
+				const registrationToken = await getCsrfToken();
+				const registration = await fetch(`/api/secrets/${secretId}/publish-nostr`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'x-csrf-token': registrationToken
+					},
+					body: JSON.stringify(
+						buildNostrRegistrationPayload(
+							nostrArtifacts.map((artifact) => ({
+								giftWrapEvent: artifact.giftWrapEvent,
+								capsuleEvent: artifact.capsuleEvent,
+								manifestEvent: artifact.manifestEvent
+							}))
+						)
+					)
+				});
+				if (!registration.ok) {
+					const body = await registration.json();
+					throw new Error(body.error || 'Failed to register retained Nostr artifacts');
+				}
+				const finalizationToken = await getCsrfToken();
+				const response = await fetch(`/api/secrets/${secretId}/finalize-nostr`, {
+					method: 'POST',
+					headers: { 'x-csrf-token': finalizationToken }
+				});
+				if (!response.ok) {
+					const body = await response.json();
+					throw new Error(body.error || 'Failed to finalize Nostr setup');
+				}
+			}
 			clearEphemeralRecoveryState(secretId);
 			userManagedShares = [];
 			recipientShares = [];
 			backupShares = [];
 			goto('/dashboard');
+		} catch (finalizeError) {
+			actionError =
+				finalizeError instanceof Error ? finalizeError.message : 'Failed to finalize setup';
+		} finally {
+			finalizing = false;
 		}
-	}
-
-	function createMailto(
-		recipient: { name: string; email?: string | null },
-		share: string
-	): string | null {
-		if (!recipient.email || !share) return null;
-		const subject = encodeURIComponent('Your KeyFate Secret Share');
-		const bodyParts = [
-			`Hi ${recipient.name || 'there'},`,
-			'',
-			`Here is your KeyFate secret share: ${share}`,
-			'',
-			`Please keep this very safe. Recovery requires ${sssThreshold} distinct shares. KeyFate will provide its service share if the secret expires, but additional shares may still be required.`,
-			'',
-			"What is KeyFate? It's a dead man's switch service. The person who set this up has stored an encrypted message that will be made accessible to you if they fail to check in regularly.",
-			'',
-			'For more information on how to use this share for recovery, you will receive further instructions from KeyFate if/when the secret is triggered.'
-		];
-		const body = encodeURIComponent(bodyParts.join('\n'));
-		return `mailto:${recipient.email}?subject=${subject}&body=${body}`;
 	}
 </script>
 
@@ -202,8 +257,9 @@
 	<div class="mx-auto max-w-2xl px-6 py-12">
 		<h1 class="font-space mb-3 text-3xl font-light tracking-tight">Manage Your Secret Shares</h1>
 		<p class="text-muted-foreground mb-10">
-			Your secret has been successfully created and split into {sssSharesTotal} shares. You need {sssThreshold}
-			shares to recover it.
+			Your structured secret was authenticated-encrypted under a random content key. Only that key
+			was split into {sssSharesTotal} recovery envelopes; {sssThreshold} distinct envelope indices are
+			required.
 		</p>
 		<div class="space-y-10">
 			<Alert.Root>
@@ -215,15 +271,16 @@
 					</p>
 					<ul class="mt-2 list-disc space-y-1 pl-5">
 						<li>
-							<strong>Share 0 (KeyFate):</strong> Automatically sent to recipients when triggered.
+							<strong>Envelope index 1 (KeyFate):</strong> Automatically sent to recipients when triggered.
 						</li>
 						<li>
-							<strong>Recipient shares:</strong> Each recipient gets only their assigned share. Sending
-							the same share over two channels does not create another recovery share.
+							<strong>Envelope index 2 (recipients):</strong> Every recipient receives a separately encrypted
+							copy of the same logical envelope. Sending it over two channels does not create another
+							recovery share.
 						</li>
 						{#if backupShares.length > 0}
 							<li>
-								<strong>Owner backup shares:</strong> Store the remaining {backupShares.length}
+								<strong>Owner backup envelopes (indices 3+):</strong> Store the remaining {backupShares.length}
 								{backupShares.length === 1 ? 'share' : 'shares'} securely offline.
 							</li>
 						{/if}
@@ -236,40 +293,52 @@
 				<h3 class="font-space text-lg font-bold tracking-tight">Distribution Checklist</h3>
 				{#each recipients as recipient, index}
 					{@const assignedShare = recipientShares[index]}
+					{@const artifact = nostrArtifacts[index]}
 					<div class="border-border/50 space-y-3 rounded-md border p-3">
-						<div class="flex items-start justify-between gap-3">
-							<div class="flex-1">
-								<p class="font-medium">Share {index + 1}: {recipient.name}</p>
-								<p class="text-muted-foreground text-sm">
-									{recipient.email || 'No email provided'}
-								</p>
-							</div>
-							{#if recipient.email}
-								{@const mailto = createMailto(recipient, assignedShare)}
-								{#if mailto}
-									<Button variant="outline" size="sm" href={mailto} class="font-semibold">
-										<Send class="mr-2 h-4 w-4" />
-										Email Share
-									</Button>
-								{/if}
-							{/if}
+						<div>
+							<p class="font-medium">
+								Recipient {index + 1}: {artifact?.recipientName ?? recipient.name}
+							</p>
+							<p class="text-muted-foreground text-sm">
+								{artifact?.recipientEmail || recipient.email || 'No email provided'}
+							</p>
 						</div>
-						<div class="flex items-center space-x-2">
-							<Input readonly value={assignedShare} class="bg-muted truncate text-sm" />
+						{#if artifact}
+							<p class="text-muted-foreground text-sm">
+								Download this recipient's signed setup bundle and deliver the file through an
+								owner-controlled channel. It contains no plaintext share.
+							</p>
 							<Button
 								type="button"
-								size="icon"
 								variant="outline"
-								aria-label={`${copiedIndex === index ? 'Copied' : 'Copy'} recovery share for ${recipient.name}`}
-								onclick={() => handleCopy(assignedShare, index)}
+								onclick={() => downloadSetupBundle(artifact, artifact.recipientName)}
 							>
-								{#if copiedIndex === index}
-									<CheckCircle class="text-accent-foreground h-4 w-4" />
+								{#if downloadedSetupRecipients.includes(artifact.recipientId)}
+									<CheckCircle class="mr-2 h-4 w-4" /> Download again
 								{:else}
-									<Copy class="h-4 w-4" />
+									<Download class="mr-2 h-4 w-4" /> Download setup bundle
 								{/if}
 							</Button>
-						</div>
+						{:else}
+							<p class="text-muted-foreground text-sm">
+								Copy this share and transfer it manually through a secure channel. It is never
+								placed in a URL or generated email link.
+							</p>
+							<div class="flex items-center space-x-2">
+								<Input readonly value={assignedShare} class="bg-muted truncate text-sm" />
+								<Button
+									type="button"
+									size="icon"
+									variant="outline"
+									aria-label={`${copiedIndex === index ? 'Copied' : 'Copy'} recovery share for ${recipient.name}`}
+									onclick={() => handleCopy(assignedShare, index)}
+								>
+									{#if copiedIndex === index}<CheckCircle
+											class="text-accent-foreground h-4 w-4"
+										/>{:else}<Copy class="h-4 w-4" />{/if}
+								</Button>
+							</div>
+						{/if}
 					</div>
 				{/each}
 			</div>
@@ -285,7 +354,7 @@
 					{#each backupShares as share, index}
 						<div class="space-y-2">
 							<Label class="font-space text-lg font-bold tracking-tight">
-								Share {recipients.length + index + 1}: Backup Share {index + 1}
+								Envelope index {index + 3}: Owner Backup {index + 1}
 							</Label>
 							<div class="flex items-center space-x-2">
 								<Input readonly value={share} class="bg-muted truncate text-sm" />
@@ -370,19 +439,16 @@
 
 			<Alert.Root variant="destructive" class="mt-6">
 				<AlertTriangle class="mt-0.5 h-5 w-5" />
-				<Alert.Title class="text-lg">
-					{sssThreshold === sssSharesTotal
-						? 'CRITICAL: All Shares Must Be Distributed'
-						: 'Action Required: Distribute Share 1'}
-				</Alert.Title>
+				<Alert.Title class="text-lg">Action Required: Complete Recipient Distribution</Alert.Title>
 				<Alert.Description class="text-foreground space-y-3">
 					<p>
-						Distribute Share 1 to each recipient using secure channels. Without it, recipients
-						cannot recover your secret when triggered.
+						{nostrArtifacts.length > 0
+							? 'Deliver every downloaded setup bundle through an owner-controlled channel. Registration alone does not activate this secret.'
+							: 'Copy and distribute the shared recipient recovery envelope through a secure channel.'}
 					</p>
 					<p>
-						<strong>Secure methods:</strong> Signal, password manager sharing, encrypted file, in-person,
-						or email (buttons above).
+						<strong>Secure methods:</strong> Signal, password manager sharing, encrypted file, or in-person
+						transfer. KeyFate does not generate share-bearing email links.
 					</p>
 				</Alert.Description>
 			</Alert.Root>
@@ -397,25 +463,42 @@
 					for="confirm-sent"
 					class="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 				>
-					I have distributed {sssThreshold === sssSharesTotal ? 'all required shares' : 'Share 1'},
-					downloaded the encrypted owner kit, and understand that this tab will clear its plaintext
-					copy.
+					I have downloaded and distributed every required recipient artifact through an
+					owner-controlled channel, downloaded the encrypted owner kit, and understand that this tab
+					will clear its plaintext copy.
 				</Label>
 			</div>
+
+			{#if actionError}
+				<Alert.Root variant="destructive">
+					<AlertTriangle class="h-4 w-4" />
+					<Alert.Title>Setup remains paused</Alert.Title>
+					<Alert.Description
+						>{actionError} The signed artifacts remain in this tab; retry without recreating the secret.</Alert.Description
+					>
+				</Alert.Root>
+			{/if}
 
 			<div class="flex justify-end pt-8">
 				<Button
 					onclick={handleProceed}
 					disabled={!confirmedSent ||
 						!kitDownloaded ||
+						!allSetupBundlesDownloaded ||
 						(!!bitcoinSetup && !bitcoinKitDownloaded) ||
-						userManagedShares.length === 0}
+						userManagedShares.length === 0 ||
+						finalizing}
 					size="lg"
 					class="w-full font-semibold md:w-auto"
 				>
-					{confirmedSent && kitDownloaded && (!bitcoinSetup || bitcoinKitDownloaded)
-						? 'Clear Plaintext and Proceed'
-						: 'Complete Distribution and Required Kit Downloads'}
+					{finalizing
+						? 'Finalizing…'
+						: confirmedSent &&
+							  kitDownloaded &&
+							  allSetupBundlesDownloaded &&
+							  (!bitcoinSetup || bitcoinKitDownloaded)
+							? 'Finalize, Clear Plaintext, and Proceed'
+							: 'Complete Distribution and Required Kit Downloads'}
 				</Button>
 			</div>
 		</div>

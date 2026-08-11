@@ -1,32 +1,20 @@
-/**
- * Nostr share publishing service.
- *
- * Publishes double-encrypted Shamir shares to Nostr relays via NIP-59 gift wraps.
- * Each recipient with a nostrPubkey gets their share delivered as a gift-wrapped event.
- */
-
 import { hex } from '@scure/base';
-import { doubleEncryptShare } from '$lib/crypto/double-encrypt';
+import { doubleEncryptShare, type Nip44Ops } from '$lib/crypto/double-encrypt';
 import { getConversationKey, encrypt, decrypt as nip44Decrypt } from '$lib/nostr/encryption';
-import { wrapCapsuleForRecipient } from '$lib/nostr/gift-wrap';
 import {
-	createRecoveryCapsule,
-	createRecoveryManifest,
-	RECOVERY_CAPSULE_VERSION
-} from '$lib/nostr/recovery-capsule';
+	createRecoveryArtifactV3,
+	type RecoverySetupBundleV3
+} from '$lib/nostr/recovery-v3-artifact';
 import { createNostrClient } from '$lib/nostr/client';
-import type { Nip44Ops } from '$lib/crypto/double-encrypt';
-import { getPublicKey } from 'nostr-tools/pure';
+import { DEFAULT_RELAYS } from '$lib/nostr/relay-config';
 import type { Event as NostrEvent } from 'nostr-tools/core';
 
-/** Input for a single share to publish */
 export interface ShareInput {
 	recipientId: string;
 	share: string;
 	shareIndex: number;
 }
 
-/** Result for a single published share */
 export interface PublishedShare {
 	recipientId: string;
 	nostrEventId: string;
@@ -35,9 +23,9 @@ export interface PublishedShare {
 	giftWrapEvent: NostrEvent;
 	capsuleEvent: NostrEvent;
 	manifestEvent: NostrEvent;
-	/** Plaintext symmetric key K (for OP_RETURN embedding) */
+	setupBundle: RecoverySetupBundleV3;
+	relayPublished: boolean;
 	plaintextK: Uint8Array;
-	/** K encrypted with passphrase-derived key (if passphrase was provided) */
 	encryptedKPassphrase?: {
 		ciphertext: Uint8Array;
 		nonce: Uint8Array;
@@ -45,32 +33,35 @@ export interface PublishedShare {
 	};
 }
 
-/** Result of publishing shares to Nostr */
 export interface PublishResult {
+	/** All fully built, signed artifacts, including retryable relay failures. */
 	published: PublishedShare[];
-	/** Recipients that were skipped (no nostrPubkey) */
 	skipped: string[];
 	errors: Array<{ recipientId: string; error: string }>;
 }
 
-/** Recipient info needed for publishing */
 export interface RecipientInfo {
 	id: string;
 	nostrPubkey: string | null;
 }
 
-/**
- * Create real NIP-44 operations that use the conversation key approach.
- */
 function createNip44Ops(): Nip44Ops {
 	return {
 		encrypt(plaintext: string, senderPrivkey: Uint8Array, recipientPubkey: string): string {
-			const convKey = getConversationKey(senderPrivkey, recipientPubkey);
-			return encrypt(plaintext, convKey);
+			const conversationKey = getConversationKey(senderPrivkey, recipientPubkey);
+			try {
+				return encrypt(plaintext, conversationKey);
+			} finally {
+				conversationKey.fill(0);
+			}
 		},
 		decrypt(ciphertext: string, recipientPrivkey: Uint8Array, senderPubkey: string): string {
-			const convKey = getConversationKey(recipientPrivkey, senderPubkey);
-			return nip44Decrypt(ciphertext, convKey);
+			const conversationKey = getConversationKey(recipientPrivkey, senderPubkey);
+			try {
+				return nip44Decrypt(ciphertext, conversationKey);
+			} finally {
+				conversationKey.fill(0);
+			}
 		}
 	};
 }
@@ -81,20 +72,8 @@ export interface NostrPublisherClient {
 }
 
 /**
- * Publish encrypted shares to Nostr relays for recipients that have a nostrPubkey.
- *
- * For each eligible recipient:
- *   1. Double-encrypt the share (ChaCha20 + NIP-44)
- *   2. Create a NIP-59 Gift Wrap event
- *   3. Publish to Nostr relays
- *
- * @param secretId - The secret's UUID
- * @param shares - Array of shares with recipient IDs
- * @param recipients - Recipient info (must include nostrPubkey)
- * @param senderSecretKey - The sender's Nostr secret key (32 bytes)
- * @param threshold - SSS threshold
- * @param totalShares - SSS total shares
- * @param passphrase - Optional passphrase for third recovery path
+ * Build every recipient-bound v3 artifact before any network effect, then publish.
+ * Relay failures retain the exact signed artifacts for idempotent retry.
  */
 export async function publishSharesToNostr(params: {
 	secretId: string;
@@ -107,116 +86,88 @@ export async function publishSharesToNostr(params: {
 	relays?: string[];
 	client?: NostrPublisherClient;
 }): Promise<PublishResult> {
-	const {
-		secretId,
-		shares,
-		recipients,
-		senderSecretKey,
-		threshold,
-		totalShares,
-		passphrase,
-		relays,
-		client: providedClient
-	} = params;
-
-	const result: PublishResult = {
-		published: [],
-		skipped: [],
-		errors: []
-	};
-	const publisherPubkey = getPublicKey(senderSecretKey);
-
-	// Build a lookup of recipient ID -> nostrPubkey
-	const recipientMap = new Map<string, string>();
-	for (const r of recipients) {
-		if (r.nostrPubkey) {
-			recipientMap.set(r.id, r.nostrPubkey);
-		}
-	}
-
+	if (params.threshold !== 2) throw new Error('Authenticated Nostr v3 requires threshold 2');
+	const relayHints = params.relays?.length ? [...params.relays] : [...DEFAULT_RELAYS];
+	const recipientMap = new Map(
+		params.recipients
+			.filter((recipient): recipient is { id: string; nostrPubkey: string } =>
+				Boolean(recipient.nostrPubkey)
+			)
+			.map((recipient) => [recipient.id, recipient.nostrPubkey])
+	);
+	const result: PublishResult = { published: [], skipped: [], errors: [] };
 	const nip44Ops = createNip44Ops();
-	const client = providedClient ?? createNostrClient(relays ? { relays } : undefined);
 
 	try {
-		for (const shareInput of shares) {
-			const nostrPubkey = recipientMap.get(shareInput.recipientId);
-			if (!nostrPubkey) {
+		// No relay call occurs until the complete recipient set is built successfully.
+		for (const shareInput of params.shares) {
+			const recipientNostrPubkey = recipientMap.get(shareInput.recipientId);
+			if (!recipientNostrPubkey) {
 				result.skipped.push(shareInput.recipientId);
 				continue;
 			}
-
+			if (shareInput.shareIndex !== 2)
+				throw new Error('V3 recipient share must have actual index 2');
+			const encrypted = await doubleEncryptShare(
+				shareInput.share,
+				recipientNostrPubkey,
+				params.senderSecretKey,
+				params.passphrase,
+				nip44Ops
+			);
 			try {
-				// 1. Double-encrypt the share
-				const encrypted = await doubleEncryptShare(
-					shareInput.share,
-					nostrPubkey,
-					senderSecretKey,
-					passphrase,
-					nip44Ops
-				);
-
-				// 2. Encode the encrypted share as hex for the gift wrap payload
-				const encryptedShareHex = hex.encode(encrypted.encryptedShare);
-				const nonceHex = hex.encode(encrypted.nonce);
-
-				const capsule = createRecoveryCapsule(
-					{
-						version: RECOVERY_CAPSULE_VERSION,
-						secretId,
-						recipientId: shareInput.recipientId,
-						recipientNostrPubkey: nostrPubkey,
-						shareIndex: shareInput.shareIndex,
-						threshold,
-						totalShares,
-						encryptedShareHex,
-						nonceHex,
-						encryptedKNostr: encrypted.encryptedKNostr
-					},
-					senderSecretKey
-				);
-
-				// The signed capsule is embedded in the encrypted rumor. The service
-				// and relays see only the already-signed outer event.
-				const giftWrap = wrapCapsuleForRecipient(capsule, senderSecretKey, nostrPubkey);
-				const manifestEvent = createRecoveryManifest(
-					{
-						version: RECOVERY_CAPSULE_VERSION,
-						secretId,
-						recipientId: shareInput.recipientId,
-						recipientNostrPubkey: nostrPubkey,
-						publisherPubkey,
-						giftWrapEventId: giftWrap.id,
-						capsuleEventId: capsule.id
-					},
-					senderSecretKey
-				);
-
-				await client.publish(giftWrap);
-
+				const artifact = createRecoveryArtifactV3({
+					secretId: params.secretId,
+					recipientId: shareInput.recipientId,
+					recipientNostrPubkey,
+					shareEnvelope: shareInput.share,
+					encryptedShareHex: hex.encode(encrypted.encryptedShare),
+					nonceHex: hex.encode(encrypted.nonce),
+					encryptedKNostr: encrypted.encryptedKNostr,
+					publisherSecretKey: params.senderSecretKey,
+					relayHints
+				});
 				result.published.push({
 					recipientId: shareInput.recipientId,
-					nostrEventId: giftWrap.id,
-					capsuleEventId: capsule.id,
-					publisherPubkey,
-					giftWrapEvent: giftWrap,
-					capsuleEvent: capsule,
-					manifestEvent,
+					nostrEventId: artifact.giftWrapEvent.id,
+					capsuleEventId: artifact.capsuleEvent.id,
+					publisherPubkey: artifact.binding.publisherPubkey,
+					giftWrapEvent: artifact.giftWrapEvent,
+					capsuleEvent: artifact.capsuleEvent,
+					manifestEvent: artifact.manifestEvent,
+					setupBundle: artifact.setupBundle,
+					relayPublished: false,
 					plaintextK: encrypted.plaintextK,
 					encryptedKPassphrase: encrypted.encryptedKPassphrase
 				});
-			} catch (err) {
-				const message = err instanceof Error ? err.message : String(err);
-				result.errors.push({
-					recipientId: shareInput.recipientId,
-					error: message
-				});
+			} catch (error) {
+				encrypted.plaintextK.fill(0);
+				throw error;
 			}
 		}
-	} finally {
-		client.close();
-		// The per-secret publisher key is one-shot and never leaves the browser.
-		senderSecretKey.fill(0);
-	}
 
-	return result;
+		const client = params.client ?? createNostrClient({ relays: relayHints });
+		try {
+			for (const artifact of result.published) {
+				try {
+					await client.publish(artifact.giftWrapEvent);
+					artifact.relayPublished = true;
+				} catch (error) {
+					result.errors.push({
+						recipientId: artifact.recipientId,
+						error: error instanceof Error ? error.message : 'Relay publication failed'
+					});
+				}
+			}
+		} finally {
+			client.close();
+		}
+		return result;
+	} catch (error) {
+		for (const artifact of result.published) artifact.plaintextK.fill(0);
+		result.published = [];
+		throw error;
+	} finally {
+		params.senderSecretKey.fill(0);
+	}
 }

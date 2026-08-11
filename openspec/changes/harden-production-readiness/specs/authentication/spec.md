@@ -30,3 +30,24 @@ The system SHALL scope OTP verification attempts to a currently issued, unexpire
 - **WHEN** the user requests a new OTP within applicable endpoint limits
 - **THEN** the system SHALL create a fresh bounded challenge
 - **AND** SHALL NOT require manual account unlock caused solely by invalid OTP guesses
+
+#### Scenario: Per-email validation rate limit
+
+- **GIVEN** an active OTP challenge exists for an email
+- **WHEN** its bounded validation-attempt limit is exhausted
+- **THEN** the system SHALL reject subsequent attempts against that challenge with 429 status
+- **AND** SHALL include retry guidance and log the challenge-scoped violation
+
+#### Scenario: Account lockout after repeated failures
+
+- **GIVEN** repeated invalid guesses target an active OTP challenge
+- **WHEN** its failure limit is reached
+- **THEN** the system SHALL lock and consume that challenge rather than create durable account-level lockout state
+- **AND** SHALL preserve shared endpoint/IP abuse limits and security monitoring
+
+#### Scenario: Rate limit reset
+
+- **GIVEN** a challenge or endpoint identity has been rate limited
+- **WHEN** its configured window expires
+- **THEN** the shared limiter SHALL reset atomically
+- **AND** a newly issued challenge MAY accept authentication attempts

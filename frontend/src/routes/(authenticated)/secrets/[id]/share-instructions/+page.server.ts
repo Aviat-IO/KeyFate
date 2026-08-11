@@ -5,7 +5,12 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async (event) => {
 	const session = await event.locals.auth();
 	if (!session?.user?.id) redirect(302, '/sign-in');
+	event.setHeaders({
+		'cache-control': 'private, no-store, max-age=0',
+		'referrer-policy': 'no-referrer'
+	});
 	return {
+		secretId: event.params.id,
 		bitcoinEnrollmentEnabled: isBitcoinEnrollmentEnabled()
 	};
 };

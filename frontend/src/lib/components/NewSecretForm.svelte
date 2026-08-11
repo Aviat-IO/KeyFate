@@ -23,13 +23,16 @@
 		Radio,
 		Trash2
 	} from '@lucide/svelte';
-	import { Buffer } from 'buffer';
-	import sss from 'shamirs-secret-sharing';
 	import { generateSecretKey } from 'nostr-tools/pure';
+	import {
+		assertRecoveryEnvelopeFitsNostrCapsule,
+		createAuthenticatedRecoverySet,
+		validateRecoveryShareEnvelopeContext
+	} from '$lib/crypto/recovery-v3';
 	import { publishSharesToNostr } from '$lib/services/nostr-publisher';
 	import {
-		clearEphemeralRecoveryState,
-		partitionRecoveryShares,
+		buildSharedRecipientShareAssignments,
+		getEphemeralRecoveryState,
 		setEphemeralBitcoinSetup,
 		setEphemeralNostrMetadata,
 		setEphemeralRecoveryState
@@ -149,21 +152,16 @@
 		if (sssSharesTotal < 3) {
 			errors.sssSharesTotal = 'Minimum 3 shares required';
 		}
-		if (sssThreshold < 2) {
-			errors.sssThreshold = 'Minimum threshold is 2';
-		}
-		if (sssThreshold > sssSharesTotal) {
-			errors.sssThreshold = 'Threshold cannot exceed total shares';
+		if (sssThreshold !== 2) {
+			errors.sssThreshold = 'Authenticated recovery currently requires a threshold of 2';
 		}
 		if (enableNostrShares && recipients.some((recipient) => !recipient.nostrPubkey.trim())) {
 			errors.nostrRecipients = 'Every Nostr recipient requires a valid npub';
 		}
-		if (enableNostrShares && recipients.length > sssSharesTotal - 1) {
-			errors.nostrRecipients = 'Increase total shares so each recipient has a distinct share';
-		}
 		if (enableBitcoinTimelock) {
 			if (!bitcoinEnrollmentEnabled) errors.bitcoinRecipient = 'Bitcoin enrollment is disabled';
-			if (!enableNostrShares) errors.bitcoinRecipient = 'Bitcoin recovery requires Nostr v2';
+			if (!enableNostrShares)
+				errors.bitcoinRecipient = 'Bitcoin recovery requires Nostr enrollment';
 			if (bitcoinRecipientIndex === null || !recipients[bitcoinRecipientIndex]) {
 				errors.bitcoinRecipient = 'Select exactly one Nostr recipient for Bitcoin recovery';
 			}
@@ -171,6 +169,20 @@
 
 		fieldErrors = errors;
 		return Object.keys(errors).length === 0;
+	}
+
+	async function getCsrfToken(): Promise<string> {
+		const response = await fetch('/api/csrf-token');
+		if (!response.ok) throw new Error('Failed to initialize protected request');
+		const body: unknown = await response.json();
+		if (
+			!body ||
+			typeof body !== 'object' ||
+			typeof (body as { token?: unknown }).token !== 'string'
+		) {
+			throw new Error('Invalid CSRF token response');
+		}
+		return (body as { token: string }).token;
 	}
 
 	async function handleSubmit(e: SubmitEvent) {
@@ -184,31 +196,30 @@
 				return;
 			}
 
-			// SSS split client-side
-			const secretBuffer = Buffer.from(secretMessageContent, 'utf8');
-			const shares = sss.split(secretBuffer, {
-				shares: sssSharesTotal,
+			const recoverySet = createAuthenticatedRecoverySet(secretMessageContent, {
+				total: sssSharesTotal,
 				threshold: sssThreshold
 			});
-
-			if (shares.length < sssSharesTotal || shares.length === 0) {
-				throw new Error('Failed to generate the required number of SSS shares.');
+			if (recoverySet.envelopes.length !== sssSharesTotal) {
+				throw new Error('Failed to generate the required number of authenticated recovery shares.');
+			}
+			const serverShareEnvelope = recoverySet.envelopes[0];
+			validateRecoveryShareEnvelopeContext(serverShareEnvelope, {
+				index: 1,
+				threshold: sssThreshold,
+				total: sssSharesTotal
+			});
+			const userManagedShares = recoverySet.envelopes.slice(1);
+			if (enableNostrShares) {
+				assertRecoveryEnvelopeFitsNostrCapsule(userManagedShares[0]);
 			}
 
-			const userManagedShares: string[] = [];
-			for (let i = 1; i < shares.length; i++) {
-				userManagedShares.push(shares[i].toString('hex'));
-			}
-
-			const serverSharePlainHex = shares[0].toString('hex');
-
-			// Get CSRF token
-			const csrfRes = await fetch('/api/csrf-token');
-			const { token: csrfToken } = await csrfRes.json();
+			// Fetch a single-use token only after all local transport constraints pass.
+			const csrfToken = await getCsrfToken();
 
 			const payload = buildSecretCreationPayload({
 				title,
-				serverShare: serverSharePlainHex,
+				serverShare: serverShareEnvelope,
 				recipients,
 				checkInDays: parseInt(checkInDays, 10),
 				totalShares: sssSharesTotal,
@@ -235,11 +246,14 @@
 				error = result.warning;
 			}
 
-			// Plaintext owner/recipient shares live only in this tab's memory until
+			// Owner/recipient recovery envelopes live only in this tab's memory until
 			// the owner downloads an encrypted recovery kit or leaves the flow.
 			setEphemeralRecoveryState({
 				secretId: result.secretId,
 				shares: userManagedShares,
+				recipients: recipients.map(({ name, email }) => ({ name, email })),
+				threshold: sssThreshold,
+				totalShares: sssSharesTotal,
 				createdAt: Date.now()
 			});
 
@@ -249,23 +263,20 @@
 				try {
 					const nostrRecipients = result.recipients as Array<{
 						id: string;
+						name: string;
+						email: string | null;
 						nostrPubkey: string | null;
 					}>;
 					if (nostrRecipients.some((recipient) => !recipient.nostrPubkey)) {
 						throw new Error('Server did not persist every recipient npub');
 					}
 
-					const { recipientShares } = partitionRecoveryShares(
-						userManagedShares,
-						nostrRecipients.length
-					);
 					const publication = await publishSharesToNostr({
 						secretId: result.secretId,
-						shares: nostrRecipients.map((recipient, index) => ({
-							recipientId: recipient.id,
-							share: recipientShares[index],
-							shareIndex: index + 1
-						})),
+						shares: buildSharedRecipientShareAssignments(
+							nostrRecipients.map((recipient) => recipient.id),
+							userManagedShares
+						),
 						recipients: nostrRecipients.map((recipient) => ({
 							id: recipient.id,
 							nostrPubkey: recipient.nostrPubkey
@@ -275,71 +286,90 @@
 						totalShares: sssSharesTotal
 					});
 
-					if (
-						publication.errors.length > 0 ||
-						publication.published.length !== nostrRecipients.length
-					) {
-						throw new Error(
-							publication.errors[0]?.error || 'Not every recipient artifact reached a relay'
-						);
-					}
-
-					const registerResponse = await fetch(`/api/secrets/${result.secretId}/publish-nostr`, {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-							'x-csrf-token': csrfToken
-						},
-						body: JSON.stringify(buildNostrRegistrationPayload(publication.published))
-					});
-					if (!registerResponse.ok) {
-						const registration = await registerResponse.json();
-						throw new Error(registration.error || 'Failed to register Nostr recovery artifacts');
-					}
-
-					setEphemeralNostrMetadata(result.secretId, {
-						eventIds: publication.published.map((item) => item.nostrEventId),
-						manifests: publication.published.map((item) => item.manifestEvent)
-					});
-					if (enableBitcoinTimelock && bitcoinRecipientIndex !== null) {
-						const selectedRecipient = nostrRecipients[bitcoinRecipientIndex];
-						const selectedPublication = publication.published.find(
-							(item) => item.recipientId === selectedRecipient.id
-						);
-						if (!selectedPublication || !selectedRecipient.nostrPubkey) {
-							throw new Error('Selected Bitcoin recipient publication is unavailable');
+					try {
+						if (publication.published.length !== nostrRecipients.length) {
+							throw new Error('Not every recipient v3 artifact was created');
 						}
-						setEphemeralBitcoinSetup(result.secretId, {
-							recipientId: selectedRecipient.id,
-							recipientName: recipients[bitcoinRecipientIndex].name,
-							recipientNostrPubkey: selectedRecipient.nostrPubkey,
-							nostrCapsuleEventId: selectedPublication.capsuleEventId,
-							nostrManifestEvent: selectedPublication.manifestEvent,
-							nostrCapsuleEvent: selectedPublication.capsuleEvent,
-							plaintextK: selectedPublication.plaintextK
+
+						// Retain the exact signed events and independently delivered setup bundles before
+						// registration or relay retry can fail.
+						setEphemeralNostrMetadata(result.secretId, {
+							eventIds: publication.published.map((item) => item.nostrEventId),
+							manifests: publication.published.map((item) => item.manifestEvent),
+							setupBundles: publication.published.map((item) => item.setupBundle),
+							artifacts: publication.published.map((item) => {
+								const recipientIndex = nostrRecipients.findIndex(
+									(recipient) => recipient.id === item.recipientId
+								);
+								if (recipientIndex < 0)
+									throw new Error('Published recipient is not in the creation set');
+								return {
+									recipientId: item.recipientId,
+									recipientName: nostrRecipients[recipientIndex].name,
+									recipientEmail: nostrRecipients[recipientIndex].email,
+									giftWrapEvent: item.giftWrapEvent,
+									capsuleEvent: item.capsuleEvent,
+									manifestEvent: item.manifestEvent,
+									setupBundle: item.setupBundle,
+									relayPublished: item.relayPublished
+								};
+							})
 						});
-						selectedPublication.plaintextK.fill(0);
+
+						if (enableBitcoinTimelock && bitcoinRecipientIndex !== null) {
+							const selectedRecipient = nostrRecipients[bitcoinRecipientIndex];
+							const selectedPublication = publication.published.find(
+								(item) => item.recipientId === selectedRecipient.id
+							);
+							if (!selectedPublication || !selectedRecipient.nostrPubkey) {
+								throw new Error('Selected Bitcoin recipient publication is unavailable');
+							}
+							setEphemeralBitcoinSetup(result.secretId, {
+								recipientId: selectedRecipient.id,
+								recipientName: recipients[bitcoinRecipientIndex].name,
+								recipientNostrPubkey: selectedRecipient.nostrPubkey,
+								nostrCapsuleEventId: selectedPublication.capsuleEventId,
+								nostrManifestEvent: selectedPublication.manifestEvent,
+								nostrCapsuleEvent: selectedPublication.capsuleEvent,
+								plaintextK: selectedPublication.plaintextK
+							});
+						}
+
+						const registrationToken = await getCsrfToken();
+						const registerResponse = await fetch(`/api/secrets/${result.secretId}/publish-nostr`, {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json',
+								'x-csrf-token': registrationToken
+							},
+							body: JSON.stringify(buildNostrRegistrationPayload(publication.published))
+						});
+						if (!registerResponse.ok) {
+							const registration = await registerResponse.json();
+							throw new Error(registration.error || 'Failed to register Nostr recovery artifacts');
+						}
+					} finally {
+						for (const artifact of publication.published) artifact.plaintextK.fill(0);
 					}
 				} catch (nostrError) {
-					clearEphemeralRecoveryState(result.secretId);
-					await fetch(`/api/secrets/${result.secretId}`, {
-						method: 'DELETE',
-						headers: { 'x-csrf-token': csrfToken }
-					}).catch(() => undefined);
-					throw nostrError;
+					const retained = getEphemeralRecoveryState(result.secretId)?.nostr?.artifacts;
+					const message =
+						nostrError instanceof Error ? nostrError.message : 'Nostr enrollment failed';
+					if (!retained || retained.length === 0) {
+						throw new Error(
+							`Nostr artifact creation failed before a safe retry set existed. ${message}`,
+							{
+								cause: nostrError
+							}
+						);
+					}
+					// Continue to instructions with the exact signed artifacts retained. The owner can
+					// idempotently retry registration before finalization without recreating the secret.
+					error = `Nostr registration is pending retry. The secret remains paused. ${message}`;
 				}
 			}
 
-			const queryParams = new URLSearchParams({
-				secretId: result.secretId,
-				sss_shares_total: sssSharesTotal.toString(),
-				sss_threshold: sssThreshold.toString(),
-				recipients: encodeURIComponent(
-					JSON.stringify(recipients.map((r) => ({ name: r.name, email: r.email })))
-				)
-			});
-
-			goto(`/secrets/${result.secretId}/share-instructions?${queryParams.toString()}`);
+			goto(`/secrets/${result.secretId}/share-instructions`);
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'An unknown error occurred.';
 			console.error('Submit error:', err);
@@ -414,8 +444,8 @@
 			/>
 			<div class="flex items-center justify-between">
 				<p class="text-muted-foreground text-xs">
-					This message will be split using Shamir's Secret Sharing. You'll manage the shares on the
-					next page.
+					This message will be authenticated-encrypted, then its recovery key will be split using
+					Shamir's Secret Sharing. You'll manage the recovery shares on the next page.
 				</p>
 			</div>
 			{#if fieldErrors.secretMessageContent}
@@ -597,7 +627,8 @@
 									Enable Nostr Share Publishing
 								</Label>
 								<p class="text-muted-foreground text-xs">
-									Deliver encrypted shares to recipients via Nostr direct messages (NIP-17).
+									Deliver encrypted shares to recipients via Nostr direct messages (NIP-17). New
+									authenticated service recovery uses the fixed threshold of 2.
 								</p>
 							</div>
 						</div>
@@ -683,8 +714,8 @@
 							<Alert.Title class="text-sm">Multiple Recipients</Alert.Title>
 							<Alert.Description class="text-xs">
 								All recipients will receive the SAME share. You must distribute this share to each
-								recipient separately via your own secure channels. With multiple recipients,
-								consider your threshold carefully.
+								recipient separately via your own secure channels. Recipient copies share one
+								logical index, so combining recipients does not add distinct shares.
 							</Alert.Description>
 						</Alert.Root>
 					{/if}
@@ -693,10 +724,13 @@
 						<Alert.Title class="text-sm">Secret Sharing Details</Alert.Title>
 						<Alert.Description class="text-xs">
 							<ul class="list-disc space-y-0.5 pl-5">
-								<li>Your secret message will be split into a number of cryptographic "shares".</li>
 								<li>
-									A minimum number of shares (threshold) will be required to reconstruct the
-									original message.
+									Your message will be authenticated-encrypted and its recovery key split into
+									cryptographic "shares".
+								</li>
+								<li>
+									New authenticated service recovery requires 2 distinct shares. You may vary the
+									total number of owner backup shares, but not the threshold.
 								</li>
 								<li>
 									KeyFate will securely store one share (encrypted again by our server). You will

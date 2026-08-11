@@ -47,6 +47,33 @@ describe('secretSchema Nostr fields', () => {
 		}
 	});
 
+	it('rejects every new authenticated service enrollment when the threshold is not 2', () => {
+		for (const enableNostrShares of [false, true]) {
+			const result = secretSchema.safeParse({
+				...validBase(),
+				sss_shares_total: 4,
+				sss_threshold: 3,
+				enable_nostr_shares: enableNostrShares
+			});
+			expect(result.success).toBe(false);
+			if (!result.success) {
+				expect(result.error.issues).toContainEqual(
+					expect.objectContaining({
+						path: ['sss_threshold'],
+						message: 'Authenticated recovery currently requires a threshold of 2.'
+					})
+				);
+			}
+		}
+	});
+
+	it('rejects client-supplied at-rest encryption fields', () => {
+		for (const field of ['iv', 'auth_tag'] as const) {
+			const result = secretSchema.safeParse({ ...validBase(), [field]: 'client-controlled' });
+			expect(result.success).toBe(false);
+		}
+	});
+
 	it('should accept enable_bitcoin_timelock: true', () => {
 		const result = secretSchema.safeParse({
 			...validBase(),

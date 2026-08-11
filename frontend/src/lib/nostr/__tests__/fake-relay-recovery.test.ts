@@ -4,8 +4,12 @@ import type { Event as NostrEvent } from 'nostr-tools/core';
 import type { Filter } from 'nostr-tools/filter';
 import { generateKeypair } from '$lib/nostr/keypair';
 import { NostrClient } from '$lib/nostr/client';
-import { unwrapGiftWrap } from '$lib/crypto/recovery-flows';
 import { publishSharesToNostr } from '$lib/services/nostr-publisher';
+import { unwrapRecoveryArtifactV3 } from '$lib/nostr/recovery-v3-artifact';
+import {
+	createAuthenticatedRecoverySet,
+	recoverAuthenticatedSecret
+} from '$lib/crypto/recovery-v3';
 
 let relay: ReturnType<typeof serve> | null = null;
 
@@ -60,18 +64,22 @@ afterEach(() => {
 	relay = null;
 });
 
-describe('Nostr v2 fake-relay recovery', () => {
-	it('publishes, queries, verifies every layer, recovers K, and decrypts the share', async () => {
+describe('Nostr v3 fake-relay recovery', () => {
+	it('publishes, queries by exact ID, verifies every layer, and authenticates reconstruction', async () => {
 		const fakeRelay = startRelay();
 		const publisher = generateKeypair();
 		const recipient = generateKeypair();
 		const secretId = '550e8400-e29b-41d4-a716-446655440000';
 		const recipientId = '660e8400-e29b-41d4-a716-446655440001';
-		const share = '80112233445566778899aabbccddeeff';
+		const recoverySet = createAuthenticatedRecoverySet('fake relay secret', {
+			threshold: 2,
+			total: 3
+		});
+		const share = recoverySet.envelopes[1];
 
 		const publication = await publishSharesToNostr({
 			secretId,
-			shares: [{ recipientId, share, shareIndex: 1 }],
+			shares: [{ recipientId, share, shareIndex: 2 }],
 			recipients: [{ id: recipientId, nostrPubkey: recipient.publicKey }],
 			senderSecretKey: publisher.secretKey,
 			threshold: 2,
@@ -91,16 +99,17 @@ describe('Nostr v2 fake-relay recovery', () => {
 				kinds: [1059],
 				'#p': [recipient.publicKey]
 			});
-			const recovered = unwrapGiftWrap(events[0], recipient.secretKey, published.manifestEvent);
-
-			expect(recovered).toMatchObject({
-				share,
-				secretId,
-				shareIndex: 1,
-				threshold: 2,
-				totalShares: 3,
-				version: 2
+			const recovered = unwrapRecoveryArtifactV3({
+				giftWrapEvent: events[0],
+				recipientSecretKey: recipient.secretKey,
+				setupBundle: published.setupBundle
 			});
+
+			expect(recovered).toBe(share);
+			expect(recoverAuthenticatedSecret([recoverySet.envelopes[0], recovered])).toBe(
+				'fake relay secret'
+			);
+			published.plaintextK.fill(0);
 		} finally {
 			client.close();
 		}

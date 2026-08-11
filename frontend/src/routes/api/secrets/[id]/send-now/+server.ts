@@ -206,6 +206,7 @@ export const POST: RequestHandler = async (event) => {
 						recipient.nostrSchemeVersion === 2 && recipient.nostrManifestEvent
 							? JSON.stringify(recipient.nostrManifestEvent)
 							: undefined,
+					nostrSchemeVersion: recipient.nostrSchemeVersion ?? undefined,
 					bitcoinRecoveryEnvelope:
 						bitcoinRecipientId === recipient.id && bitcoinRecovery?.encryptedRecoveryTx
 							? bitcoinRecovery.encryptedRecoveryTx

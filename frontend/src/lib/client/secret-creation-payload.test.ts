@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { Buffer } from 'buffer';
-import sss from 'shamirs-secret-sharing';
 import type { Event as NostrEvent } from 'nostr-tools/core';
+import {
+	createAuthenticatedRecoverySet,
+	parseRecoveryShareEnvelope,
+	recoverAuthenticatedSecret
+} from '../crypto/recovery-v3';
 import {
 	buildNostrRegistrationPayload,
 	buildSecretCreationPayload
@@ -20,11 +23,36 @@ function opaqueEvent(id: string, kind: number): NostrEvent {
 }
 
 describe('default 2-of-3 secret creation request boundary', () => {
-	it('sends only the service share and opaque signed recovery artifacts to the server', () => {
-		const shares = sss.split(Buffer.from('launch secret'), { shares: 3, threshold: 2 });
-		const serverShare = shares[0].toString('hex');
-		const recipientShare = shares[1].toString('hex');
-		const offlineShare = shares[2].toString('hex');
+	it('rejects every new authenticated service request whose threshold is not 2', () => {
+		const { envelopes } = createAuthenticatedRecoverySet('secret', { total: 4, threshold: 3 });
+		for (const enableNostrShares of [false, true]) {
+			expect(() =>
+				buildSecretCreationPayload({
+					title: 'Invalid authenticated threshold',
+					serverShare: envelopes[0],
+					recipients: [
+						{
+							name: 'Recipient',
+							email: 'recipient@example.com',
+							nostrPubkey: `npub1${'q'.repeat(58)}`
+						}
+					],
+					checkInDays: 30,
+					totalShares: 4,
+					threshold: 3,
+					enableNostrShares,
+					enableBitcoinTimelock: false
+				})
+			).toThrow('requires a threshold of 2');
+		}
+	});
+
+	it('sends only the v3 service envelope and opaque signed recovery artifacts to the server', () => {
+		const secret = 'launch secret 🔐 電池';
+		const recoverySet = createAuthenticatedRecoverySet(secret, { total: 3, threshold: 2 });
+		const serverShare = recoverySet.envelopes[0];
+		const recipientShare = recoverySet.envelopes[1];
+		const offlineShare = recoverySet.envelopes[2];
 		const symmetricKey = 'aa'.repeat(32);
 		const publisherSecret = 'bb'.repeat(32);
 		const passphrase = 'correct horse battery staple';
@@ -50,13 +78,20 @@ describe('default 2-of-3 secret creation request boundary', () => {
 		const registration = buildNostrRegistrationPayload([
 			{
 				giftWrapEvent: opaqueEvent('33'.repeat(32), 1059),
+				capsuleEvent: opaqueEvent('55'.repeat(32), 21060),
 				manifestEvent: opaqueEvent('44'.repeat(32), 21061)
 			}
 		]);
 		const registrationBody = JSON.stringify(registration);
 		const observedServerBodies = [creationBody, registrationBody].join('\n');
 
-		expect(creationBody).toContain(serverShare);
+		const parsedCreation = JSON.parse(creationBody) as { server_share: string };
+		expect(parsedCreation.server_share).toBe(serverShare);
+		expect(parseRecoveryShareEnvelope(serverShare)).toEqual(
+			expect.objectContaining({ index: 1, threshold: 2, total: 3 })
+		);
+		expect(recoverAuthenticatedSecret([serverShare, recipientShare])).toBe(secret);
+		expect(creationBody).not.toContain(secret);
 		for (const forbidden of [
 			recipientShare,
 			offlineShare,
@@ -67,6 +102,10 @@ describe('default 2-of-3 secret creation request boundary', () => {
 			expect(observedServerBodies).not.toContain(forbidden);
 		}
 		expect(Object.keys(registration)).toEqual(['artifacts']);
-		expect(Object.keys(registration.artifacts[0])).toEqual(['giftWrapEvent', 'manifestEvent']);
+		expect(Object.keys(registration.artifacts[0])).toEqual([
+			'giftWrapEvent',
+			'capsuleEvent',
+			'manifestEvent'
+		]);
 	});
 });

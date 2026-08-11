@@ -27,6 +27,12 @@ import {
 } from '$lib/nostr/recovery-capsule';
 import { decryptBitcoinRecoveryEnvelope } from '$lib/bitcoin/recovery-envelope';
 import { validateBitcoinRecoveryTransaction } from '$lib/bitcoin/validate-recovery-tx';
+import {
+	NOSTR_RECOVERY_V3_VERSION,
+	parseVerifiedCapsuleV3,
+	parseVerifiedManifestV3
+} from '$lib/nostr/recovery-v3-artifact';
+import { validateRecoveryShareEnvelopeContext } from '$lib/crypto/recovery-v3';
 // Re-export so existing consumers (components, tests) don't break
 export { hexToBytes, bytesToHex };
 
@@ -120,6 +126,15 @@ const signedEventSchema = z
 	.strict();
 
 const rumorSchema = signedEventSchema.omit({ sig: true });
+
+function decryptConversation(payload: string, privateKey: Uint8Array, publicKey: string): string {
+	const conversationKey = getConversationKey(privateKey, publicKey);
+	try {
+		return nip44Decrypt(payload, conversationKey);
+	} finally {
+		conversationKey.fill(0);
+	}
+}
 const envelopeSchema = z
 	.object({ version: z.literal(RECOVERY_CAPSULE_VERSION), capsule: signedEventSchema })
 	.strict();
@@ -155,9 +170,8 @@ export function unwrapGiftWrap(
 		throw new Error('Gift wrap timestamp is in the future');
 	}
 
-	const wrapConvKey = getConversationKey(recipientSecretKey, giftWrap.pubkey);
 	const seal = signedEventSchema.parse(
-		JSON.parse(nip44Decrypt(giftWrap.content, wrapConvKey))
+		JSON.parse(decryptConversation(giftWrap.content, recipientSecretKey, giftWrap.pubkey))
 	) as NostrEvent;
 	if (!verifyEvent(seal) || seal.id !== getEventHash(seal)) {
 		throw new Error('Invalid NIP-59 seal signature');
@@ -165,8 +179,9 @@ export function unwrapGiftWrap(
 	if (seal.kind !== 13 || seal.tags.length !== 0) throw new Error('Invalid NIP-59 seal');
 	if (seal.pubkey !== manifest.publisherPubkey) throw new Error('Unexpected NIP-59 publisher');
 
-	const sealConvKey = getConversationKey(recipientSecretKey, seal.pubkey);
-	const rumor = rumorSchema.parse(JSON.parse(nip44Decrypt(seal.content, sealConvKey)));
+	const rumor = rumorSchema.parse(
+		JSON.parse(decryptConversation(seal.content, recipientSecretKey, seal.pubkey))
+	);
 	if (rumor.id !== getEventHash(rumor)) throw new Error('Invalid NIP-59 rumor ID');
 	if (rumor.kind !== KEYFATE_SHARE_KIND || rumor.pubkey !== manifest.publisherPubkey) {
 		throw new Error('Invalid NIP-59 rumor binding');
@@ -195,18 +210,25 @@ export function unwrapGiftWrap(
 		throw new Error('Recovery capsule context mismatch');
 	}
 
-	const encryptedK = nip44Decrypt(
+	const encryptedK = decryptConversation(
 		capsule.encryptedKNostr,
-		getConversationKey(recipientSecretKey, manifest.publisherPubkey)
+		recipientSecretKey,
+		manifest.publisherPubkey
 	);
 	if (!/^[0-9a-f]{64}$/.test(encryptedK)) {
 		throw new Error('Recovered Nostr key is not 32 bytes');
 	}
-	const share = decryptShare(
-		hexToBytes(capsule.encryptedShareHex),
-		hexToBytes(capsule.nonceHex),
-		hexToBytes(encryptedK)
-	);
+	const transportKey = hexToBytes(encryptedK);
+	let share: string;
+	try {
+		share = decryptShare(
+			hexToBytes(capsule.encryptedShareHex),
+			hexToBytes(capsule.nonceHex),
+			transportKey
+		);
+	} finally {
+		transportKey.fill(0);
+	}
 	if (!/^(?:[0-9a-f]{2})+$/.test(share)) throw new Error('Recovered share is malformed');
 
 	return {
@@ -248,8 +270,12 @@ export function recoverShareFromBitcoinEnvelope(
 	}
 	const manifestEvent = parseNostrEvent(content.nostrManifestEvent);
 	const capsuleEvent = parseNostrEvent(content.nostrCapsuleEvent);
-	const manifest = parseVerifiedManifest(manifestEvent);
 	const recipientPubkey = getPublicKey(recipientSecretKey);
+	const manifestVersion = (JSON.parse(manifestEvent.content) as { version?: unknown }).version;
+	const isV3 = manifestVersion === NOSTR_RECOVERY_V3_VERSION;
+	const manifest = isV3
+		? parseVerifiedManifestV3(manifestEvent)
+		: parseVerifiedManifest(manifestEvent);
 	if (
 		manifest.secretId !== content.secretId ||
 		manifest.recipientNostrPubkey !== recipientPubkey ||
@@ -259,7 +285,9 @@ export function recoverShareFromBitcoinEnvelope(
 		throw new Error('Bitcoin recovery Nostr manifest binding mismatch');
 	}
 
-	const capsule = parseVerifiedCapsule(capsuleEvent, manifest.publisherPubkey, recipientPubkey);
+	const capsule = isV3
+		? parseVerifiedCapsuleV3(capsuleEvent, manifest as ReturnType<typeof parseVerifiedManifestV3>)
+		: parseVerifiedCapsule(capsuleEvent, manifest.publisherPubkey, recipientPubkey);
 	if (capsule.secretId !== content.secretId || capsule.recipientId !== manifest.recipientId) {
 		throw new Error('Bitcoin recovery capsule context mismatch');
 	}
@@ -280,7 +308,21 @@ export function recoverShareFromBitcoinEnvelope(
 		hexToBytes(capsule.nonceHex),
 		transaction.symmetricKeyK
 	);
-	if (!/^(?:[0-9a-f]{2})+$/.test(share)) throw new Error('Recovered share is malformed');
+	if (isV3) {
+		const v3Manifest = manifest as ReturnType<typeof parseVerifiedManifestV3>;
+		const envelope = validateRecoveryShareEnvelopeContext(share, {
+			index: 2,
+			threshold: 2,
+			total: v3Manifest.totalShares
+		});
+		if (
+			envelope.setId !== v3Manifest.setId ||
+			envelope.protectedSecret.ciphertextDigestHex !== v3Manifest.ciphertextDigestHex
+		)
+			throw new Error('Bitcoin v3 share envelope binding mismatch');
+	} else if (!/^(?:[0-9a-f]{2})+$/.test(share)) {
+		throw new Error('Recovered legacy share is malformed');
+	}
 
 	return {
 		share,

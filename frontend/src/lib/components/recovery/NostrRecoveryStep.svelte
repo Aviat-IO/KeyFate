@@ -8,82 +8,96 @@
 	import {
 		isValidNsec,
 		nsecToSecretKey,
-		unwrapGiftWrap,
 		type DecryptedShareResult
 	} from '$lib/crypto/recovery-flows';
 	import { createNostrClient } from '$lib/nostr/client';
-	import { publicKeyFromSecret } from '$lib/nostr/keypair';
 	import { DEFAULT_RELAYS } from '$lib/nostr/relay-config';
-	import { parseVerifiedManifestJson } from '$lib/nostr/recovery-capsule';
+	import { publicKeyFromSecret } from '$lib/nostr/keypair';
+	import { parseRecoveryShareEnvelope } from '$lib/crypto/recovery-v3';
+	import {
+		parseRecoverySetupBundleV3,
+		unwrapRecoveryArtifactV3
+	} from '$lib/nostr/recovery-v3-artifact';
 
 	interface Props {
 		onComplete: (results: DecryptedShareResult[]) => void;
 		onError: (message: string) => void;
 	}
-
 	let { onComplete, onError }: Props = $props();
-	let manifestInput = $state('');
+	let setupBundleInput = $state('');
 	let nsecInput = $state('');
 	let nsecVisible = $state(false);
 	let recovering = $state(false);
 	let recovered = $state(false);
-	const manifestPlaceholder = '{"id":"…","pubkey":"…","kind":21061,"content":"…"}';
-
 	let nsecValid = $derived(nsecInput.trim().length > 0 && isValidNsec(nsecInput.trim()));
-	let manifestValid = $derived.by(() => {
-		if (!manifestInput.trim()) return false;
+	let bundleValid = $derived.by(() => {
+		if (!setupBundleInput.trim()) return false;
 		try {
-			parseVerifiedManifestJson(manifestInput.trim());
+			parseRecoverySetupBundleV3(setupBundleInput.trim());
 			return true;
 		} catch {
 			return false;
 		}
 	});
-	let canRecover = $derived(nsecValid && manifestValid && !recovering && !recovered);
+	let canRecover = $derived(nsecValid && bundleValid && !recovering && !recovered);
+
+	async function importBundleFile(event: Event) {
+		const file = (event.target as HTMLInputElement).files?.[0];
+		if (!file) return;
+		if (file.size > 300_000) {
+			onError('Setup bundle exceeds maximum size');
+			return;
+		}
+		setupBundleInput = await file.text();
+	}
 
 	async function recoverFromNostr() {
 		if (!canRecover) return;
 		onError('');
 		recovering = true;
 		const secretKey = nsecToSecretKey(nsecInput.trim());
-
 		try {
-			const { event: manifestEvent, content: manifest } = parseVerifiedManifestJson(
-				manifestInput.trim()
-			);
-			if (publicKeyFromSecret(secretKey) !== manifest.recipientNostrPubkey) {
-				throw new Error('The supplied nsec does not match the signed recovery manifest');
-			}
-
-			const client = createNostrClient({ relays: [...DEFAULT_RELAYS] });
+			const { bundle, manifest } = parseRecoverySetupBundleV3(setupBundleInput.trim());
+			if (publicKeyFromSecret(secretKey) !== manifest.recipientNostrPubkey)
+				throw new Error('The supplied nsec does not match the owner-delivered setup bundle');
+			const relays = [...new Set([...bundle.relayHints, ...DEFAULT_RELAYS])];
+			const client = createNostrClient({ relays });
 			try {
 				const events = await client.query({
 					ids: [manifest.giftWrapEventId],
 					kinds: [1059],
 					'#p': [manifest.recipientNostrPubkey]
 				});
-				const giftWrap = events.find((event) => event.id === manifest.giftWrapEventId);
-				if (!giftWrap) throw new Error('The signed recovery artifact was not found on a relay');
-
-				const share = unwrapGiftWrap(giftWrap, secretKey, manifestEvent);
+				const exactEvent = events.find((event) => event.id === manifest.giftWrapEventId);
+				if (!exactEvent) {
+					throw new Error(
+						'The exact setup-bundle-pinned artifact was not found on signed or configured relays; retry remains safe'
+					);
+				}
+				const share = unwrapRecoveryArtifactV3({
+					giftWrapEvent: exactEvent,
+					recipientSecretKey: secretKey,
+					setupBundle: bundle
+				});
+				const envelope = parseRecoveryShareEnvelope(share);
 				onComplete([
 					{
-						share: share.share,
-						shareIndex: share.shareIndex,
-						threshold: share.threshold,
-						totalShares: share.totalShares,
-						secretId: share.secretId
+						share,
+						shareIndex: envelope.index,
+						threshold: envelope.threshold,
+						totalShares: envelope.total,
+						secretId: manifest.secretId
 					}
 				]);
 				recovered = true;
 				nsecInput = '';
-				toast.success('Recovery share verified and decrypted');
+				toast.success('Authenticated recovery envelope decrypted');
 			} finally {
 				client.close();
 			}
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Unknown recovery error';
-			onError(`Nostr recovery failed: ${message}`);
+			onError(`Authenticated Nostr v3 recovery failed: ${message}`);
 			toast.error('Nostr recovery failed');
 		} finally {
 			secretKey.fill(0);
@@ -94,37 +108,42 @@
 
 <div class="space-y-6">
 	<div>
-		<h2 class="font-space text-xl font-bold tracking-tight">Recover via Nostr</h2>
+		<h2 class="font-space text-xl font-bold tracking-tight">Authenticated Nostr Recovery</h2>
 		<p class="text-muted-foreground mt-1 text-sm">
-			Use the signed recovery manifest from your disclosure notice and the matching Nostr key.
+			Import the setup bundle the owner delivered before disclosure. A server-supplied replacement
+			manifest is not trusted.
 		</p>
 	</div>
-
 	<div class="space-y-2">
-		<Label for="manifest-input">Signed Recovery Manifest</Label>
+		<Label for="setup-bundle-file">Owner-delivered setup bundle</Label>
+		<input
+			id="setup-bundle-file"
+			type="file"
+			accept="application/json,.json"
+			onchange={importBundleFile}
+			class="border-input bg-background w-full rounded-md border px-3 py-2 text-sm"
+		/>
+		<Label for="setup-bundle-input">Or paste setup bundle JSON</Label>
 		<Textarea
-			id="manifest-input"
-			placeholder={manifestPlaceholder}
-			bind:value={manifestInput}
+			id="setup-bundle-input"
+			bind:value={setupBundleInput}
 			class="font-mono text-xs"
-			rows={6}
+			rows={7}
 			autocomplete="off"
 			spellcheck={false}
 		/>
-		{#if manifestInput.trim() && !manifestValid}
-			<p class="text-destructive text-xs">The manifest signature or schema is invalid.</p>
-		{/if}
+		{#if setupBundleInput.trim() && !bundleValid}<p class="text-destructive text-xs">
+				The setup bundle, signed manifest, or strict v3 schema is invalid.
+			</p>{/if}
 	</div>
-
 	<div class="space-y-2">
 		<Label for="nsec-input">Recipient Nostr Private Key (nsec)</Label>
-		<Alert.Alert variant="destructive" class="mb-2">
-			<AlertTriangle class="h-4 w-4" />
-			<Alert.AlertDescription class="text-xs">
-				Your nsec stays in this browser, is cleared after recovery, and is never sent to KeyFate or
-				a relay.
-			</Alert.AlertDescription>
-		</Alert.Alert>
+		<Alert.Alert variant="destructive"
+			><AlertTriangle class="h-4 w-4" /><Alert.AlertDescription class="text-xs"
+				>The nsec is used locally by trusted page code and is cleared after recovery. Browser
+				extensions or a compromised origin could still observe it.</Alert.AlertDescription
+			></Alert.Alert
+		>
 		<div class="relative">
 			<Textarea
 				id="nsec-input"
@@ -135,36 +154,27 @@
 				autocomplete="off"
 				spellcheck={false}
 				style={nsecVisible ? '' : '-webkit-text-security: disc; text-security: disc;'}
-			/>
-			<button
+			/><button
 				type="button"
 				onclick={() => (nsecVisible = !nsecVisible)}
 				class="text-muted-foreground hover:text-foreground absolute top-2 right-2 p-1"
 				aria-label={nsecVisible ? 'Hide private key' : 'Show private key'}
+				>{#if nsecVisible}<EyeOff class="h-4 w-4" />{:else}<Eye class="h-4 w-4" />{/if}</button
 			>
-				{#if nsecVisible}<EyeOff class="h-4 w-4" />{:else}<Eye class="h-4 w-4" />{/if}
-			</button>
 		</div>
-		{#if nsecInput.trim() && !nsecValid}
-			<p class="text-destructive text-xs">Enter a valid nsec.</p>
-		{/if}
+		{#if nsecInput.trim() && !nsecValid}<p class="text-destructive text-xs">
+				Enter a valid nsec.
+			</p>{/if}
 	</div>
-
-	<Button onclick={recoverFromNostr} disabled={!canRecover} class="w-full">
-		{#if recovering}
-			<Loader2 class="mr-2 h-4 w-4 animate-spin" />
-			Fetching and verifying…
-		{:else if recovered}
-			<CheckCircle class="mr-2 h-4 w-4" />
-			Share recovered
-		{:else}
-			<Search class="mr-2 h-4 w-4" />
-			Fetch, verify, and recover share
-		{/if}
-	</Button>
-
+	<Button onclick={recoverFromNostr} disabled={!canRecover} class="w-full"
+		>{#if recovering}<Loader2 class="mr-2 h-4 w-4 animate-spin" /> Fetching exact pinned event…{:else if recovered}<CheckCircle
+				class="mr-2 h-4 w-4"
+			/> Envelope recovered{:else}<Search class="mr-2 h-4 w-4" /> Fetch, verify, and recover envelope{/if}</Button
+	>
 	<p class="text-muted-foreground text-xs">
-		Recovery verifies the manifest, outer gift wrap, recipient tag, publisher seal, rumor ID,
-		capsule signature, context fields, and authenticated share ciphertext before returning a share.
+		Recovery queries the signed relay hints and alternate KeyFate-configured relays only for the
+		exact pinned event ID and recipient. Retry cannot accept a substitute. It verifies the manifest,
+		outer gift wrap, seal, rumor, capsule, publisher, secret, set, share index, threshold, and
+		ciphertext digest before returning a v3 envelope.
 	</p>
 </div>

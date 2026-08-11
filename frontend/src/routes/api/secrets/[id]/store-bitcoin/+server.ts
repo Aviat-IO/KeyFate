@@ -117,7 +117,7 @@ export const POST: RequestHandler = async (event) => {
 		}
 
 		const activatedAt = new Date();
-		const shouldActivate = secret.nostrDeliveryStatus !== 'pending';
+		const shouldActivate = secret.nostrDeliveryStatus === 'ready';
 		const [record] = await db.transaction(async (tx) => {
 			const inserted = await tx
 				.insert(bitcoinUtxos)

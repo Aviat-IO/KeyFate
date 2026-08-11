@@ -73,31 +73,40 @@ export async function doubleEncryptShare(
 	// 1. Generate random symmetric key K
 	const K = generateSymmetricKey();
 
-	// 2. Encrypt share with K using ChaCha20-Poly1305
 	const shareBytes = new TextEncoder().encode(share);
-	const { ciphertext: encryptedShare, nonce } = encryptWithSymmetricKey(shareBytes, K);
+	try {
+		// 2. Encrypt share with K using ChaCha20-Poly1305
+		const { ciphertext: encryptedShare, nonce } = encryptWithSymmetricKey(shareBytes, K);
 
-	// 3. Encrypt K with NIP-44 (sender privkey + recipient pubkey)
-	const kHex = bytesToHex(K);
-	const encryptedKNostr = await nip44.encrypt(kHex, senderNostrPrivkey, recipientNostrPubkey);
+		// 3. Encrypt K with NIP-44 (sender privkey + recipient pubkey)
+		// NIP-44 accepts strings, so this short-lived immutable hex copy cannot be explicitly
+		// zeroized in JavaScript. The mutable key and every derived conversation key are cleared.
+		const kHex = bytesToHex(K);
+		const encryptedKNostr = await nip44.encrypt(kHex, senderNostrPrivkey, recipientNostrPubkey);
 
-	// 4. If passphrase provided, derive key and encrypt K with AES-256-GCM
-	let encryptedKPassphrase: EncryptedKPassphrase | undefined;
-	if (passphrase) {
-		const { key: derivedKey, salt } = await deriveKeyFromPassphrase(passphrase);
-		const encrypted = await encryptWithDerivedKey(K, derivedKey);
-		encryptedKPassphrase = {
-			ciphertext: encrypted.ciphertext,
-			nonce: encrypted.nonce,
-			salt
+		// 4. If passphrase provided, derive key and encrypt K with AES-256-GCM
+		let encryptedKPassphrase: EncryptedKPassphrase | undefined;
+		if (passphrase) {
+			const { key: derivedKey, salt } = await deriveKeyFromPassphrase(passphrase);
+			const encrypted = await encryptWithDerivedKey(K, derivedKey);
+			encryptedKPassphrase = {
+				ciphertext: encrypted.ciphertext,
+				nonce: encrypted.nonce,
+				salt
+			};
+		}
+
+		return {
+			encryptedShare,
+			nonce,
+			encryptedKNostr,
+			encryptedKPassphrase,
+			plaintextK: K
 		};
+	} catch (error) {
+		K.fill(0);
+		throw error;
+	} finally {
+		shareBytes.fill(0);
 	}
-
-	return {
-		encryptedShare,
-		nonce,
-		encryptedKNostr,
-		encryptedKPassphrase,
-		plaintextK: K
-	};
 }

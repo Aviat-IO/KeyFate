@@ -14,6 +14,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { hex } from '@scure/base';
 import { secp256k1 } from '@noble/curves/secp256k1.js';
 import * as btcSigner from '@scure/btc-signer';
+import { createAuthenticatedRecoverySet } from '$lib/crypto/recovery-v3';
+
+const TEST_RECIPIENT_ENVELOPE = createAuthenticatedRecoverySet('bitcoin integration', {
+	threshold: 2,
+	total: 3
+}).envelopes[1];
 
 // ─── Test key pairs ───────────────────────────────────────────────────────────
 
@@ -55,8 +61,8 @@ describe('Nostr Publisher Service', () => {
 			shares: [
 				{
 					recipientId: '22222222-2222-4222-8222-222222222222',
-					share: 'share-data-1',
-					shareIndex: 1
+					share: TEST_RECIPIENT_ENVELOPE,
+					shareIndex: 2
 				}
 			],
 			recipients: [
@@ -92,12 +98,12 @@ describe('Nostr Publisher Service', () => {
 			shares: [
 				{
 					recipientId: '22222222-2222-4222-8222-222222222222',
-					share: 'share-data-1',
-					shareIndex: 1
+					share: TEST_RECIPIENT_ENVELOPE,
+					shareIndex: 2
 				},
 				{
 					recipientId: '33333333-3333-4333-8333-333333333333',
-					share: 'share-data-2',
+					share: TEST_RECIPIENT_ENVELOPE,
 					shareIndex: 2
 				}
 			],
@@ -128,8 +134,16 @@ describe('Nostr Publisher Service', () => {
 		const result = await publishSharesToNostr({
 			secretId: '11111111-1111-4111-8111-111111111111',
 			shares: [
-				{ recipientId: '22222222-2222-4222-8222-222222222222', share: 'share-1', shareIndex: 1 },
-				{ recipientId: '33333333-3333-4333-8333-333333333333', share: 'share-2', shareIndex: 2 }
+				{
+					recipientId: '22222222-2222-4222-8222-222222222222',
+					share: TEST_RECIPIENT_ENVELOPE,
+					shareIndex: 2
+				},
+				{
+					recipientId: '33333333-3333-4333-8333-333333333333',
+					share: TEST_RECIPIENT_ENVELOPE,
+					shareIndex: 2
+				}
 			],
 			recipients: [
 				{ id: '22222222-2222-4222-8222-222222222222', nostrPubkey: recipientKp.publicKey },
@@ -158,7 +172,11 @@ describe('Nostr Publisher Service', () => {
 		const result = await publishSharesToNostr({
 			secretId: '11111111-1111-4111-8111-111111111111',
 			shares: [
-				{ recipientId: '22222222-2222-4222-8222-222222222222', share: 'share-1', shareIndex: 1 }
+				{
+					recipientId: '22222222-2222-4222-8222-222222222222',
+					share: TEST_RECIPIENT_ENVELOPE,
+					shareIndex: 2
+				}
 			],
 			recipients: [
 				{ id: '22222222-2222-4222-8222-222222222222', nostrPubkey: recipientKp.publicKey }
@@ -169,7 +187,8 @@ describe('Nostr Publisher Service', () => {
 			client: testClient
 		});
 
-		expect(result.published).toHaveLength(0);
+		expect(result.published).toHaveLength(1);
+		expect(result.published[0].relayPublished).toBe(false);
 		expect(result.errors).toHaveLength(1);
 		expect(result.errors[0].recipientId).toBe('22222222-2222-4222-8222-222222222222');
 		expect(result.errors[0].error).toContain('Relay refused');
@@ -186,8 +205,16 @@ describe('Nostr Publisher Service', () => {
 		const result = await publishSharesToNostr({
 			secretId: '11111111-1111-4111-8111-111111111111',
 			shares: [
-				{ recipientId: '22222222-2222-4222-8222-222222222222', share: 'share-1', shareIndex: 1 },
-				{ recipientId: '33333333-3333-4333-8333-333333333333', share: 'share-2', shareIndex: 2 }
+				{
+					recipientId: '22222222-2222-4222-8222-222222222222',
+					share: TEST_RECIPIENT_ENVELOPE,
+					shareIndex: 2
+				},
+				{
+					recipientId: '33333333-3333-4333-8333-333333333333',
+					share: TEST_RECIPIENT_ENVELOPE,
+					shareIndex: 2
+				}
 			],
 			recipients: [
 				{ id: '22222222-2222-4222-8222-222222222222', nostrPubkey: r1.publicKey },
@@ -326,8 +353,8 @@ describe('Bitcoin-Enabled Secret Lifecycle', () => {
 			shares: [
 				{
 					recipientId: '22222222-2222-4222-8222-222222222222',
-					share: 'shamir-share-data',
-					shareIndex: 1
+					share: TEST_RECIPIENT_ENVELOPE,
+					shareIndex: 2
 				}
 			],
 			recipients: [

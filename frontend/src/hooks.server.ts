@@ -57,6 +57,16 @@ const middlewareHandle: Handle = async ({ event, resolve }) => {
 		response.headers.set('X-Frame-Options', 'DENY');
 		response.headers.set('X-Content-Type-Options', 'nosniff');
 		response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+		const sensitiveRecoveryPath =
+			pathname === '/recover' ||
+			pathname.startsWith('/recover/') ||
+			pathname === '/decrypt' ||
+			pathname.startsWith('/decrypt/') ||
+			/^\/secrets\/[^/]+\/share-instructions(?:\/|$)/.test(pathname);
+		if (sensitiveRecoveryPath) {
+			response.headers.set('Cache-Control', 'private, no-store, max-age=0');
+			response.headers.set('Referrer-Policy', 'no-referrer');
+		}
 		response.headers.set('X-XSS-Protection', '0');
 		response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 		if (process.env.NODE_ENV === 'production') {

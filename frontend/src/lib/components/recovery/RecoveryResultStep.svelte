@@ -81,7 +81,7 @@
 				</Button>
 				<Button
 					onclick={() => (showReconstruct = true)}
-					disabled={recoveredShares.length < 2}
+					disabled={recoveredShares.length < 1}
 					class="flex-1"
 				>
 					<Shield class="mr-2 h-4 w-4" />
@@ -89,13 +89,13 @@
 				</Button>
 			</div>
 
-			{#if recoveredShares.length < 2}
+			{#if recoveredShares.length === 1}
 				<Alert.Alert>
 					<AlertTriangle class="h-4 w-4" />
-					<Alert.AlertTitle>More shares needed</Alert.AlertTitle>
+					<Alert.AlertTitle>Service envelope still required</Alert.AlertTitle>
 					<Alert.AlertDescription>
-						You need at least 2 shares to reconstruct the secret. Use "Recover Another Share" to
-						decrypt additional shares using a different recovery method or key.
+						Open the authenticated reconstruction form and paste the v3 service envelope from the
+						disclosure notice as the second envelope.
 					</Alert.AlertDescription>
 				</Alert.Alert>
 			{/if}

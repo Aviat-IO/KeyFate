@@ -95,11 +95,33 @@ export async function validateEmailConfig(): Promise<{
  *
  * Wraps the provider with circuit breaker protection and logging.
  */
+function containsHeaderControl(value: string): boolean {
+	return Array.from(value).some((character) => {
+		const code = character.charCodeAt(0);
+		return code <= 31 || code === 127;
+	});
+}
+
 export async function sendEmail(
 	emailData: EmailData,
 	_options: EmailOptions = {}
 ): Promise<EmailResult> {
 	const sendStartTime = Date.now();
+	const headerValues = [
+		emailData.to,
+		emailData.subject,
+		emailData.from,
+		emailData.replyTo,
+		...Object.entries(emailData.headers ?? {}).flat()
+	].filter((value): value is string => typeof value === 'string');
+	if (headerValues.some(containsHeaderControl)) {
+		return {
+			success: false,
+			error: 'Invalid control character in email header',
+			retryable: false,
+			attempts: 0
+		};
+	}
 
 	try {
 		const isDevelopment = process.env.NODE_ENV === 'development';
@@ -330,6 +352,7 @@ export async function sendSecretDisclosureEmail(disclosureData: {
 	senderLastSeen?: Date;
 	secretCreatedAt?: Date;
 	nostrManifest?: string;
+	nostrSchemeVersion?: number;
 	bitcoinRecoveryEnvelope?: string;
 	bitcoinRecoverySenderPubkey?: string;
 	bitcoinRecoveryGeneration?: number;

@@ -373,6 +373,7 @@ async function processOverdueSecret(
 									recipient.nostrSchemeVersion === 2 && recipient.nostrManifestEvent
 										? JSON.stringify(recipient.nostrManifestEvent)
 										: undefined,
+								nostrSchemeVersion: recipient.nostrSchemeVersion ?? undefined,
 								bitcoinRecoveryEnvelope:
 									bitcoinRecipientId === recipient.id && bitcoinRecovery?.encryptedRecoveryTx
 										? bitcoinRecovery.encryptedRecoveryTx

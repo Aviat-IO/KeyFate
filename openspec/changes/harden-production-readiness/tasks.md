@@ -33,6 +33,13 @@
 - [x] 3.4 Update recovery UI to parse the canonical capsule, use `encryptedKNostr` and per-capsule nonce, verify expected bindings, and reject v1/mixed/conflicting artifacts.
 - [x] 3.5 Store only public expected publisher/capsule/version bindings and add owner re-enrollment status for legacy records.
 - [x] 3.6 Pass a real publisher→fake-relay→query→unwrap→K→share integration test.
+- [x] 3.7 Add failing tests and pure browser-safe v3 primitives that AEAD-encrypt the structured secret under a random 32-byte content key, split only that key, strictly validate share envelopes and embedded indices, and release plaintext only after authenticated reconstruction.
+- [x] 3.8 Update creation to write v3 service envelopes, assign one shared logical recipient share, retain owner backup shares, and reject automated service/Nostr v3 thresholds other than 2 without changing legacy records.
+- [x] 3.9 Add strict signed Nostr v3 capsules/manifests and owner-exported per-recipient setup bundles that pin publisher, recipient, secret, set, threshold, share index, ciphertext digest, and event IDs outside the disclosure channel.
+- [x] 3.10 Add register-then-finalize enrollment so secrets remain paused until the owner confirms recipient setup-bundle download/distribution; make finalization authenticated, CSRF-protected, idempotent, and required before reminder scheduling.
+- [x] 3.11 Replace string accumulation and unconditional `combine()` success with typed v3 reconstruction that rejects insufficient, duplicate, mixed, malformed, metadata-mutated, and tampered shares; isolate v2/raw interpolation behind a deliberate unverified legacy mode with no automatic downgrade.
+- [x] 3.12 Remove share-bearing query parameters and plaintext-share `mailto:` generation, add recovery `no-store`/`no-referrer` behavior and accurate local-processing copy, and add focused browser/component regressions.
+- [x] 3.13 Pass end-to-end creation, setup-bundle export/import, Nostr retrieval, service-share disclosure, authenticated reconstruction, tamper, server-substitution, legacy-isolation, and multi-recipient shared-share tests.
 
 ## 4. Recipient-usable Bitcoin recovery (TDD)
 

@@ -27,7 +27,9 @@ This design is intentionally limited to issues already identified in the complet
 
 ### 1. Recovery custody boundary
 
-The browser creates all Shamir shares. Only service share S0 crosses to KeyFate. Recipient share S1 is encrypted and signed in the owner browser; offline share S2 remains local. No server request may contain S1/S2 plaintext, K, or a key capable of opening S1.
+For authenticated v3 recovery, the browser generates a random 32-byte content-encryption key, AEAD-encrypts the structured secret, and Shamir-splits only that uniformly random key. Only service share S0 crosses to KeyFate. One shared logical recipient share S1 is encrypted separately for every recipient; remaining offline shares stay owner-controlled. No server request may contain S1/S2 plaintext, the reconstructed content key, or a key capable of opening S1.
+
+Automated service/Nostr v3 recovery is restricted to threshold 2. Higher-threshold schemes require a separately approved custodian-role model and are not silently mapped onto the shared-recipient-share custody model.
 
 The generic `/api/decrypt` route is removed. Owner export no longer requests/decrypts the server share. Disclosure-time access to S0 uses a one-time capability whose stored verifier is hashed; the capability route is purpose-bound to one secret and expires/consumes atomically.
 
@@ -37,30 +39,19 @@ Alternatives rejected:
 - relying on TLS or prompt deletion: the application process still observes plaintext;
 - retaining generic decrypt for convenience: cross-tenant/purpose binding cannot be guaranteed.
 
-### 2. Versioned client-created Nostr recovery capsule
+### 2. Authenticated v3 recovery and independently pinned Nostr identity
 
-The owner browser creates and signs a strict v2 capsule:
+The owner browser creates a random set ID and content key, AEAD-encrypts a strict versioned secret payload with domain-separated associated data, and Shamir-splits the content key. It emits strict share envelopes containing the scheme/version, set ID, threshold, total, actual embedded Shamir index, share bytes, protected-secret ciphertext and nonce, and ciphertext digest. The ciphertext digest is safe to distribute because encryption uses a fresh random key and nonce; no plaintext secret hash is published because that would create an offline dictionary oracle for low-entropy secrets.
 
-```json
-{
-  "version": 2,
-  "secretId": "uuid",
-  "recipientId": "uuid",
-  "recipientNostrPubkey": "hex",
-  "shareIndex": 1,
-  "threshold": 2,
-  "totalShares": 3,
-  "encryptedShareHex": "hex",
-  "nonceHex": "hex",
-  "encryptedKNostr": "nip44 payload"
-}
-```
+Before interpolation, recovery requires matching scheme/version/set ID/threshold/total/ciphertext metadata, distinct valid indices, wrapper-to-embedded-index agreement, and at least the declared threshold. It reconstructs exactly one 32-byte content key and releases plaintext only after AEAD authentication succeeds. A failed v3 check never falls back to legacy parsing.
 
-The browser publishes the signed capsule and a NIP-59 gift-wrapped pointer directly. An optional app relay endpoint may accept only an already-signed opaque event after ownership and schema checks; it never signs or receives plaintext. The invitation/recovery manifest binds the expected publisher pubkey, recipient pubkey, secret/recipient IDs, event IDs, scheme, and version.
+The owner browser creates and signs a strict v3 Nostr capsule and manifest that additionally bind the set ID, ciphertext digest, threshold, total, actual shared recipient index, recipient identity, and event IDs. It exports the exact signed manifest and trust metadata in a per-recipient setup bundle. The owner must deliver that bundle through an owner-controlled out-of-band channel before disclosure. V3 recovery imports the retained bundle as its trust anchor and never treats a self-signed manifest supplied by KeyFate at disclosure as the expected owner identity.
 
-Recovery verifies outer event ID/signature/kind/recipient tag, seal ID/signature/kind/empty tags/expected publisher, rumor ID/kind/author/context, and canonical capsule ID/signature/schema before decrypting K and the share. `nostr-tools` verification primitives are used.
+The browser publishes the signed capsule and NIP-59 gift wrap directly. An optional app relay endpoint may accept only an already-signed opaque event after ownership and schema checks; it never signs or receives a plaintext recipient share. Recovery verifies the retained bundle, outer event, seal, rumor, capsule, publisher, recipient, secret, set, share, and ciphertext bindings before decrypting a share.
 
-Legacy v1 events are never interpreted as v2. Existing records become `legacy_reenrollment_required` until the owner republishes.
+Enrollment is two phase. Registration stores opaque signed artifacts while the secret remains paused. Only an authenticated, CSRF-protected finalization after the owner confirms setup-bundle download/distribution may mark v3 recovery ready, activate the secret, or schedule reminders.
+
+V1/v2 Nostr and raw Shamir material are never interpreted as v3. Existing material cannot be upgraded without the original secret and keys. A deliberately selected legacy recovery mode may interpolate it only with an explicit unverified result state; re-enrollment remains the secure path.
 
 ### 3. Recipient-usable Bitcoin delivery
 
@@ -100,7 +91,7 @@ BTCPay handling maps official top-level webhook metadata and fetches the full in
 
 Use SvelteKit `kit.csp` with nonces/auto handling. Enforce `default-src 'self'`, `base-uri 'self'`, `object-src 'none'`, `frame-ancestors 'none'`, and `form-action 'self'`, then add only observed Turnstile, relay, and Bitcoin connections. `style-src 'unsafe-inline'` is accepted initially for Svelte/Tailwind compatibility and tracked for later reduction.
 
-Upgrade `sanitize-html` to the exact fixed version and extract/test the blog formatter with the existing narrow allowlist. Sensitive recovery data is not retained longer than the active creation/recovery flow; durable owner kits are explicit encrypted downloads.
+Upgrade `sanitize-html` to the exact fixed version and extract/test the blog formatter with the existing narrow allowlist. Sensitive recovery data is not retained longer than the active creation/recovery flow; durable owner kits are explicit encrypted downloads. KeyFate does not generate, consume, or support share-bearing URLs or `mailto:` bodies. Recovery responses use `no-store` and `no-referrer`; the UI instructs users to paste or import material locally and warns that user-crafted URLs can reach upstream infrastructure.
 
 ### 7. Runtime, migrations, and release
 
@@ -116,7 +107,10 @@ Production promotion remains blocked until GitHub required checks/environment ap
 
 - PostgreSQL export bytes increase database storage/load. Mitigation: strict artifact cap, compression, expiry cleanup, metrics, and disable-new-export switch.
 - Mixed old/new workers are not mutually fenced. Mitigation: additive migration, pause cron during final rolling replacement, and never roll back to an unfenced multi-replica build.
-- Legacy recovery records cannot be upgraded automatically. Mitigation: explicit fail-closed status and owner re-enrollment UX.
+- Legacy recovery records cannot be upgraded automatically. Mitigation: explicit fail-closed status, isolated unverified legacy interpolation, and owner re-enrollment UX.
+- Recipient loss of the owner-delivered setup bundle makes authenticated v3 Nostr recovery impossible. Mitigation: require download/distribution confirmation, provide redundant owner-controlled copies, and fail closed rather than trust a disclosure-time replacement.
+- Shared recipient custody supports automated service/Nostr recovery only at threshold 2. Mitigation: reject higher-threshold v3 enrollment until a separately approved custodian-role model exists.
+- JavaScript cannot guarantee secret zeroization and origin compromise can observe creation/recovery plaintext. Mitigation: minimize copies and retention, enforce CSP, support offline recovery, and state the browser-origin trust assumption accurately.
 - Direct browser Nostr publication depends on CSP/network/relay availability. Mitigation: fixed relay configuration, health feedback, signed-event retry, and optional opaque relay endpoint.
 - At-least-once email can duplicate. Mitigation: deterministic disclosure IDs and provider idempotency where available; never mark unsent work complete.
 - Action/image digest maintenance adds operational work. Mitigation: deliberate dependency-update changes with CI smoke evidence.
@@ -124,10 +118,10 @@ Production promotion remains blocked until GitHub required checks/environment ap
 ## Migration Plan
 
 1. Merge spec and failing tests.
-2. Add nullable lease/artifact/recovery-v2 columns and generated indexes; deploy migration independently.
-3. Deploy code that dual-reads legacy records and writes v2 only. Mark legacy Nostr/Bitcoin records for re-enrollment.
+2. Add nullable lease/artifact/recovery-version columns and generated indexes; deploy migration independently.
+3. Deploy code that reads v1/v2 only through explicit legacy paths and writes authenticated v3 only. Mark legacy Nostr/Bitcoin records for re-enrollment.
 4. Pause scheduler during the old/new worker overlap, replace all replicas, reconcile only stale non-terminal rows, then resume.
-5. Enable Nostr v2 after browser round-trip tests; enable Bitcoin only after signet funding/refresh/recovery tests.
+5. Enable Nostr v3 only after authenticated-envelope, setup-bundle, two-phase enrollment, browser round-trip, tamper, downgrade, and legacy-isolation tests; enable Bitcoin only after signet funding/refresh/recovery tests.
 6. Configure Railway pre-deploy migration, probes, required CI gate, backups, alerts, and staging provider credentials.
 7. Remove legacy write paths and columns only in a later generated contract migration after measured re-enrollment/retention.
 

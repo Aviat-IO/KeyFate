@@ -1,31 +1,14 @@
 <script lang="ts">
-	import { page } from '$app/stores';
 	import NavBar from '$lib/components/NavBar.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import SSSDecryptor from '$lib/components/SSSDecryptor.svelte';
-
-	// Extract shares from URL query parameters (share1, share2, share3, etc.)
-	let initialShares = $derived.by(() => {
-		const shares: string[] = [];
-		let index = 1;
-		while (true) {
-			const value = $page.url.searchParams.get(`share${index}`);
-			if (value) {
-				shares.push(value);
-				index++;
-			} else {
-				break;
-			}
-		}
-		return shares;
-	});
 </script>
 
 <svelte:head>
 	<title>Recover Secret - KeyFate</title>
 	<meta
 		name="description"
-		content="Reconstruct your secret using Shamir's Secret Sharing. Enter your shares to recover the original secret — all processing happens in your browser."
+		content="Paste authenticated recovery envelopes locally. Recovery material in URL query parameters is ignored."
 	/>
 </svelte:head>
 
@@ -35,12 +18,8 @@
 	>
 		<NavBar />
 	</div>
-
 	<div class="mx-auto flex min-h-[calc(100vh-4rem)] items-center justify-center px-6 py-12">
-		<div class="w-full max-w-3xl">
-			<SSSDecryptor {initialShares} />
-		</div>
+		<div class="w-full max-w-3xl"><SSSDecryptor /></div>
 	</div>
-
 	<Footer />
 </div>

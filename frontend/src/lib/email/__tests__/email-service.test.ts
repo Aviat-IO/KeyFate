@@ -82,6 +82,17 @@ describe('email-service', () => {
 			expect(mockProvider.sendEmail).toHaveBeenCalledTimes(1);
 		});
 
+		it('rejects header control characters before calling the provider', async () => {
+			const result = await sendEmail({
+				to: 'user@example.com',
+				subject: 'Safe\r\nBcc: attacker@example.com',
+				html: '<p>Body</p>'
+			});
+			expect(result).toMatchObject({ success: false, retryable: false });
+			expect(result.error).toContain('header');
+			expect(mockProvider.sendEmail).not.toHaveBeenCalled();
+		});
+
 		it('passes email data through to provider', async () => {
 			(mockProvider.validateConfig as ReturnType<typeof vi.fn>).mockResolvedValue(true);
 			(mockProvider.sendEmail as ReturnType<typeof vi.fn>).mockResolvedValue({

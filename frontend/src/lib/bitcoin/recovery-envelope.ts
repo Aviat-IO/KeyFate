@@ -51,12 +51,16 @@ export function encryptBitcoinRecoveryEnvelope(
 	const parsed = bitcoinRecoveryContentSchema.parse(content);
 	const senderPubkey = getPublicKey(senderSecretKey);
 	const conversationKey = getConversationKey(senderSecretKey, recipientNostrPubkey);
-	return encryptedBitcoinEnvelopeSchema.parse({
-		version: 1,
-		senderPubkey,
-		recipientNostrPubkey,
-		ciphertext: encrypt(JSON.stringify(parsed), conversationKey)
-	});
+	try {
+		return encryptedBitcoinEnvelopeSchema.parse({
+			version: 1,
+			senderPubkey,
+			recipientNostrPubkey,
+			ciphertext: encrypt(JSON.stringify(parsed), conversationKey)
+		});
+	} finally {
+		conversationKey.fill(0);
+	}
 }
 
 export function decryptBitcoinRecoveryEnvelope(
@@ -73,7 +77,11 @@ export function decryptBitcoinRecoveryEnvelope(
 		throw new Error('Bitcoin recovery envelope sender mismatch');
 	}
 	const conversationKey = getConversationKey(recipientSecretKey, expectedSenderPubkey);
-	return bitcoinRecoveryContentSchema.parse(
-		JSON.parse(decrypt(envelope.ciphertext, conversationKey))
-	);
+	try {
+		return bitcoinRecoveryContentSchema.parse(
+			JSON.parse(decrypt(envelope.ciphertext, conversationKey))
+		);
+	} finally {
+		conversationKey.fill(0);
+	}
 }

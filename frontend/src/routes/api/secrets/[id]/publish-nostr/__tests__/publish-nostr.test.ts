@@ -1,11 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { generateSecretKey, getPublicKey } from 'nostr-tools/pure';
-import {
-	createRecoveryCapsule,
-	createRecoveryManifest,
-	RECOVERY_CAPSULE_VERSION
-} from '$lib/nostr/recovery-capsule';
-import { wrapCapsuleForRecipient } from '$lib/nostr/gift-wrap';
+import { createAuthenticatedRecoverySet } from '$lib/crypto/recovery-v3';
+import { publishSharesToNostr } from '$lib/services/nostr-publisher';
+import { DEFAULT_RELAYS } from '$lib/nostr/relay-config';
 
 vi.mock('@sveltejs/kit', () => ({
 	json: (data: unknown, init?: { status?: number }) =>
@@ -14,18 +11,19 @@ vi.mock('@sveltejs/kit', () => ({
 			headers: { 'content-type': 'application/json' }
 		})
 }));
-
 vi.mock('$lib/csrf', () => ({
 	requireCSRFProtection: vi.fn(async () => ({ valid: true })),
 	createCSRFErrorResponse: vi.fn(() => new Response(null, { status: 403 }))
 }));
-
-const requireSession = vi.fn(async () => ({ user: { id: 'user-1' } }));
 vi.mock('$lib/server/auth', () => ({
-	requireSession: () => requireSession()
+	requireSession: vi.fn(async () => ({ user: { id: 'user-1' } }))
 }));
+let serviceEnvelope = '';
+vi.mock('$lib/encryption', () => ({ decryptMessage: vi.fn(async () => serviceEnvelope) }));
 
-const updateWhere = vi.fn(async () => []);
+let casSucceeds = true;
+const returning = vi.fn(async () => (casSucceeds ? [{ id: RECIPIENT_ID }] : []));
+const updateWhere = vi.fn(() => ({ returning }));
 const updateSet = vi.fn(() => ({ where: updateWhere }));
 const update = vi.fn(() => ({ set: updateSet }));
 const transaction = vi.fn(async (callback: (tx: { update: typeof update }) => Promise<void>) =>
@@ -34,39 +32,45 @@ const transaction = vi.fn(async (callback: (tx: { update: typeof update }) => Pr
 const select = vi.fn();
 const db = { select, transaction };
 vi.mock('$lib/db/drizzle', () => ({ getDatabase: vi.fn(async () => db) }));
-
 vi.mock('$lib/db/schema', () => ({
 	secrets: {
 		id: 'secrets.id',
 		userId: 'secrets.user_id',
-		status: 'secrets.status',
-		checkInDays: 'secrets.check_in_days',
 		nostrDeliveryStatus: 'secrets.nostr_delivery_status',
-		bitcoinDeliveryStatus: 'secrets.bitcoin_delivery_status'
+		sssThreshold: 'secrets.sss_threshold',
+		sssSharesTotal: 'secrets.sss_shares_total',
+		serverShare: 'secrets.server_share',
+		iv: 'secrets.iv',
+		authTag: 'secrets.auth_tag',
+		keyVersion: 'secrets.key_version'
 	},
 	secretRecipients: {
 		id: 'recipients.id',
 		secretId: 'recipients.secret_id',
-		nostrPubkey: 'recipients.nostr_pubkey'
+		nostrPubkey: 'recipients.nostr_pubkey',
+		nostrPublisherPubkey: 'recipients.nostr_publisher_pubkey',
+		nostrGiftWrapEventId: 'recipients.nostr_gift_wrap_event_id',
+		nostrCapsuleEventId: 'recipients.nostr_capsule_event_id',
+		nostrManifestEvent: 'recipients.nostr_manifest_event',
+		nostrSchemeVersion: 'recipients.nostr_scheme_version'
 	}
 }));
-
 vi.mock('drizzle-orm', () => ({
 	eq: vi.fn((left: unknown, right: unknown) => ({ type: 'eq', left, right })),
-	and: vi.fn((...conditions: unknown[]) => ({ type: 'and', conditions }))
+	isNull: vi.fn((value: unknown) => ({ type: 'isNull', value })),
+	and: vi.fn((...conditions: unknown[]) => ({ type: 'and', conditions })),
+	or: vi.fn((...conditions: unknown[]) => ({ type: 'or', conditions }))
 }));
-
 const relayPublish = vi.fn(async () => undefined);
-vi.mock('$lib/nostr/client', () => ({
-	createNostrClient: () => ({ publish: relayPublish, close: vi.fn() })
+const relayClose = vi.fn();
+const createRelayClient = vi.fn(() => ({
+	publish: relayPublish,
+	close: relayClose
 }));
-
-const scheduleRemindersForSecret = vi.fn(async () => undefined);
-vi.mock('$lib/services/reminder-scheduler', () => ({ scheduleRemindersForSecret }));
+vi.mock('$lib/nostr/client', () => ({ createNostrClient: createRelayClient }));
 
 const SECRET_ID = '550e8400-e29b-41d4-a716-446655440000';
 const RECIPIENT_ID = '660e8400-e29b-41d4-a716-446655440001';
-
 function createRequest(body: unknown): Request {
 	return new Request(`http://localhost/api/secrets/${SECRET_ID}/publish-nostr`, {
 		method: 'POST',
@@ -74,158 +78,165 @@ function createRequest(body: unknown): Request {
 		body: JSON.stringify(body)
 	});
 }
-
-function configureSelect(secretRows: unknown[], recipientRows: unknown[]) {
+function configureSelect(secretRows: readonly unknown[], recipientRows: readonly unknown[]) {
 	let call = 0;
 	select.mockImplementation(() => ({
 		from: () => ({ where: async () => (call++ === 0 ? secretRows : recipientRows) })
 	}));
 }
-
-function signedArtifacts() {
-	const publisherSecretKey = generateSecretKey();
-	const publisherPubkey = getPublicKey(publisherSecretKey);
-	const recipientPubkey = getPublicKey(generateSecretKey());
-	const capsule = createRecoveryCapsule(
+async function signedArtifacts(secret = 'route test', relays: string[] = [DEFAULT_RELAYS[0]]) {
+	const recipientKey = generateSecretKey();
+	const recipientPubkey = getPublicKey(recipientKey);
+	const set = createAuthenticatedRecoverySet(secret, { threshold: 2, total: 3 });
+	const result = await publishSharesToNostr({
+		secretId: SECRET_ID,
+		shares: [{ recipientId: RECIPIENT_ID, share: set.envelopes[1], shareIndex: 2 }],
+		recipients: [{ id: RECIPIENT_ID, nostrPubkey: recipientPubkey }],
+		senderSecretKey: generateSecretKey(),
+		threshold: 2,
+		totalShares: 3,
+		relays,
+		client: { publish: async () => undefined, close: () => undefined }
+	});
+	const artifact = result.published[0];
+	artifact.plaintextK.fill(0);
+	recipientKey.fill(0);
+	return { serviceEnvelope: set.envelopes[0], recipientPubkey, ...artifact };
+}
+function rowsFor(artifact: Awaited<ReturnType<typeof signedArtifacts>>) {
+	return [
 		{
-			version: RECOVERY_CAPSULE_VERSION,
-			secretId: SECRET_ID,
-			recipientId: RECIPIENT_ID,
-			recipientNostrPubkey: recipientPubkey,
-			shareIndex: 1,
-			threshold: 2,
-			totalShares: 3,
-			encryptedShareHex: 'aabb',
-			nonceHex: '00'.repeat(12),
-			encryptedKNostr: 'opaque-nip44-payload'
+			id: SECRET_ID,
+			nostrDeliveryStatus: 'pending',
+			sssThreshold: 2,
+			sssSharesTotal: 3,
+			serverShare: 'encrypted',
+			iv: Buffer.from('123456789012').toString('base64'),
+			authTag: Buffer.alloc(16).toString('base64'),
+			keyVersion: 1
 		},
-		publisherSecretKey
-	);
-	const giftWrapEvent = wrapCapsuleForRecipient(capsule, publisherSecretKey, recipientPubkey);
-	const manifestEvent = createRecoveryManifest(
-		{
-			version: RECOVERY_CAPSULE_VERSION,
-			secretId: SECRET_ID,
-			recipientId: RECIPIENT_ID,
-			recipientNostrPubkey: recipientPubkey,
-			publisherPubkey,
-			giftWrapEventId: giftWrapEvent.id,
-			capsuleEventId: capsule.id
-		},
-		publisherSecretKey
-	);
-	return { recipientPubkey, giftWrapEvent, manifestEvent };
+		[
+			{
+				id: RECIPIENT_ID,
+				nostrPubkey: artifact.recipientPubkey,
+				nostrPublisherPubkey: null,
+				nostrGiftWrapEventId: null,
+				nostrCapsuleEventId: null,
+				nostrManifestEvent: null,
+				nostrSchemeVersion: null
+			}
+		]
+	] as const;
+}
+function artifactBody(artifact: Awaited<ReturnType<typeof signedArtifacts>>) {
+	return {
+		artifacts: [
+			{
+				giftWrapEvent: artifact.giftWrapEvent,
+				capsuleEvent: artifact.capsuleEvent,
+				manifestEvent: artifact.manifestEvent
+			}
+		]
+	};
 }
 
-describe('POST /api/secrets/[id]/publish-nostr', () => {
+describe('POST /api/secrets/[id]/publish-nostr v3', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		casSucceeds = true;
+		relayPublish.mockImplementation(async () => undefined);
 	});
 
-	it('rejects the legacy plaintext-share request shape', async () => {
+	it('rejects plaintext or extra sensitive request fields before database access', async () => {
 		const { POST } = await import('../+server');
-		const response = await POST({
-			params: { id: SECRET_ID },
-			request: createRequest({
-				shares: [{ recipientId: RECIPIENT_ID, share: 'plaintext-share', shareIndex: 1 }],
-				threshold: 2,
-				totalShares: 3
-			})
-		} as unknown as Parameters<typeof POST>[0]);
-
-		expect(response.status).toBe(400);
+		for (const body of [
+			{ shares: [{ recipientId: RECIPIENT_ID, share: 'plaintext' }] },
+			{ artifacts: [], plaintextK: 'forbidden' },
+			{ artifacts: [], passphrase: 'forbidden' },
+			{ artifacts: [], publisherSecretKey: 'forbidden' }
+		]) {
+			const response = await POST({
+				params: { id: SECRET_ID },
+				request: createRequest(body)
+			} as unknown as Parameters<typeof POST>[0]);
+			expect(response.status).toBe(400);
+		}
 		expect(select).not.toHaveBeenCalled();
 	});
 
-	it.each(['plaintextK', 'passphrase', 'publisherSecretKey'])(
-		'rejects the extra sensitive field %s before database access',
-		async (field) => {
-			const artifact = signedArtifacts();
-			const { POST } = await import('../+server');
-			const response = await POST({
-				params: { id: SECRET_ID },
-				request: createRequest({
-					artifacts: [
-						{
-							giftWrapEvent: artifact.giftWrapEvent,
-							manifestEvent: artifact.manifestEvent
-						}
-					],
-					[field]: 'must-not-cross-boundary'
-				})
-			} as unknown as Parameters<typeof POST>[0]);
-
-			expect(response.status).toBe(400);
-			expect(select).not.toHaveBeenCalled();
-		}
-	);
-
-	it('verifies, relays, and registers one opaque artifact per recipient', async () => {
-		const artifact = signedArtifacts();
-		configureSelect(
-			[
-				{
-					id: SECRET_ID,
-					status: 'paused',
-					checkInDays: 30,
-					nostrDeliveryStatus: 'pending',
-					bitcoinDeliveryStatus: null
-				}
-			],
-			[{ id: RECIPIENT_ID, nostrPubkey: artifact.recipientPubkey }]
-		);
-
+	it('binds artifacts to the stored service envelope and registers with CAS', async () => {
+		const artifact = await signedArtifacts();
+		serviceEnvelope = artifact.serviceEnvelope;
+		const [secretRow, recipientRows] = rowsFor(artifact);
+		configureSelect([secretRow], recipientRows);
 		const { POST } = await import('../+server');
 		const response = await POST({
 			params: { id: SECRET_ID },
-			request: createRequest({
-				artifacts: [
-					{
-						giftWrapEvent: artifact.giftWrapEvent,
-						manifestEvent: artifact.manifestEvent
-					}
-				]
-			})
+			request: createRequest(artifactBody(artifact))
 		} as unknown as Parameters<typeof POST>[0]);
-		const body = await response.json();
-
 		expect(response.status).toBe(200);
-		expect(body.active).toBe(true);
-		expect(body.registered).toHaveLength(1);
-		expect(relayPublish).toHaveBeenCalledWith(artifact.giftWrapEvent);
+		expect(await response.json()).toMatchObject({ status: 'registered', active: false });
+		expect(createRelayClient).toHaveBeenCalledWith({ relays: [DEFAULT_RELAYS[0]] });
+		expect(relayPublish).toHaveBeenCalledTimes(1);
 		expect(transaction).toHaveBeenCalledTimes(1);
-		expect(scheduleRemindersForSecret).toHaveBeenCalledTimes(1);
 	});
 
-	it('rejects an outer event modified after signing', async () => {
-		const artifact = signedArtifacts();
-		configureSelect(
-			[
-				{
-					id: SECRET_ID,
-					status: 'paused',
-					checkInDays: 30,
-					nostrDeliveryStatus: 'pending',
-					bitcoinDeliveryStatus: null
-				}
-			],
-			[{ id: RECIPIENT_ID, nostrPubkey: artifact.recipientPubkey }]
-		);
-
+	it('rejects a correctly signed artifact from a different recovery set', async () => {
+		const stored = await signedArtifacts('stored set');
+		const substituted = await signedArtifacts('substituted set');
+		serviceEnvelope = stored.serviceEnvelope;
+		const [secretRow, recipientRows] = rowsFor(substituted);
+		configureSelect([secretRow], recipientRows);
 		const { POST } = await import('../+server');
 		const response = await POST({
 			params: { id: SECRET_ID },
-			request: createRequest({
-				artifacts: [
-					{
-						giftWrapEvent: { ...artifact.giftWrapEvent, content: 'modified' },
-						manifestEvent: artifact.manifestEvent
-					}
-				]
-			})
+			request: createRequest(artifactBody(substituted))
 		} as unknown as Parameters<typeof POST>[0]);
-
 		expect(response.status).toBe(400);
 		expect(transaction).not.toHaveBeenCalled();
+	});
+
+	it('rejects signed but unconfigured relay hints before server network access', async () => {
+		const artifact = await signedArtifacts('unconfigured relay', ['wss://attacker.example']);
+		serviceEnvelope = artifact.serviceEnvelope;
+		const [secretRow, recipientRows] = rowsFor(artifact);
+		configureSelect([secretRow], recipientRows);
+		const { POST } = await import('../+server');
+		const response = await POST({
+			params: { id: SECRET_ID },
+			request: createRequest(artifactBody(artifact))
+		} as unknown as Parameters<typeof POST>[0]);
+		expect(response.status).toBe(400);
+		expect(createRelayClient).not.toHaveBeenCalled();
+		expect(transaction).not.toHaveBeenCalled();
+	});
+
+	it('keeps enrollment pending when any server relay publication fails', async () => {
+		const artifact = await signedArtifacts();
+		serviceEnvelope = artifact.serviceEnvelope;
+		const [secretRow, recipientRows] = rowsFor(artifact);
+		configureSelect([secretRow], recipientRows);
+		relayPublish.mockRejectedValueOnce(new Error('relay unavailable'));
+		const { POST } = await import('../+server');
+		const response = await POST({
+			params: { id: SECRET_ID },
+			request: createRequest(artifactBody(artifact))
+		} as unknown as Parameters<typeof POST>[0]);
+		expect(response.status).toBe(503);
+		expect(transaction).not.toHaveBeenCalled();
+	});
+
+	it('rejects a racing replacement when compare-and-set loses', async () => {
+		const artifact = await signedArtifacts();
+		serviceEnvelope = artifact.serviceEnvelope;
+		const [secretRow, recipientRows] = rowsFor(artifact);
+		configureSelect([secretRow], recipientRows);
+		casSucceeds = false;
+		const { POST } = await import('../+server');
+		const response = await POST({
+			params: { id: SECRET_ID },
+			request: createRequest(artifactBody(artifact))
+		} as unknown as Parameters<typeof POST>[0]);
+		expect(response.status).toBe(409);
 	});
 });
