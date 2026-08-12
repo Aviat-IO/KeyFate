@@ -25,6 +25,14 @@ open http://localhost:3000
 
 For detailed setup instructions, see [INFRASTRUCTURE.md](./INFRASTRUCTURE.md)
 
+## Security and threat model
+
+Dead-man-switch systems have timing, metadata, coercion, and availability risks
+that encryption alone does not solve. See [docs/threat-model.md](./docs/threat-model.md)
+for documented mitigations and residual risks, including early recipient
+discovery, Nostr/email/server-log metadata leakage, operator disappearance,
+false triggers, missed check-ins, forced check-ins, and replay/link-forwarding.
+
 **Payment testing:** See [PAYMENT_TESTING.md](./PAYMENT_TESTING.md) for BTCPay
 Server and Stripe testing
 

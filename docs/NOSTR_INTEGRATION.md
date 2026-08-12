@@ -6,6 +6,8 @@
 
 This document outlines how KeyFate can integrate with the Nostr protocol to provide
 **censorship-resistant secret disclosure** that doesn't depend on KeyFate's servers.
+For Nostr metadata leakage, early recipient discovery, operator disappearance,
+and other residual risks, see the [KeyFate threat model](./threat-model.md).
 
 ## Problem Statement
 
